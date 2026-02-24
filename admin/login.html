@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PayGo Admin | Login</title>
+  <!-- ✅ URL corrigida (sem espaços) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 
+              700: '#1d4ed8', 900: '#1e3a8a', 950: '#0f172a',
+            },
+            accent: { 400: '#22d3ee', 500: '#06b6d4', 600: '#0891b2' }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-brand-900 to-slate-900 min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-md">
+    <!-- Logo Card -->
+    <div class="bg-white/10 backdrop-blur-xl rounded-3xl p-8 border border-white/20 shadow-2xl">
+      <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-tr from-brand-500 to-accent-500 rounded-2xl text-white mb-4 shadow-lg shadow-brand-500/30">
+          <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+        </div>
+        <h1 class="text-3xl font-bold text-white mb-2">PayGo Admin</h1>
+        <p class="text-slate-400">Acesso restrito à equipa</p>
+      </div>
+
+      <!-- Login Form -->
+      <form id="loginForm" class="space-y-6">
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-2">Email</label>
+          <input type="email" id="adminEmail" required 
+            class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all" 
+            placeholder="admin@paygo.co.mz" autocomplete="email">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-2">Senha</label>
+          <input type="password" id="adminPassword" required 
+            class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all" 
+            placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <button type="submit" id="loginBtn" 
+          class="w-full bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-500 hover:to-brand-600 text-white py-3 rounded-xl font-bold transition-all shadow-lg shadow-brand-500/30 hover:shadow-brand-500/50 transform hover:-translate-y-0.5 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+          <span id="btnText">Entrar</span>
+          <svg id="loadingIcon" class="w-5 h-5 animate-spin hidden" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+        </button>
+      </form>
+
+      <!-- Error Message -->
+      <div id="errorMsg" class="mt-4 p-3 bg-red-500/20 border border-red-500/30 rounded-xl text-red-300 text-sm hidden flex items-center gap-2">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <span id="errorText"></span>
+      </div>
+
+      <!-- Help Text -->
+      <p class="text-center text-slate-500 text-xs mt-6">
+        Acesso exclusivo para administradores PayGo.<br>
+        <!-- ✅ URL corrigida (sem espaços) -->
+        <a href="https://paygo.co.mz" class="text-brand-400 hover:text-brand-300 transition">← Voltar ao site</a>
+      </p>
+    </div>
+    
+    <p class="text-center text-slate-500/50 text-xs mt-4">© 2026 PayGo Serviços Digitais</p>
+  </div>
+
+  <!-- Firebase + Auth Logic -->
+  <script type="module">
+    // ✅ URLs corrigidas (sem espaços no final)
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { 
+      getAuth, 
+      signInWithEmailAndPassword, 
+      onAuthStateChanged,
+      getIdTokenResult,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { 
+      getFirestore, 
+      doc, 
+      getDoc 
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
+      authDomain: "paygo-14311.firebaseapp.com",
+      projectId: "paygo-14311",
+      storageBucket: "paygo-14311.firebasestorage.app",
+      messagingSenderId: "208360646277",
+      appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app, "paygodb"); 
+
+    // ✅ Lista de emails autorizados (fallback de segurança)
+    const ADMIN_EMAILS = [
+      'admin@paygo.co.mz',
+      'app@paygo.co.mz',
+      'superadmin@paygo.co.mz', 
+      'gestao@paygo.co.mz',
+      'direcao@paygo.co.mz'
+    ];
+
+    // ✅ Verificar se email está na lista de admins
+    function isAdminEmail(email) {
+      return ADMIN_EMAILS.includes(email?.toLowerCase());
+    }
+
+    // ✅ Verificação completa de admin (3 camadas)
+    async function verifyAdmin(user) {
+      try {
+        // Camada 1: Custom Claims (mais seguro)
+        const idTokenResult = await getIdTokenResult(user);
+        if (idTokenResult.claims?.admin === true) {
+          return true;
+        }
+
+        // Camada 2: Coleção "admins" no Firestore
+        const adminRef = doc(db, "admins", user.uid);
+        const adminSnap = await getDoc(adminRef);
+        if (adminSnap.exists() && adminSnap.data()?.role === 'admin') {
+          return true;
+        }
+
+        // Camada 3: Fallback por email (menos seguro, mas funcional)
+        if (isAdminEmail(user.email)) {
+          return true;
+        }
+
+        return false;
+      } catch (error) {
+        console.error('Erro na verificação de admin:', error);
+        return false;
+      }
+    }
+
+    // ✅ Flag para evitar erro prematuro na primeira carga
+    let hasAttemptedLogin = false;
+
+    // ✅ Redirecionar se já estiver logado como admin
+    onAuthStateChanged(auth, async (user) => {
+      // Se não tem usuário, não faz nada (página de login normal)
+      if (!user) return;
+      
+      // Só verifica admin se houve tentativa de login OU se veio com token na URL
+      const urlParams = new URLSearchParams(window.location.search);
+      if (!hasAttemptedLogin && !urlParams.get('token')) return;
+      
+      try {
+        const isAdmin = await verifyAdmin(user);
+        if (isAdmin) {
+          window.location.href = 'dashboard.html';
+        } else {
+          // Não é admin, fazer logout silencioso
+          await signOut(auth);
+          // Só mostra erro se o usuário tentou login ativamente
+          if (hasAttemptedLogin) {
+            showError('Acesso negado: Apenas administradores podem acessar.');
+          }
+        }
+      } catch (error) {
+        console.error('Erro no auth state:', error);
+        if (hasAttemptedLogin) {
+          showError('Erro de autenticação. Tente novamente.');
+        }
+      }
+    });
+
+    // ✅ Handle Login Submit
+    document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      // ✅ Marcar que houve tentativa de login
+      hasAttemptedLogin = true;
+      
+      const email = document.getElementById('adminEmail').value.trim();
+      const password = document.getElementById('adminPassword').value;
+      const errorMsg = document.getElementById('errorMsg');
+      const errorText = document.getElementById('errorText');
+      const loginBtn = document.getElementById('loginBtn');
+      const btnText = document.getElementById('btnText');
+      const loadingIcon = document.getElementById('loadingIcon');
+      
+      // UI: Loading state
+      loginBtn.disabled = true;
+      btnText.textContent = 'Verificando...';
+      loadingIcon.classList.remove('hidden');
+      errorMsg.classList.add('hidden');
+
+      try {
+        // 1. Autenticar usuário
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        
+        // 2. ✅ Verificar se é admin
+        const isAdmin = await verifyAdmin(user);
+        
+        if (!isAdmin) {
+          // ❌ Não é admin - logout + erro
+          await signOut(auth);
+          throw new Error('Acesso negado: Apenas administradores podem acessar o dashboard.');
+        }
+        
+        // 3. ✅ É admin - redirecionar
+        btnText.textContent = 'Redirecionando...';
+        setTimeout(() => {
+          window.location.href = 'dashboard.html';
+        }, 500);
+        
+      } catch (error) {
+        console.error('Login error:', error);
+        
+        // Mensagens amigáveis
+        let message = 'Erro ao fazer login';
+        if (error.message?.includes('Acesso negado')) {
+          message = error.message;
+        } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+          message = 'Email ou senha inválidos';
+        } else if (error.code === 'auth/too-many-requests') {
+          message = 'Muitas tentativas. Aguarde alguns minutos.';
+        } else if (error.code === 'auth/invalid-email') {
+          message = 'Formato de email inválido';
+        } else if (error.code === 'auth/network-request-failed') {
+          message = 'Erro de conexão. Verifique sua internet.';
+        }
+        
+        showError(message);
+      } finally {
+        // Reset UI
+        loginBtn.disabled = false;
+        btnText.textContent = 'Entrar';
+        loadingIcon.classList.add('hidden');
+      }
+    });
+
+    // ✅ Mostrar erro
+    function showError(message) {
+      const errorMsg = document.getElementById('errorMsg');
+      const errorText = document.getElementById('errorText');
+      if (errorText) errorText.textContent = message;
+      if (errorMsg) errorMsg.classList.remove('hidden');
+      
+      // Auto-hide após 5 segundos
+      setTimeout(() => {
+        if (errorMsg) errorMsg.classList.add('hidden');
+      }, 5000);
+    }
+  </script>
+</body>
+</html>
