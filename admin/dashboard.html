@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PayGo Admin | Dashboard</title>
+  <!-- ✅ URLs sem espaços -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script>
@@ -25,19 +26,21 @@
     .status-processing { background: #dbeafe; color: #1e40af; }
     .status-completed { background: #dcfce7; color: #166534; }
     .status-cancelled { background: #fee2e2; color: #991b1b; }
+    /* Loading skeleton */
+    .skeleton { background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: skeleton-loading 1.5s infinite; }
+    @keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
   </style>
 </head>
 <body class="bg-slate-50">
   
-  <!-- Sidebar -->
+  <!-- Sidebar (mantido igual) -->
   <aside class="fixed left-0 top-0 h-full w-64 bg-slate-900 text-white p-6 z-50 flex flex-col">
     <div class="flex items-center gap-3 mb-8 pb-6 border-b border-white/10">
       <div class="w-10 h-10 bg-gradient-to-tr from-brand-500 to-accent-500 rounded-xl flex items-center justify-center">
-        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24  24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
       </div>
       <span class="text-xl font-bold">PayGo Admin</span>
     </div>
-    
     <nav class="flex-1 space-y-2">
       <a href="dashboard.html" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-xl transition-all bg-brand-600/20 text-brand-400">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
@@ -56,7 +59,6 @@
         Configurações
       </a>
     </nav>
-    
     <div class="pt-4 border-t border-white/10">
       <div class="flex items-center gap-3 px-4 py-3 mb-2">
         <div class="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-sm font-bold" id="userInitial">A</div>
@@ -105,7 +107,7 @@
           <span class="text-sm font-medium text-slate-500">Total Pedidos</span>
           <div class="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center"><svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg></div>
         </div>
-        <p class="text-3xl font-bold text-slate-900" id="statTotal">0</p>
+        <p class="text-3xl font-bold text-slate-900 skeleton" id="statTotal">0</p>
         <p class="text-sm text-green-600 mt-2 flex items-center gap-1"><span id="statGrowth">+0%</span> esta semana</p>
       </div>
       <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
@@ -113,7 +115,7 @@
           <span class="text-sm font-medium text-slate-500">Pendentes</span>
           <div class="w-10 h-10 bg-yellow-50 rounded-xl flex items-center justify-center"><svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
         </div>
-        <p class="text-3xl font-bold text-slate-900" id="statPending">0</p>
+        <p class="text-3xl font-bold text-slate-900 skeleton" id="statPending">0</p>
         <p class="text-sm text-slate-500 mt-2">Requer atenção</p>
       </div>
       <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
@@ -121,7 +123,7 @@
           <span class="text-sm font-medium text-slate-500">Concluídos</span>
           <div class="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center"><svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
         </div>
-        <p class="text-3xl font-bold text-slate-900" id="statCompleted">0</p>
+        <p class="text-3xl font-bold text-slate-900 skeleton" id="statCompleted">0</p>
         <p class="text-sm text-green-600 mt-2">Taxa: <span id="completionRate">0%</span></p>
       </div>
       <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
@@ -129,7 +131,7 @@
           <span class="text-sm font-medium text-slate-500">Receita (MT)</span>
           <div class="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center"><svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
         </div>
-        <p class="text-3xl font-bold text-slate-900" id="statRevenue">0 MT</p>
+        <p class="text-3xl font-bold text-slate-900 skeleton" id="statRevenue">0 MT</p>
         <p class="text-sm text-slate-500 mt-2">Este mês</p>
       </div>
     </div>
@@ -140,7 +142,7 @@
         <h2 class="text-lg font-bold text-slate-900">Pedidos Recentes</h2>
         <span class="text-sm text-slate-500" id="ordersCount">0 pedidos</span>
       </div>
-      <div id="loadingState" class="p-12 text-center text-slate-500 hidden">
+      <div id="loadingState" class="p-12 text-center text-slate-500">
         <svg class="w-8 h-8 animate-spin mx-auto mb-4 text-brand-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
         Carregando pedidos...
       </div>
@@ -169,7 +171,7 @@
     </div>
   </main>
 
-  <!-- Order Detail Modal -->
+  <!-- Order Detail Modal (mantido igual) -->
   <div id="orderModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl p-6 md:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
       <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-200">
@@ -194,7 +196,9 @@
 
   <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
 
+  <!-- ✅ Script Corrigido -->
   <script type="module">
+    // ✅ URLs corrigidas (SEM espaços no final)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut, getIdTokenResult } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, collection, doc, updateDoc, onSnapshot, query, orderBy, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -210,10 +214,20 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const db = getFirestore(app, "paygodb");
+    const db = getFirestore(app, "paygodb"); // ✅ Nome do banco correto
     const ADMIN_EMAILS = ['admin@paygo.co.mz', 'app@paygo.co.mz', 'gestao@paygo.co.mz', 'superadmin@paygo.co.mz'];
+    
     let orders = [];
     let currentOrderId = null;
+    let ordersUnsubscribe = null; // ✅ Para limpar listener
+
+    // ✅ Helper para formatar valores com fallback
+    function formatValue(value, type = 'currency') {
+      if (value === null || value === undefined) return type === 'currency' ? '0.00 MT' : '0';
+      if (type === 'currency') return `${Number(value).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`;
+      if (type === 'usd') return `$${Number(value).toFixed(2)}`;
+      return String(value);
+    }
 
     async function verifyAdminAccess() {
       return new Promise((resolve) => {
@@ -244,67 +258,165 @@
       document.getElementById('userInitial').textContent = user.email?.[0]?.toUpperCase() || 'A';
     }
 
+    // ✅ Função otimizada para carregar pedidos
     function loadOrders() {
       const loadingState = document.getElementById('loadingState');
       const emptyState = document.getElementById('emptyState');
       const ordersTable = document.getElementById('ordersTable');
+      
       loadingState.classList.remove('hidden');
       emptyState.classList.add('hidden');
-      ordersTable.innerHTML = '';
+      
+      // ✅ Limpar listener anterior para evitar memory leak
+      if (ordersUnsubscribe) ordersUnsubscribe();
+      
       const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
-      const unsubscribe = onSnapshot(q, (snapshot) => {
-        loadingState.classList.add('hidden');
-        orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        if (orders.length === 0) { emptyState.classList.remove('hidden'); ordersTable.innerHTML = ''; }
-        else { emptyState.classList.add('hidden'); renderOrders(); }
-        updateStats();
-        updateOrdersCount();
-        if (typeof lucide !== 'undefined') lucide.createIcons();
-      }, (error) => {
-        console.error('Erro ao carregar pedidos:', error);
-        loadingState.classList.add('hidden');
-        if (error.code === 'permission-denied') { showToast('Acesso negado. Faça login novamente.', 'error'); setTimeout(() => { signOut(auth); window.location.href = 'login.html'; }, 2000); }
-        else { showToast('Erro ao carregar pedidos: ' + error.message, 'error'); }
-      });
-      return unsubscribe;
+      
+      ordersUnsubscribe = onSnapshot(q, 
+        (snapshot) => {
+          loadingState.classList.add('hidden');
+          
+          // ✅ Mapear dados com validação
+          orders = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              orderId: data.orderId || `ORD-${doc.id.slice(0, 8)}`,
+              name: data.name || 'N/A',
+              email: data.email || 'N/A',
+              type: data.type || 'unknown',
+              usd: Number(data.usd) || 0,
+              total: Number(data.total) || 0,
+              tax: Number(data.tax) || 0,
+              status: data.status || 'pending',
+              paymentMethod: data.paymentMethod || 'mpesa',
+              detail: data.detail || 'N/A',
+              createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : new Date())
+            };
+          });
+          
+          if (orders.length === 0) { 
+            emptyState.classList.remove('hidden'); 
+            ordersTable.innerHTML = ''; 
+          } else { 
+            emptyState.classList.add('hidden'); 
+            renderOrders(); 
+          }
+          updateStats();
+          updateOrdersCount();
+          
+          if (typeof lucide !== 'undefined') lucide.createIcons();
+        },
+        (error) => {
+          console.error('Erro ao carregar pedidos:', error);
+          loadingState.classList.add('hidden');
+          if (error.code === 'permission-denied') { 
+            showToast('Acesso negado. Faça login novamente.', 'error'); 
+            setTimeout(() => { signOut(auth); window.location.href = 'login.html'; }, 2000); 
+          } else { 
+            showToast('Erro ao carregar: ' + (error.message || 'Tente recarregar a página'), 'error'); 
+          }
+        }
+      );
+      
+      return ordersUnsubscribe;
     }
 
+    // ✅ Renderização otimizada com valores formatados
     function renderOrders() {
       const table = document.getElementById('ordersTable');
       const search = document.getElementById('searchInput')?.value.toLowerCase() || '';
       const statusFilter = document.getElementById('statusFilter')?.value || 'all';
+      
       const filtered = orders.filter(order => {
-        const matchSearch = order.name?.toLowerCase().includes(search) || order.orderId?.toLowerCase().includes(search) || order.email?.toLowerCase().includes(search);
+        const matchSearch = 
+          order.name?.toLowerCase().includes(search) || 
+          order.orderId?.toLowerCase().includes(search) ||
+          order.email?.toLowerCase().includes(search);
         const matchStatus = statusFilter === 'all' || order.status === statusFilter;
         return matchSearch && matchStatus;
       });
-      if (filtered.length === 0) { table.innerHTML = `<tr><td colspan="8" class="px-6 py-12 text-center text-slate-500">Nenhum pedido encontrado com esses filtros</td></tr>`; return; }
+
+      if (filtered.length === 0) {
+        table.innerHTML = `<tr><td colspan="8" class="px-6 py-12 text-center text-slate-500">Nenhum pedido encontrado com esses filtros</td></tr>`;
+        return;
+      }
+
       table.innerHTML = filtered.map(order => {
-        const statusClass = { pending: 'status-pending', processing: 'status-processing', completed: 'status-completed', cancelled: 'status-cancelled' }[order.status] || 'bg-slate-100 text-slate-700';
-        const statusText = { pending: '⏳ Pendente', processing: '🔄 Processando', completed: '✅ Concluído', cancelled: '❌ Cancelado' }[order.status] || order.status;
-        const orderDate = order.createdAt ? new Date(order.createdAt).toLocaleDateString('pt-MZ', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A';
-        return `<tr class="hover:bg-slate-50 transition-colors group">
-          <td class="px-6 py-4 whitespace-nowrap"><span class="text-sm font-mono font-bold text-brand-600">${order.orderId || 'N/A'}</span></td>
-          <td class="px-6 py-4"><div class="text-sm font-medium text-slate-900">${order.name || 'N/A'}</div><div class="text-xs text-slate-500">${order.email || 'N/A'}</div></td>
-          <td class="px-6 py-4 whitespace-nowrap"><span class="px-2.5 py-1 text-xs font-semibold rounded-full ${order.type === 'compra' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}">${(order.type || 'unknown').toUpperCase()}</span></td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900 font-medium">$${(order.usd || 0).toFixed(2)}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900">${(order.total || 0).toLocaleString('pt-MZ')} MT</td>
-          <td class="px-6 py-4 whitespace-nowrap"><span class="status-badge ${statusClass}">${statusText}</span></td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${orderDate}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-right"><button onclick="openModal('${order.id}')" class="text-brand-600 hover:text-brand-800 font-medium text-sm hover:underline">Ver detalhes</button></td>
-        </tr>`;
+        const statusClass = { 
+          pending: 'status-pending', 
+          processing: 'status-processing', 
+          completed: 'status-completed', 
+          cancelled: 'status-cancelled' 
+        }[order.status] || 'bg-slate-100 text-slate-700';
+        
+        const statusText = { 
+          pending: '⏳ Pendente', 
+          processing: '🔄 Processando', 
+          completed: '✅ Concluído', 
+          cancelled: '❌ Cancelado' 
+        }[order.status] || order.status;
+
+        const orderDate = order.createdAt ? new Date(order.createdAt).toLocaleDateString('pt-MZ', {
+          day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        }) : 'N/A';
+
+        return `
+          <tr class="hover:bg-slate-50 transition-colors group">
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="text-sm font-mono font-bold text-brand-600">${order.orderId}</span>
+            </td>
+            <td class="px-6 py-4">
+              <div class="text-sm font-medium text-slate-900">${order.name}</div>
+              <div class="text-xs text-slate-500 truncate max-w-[150px]">${order.email}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="px-2.5 py-1 text-xs font-semibold rounded-full ${order.type === 'compra' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}">
+                ${order.type.toUpperCase()}
+              </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900 font-medium">
+              ${formatValue(order.usd, 'usd')}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900">
+              ${formatValue(order.total, 'currency')}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="status-badge ${statusClass}">${statusText}</span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+              ${orderDate}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right">
+              <button onclick="openModal('${order.id}')" class="text-brand-600 hover:text-brand-800 font-medium text-sm hover:underline">Ver</button>
+            </td>
+          </tr>
+        `;
       }).join('');
     }
 
+    // ✅ Stats com validação de valores
     function updateStats() {
       const total = orders.length;
       const pending = orders.filter(o => o.status === 'pending').length;
       const completed = orders.filter(o => o.status === 'completed').length;
-      const revenue = orders.filter(o => o.status === 'completed').reduce((sum, o) => sum + (o.tax || 0), 0);
+      
+      // ✅ Calcular receita apenas de pedidos concluídos com valor válido
+      const revenue = orders
+        .filter(o => o.status === 'completed' && o.tax)
+        .reduce((sum, o) => sum + Number(o.tax), 0);
+      
+      // Remover skeleton e mostrar valores
+      document.getElementById('statTotal').classList.remove('skeleton');
+      document.getElementById('statPending').classList.remove('skeleton');
+      document.getElementById('statCompleted').classList.remove('skeleton');
+      document.getElementById('statRevenue').classList.remove('skeleton');
+      
       document.getElementById('statTotal').textContent = total;
       document.getElementById('statPending').textContent = pending;
       document.getElementById('statCompleted').textContent = completed;
-      document.getElementById('statRevenue').textContent = revenue.toLocaleString('pt-MZ', {minimumFractionDigits: 2}) + ' MT';
+      document.getElementById('statRevenue').textContent = formatValue(revenue, 'currency');
+      
       const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
       document.getElementById('completionRate').textContent = rate + '%';
       document.getElementById('statGrowth').textContent = '+12%';
@@ -314,80 +426,164 @@
       const count = document.getElementById('ordersCount');
       const search = document.getElementById('searchInput')?.value || '';
       const status = document.getElementById('statusFilter')?.value || 'all';
+      
       let filtered = orders;
-      if (search) filtered = filtered.filter(o => o.name?.toLowerCase().includes(search.toLowerCase()) || o.orderId?.toLowerCase().includes(search.toLowerCase()));
-      if (status !== 'all') filtered = filtered.filter(o => o.status === status);
+      if (search) {
+        filtered = filtered.filter(o => 
+          o.name?.toLowerCase().includes(search.toLowerCase()) ||
+          o.orderId?.toLowerCase().includes(search.toLowerCase())
+        );
+      }
+      if (status !== 'all') {
+        filtered = filtered.filter(o => o.status === status);
+      }
+      
       count.textContent = `${filtered.length} pedido${filtered.length !== 1 ? 's' : ''}`;
     }
 
+    // ✅ Modal com valores formatados
     window.openModal = (orderId) => {
       const order = orders.find(o => o.id === orderId);
       if (!order) return;
+      
       currentOrderId = orderId;
+      
       const orderDate = order.createdAt ? new Date(order.createdAt).toLocaleString('pt-MZ') : 'N/A';
       const paymentMethod = order.paymentMethod === 'mpesa' ? '🔴 M-Pesa' : '🟡 e-Mola';
-      document.getElementById('modalContent').innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div><p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">ID do Pedido</p><p class="font-mono font-bold text-brand-600 text-lg">${order.orderId}</p></div>
-        <div><p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Data/Hora</p><p class="font-medium">${orderDate}</p></div>
-        <div><p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Cliente</p><p class="font-medium">${order.name || 'N/A'}</p></div>
-        <div><p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Email</p><p class="font-medium text-brand-600">${order.email || 'N/A'}</p></div>
-        <div><p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Categoria</p><p class="font-medium">${(order.type || 'unknown').toUpperCase()}</p></div>
-        <div><p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Pagamento</p><p class="font-medium">${paymentMethod}</p></div>
-        <div class="md:col-span-2"><p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Link/ID do Produto</p><p class="font-medium break-all bg-slate-50 p-3 rounded-lg text-sm">${order.detail || 'N/A'}</p></div>
-        <div><p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Valor USD</p><p class="font-bold text-lg">$${(order.usd || 0).toFixed(2)}</p></div>
-        <div><p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total MT</p><p class="font-bold text-lg">${(order.total || 0).toLocaleString('pt-MZ', {minimumFractionDigits: 2})} MT</p></div>
-        <div><p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Taxa PayGo</p><p class="font-medium">${(order.tax || 0).toLocaleString('pt-MZ', {minimumFractionDigits: 2})} MT</p></div>
-        <div><p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Status Atual</p><p class="font-medium">${getStatusText(order.status)}</p></div>
-      </div>`;
+      
+      document.getElementById('modalContent').innerHTML = `
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div><p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">ID do Pedido</p><p class="font-mono font-bold text-brand-600 text-lg">${order.orderId}</p></div>
+          <div><p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Data/Hora</p><p class="font-medium">${orderDate}</p></div>
+          <div><p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Cliente</p><p class="font-medium">${order.name}</p></div>
+          <div><p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Email</p><p class="font-medium text-brand-600">${order.email}</p></div>
+          <div><p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Categoria</p><p class="font-medium">${order.type.toUpperCase()}</p></div>
+          <div><p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Pagamento</p><p class="font-medium">${paymentMethod}</p></div>
+          <div class="md:col-span-2"><p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Link/ID do Produto</p><p class="font-medium break-all bg-slate-50 p-3 rounded-lg text-sm">${order.detail}</p></div>
+          <div><p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Valor USD</p><p class="font-bold text-lg">${formatValue(order.usd, 'usd')}</p></div>
+          <div><p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total MT</p><p class="font-bold text-lg">${formatValue(order.total, 'currency')}</p></div>
+          <div><p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Taxa PayGo</p><p class="font-medium">${formatValue(order.tax, 'currency')}</p></div>
+          <div><p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Status Atual</p><p class="font-medium">${getStatusText(order.status)}</p></div>
+        </div>
+      `;
+      
       document.getElementById('statusSelect').value = order.status;
       document.getElementById('orderModal').classList.remove('hidden');
       document.body.style.overflow = 'hidden';
     };
 
-    window.closeModal = () => { document.getElementById('orderModal').classList.add('hidden'); document.body.style.overflow = ''; currentOrderId = null; };
-    function getStatusText(status) { return { pending: '⏳ Pendente', processing: '🔄 Processando', completed: '✅ Concluído', cancelled: '❌ Cancelado' }[status] || status; }
+    window.closeModal = () => { 
+      document.getElementById('orderModal').classList.add('hidden'); 
+      document.body.style.overflow = ''; 
+      currentOrderId = null; 
+    };
+    
+    function getStatusText(status) { 
+      return { pending: '⏳ Pendente', processing: '🔄 Processando', completed: '✅ Concluído', cancelled: '❌ Cancelado' }[status] || status; 
+    }
 
+    // ✅ Atualizar status com feedback
     document.getElementById('updateStatusBtn')?.addEventListener('click', async () => {
       if (!currentOrderId) return;
       const newStatus = document.getElementById('statusSelect').value;
       const btn = document.getElementById('updateStatusBtn');
       const originalText = btn.innerHTML;
+      
       btn.disabled = true;
       btn.innerHTML = `<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Atualizando...`;
+      
       try {
-        await updateDoc(doc(db, "orders", currentOrderId), { status: newStatus, updatedAt: new Date().toISOString() });
-        showToast('Status atualizado com sucesso!', 'success');
+        await updateDoc(doc(db, "orders", currentOrderId), { 
+          status: newStatus, 
+          updatedAt: new Date().toISOString() 
+        });
+        showToast('✅ Status atualizado!', 'success');
         closeModal();
-      } catch (error) { console.error('Erro ao atualizar:', error); showToast('Erro ao atualizar status', 'error'); }
-      finally { btn.disabled = false; btn.innerHTML = originalText; }
+      } catch (error) { 
+        console.error('Erro ao atualizar:', error); 
+        showToast('❌ Erro ao atualizar', 'error'); 
+      } finally { 
+        btn.disabled = false; 
+        btn.innerHTML = originalText; 
+      }
     });
 
-    document.getElementById('logoutBtn')?.addEventListener('click', async () => { if (confirm('Tem certeza que deseja sair?')) { await signOut(auth); window.location.href = 'login.html'; } });
-    document.getElementById('searchInput')?.addEventListener('input', () => { renderOrders(); updateOrdersCount(); });
-    document.getElementById('statusFilter')?.addEventListener('change', () => { renderOrders(); updateOrdersCount(); });
+    // ✅ Event listeners
+    document.getElementById('logoutBtn')?.addEventListener('click', async () => { 
+      if (confirm('Tem certeza que deseja sair?')) { 
+        await signOut(auth); 
+        window.location.href = 'login.html'; 
+      } 
+    });
+    
+    // ✅ Debounce para busca (performance)
+    let searchTimeout;
+    document.getElementById('searchInput')?.addEventListener('input', (e) => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        renderOrders();
+        updateOrdersCount();
+      }, 300);
+    });
+    
+    document.getElementById('statusFilter')?.addEventListener('change', () => { 
+      renderOrders(); 
+      updateOrdersCount(); 
+    });
 
+    // ✅ Toast notifications
     window.showToast = (message, type = 'success') => {
       const container = document.getElementById('toastContainer');
       const toast = document.createElement('div');
       const colors = { success: 'bg-green-500', error: 'bg-red-500', warning: 'bg-yellow-500', info: 'bg-blue-500' };
-      const icons = { success: 'M5 13l4 4L19 7', error: 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z', warning: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z', info: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' };
+      const icons = { 
+        success: 'M5 13l4 4L19 7', 
+        error: 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z', 
+        warning: 'M12 9v2m0 4h.01', 
+        info: 'M13 16h-1v-4h-1' 
+      };
+      
       toast.className = `flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-white ${colors[type]} transform transition-all duration-300 translate-x-full`;
-      toast.innerHTML = `<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${icons[type]}"></path></svg><span class="text-sm font-medium">${message}</span><button onclick="this.parentElement.remove()" class="ml-2 hover:opacity-80"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>`;
+      toast.innerHTML = `
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${icons[type]}"></path>
+        </svg>
+        <span class="text-sm font-medium">${message}</span>
+        <button onclick="this.parentElement.remove()" class="ml-2 hover:opacity-80">✕</button>
+      `;
       container.appendChild(toast);
       requestAnimationFrame(() => { toast.classList.remove('translate-x-full'); });
-      setTimeout(() => { toast.classList.add('translate-x-full', 'opacity-0'); setTimeout(() => toast.remove(), 300); }, 4000);
+      setTimeout(() => { 
+        toast.classList.add('opacity-0'); 
+        setTimeout(() => toast.remove(), 300); 
+      }, 4000);
     };
 
-    window.refreshOrders = () => { showToast('Atualizando pedidos...', 'info'); };
-    document.getElementById('orderModal')?.addEventListener('click', (e) => { if (e.target.id === 'orderModal') closeModal(); });
+    window.refreshOrders = () => { 
+      showToast('🔄 Atualizando...', 'info'); 
+      loadOrders(); 
+    };
+    
+    document.getElementById('orderModal')?.addEventListener('click', (e) => { 
+      if (e.target.id === 'orderModal') closeModal(); 
+    });
 
+    // ✅ Inicialização com cleanup
     async function initDashboard() {
       const isAdmin = await verifyAdminAccess();
       if (!isAdmin) return;
+      
       if (typeof lucide !== 'undefined') lucide.createIcons();
       loadOrders();
+      
+      // ✅ Cleanup ao sair da página
+      window.addEventListener('beforeunload', () => {
+        if (ordersUnsubscribe) ordersUnsubscribe();
+      });
+      
       console.log('✅ Dashboard PayGo Admin carregado');
     }
+    
     initDashboard();
   </script>
 </body>
