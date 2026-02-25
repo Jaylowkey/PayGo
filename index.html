@@ -619,199 +619,268 @@
     </a>
 
     <!-- ✅ Main JavaScript -->
-    <script>
-    // Constants
-    const BINANCE_RATE = 88.00;
-    const WHATSAPP_NUMBER = '258877522255';
-    const COMPANY_EMAIL = 'contact@paygo.co.mz';
+<!-- ✅ Firebase + Main JavaScript -->
+<script type="module">
+// Import Firebase diretamente (mais confiável que arquivo externo)
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { 
+  getFirestore, 
+  collection, 
+  addDoc,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // Toast Notification
-    function showToast(message, type = 'default') {
-      const container = document.getElementById('toast-container');
-      const toast = document.createElement('div');
-      toast.className = `toast ${type}`;
-      let icon = type === 'success' ? 'check-circle' : (type === 'error' ? 'alert-circle' : 'info');
-      let color = type === 'success' ? 'text-green-500' : (type === 'error' ? 'text-red-500' : 'text-blue-500');
-      toast.innerHTML = `<i data-lucide="${icon}" class="${color} w-6 h-6"></i><span class="text-sm font-semibold text-slate-700">${message}</span>`;
-      container.appendChild(toast);
-      if (typeof lucide !== 'undefined') lucide.createIcons();
-      setTimeout(() => toast.classList.add('show'), 100);
-      setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => toast.remove(), 300);
-      }, 4000);
+// Firebase Config
+const firebaseConfig = {
+  apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
+  authDomain: "paygo-14311.firebaseapp.com",
+  projectId: "paygo-14311",
+  storageBucket: "paygo-14311.firebasestorage.app",
+  messagingSenderId: "208360646277",
+  appId: "1:208360646277:web:aecc57cc0077ae48a52bec",
+  measurementId: "G-N9E391HCFL"
+};
+
+// Inicializar Firebase
+const app = initializeApp(firebaseConfig);
+
+// ✅ IMPORTANTE: Especificar o nome do banco de dados "paygodb"
+const db = getFirestore(app, "paygodb");
+
+// Exportar para escopo global (para outras funções usarem)
+window.db = db;
+window.collection = collection;
+window.addDoc = addDoc;
+
+// Constants
+const BINANCE_RATE = 88.00;
+const WHATSAPP_NUMBER = '258877522255';
+const COMPANY_EMAIL = 'contact@paygo.co.mz';
+
+// ✅ Testar conexão Firebase ao carregar
+async function testFirebaseConnection() {
+  try {
+    console.log('🔍 Testando conexão Firebase...');
+    const testRef = await addDoc(collection(db, "connection_test"), {
+      test: true,
+      timestamp: serverTimestamp()
+    });
+    console.log('✅ Firebase conectado! Test ID:', testRef.id);
+    showToast('✅ Sistema conectado ao banco de dados', 'success');
+  } catch (error) {
+    console.error('❌ Erro Firebase:', error.code, error.message);
+    showToast('⚠️ Erro de conexão com banco de dados', 'error');
+  }
+}
+
+// Toast Notification
+function showToast(message, type = 'default') {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  let icon = type === 'success' ? 'check-circle' : (type === 'error' ? 'alert-circle' : 'info');
+  let color = type === 'success' ? 'text-green-500' : (type === 'error' ? 'text-red-500' : 'text-blue-500');
+  toast.innerHTML = `<i data-lucide="${icon}" class="${color} w-6 h-6"></i><span class="text-sm font-semibold text-slate-700">${message}</span>`;
+  container.appendChild(toast);
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+  setTimeout(() => toast.classList.add('show'), 100);
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 300);
+  }, 4000);
+}
+
+// Toggle Service Type
+function toggleServiceType(type) {
+  const btnCompra = document.getElementById('btn-compra');
+  const btnJogo = document.getElementById('btn-jogo');
+  const inputHidden = document.getElementById('serviceType');
+  const label = document.getElementById('dynamic-label');
+  const icon = document.getElementById('dynamic-icon');
+  const input = document.getElementById('userLink');
+  const activeClass = ['bg-white', 'text-brand-700', 'shadow-sm', 'ring-1', 'ring-slate-200'];
+  const inactiveClass = ['bg-transparent', 'text-slate-500', 'hover:bg-slate-200/50'];
+  if (type === 'compra') {
+    btnCompra.classList.remove(...inactiveClass);
+    btnCompra.classList.add(...activeClass);
+    btnJogo.classList.remove(...activeClass);
+    btnJogo.classList.add(...inactiveClass);
+    label.innerText = "Link do Produto";
+    input.placeholder = "https://pt.aliexpress.com/item...";
+    icon.setAttribute('data-lucide', 'link');
+  } else {
+    btnJogo.classList.remove(...inactiveClass);
+    btnJogo.classList.add(...activeClass);
+    btnCompra.classList.remove(...activeClass);
+    btnCompra.classList.add(...inactiveClass);
+    label.innerText = "ID do Jogador / Email";
+    input.placeholder = "Ex: UID do FreeFire";
+    icon.setAttribute('data-lucide', 'gamepad-2');
+  }
+  inputHidden.value = type;
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+  input.focus();
+}
+
+// Update Payment Method
+function updatePaymentMethod() {
+  const methods = document.querySelectorAll('.payment-method');
+  methods.forEach(method => {
+    const radio = method.querySelector('input[type="radio"]');
+    if (radio.checked) {
+      method.classList.add('selected');
+    } else {
+      method.classList.remove('selected');
     }
+  });
+}
 
-    // Toggle Service Type
-    function toggleServiceType(type) {
-      const btnCompra = document.getElementById('btn-compra');
-      const btnJogo = document.getElementById('btn-jogo');
-      const inputHidden = document.getElementById('serviceType');
-      const label = document.getElementById('dynamic-label');
-      const icon = document.getElementById('dynamic-icon');
-      const input = document.getElementById('userLink');
-      const activeClass = ['bg-white', 'text-brand-700', 'shadow-sm', 'ring-1', 'ring-slate-200'];
-      const inactiveClass = ['bg-transparent', 'text-slate-500', 'hover:bg-slate-200/50'];
-      if (type === 'compra') {
-        btnCompra.classList.remove(...inactiveClass);
-        btnCompra.classList.add(...activeClass);
-        btnJogo.classList.remove(...activeClass);
-        btnJogo.classList.add(...inactiveClass);
-        label.innerText = "Link do Produto";
-        input.placeholder = "https://pt.aliexpress.com/item...";
-        icon.setAttribute('data-lucide', 'link');
-      } else {
-        btnJogo.classList.remove(...inactiveClass);
-        btnJogo.classList.add(...activeClass);
-        btnCompra.classList.remove(...activeClass);
-        btnCompra.classList.add(...inactiveClass);
-        label.innerText = "ID do Jogador / Email";
-        input.placeholder = "Ex: UID do FreeFire";
-        icon.setAttribute('data-lucide', 'gamepad-2');
-      }
-      inputHidden.value = type;
-      if (typeof lucide !== 'undefined') lucide.createIcons();
-      input.focus();
+// Calculator Function
+function calculate() {
+  const usdInput = document.getElementById('userUSD');
+  const usd = parseFloat(usdInput.value) || 0;
+  const isFirst = document.getElementById('chkFirstPurchase').checked;
+  const converted = usd * BINANCE_RATE;
+  let tax = 0;
+  const badge = document.getElementById('tax-discount-badge');
+  if (usd > 0) {
+    if (usd <= 5 && isFirst) {
+      tax = 0;
+      badge.classList.remove('hidden');
+    } else {
+      badge.classList.add('hidden');
+      if (usd <= 20) tax = 150;
+      else if (usd <= 50) tax = 250;
+      else if (usd <= 100) tax = 600;
+      else tax = converted * 0.07;
     }
+  } else {
+    badge.classList.add('hidden');
+  }
+  const total = converted + tax;
+  const receiptConverted = document.getElementById('receipt-converted');
+  const receiptTax = document.getElementById('receipt-tax');
+  const receiptTotal = document.getElementById('receipt-total');
+  if (receiptConverted) receiptConverted.innerText = converted.toLocaleString('pt-MZ', {minimumFractionDigits: 2}) + " MT";
+  if (receiptTax) receiptTax.innerText = tax.toLocaleString('pt-MZ', {minimumFractionDigits: 2}) + " MT";
+  if (receiptTotal) receiptTotal.innerHTML = `${total.toLocaleString('pt-MZ', {maximumFractionDigits: 0})}<span class="text-lg text-slate-400 font-normal">.${(total % 1).toFixed(2).substring(2)} MT</span>`;
+  console.log('Calculate:', { usd, converted, tax, total });
+}
 
-    // Update Payment Method
-    function updatePaymentMethod() {
-      const methods = document.querySelectorAll('.payment-method');
-      methods.forEach(method => {
-        const radio = method.querySelector('input[type="radio"]');
-        if (radio.checked) {
-          method.classList.add('selected');
-        } else {
-          method.classList.remove('selected');
-        }
-      });
+// ✅ Save Order to Firebase (CORRIGIDO)
+async function saveOrderToFirebase(orderData) {
+  try {
+    console.log('💾 Salvando pedido no Firebase...', orderData);
+    
+    // Verificar se Firebase está inicializado
+    if (!window.db) {
+      console.error('❌ Firebase não inicializado!');
+      throw new Error('Firebase não conectado');
     }
+    
+    // Adicionar timestamp do servidor
+    orderData.createdAt = serverTimestamp();
+    orderData.updatedAt = serverTimestamp();
+    
+    // Salvar na coleção "orders"
+    const orderRef = await addDoc(collection(window.db, "orders"), orderData);
+    
+    console.log('✅ Pedido salvo com ID:', orderRef.id);
+    return { success: true, orderId: orderRef.id };
+    
+  } catch (error) {
+    console.error('❌ Erro ao salvar pedido:', error.code, error.message);
+    return { 
+      success: false, 
+      error: error.message,
+      code: error.code 
+    };
+  }
+}
 
-    // Calculator Function
-    function calculate() {
-      const usdInput = document.getElementById('userUSD');
-      const usd = parseFloat(usdInput.value) || 0;
-      const isFirst = document.getElementById('chkFirstPurchase').checked;
-      const converted = usd * BINANCE_RATE;
-      let tax = 0;
-      const badge = document.getElementById('tax-discount-badge');
-      if (usd > 0) {
-        if (usd <= 5 && isFirst) {
-          tax = 0;
-          badge.classList.remove('hidden');
-        } else {
-          badge.classList.add('hidden');
-          if (usd <= 20) tax = 150;
-          else if (usd <= 50) tax = 250;
-          else if (usd <= 100) tax = 600;
-          else tax = converted * 0.07;
-        }
-      } else {
-        badge.classList.add('hidden');
-      }
-      const total = converted + tax;
-      const receiptConverted = document.getElementById('receipt-converted');
-      const receiptTax = document.getElementById('receipt-tax');
-      const receiptTotal = document.getElementById('receipt-total');
-      if (receiptConverted) receiptConverted.innerText = converted.toLocaleString('pt-MZ', {minimumFractionDigits: 2}) + " MT";
-      if (receiptTax) receiptTax.innerText = tax.toLocaleString('pt-MZ', {minimumFractionDigits: 2}) + " MT";
-      if (receiptTotal) receiptTotal.innerHTML = `${total.toLocaleString('pt-MZ', {maximumFractionDigits: 0})}<span class="text-lg text-slate-400 font-normal">.${(total % 1).toFixed(2).substring(2)} MT</span>`;
-      console.log('Calculate:', { usd, converted, tax, total });
+// Send Email via EmailJS
+async function sendOrderEmail(orderData) {
+  try {
+    if (typeof emailjs !== 'undefined') {
+      const templateParams = {
+        to_email: orderData.email,
+        cc_email: COMPANY_EMAIL,
+        customer_name: orderData.name,
+        customer_email: orderData.email,
+        category: orderData.type.toUpperCase(),
+        link_id: orderData.detail,
+        payment_method: orderData.paymentMethod === 'mpesa' ? 'M-Pesa' : 'e-Mola',
+        usd_amount: `$${orderData.usd}`,
+        exchange_rate: `${BINANCE_RATE} MT`,
+        tax_amount: `${orderData.tax.toLocaleString('pt-MZ', {minimumFractionDigits: 2})} MT`,
+        total_amount: `${orderData.total.toLocaleString('pt-MZ', {minimumFractionDigits: 2})} MT`,
+        order_date: new Date().toLocaleString('pt-MZ'),
+        order_id: orderData.orderId
+      };
+      await emailjs.send('service_3khb6nh', 'template_ybkof4r', templateParams);
+      await emailjs.send('service_3khb6nh', 'template_ivgtr7i', templateParams);
+      return true;
     }
+    return false;
+  } catch (error) {
+    console.error('Email error:', error);
+    return false;
+  }
+}
 
-    // Save Order to Firebase
-    async function saveOrderToFirebase(orderData) {
-      try {
-        if (typeof db !== 'undefined' && typeof collection !== 'undefined' && typeof addDoc !== 'undefined') {
-          const orderRef = await addDoc(collection(db, "orders"), {
-            ...orderData,
-            status: 'pending',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          });
-          console.log('Order saved with ID:', orderRef.id);
-          return { success: true, orderId: orderRef.id };
-        } else {
-          console.warn('Firebase not initialized');
-          return { success: true, orderId: 'local-' + Date.now() };
-        }
-      } catch (error) {
-        console.error('Error saving order:', error);
-        return { success: false, error: error.message };
-      }
-    }
-
-    // Send Email via EmailJS
-    async function sendOrderEmail(orderData) {
-      try {
-        if (typeof emailjs !== 'undefined') {
-          const templateParams = {
-            to_email: orderData.email,
-            cc_email: COMPANY_EMAIL,
-            customer_name: orderData.name,
-            customer_email: orderData.email,
-            category: orderData.type.toUpperCase(),
-            link_id: orderData.detail,
-            payment_method: orderData.paymentMethod === 'mpesa' ? 'M-Pesa' : 'e-Mola',
-            usd_amount: `$${orderData.usd}`,
-            exchange_rate: `${BINANCE_RATE} MT`,
-            tax_amount: `${orderData.tax.toLocaleString('pt-MZ', {minimumFractionDigits: 2})} MT`,
-            total_amount: `${orderData.total.toLocaleString('pt-MZ', {minimumFractionDigits: 2})} MT`,
-            order_date: new Date().toLocaleString('pt-MZ'),
-            order_id: orderData.orderId
-          };
-          await emailjs.send('service_3khb6nh', 'template_ybkof4r', templateParams);
-          await emailjs.send('service_3khb6nh', 'template_ivgtr7i', templateParams);
-          return true;
-        }
-        return false;
-      } catch (error) {
-        console.error('Email error:', error);
-        return false;
-      }
-    }
-
-    // Handle Form Submit
-    async function handleFormSubmit(e) {
-      e.preventDefault();
-      const btn = document.getElementById('submitBtn');
-      const originalContent = btn.innerHTML;
-      btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Processando...`;
-      if (typeof lucide !== 'undefined') lucide.createIcons();
-      btn.disabled = true;
-      const name = document.getElementById('userName').value;
-      const email = document.getElementById('userEmail').value;
-      const usd = parseFloat(document.getElementById('userUSD').value);
-      const type = document.getElementById('serviceType').value;
-      const detail = document.getElementById('userLink').value;
-      const isFirst = document.getElementById('chkFirstPurchase').checked;
-      const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
-      setTimeout(async () => {
-        btn.innerHTML = originalContent;
-        btn.disabled = false;
-        if (typeof lucide !== 'undefined') lucide.createIcons();
-        if (!detail) { showToast('Por favor, preencha o link ou ID.', 'error'); return; }
-        if (!usd || usd <= 0) { showToast('Insira um valor válido em USD.', 'error'); return; }
-        if (!email) { showToast('Insira um email válido.', 'error'); return; }
-        let tax = (usd <= 5 && isFirst) ? 0 : (usd <= 20 ? 150 : (usd <= 50 ? 250 : (usd <= 100 ? 600 : (usd * BINANCE_RATE * 0.07))));
-        const total = (usd * BINANCE_RATE) + tax;
-        const orderId = 'PG-' + Date.now().toString().slice(-6);
-        const orderData = {
-          orderId,
-          name,
-          email,
-          type,
-          detail,
-          paymentMethod,
-          usd,
-          tax,
-          total,
-          exchangeRate: BINANCE_RATE,
-          status: 'pending'
-        };
-        const firebaseResult = await saveOrderToFirebase(orderData);
-        const emailSent = await sendOrderEmail(orderData);
-        const whatsappMsg = `━━━━━━━━━━━━━━━━━━━
+// Handle Form Submit
+async function handleFormSubmit(e) {
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  const originalContent = btn.innerHTML;
+  btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Processando...`;
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+  btn.disabled = true;
+  const name = document.getElementById('userName').value;
+  const email = document.getElementById('userEmail').value;
+  const usd = parseFloat(document.getElementById('userUSD').value);
+  const type = document.getElementById('serviceType').value;
+  const detail = document.getElementById('userLink').value;
+  const isFirst = document.getElementById('chkFirstPurchase').checked;
+  const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+  
+  setTimeout(async () => {
+    btn.innerHTML = originalContent;
+    btn.disabled = false;
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    
+    if (!detail) { showToast('Por favor, preencha o link ou ID.', 'error'); return; }
+    if (!usd || usd <= 0) { showToast('Insira um valor válido em USD.', 'error'); return; }
+    if (!email) { showToast('Insira um email válido.', 'error'); return; }
+    
+    let tax = (usd <= 5 && isFirst) ? 0 : (usd <= 20 ? 150 : (usd <= 50 ? 250 : (usd <= 100 ? 600 : (usd * BINANCE_RATE * 0.07))));
+    const total = (usd * BINANCE_RATE) + tax;
+    const orderId = 'PG-' + Date.now().toString().slice(-6);
+    
+    const orderData = {
+      orderId,
+      name,
+      email,
+      type,
+      detail,
+      paymentMethod,
+      usd,
+      tax,
+      total,
+      exchangeRate: BINANCE_RATE,
+      status: 'pending'
+    };
+    
+    console.log('📦 Dados do pedido:', orderData);
+    
+    // 1. Save to Firebase
+    const firebaseResult = await saveOrderToFirebase(orderData);
+    
+    // 2. Send Emails (independente do Firebase)
+    const emailSent = await sendOrderEmail(orderData);
+    
+    // 3. Prepare WhatsApp message
+    const whatsappMsg = `━━━━━━━━━━━━━━━━━━━
 🛒 *NOVO PEDIDO PAYGO*
 ━━━━━━━━━━━━━━━━━━━
 📋 *ID do Pedido:* ${orderId}
@@ -838,100 +907,58 @@
 📧 *Confirmação enviada por email*
 🗄️ *Pedido registrado no sistema*
 `;
-        if (firebaseResult.success) {
-          showToast(`✅ Pedido ${orderId} registrado! Redirecionando...`, 'success');
-        } else {
-          showToast('⚠️ Pedido enviado! (Erro ao registrar)', 'error');
-        }
-        setTimeout(() => {
-          window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMsg)}`, '_blank');
-        }, 1500);
-      }, 800);
+    
+    // Show success message
+    if (firebaseResult.success) {
+      showToast(`✅ Pedido ${orderId} registrado no banco!`, 'success');
+    } else {
+      showToast(`⚠️ Email enviado, mas erro ao salvar: ${firebaseResult.code}`, 'error');
     }
+    
+    // Open WhatsApp
+    setTimeout(() => {
+      window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMsg)}`, '_blank');
+    }, 1500);
+  }, 800);
+}
 
-    // Export functions to window
-    window.toggleServiceType = toggleServiceType;
-    window.updatePaymentMethod = updatePaymentMethod;
-    window.calculate = calculate;
-    window.handleFormSubmit = handleFormSubmit;
-    window.showToast = showToast;
-    </script>
+// Export functions to window
+window.toggleServiceType = toggleServiceType;
+window.updatePaymentMethod = updatePaymentMethod;
+window.calculate = calculate;
+window.handleFormSubmit = handleFormSubmit;
+window.showToast = showToast;
+window.testFirebaseConnection = testFirebaseConnection;
 
-    <!-- ✅ Initialize after DOM loaded -->
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      // Initialize Lucide Icons
-      if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-      }
-      // Initialize AOS
-      if (typeof AOS !== 'undefined') {
-        AOS.init({
-          duration: 800,
-          once: true,
-          offset: 50,
-          easing: 'ease-out-cubic'
-        });
-      }
-      // Initialize payment method display
-      updatePaymentMethod();
-      // Initialize calculator
-      calculate();
-      // Form submit listener
-      const form = document.getElementById('paygoForm');
-      if (form) {
-        form.addEventListener('submit', handleFormSubmit);
-      }
-      // ✅ Smooth scroll for anchor links (prevents page reload on Vercel)
-      document.querySelectorAll('.anchor-link').forEach(anchor => {
-        anchor.addEventListener('click', function(e) {
-          const href = this.getAttribute('href');
-          if (href && href.startsWith('#')) {
-            e.preventDefault();
-            const targetId = href.substring(1);
-            const targetElement = document.getElementById(targetId);
-            if (targetElement) {
-              // Close mobile menu if open
-              const mobileMenu = document.getElementById('mobile-menu');
-              if (mobileMenu && !mobileMenu.classList.contains('translate-x-full')) {
-                mobileMenu.classList.add('translate-x-full');
-                document.body.classList.remove('overflow-hidden');
-              }
-              // Smooth scroll
-              const headerOffset = 100;
-              const elementPosition = targetElement.getBoundingClientRect().top;
-              const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-              window.scrollTo({
-                top: offsetPosition,
-                behavior: 'smooth'
-              });
-              // Update URL without reload
-              history.pushState(null, null, href);
-            }
-          }
-        });
-      });
-      // Navbar scroll effect
-      window.addEventListener('scroll', function() {
-        const nav = document.getElementById('navbar');
-        if (nav) {
-          window.scrollY > 20 ? nav.classList.add('glass-nav') : nav.classList.remove('glass-nav');
-        }
-      });
-      // Mobile menu
-      const menuBtn = document.getElementById('menu-btn');
-      const mobileMenu = document.getElementById('mobile-menu');
-      const closeMenuBtn = document.getElementById('close-menu-btn');
-      function toggleMenu() {
-        mobileMenu.classList.toggle('translate-x-full');
-        document.body.classList.toggle('overflow-hidden');
-      }
-      if (menuBtn) menuBtn.onclick = toggleMenu;
-      if (closeMenuBtn) closeMenuBtn.onclick = toggleMenu;
-      window.toggleMenu = toggleMenu;
-      console.log('PayGo initialized successfully!');
-    });
-    </script>
-    <script async src="https://static.sppopups.com/assets/loader.js" data-chats-widget-id="6d83448b-1abc-433c-9f8e-44b8d4d54ad4"></script>
+// Initialize after DOM loaded
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+  if (typeof AOS !== 'undefined') AOS.init({ duration: 800, once: true, offset: 50, easing: 'ease-out-cubic' });
+  updatePaymentMethod();
+  calculate();
+  const form = document.getElementById('paygoForm');
+  if (form) form.addEventListener('submit', handleFormSubmit);
+  
+  // ✅ Testar conexão Firebase após 2 segundos
+  setTimeout(testFirebaseConnection, 2000);
+  
+  window.addEventListener('scroll', function() {
+    const nav = document.getElementById('navbar');
+    if (nav) window.scrollY > 20 ? nav.classList.add('glass-nav') : nav.classList.remove('glass-nav');
+  });
+  
+  const menuBtn = document.getElementById('menu-btn');
+  const mobileMenu = document.getElementById('mobile-menu');
+  const closeMenuBtn = document.getElementById('close-menu-btn');
+  function toggleMenu() {
+    mobileMenu.classList.toggle('translate-x-full');
+    document.body.classList.toggle('overflow-hidden');
+  }
+  if (menuBtn) menuBtn.onclick = toggleMenu;
+  if (closeMenuBtn) closeMenuBtn.onclick = toggleMenu;
+  window.toggleMenu = toggleMenu;
+  console.log('✅ PayGo initialized successfully!');
+});
+</script>
 </body>
 </html>
