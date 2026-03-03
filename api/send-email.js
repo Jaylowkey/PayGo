@@ -10,389 +10,397 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { to, subject, template, variables } = req.body;
+    const { to, subject, template, variables, type } = req.body;
 
     // ✅ Validações básicas
     if (!to || !subject || !template) {
+      console.error('❌ Missing fields:', { to, subject, template });
       return res.status(400).json({ 
-        error: 'Missing required fields: to, subject, template' 
+        error: 'Missing required fields: to, subject, template',
+        received: { to, subject, template }
       });
     }
 
-    // ✅ Gerar HTML baseado no template
-    const html = generateEmailHTML(template, variables);
-    const text = generateEmailText(template, variables);
+    console.log('📧 Processing email:', { template, to, type });
+
+    // ✅ Gerar HTML e texto baseado no template
+    const html = generateEmailHTML(template, variables || {});
+    const text = generateEmailText(template, variables || {});
+
+    if (!html || html.trim() === '') {
+      console.error('❌ Empty HTML generated for template:', template);
+      return res.status(500).json({ error: 'Failed to generate email content', template });
+    }
 
     // ✅ Enviar email via Resend
     const { data, error } = await resend.emails.send({
-      from: `PayGo <noreply@paygo.co.mz>`,
+      from: `PayGo Moçambique <noreply@paygo.co.mz>`,
       to: [to],
       subject: subject,
       html: html,
       text: text,
       headers: {
         'X-PayGo-Template': template,
-        'X-PayGo-Version': '1.0'
+        'X-PayGo-Type': type || 'transactional',
+        'X-PayGo-Version': '2.0'
       }
     });
 
     if (error) {
-      console.error('❌ Resend error:', error);
-      return res.status(500).json({ error: error.message });
+      console.error('❌ Resend API error:', error);
+      return res.status(500).json({ error: error.message, resendError: error });
     }
 
-    console.log('✅ Email sent:', data);
+    console.log('✅ Email sent successfully:', { to, template, dataId: data?.id });
     return res.status(200).json({ 
       success: true, 
-      data: data,
-      message: 'Email enviado com sucesso'
+       data,
+      message: 'Email enviado com sucesso',
+      sentTo: to,
+      template: template
     });
 
   } catch (err) {
-    console.error('❌ Send email error:', err);
+    console.error('❌ API handler error:', err);
     return res.status(500).json({ 
       error: 'Internal server error',
-      message: err.message 
+      message: err.message,
+      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
     });
   }
 }
 
-// ✅ Gerador de HTML para templates - COM DESIGNS PROFISSIONAIS
+// ==========================================
+// 🎨 GERADOR DE HTML PREMIUM
+// ==========================================
 function generateEmailHTML(template, vars) {
+  const escape = (str) => {
+    if (!str && str !== 0) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  };
+
+  // ✅ CSS Base - Design de Fintech (Minimalista e Elegante)
+  const baseStyles = `
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+      
+      body { 
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+        background-color: #f3f4f6; 
+        margin: 0; 
+        padding: 40px 20px; 
+        color: #1f2937; 
+        -webkit-font-smoothing: antialiased;
+      }
+      .wrapper {
+        max-width: 520px;
+        margin: 0 auto;
+        background: #ffffff;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+        border: 1px solid #f3f4f6;
+      }
+      .logo-container {
+        padding: 32px 32px 0 32px;
+        text-align: center;
+      }
+      .logo-container h1 {
+        margin: 0;
+        color: #2563eb;
+        font-size: 28px;
+        font-weight: 800;
+        letter-spacing: -1px;
+      }
+      .content { 
+        padding: 32px; 
+      }
+      h2 {
+        margin: 0 0 16px 0;
+        font-size: 20px;
+        font-weight: 700;
+        color: #111827;
+        line-height: 1.3;
+      }
+      p {
+        margin: 0 0 20px 0;
+        font-size: 15px;
+        line-height: 1.6;
+        color: #4b5563;
+      }
+      .btn { 
+        display: block; 
+        background: #2563eb; 
+        color: #ffffff !important; 
+        padding: 14px 24px; 
+        border-radius: 8px; 
+        text-decoration: none; 
+        font-weight: 600; 
+        font-size: 15px; 
+        text-align: center;
+        transition: background 0.2s;
+        margin: 32px 0;
+      }
+      .btn:hover { background: #1d4ed8; }
+      .data-card {
+        background: #f9fafb;
+        border: 1px solid #f3f4f6;
+        border-radius: 12px;
+        padding: 24px;
+        margin: 24px 0;
+      }
+      .data-card h3 {
+        margin: 0 0 16px 0;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #6b7280;
+      }
+      table { width: 100%; border-collapse: collapse; }
+      td { padding: 8px 0; font-size: 14px; border-bottom: 1px solid #f3f4f6; }
+      tr:last-child td { border-bottom: none; padding-bottom: 0; }
+      .label { color: #6b7280; width: 40%; }
+      .value { color: #111827; font-weight: 500; text-align: right; }
+      .total-row td {
+        padding-top: 16px;
+        border-top: 2px solid #e5e7eb;
+        font-size: 16px;
+        font-weight: 700;
+      }
+      .total-value { color: #059669; }
+      .notice {
+        background: #fffbeb;
+        border-left: 4px solid #f59e0b;
+        padding: 16px;
+        border-radius: 4px 8px 8px 4px;
+        margin: 24px 0;
+      }
+      .notice p { margin: 0; font-size: 13px; color: #92400e; }
+      .code-highlight {
+        background: #f0fdf4;
+        border: 1px dashed #22c55e;
+        color: #166534;
+        padding: 16px;
+        border-radius: 8px;
+        text-align: center;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        margin: 24px 0;
+      }
+      .footer { 
+        padding: 24px 32px; 
+        background: #f9fafb;
+        text-align: center; 
+        border-top: 1px solid #f3f4f6; 
+      }
+      .footer p { 
+        margin: 0 0 8px 0; 
+        font-size: 12px; 
+        color: #9ca3af; 
+      }
+      .brand-claim {
+        font-weight: 600;
+        color: #4b5563 !important;
+      }
+    </style>
+  `;
+
+  // ✅ URL base para links - SEM ESPAÇOS
+  const baseUrl = process.env.VERCEL_URL 
+    ? `https://${process.env.VERCEL_URL}` 
+    : (process.env.NEXT_PUBLIC_SITE_URL || 'https://paygo.co.mz');
+
+  const htmlStart = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">${baseStyles}</head><body><div class="wrapper"><div class="logo-container"><h1>PayGo</h1></div><div class="content">`;
+  const htmlEnd = `</div><div class="footer"><p class="brand-claim">Simples. Seguro. Moçambicano. 🇲🇿</p><p>PayGo Serviços Digitais &copy; ${new Date().getFullYear()}</p><p>Suporte: contact@paygo.co.mz | WhatsApp: +258 87 100 2255</p></div></div></body></html>`;
+
   switch (template) {
     
-    // 🔐 PASSWORD RESET - Template Profissional
-    case 'password-reset':
-      return `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Recuperação de Senha - PayGo</title>
-</head>
-<body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: auto; background: #f8fafc; padding: 20px;">
-  <div style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); background: #fff;">
-    
-    <!-- Header -->
-    <div style="background-color: #0052FF; padding: 35px 30px; text-align: center; color: white;">
-      <h1 style="margin: 0; font-size: 24px; letter-spacing: -0.5px;">🔐 Recuperação de Senha</h1>
-      <p style="margin: 10px 0 0; opacity: 0.9; font-size: 15px;">Olá, <strong>${vars.customer_name || 'Cliente'}</strong>. Recebemos sua solicitação.</p>
-    </div>
+    // 🔐 VERIFICAÇÃO DE EMAIL
+    case 'email-verification': {
+      const verifyLink = `${baseUrl}/verify-email.html?token=${vars.verificationToken || 'DEMO_TOKEN'}&email=${encodeURIComponent(vars.email || '')}`;
+      return `${htmlStart}
+        <h2>Confirme o seu e-mail</h2>
+        <p>Olá, <strong>${escape(vars.customer_name || 'Cliente')}</strong>.</p>
+        <p>Para garantir a segurança da sua conta e começar a processar pagamentos internacionais, precisamos que valide este endereço de e-mail.</p>
+        <a href="${verifyLink}" class="btn">Confirmar E-mail</a>
+        <div class="notice">
+          <p>⚠️ <strong>Atenção:</strong> Este link de segurança expira em 24 horas. Caso não tenha criado uma conta na PayGo, pode ignorar esta mensagem.</p>
+        </div>
+      ${htmlEnd}`;
+    }
 
-    <!-- Content -->
-    <div style="padding: 30px; color: #334155; line-height: 1.6;">
-      <p style="margin-top: 0; font-size: 15px;">Recebemos uma solicitação para redefinir a senha da sua conta PayGo.</p>
+    // 🎉 BOAS-VINDAS - ✅ LÓGICA DE AFILIADO CORRIGIDA
+    case 'welcome': {
+      // ✅ IMPORTANTE: Só mostra código de afiliado se vars.affiliate_code EXISTIR e NÃO for vazio
+      const hasAffiliateCode = vars.affiliate_code && 
+                               vars.affiliate_code.trim() !== '' && 
+                               vars.affiliate_code !== 'null' && 
+                               vars.affiliate_code !== 'undefined';
       
-      <!-- Reset Button -->
-      <div style="text-align: center; margin: 32px 0;">
-        <a href="${vars.reset_link || '#'}" style="display: inline-block; background: #0052FF; color: #fff; padding: 14px 32px; border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 16px; box-shadow: 0 4px 14px rgba(0,82,255,0.3);">
-          🔗 Redefinir Senha
-        </a>
-      </div>
-      
-      <!-- Warning -->
-      <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; border-radius: 0 8px 8px 0; margin: 24px 0;">
-        <p style="margin: 0; font-size: 14px; color: #92400e;">
-          ⚠️ <strong>Este link expira em 1 hora.</strong><br>
-          Se você não solicitou esta alteração, ignore este email ou contacte o suporte.
-        </p>
-      </div>
-      
-      <!-- Security Info -->
-      <div style="background: #f1f5f9; padding: 16px; border-radius: 8px; margin-top: 24px;">
-        <p style="margin: 0; font-size: 13px; color: #475569;">
-          <strong>Dica de segurança:</strong> Nunca compartilhe seu link de recuperação com terceiros.
-        </p>
-      </div>
-    </div>
-
-    <!-- Footer -->
-    <div style="background: #f8fafc; padding: 25px; text-align: center; border-top: 1px solid #e2e8f0;">
-      <p style="margin: 0; font-weight: bold; color: #0f172a; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">PayGo Moçambique</p>
-      <p style="margin: 6px 0 0; font-size: 13px; color: #64748b;">Simples. Seguro. Moçambicano. 🇲🇿</p>
-      <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #94a3b8;">
-        Suporte: contact@paygo.co.mz &nbsp;|&nbsp; WhatsApp: +258 87 100 2255
-      </div>
-    </div>
-    
-  </div>
-</body>
-</html>`;
-
-    // ✅ ORDER CONFIRMATION - Template Profissional (NOVO DESIGN)
-    case 'order-confirmation':
-      return `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pedido Confirmado - PayGo</title>
-</head>
-<body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: auto; background: #f8fafc; padding: 20px;">
-  
-  <div style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); background: #fff;">
-    
-    <!-- Header -->
-    <div style="background-color: #0052FF; padding: 35px 30px; text-align: center; color: white;">
-      <h1 style="margin: 0; font-size: 24px; letter-spacing: -0.5px;">Pedido Confirmado! ✅</h1>
-      <p style="margin: 10px 0 0; opacity: 0.9; font-size: 15px;">Olá, <strong>${vars.customer_name || 'Cliente'}</strong>. Recebemos o seu pedido.</p>
-    </div>
-
-    <!-- Content -->
-    <div style="padding: 30px; color: #334155; line-height: 1.6;">
-      <p style="margin-top: 0; font-size: 15px;">O seu pedido <strong>#${vars.order_id || 'N/A'}</strong> foi registado com sucesso e já está na nossa fila de processamento.</p>
-      
-      <!-- Order Details -->
-      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 24px 0;">
-        <h3 style="margin: 0 0 12px 0; color: #0052FF; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">📋 Detalhes do Pedido</h3>
-        <table style="width: 100%; font-size: 14px;">
-          <tr><td style="padding: 6px 0; color: #64748b;">Data:</td><td style="color: #0f172a; font-weight: 500;">${vars.order_date || new Date().toLocaleDateString('pt-MZ')}</td></tr>
-          <tr><td style="padding: 6px 0; color: #64748b;">Categoria:</td><td style="color: #0f172a; font-weight: 500;">${vars.category || 'Compras'}</td></tr>
-          <tr><td style="padding: 6px 0; color: #64748b;">Produto:</td><td><a href="${vars.link_id || '#'}" style="color: #0052FF; font-weight: 600; text-decoration: none;" target="_blank">Ver Link 🔗</a></td></tr>
-        </table>
-      </div>
-
-      <!-- Financial Summary -->
-      <div style="border: 1px dashed #cbd5e1; border-radius: 8px; padding: 20px; margin: 24px 0;">
-        <h3 style="margin: 0 0 12px 0; color: #0052FF; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">💰 Resumo Financeiro</h3>
-        <table style="width: 100%; font-size: 14px;">
-          <tr><td style="padding: 6px 0; color: #475569;">Valor USD:</td><td style="text-align: right; color: #0f172a; font-weight: 500;">$${vars.usd_amount || '0.00'}</td></tr>
-          <tr><td style="padding: 6px 0; color: #475569;">Câmbio:</td><td style="text-align: right; color: #0f172a; font-weight: 500;">${vars.exchange_rate || '88.00 MT'}</td></tr>
-          <tr><td style="padding: 6px 0; color: #475569;">Taxas:</td><td style="text-align: right; color: #0f172a; font-weight: 500;">${vars.tax_amount || '0.00 MT'}</td></tr>
-          <tr style="font-size: 18px; font-weight: bold;">
-            <td style="padding-top: 16px; border-top: 1px solid #e2e8f0; color: #0f172a;">TOTAL:</td>
-            <td style="padding-top: 16px; border-top: 1px solid #e2e8f0; text-align: right; color: #059669;">${vars.total_amount || '0.00 MT'}</td>
-          </tr>
-        </table>
-        <p style="font-size: 13px; margin: 12px 0 0 0; color: #64748b; text-align: right;">Método selecionado: <strong>${vars.payment_method || 'N/A'}</strong></p>
-      </div>
-
-      <!-- Payment Instructions -->
-      <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-left: 4px solid #2563eb; padding: 20px; border-radius: 8px; margin-top: 28px;">
-        <h4 style="margin: 0 0 12px 0; color: #1e3a8a; font-size: 16px;">📍 Ação Necessária: Pagamento Manual</h4>
-        <p style="margin: 0 0 16px 0; font-size: 14px; color: #1e40af; line-height: 1.5;">Como o nosso sistema automático encontra-se temporariamente em manutenção, ativámos a via rápida manual para que o seu pedido não sofra atrasos.</p>
+      return `${htmlStart}
+        <h2>Bem-vindo à PayGo! 🚀</h2>
+        <p>Olá, <strong>${escape(vars.customer_name || 'Cliente')}</strong>. A sua conta foi ativada com sucesso.</p>
+        <p>A partir de agora, as suas compras internacionais no AliExpress, Shein ou Amazon estão à distância de um clique, pagando com o seu M-Pesa ou e-Mola.</p>
         
-        <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: bold; color: #1e3a8a;">1. Transfira o valor total (<strong>${vars.total_amount || '0.00 MT'}</strong>) para:</p>
-        <ul style="margin: 0 0 16px 0; padding-left: 20px; font-size: 14px; color: #1e40af; line-height: 1.8;">
-          <li><strong>e-Mola:</strong> <span style="font-size: 15px; font-weight: bold; color: #1e3a8a;">87 752 2255</span></li>
-          <li><strong>M-Pesa:</strong> <span style="font-size: 15px; font-weight: bold; color: #1e3a8a;">84 162 7519</span></li>
-        </ul>
+        <div class="data-card">
+          <h3 style="color: #2563eb;">O que pode fazer agora:</h3>
+          <ul style="margin:0; padding-left: 20px; font-size: 14px; color: #4b5563; line-height: 1.8;">
+            <li>Fazer pagamentos internacionais sem cartão Visa</li>
+            <li>Acompanhar o status dos seus pedidos em tempo real</li>
+            <li>Convidar amigos e ganhar comissões</li>
+          </ul>
+        </div>
 
-        <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: bold; color: #1e3a8a;">2. Valide o pagamento:</p>
-        <p style="margin: 0; font-size: 14px; color: #1e40af;">Envie a foto ou PDF do comprovativo para o nosso WhatsApp de validação clicando no botão abaixo:</p>
+        <a href="${escape(vars.dashboard_link || baseUrl)}" class="btn">Aceder à Minha Conta</a>
+
+        ${hasAffiliateCode ? `
+        <div style="text-align: center; margin-top: 32px; border-top: 1px solid #f3f4f6; padding-top: 32px;">
+          <p style="font-size: 13px; font-weight: 600; color: #6b7280; text-transform: uppercase;">🎁 O seu Código de Afiliado</p>
+          <div class="code-highlight">${escape(vars.affiliate_code)}</div>
+          <p style="font-size: 13px; color: #4b5563;">Partilhe e ganhe <strong>3%</strong> na primeira compra de cada amigo.</p>
+        </div>
+        ` : ''}
+      ${htmlEnd}`;
+    }
+
+    // 🔐 RECUPERAÇÃO DE SENHA
+    case 'password-reset': {
+      return `${htmlStart}
+        <h2>Recuperação de Senha</h2>
+        <p>Olá, <strong>${escape(vars.customer_name || 'Cliente')}</strong>.</p>
+        <p>Recebemos um pedido de redefinição de senha para a conta associada a este e-mail.</p>
+        <a href="${escape(vars.reset_link || '#')}" class="btn">Redefinir a Minha Senha</a>
+        <div class="notice">
+          <p>🔒 <strong>Segurança:</strong> O link acima é válido por apenas 1 hora. Se não fez este pedido, a sua conta permanece segura e pode ignorar este e-mail.</p>
+        </div>
+      ${htmlEnd}`;
+    }
+
+    // ✅ CONFIRMAÇÃO DE PEDIDO
+    case 'order-confirmation': {
+      return `${htmlStart}
+        <h2>O seu pedido foi recebido. ✅</h2>
+        <p>Olá, <strong>${escape(vars.customer_name || 'Cliente')}</strong>. O seu pedido <strong>#${escape(vars.order_id || 'N/A')}</strong> foi registado no nosso sistema.</p>
         
-        <!-- ✅ Link WhatsApp SEM espaços -->
-        <a href="https://wa.me/258871002255" style="display: inline-block; margin-top: 12px; background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; font-size: 14px; box-shadow: 0 2px 4px rgba(37,99,235,0.2);">
-          📲 Enviar Comprovativo (87 100 2255)
-        </a>
-      </div>
-    </div>
+        <div class="data-card">
+          <h3>Detalhes do Pedido</h3>
+          <table>
+            <tr><td class="label">Data</td><td class="value">${escape(vars.order_date || new Date().toLocaleDateString('pt-MZ'))}</td></tr>
+            <tr><td class="label">Categoria</td><td class="value">${escape(vars.category || 'Compras')}</td></tr>
+            <tr><td class="label">Produto</td><td class="value"><a href="${escape(vars.link_id || '#')}" style="color: #2563eb; text-decoration: none;">Ver Link do Produto</a></td></tr>
+          </table>
+        </div>
 
-    <!-- Footer -->
-    <div style="background: #f8fafc; padding: 25px; text-align: center; border-top: 1px solid #e2e8f0;">
-      <p style="margin: 0; font-weight: bold; color: #0f172a; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">PayGo Moçambique</p>
-      <p style="margin: 6px 0 0; font-size: 13px; color: #64748b;">Simples. Seguro. Moçambicano. 🇲🇿</p>
-      <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #94a3b8;">
-        Suporte: contact@paygo.co.mz &nbsp;|&nbsp; WhatsApp: +258 87 100 2255
-      </div>
-    </div>
-    
-  </div>
-</body>
-</html>`;
+        <div class="data-card">
+          <h3>Resumo Financeiro</h3>
+          <table>
+            <tr><td class="label">Valor USD</td><td class="value">$${escape(vars.usd_amount || '0.00')}</td></tr>
+            <tr><td class="label">Câmbio Aplicado</td><td class="value">${escape(vars.exchange_rate || '88.00 MT')}</td></tr>
+            <tr><td class="label">Taxa de Serviço</td><td class="value">${escape(vars.tax_amount || '0.00 MT')}</td></tr>
+            <tr class="total-row">
+              <td class="label" style="color: #111827;">TOTAL A PAGAR</td>
+              <td class="value total-value">${escape(vars.total_amount || '0.00 MT')}</td>
+            </tr>
+          </table>
+          <p style="font-size: 12px; margin-top: 16px; margin-bottom: 0; text-align: right; color: #6b7280;">Método: ${escape(vars.payment_method || 'N/A')}</p>
+        </div>
 
-    // 🎉 AFFILIATE APPROVED - Template Profissional
-    case 'affiliate-approved':
-      return `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Afiliado Aprovado - PayGo</title>
-</head>
-<body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: auto; background: #f8fafc; padding: 20px;">
-  
-  <div style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); background: #fff;">
-    
-    <!-- Header -->
-    <div style="background: linear-gradient(135deg, #22c55e, #16a34a); padding: 35px 30px; text-align: center; color: white;">
-      <h1 style="margin: 0; font-size: 24px; letter-spacing: -0.5px;">🎉 Afiliado Aprovado!</h1>
-      <p style="margin: 10px 0 0; opacity: 0.9; font-size: 15px;">Parabéns, <strong>${vars.customer_name || 'Cliente'}</strong>! Sua candidatura foi aprovada.</p>
-    </div>
+        <div style="background: #eef2ff; border-radius: 8px; padding: 24px; border-left: 4px solid #2563eb; margin-top: 32px;">
+          <h4 style="margin: 0 0 12px 0; color: #1e3a8a; font-size: 14px; text-transform: uppercase;">Ação Necessária: Finalizar Pagamento</h4>
+          <p style="font-size: 14px; color: #1e40af; margin-bottom: 12px;">Para iniciarmos a sua compra, transfira o valor total e envie o comprovativo pelo WhatsApp.</p>
+          <p style="font-size: 14px; color: #1e40af; font-weight: 600; margin-bottom: 4px;">e-Mola: 87 752 2255</p>
+          <p style="font-size: 14px; color: #1e40af; font-weight: 600; margin-bottom: 16px;">M-Pesa: 84 162 7519</p>
+          <a href="https://wa.me/258871002255" style="display: inline-block; background: #2563eb; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; font-size: 13px;">Enviar Comprovativo no WhatsApp</a>
+        </div>
+      ${htmlEnd}`;
+    }
 
-    <!-- Content -->
-    <div style="padding: 30px; color: #334155; line-height: 1.6;">
-      <p style="margin-top: 0; font-size: 15px;">Sua candidatura ao programa de afiliados PayGo foi <strong>aprovada</strong>. Agora você pode começar a ganhar comissões!</p>
-      
-      <!-- Affiliate Code Box -->
-      <div style="background: #f0fdf4; border: 2px solid #22c55e; border-radius: 12px; padding: 24px; margin: 24px 0; text-align: center;">
-        <p style="margin: 0 0 8px 0; font-size: 14px; color: #166534; font-weight: 600;">Seu Código de Afiliado:</p>
-        <p style="margin: 0; font-size: 24px; font-weight: bold; color: #22c55e; letter-spacing: 2px; font-family: monospace;">
-          ${vars.affiliate_code || 'AFF-XXXX'}
-        </p>
-      </div>
+    // 🎉 AFILIADO APROVADO
+    case 'affiliate-approved': {
+      return `${htmlStart}
+        <h2>Candidatura Aprovada! 🎉</h2>
+        <p>Parabéns, <strong>${escape(vars.customer_name || 'Cliente')}</strong>. O seu perfil de afiliado foi aprovado.</p>
+        <p>A partir de agora, é oficialmente parceiro da PayGo e já pode começar a monetizar a sua rede de contactos.</p>
+        
+        <div style="text-align: center; margin-top: 32px;">
+          <p style="font-size: 13px; font-weight: 600; color: #6b7280; text-transform: uppercase;">O seu Código Exclusivo</p>
+          <div class="code-highlight">${escape(vars.affiliate_code || 'AFF-XXXX')}</div>
+        </div>
 
-      <!-- Commission Info -->
-      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 24px 0;">
-        <h3 style="margin: 0 0 12px 0; color: #0052FF; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">💰 Sua Comissão</h3>
-        <table style="width: 100%; font-size: 14px;">
-          <tr><td style="padding: 6px 0; color: #64748b;">Taxa:</td><td style="color: #0f172a; font-weight: 500;">3% na primeira compra</td></tr>
-          <tr><td style="padding: 6px 0; color: #64748b;">Aplicação:</td><td style="color: #0f172a; font-weight: 500;">Cada indicado que comprar</td></tr>
-          <tr><td style="padding: 6px 0; color: #64748b;">Pagamento:</td><td style="color: #0f172a; font-weight: 500;">Via M-Pesa ou e-Mola</td></tr>
-        </table>
-      </div>
+        <div class="data-card">
+          <h3>Detalhes da Comissão</h3>
+          <table>
+            <tr><td class="label">Taxa</td><td class="value">3% na primeira compra</td></tr>
+            <tr><td class="label">Validade</td><td class="value">Vitalícia por novo cliente</td></tr>
+            <tr><td class="label">Pagamento</td><td class="value">Via M-Pesa ou e-Mola</td></tr>
+          </table>
+        </div>
 
-      <!-- CTA Button -->
-      <div style="text-align: center; margin: 32px 0;">
-        <a href="${vars.dashboard_link || '#'}" style="display: inline-block; background: #0052FF; color: #fff; padding: 14px 32px; border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 16px; box-shadow: 0 4px 14px rgba(0,82,255,0.3);">
-          🚀 Acessar Dashboard de Afiliado
-        </a>
-      </div>
+        <a href="${escape(vars.dashboard_link || baseUrl)}" class="btn">Ir para o Dashboard</a>
+      ${htmlEnd}`;
+    }
 
-      <!-- Tips -->
-      <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-left: 4px solid #2563eb; padding: 20px; border-radius: 8px;">
-        <h4 style="margin: 0 0 12px 0; color: #1e3a8a; font-size: 16px;">💡 Dicas para Ganhar Mais</h4>
-        <ul style="margin: 0; padding-left: 20px; font-size: 14px; color: #1e40af; line-height: 1.8;">
-          <li>Compartilhe seu código em redes sociais</li>
-          <li>Indique amigos e familiares no WhatsApp</li>
-          <li>Crie conteúdo sobre compras internacionais</li>
-        </ul>
-      </div>
-    </div>
-
-    <!-- Footer -->
-    <div style="background: #f8fafc; padding: 25px; text-align: center; border-top: 1px solid #e2e8f0;">
-      <p style="margin: 0; font-weight: bold; color: #0f172a; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">PayGo Moçambique</p>
-      <p style="margin: 6px 0 0; font-size: 13px; color: #64748b;">Simples. Seguro. Moçambicano. 🇲🇿</p>
-      <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #94a3b8;">
-        Suporte: contact@paygo.co.mz &nbsp;|&nbsp; WhatsApp: +258 87 100 2255
-      </div>
-    </div>
-    
-  </div>
-</body>
-</html>`;
-
-    // 📧 DEFAULT - Template genérico
+    // 📧 DEFAULT
     default:
-      return `<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Notificação - PayGo</title></head>
-<body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: auto; background: #f8fafc; padding: 20px;">
-  <div style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: #fff;">
-    <div style="background: linear-gradient(135deg, #3b82f6, #06b6d4); padding: 24px; text-align: center; color: #fff;">
-      <h1 style="margin: 0; font-size: 24px;">PayGo</h1>
-    </div>
-    <div style="padding: 32px; color: #334155; line-height: 1.6;">
-      <p style="margin: 0;">${vars.message || 'Notificação PayGo'}</p>
-    </div>
-    <div style="background: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0; color: #94a3b8; font-size: 12px;">
-      &copy; 2026 PayGo Moçambique
-    </div>
-  </div>
-</body></html>`;
+      return `${htmlStart}
+        <h2>Notificação PayGo</h2>
+        <p>${escape(vars.message || 'Recebeu uma nova notificação do sistema.')}</p>
+      ${htmlEnd}`;
   }
 }
 
-// ✅ Versão texto simples (fallback para clientes sem HTML)
+// ==========================================
+// 📝 GERADOR DE TEXTO (Para clientes sem HTML)
+// ==========================================
 function generateEmailText(template, vars) {
+  const escape = (str) => {
+    if (!str && str !== 0) return '';
+    return String(str);
+  };
+
+  const footer = `\n\n---\nPayGo Moçambique - Simples. Seguro. Moçambicano. 🇲🇿\nSuporte: contact@paygo.co.mz | WhatsApp: +258 87 100 2255`;
+
   switch (template) {
+    case 'email-verification': {
+      const baseUrl = process.env.VERCEL_URL 
+        ? `https://${process.env.VERCEL_URL}` 
+        : (process.env.NEXT_PUBLIC_SITE_URL || 'https://paygo.co.mz');
+      const verifyLink = `${baseUrl}/verify-email.html?token=${vars.verificationToken || 'DEMO_TOKEN'}&email=${encodeURIComponent(vars.email || '')}`;
+      return `CONFIRME O SEU E-MAIL - PAYGO\n\nOlá ${escape(vars.customer_name || 'Cliente')},\n\nPara garantir a segurança da sua conta, valide o seu e-mail acedendo a este link:\n${verifyLink}\n\nAviso: Este link expira em 24 horas.${footer}`;
+    }
+    
+    case 'welcome': {
+      const hasAffiliateCode = vars.affiliate_code && 
+                               vars.affiliate_code.trim() !== '' && 
+                               vars.affiliate_code !== 'null' && 
+                               vars.affiliate_code !== 'undefined';
+      
+      let message = `BEM-VINDO À PAYGO! 🚀\n\nOlá ${escape(vars.customer_name || 'Cliente')},\nA sua conta foi ativada. Já pode fazer compras internacionais pagando com M-Pesa ou e-Mola.\n\nAceda à sua conta: ${escape(vars.dashboard_link || 'https://paygo.co.mz')}`;
+      
+      if (hasAffiliateCode) {
+        message += `\n\n🎁 O seu Código de Afiliado: ${escape(vars.affiliate_code)}\nPartilhe e ganhe 3% na primeira compra de cada amigo.`;
+      }
+      
+      return message + footer;
+    }
     
     case 'password-reset':
-      return `
-RECUPERAÇÃO DE SENHA - PAYGO 🔐
-
-Olá ${vars.customer_name || 'Cliente'},
-
-Recebemos uma solicitação para redefinir a senha da sua conta PayGo.
-
-Clique no link abaixo para redefinir:
-${vars.reset_link || '#'}
-
-⚠️ Este link expira em 1 hora.
-
-Se você não solicitou esta alteração, ignore este email.
-
-Dica de segurança: Nunca compartilhe seu link de recuperação.
-
-PayGo Moçambique - Simples. Seguro. Moçambicano. 🇲🇿
-Suporte: contact@paygo.co.mz | WhatsApp: +258 87 100 2255
-      `.trim();
-
+      return `RECUPERAÇÃO DE SENHA - PAYGO\n\nOlá ${escape(vars.customer_name || 'Cliente')},\n\nAceda ao link abaixo para redefinir a sua senha:\n${escape(vars.reset_link || '#')}\n\nAviso: Este link expira em 1 hora.${footer}`;
+      
     case 'order-confirmation':
-      return `
-PEDIDO CONFIRMADO - PAYGO MOÇAMBIQUE ✅
-
-Olá ${vars.customer_name || 'Cliente'},
-
-O seu pedido #${vars.order_id || 'N/A'} foi registado com sucesso!
-
-📋 DETALHES DO PEDIDO:
-• Data: ${vars.order_date || new Date().toLocaleDateString('pt-MZ')}
-• Categoria: ${vars.category || 'Compras'}
-• Produto: ${vars.link_id || 'N/A'}
-
-💰 RESUMO FINANCEIRO:
-• Valor USD: $${vars.usd_amount || '0.00'}
-• Câmbio: ${vars.exchange_rate || '88.00 MT'}
-• Taxas: ${vars.tax_amount || '0.00 MT'}
-• TOTAL: ${vars.total_amount || '0.00 MT'}
-• Método: ${vars.payment_method || 'N/A'}
-
-📍 AÇÃO NECESSÁRIA: PAGAMENTO MANUAL
-
-Devido a manutenção temporária no sistema, por favor siga estes passos:
-
-1. Transfira o valor total de ${vars.total_amount || '0.00 MT'} para:
-   • e-Mola: 87 752 2255
-   • M-Pesa: 84 162 7519
-
-2. Envie o comprovativo para validação:
-   WhatsApp: https://wa.me/258871002255
-
-Precisa de ajuda? Contacte-nos:
-• Email: contact@paygo.co.mz
-• WhatsApp: +258 87 100 2255
-
-PayGo Moçambique - Simples. Seguro. Moçambicano. 🇲🇿
-      `.trim();
-
+      return `PEDIDO RECEBIDO - PAYGO ✅\n\nO seu pedido #${escape(vars.order_id || 'N/A')} foi registado.\n\nVALOR TOTAL A PAGAR: ${escape(vars.total_amount || '0.00 MT')}\n\nPara finalizar, transfira o valor para:\ne-Mola: 87 752 2255\nM-Pesa: 84 162 7519\n\nEnvie o comprovativo para o WhatsApp: +258 87 100 2255${footer}`;
+      
     case 'affiliate-approved':
-      return `
-AFILIADO APROVADO - PAYGO 🎉
-
-Olá ${vars.customer_name || 'Cliente'},
-
-Parabéns! Sua candidatura ao programa de afiliados PayGo foi APROVADA.
-
-🔑 SEU CÓDIGO DE AFILIADO:
-${vars.affiliate_code || 'AFF-XXXX'}
-
-💰 SUA COMISSÃO:
-• Taxa: 3% na primeira compra de cada indicado
-• Aplicação: Cada pessoa que usar seu código
-• Pagamento: Via M-Pesa ou e-Mola
-
-🚀 PRÓXIMOS PASSOS:
-1. Acesse seu dashboard: ${vars.dashboard_link || '#'}
-2. Compartilhe seu código em redes sociais
-3. Indique amigos e familiares no WhatsApp
-4. Acompanhe seus ganhos em tempo real
-
-💡 DICAS PARA GANHAR MAIS:
-• Crie conteúdo sobre compras internacionais
-• Compartilhe em grupos do WhatsApp e Facebook
-• Ofereça ajuda para quem quer comprar online
-
-Precisa de ajuda? Contacte-nos:
-• Email: contact@paygo.co.mz
-• WhatsApp: +258 87 100 2255
-
-PayGo Moçambique - Simples. Seguro. Moçambicano. 🇲🇿
-      `.trim();
-
+      return `CANDIDATURA APROVADA - PAYGO 🎉\n\nParabéns ${escape(vars.customer_name || 'Cliente')}! O seu perfil de afiliado foi aprovado.\n\nO seu código: ${escape(vars.affiliate_code || 'AFF-XXXX')}\nComissão: 3% na primeira compra de cada amigo indicado.${footer}`;
+      
     default:
-      return `${vars.message || 'Notificação PayGo'}\n\nPayGo Moçambique\nSuporte: contact@paygo.co.mz`;
+      return `${escape(vars.message || 'Notificação PayGo')}${footer}`;
   }
 }
