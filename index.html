@@ -829,58 +829,112 @@ async function sendOrderEmail(orderData) {
 }
 
 // Handle Form Submit
+// ✅ Handle Form Submit - CORRIGIDO para Firebase Rules + WhatsApp
 async function handleFormSubmit(e) {
-  e.preventDefault();
-  const btn = document.getElementById('submitBtn');
-  const originalContent = btn.innerHTML;
-  btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Processando...`;
-  if (typeof lucide !== 'undefined') lucide.createIcons();
-  btn.disabled = true;
-  const name = document.getElementById('userName').value;
-  const email = document.getElementById('userEmail').value;
-  const usd = parseFloat(document.getElementById('userUSD').value);
-  const type = document.getElementById('serviceType').value;
-  const detail = document.getElementById('userLink').value;
-  const isFirst = document.getElementById('chkFirstPurchase').checked;
-  const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
-  
-  setTimeout(async () => {
-    btn.innerHTML = originalContent;
-    btn.disabled = false;
+    e.preventDefault();
+    const btn = document.getElementById('submitBtn');
+    const originalContent = btn.innerHTML;
+    btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Processando...`;
     if (typeof lucide !== 'undefined') lucide.createIcons();
-    
-    if (!detail) { showToast('Por favor, preencha o link ou ID.', 'error'); return; }
-    if (!usd || usd <= 0) { showToast('Insira um valor válido em USD.', 'error'); return; }
-    if (!email) { showToast('Insira um email válido.', 'error'); return; }
-    
-    let tax = (usd <= 5 && isFirst) ? 0 : (usd <= 20 ? 150 : (usd <= 50 ? 250 : (usd <= 100 ? 600 : (usd * BINANCE_RATE * 0.07))));
-    const total = (usd * BINANCE_RATE) + tax;
-    const orderId = 'PG-' + Date.now().toString().slice(-6);
-    
-    const orderData = {
-      orderId,
-      name,
-      email,
-      type,
-      detail,
-      paymentMethod,
-      usd,
-      tax,
-      total,
-      exchangeRate: BINANCE_RATE,
-      status: 'pending'
-    };
-    
-    console.log('📦 Dados do pedido:', orderData);
-    
-    // 1. Save to Firebase
-    const firebaseResult = await saveOrderToFirebase(orderData);
-    
-    // 2. Send Emails (independente do Firebase)
-    const emailSent = await sendOrderEmail(orderData);
-    
-    // 3. Prepare WhatsApp message
-    const whatsappMsg = `━━━━━━━━━━━━━━━━━━━
+    btn.disabled = true;
+
+    // ✅ Coletar dados do formulário
+    const name = document.getElementById('userName').value.trim();
+    const whatsapp = document.getElementById('userWhatsApp').value.trim();
+    const email = document.getElementById('userEmail').value.trim();
+    const usd = parseFloat(document.getElementById('userUSD').value);
+    const type = document.getElementById('serviceType').value;
+    const detail = document.getElementById('userLink').value.trim();
+    const isFirst = document.getElementById('chkFirstPurchase').checked;
+    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+
+    setTimeout(async () => {
+        btn.innerHTML = originalContent;
+        btn.disabled = false;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+
+        // ✅ Validações
+        if (!name) { showToast('Por favor, preencha seu nome.', 'error'); return; }
+        if (!whatsapp) { showToast('Por favor, preencha seu WhatsApp.', 'error'); return; }
+        if (!email) { showToast('Por favor, preencha seu email.', 'error'); return; }
+        if (!detail) { showToast('Por favor, preencha o link ou ID do produto.', 'error'); return; }
+        if (!usd || usd <= 0) { showToast('Insira um valor válido em USD.', 'error'); return; }
+
+        // ✅ Calcular valores
+        let tax = (usd <= 5 && isFirst) ? 0 : (usd <= 20 ? 150 : (usd <= 50 ? 250 : (usd <= 100 ? 600 : (usd * BINANCE_RATE * 0.07))));
+        const total = (usd * BINANCE_RATE) + tax;
+        const orderId = 'PG-' + Date.now().toString().slice(-6);
+
+        // ✅ OBTER userId do usuário logado (ou gerar anônimo)
+        let userId = null;
+        try {
+            const { getAuth } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js");
+            const auth = getAuth(app);
+            const currentUser = auth.currentUser;
+            userId = currentUser ? currentUser.uid : `anon-${Date.now()}`;
+        } catch (e) {
+            userId = `anon-${Date.now()}`;
+        }
+
+        // ✅ Dados do pedido - ESTRUTURA COMPATÍVEL COM AS REGRAS
+        const orderData = {
+            // ✅ Campos OBRIGATÓRIOS (hasAll nas regras)
+            orderId: orderId,           // string única
+            name: name,                 // string, <= 100 chars
+            email: email,               // string, formato email válido
+            total: total,               // number, 0-10000000
+            status: 'pending',          // string, um dos valores permitidos
+            
+            // ✅ Campos OPCIONAIS (validados se presentes)
+            whatsapp: whatsapp,         // string, telefone Moçambique
+            type: type,                 // string: 'compra' ou 'jogo'
+            detail: detail,             // string, <= 2000 chars
+            paymentMethod: paymentMethod, // string: 'mpesa' ou 'emola'
+            usd: usd,                   // number
+            tax: tax,                   // number
+            exchangeRate: BINANCE_RATE, // number
+            userId: userId,             // string ou null (para leitura futura)
+            
+            // ✅ Timestamps: serão preenchidos pelo servidor
+            // createdAt e updatedAt são adicionados automaticamente por serverTimestamp()
+        };
+
+        console.log('📦 Dados do pedido:', orderData);
+
+        // ✅ Salvar no Firebase
+        try {
+            if (!window.db) throw new Error('Firebase não conectado');
+            if (!window.serverTimestamp) throw new Error('serverTimestamp não disponível');
+            
+            // Adicionar timestamps do servidor
+            const orderDataWithTimestamp = {
+                ...orderData,
+                createdAt: window.serverTimestamp(),
+                updatedAt: window.serverTimestamp()
+            };
+            
+            const orderRef = await window.addDoc(
+                window.collection(window.db, "orders"), 
+                orderDataWithTimestamp
+            );
+            
+            console.log('✅ Pedido salvo com ID:', orderRef.id);
+            showToast(`✅ Pedido ${orderId} registrado com sucesso!`, 'success');
+            
+            // ✅ Reset do formulário
+            document.getElementById('paygoForm').reset();
+            calculate();
+            updatePaymentMethod();
+            toggleServiceType('compra');
+            
+        } catch (error) {
+            console.error('❌ Erro Firebase:', error.code, error.message);
+            showToast(`❌ Erro ao registrar: ${error.message}`, 'error');
+            return;
+        }
+
+        // ✅ Preparar mensagem WhatsApp (COM NÚMERO DO CLIENTE)
+        const whatsappMsg = `━━━━━━━━━━━━━━━━━━━
 🛒 *NOVO PEDIDO PAYGO*
 ━━━━━━━━━━━━━━━━━━━
 📋 *ID do Pedido:* ${orderId}
@@ -888,6 +942,7 @@ async function handleFormSubmit(e) {
 ━━━━━━━━━━━━━━━━━━━
 👤 *CLIENTE*
 • Nome: ${name}
+• WhatsApp: ${whatsapp}
 • Email: ${email}
 ━━━━━━━━━━━━━━━━━━━
 📦 *DETALHES*
@@ -904,22 +959,15 @@ async function handleFormSubmit(e) {
 💵 *TOTAL A PAGAR:*
 *${total.toLocaleString('pt-MZ', {minimumFractionDigits: 2})} MT*
 ━━━━━━━━━━━━━━━━━━━
-📧 *Confirmação enviada por email*
-🗄️ *Pedido registrado no sistema*
+🗄️ *Pedido registrado no Firebase*
 `;
-    
-    // Show success message
-    if (firebaseResult.success) {
-      showToast(`✅ Pedido ${orderId} registrado no banco!`, 'success');
-    } else {
-      showToast(`⚠️ Email enviado, mas erro ao salvar: ${firebaseResult.code}`, 'error');
-    }
-    
-    // Open WhatsApp
-    setTimeout(() => {
-      window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMsg)}`, '_blank');
-    }, 1500);
-  }, 800);
+
+        // ✅ Abrir WhatsApp com a mensagem
+        setTimeout(() => {
+            window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMsg)}`, '_blank');
+        }, 1500);
+
+    }, 800);
 }
 
 // Export functions to window
@@ -962,5 +1010,6 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 </body>
 </html>
+
 
 
