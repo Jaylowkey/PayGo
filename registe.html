@@ -7,7 +7,7 @@
     <meta name="description" content="Crie sua conta PayGo gratuitamente e comece a fazer pagamentos internacionais.">
     <meta name="theme-color" content="#0f172a">
     
-    <!-- Open Graph - ✅ URLs corrigidas sem espaços -->
+    <!-- Open Graph - URLs corrigidas -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://paygo.co.mz/register.html">
     <meta property="og:title" content="Registar - PayGo Moçambique">
@@ -16,7 +16,7 @@
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233b82f6' stroke='none'><polygon points='13 2 3 14 12 14 11 22 21 10 12 10 13 2'></polygon></svg>">
     
-    <!-- Fonts & Icons - ✅ URLs corrigidas sem espaços -->
+    <!-- Fonts & Icons - URLs corrigidas -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -223,9 +223,7 @@
                 <span class="text-2xl font-display font-bold text-white">PayGo</span>
             </a>
             <div class="flex items-center gap-3">
-                <a href="login.html" class="text-slate-300 hover:text-white transition font-medium hidden md:block">
-                    Entrar
-                </a>
+                <a href="login.html" class="text-slate-300 hover:text-white transition font-medium hidden md:block">Entrar</a>
                 <a href="index.html" class="text-slate-300 hover:text-white transition p-2">
                     <i data-lucide="home" class="w-5 h-5"></i>
                 </a>
@@ -311,15 +309,7 @@
                                 <p class="text-xs text-danger-400 mt-1 ml-1 hidden" id="passwordMatchError">As senhas não coincidem</p>
                             </div>
                             
-                            <!-- Affiliate Code (Optional) -->
-                            <div class="input-wrapper">
-                                <div class="input-field">
-                                    <i data-lucide="gift" class="input-icon"></i>
-                                    <input type="text" id="affiliateCode" placeholder=" " class="uppercase" autocomplete="off">
-                                    <label for="affiliateCode" class="input-label">Código de Afiliado (Opcional)</label>
-                                </div>
-                                <p class="text-xs text-slate-500 mt-1 ml-1">Tem um código de indicação? Insira aqui</p>
-                            </div>
+                            <!-- ✅ REMOVIDO: Affiliate Code Input (apenas em afiliados.html) -->
                             
                             <!-- Terms Checkbox -->
                             <div class="flex items-start gap-3">
@@ -359,19 +349,11 @@
                                 </div>
                                 <div class="flex items-center gap-2 text-slate-400">
                                     <i data-lucide="check-circle" class="w-4 h-4 text-success-400"></i>
-                                    <span>Programa de Afiliados</span>
-                                </div>
-                                <div class="flex items-center gap-2 text-slate-400">
-                                    <i data-lucide="check-circle" class="w-4 h-4 text-success-400"></i>
-                                    <span>Suporte Prioritário</span>
-                                </div>
-                                <div class="flex items-center gap-2 text-slate-400">
-                                    <i data-lucide="check-circle" class="w-4 h-4 text-success-400"></i>
                                     <span>Comprovativo PDF</span>
                                 </div>
                                 <div class="flex items-center gap-2 text-slate-400">
                                     <i data-lucide="check-circle" class="w-4 h-4 text-success-400"></i>
-                                    <span>Ganhe por Indicar</span>
+                                    <span>Suporte Prioritário</span>
                                 </div>
                             </div>
                         </div>
@@ -393,10 +375,10 @@
 
     <!-- Scripts -->
     <script type="module">
-    // ✅ Import Firebase - URLs corrigidas sem espaços
+    // ✅ Import Firebase - URLs corrigidas
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     // Firebase Config
     const firebaseConfig = {
@@ -414,15 +396,14 @@
     const auth = getAuth(app);
     const db = getFirestore(app, "paygodb");
 
-    // ✅ API Endpoint do Resend (substitua pela sua URL real)
-    const RESEND_API_ENDPOINT = '/api/send-email'; // Ou URL completa: 'https://paygo.co.mz/api/send-email'
+    // ✅ API Endpoint do Resend (URL corrigida)
+    const RESEND_API_ENDPOINT = '/api/send-email';
 
     // Toggle Password Visibility
     window.togglePassword = function(inputId) {
         const input = document.getElementById(inputId);
         const icon = document.getElementById(`toggleIcon-${inputId}`);
         if (!input || !icon) return;
-        
         if (input.type === 'password') {
             input.type = 'text';
             icon.setAttribute('data-lucide', 'eye-off');
@@ -437,29 +418,18 @@
     window.checkPasswordStrength = function() {
         const password = document.getElementById('registerPassword').value;
         const strengthBar = document.getElementById('passwordStrength');
-        
         if (!strengthBar) return;
-        
-        if (password.length === 0) {
-            strengthBar.className = 'password-strength';
-            return;
-        }
-        
+        if (password.length === 0) { strengthBar.className = 'password-strength'; return; }
         let strength = 0;
         if (password.length >= 6) strength++;
         if (password.length >= 10) strength++;
         if (/[A-Z]/.test(password)) strength++;
         if (/[0-9]/.test(password)) strength++;
         if (/[^A-Za-z0-9]/.test(password)) strength++;
-        
         strengthBar.className = 'password-strength';
-        if (strength <= 2) {
-            strengthBar.classList.add('weak');
-        } else if (strength <= 4) {
-            strengthBar.classList.add('medium');
-        } else {
-            strengthBar.classList.add('strong');
-        }
+        if (strength <= 2) strengthBar.classList.add('weak');
+        else if (strength <= 4) strengthBar.classList.add('medium');
+        else strengthBar.classList.add('strong');
     };
 
     // Check Password Match
@@ -467,9 +437,7 @@
         const password = document.getElementById('registerPassword').value;
         const confirmPassword = document.getElementById('registerConfirmPassword').value;
         const errorText = document.getElementById('passwordMatchError');
-        
         if (!errorText) return true;
-        
         if (confirmPassword.length > 0 && password !== confirmPassword) {
             errorText.classList.remove('hidden');
             return false;
@@ -479,163 +447,46 @@
         }
     };
 
-    // Generate Unique Affiliate Code
-    function generateAffiliateCode(name) {
-        const cleanName = name.replace(/[^a-zA-Z]/g, '').toUpperCase().substring(0, 4);
-        const randomNum = Math.floor(1000 + Math.random() * 9000);
-        return `AFF-${cleanName}${randomNum}`;
-    }
-
     // Toast Notification
     function showToast(message, type = 'default') {
         const container = document.getElementById('toast-container');
         if (!container) return;
-        
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
         toast.setAttribute('role', 'alert');
-        
         let icon = type === 'success' ? 'check-circle' : (type === 'error' ? 'alert-circle' : 'info');
         let color = type === 'success' ? 'text-success-400' : (type === 'error' ? 'text-danger-400' : 'text-brand-400');
-        
         toast.innerHTML = `<i data-lucide="${icon}" class="${color} w-5 h-5 flex-shrink-0"></i><span class="text-sm font-medium text-slate-200">${message}</span>`;
         container.appendChild(toast);
-        
         if (typeof lucide !== 'undefined') lucide.createIcons();
         requestAnimationFrame(() => toast.classList.add('show'));
         setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 5000);
     }
 
-    // ✅ Enviar Email via Resend (API Endpoint - Sem Firebase Cloud Functions)
+    // ✅ Enviar Email via Resend (API Endpoint)
     async function sendEmailViaResend({ to, subject, template, variables }) {
         try {
             const response = await fetch(RESEND_API_ENDPOINT, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    to,
-                    subject,
-                    template,
-                    variables,
+                    to, subject, template, variables,
                     type: template === 'email-verification' ? 'verification' : 'transactional'
                 })
             });
-
             const result = await response.json();
-            
             if (!response.ok || !result.success) {
-                throw new Error(result.error || 'Failed to send email');
+                throw new Error(result.error || `HTTP ${response.status}`);
             }
-            
             console.log('✅ Email sent via Resend:', { to, template });
-            return { success: true, token: result.verificationToken };
-            
+            return { success: true };
         } catch (error) {
-            console.error('❌ Failed to send email via Resend:', error);
+            console.error('❌ Failed to send email:', error);
             return { success: false, error: error.message };
         }
     }
 
-    // ✅ Enviar Email de Verificação via Resend
-    async function sendVerificationEmail(userData) {
-        return await sendEmailViaResend({
-            to: userData.email,
-            subject: '🔐 Verifique seu Email - PayGo',
-            template: 'email-verification',
-            variables: {
-                customer_name: userData.name,
-                email: userData.email
-            }
-        });
-    }
-
-    // ✅ Enviar Email de Boas-Vindas via Resend
-    async function sendWelcomeEmail(userData, affiliateInfo = null) {
-        return await sendEmailViaResend({
-            to: userData.email,
-            subject: '🎉 Bem-vindo à PayGo!',
-            template: 'welcome',
-            variables: {
-                customer_name: userData.name,
-                affiliate_code: userData.affiliateCode,
-                dashboard_link: 'https://paygo.co.mz/index.html',
-                support_whatsapp: '258837522255'
-            }
-        });
-    }
-
-    // ✅ Notificar Afiliado via Lark Webhook
-    async function notifyAffiliateViaLark(data) {
-        const LARK_WEBHOOK = 'https://open.larksuite.com/open-apis/bot/v2/hook/6c0179aa-9b0a-4815-8a02-a201f7504ac2';
-        
-        const payload = {
-            msg_type: "interactive",
-            card: {
-                config: { wide_screen_mode: true },
-                header: {
-                    template: "green",
-                    title: { content: "🎉 Nova Indicação!", tag: "plain_text" }
-                },
-                elements: [
-                    {
-                        tag: "div",
-                        fields: [
-                            { is_short: true, text: { tag: "lark_md", content: `**Afiliado:**\n${data.affiliateName}` }},
-                            { is_short: true, text: { tag: "lark_md", content: `**Indicado:**\n${data.referralName}` }},
-                            { is_short: true, text: { tag: "lark_md", content: `**Email:**\n${data.referralEmail}` }},
-                            { is_short: false, text: { tag: "lark_md", content: `**Código do Indicado:**\n${data.affiliateCode}` }}
-                        ]
-                    },
-                    {
-                        tag: "note",
-                        elements: [
-                            { tag: "plain_text", content: "💰 Você ganhará 3% na primeira compra deste indicado!" }
-                        ]
-                    }
-                ]
-            }
-        };
-
-        try {
-            await fetch(LARK_WEBHOOK, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            console.log('✅ Lark notification sent');
-        } catch (error) {
-            console.error('❌ Lark webhook error:', error);
-        }
-    }
-
-    // Verify Affiliate Code
-    async function verifyAffiliateCode(code) {
-        if (!code || code.trim() === '') return { valid: true, userId: null };
-        
-        try {
-            const codeUpper = code.trim().toUpperCase();
-            const usersRef = collection(db, "users");
-            const q = query(usersRef, where("affiliateCode", "==", codeUpper), where("role", "==", "affiliate"), where("status", "==", "active"));
-            const snapshot = await getDocs(q);
-            
-            if (snapshot.empty) {
-                return { valid: false, error: 'Código de afiliado inválido ou não ativo' };
-            }
-            
-            const referrer = snapshot.docs[0].data();
-            return { 
-                valid: true, 
-                userId: snapshot.docs[0].id, 
-                referrerEmail: referrer.email,
-                referrerName: referrer.name
-            };
-        } catch (error) {
-            console.error('Error verifying affiliate code:', error);
-            return { valid: true, userId: null };
-        }
-    }
-
-    // ✅ Handle Register - COM RESEND + LARK + REDIRECIONA PARA HOME
+    // ✅ Handle Register - REGISTRO NORMAL (SEM AFILIADO)
     document.getElementById('registerForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         const btn = document.getElementById('registerBtn');
@@ -648,47 +499,30 @@
         const phone = document.getElementById('registerPhone').value.trim();
         const password = document.getElementById('registerPassword').value;
         const confirmPassword = document.getElementById('registerConfirmPassword').value;
-        const affiliateCode = document.getElementById('affiliateCode').value.trim().toUpperCase();
         const agreeTerms = document.getElementById('agreeTerms').checked;
 
-        // Validações básicas
+        // Validações
         if (!agreeTerms) { showToast('❌ Você deve concordar com os termos.', 'error'); resetBtn(); return; }
         if (password !== confirmPassword) { showToast('❌ As senhas não coincidem.', 'error'); resetBtn(); return; }
         if (password.length < 6) { showToast('❌ Senha muito fraca.', 'error'); resetBtn(); return; }
-
-        // ✅ Verificar código de afiliado (se fornecido)
-        let affiliateInfo = { valid: true, userId: null };
-        if (affiliateCode) {
-            affiliateInfo = await verifyAffiliateCode(affiliateCode);
-            if (!affiliateInfo.valid) {
-                showToast(`❌ ${affiliateInfo.error}`, 'error');
-                resetBtn();
-                return;
-            }
-        }
 
         try {
             // Criar usuário no Firebase Auth
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
-
-            // Atualizar perfil
             await updateProfile(user, { displayName: name });
 
-            // Gerar código de afiliado para o NOVO usuário
-            const newAffiliateCode = generateAffiliateCode(name);
-
-            // ✅ Dados do usuário com vínculo de afiliado
+            // ✅ Dados do usuário NORMAL (SEM código de afiliado)
             const userData = {
                 uid: user.uid,
                 name: name,
                 email: email,
                 phone: phone,
-                role: 'user',
+                role: 'user',              // ✅ Sempre 'user' para registro normal
                 status: 'active',
-                affiliateCode: newAffiliateCode,
-                referredBy: affiliateCode || null,
-                referrerId: affiliateInfo.userId || null,
+                affiliateCode: null,        // ✅ SEM código de afiliado
+                referredBy: null,           // ✅ SEM indicação
+                referrerId: null,
                 firstPurchaseProcessed: false,
                 totalPurchases: 0,
                 totalSpent: 0,
@@ -696,50 +530,38 @@
                 totalReferrals: 0,
                 createdAt: new Date().toISOString(),
                 lastLogin: new Date().toISOString(),
-                emailVerified: false  // Será atualizado após verificação via Resend
+                emailVerified: false
             };
 
             // Salvar no Firestore
             await setDoc(doc(db, "users", user.uid), userData);
 
-            // ✅ Se foi indicado por alguém, atualizar contador do afiliado
-            if (affiliateCode && affiliateInfo.userId) {
-                const referrerRef = doc(db, "users", affiliateInfo.userId);
-                await updateDoc(referrerRef, {
-                    totalReferrals: increment(1),
-                    pendingReferrals: increment(1)
-                });
-            }
+            // ✅ Enviar email de verificação via Resend
+            await sendEmailViaResend({
+                to: userData.email,
+                subject: '🔐 Verifique seu Email - PayGo',
+                template: 'email-verification',
+                variables: { customer_name: userData.name, email: userData.email }
+            });
 
-            // ✅ Enviar email de verificação via Resend (O PRINCIPAL)
-            const verificationResult = await sendVerificationEmail(userData);
-            
-            // ✅ Enviar email de boas-vindas via Resend (opcional, assíncrono)
-            sendWelcomeEmail(userData, affiliateInfo).catch(err => console.error('Welcome email error:', err));
-            
-            // ✅ Notificar afiliado via Lark (se houver indicação)
-            if (affiliateInfo.userId && affiliateInfo.referrerName) {
-                notifyAffiliateViaLark({
-                    affiliateName: affiliateInfo.referrerName,
-                    affiliateEmail: affiliateInfo.referrerEmail,
-                    referralName: userData.name,
-                    referralEmail: userData.email,
-                    affiliateCode: userData.affiliateCode
-                }).catch(err => console.error('Lark notification error:', err));
-            }
+            // ✅ Enviar email de boas-vindas (SEM código de afiliado)
+            sendEmailViaResend({
+                to: userData.email,
+                subject: '🎉 Bem-vindo à PayGo!',
+                template: 'welcome',
+                variables: {
+                    customer_name: userData.name,
+                    // ✅ affiliate_code NÃO é enviado para usuários normais
+                    dashboard_link: 'https://paygo.co.mz/index.html',
+                    support_whatsapp: '258837522255'
+                }
+            }).catch(err => console.error('Welcome email error:', err));
 
             showToast('✅ Conta criada com sucesso!', 'success');
+            setTimeout(() => { showToast('📧 Email de verificação enviado!', 'success'); }, 2000);
             
-            if (verificationResult.success) {
-                setTimeout(() => { 
-                    showToast('📧 Email de verificação enviado! Verifique sua caixa de entrada.', 'success'); 
-                }, 2000);
-            }
-            
-            // ✅ REDIRECIONA PARA HOME PAGE (index.html)
-            setTimeout(() => {
-                window.location.href = 'index.html';
-            }, 3500);
+            // ✅ REDIRECIONA PARA HOME
+            setTimeout(() => { window.location.href = 'index.html'; }, 3000);
 
         } catch (error) {
             console.error('Register error:', error.code, error.message);
@@ -761,19 +583,10 @@
     document.addEventListener('DOMContentLoaded', function() {
         if (typeof lucide !== 'undefined') lucide.createIcons();
         if (typeof AOS !== 'undefined') AOS.init({ duration: 800, once: true, offset: 50, easing: 'ease-out-cubic' });
-        
         window.addEventListener('scroll', function() {
             const nav = document.getElementById('navbar');
             if (nav) window.scrollY > 20 ? nav.classList.add('glass-nav') : nav.classList.remove('glass-nav');
         });
-
-        // Check for affiliate code in URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const refCode = urlParams.get('ref');
-        if (refCode) {
-            document.getElementById('affiliateCode').value = refCode.toUpperCase();
-            showToast('🎁 Código de afiliado aplicado!', 'success');
-        }
     });
     </script>
 </body>
