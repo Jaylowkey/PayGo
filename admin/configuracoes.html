@@ -3,12 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PayGo Admin | Configurações</title>
+  <title>Configurações | PayGo Admin</title>
+  <meta name="robots" content="noindex, nofollow">
+  <!-- ✅ URLs corrigidas SEM espaços -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script>
     tailwind.config = {
-      theme: { extend: { colors: { brand: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 900: '#1e3a8a', 950: '#0f172a' }, accent: { 400: '#22d3ee', 500: '#06b6d4' } } } }
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 900: '#1e3a8a', 950: '#0f172a' },
+            accent: { 400: '#22d3ee', 500: '#06b6d4' },
+            success: { 400: '#4ade80', 500: '#22c55e' }
+          }
+        }
+      }
     }
   </script>
   <style>
@@ -19,11 +29,16 @@
     .toggle-slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
     input:checked + .toggle-slider { background-color: #2563eb; }
     input:checked + .toggle-slider:before { transform: translateX(24px); }
+    .config-section { transition: all 0.3s ease; }
+    .config-section:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .input-group:focus-within { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+    @keyframes pulse-success { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+    .saved-indicator { animation: pulse-success 2s ease-in-out; }
   </style>
 </head>
 <body class="bg-slate-50">
   
-  <!-- Sidebar -->
+  <!-- ✅ SIDEBAR -->
   <aside class="fixed left-0 top-0 h-full w-64 bg-slate-900 text-white p-6 z-50 flex flex-col">
     <div class="flex items-center gap-3 mb-8 pb-6 border-b border-white/10">
       <div class="w-10 h-10 bg-gradient-to-tr from-brand-500 to-accent-500 rounded-xl flex items-center justify-center">
@@ -52,7 +67,10 @@
     <div class="pt-4 border-t border-white/10">
       <div class="flex items-center gap-3 px-4 py-3 mb-2">
         <div class="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-sm font-bold" id="userInitial">A</div>
-        <div class="flex-1 min-w-0"><p class="text-sm font-medium truncate" id="userEmail">admin@paygo.co.mz</p><p class="text-xs text-slate-400">Administrador</p></div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium truncate" id="userEmail">admin@paygo.co.mz</p>
+          <p class="text-xs text-slate-400">Administrador</p>
+        </div>
       </div>
       <button id="logoutBtn" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white/5 hover:bg-red-500/20 text-slate-400 hover:text-red-400 rounded-xl transition-all text-sm">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
@@ -61,38 +79,54 @@
     </div>
   </aside>
 
-  <!-- Main Content -->
+  <!-- ✅ MAIN CONTENT -->
   <main class="ml-64 p-8">
-    <h1 class="text-3xl font-bold text-slate-900 mb-2">⚙️ Configurações</h1>
-    <p class="text-slate-500 mb-8">Ajustes da plataforma PayGo</p>
+    <div class="flex items-center justify-between mb-8">
+      <div>
+        <h1 class="text-3xl font-bold text-slate-900">⚙️ Configurações</h1>
+        <p class="text-slate-500 mt-1">Gerencie as configurações globais da plataforma PayGo</p>
+      </div>
+      <div id="saveStatus" class="hidden flex items-center gap-2 text-success-600 text-sm font-medium">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        <span>Alterações salvas</span>
+      </div>
+    </div>
     
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <form id="settingsForm" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
       
-      <!-- Configurações Gerais -->
-      <div class="bg-white rounded-2xl border border-slate-200 p-6">
+      <!-- 🔹 Configurações Gerais -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-6 config-section">
         <h2 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
           <svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
           Gerais
         </h2>
         <div class="space-y-6">
-          <div>
+          <div class="input-group">
             <label class="block text-sm font-medium text-slate-700 mb-2">Taxa de Câmbio (USD → MT)</label>
-            <input type="number" id="exchangeRate" value="88.00" step="0.01" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500">
+            <div class="relative">
+              <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+              <input type="number" id="exchangeRate" value="88.00" step="0.01" min="1" max="1000" class="w-full pl-8 pr-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 transition font-mono">
+            </div>
             <p class="text-xs text-slate-500 mt-1">Valor usado para conversão automática nos pedidos</p>
           </div>
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-2">Emails de Notificação</label>
-            <textarea id="adminEmails" rows="3" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" placeholder="admin@paygo.co.mz, gestao@paygo.co.mz">admin@paygo.co.mz</textarea>
+          <div class="input-group">
+            <label class="block text-sm font-medium text-slate-700 mb-2">Emails de Notificação (Admin)</label>
+            <textarea id="adminEmails" rows="3" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 transition font-mono text-sm" placeholder="admin@paygo.co.mz, gestao@paygo.co.mz">admin@paygo.co.mz</textarea>
+            <p class="text-xs text-slate-500 mt-1">Separe múltiplos emails com vírgula</p>
           </div>
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-2">Número WhatsApp</label>
-            <input type="text" id="whatsappNumber" value="258877522255" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500">
+          <div class="input-group">
+            <label class="block text-sm font-medium text-slate-700 mb-2">Número WhatsApp (formato internacional)</label>
+            <div class="relative">
+              <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">+</span>
+              <input type="tel" id="whatsappNumber" value="258877522255" pattern="^\d{10,15}$" class="w-full pl-8 pr-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 transition font-mono">
+            </div>
+            <p class="text-xs text-slate-500 mt-1">Ex: 258877522255 (sem + ou espaços)</p>
           </div>
         </div>
       </div>
 
-      <!-- Configurações de Taxas -->
-      <div class="bg-white rounded-2xl border border-slate-200 p-6">
+      <!-- 🔹 Configurações de Taxas -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-6 config-section">
         <h2 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
           <svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
           Taxas de Serviço
@@ -100,36 +134,45 @@
         <div class="space-y-4">
           <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
             <div>
-              <p class="font-medium text-slate-900">Até $20</p>
-              <p class="text-xs text-slate-500">Taxa fixa</p>
+              <p class="font-medium text-slate-900">Até $20 USD</p>
+              <p class="text-xs text-slate-500">Taxa fixa em MT</p>
             </div>
-            <input type="number" id="tax1" value="150" class="w-24 px-3 py-2 border border-slate-200 rounded-lg text-right">
+            <div class="relative">
+              <input type="number" id="tax1" value="150" min="0" max="10000" class="w-28 px-3 py-2 border border-slate-200 rounded-lg text-right focus:outline-none focus:border-brand-500 transition font-mono">
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">MT</span>
+            </div>
           </div>
           <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
             <div>
-              <p class="font-medium text-slate-900">$21 - $50</p>
-              <p class="text-xs text-slate-500">Taxa fixa</p>
+              <p class="font-medium text-slate-900">$21 - $50 USD</p>
+              <p class="text-xs text-slate-500">Taxa fixa em MT</p>
             </div>
-            <input type="number" id="tax2" value="250" class="w-24 px-3 py-2 border border-slate-200 rounded-lg text-right">
+            <div class="relative">
+              <input type="number" id="tax2" value="250" min="0" max="10000" class="w-28 px-3 py-2 border border-slate-200 rounded-lg text-right focus:outline-none focus:border-brand-500 transition font-mono">
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">MT</span>
+            </div>
           </div>
           <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
             <div>
-              <p class="font-medium text-slate-900">$51 - $100</p>
-              <p class="text-xs text-slate-500">Taxa fixa</p>
+              <p class="font-medium text-slate-900">$51 - $100 USD</p>
+              <p class="text-xs text-slate-500">Taxa fixa em MT</p>
             </div>
-            <input type="number" id="tax3" value="600" class="w-24 px-3 py-2 border border-slate-200 rounded-lg text-right">
+            <div class="relative">
+              <input type="number" id="tax3" value="600" min="0" max="10000" class="w-28 px-3 py-2 border border-slate-200 rounded-lg text-right focus:outline-none focus:border-brand-500 transition font-mono">
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">MT</span>
+            </div>
           </div>
           <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
             <div>
-              <p class="font-medium text-slate-900">Acima de $100</p>
+              <p class="font-medium text-slate-900">Acima de $100 USD</p>
               <p class="text-xs text-slate-500">Taxa percentual</p>
             </div>
             <div class="flex items-center gap-2">
-              <input type="number" id="taxPercent" value="7" class="w-16 px-3 py-2 border border-slate-200 rounded-lg text-right">
+              <input type="number" id="taxPercent" value="7" min="0" max="50" step="0.1" class="w-20 px-3 py-2 border border-slate-200 rounded-lg text-right focus:outline-none focus:border-brand-500 transition font-mono">
               <span class="text-slate-500">%</span>
             </div>
           </div>
-          <label class="flex items-center gap-3 p-4 bg-green-50 rounded-xl cursor-pointer">
+          <label class="flex items-center gap-3 p-4 bg-green-50 rounded-xl cursor-pointer hover:bg-green-100/50 transition">
             <label class="toggle-switch">
               <input type="checkbox" id="firstPurchaseFree" checked>
               <span class="toggle-slider"></span>
@@ -142,149 +185,437 @@
         </div>
       </div>
 
-      <!-- Configurações de Email -->
-      <div class="bg-white rounded-2xl border border-slate-200 p-6 lg:col-span-2">
+      <!-- 🔹 Configurações de Email (Resend/API) -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-6 config-section lg:col-span-2">
         <h2 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
           <svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-          EmailJS Configurações
+          Configurações de Email (Resend)
         </h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-2">Public Key</label>
-            <input type="password" id="emailjsPubKey" value="YOUR_PUBLIC_KEY" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 font-mono text-sm">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="input-group">
+            <label class="block text-sm font-medium text-slate-700 mb-2">API Key do Resend</label>
+            <input type="password" id="resendApiKey" placeholder="re_xxxxxxxxxxxxxxxxxxxxxxxx" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 transition font-mono text-sm bg-slate-50">
+            <p class="text-xs text-slate-500 mt-1">Obtenha em <a href="https://resend.com/api-keys" target="_blank" class="text-brand-600 hover:underline">resend.com/api-keys</a></p>
           </div>
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-2">Service ID</label>
-            <input type="text" id="emailjsService" value="service_3khb6nh" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 font-mono text-sm">
+          <div class="input-group">
+            <label class="block text-sm font-medium text-slate-700 mb-2">Email Remetente</label>
+            <input type="email" id="senderEmail" value="noreply@paygo.co.mz" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 transition font-mono text-sm">
           </div>
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-2">Template Cliente</label>
-            <input type="text" id="emailjsTemplate1" value="template_ybkof4r" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 font-mono text-sm">
+          <div class="input-group">
+            <label class="block text-sm font-medium text-slate-700 mb-2">Nome Remetente</label>
+            <input type="text" id="senderName" value="PayGo Moçambique" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 transition">
           </div>
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-2">Template Admin</label>
-            <input type="text" id="emailjsTemplate2" value="template_ivgtr7i" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 font-mono text-sm">
+          <div class="input-group">
+            <label class="block text-sm font-medium text-slate-700 mb-2">Webhook Lark (notificações)</label>
+            <input type="url" id="larkWebhook" placeholder="https://open.larksuite.com/open-apis/bot/v2/hook/..." class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 transition font-mono text-sm bg-slate-50">
+          </div>
+        </div>
+        <div class="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+          <div class="flex gap-3">
+            <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            <p class="text-sm text-amber-800">
+              <strong>Importante:</strong> As chaves de API são sensíveis. Em produção, use variáveis de ambiente no Vercel/Firebase Functions em vez de armazenar no frontend.
+            </p>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Botão Salvar -->
-    <div class="mt-8 flex justify-end">
-      <button id="saveConfigBtn" class="px-8 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-medium transition flex items-center gap-2 shadow-lg shadow-brand-500/20">
+      <!-- 🔹 Configurações de Afiliados -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-6 config-section lg:col-span-2">
+        <h2 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+          <svg class="w-5 h-5 text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+          Programa de Afiliados
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="input-group">
+            <label class="block text-sm font-medium text-slate-700 mb-2">Comissão Padrão (%)</label>
+            <div class="relative">
+              <input type="number" id="affiliateCommission" value="3" min="0" max="50" step="0.1" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 transition font-mono text-center">
+              <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">%</span>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">Percentual sobre a primeira compra do indicado</p>
+          </div>
+          <div class="input-group">
+            <label class="block text-sm font-medium text-slate-700 mb-2">Prefixo do Código</label>
+            <input type="text" id="affiliatePrefix" value="AFF" maxlength="6" pattern="[A-Z]+" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 transition font-mono uppercase text-center">
+            <p class="text-xs text-slate-500 mt-1">Ex: AFF-XXXX1234</p>
+          </div>
+          <div class="input-group">
+            <label class="block text-sm font-medium text-slate-700 mb-2">Comprimento do Número</label>
+            <input type="number" id="affiliateCodeLength" value="4" min="3" max="8" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 transition font-mono text-center">
+            <p class="text-xs text-slate-500 mt-1">Número de letras do nome + dígitos aleatórios</p>
+          </div>
+        </div>
+        <div class="mt-6 flex items-center gap-3">
+          <label class="toggle-switch">
+            <input type="checkbox" id="affiliateAutoApprove">
+            <span class="toggle-slider"></span>
+          </label>
+          <div>
+            <p class="font-medium text-slate-900">Aprovação Automática de Afiliados</p>
+            <p class="text-xs text-slate-500">Se ativado, novas candidaturas são aprovadas automaticamente (não recomendado para produção)</p>
+          </div>
+        </div>
+      </div>
+
+    </form>
+
+    <!-- ✅ Botões de Ação -->
+    <div class="mt-8 flex flex-col sm:flex-row justify-end gap-3">
+      <button type="button" id="resetBtn" class="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium transition flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+        Restaurar Padrões
+      </button>
+      <button type="submit" form="settingsForm" id="saveConfigBtn" class="px-8 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-medium transition flex items-center gap-2 shadow-lg shadow-brand-500/20">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-4 0V5a2 2 0 114 0v2m-4 0h4"></path></svg>
-        Salvar Todas as Configurações
+        Salvar Configurações
       </button>
     </div>
+
+    <!-- ✅ Toast Container -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2 pointer-events-none"></div>
   </main>
 
-  <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
-
+  <!-- ✅ Script Completo e Funcional -->
   <script type="module">
+    // ✅ Import Firebase - URLs corrigidas SEM espaços
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut, getIdTokenResult } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    const firebaseConfig = { apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8", authDomain: "paygo-14311.firebaseapp.com", projectId: "paygo-14311", storageBucket: "paygo-14311.firebasestorage.app", messagingSenderId: "208360646277", appId: "1:208360646277:web:aecc57cc0077ae48a52bec" };
+    // ✅ Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
+      authDomain: "paygo-14311.firebaseapp.com",
+      projectId: "paygo-14311",
+      storageBucket: "paygo-14311.firebasestorage.app",
+      messagingSenderId: "208360646277",
+      appId: "1:208360646277:web:aecc57cc0077ae48a52bec",
+      measurementId: "G-N9E391HCFL"
+    };
+
+    // ✅ Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app, "paygodb");
+    
+    // ✅ Emails de admin permitidos
     const ADMIN_EMAILS = ['admin@paygo.co.mz', 'app@paygo.co.mz', 'gestao@paygo.co.mz', 'superadmin@paygo.co.mz'];
+    
+    // ✅ Valores padrão das configurações
+    const DEFAULT_SETTINGS = {
+      exchangeRate: 88.00,
+      adminEmails: 'admin@paygo.co.mz',
+      whatsappNumber: '258877522255',
+      tax1: 150,
+      tax2: 250,
+      tax3: 600,
+      taxPercent: 7,
+      firstPurchaseFree: true,
+      resendApiKey: '',
+      senderEmail: 'noreply@paygo.co.mz',
+      senderName: 'PayGo Moçambique',
+      larkWebhook: '',
+      affiliateCommission: 3,
+      affiliatePrefix: 'AFF',
+      affiliateCodeLength: 4,
+      affiliateAutoApprove: false,
+      updatedAt: null,
+      updatedBy: null
+    };
 
+    // ✅ Verificar se usuário é admin
     async function verifyAdmin() {
       return new Promise((resolve) => {
-        const unsub = onAuthStateChanged(auth, async (user) => {
-          unsub();
-          if (!user) { window.location.href = 'login.html'; resolve(false); return; }
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+          unsubscribe();
+          
+          if (!user) {
+            showToast('❌ Faça login para acessar', 'error');
+            setTimeout(() => { window.location.href = 'login.html'; }, 1500);
+            resolve(false);
+            return;
+          }
+          
           try {
-            const token = await getIdTokenResult(user);
-            if (token.claims?.admin || ADMIN_EMAILS.includes(user.email?.toLowerCase())) {
-              document.getElementById('userEmail').textContent = user.email;
-              document.getElementById('userInitial').textContent = user.email?.[0]?.toUpperCase() || 'A';
-              loadSettings();
-              resolve(true);
-            } else { await signOut(auth); window.location.href = 'login.html?error=unauthorized'; resolve(false); }
-          } catch { window.location.href = 'login.html'; resolve(false); }
+            // Verificar claims de admin ou email na lista
+            const tokenResult = await getIdTokenResult(user);
+            const isAdmin = tokenResult.claims?.admin === true || 
+                           ADMIN_EMAILS.includes(user.email?.toLowerCase());
+            
+            if (!isAdmin) {
+              showToast('❌ Acesso negado. Apenas administradores.', 'error');
+              setTimeout(() => { window.location.href = 'index.html'; }, 2000);
+              resolve(false);
+              return;
+            }
+            
+            // Atualizar UI com dados do admin
+            document.getElementById('userEmail').textContent = user.email || 'admin@paygo.co.mz';
+            document.getElementById('userInitial').textContent = (user.email || 'A').charAt(0).toUpperCase();
+            
+            // Carregar configurações
+            await loadSettings();
+            resolve(true);
+            
+          } catch (error) {
+            console.error('Erro na verificação:', error);
+            showToast('❌ Erro de autenticação', 'error');
+            setTimeout(() => { window.location.href = 'login.html'; }, 1500);
+            resolve(false);
+          }
         });
       });
     }
 
-    function loadSettings() {
-      const saved = JSON.parse(localStorage.getItem('paygo_settings') || '{}');
-      if (saved.exchangeRate) document.getElementById('exchangeRate').value = saved.exchangeRate;
-      if (saved.adminEmails) document.getElementById('adminEmails').value = saved.adminEmails;
-      if (saved.whatsappNumber) document.getElementById('whatsappNumber').value = saved.whatsappNumber;
-      if (saved.tax1) document.getElementById('tax1').value = saved.tax1;
-      if (saved.tax2) document.getElementById('tax2').value = saved.tax2;
-      if (saved.tax3) document.getElementById('tax3').value = saved.tax3;
-      if (saved.taxPercent) document.getElementById('taxPercent').value = saved.taxPercent;
-      if (saved.firstPurchaseFree !== undefined) document.getElementById('firstPurchaseFree').checked = saved.firstPurchaseFree;
-      if (saved.emailjsPubKey) document.getElementById('emailjsPubKey').value = saved.emailjsPubKey;
-      if (saved.emailjsService) document.getElementById('emailjsService').value = saved.emailjsService;
-      if (saved.emailjsTemplate1) document.getElementById('emailjsTemplate1').value = saved.emailjsTemplate1;
-      if (saved.emailjsTemplate2) document.getElementById('emailjsTemplate2').value = saved.emailjsTemplate2;
+    // ✅ Carregar configurações do Firestore ou localStorage
+    async function loadSettings() {
+      try {
+        // Tentar carregar do Firestore primeiro
+        const settingsRef = doc(db, "settings", "global");
+        const settingsSnap = await getDoc(settingsRef);
+        
+        let settings = DEFAULT_SETTINGS;
+        
+        if (settingsSnap.exists()) {
+          settings = { ...DEFAULT_SETTINGS, ...settingsSnap.data() };
+          console.log('✅ Configurações carregadas do Firestore');
+        } else {
+          // Fallback para localStorage
+          const localSettings = localStorage.getItem('paygo_settings');
+          if (localSettings) {
+            settings = { ...DEFAULT_SETTINGS, ...JSON.parse(localSettings) };
+            console.log('✅ Configurações carregadas do localStorage');
+          }
+        }
+        
+        // Preencher formulário com os valores
+        populateForm(settings);
+        
+      } catch (error) {
+        console.error('Erro ao carregar configurações:', error);
+        // Carregar valores padrão em caso de erro
+        populateForm(DEFAULT_SETTINGS);
+        showToast('⚠️ Usando configurações padrão', 'warning');
+      }
     }
 
-    document.getElementById('saveConfigBtn')?.addEventListener('click', async () => {
+    // ✅ Preencher formulário com configurações
+    function populateForm(settings) {
+      document.getElementById('exchangeRate').value = settings.exchangeRate;
+      document.getElementById('adminEmails').value = settings.adminEmails;
+      document.getElementById('whatsappNumber').value = settings.whatsappNumber;
+      document.getElementById('tax1').value = settings.tax1;
+      document.getElementById('tax2').value = settings.tax2;
+      document.getElementById('tax3').value = settings.tax3;
+      document.getElementById('taxPercent').value = settings.taxPercent;
+      document.getElementById('firstPurchaseFree').checked = settings.firstPurchaseFree;
+      document.getElementById('resendApiKey').value = settings.resendApiKey || '';
+      document.getElementById('senderEmail').value = settings.senderEmail;
+      document.getElementById('senderName').value = settings.senderName;
+      document.getElementById('larkWebhook').value = settings.larkWebhook || '';
+      document.getElementById('affiliateCommission').value = settings.affiliateCommission;
+      document.getElementById('affiliatePrefix').value = settings.affiliatePrefix;
+      document.getElementById('affiliateCodeLength').value = settings.affiliateCodeLength;
+      document.getElementById('affiliateAutoApprove').checked = settings.affiliateAutoApprove;
+    }
+
+    // ✅ Salvar configurações
+    async function saveSettings(e) {
+      e.preventDefault();
+      
       const btn = document.getElementById('saveConfigBtn');
-      const original = btn.innerHTML;
+      const originalContent = btn.innerHTML;
+      
+      // Estado de loading
       btn.disabled = true;
       btn.innerHTML = `<svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Salvando...`;
       
-      const settings = {
-        exchangeRate: parseFloat(document.getElementById('exchangeRate').value) || 88,
-        adminEmails: document.getElementById('adminEmails').value,
-        whatsappNumber: document.getElementById('whatsappNumber').value,
-        tax1: parseInt(document.getElementById('tax1').value) || 150,
-        tax2: parseInt(document.getElementById('tax2').value) || 250,
-        tax3: parseInt(document.getElementById('tax3').value) || 600,
-        taxPercent: parseFloat(document.getElementById('taxPercent').value) || 7,
-        firstPurchaseFree: document.getElementById('firstPurchaseFree').checked,
-        emailjsPubKey: document.getElementById('emailjsPubKey').value,
-        emailjsService: document.getElementById('emailjsService').value,
-        emailjsTemplate1: document.getElementById('emailjsTemplate1').value,
-        emailjsTemplate2: document.getElementById('emailjsTemplate2').value,
-        updatedAt: new Date().toISOString()
-      };
-      
       try {
-        // Salvar no localStorage (fallback)
+        // Coletar valores do formulário
+        const settings = {
+          exchangeRate: parseFloat(document.getElementById('exchangeRate').value) || DEFAULT_SETTINGS.exchangeRate,
+          adminEmails: document.getElementById('adminEmails').value.trim() || DEFAULT_SETTINGS.adminEmails,
+          whatsappNumber: document.getElementById('whatsappNumber').value.trim() || DEFAULT_SETTINGS.whatsappNumber,
+          tax1: parseInt(document.getElementById('tax1').value) || DEFAULT_SETTINGS.tax1,
+          tax2: parseInt(document.getElementById('tax2').value) || DEFAULT_SETTINGS.tax2,
+          tax3: parseInt(document.getElementById('tax3').value) || DEFAULT_SETTINGS.tax3,
+          taxPercent: parseFloat(document.getElementById('taxPercent').value) || DEFAULT_SETTINGS.taxPercent,
+          firstPurchaseFree: document.getElementById('firstPurchaseFree').checked,
+          resendApiKey: document.getElementById('resendApiKey').value.trim(),
+          senderEmail: document.getElementById('senderEmail').value.trim() || DEFAULT_SETTINGS.senderEmail,
+          senderName: document.getElementById('senderName').value.trim() || DEFAULT_SETTINGS.senderName,
+          larkWebhook: document.getElementById('larkWebhook').value.trim(),
+          affiliateCommission: parseFloat(document.getElementById('affiliateCommission').value) || DEFAULT_SETTINGS.affiliateCommission,
+          affiliatePrefix: document.getElementById('affiliatePrefix').value.trim().toUpperCase() || DEFAULT_SETTINGS.affiliatePrefix,
+          affiliateCodeLength: parseInt(document.getElementById('affiliateCodeLength').value) || DEFAULT_SETTINGS.affiliateCodeLength,
+          affiliateAutoApprove: document.getElementById('affiliateAutoApprove').checked,
+          updatedAt: serverTimestamp(),
+          updatedBy: auth.currentUser?.uid || null
+        };
+        
+        // Validar dados críticos
+        if (settings.exchangeRate <= 0) throw new Error('Taxa de câmbio inválida');
+        if (!settings.whatsappNumber.match(/^\d{10,15}$/)) throw new Error('Número WhatsApp inválido');
+        
+        // Salvar no Firestore
+        const settingsRef = doc(db, "settings", "global");
+        await setDoc(settingsRef, settings, { merge: true });
+        
+        // Salvar no localStorage como fallback
         localStorage.setItem('paygo_settings', JSON.stringify(settings));
         
-        // Tentar salvar no Firestore (se admin logado)
-        const user = auth.currentUser;
-        if (user) {
-          await setDoc(doc(db, "settings", "global"), settings, { merge: true });
+        // Atualizar variáveis globais se existirem (para uso em outras páginas)
+        if (typeof window !== 'undefined') {
+          window.PAYGO_SETTINGS = settings;
+          window.BINANCE_RATE = settings.exchangeRate;
+          window.WHATSAPP_NUMBER = settings.whatsappNumber;
         }
         
-        // Atualizar variáveis globais se existirem
-        if (typeof window.BINANCE_RATE !== 'undefined') window.BINANCE_RATE = settings.exchangeRate;
-        if (typeof window.WHATSAPP_NUMBER !== 'undefined') window.WHATSAPP_NUMBER = settings.whatsappNumber;
-        
+        // Feedback visual de sucesso
+        showSaveStatus();
         showToast('✅ Configurações salvas com sucesso!', 'success');
+        
+        // Recarregar configurações para garantir consistência
+        await loadSettings();
+        
       } catch (error) {
-        console.error('Erro ao salvar:', error);
-        showToast('⚠️ Configurações salvas localmente (offline)', 'warning');
+        console.error('Erro ao salvar configurações:', error);
+        showToast(`❌ Erro: ${error.message || 'Falha ao salvar'}`, 'error');
       } finally {
+        // Restaurar botão
         btn.disabled = false;
-        btn.innerHTML = original;
+        btn.innerHTML = originalContent;
       }
-    });
+    }
 
-    window.showToast = (msg, type = 'success') => {
-      const c = document.getElementById('toastContainer');
-      const t = document.createElement('div');
-      const colors = { success: 'bg-green-500', error: 'bg-red-500', warning: 'bg-yellow-500' };
-      t.className = `flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-white ${colors[type]} transform transition-all translate-x-full`;
-      t.innerHTML = `<span class="text-sm font-medium">${msg}</span><button onclick="this.parentElement.remove()" class="ml-2">✕</button>`;
-      c.appendChild(t);
-      requestAnimationFrame(() => t.classList.remove('translate-x-full'));
-      setTimeout(() => { t.classList.add('opacity-0'); setTimeout(() => t.remove(), 300); }, type === 'warning' ? 5000 : 3000);
-    };
+    // ✅ Mostrar indicador de salvamento
+    function showSaveStatus() {
+      const indicator = document.getElementById('saveStatus');
+      indicator.classList.remove('hidden');
+      indicator.classList.add('saved-indicator');
+      setTimeout(() => {
+        indicator.classList.add('hidden');
+        indicator.classList.remove('saved-indicator');
+      }, 3000);
+    }
 
-    document.getElementById('logoutBtn')?.addEventListener('click', async () => { if (confirm('Sair?')) { await signOut(auth); window.location.href = 'login.html'; } });
+    // ✅ Restaurar configurações padrão
+    function resetSettings() {
+      if (confirm('Tem certeza que deseja restaurar as configurações padrão? Todas as alterações serão perdidas.')) {
+        populateForm(DEFAULT_SETTINGS);
+        showToast('🔄 Configurações restauradas para os valores padrão', 'warning');
+      }
+    }
 
-    (async () => { await verifyAdmin(); })();
+    // ✅ Toast notifications
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      
+      const styles = {
+        success: 'bg-success-500 border-success-600',
+        error: 'bg-red-500 border-red-600',
+        warning: 'bg-amber-500 border-amber-600',
+        info: 'bg-blue-500 border-blue-600'
+      };
+      
+      const icons = {
+        success: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>',
+        error: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+        warning: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01"></path></svg>',
+        info: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01"></path></svg>'
+      };
+      
+      toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-white border-l-4 ${styles[type]} transform transition-all duration-300 translate-x-full`;
+      toast.innerHTML = `
+        ${icons[type]}
+        <span class="text-sm font-medium">${message}</span>
+        <button onclick="this.parentElement.remove()" class="ml-2 hover:opacity-80 transition">✕</button>
+      `;
+      
+      container.appendChild(toast);
+      
+      // Animar entrada
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-x-full');
+      });
+      
+      // Auto-remover
+      const duration = type === 'warning' ? 5000 : 3000;
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-x-full');
+        setTimeout(() => toast.remove(), 300);
+      }, duration);
+    }
+
+    // ✅ Logout
+    async function handleLogout() {
+      if (confirm('Tem certeza que deseja sair?')) {
+        try {
+          await signOut(auth);
+          showToast('✅ Logout realizado com sucesso!', 'success');
+          setTimeout(() => { window.location.href = 'login.html'; }, 1500);
+        } catch (error) {
+          console.error('Erro no logout:', error);
+          showToast('❌ Erro ao fazer logout', 'error');
+        }
+      }
+    }
+
+    // ✅ Validação em tempo real dos inputs
+    function setupRealtimeValidation() {
+      // Validar número de WhatsApp
+      document.getElementById('whatsappNumber')?.addEventListener('input', function(e) {
+        this.value = this.value.replace(/\D/g, ''); // Apenas números
+        if (this.value.length > 15) this.value = this.value.slice(0, 15);
+      });
+      
+      // Validar taxa de câmbio
+      document.getElementById('exchangeRate')?.addEventListener('input', function(e) {
+        const value = parseFloat(this.value);
+        if (value < 1 || value > 1000) {
+          this.classList.add('border-red-500');
+        } else {
+          this.classList.remove('border-red-500');
+        }
+      });
+      
+      // Validar prefixo de afiliado (apenas letras maiúsculas)
+      document.getElementById('affiliatePrefix')?.addEventListener('input', function(e) {
+        this.value = this.value.toUpperCase().replace(/[^A-Z]/g, '');
+      });
+    }
+
+    // ✅ Inicialização
+    async function initSettingsPage() {
+      // Verificar autenticação de admin
+      const isAdmin = await verifyAdmin();
+      if (!isAdmin) return;
+      
+      // Inicializar ícones
+      if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+      }
+      
+      // Configurar validações em tempo real
+      setupRealtimeValidation();
+      
+      // Event listeners
+      document.getElementById('settingsForm')?.addEventListener('submit', saveSettings);
+      document.getElementById('resetBtn')?.addEventListener('click', resetSettings);
+      document.getElementById('logoutBtn')?.addEventListener('click', handleLogout);
+      
+      // Auto-save indicator reset when form changes
+      document.getElementById('settingsForm')?.addEventListener('input', () => {
+        document.getElementById('saveStatus').classList.add('hidden');
+      });
+      
+      console.log('✅ Página de configurações inicializada');
+    }
+    
+    // Iniciar quando o DOM estiver pronto
+    document.addEventListener('DOMContentLoaded', initSettingsPage);
   </script>
 </body>
 </html>
