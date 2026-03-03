@@ -829,7 +829,7 @@ async function sendOrderEmail(orderData) {
 }
 
 // Handle Form Submit
-// ✅ Handle Form Submit - CORRIGIDO para Firebase Rules + WhatsApp
+// ✅ Handle Form Submit - COMPATÍVEL COM FIRESTORE RULES
 async function handleFormSubmit(e) {
     e.preventDefault();
     const btn = document.getElementById('submitBtn');
@@ -838,7 +838,7 @@ async function handleFormSubmit(e) {
     if (typeof lucide !== 'undefined') lucide.createIcons();
     btn.disabled = true;
 
-    // ✅ Coletar dados do formulário
+    // ✅ Coletar e sanitizar dados
     const name = document.getElementById('userName').value.trim();
     const whatsapp = document.getElementById('userWhatsApp').value.trim();
     const email = document.getElementById('userEmail').value.trim();
@@ -853,19 +853,18 @@ async function handleFormSubmit(e) {
         btn.disabled = false;
         if (typeof lucide !== 'undefined') lucide.createIcons();
 
-        // ✅ Validações
-        if (!name) { showToast('Por favor, preencha seu nome.', 'error'); return; }
-        if (!whatsapp) { showToast('Por favor, preencha seu WhatsApp.', 'error'); return; }
-        if (!email) { showToast('Por favor, preencha seu email.', 'error'); return; }
-        if (!detail) { showToast('Por favor, preencha o link ou ID do produto.', 'error'); return; }
-        if (!usd || usd <= 0) { showToast('Insira um valor válido em USD.', 'error'); return; }
+        // ✅ Validações básicas
+        if (!name || !whatsapp || !email || !detail || !usd || usd <= 0) {
+            showToast('Por favor, preencha todos os campos corretamente.', 'error');
+            return;
+        }
 
-        // ✅ Calcular valores
+        // ✅ Calcular valores (garantir que são números)
         let tax = (usd <= 5 && isFirst) ? 0 : (usd <= 20 ? 150 : (usd <= 50 ? 250 : (usd <= 100 ? 600 : (usd * BINANCE_RATE * 0.07))));
-        const total = (usd * BINANCE_RATE) + tax;
+        const total = parseFloat((usd * BINANCE_RATE + tax).toFixed(2)); // ✅ Garantir número float
         const orderId = 'PG-' + Date.now().toString().slice(-6);
 
-        // ✅ OBTER userId do usuário logado (ou gerar anônimo)
+        // ✅ OBTER userId (essencial para regras de leitura futura)
         let userId = null;
         try {
             const { getAuth } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js");
@@ -876,46 +875,45 @@ async function handleFormSubmit(e) {
             userId = `anon-${Date.now()}`;
         }
 
-        // ✅ Dados do pedido - ESTRUTURA COMPATÍVEL COM AS REGRAS
+        // ✅ Dados do pedido - ESTRUTURA EXATA PARA AS REGRAS
         const orderData = {
-            // ✅ Campos OBRIGATÓRIOS (hasAll nas regras)
-            orderId: orderId,           // string única
+            // ✅ CAMPOS OBRIGATÓRIOS (hasAll nas regras)
+            orderId: orderId,           // string
             name: name,                 // string, <= 100 chars
             email: email,               // string, formato email válido
-            total: total,               // number, 0-10000000
+            total: total,               // ✅ NUMBER (não string!)
             status: 'pending',          // string, um dos valores permitidos
             
-            // ✅ Campos OPCIONAIS (validados se presentes)
-            whatsapp: whatsapp,         // string, telefone Moçambique
-            type: type,                 // string: 'compra' ou 'jogo'
-            detail: detail,             // string, <= 2000 chars
-            paymentMethod: paymentMethod, // string: 'mpesa' ou 'emola'
-            usd: usd,                   // number
-            tax: tax,                   // number
+            // ✅ CAMPOS OPCIONAIS (validados se presentes)
+            whatsapp: whatsapp || null, // string ou null
+            type: type || null,         // string ou null
+            detail: detail || null,     // string ou null, <= 2000 chars
+            paymentMethod: paymentMethod || null,
+            usd: usd || null,           // number ou null
+            tax: tax || null,           // number ou null
             exchangeRate: BINANCE_RATE, // number
-            userId: userId,             // string ou null (para leitura futura)
+            userId: userId || null,     // string ou null
             
-            // ✅ Timestamps: serão preenchidos pelo servidor
-            // createdAt e updatedAt são adicionados automaticamente por serverTimestamp()
+            // ✅ createdAt: NÃO enviar manualmente - as regras aceitam null
+            // O serverTimestamp() será adicionado pelo servidor automaticamente
         };
 
-        console.log('📦 Dados do pedido:', orderData);
+        console.log('📦 Enviando para Firestore:', orderData);
 
         // ✅ Salvar no Firebase
         try {
             if (!window.db) throw new Error('Firebase não conectado');
-            if (!window.serverTimestamp) throw new Error('serverTimestamp não disponível');
             
-            // Adicionar timestamps do servidor
-            const orderDataWithTimestamp = {
-                ...orderData,
-                createdAt: window.serverTimestamp(),
-                updatedAt: window.serverTimestamp()
-            };
+            // ✅ IMPORTANTE: Adicionar timestamps APENAS se as regras permitirem null
+            // Suas regras: (request.resource.data.createdAt == null || request.resource.data.createdAt is timestamp)
+            // Então podemos enviar sem createdAt ou com serverTimestamp()
             
             const orderRef = await window.addDoc(
                 window.collection(window.db, "orders"), 
-                orderDataWithTimestamp
+                {
+                    ...orderData,
+                    createdAt: window.serverTimestamp() // ✅ Isso gera um timestamp válido
+                }
             );
             
             console.log('✅ Pedido salvo com ID:', orderRef.id);
@@ -929,40 +927,24 @@ async function handleFormSubmit(e) {
             
         } catch (error) {
             console.error('❌ Erro Firebase:', error.code, error.message);
-            showToast(`❌ Erro ao registrar: ${error.message}`, 'error');
+            showToast(`❌ Erro: ${error.message}`, 'error');
             return;
         }
 
-        // ✅ Preparar mensagem WhatsApp (COM NÚMERO DO CLIENTE)
+        // ✅ Preparar mensagem WhatsApp
         const whatsappMsg = `━━━━━━━━━━━━━━━━━━━
 🛒 *NOVO PEDIDO PAYGO*
 ━━━━━━━━━━━━━━━━━━━
-📋 *ID do Pedido:* ${orderId}
-📅 *Data:* ${new Date().toLocaleString('pt-MZ')}
+📋 *ID:* ${orderId}
+👤 *Cliente:* ${name}
+📱 *WhatsApp:* ${whatsapp}
+📧 *Email:* ${email}
+📦 *Detalhe:* ${detail}
+💰 *Total:* ${total.toLocaleString('pt-MZ')} MT
 ━━━━━━━━━━━━━━━━━━━
-👤 *CLIENTE*
-• Nome: ${name}
-• WhatsApp: ${whatsapp}
-• Email: ${email}
-━━━━━━━━━━━━━━━━━━━
-📦 *DETALHES*
-• Categoria: ${type.toUpperCase()}
-• Link/ID: ${detail}
-• Pagamento: ${paymentMethod === 'mpesa' ? '🔴 M-Pesa' : '🟡 e-Mola'}
-━━━━━━━━━━━━━━━━━━━
-💰 *VALORES*
-• Valor USD: $${usd.toFixed(2)}
-• Câmbio: ${BINANCE_RATE} MT
-• Subtotal: ${(usd * BINANCE_RATE).toLocaleString('pt-MZ', {minimumFractionDigits: 2})} MT
-• Taxa: ${tax.toLocaleString('pt-MZ', {minimumFractionDigits: 2})} MT ${tax === 0 ? '✅ GRÁTIS' : ''}
-━━━━━━━━━━━━━━━━━━━
-💵 *TOTAL A PAGAR:*
-*${total.toLocaleString('pt-MZ', {minimumFractionDigits: 2})} MT*
-━━━━━━━━━━━━━━━━━━━
-🗄️ *Pedido registrado no Firebase*
+🗄️ *Registrado no Firebase*
 `;
 
-        // ✅ Abrir WhatsApp com a mensagem
         setTimeout(() => {
             window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMsg)}`, '_blank');
         }, 1500);
@@ -1010,6 +992,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 </body>
 </html>
+
 
 
 
