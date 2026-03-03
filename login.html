@@ -13,10 +13,10 @@
     <meta property="og:title" content="Login - PayGo Moçambique">
     <meta property="og:description" content="Acesse sua conta PayGo.">
     
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233b82f6' stroke='none'><polygon points='13 2 3 14 12 14 11 22 21 10 12 10 13 2'></polygon></svg>">
+    <!-- Favicon - ✅ Usando emoji como fallback -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
     
-    <!-- Fonts & Icons - ✅ URLs corrigidas sem espaços -->
+    <!-- Fonts & Icons - ✅ URLs SEM espaços -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -389,7 +389,7 @@
 
     <!-- Scripts -->
     <script type="module">
-    // ✅ Import Firebase - URLs corrigidas sem espaços
+    // ✅ Import Firebase - URLs SEM espaços
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, doc, getDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -405,7 +405,7 @@
         measurementId: "G-N9E391HCFL"
     };
 
-    // ✅ Lark Webhook URL - Para notificações de login/recuperação
+    // ✅ Lark Webhook URL - SEM espaços no final!
     const LARK_WEBHOOK_URL = 'https://open.larksuite.com/open-apis/bot/v2/hook/6c0179aa-9b0a-4815-8a02-a201f7504ac2';
 
     // Initialize Firebase ONCE
@@ -444,7 +444,7 @@
                 const larkPayload = {
                     msg_type: "text",
                     content: {
-                        text: `🔐 **Login Detectado**\n• Email: ${user.email}\n• Hora: ${new Date().toLocaleString('pt-MZ')}\n• IP: (capturar via backend)`
+                        text: `🔐 **Login Detectado**\n• Email: ${user.email}\n• Hora: ${new Date().toLocaleString('pt-MZ')}`
                     }
                 };
                 // Enviar de forma assíncrona (não bloqueia o fluxo)
@@ -490,7 +490,7 @@
         if (emailInput) emailInput.value = '';
     };
 
-    // ✅ Send Password Reset Email - ✅ CORRIGIDO: usa auth instance global + Lark notification
+    // ✅ Send Password Reset - USANDO SERVERLESS FUNCTION + FALLBACK FIREBASE
     window.sendPasswordReset = async function(e) {
         if (e) e.preventDefault();
         
@@ -510,37 +510,78 @@
         if (btn) btn.disabled = true;
         
         try {
-            // ✅ USA A INSTÂNCIA GLOBAL 'auth' (não cria nova)
+            // ✅ Detectar se está em produção (Vercel) ou local
+            const isProduction = window.location.hostname !== 'localhost' && 
+                                !window.location.hostname.startsWith('127.0.0.1') &&
+                                !window.location.hostname.startsWith('0.0.0.0');
+            
+            if (isProduction) {
+                // ✅ TENTAR Serverless Function primeiro (Resend + Lark)
+                try {
+                    const response = await fetch('/api/send-email', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            to: email,
+                            subject: '🔐 Recuperação de Senha - PayGo',
+                            template: 'password-reset',
+                            variables: {
+                                customer_name: email.split('@')[0],
+                                reset_link: `https://paygo.co.mz/seguranca.html?mode=resetPassword`
+                            }
+                        })
+                    });
+
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            console.log('✅ Email personalizado enviado via Resend');
+                            
+                            // ✅ Notificar admin no Lark sobre recuperação solicitada
+                            await sendLarkNotification({
+                                msg_type: "interactive",
+                                card: {
+                                    config: { wide_screen_mode: true },
+                                    header: {
+                                        template: "blue",
+                                        title: { content: "🔐 Recuperação de Senha", tag: "plain_text" }
+                                    },
+                                    elements: [
+                                        {
+                                            tag: "div",
+                                            fields: [
+                                                { is_short: false, text: { tag: "lark_md", content: `**Email:**\n${email}` }},
+                                                { is_short: true, text: { tag: "lark_md", content: `**Hora:**\n${new Date().toLocaleString('pt-MZ')}` }},
+                                                { is_short: true, text: { tag: "lark_md", content: `**Status:**\n✅ Email Resend enviado` }}
+                                            ]
+                                        }
+                                    ]
+                                }
+                            });
+                            
+                            showToast('✅ Email de recuperação enviado! Verifique sua caixa de entrada.', 'success');
+                            closeForgotModal();
+                            return; // ✅ Sucesso, não precisa do fallback
+                        }
+                    }
+                } catch (apiError) {
+                    console.warn('⚠️ API Serverless falhou, usando fallback Firebase:', apiError);
+                }
+            }
+            
+            // ✅ FALLBACK: Usar Firebase Auth (funciona local e se API falhar)
+            console.log('🔄 Usando Firebase para recovery email');
             await sendPasswordResetEmail(auth, email);
             
-            // ✅ Enviar notificação para Lark sobre recuperação de senha solicitada
-            const larkPayload = {
-                msg_type: "interactive",
-                card: {
-                    config: { wide_screen_mode: true },
-                    header: {
-                        template: "blue",
-                        title: { content: "🔐 Recuperação de Senha", tag: "plain_text" }
-                    },
-                    elements: [
-                        {
-                            tag: "div",
-                            fields: [
-                                { is_short: false, text: { tag: "lark_md", content: `**Email:**\n${email}` }},
-                                { is_short: true, text: { tag: "lark_md", content: `**Hora:**\n${new Date().toLocaleString('pt-MZ')}` }},
-                                { is_short: true, text: { tag: "lark_md", content: `**Status:**\n✅ Email enviado` }}
-                            ]
-                        },
-                        {
-                            tag: "note",
-                            elements: [
-                                { tag: "plain_text", content: "🔔 Se não foi você, verifique a segurança da conta." }
-                            ]
-                        }
-                    ]
+            // ✅ Notificar admin no Lark sobre recuperação solicitada (fallback)
+            sendLarkNotification({
+                msg_type: "text",
+                content: {
+                    text: `🔐 **Recuperação de Senha**\n• Email: ${email}\n• Método: Firebase Auth\n• Hora: ${new Date().toLocaleString('pt-MZ')}`
                 }
-            };
-            sendLarkNotification(larkPayload).catch(err => console.error('Lark error:', err));
+            }).catch(err => console.error('Lark error:', err));
             
             showToast('✅ Email de recuperação enviado! Verifique sua caixa de entrada.', 'success');
             closeForgotModal();
@@ -555,18 +596,15 @@
                 message = '❌ Email inválido.';
             } else if (error.code === 'auth/too-many-requests') {
                 message = '⚠️ Muitas tentativas. Tente novamente mais tarde.';
-            } else if (error.code === 'auth/missing-android-pkg-name' || error.code === 'auth/missing-ios-bundle-id') {
-                message = '⚠️ Configuração do Firebase incompleta. Contacte o suporte.';
             }
             
             // ✅ Notificar erro no Lark
-            const errorPayload = {
+            sendLarkNotification({
                 msg_type: "text",
                 content: {
                     text: `❌ **Erro Recuperação Senha**\n• Email: ${email}\n• Erro: ${error.code}\n• ${error.message}`
                 }
-            };
-            sendLarkNotification(errorPayload).catch(err => console.error('Lark error:', err));
+            }).catch(err => console.error('Lark error:', err));
             
             showToast(message, 'error');
         } finally {
@@ -643,14 +681,12 @@
                 if (userData.status === 'blocked') {
                     showToast('❌ Sua conta está bloqueada. Contacte o suporte.', 'error');
                     
-                    // ✅ Notificar tentativa de login de conta bloqueada no Lark
-                    const larkPayload = {
+                    sendLarkNotification({
                         msg_type: "text",
                         content: {
                             text: `⚠️ **Tentativa de Login - Conta Bloqueada**\n• Email: ${email}\n• Hora: ${new Date().toLocaleString('pt-MZ')}`
                         }
-                    };
-                    sendLarkNotification(larkPayload).catch(err => console.error('Lark error:', err));
+                    }).catch(err => console.error('Lark error:', err));
                     
                     if (btn) { btn.innerHTML = originalContent; btn.disabled = false; }
                     return;
@@ -659,14 +695,12 @@
                 if (userData.status === 'banned') {
                     showToast('❌ Sua conta foi banida. Contacte o suporte.', 'error');
                     
-                    // ✅ Notificar tentativa de login de conta banida no Lark
-                    const larkPayload = {
+                    sendLarkNotification({
                         msg_type: "text",
                         content: {
                             text: `🚫 **Tentativa de Login - Conta Banida**\n• Email: ${email}\n• Hora: ${new Date().toLocaleString('pt-MZ')}`
                         }
-                    };
-                    sendLarkNotification(larkPayload).catch(err => console.error('Lark error:', err));
+                    }).catch(err => console.error('Lark error:', err));
                     
                     if (btn) { btn.innerHTML = originalContent; btn.disabled = false; }
                     return;
@@ -681,14 +715,13 @@
                 // ✅ REDIRECIONA PARA HOME PAGE (index.html) - não dashboard
                 showToast('✅ Login realizado! Redirecionando...', 'success');
                 
-                // ✅ Notificar login bem-sucedido no Lark (opcional, para monitoramento)
-                const larkPayload = {
+                // ✅ Notificar login bem-sucedido no Lark
+                sendLarkNotification({
                     msg_type: "text",
                     content: {
                         text: `✅ **Login Bem-Sucedido**\n• Email: ${email}\n• Nome: ${userData.name || 'N/A'}\n• Hora: ${new Date().toLocaleString('pt-MZ')}`
                     }
-                };
-                sendLarkNotification(larkPayload).catch(err => console.error('Lark error:', err));
+                }).catch(err => console.error('Lark error:', err));
                 
                 setTimeout(() => {
                     window.location.href = 'index.html';
@@ -708,15 +741,14 @@
             if (error.code === 'auth/too-many-requests') message = '⚠️ Muitas tentativas. Tente novamente mais tarde.';
             if (error.code === 'auth/network-request-failed') message = '❌ Erro de conexão. Verifique sua internet.';
             
-            // ✅ Notificar erro de login no Lark para monitoramento de segurança
+            // ✅ Notificar erro de login no Lark para monitoramento
             if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
-                const securityPayload = {
+                sendLarkNotification({
                     msg_type: "text",
                     content: {
                         text: `🔐 **Tentativa de Login Falhou**\n• Email: ${email}\n• Erro: ${error.code}\n• Hora: ${new Date().toLocaleString('pt-MZ')}`
                     }
-                };
-                sendLarkNotification(securityPayload).catch(err => console.error('Lark error:', err));
+                }).catch(err => console.error('Lark error:', err));
             }
             
             showToast(message, 'error');
