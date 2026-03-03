@@ -7,13 +7,13 @@
     <meta name="description" content="Acesse sua conta PayGo para gerenciar seus pedidos e pagamentos.">
     <meta name="theme-color" content="#0f172a">
     
-    <!-- Open Graph -->
+    <!-- Open Graph - ✅ URLs sem espaços -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://paygo.co.mz/login.html">
     <meta property="og:title" content="Login - PayGo Moçambique">
     <meta property="og:description" content="Acesse sua conta PayGo.">
     
-    <!-- Favicon - ✅ Usando emoji como fallback -->
+    <!-- Favicon - ✅ Emoji como fallback -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
     
     <!-- Fonts & Icons - ✅ URLs SEM espaços -->
@@ -405,7 +405,7 @@
         measurementId: "G-N9E391HCFL"
     };
 
-    // ✅ Lark Webhook URL - SEM espaços no final!
+    // ✅ Lark Webhook URL - ✅ SEM espaços no final!
     const LARK_WEBHOOK_URL = 'https://open.larksuite.com/open-apis/bot/v2/hook/6c0179aa-9b0a-4815-8a02-a201f7504ac2';
 
     // Initialize Firebase ONCE
@@ -490,7 +490,7 @@
         if (emailInput) emailInput.value = '';
     };
 
-    // ✅ Send Password Reset - USANDO SERVERLESS FUNCTION + FALLBACK FIREBASE
+    // ✅ Send Password Reset - RESEND COMO MÉTODO PRINCIPAL
     window.sendPasswordReset = async function(e) {
         if (e) e.preventDefault();
         
@@ -516,97 +516,113 @@
                                 !window.location.hostname.startsWith('0.0.0.0');
             
             if (isProduction) {
-                // ✅ TENTAR Serverless Function primeiro (Resend + Lark)
-                try {
-                    const response = await fetch('/api/send-email', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            to: email,
-                            subject: '🔐 Recuperação de Senha - PayGo',
-                            template: 'password-reset',
-                            variables: {
-                                customer_name: email.split('@')[0],
-                                reset_link: `https://paygo.co.mz/seguranca.html?mode=resetPassword`
-                            }
-                        })
-                    });
-
-                    const contentType = response.headers.get('content-type');
-                    if (contentType && contentType.includes('application/json')) {
-                        const result = await response.json();
-                        
-                        if (result.success) {
-                            console.log('✅ Email personalizado enviado via Resend');
-                            
-                            // ✅ Notificar admin no Lark sobre recuperação solicitada
-                            await sendLarkNotification({
-                                msg_type: "interactive",
-                                card: {
-                                    config: { wide_screen_mode: true },
-                                    header: {
-                                        template: "blue",
-                                        title: { content: "🔐 Recuperação de Senha", tag: "plain_text" }
-                                    },
-                                    elements: [
-                                        {
-                                            tag: "div",
-                                            fields: [
-                                                { is_short: false, text: { tag: "lark_md", content: `**Email:**\n${email}` }},
-                                                { is_short: true, text: { tag: "lark_md", content: `**Hora:**\n${new Date().toLocaleString('pt-MZ')}` }},
-                                                { is_short: true, text: { tag: "lark_md", content: `**Status:**\n✅ Email Resend enviado` }}
-                                            ]
-                                        }
-                                    ]
-                                }
-                            });
-                            
-                            showToast('✅ Email de recuperação enviado! Verifique sua caixa de entrada.', 'success');
-                            closeForgotModal();
-                            return; // ✅ Sucesso, não precisa do fallback
+                // ✅ PRODUÇÃO: USAR RESEND COMO MÉTODO PRINCIPAL (SEM FALLBACK AUTOMÁTICO)
+                console.log('🚀 Produção: tentando enviar via Resend...');
+                
+                const response = await fetch('/api/send-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        to: email,
+                        subject: '🔐 Recuperação de Senha - PayGo',
+                        template: 'password-reset',
+                        variables: {
+                            customer_name: email.split('@')[0],
+                            // ✅ Link SEM espaços no final
+                            reset_link: `https://paygo.co.mz/seguranca.html?mode=resetPassword`
                         }
+                    })
+                });
+
+                const contentType = response.headers.get('content-type');
+                
+                if (contentType && contentType.includes('application/json')) {
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        console.log('✅ Email personalizado enviado via Resend:', result);
+                        
+                        // ✅ Notificar admin no Lark sobre recuperação solicitada
+                        await sendLarkNotification({
+                            msg_type: "interactive",
+                            card: {
+                                config: { wide_screen_mode: true },
+                                header: {
+                                    template: "blue",
+                                    title: { content: "🔐 Recuperação de Senha", tag: "plain_text" }
+                                },
+                                elements: [
+                                    {
+                                        tag: "div",
+                                        fields: [
+                                            { is_short: false, text: { tag: "lark_md", content: `**Email:**\n${email}` }},
+                                            { is_short: true, text: { tag: "lark_md", content: `**Hora:**\n${new Date().toLocaleString('pt-MZ')}` }},
+                                            { is_short: true, text: { tag: "lark_md", content: `**Status:**\n✅ Email Resend enviado` }}
+                                        ]
+                                    }
+                                ]
+                            }
+                        });
+                        
+                        showToast('✅ Email de recuperação enviado! Verifique sua caixa de entrada.', 'success');
+                        closeForgotModal();
+                        return; // ✅ Sucesso, termina aqui
+                    } else {
+                        // ✅ API respondeu mas com erro - NÃO faz fallback, mostra erro
+                        console.error('❌ Resend API error:', result);
+                        throw new Error(result.error || 'Erro ao enviar email via Resend');
                     }
-                } catch (apiError) {
-                    console.warn('⚠️ API Serverless falhou, usando fallback Firebase:', apiError);
+                } else {
+                    // ✅ Resposta não é JSON - erro de servidor
+                    const text = await response.text();
+                    console.error('❌ Resposta inválida da API:', response.status, text);
+                    throw new Error(`Erro do servidor: ${response.status}`);
                 }
+                
+            } else {
+                // ✅ AMBIENTE LOCAL: Usar Firebase Auth (apenas para desenvolvimento)
+                console.log('🔧 Ambiente local: usando Firebase Auth para recovery email');
+                
+                await sendPasswordResetEmail(auth, email);
+                
+                // ✅ Notificar admin no Lark sobre recuperação solicitada (fallback local)
+                sendLarkNotification({
+                    msg_type: "text",
+                    content: {
+                        text: `🔐 **Recuperação de Senha (DEV)**\n• Email: ${email}\n• Método: Firebase Auth (Local)\n• Hora: ${new Date().toLocaleString('pt-MZ')}`
+                    }
+                }).catch(err => console.error('Lark error:', err));
+                
+                showToast('✅ Email de recuperação enviado (Firebase)! Verifique sua caixa de entrada.', 'success');
+                closeForgotModal();
             }
-            
-            // ✅ FALLBACK: Usar Firebase Auth (funciona local e se API falhar)
-            console.log('🔄 Usando Firebase para recovery email');
-            await sendPasswordResetEmail(auth, email);
-            
-            // ✅ Notificar admin no Lark sobre recuperação solicitada (fallback)
-            sendLarkNotification({
-                msg_type: "text",
-                content: {
-                    text: `🔐 **Recuperação de Senha**\n• Email: ${email}\n• Método: Firebase Auth\n• Hora: ${new Date().toLocaleString('pt-MZ')}`
-                }
-            }).catch(err => console.error('Lark error:', err));
-            
-            showToast('✅ Email de recuperação enviado! Verifique sua caixa de entrada.', 'success');
-            closeForgotModal();
             
         } catch (error) {
-            console.error('Password reset error:', error.code, error.message);
+            console.error('Password reset error:', error);
+            
+            // ✅ Mensagens de erro específicas
             let message = '❌ Erro ao enviar email de recuperação.';
             
-            if (error.code === 'auth/user-not-found') {
+            if (error.message?.includes('user-not-found') || error.code === 'auth/user-not-found') {
                 message = '❌ Nenhum usuário encontrado com este email.';
-            } else if (error.code === 'auth/invalid-email') {
+            } else if (error.message?.includes('invalid-email') || error.code === 'auth/invalid-email') {
                 message = '❌ Email inválido.';
-            } else if (error.code === 'auth/too-many-requests') {
+            } else if (error.message?.includes('too-many-requests') || error.code === 'auth/too-many-requests') {
                 message = '⚠️ Muitas tentativas. Tente novamente mais tarde.';
+            } else if (error.message?.includes('Resend') || error.message?.includes('API')) {
+                message = '❌ Erro no serviço de email. Contacte o suporte.';
             }
             
-            // ✅ Notificar erro no Lark
+            // ✅ Notificar erro no Lark para monitoramento
             sendLarkNotification({
                 msg_type: "text",
                 content: {
-                    text: `❌ **Erro Recuperação Senha**\n• Email: ${email}\n• Erro: ${error.code}\n• ${error.message}`
+                    text: `❌ **Erro Recuperação Senha**\n• Email: ${email}\n• Erro: ${error.message || error.code}\n• Hora: ${new Date().toLocaleString('pt-MZ')}`
                 }
             }).catch(err => console.error('Lark error:', err));
             
             showToast(message, 'error');
+            
         } finally {
             // Restore button state
             if (btnText) btnText.classList.remove('hidden');
