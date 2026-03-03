@@ -83,6 +83,7 @@ export default async function handler(req, res) {
                     tag: "button",
                     text: { tag: "plain_text", content: "Ver no Admin" },
                     type: "primary",
+                    // ✅ URL SEM espaços no final
                     url: `${process.env.SITE_URL || 'https://paygo.co.mz'}/admin.html`
                   }
                 ]
@@ -163,46 +164,125 @@ export default async function handler(req, res) {
   }
 }
 
-// ✅ HTML do Email de Confirmação
+// ✅ HTML do Email de Confirmação - TEMPLATE PROFISSIONAL ATUALIZADO
 function generateOrderConfirmationHTML(order) {
   return `<!DOCTYPE html>
 <html>
-<head><meta charset="UTF-8">
-<style>
-  body { font-family: Arial, sans-serif; background: #f8fafc; padding: 20px; margin: 0; }
-  .container { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-  .header { background: linear-gradient(135deg, #3b82f6, #06b6d4); padding: 24px; text-align: center; color: #fff; }
-  .content { padding: 32px; color: #334155; line-height: 1.6; }
-  .table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-  .table td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
-  .button { display: inline-block; background: #3b82f6; color: #fff; padding: 14px 32px; text-decoration: none; border-radius: 12px; font-weight: 600; }
-  .footer { background: #f8fafc; padding: 20px; text-align: center; color: #94a3b8; font-size: 12px; }
-</style>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pedido Confirmado - PayGo</title>
 </head>
-<body>
-  <div class="container">
-    <div class="header"><h1 style="margin:0">PayGo</h1><p style="margin:8px 0 0">✅ Pedido Confirmado</p></div>
-    <div class="content">
-      <p>Olá <strong>${order.name || 'Cliente'}</strong>,</p>
-      <p>Seu pedido foi registrado com sucesso!</p>
-      <table class="table">
-        <tr><td><strong>ID do Pedido:</strong></td><td>${order.orderId || 'N/A'}</td></tr>
-        <tr><td><strong>Valor Total:</strong></td><td>${order.total?.toLocaleString('pt-MZ') || 'N/A'} MT</td></tr>
-        <tr><td><strong>Pagamento:</strong></td><td>${order.paymentMethod === 'mpesa' ? '🔴 M-Pesa' : '🟡 e-Mola'}</td></tr>
-        <tr><td><strong>WhatsApp:</strong></td><td>${order.whatsapp || 'N/A'}</td></tr>
-      </table>
-      <p style="text-align:center;margin:24px 0">
-        <a href="${process.env.SITE_URL || 'https://paygo.co.mz'}/dashboard.html" class="button">Ver no Dashboard</a>
-      </p>
-      <p style="font-size:14px;color:#64748b">Precisa de ajuda? Responda este email ou contacte-nos no WhatsApp: +258 83 752 2255</p>
+<body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: auto; background: #f8fafc; padding: 20px;">
+  
+  <div style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); background: #fff;">
+    
+    <!-- Header -->
+    <div style="background-color: #0052FF; padding: 35px 30px; text-align: center; color: white;">
+      <h1 style="margin: 0; font-size: 24px; letter-spacing: -0.5px;">Pedido Confirmado! ✅</h1>
+      <p style="margin: 10px 0 0; opacity: 0.9; font-size: 15px;">Olá, <strong>${order.name || 'Cliente'}</strong>. Recebemos o seu pedido.</p>
     </div>
-    <div class="footer">&copy; 2026 PayGo Moçambique. Todos direitos reservados.</div>
+
+    <!-- Content -->
+    <div style="padding: 30px; color: #334155; line-height: 1.6;">
+      <p style="margin-top: 0; font-size: 15px;">O seu pedido <strong>#${order.orderId || 'N/A'}</strong> foi registado com sucesso e já está na nossa fila de processamento.</p>
+      
+      <!-- Order Details -->
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 24px 0;">
+        <h3 style="margin: 0 0 12px 0; color: #0052FF; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">📋 Detalhes do Pedido</h3>
+        <table style="width: 100%; font-size: 14px;">
+          <tr><td style="padding: 6px 0; color: #64748b;">Data:</td><td style="color: #0f172a; font-weight: 500;">${order.createdAt ? new Date(order.createdAt).toLocaleDateString('pt-MZ') : new Date().toLocaleDateString('pt-MZ')}</td></tr>
+          <tr><td style="padding: 6px 0; color: #64748b;">Categoria:</td><td style="color: #0f172a; font-weight: 500;">${order.type === 'compra' ? '🛍️ Compras' : '🎮 Jogos'}</td></tr>
+          <tr><td style="padding: 6px 0; color: #64748b;">Produto:</td><td><a href="${order.detail || '#'}" style="color: #0052FF; font-weight: 600; text-decoration: none;" target="_blank">Ver Link 🔗</a></td></tr>
+        </table>
+      </div>
+
+      <!-- Financial Summary -->
+      <div style="border: 1px dashed #cbd5e1; border-radius: 8px; padding: 20px; margin: 24px 0;">
+        <h3 style="margin: 0 0 12px 0; color: #0052FF; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">💰 Resumo Financeiro</h3>
+        <table style="width: 100%; font-size: 14px;">
+          <tr><td style="padding: 6px 0; color: #475569;">Valor USD:</td><td style="text-align: right; color: #0f172a; font-weight: 500;">$${(order.usd || 0).toFixed(2)}</td></tr>
+          <tr><td style="padding: 6px 0; color: #475569;">Câmbio:</td><td style="text-align: right; color: #0f172a; font-weight: 500;">${order.exchangeRate || 88.00} MT</td></tr>
+          <tr><td style="padding: 6px 0; color: #475569;">Taxas:</td><td style="text-align: right; color: #0f172a; font-weight: 500;">${(order.tax || 0).toLocaleString('pt-MZ', {minimumFractionDigits: 2})} MT</td></tr>
+          <tr style="font-size: 18px; font-weight: bold;">
+            <td style="padding-top: 16px; border-top: 1px solid #e2e8f0; color: #0f172a;">TOTAL:</td>
+            <td style="padding-top: 16px; border-top: 1px solid #e2e8f0; text-align: right; color: #059669;">${(order.total || 0).toLocaleString('pt-MZ', {minimumFractionDigits: 2})} MT</td>
+          </tr>
+        </table>
+        <p style="font-size: 13px; margin: 12px 0 0 0; color: #64748b; text-align: right;">Método selecionado: <strong>${order.paymentMethod === 'mpesa' ? '🔴 M-Pesa' : '🟡 e-Mola'}</strong></p>
+      </div>
+
+      <!-- Payment Instructions -->
+      <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-left: 4px solid #2563eb; padding: 20px; border-radius: 8px; margin-top: 28px;">
+        <h4 style="margin: 0 0 12px 0; color: #1e3a8a; font-size: 16px;">📍 Ação Necessária: Pagamento Manual</h4>
+        <p style="margin: 0 0 16px 0; font-size: 14px; color: #1e40af; line-height: 1.5;">Como o nosso sistema automático encontra-se temporariamente em manutenção, ativámos a via rápida manual para que o seu pedido não sofra atrasos.</p>
+        
+        <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: bold; color: #1e3a8a;">1. Transfira o valor total (<strong>${(order.total || 0).toLocaleString('pt-MZ', {minimumFractionDigits: 2})} MT</strong>) para:</p>
+        <ul style="margin: 0 0 16px 0; padding-left: 20px; font-size: 14px; color: #1e40af; line-height: 1.8;">
+          <li><strong>e-Mola:</strong> <span style="font-size: 15px; font-weight: bold; color: #1e3a8a;">87 752 2255</span></li>
+          <li><strong>M-Pesa:</strong> <span style="font-size: 15px; font-weight: bold; color: #1e3a8a;">84 162 7519</span></li>
+        </ul>
+
+        <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: bold; color: #1e3a8a;">2. Valide o pagamento:</p>
+        <p style="margin: 0; font-size: 14px; color: #1e40af;">Envie a foto ou PDF do comprovativo para o nosso WhatsApp de validação clicando no botão abaixo:</p>
+        
+        <!-- ✅ Link WhatsApp SEM espaços -->
+        <a href="https://wa.me/258871002255" style="display: inline-block; margin-top: 12px; background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; font-size: 14px; box-shadow: 0 2px 4px rgba(37,99,235,0.2);">
+          📲 Enviar Comprovativo (87 100 2255)
+        </a>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="background: #f8fafc; padding: 25px; text-align: center; border-top: 1px solid #e2e8f0;">
+      <p style="margin: 0; font-weight: bold; color: #0f172a; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">PayGo Moçambique</p>
+      <p style="margin: 6px 0 0; font-size: 13px; color: #64748b;">Simples. Seguro. Moçambicano. 🇲🇿</p>
+      <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #94a3b8;">
+        Suporte: contact@paygo.co.mz &nbsp;|&nbsp; WhatsApp: +258 87 100 2255
+      </div>
+    </div>
+    
   </div>
 </body>
 </html>`;
 }
 
-// ✅ Texto simples (fallback)
+// ✅ Versão texto simples (fallback)
 function generateOrderConfirmationText(order) {
-  return `Olá ${order.name || 'Cliente'},\n\nSeu pedido foi registrado!\n\nID: ${order.orderId}\nTotal: ${order.total?.toLocaleString('pt-MZ') || 'N/A'} MT\nPagamento: ${order.paymentMethod === 'mpesa' ? 'M-Pesa' : 'e-Mola'}\n\nAcesse: ${process.env.SITE_URL || 'https://paygo.co.mz'}/dashboard.html\n\nPrecisa de ajuda? WhatsApp: +258 83 752 2255\n\n© 2026 PayGo Moçambique`;
+  return `
+PEDIDO CONFIRMADO - PAYGO MOÇAMBIQUE ✅
+
+Olá ${order.name || 'Cliente'},
+
+O seu pedido #${order.orderId || 'N/A'} foi registado com sucesso!
+
+📋 DETALHES DO PEDIDO:
+• Data: ${order.createdAt ? new Date(order.createdAt).toLocaleDateString('pt-MZ') : new Date().toLocaleDateString('pt-MZ')}
+• Categoria: ${order.type === 'compra' ? 'Compras' : 'Jogos'}
+• Produto: ${order.detail || 'N/A'}
+
+💰 RESUMO FINANCEIRO:
+• Valor USD: $${(order.usd || 0).toFixed(2)}
+• Câmbio: ${order.exchangeRate || 88.00} MT
+• Taxas: ${(order.tax || 0).toLocaleString('pt-MZ')} MT
+• TOTAL: ${(order.total || 0).toLocaleString('pt-MZ')} MT
+• Método: ${order.paymentMethod === 'mpesa' ? 'M-Pesa' : 'e-Mola'}
+
+📍 AÇÃO NECESSÁRIA: PAGAMENTO MANUAL
+
+Devido a manutenção temporária no sistema, por favor siga estes passos:
+
+1. Transfira o valor total de ${(order.total || 0).toLocaleString('pt-MZ')} MT para:
+   • e-Mola: 87 752 2255
+   • M-Pesa: 84 162 7519
+
+2. Envie o comprovativo para validação:
+   WhatsApp: https://wa.me/258871002255
+
+Precisa de ajuda? Contacte-nos:
+• Email: contact@paygo.co.mz
+• WhatsApp: +258 87 100 2255
+
+PayGo Moçambique - Simples. Seguro. Moçambicano. 🇲🇿
+  `.trim();
 }
