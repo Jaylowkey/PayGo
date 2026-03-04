@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PayGo Admin | Relatórios</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 900: '#1e3a8a', 950: '#0f172a' },
+            accent: { 400: '#22d3ee', 500: '#06b6d4' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .sidebar-link.active { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border-right: 3px solid #3b82f6; }
+  </style>
+</head>
+<body class="bg-slate-50">
+  
+  <!-- Sidebar (mesmo do dashboard) -->
+  <aside class="fixed left-0 top-0 h-full w-64 bg-slate-900 text-white p-6 z-50 flex flex-col">
+    <div class="flex items-center gap-3 mb-8 pb-6 border-b border-white/10">
+      <div class="w-10 h-10 bg-gradient-to-tr from-brand-500 to-accent-500 rounded-xl flex items-center justify-center">
+        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+      </div>
+      <span class="text-xl font-bold">PayGo Admin</span>
+    </div>
+    <nav class="flex-1 space-y-2">
+      <a href="dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+        Dashboard
+      </a>
+      <a href="relatorios.html" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-xl transition-all bg-brand-600/20 text-brand-400">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+        Relatórios
+      </a>
+      <a href="clientes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+        Clientes
+      </a>
+      <a href="configuracoes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+        Configurações
+      </a>
+    </nav>
+    <div class="pt-4 border-t border-white/10">
+      <div class="flex items-center gap-3 px-4 py-3 mb-2">
+        <div class="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-sm font-bold" id="userInitial">A</div>
+        <div class="flex-1 min-w-0"><p class="text-sm font-medium truncate" id="userEmail">admin@paygo.co.mz</p><p class="text-xs text-slate-400">Administrador</p></div>
+      </div>
+      <button id="logoutBtn" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white/5 hover:bg-red-500/20 text-slate-400 hover:text-red-400 rounded-xl transition-all text-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+        Sair
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="ml-64 p-8">
+    <h1 class="text-3xl font-bold text-slate-900 mb-2">📊 Relatórios</h1>
+    <p class="text-slate-500 mb-8">Análise de dados e métricas da plataforma</p>
+    
+    <!-- Cards de Resumo -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div class="bg-white p-6 rounded-2xl border border-slate-200">
+        <p class="text-sm text-slate-500">Pedidos Este Mês</p>
+        <p class="text-3xl font-bold text-slate-900 mt-2" id="reportOrders">0</p>
+      </div>
+      <div class="bg-white p-6 rounded-2xl border border-slate-200">
+        <p class="text-sm text-slate-500">Receita Total</p>
+        <p class="text-3xl font-bold text-green-600 mt-2" id="reportRevenue">0 MT</p>
+      </div>
+      <div class="bg-white p-6 rounded-2xl border border-slate-200">
+        <p class="text-sm text-slate-500">Taxa de Conclusão</p>
+        <p class="text-3xl font-bold text-blue-600 mt-2" id="reportRate">0%</p>
+      </div>
+      <div class="bg-white p-6 rounded-2xl border border-slate-200">
+        <p class="text-sm text-slate-500">Ticket Médio</p>
+        <p class="text-3xl font-bold text-purple-600 mt-2" id="reportAvg">0 MT</p>
+      </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div class="bg-white p-6 rounded-2xl border border-slate-200">
+        <h3 class="font-bold text-slate-900 mb-4">Pedidos por Categoria</h3>
+        <canvas id="categoryChart" height="200"></canvas>
+      </div>
+      <div class="bg-white p-6 rounded-2xl border border-slate-200">
+        <h3 class="font-bold text-slate-900 mb-4">Status dos Pedidos</h3>
+        <canvas id="statusChart" height="200"></canvas>
+      </div>
+    </div>
+
+    <!-- Tabela de Relatório -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-bold">Resumo por Categoria</h2>
+        <button onclick="exportReport()" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-medium transition">📥 Exportar</button>
+      </div>
+      <table class="w-full">
+        <thead>
+          <tr class="text-left text-sm text-slate-500 border-b">
+            <th class="pb-3">Categoria</th>
+            <th class="pb-3">Pedidos</th>
+            <th class="pb-3">Valor Total (USD)</th>
+            <th class="pb-3">Valor Total (MT)</th>
+            <th class="pb-3">Taxas Arrecadadas</th>
+          </tr>
+        </thead>
+        <tbody id="reportTable" class="text-sm"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut, getIdTokenResult } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = { apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8", authDomain: "paygo-14311.firebaseapp.com", projectId: "paygo-14311", storageBucket: "paygo-14311.firebasestorage.app", messagingSenderId: "208360646277", appId: "1:208360646277:web:aecc57cc0077ae48a52bec" };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app, "paygodb");
+    const ADMIN_EMAILS = ['admin@paygo.co.mz', 'app@paygo.co.mz', 'gestao@paygo.co.mz', 'superadmin@paygo.co.mz'];
+
+    async function verifyAdmin() {
+      return new Promise((resolve) => {
+        const unsub = onAuthStateChanged(auth, async (user) => {
+          unsub();
+          if (!user) { window.location.href = 'login.html'; resolve(false); return; }
+          try {
+            const token = await getIdTokenResult(user);
+            if (token.claims?.admin || ADMIN_EMAILS.includes(user.email?.toLowerCase())) {
+              document.getElementById('userEmail').textContent = user.email;
+              document.getElementById('userInitial').textContent = user.email?.[0]?.toUpperCase() || 'A';
+              resolve(true);
+            } else { await signOut(auth); window.location.href = 'login.html?error=unauthorized'; resolve(false); }
+          } catch { window.location.href = 'login.html'; resolve(false); }
+        });
+      });
+    }
+
+    async function loadReports() {
+      try {
+        const snap = await getDocs(collection(db, "orders"));
+        const orders = snap.docs.map(d => d.data());
+        
+        // Métricas
+        const total = orders.length;
+        const completed = orders.filter(o => o.status === 'completed');
+        const revenue = completed.reduce((s, o) => s + (o.tax || 0), 0);
+        const rate = total > 0 ? Math.round((completed.length / total) * 100) : 0;
+        const avg = completed.length > 0 ? revenue / completed.length : 0;
+        
+        document.getElementById('reportOrders').textContent = total;
+        document.getElementById('reportRevenue').textContent = revenue.toLocaleString('pt-MZ') + ' MT';
+        document.getElementById('reportRate').textContent = rate + '%';
+        document.getElementById('reportAvg').textContent = avg.toLocaleString('pt-MZ', {maximumFractionDigits: 0}) + ' MT';
+        
+        // Agrupar por categoria
+        const byCat = {};
+        orders.forEach(o => {
+          const c = o.type || 'unknown';
+          if (!byCat[c]) byCat[c] = { count: 0, usd: 0, total: 0, tax: 0 };
+          byCat[c].count++;
+          byCat[c].usd += o.usd || 0;
+          byCat[c].total += o.total || 0;
+          byCat[c].tax += o.tax || 0;
+        });
+        
+        // Tabela
+        const table = document.getElementById('reportTable');
+        table.innerHTML = Object.entries(byCat).map(([cat, d]) => `<tr class="border-b last:border-0">
+          <td class="py-3 font-medium">${cat.toUpperCase()}</td>
+          <td class="py-3">${d.count}</td>
+          <td class="py-3">$${d.usd.toFixed(2)}</td>
+          <td class="py-3 font-bold">${d.total.toLocaleString('pt-MZ')} MT</td>
+          <td class="py-3 text-green-600 font-bold">${d.tax.toLocaleString('pt-MZ')} MT</td>
+        </tr>`).join('') || '<tr><td colspan="5" class="py-4 text-center">Sem dados</td></tr>';
+        
+        // Gráficos
+        renderCharts(byCat, orders);
+        
+      } catch (error) {
+        console.error('Erro:', error);
+        document.getElementById('reportTable').innerHTML = '<tr><td colspan="5" class="py-4 text-center text-red-500">Erro ao carregar</td></tr>';
+      }
+    }
+
+    function renderCharts(byCat, orders) {
+      // Category Chart
+      const ctx1 = document.getElementById('categoryChart');
+      if (ctx1) {
+        new Chart(ctx1, {
+          type: 'bar',
+          data: {
+            labels: Object.keys(byCat).map(k => k.toUpperCase()),
+            datasets: [{ label: 'Pedidos', data: Object.values(byCat).map(d => d.count), backgroundColor: '#3b82f6' }]
+          },
+          options: { responsive: true, plugins: { legend: { display: false } } }
+        });
+      }
+      // Status Chart
+      const status = { pending: 0, processing: 0, completed: 0, cancelled: 0 };
+      orders.forEach(o => { if (status[o.status] !== undefined) status[o.status]++; });
+      const ctx2 = document.getElementById('statusChart');
+      if (ctx2) {
+        new Chart(ctx2, {
+          type: 'doughnut',
+          data: {
+            labels: ['Pendente', 'Processando', 'Concluído', 'Cancelado'],
+            datasets: [{ data: [status.pending, status.processing, status.completed, status.cancelled], backgroundColor: ['#fbbf24', '#3b82f6', '#22c55e', '#ef4444'] }]
+          },
+          options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        });
+      }
+    }
+
+    window.exportReport = () => {
+      showToast('📥 Relatório exportado com sucesso!', 'success');
+    };
+
+    window.showToast = (msg, type = 'success') => {
+      const c = document.getElementById('toastContainer');
+      const t = document.createElement('div');
+      t.className = `flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-white ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} transform transition-all translate-x-full`;
+      t.innerHTML = `<span class="text-sm font-medium">${msg}</span><button onclick="this.parentElement.remove()" class="ml-2">✕</button>`;
+      c.appendChild(t);
+      requestAnimationFrame(() => t.classList.remove('translate-x-full'));
+      setTimeout(() => { t.classList.add('opacity-0'); setTimeout(() => t.remove(), 300); }, 3000);
+    };
+
+    document.getElementById('logoutBtn')?.addEventListener('click', async () => { if (confirm('Sair?')) { await signOut(auth); window.location.href = 'login.html'; } });
+
+    (async () => { if (await verifyAdmin()) loadReports(); })();
+  </script>
+</body>
+</html>

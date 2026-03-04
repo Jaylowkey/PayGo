@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clientes | PayGo Admin</title>
+  <meta name="robots" content="noindex, nofollow">
+  <!-- ✅ URLs corrigidas SEM espaços -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 900: '#1e3a8a', 950: '#0f172a' },
+            accent: { 400: '#22d3ee', 500: '#06b6d4' },
+            success: { 400: '#4ade80', 500: '#22c55e' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .sidebar-link.active { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border-right: 3px solid #3b82f6; }
+    .status-badge { padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 600; }
+    .status-completed { background: #dcfce7; color: #166534; }
+    .status-pending { background: #fef3c7; color: #92400e; }
+    .status-processing { background: #dbeafe; color: #1e40af; }
+    .status-cancelled { background: #fee2e2; color: #991b1b; }
+    .skeleton { background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: skeleton-loading 1.5s infinite; }
+    @keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    .client-row:hover { background: #f8fafc; }
+    .modal { display: none; position: fixed; inset: 0; z-index: 1000; align-items: center; justify-content: center; }
+    .modal.active { display: flex; }
+    .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+    .modal-content { position: relative; background: white; border-radius: 24px; padding: 24px; max-width: 700px; width: 90%; max-height: 90vh; overflow-y: auto; }
+  </style>
+</head>
+<body class="bg-slate-50">
+  
+  <!-- ✅ SIDEBAR -->
+  <aside class="fixed left-0 top-0 h-full w-64 bg-slate-900 text-white p-6 z-50 flex flex-col">
+    <div class="flex items-center gap-3 mb-8 pb-6 border-b border-white/10">
+      <div class="w-10 h-10 bg-gradient-to-tr from-brand-500 to-accent-500 rounded-xl flex items-center justify-center">
+        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+      </div>
+      <span class="text-xl font-bold">PayGo Admin</span>
+    </div>
+    <nav class="flex-1 space-y-2">
+      <a href="dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+        Dashboard
+      </a>
+      <a href="relatorios.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+        Relatórios
+      </a>
+      <a href="clientes.html" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-xl transition-all bg-brand-600/20 text-brand-400">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+        Clientes
+      </a>
+      <a href="configuracoes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+        Configurações
+      </a>
+    </nav>
+    <div class="pt-4 border-t border-white/10">
+      <div class="flex items-center gap-3 px-4 py-3 mb-2">
+        <div class="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-sm font-bold" id="userInitial">A</div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium truncate" id="userEmail">admin@paygo.co.mz</p>
+          <p class="text-xs text-slate-400">Administrador</p>
+        </div>
+      </div>
+      <button id="logoutBtn" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white/5 hover:bg-red-500/20 text-slate-400 hover:text-red-400 rounded-xl transition-all text-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+        Sair
+      </button>
+    </div>
+  </aside>
+
+  <!-- ✅ MAIN CONTENT -->
+  <main class="ml-64 p-8">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+      <div>
+        <h1 class="text-3xl font-bold text-slate-900">👥 Clientes</h1>
+        <p class="text-slate-500 mt-1">Gestão de clientes e histórico de pedidos</p>
+      </div>
+      <div class="flex flex-wrap items-center gap-3">
+        <div class="relative">
+          <input type="text" id="clientSearch" placeholder="Buscar cliente..." class="pl-10 pr-4 py-2.5 w-64 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 text-sm">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        </div>
+        <button onclick="refreshClients()" class="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-medium transition flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+          Atualizar
+        </button>
+      </div>
+    </div>
+
+    <!-- ✅ Stats Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+          <span class="text-sm font-medium text-slate-500">Total de Clientes</span>
+          <div class="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center"><svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg></div>
+        </div>
+        <p class="text-3xl font-bold text-slate-900 skeleton" id="totalClients">0</p>
+        <p class="text-sm text-slate-500 mt-2">Clientes únicos</p>
+      </div>
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+          <span class="text-sm font-medium text-slate-500">Cliente Mais Ativo</span>
+          <div class="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center"><svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+        </div>
+        <p class="text-lg font-bold text-brand-600 mt-2 truncate skeleton" id="topClient">-</p>
+        <p class="text-sm text-slate-500 mt-2">Mais pedidos realizados</p>
+      </div>
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+          <span class="text-sm font-medium text-slate-500">Maior Gasto</span>
+          <div class="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center"><svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+        </div>
+        <p class="text-2xl font-bold text-green-600 mt-2 skeleton" id="topSpend">0 MT</p>
+        <p class="text-sm text-slate-500 mt-2">Valor total acumulado</p>
+      </div>
+    </div>
+
+    <!-- ✅ Clients Table -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="p-6 border-b border-slate-200 flex justify-between items-center">
+        <h2 class="text-lg font-bold text-slate-900">Lista de Clientes</h2>
+        <span class="text-sm text-slate-500" id="clientsCount">0 clientes</span>
+      </div>
+      
+      <!-- Loading State -->
+      <div id="loadingClients" class="p-12 text-center text-slate-500">
+        <svg class="w-8 h-8 animate-spin mx-auto mb-4 text-brand-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+        Carregando clientes...
+      </div>
+      
+      <!-- Empty State -->
+      <div id="emptyClients" class="p-12 text-center text-slate-500 hidden">
+        <svg class="w-12 h-12 mx-auto mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+        <p class="font-medium">Nenhum cliente encontrado</p>
+        <p class="text-sm mt-1">Os clientes aparecerão aqui quando fizerem pedidos.</p>
+      </div>
+      
+      <!-- Table -->
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-slate-50">
+            <tr>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase">Cliente</th>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase">Email</th>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase">Pedidos</th>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase">Total Gasto</th>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase">Último Pedido</th>
+              <th class="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="clientsTable" class="divide-y divide-slate-200"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- ✅ Client Detail Modal -->
+  <div id="clientModal" class="modal">
+    <div class="modal-overlay" onclick="closeClientModal()"></div>
+    <div class="modal-content">
+      <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-200">
+        <h2 class="text-2xl font-bold text-slate-900">Histórico do Cliente</h2>
+        <button onclick="closeClientModal()" class="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <div id="clientModalContent" class="space-y-4"></div>
+    </div>
+  </div>
+
+  <!-- ✅ Toast Container -->
+  <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2 pointer-events-none"></div>
+
+  <!-- ✅ Script Completo e Funcional -->
+  <script type="module">
+    // ✅ Import Firebase - URLs corrigidas SEM espaços
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut, getIdTokenResult } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // ✅ Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
+      authDomain: "paygo-14311.firebaseapp.com",
+      projectId: "paygo-14311",
+      storageBucket: "paygo-14311.firebasestorage.app",
+      messagingSenderId: "208360646277",
+      appId: "1:208360646277:web:aecc57cc0077ae48a52bec",
+      measurementId: "G-N9E391HCFL"
+    };
+
+    // ✅ Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app, "paygodb");
+    
+    // ✅ Emails de admin permitidos
+    const ADMIN_EMAILS = ['admin@paygo.co.mz', 'app@paygo.co.mz', 'gestao@paygo.co.mz', 'superadmin@paygo.co.mz'];
+    
+    let allClients = [];
+    let currentClient = null;
+
+    // ✅ Helper para formatar valores
+    function formatCurrency(value) {
+      if (!value && value !== 0) return '0.00 MT';
+      return `${Number(value).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`;
+    }
+
+    // ✅ Helper para formatar data
+    function formatDate(date) {
+      if (!date) return 'N/A';
+      const d = date?.toDate ? date.toDate() : new Date(date);
+      return d.toLocaleDateString('pt-MZ', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+
+    // ✅ Helper para formatar data/hora
+    function formatDateTime(date) {
+      if (!date) return 'N/A';
+      const d = date?.toDate ? date.toDate() : new Date(date);
+      return d.toLocaleString('pt-MZ');
+    }
+
+    // ✅ Verificar se usuário é admin
+    async function verifyAdmin() {
+      return new Promise((resolve) => {
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+          unsubscribe();
+          
+          if (!user) {
+            showToast('❌ Faça login para acessar', 'error');
+            setTimeout(() => { window.location.href = 'login.html'; }, 1500);
+            resolve(false);
+            return;
+          }
+          
+          try {
+            const tokenResult = await getIdTokenResult(user);
+            const isAdmin = tokenResult.claims?.admin === true || 
+                           ADMIN_EMAILS.includes(user.email?.toLowerCase());
+            
+            if (!isAdmin) {
+              showToast('❌ Acesso negado. Apenas administradores.', 'error');
+              setTimeout(() => { window.location.href = 'index.html'; }, 2000);
+              resolve(false);
+              return;
+            }
+            
+            // Atualizar UI com dados do admin
+            document.getElementById('userEmail').textContent = user.email || 'admin@paygo.co.mz';
+            document.getElementById('userInitial').textContent = (user.email || 'A').charAt(0).toUpperCase();
+            
+            resolve(true);
+            
+          } catch (error) {
+            console.error('Erro na verificação:', error);
+            showToast('❌ Erro de autenticação', 'error');
+            setTimeout(() => { window.location.href = 'login.html'; }, 1500);
+            resolve(false);
+          }
+        });
+      });
+    }
+
+    // ✅ Carregar e agrupar clientes a partir dos pedidos
+    async function loadClients() {
+      const loadingEl = document.getElementById('loadingClients');
+      const emptyEl = document.getElementById('emptyClients');
+      const tableEl = document.getElementById('clientsTable');
+      
+      loadingEl.classList.remove('hidden');
+      emptyEl.classList.add('hidden');
+      
+      try {
+        const ordersRef = collection(db, "orders");
+        const q = query(ordersRef, orderBy("createdAt", "desc"));
+        const snapshot = await getDocs(q);
+        
+        // Agrupar pedidos por email do cliente
+        const clientsMap = {};
+        
+        snapshot.forEach(doc => {
+          const order = doc.data();
+          const email = order.email?.toLowerCase();
+          
+          if (!email || !order.name) return;
+          
+          if (!clientsMap[email]) {
+            clientsMap[email] = {
+              email: order.email,
+              name: order.name,
+              phone: order.whatsapp || order.phone || 'N/A',
+              orders: 0,
+              total: 0,
+              lastOrder: null,
+              orderList: []
+            };
+          }
+          
+          const client = clientsMap[email];
+          client.orders++;
+          client.total += Number(order.total) || 0;
+          client.orderList.push({
+            id: doc.id,
+            orderId: order.orderId || `ORD-${doc.id.slice(0, 8)}`,
+            type: order.type || 'compra',
+            paymentMethod: order.paymentMethod || 'mpesa',
+            total: order.total || 0,
+            status: order.status || 'pending',
+            createdAt: order.createdAt,
+            detail: order.detail || 'N/A'
+          });
+          
+          // Atualizar último pedido (mais recente)
+          const orderDate = order.createdAt?.toDate ? order.createdAt.toDate() : new Date(order.createdAt || 0);
+          if (!client.lastOrder || orderDate > client.lastOrder) {
+            client.lastOrder = orderDate;
+          }
+        });
+        
+        // Converter para array e ordenar por total gasto
+        allClients = Object.values(clientsMap).sort((a, b) => b.total - a.total);
+        
+        // Atualizar stats
+        updateStats();
+        
+        // Renderizar tabela
+        renderClients(allClients);
+        
+        // Atualizar contador
+        updateClientsCount(allClients);
+        
+        // Esconder loading, mostrar tabela
+        loadingEl.classList.add('hidden');
+        if (allClients.length === 0) {
+          emptyEl.classList.remove('hidden');
+          tableEl.innerHTML = '';
+        } else {
+          emptyEl.classList.add('hidden');
+        }
+        
+        // Inicializar ícones
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        
+      } catch (error) {
+        console.error('Erro ao carregar clientes:', error);
+        loadingEl.classList.add('hidden');
+        emptyEl.classList.remove('hidden');
+        tableEl.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-red-500">Erro ao carregar clientes. Tente recarregar a página.</td></tr>';
+        showToast('❌ Erro ao carregar clientes', 'error');
+      }
+    }
+
+    // ✅ Atualizar cards de estatísticas
+    function updateStats() {
+      // Remover skeleton e mostrar valores
+      document.getElementById('totalClients').classList.remove('skeleton');
+      document.getElementById('topClient').classList.remove('skeleton');
+      document.getElementById('topSpend').classList.remove('skeleton');
+      
+      // Total de clientes
+      document.getElementById('totalClients').textContent = allClients.length;
+      
+      // Cliente mais ativo (mais pedidos)
+      if (allClients.length > 0) {
+        const topClient = [...allClients].sort((a, b) => b.orders - a.orders)[0];
+        document.getElementById('topClient').textContent = topClient.name || '-';
+        document.getElementById('topSpend').textContent = formatCurrency(topClient.total);
+      } else {
+        document.getElementById('topClient').textContent = '-';
+        document.getElementById('topSpend').textContent = '0 MT';
+      }
+    }
+
+    // ✅ Atualizar contador de clientes filtrados
+    function updateClientsCount(clients) {
+      const count = document.getElementById('clientsCount');
+      count.textContent = `${clients.length} cliente${clients.length !== 1 ? 's' : ''}`;
+    }
+
+    // ✅ Renderizar tabela de clientes
+    function renderClients(clients) {
+      const table = document.getElementById('clientsTable');
+      const search = document.getElementById('clientSearch')?.value.toLowerCase() || '';
+      
+      // Filtrar por busca
+      const filtered = clients.filter(c => 
+        c.name?.toLowerCase().includes(search) || 
+        c.email?.toLowerCase().includes(search) ||
+        c.phone?.includes(search)
+      );
+      
+      if (filtered.length === 0) {
+        table.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-slate-500">Nenhum cliente encontrado com esses filtros</td></tr>';
+        updateClientsCount([]);
+        return;
+      }
+      
+      table.innerHTML = filtered.map(client => {
+        const lastOrderDate = client.lastOrder ? formatDate(client.lastOrder) : 'N/A';
+        
+        return `
+          <tr class="client-row transition-colors">
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-brand-500 to-accent-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                  ${(client.name || 'C').charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <p class="font-medium text-slate-900">${client.name}</p>
+                  <p class="text-xs text-slate-500">${client.phone}</p>
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4 text-slate-500 text-sm">${client.email}</td>
+            <td class="px-6 py-4">
+              <span class="px-3 py-1 bg-brand-100 text-brand-700 rounded-full text-xs font-bold">${client.orders}</span>
+            </td>
+            <td class="px-6 py-4 font-bold text-slate-900">${formatCurrency(client.total)}</td>
+            <td class="px-6 py-4 text-slate-500 text-sm">${lastOrderDate}</td>
+            <td class="px-6 py-4 text-right">
+              <button onclick="viewClient('${encodeURIComponent(client.email)}')" class="text-brand-600 hover:text-brand-800 font-medium text-sm hover:underline">Ver histórico</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+      
+      updateClientsCount(filtered);
+      
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    // ✅ Ver detalhes do cliente (modal)
+    window.viewClient = (encodedEmail) => {
+      const email = decodeURIComponent(encodedEmail);
+      const client = allClients.find(c => c.email?.toLowerCase() === email.toLowerCase());
+      
+      if (!client) {
+        showToast('❌ Cliente não encontrado', 'error');
+        return;
+      }
+      
+      currentClient = client;
+      
+      // Ordenar pedidos por data (mais recente primeiro)
+      const sortedOrders = [...client.orderList].sort((a, b) => {
+        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
+        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
+        return dateB - dateA;
+      });
+      
+      const content = document.getElementById('clientModalContent');
+      
+      content.innerHTML = `
+        <!-- Client Info -->
+        <div class="grid grid-cols-2 gap-4 p-4 bg-slate-50 rounded-xl">
+          <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Nome</p>
+            <p class="font-medium text-slate-900">${client.name}</p>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Email</p>
+            <p class="font-medium text-brand-600">${client.email}</p>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Telefone</p>
+            <p class="font-medium text-slate-900">${client.phone}</p>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total de Pedidos</p>
+            <p class="font-bold text-slate-900">${client.orders}</p>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Gasto</p>
+            <p class="font-bold text-green-600">${formatCurrency(client.total)}</p>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Último Pedido</p>
+            <p class="font-medium text-slate-900">${client.lastOrder ? formatDate(client.lastOrder) : 'N/A'}</p>
+          </div>
+        </div>
+        
+        <!-- Orders List -->
+        <h4 class="font-bold text-slate-900 mt-6 mb-4">Histórico de Pedidos</h4>
+        <div class="space-y-3">
+          ${sortedOrders.map(order => {
+            const statusClass = {
+              pending: 'status-pending',
+              processing: 'status-processing',
+              completed: 'status-completed',
+              cancelled: 'status-cancelled'
+            }[order.status] || 'bg-slate-100 text-slate-700';
+            
+            const statusText = {
+              pending: '⏳ Pendente',
+              processing: '🔄 Processando',
+              completed: '✅ Concluído',
+              cancelled: '❌ Cancelado'
+            }[order.status] || order.status;
+            
+            const paymentIcon = order.paymentMethod === 'mpesa' ? '🔴' : '🟡';
+            const paymentText = order.paymentMethod === 'mpesa' ? 'M-Pesa' : 'e-Mola';
+            
+            return `
+              <div class="p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition cursor-pointer" onclick="viewOrderDetails('${order.id}')">
+                <div class="flex justify-between items-start">
+                  <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-1">
+                      <p class="font-mono font-bold text-brand-600 text-sm">${order.orderId}</p>
+                      <span class="status-badge ${statusClass}">${statusText}</span>
+                    </div>
+                    <p class="text-sm text-slate-600 truncate">${order.detail}</p>
+                    <p class="text-xs text-slate-400 mt-1">
+                      ${order.type?.toUpperCase()} • ${paymentIcon} ${paymentText}
+                    </p>
+                  </div>
+                  <div class="text-right ml-4">
+                    <p class="font-bold text-slate-900">${formatCurrency(order.total)}</p>
+                    <p class="text-xs text-slate-400 mt-1">${formatDateTime(order.createdAt)}</p>
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+        
+        ${sortedOrders.length === 0 ? '<p class="text-center text-slate-500 py-4">Nenhum pedido registrado</p>' : ''}
+      `;
+      
+      document.getElementById('clientModal').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    };
+
+    // ✅ Ver detalhes de um pedido específico
+    window.viewOrderDetails = (orderId) => {
+      if (!currentClient) return;
+      
+      const order = currentClient.orderList.find(o => o.id === orderId);
+      if (!order) return;
+      
+      showToast(`📋 Pedido ${order.orderId} - ${formatCurrency(order.total)}`, 'info');
+      // Aqui você pode expandir para mostrar mais detalhes ou abrir modal específico
+    };
+
+    // ✅ Fechar modal do cliente
+    window.closeClientModal = () => {
+      document.getElementById('clientModal').classList.remove('active');
+      document.body.style.overflow = '';
+      currentClient = null;
+    };
+
+    // ✅ Fechar modal ao clicar fora
+    document.getElementById('clientModal')?.addEventListener('click', (e) => {
+      if (e.target.id === 'clientModal' || e.target.classList.contains('modal-overlay')) {
+        closeClientModal();
+      }
+    });
+
+    // ✅ Refresh clients
+    window.refreshClients = () => {
+      showToast('🔄 Atualizando...', 'info');
+      loadClients();
+    };
+
+    // ✅ Search with debounce
+    let searchTimeout;
+    document.getElementById('clientSearch')?.addEventListener('input', (e) => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        renderClients(allClients);
+      }, 300);
+    });
+
+    // ✅ Logout
+    window.handleLogout = async () => {
+      if (confirm('Tem certeza que deseja sair?')) {
+        try {
+          await signOut(auth);
+          showToast('✅ Logout realizado com sucesso!', 'success');
+          setTimeout(() => { window.location.href = 'login.html'; }, 1500);
+        } catch (error) {
+          console.error('Erro no logout:', error);
+          showToast('❌ Erro ao fazer logout', 'error');
+        }
+      }
+    };
+
+    document.getElementById('logoutBtn')?.addEventListener('click', handleLogout);
+
+    // ✅ Toast notifications
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      
+      const styles = {
+        success: 'bg-success-500 border-success-600',
+        error: 'bg-red-500 border-red-600',
+        warning: 'bg-amber-500 border-amber-600',
+        info: 'bg-blue-500 border-blue-600'
+      };
+      
+      const icons = {
+        success: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>',
+        error: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+        warning: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01"></path></svg>',
+        info: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01"></path></svg>'
+      };
+      
+      toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-white border-l-4 ${styles[type]} transform transition-all duration-300 translate-x-full`;
+      toast.innerHTML = `
+        ${icons[type]}
+        <span class="text-sm font-medium">${message}</span>
+        <button onclick="this.parentElement.remove()" class="ml-2 hover:opacity-80 transition">✕</button>
+      `;
+      
+      container.appendChild(toast);
+      
+      // Animar entrada
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-x-full');
+      });
+      
+      // Auto-remover
+      const duration = type === 'warning' ? 5000 : 3000;
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-x-full');
+        setTimeout(() => toast.remove(), 300);
+      }, duration);
+    }
+
+    // ✅ Inicialização
+    async function initClientsPage() {
+      // Verificar autenticação de admin
+      const isAdmin = await verifyAdmin();
+      if (!isAdmin) return;
+      
+      // Inicializar ícones
+      if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+      }
+      
+      // Carregar clientes
+      await loadClients();
+      
+      console.log('✅ Página de clientes inicializada');
+    }
+    
+    // Iniciar quando o DOM estiver pronto
+    document.addEventListener('DOMContentLoaded', initClientsPage);
+  </script>
+</body>
+</html>
