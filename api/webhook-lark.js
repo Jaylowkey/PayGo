@@ -13,7 +13,6 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'LARK_WEBHOOK_URL not configured' });
     }
 
-    // ✅ Preparar payload baseado no tipo
     let payload = {};
 
     switch (type) {
@@ -54,12 +53,12 @@ export default async function handler(req, res) {
         };
         break;
 
-      case 'password-reset':
+      case 'new-payment':
         payload = {
           msg_type: "text",
           content: {
-            text: `🔐 **Recuperação de Senha Solicitada**\n• Email: ${data.email}\n• Hora: ${new Date().toLocaleString('pt-MZ')}\n• IP: ${data.ip || 'N/A'}`
-          }
+            text: `💰 **Novo Pagamento Recebido**\n• Pedido: ${data.order_id || 'N/A'}\n• Cliente: ${data.customer || 'N/A'}\n• Total: ${data.total ? Number(data.total).toLocaleString('pt-MZ') + ' MT' : 'N/A'}\n• Pagamento: ${data.payment_method || 'N/A'}\n• Data: ${new Date().toLocaleString('pt-MZ')}`
+          } 
         };
         break;
 
@@ -87,6 +86,15 @@ export default async function handler(req, res) {
         };
         break;
 
+      case 'password-reset':
+        payload = {
+          msg_type: "text",
+          content: {
+            text: `🔐 **Recuperação de Senha Solicitada**\n• Email: ${data.email}\n• Hora: ${new Date().toLocaleString('pt-MZ')}\n• IP: ${data.ip || 'N/A'}`
+          } 
+        };
+        break;
+
       default:
         payload = {
           msg_type: "text",
@@ -96,7 +104,6 @@ export default async function handler(req, res) {
         };
     }
 
-    // ✅ Enviar para Lark
     const response = await fetch(LARK_WEBHOOK_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -105,7 +112,7 @@ export default async function handler(req, res) {
 
     const result = await response.json();
 
-    if (result.code === 0 || result.StatusCode === 0 || !result.code) {
+    if (result.code === 0 || result.StatusCode === 0 || (!result.code && response.ok)) {
       console.log('✅ Lark notification sent:', type);
       return res.status(200).json({ 
         success: true, 
@@ -119,9 +126,9 @@ export default async function handler(req, res) {
 
   } catch (err) {
     console.error('❌ Lark webhook error:', err);
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: 'Internal server error',
-      message: err.message 
+      message: err.message
     });
   }
 }
