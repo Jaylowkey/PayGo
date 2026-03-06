@@ -93,7 +93,50 @@
       }
     }
   </script>
+
+  <!-- ✅ PWA Meta Tags -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PayGo">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="manifest" href="/manifest.json">
+
+<!-- ✅ PWA Install Script -->
+<script>
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  showInstallPrompt();
+});
+
+function showInstallPrompt() {
+  const installBtn = document.createElement('button');
+  installBtn.id = 'installApp';
+  installBtn.innerHTML = '📲 Instalar App PayGo';
+  installBtn.style.cssText = 'position:fixed;bottom:80px;right:20px;background:#3b82f6;color:white;padding:12px 24px;border-radius:12px;border:none;font-weight:600;cursor:pointer;box-shadow:0 4px 20px rgba(59,130,246,0.4);z-index:9999;';
+  document.body.appendChild(installBtn);
   
+  installBtn.addEventListener('click', async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        console.log('User accepted the install prompt');
+      }
+      deferredPrompt = null;
+      installBtn.remove();
+    }
+  });
+}
+
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js')
+    .then(reg => console.log('Service Worker registered:', reg.scope))
+    .catch(err => console.error('Service Worker registration failed:', err));
+}
+</script>
   <!-- ✅ CSS Personalizado -->
   <style>
     /* Scrollbar Personalizado */
@@ -1803,6 +1846,7 @@
   
 </body>
 </html>
+
 
 
 
