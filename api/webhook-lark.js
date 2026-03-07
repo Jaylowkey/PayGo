@@ -1,7 +1,18 @@
 // api/webhook-lark.js
 export default async function handler(req, res) {
+  // ✅ CORS headers para segurança
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  // ✅ Handle preflight request
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   // ✅ Apenas POST
   if (req.method !== 'POST') {
+    console.warn('⚠️ [webhook-lark] Method not allowed:', req.method);
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
@@ -10,8 +21,11 @@ export default async function handler(req, res) {
     const LARK_WEBHOOK_URL = process.env.LARK_WEBHOOK_URL;
 
     if (!LARK_WEBHOOK_URL) {
+      console.error('❌ [webhook-lark] LARK_WEBHOOK_URL not configured');
       return res.status(500).json({ error: 'LARK_WEBHOOK_URL not configured' });
     }
+
+    console.log('🔔 [webhook-lark] Processing notification:', { type, hasData: !!data });
 
     let payload = {};
 
@@ -44,6 +58,7 @@ export default async function handler(req, res) {
                     tag: "button",
                     text: { tag: "plain_text", content: "Ver no Admin" },
                     type: "primary",
+                    // ✅ URL SEM espaços no final
                     url: `${process.env.SITE_URL || 'https://paygo.co.mz'}/admin.html`
                   }
                 ]
@@ -104,31 +119,47 @@ export default async function handler(req, res) {
         };
     }
 
+    console.log('📤 [webhook-lark] Sending payload to Lark');
+
     const response = await fetch(LARK_WEBHOOK_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
 
-    const result = await response.json();
+    const responseText = await response.text();
+    let result;
+    try {
+      result = JSON.parse(responseText);
+    } catch {
+      result = { raw: responseText };
+    }
 
+    console.log('📥 [webhook-lark] Lark response:', {
+      status: response.status,
+      statusText: response.statusText,
+      result: result
+    });
+
+    // ✅ Lark retorna code: 0 para sucesso
     if (result.code === 0 || result.StatusCode === 0 || (!result.code && response.ok)) {
-      console.log('✅ Lark notification sent:', type);
+      console.log('✅ [webhook-lark] Notification sent successfully:', type);
       return res.status(200).json({ 
         success: true, 
         message: 'Notificação Lark enviada',
         data: result 
       });
     } else {
-      console.error('❌ Lark API error:', result);
+      console.error('❌ [webhook-lark] Lark API error:', result);
       return res.status(500).json({ error: 'Lark API error', data: result });
     }
 
   } catch (err) {
-    console.error('❌ Lark webhook error:', err);
+    console.error('❌ [webhook-lark] Critical error:', err);
     return res.status(500).json({
       error: 'Internal server error',
-      message: err.message
+      message: err.message,
+      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
     });
   }
 }
