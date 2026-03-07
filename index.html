@@ -1220,88 +1220,141 @@ fallback: true // Indica que pode usar fallback
 }
 }
 // ========================================================================
-// 📤 HANDLE FORM SUBMIT
+// 📤 HANDLE FORM SUBMIT - ✅ CORRIGIDO COM NOTIFICAÇÕES
 // ========================================================================
 async function handleFormSubmit(e) {
-e.preventDefault();
-const btn = document.getElementById('submitBtn');
-const btnText = btn.querySelector('.btn-text');
-const btnSpinner = btn.querySelector('.btn-spinner');
-const originalContent = btn.innerHTML;
-// Estado de loading
-btn.disabled = true;
-btn.setAttribute('aria-busy', 'true');
-if (btnText) btnText.textContent = 'Processando...';
-if (btnSpinner) btnSpinner.classList.remove('hidden');
-// Coletar dados do formulário
-const formData = {
-name: document.getElementById('userName').value.trim(),
-whatsapp: document.getElementById('userWhatsApp').value.trim(),
-email: document.getElementById('userEmail').value.trim(),
-usd: parseFloat(document.getElementById('userUSD').value) || 0,
-type: document.getElementById('serviceType').value,
-detail: document.getElementById('userLink').value.trim(),
-isFirst: document.getElementById('chkFirstPurchase').checked,
-paymentMethod: document.querySelector('input[name="paymentMethod"]:checked')?.value || 'mpesa'
-};
-// Validações
-if (!formData.detail) {
-showToast('Por favor, preencha o link do produto ou ID do jogo.', 'error');
-resetButton();
-return;
-}
-if (!formData.usd || formData.usd <= 0) {
-showToast('Insira um valor válido em USD.', 'error');
-resetButton();
-return;
-}
-if (!formData.whatsapp || !/^\+?258\d{9}$/.test(formData.whatsapp.replace(/\s/g, ''))) {
-showToast('Insira um número de WhatsApp válido de Moçambique.', 'error');
-resetButton();
-return;
-}
-if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-showToast('Insira um endereço de email válido.', 'error');
-resetButton();
-return;
-}
-// Calcular valores
-const converted = formData.usd * BINANCE_RATE;
-const tax = (formData.usd <= 5 && formData.isFirst) ? 0 :
-(formData.usd <= 20 ? 150 :
-(formData.usd <= 50 ? 250 :
-(formData.usd <= 100 ? 600 : converted * 0.07)));
-const total = converted + tax;
-// Gerar ID único do pedido
-const orderId = 'PG-' + Date.now().toString().slice(-6);
-// Preparar dados para Firebase
-const orderData = {
-orderId,
-name: formData.name,
-whatsapp: formData.whatsapp,
-email: formData.email,
-type: formData.type,
-detail: formData.detail,
-paymentMethod: formData.paymentMethod,
-usd: formData.usd,
-tax: tax,
-total: total,
-exchangeRate: BINANCE_RATE,
-status: 'pending',
-isFirstPurchase: formData.isFirst,
-clientIP: null, // Pode ser preenchido via API se necessário
-metadata: {
-userAgent: navigator.userAgent,
-timestamp: new Date().toISOString(),
-formVersion: '2.0'
-}
-};
-console.log('📦 Dados do pedido:', orderData);
-try {
-// 1. Salvar no Firebase
-const firebaseResult = await saveOrderToFirebase(orderData);
-// 2. Preparar mensagem para WhatsApp
-const whatsappMsg = `━━━━━━━━━━━━━━━━━━━
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  const btnText = btn.querySelector('.btn-text');
+  const btnSpinner = btn.querySelector('.btn-spinner');
+  const originalContent = btn.innerHTML;
+
+  // Estado de loading
+  btn.disabled = true;
+  btn.setAttribute('aria-busy', 'true');
+  if (btnText) btnText.textContent = 'Processando...';
+  if (btnSpinner) btnSpinner.classList.remove('hidden');
+
+  // Coletar dados do formulário
+  const formData = {
+    name: document.getElementById('userName').value.trim(),
+    whatsapp: document.getElementById('userWhatsApp').value.trim(),
+    email: document.getElementById('userEmail').value.trim(),
+    usd: parseFloat(document.getElementById('userUSD').value) || 0,
+    type: document.getElementById('serviceType').value,
+    detail: document.getElementById('userLink').value.trim(),
+    isFirst: document.getElementById('chkFirstPurchase').checked,
+    paymentMethod: document.querySelector('input[name="paymentMethod"]:checked')?.value || 'mpesa'
+  };
+
+  // Validações
+  if (!formData.detail) {
+    showToast('Por favor, preencha o link do produto ou ID do jogo.', 'error');
+    resetButton(); return;
+  }
+  if (!formData.usd || formData.usd <= 0) {
+    showToast('Insira um valor válido em USD.', 'error');
+    resetButton(); return;
+  }
+  if (!formData.whatsapp || !/^\+?258\d{9}$/.test(formData.whatsapp.replace(/\s/g, ''))) {
+    showToast('Insira um número de WhatsApp válido de Moçambique.', 'error');
+    resetButton(); return;
+  }
+  if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    showToast('Insira um endereço de email válido.', 'error');
+    resetButton(); return;
+  }
+
+  // Calcular valores
+  const converted = formData.usd * BINANCE_RATE;
+  const tax = (formData.usd <= 5 && formData.isFirst) ? 0 :
+    (formData.usd <= 20 ? 150 :
+    (formData.usd <= 50 ? 250 :
+    (formData.usd <= 100 ? 600 : converted * 0.07)));
+  const total = converted + tax;
+
+  // Gerar ID único do pedido
+  const orderId = 'PG-' + Date.now().toString().slice(-6);
+
+  // Preparar dados para Firebase
+  const orderData = {
+    orderId,
+    name: formData.name,
+    whatsapp: formData.whatsapp,
+    email: formData.email,
+    type: formData.type,
+    detail: formData.detail,
+    paymentMethod: formData.paymentMethod,
+    usd: formData.usd,
+    tax: tax,
+    total: total,
+    exchangeRate: BINANCE_RATE,
+    status: 'pending',
+    isFirstPurchase: formData.isFirst,
+    metadata: {
+      userAgent: navigator.userAgent,
+      timestamp: new Date().toISOString(),
+      formVersion: '2.0',
+      userLoggedIn: false // ✅ Marca que é usuário não logado
+    }
+  };
+
+  console.log('📦 Dados do pedido:', orderData);
+
+  try {
+    // 1️⃣ Salvar no Firebase
+    const firebaseResult = await saveOrderToFirebase(orderData);
+
+    // ✅ 2️⃣ CHAMAR API DE NOTIFICAÇÃO (Email + Lark) - PARA TODOS OS USUÁRIOS
+    try {
+      console.log('🔔 [Frontend] Enviando notificações para:', formData.email);
+      
+      const notifyResponse = await fetch('/api/notify-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderData: {
+            orderId,
+            name: formData.name,
+            whatsapp: formData.whatsapp,
+            email: formData.email,
+            total: total,
+            paymentMethod: formData.paymentMethod,
+            type: formData.type,
+            detail: formData.detail,
+            tax: tax,
+            exchangeRate: BINANCE_RATE,
+            createdAt: new Date().toISOString()
+          },
+          sendEmail: true,   // ✅ Enviar email ao cliente
+          sendLark: true     // ✅ Notificar admin
+        })
+      });
+
+      const notifyResult = await notifyResponse.json();
+      console.log('📧 Resultado notificações:', notifyResult);
+
+      if (notifyResult.results?.email?.success) {
+        console.log('✅ Email enviado ao cliente');
+      }
+      if (notifyResult.results?.lark?.success) {
+        console.log('✅ Notificação Lark enviada ao admin');
+      }
+    } catch (notifyError) {
+      console.warn('⚠️ Erro ao enviar notificações (não crítico):', notifyError);
+      // Não bloqueia o fluxo - notificações são secundárias
+    }
+
+    // 3️⃣ Feedback ao usuário
+    if (firebaseResult.success) {
+      showToast(`✅ Pedido ${orderId} registrado! Email enviado para ${formData.email}`, 'success', 6000);
+    } else {
+      showToast(`⚠️ Pedido registrado localmente. ID: ${orderId}`, 'warning', 6000);
+    }
+
+    // 4️⃣ Abrir WhatsApp após pequeno delay
+    setTimeout(() => {
+      const whatsappMsg = `━━━━━━━━━━━━━━━━━━━
 🛒 *NOVO PEDIDO PAYGO*
 ━━━━━━━━━━━━━━━━━━━
 📋 *ID do Pedido:* ${orderId}
@@ -1328,37 +1381,32 @@ const whatsappMsg = `━━━━━━━━━━━━━━━━━━━
 ━━━━━━━━━━━━━━━━━━━
 🗄️ *Pedido registrado no sistema PayGo*
 `;
-// 3. Feedback ao usuário
-if (firebaseResult.success) {
-showToast(`✅ Pedido ${orderId} registrado com sucesso!`, 'success', 5000);
-} else {
-showToast(`⚠️ Pedido registrado localmente. ID: ${orderId}`, 'warning', 6000);
-}
-// 4. Abrir WhatsApp após pequeno delay
-setTimeout(() => {
-const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMsg)}`;
-window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-// Resetar formulário após envio
-setTimeout(() => {
-document.getElementById('paygoForm').reset();
-calculate();
-updatePaymentMethod();
-toggleServiceType('compra');
-}, 1000);
-}, 1500);
-} catch (error) {
-console.error('❌ Erro no processamento:', error);
-showToast('❌ Ocorreu um erro. Tente novamente ou contate o suporte.', 'error');
-} finally {
-resetButton();
-}
-// Função auxiliar para resetar botão
-function resetButton() {
-btn.disabled = false;
-btn.setAttribute('aria-busy', 'false');
-btn.innerHTML = originalContent;
-if (typeof lucide !== 'undefined') lucide.createIcons();
-}
+      const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMsg)}`;
+      window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+
+      // Resetar formulário
+      setTimeout(() => {
+        document.getElementById('paygoForm').reset();
+        calculate();
+        updatePaymentMethod();
+        toggleServiceType('compra');
+      }, 1000);
+    }, 1500);
+
+  } catch (error) {
+    console.error('❌ Erro no processamento:', error);
+    showToast('❌ Ocorreu um erro. Tente novamente ou contate o suporte.', 'error');
+  } finally {
+    resetButton();
+  }
+
+  // Função auxiliar para resetar botão
+  function resetButton() {
+    btn.disabled = false;
+    btn.setAttribute('aria-busy', 'false');
+    btn.innerHTML = originalContent;
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+  }
 }
 // ========================================================================
 // 👤 HEADER AUTH DYNAMIC (Otimizado)
@@ -1597,3 +1645,4 @@ logout: window.logoutFromHeader
 </script>
 </body>
 </html>
+
