@@ -4,8 +4,19 @@ import { Resend } from 'resend';
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export default async function handler(req, res) {
+  // ✅ CORS headers para segurança
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  // ✅ Handle preflight request
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   // ✅ Apenas POST
   if (req.method !== 'POST') {
+    console.warn('⚠️ [send-email] Method not allowed:', req.method);
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
@@ -14,27 +25,27 @@ export default async function handler(req, res) {
 
     // ✅ Validações básicas
     if (!to || !subject || !template) {
-      console.error('❌ Missing fields:', { to, subject, template });
+      console.error('❌ [send-email] Missing fields:', { to, subject, template });
       return res.status(400).json({ 
         error: 'Missing required fields: to, subject, template',
         received: { to, subject, template }
       });
     }
 
-    console.log('📧 Processing email:', { template, to, type });
+    console.log('📧 [send-email] Processing:', { template, to, type }); 
 
     // ✅ Gerar HTML e texto baseado no template
     const html = generateEmailHTML(template, variables || {});
     const text = generateEmailText(template, variables || {});
 
     if (!html || html.trim() === '') {
-      console.error('❌ Empty HTML generated for template:', template);
+      console.error('❌ [send-email] Empty HTML generated for template:', template);
       return res.status(500).json({ error: 'Failed to generate email content', template });
     }
 
     // ✅ Enviar email via Resend
     const { data, error } = await resend.emails.send({
-      from: `PayGo Moçambique <noreply@paygo.co.mz>`,
+      from: 'PayGo Moçambique <noreply@paygo.co.mz>', // ✅ SEM espaços
       to: [to],
       subject: subject,
       html: html,
@@ -47,21 +58,21 @@ export default async function handler(req, res) {
     });
 
     if (error) {
-      console.error('❌ Resend API error:', error);
+      console.error('❌ [send-email] Resend API error:', error);
       return res.status(500).json({ error: error.message, resendError: error });
     }
 
-    console.log('✅ Email sent successfully:', { to, template, dataId: data?.id });
+    console.log('✅ [send-email] Email sent:', { to, template, dataId: data?.id });
     return res.status(200).json({ 
       success: true, 
-       data,
+      data,
       message: 'Email enviado com sucesso',
       sentTo: to,
       template: template
     });
 
   } catch (err) {
-    console.error('❌ API handler error:', err);
+    console.error('❌ [send-email] Critical error:', err);
     return res.status(500).json({ 
       error: 'Internal server error',
       message: err.message,
@@ -71,9 +82,10 @@ export default async function handler(req, res) {
 }
 
 // ==========================================
-// 🎨 GERADOR DE HTML PREMIUM
+// 🎨 GERADOR DE HTML - EMAILS PREMIUM
 // ==========================================
 function generateEmailHTML(template, vars) {
+  // ✅ Função de escape segura para HTML
   const escape = (str) => {
     if (!str && str !== 0) return '';
     return String(str)
@@ -84,7 +96,7 @@ function generateEmailHTML(template, vars) {
       .replace(/'/g, '&#039;');
   };
 
-  // ✅ CSS Base - Design de Fintech (Minimalista e Elegante)
+  // ✅ CSS Base - Design Fintech Minimalista
   const baseStyles = `
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -134,7 +146,7 @@ function generateEmailHTML(template, vars) {
         color: #4b5563;
       }
       .btn { 
-        display: block; 
+        display: inline-block; 
         background: #2563eb; 
         color: #ffffff !important; 
         padding: 14px 24px; 
@@ -209,6 +221,8 @@ function generateEmailHTML(template, vars) {
         font-weight: 600;
         color: #4b5563 !important;
       }
+      a { color: #2563eb; text-decoration: none; }
+      a:hover { text-decoration: underline; }
     </style>
   `;
 
@@ -218,6 +232,7 @@ function generateEmailHTML(template, vars) {
     : (process.env.NEXT_PUBLIC_SITE_URL || 'https://paygo.co.mz');
 
   const htmlStart = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">${baseStyles}</head><body><div class="wrapper"><div class="logo-container"><h1>PayGo</h1></div><div class="content">`;
+  
   const htmlEnd = `</div><div class="footer"><p class="brand-claim">Simples. Seguro. Moçambicano. 🇲🇿</p><p>PayGo Serviços Digitais &copy; ${new Date().getFullYear()}</p><p>Suporte: contact@paygo.co.mz | WhatsApp: +258 87 100 2255</p></div></div></body></html>`;
 
   switch (template) {
@@ -238,7 +253,6 @@ function generateEmailHTML(template, vars) {
 
     // 🎉 BOAS-VINDAS - ✅ LÓGICA DE AFILIADO CORRIGIDA
     case 'welcome': {
-      // ✅ IMPORTANTE: Só mostra código de afiliado se vars.affiliate_code EXISTIR e NÃO for vazio
       const hasAffiliateCode = vars.affiliate_code && 
                                vars.affiliate_code.trim() !== '' && 
                                vars.affiliate_code !== 'null' && 
@@ -357,7 +371,7 @@ function generateEmailHTML(template, vars) {
 }
 
 // ==========================================
-// 📝 GERADOR DE TEXTO (Para clientes sem HTML)
+// 📝 GERADOR DE TEXTO PLAIN (Fallback)
 // ==========================================
 function generateEmailText(template, vars) {
   const escape = (str) => {
@@ -367,11 +381,13 @@ function generateEmailText(template, vars) {
 
   const footer = `\n\n---\nPayGo Moçambique - Simples. Seguro. Moçambicano. 🇲🇿\nSuporte: contact@paygo.co.mz | WhatsApp: +258 87 100 2255`;
 
+  // ✅ URL base para links - SEM ESPAÇOS
+  const baseUrl = process.env.VERCEL_URL 
+    ? `https://${process.env.VERCEL_URL}` 
+    : (process.env.NEXT_PUBLIC_SITE_URL || 'https://paygo.co.mz');
+
   switch (template) {
     case 'email-verification': {
-      const baseUrl = process.env.VERCEL_URL 
-        ? `https://${process.env.VERCEL_URL}` 
-        : (process.env.NEXT_PUBLIC_SITE_URL || 'https://paygo.co.mz');
       const verifyLink = `${baseUrl}/verify-email.html?token=${vars.verificationToken || 'DEMO_TOKEN'}&email=${encodeURIComponent(vars.email || '')}`;
       return `CONFIRME O SEU E-MAIL - PAYGO\n\nOlá ${escape(vars.customer_name || 'Cliente')},\n\nPara garantir a segurança da sua conta, valide o seu e-mail acedendo a este link:\n${verifyLink}\n\nAviso: Este link expira em 24 horas.${footer}`;
     }
@@ -382,7 +398,7 @@ function generateEmailText(template, vars) {
                                vars.affiliate_code !== 'null' && 
                                vars.affiliate_code !== 'undefined';
       
-      let message = `BEM-VINDO À PAYGO! 🚀\n\nOlá ${escape(vars.customer_name || 'Cliente')},\nA sua conta foi ativada. Já pode fazer compras internacionais pagando com M-Pesa ou e-Mola.\n\nAceda à sua conta: ${escape(vars.dashboard_link || 'https://paygo.co.mz')}`;
+      let message = `BEM-VINDO À PAYGO! 🚀\n\nOlá ${escape(vars.customer_name || 'Cliente')},\nA sua conta foi ativada. Já pode fazer compras internacionais pagando com M-Pesa ou e-Mola.\n\nAceda à sua conta: ${escape(vars.dashboard_link || baseUrl)}`;
       
       if (hasAffiliateCode) {
         message += `\n\n🎁 O seu Código de Afiliado: ${escape(vars.affiliate_code)}\nPartilhe e ganhe 3% na primeira compra de cada amigo.`;
@@ -395,7 +411,7 @@ function generateEmailText(template, vars) {
       return `RECUPERAÇÃO DE SENHA - PAYGO\n\nOlá ${escape(vars.customer_name || 'Cliente')},\n\nAceda ao link abaixo para redefinir a sua senha:\n${escape(vars.reset_link || '#')}\n\nAviso: Este link expira em 1 hora.${footer}`;
       
     case 'order-confirmation':
-      return `PEDIDO RECEBIDO - PAYGO ✅\n\nO seu pedido #${escape(vars.order_id || 'N/A')} foi registado.\n\nVALOR TOTAL A PAGAR: ${escape(vars.total_amount || '0.00 MT')}\n\nPara finalizar, transfira o valor para:\ne-Mola: 87 752 2255\nM-Pesa: 84 162 7519\n\nEnvie o comprovativo para o WhatsApp: +258 87 100 2255${footer}`;
+      return `PEDIDO RECEBIDO - PAYGO ✅\n\nO seu pedido #${escape(vars.order_id || 'N/A')} foi registado.\n\nVALOR TOTAL A PAGAR: ${escape(vars.total_amount || '0.00 MT')}\n\nPara finalizar, transfira o valor para:\ne-Mola: 87 752 2255\nM-Pesa: 84 162 7519\n\nEnvie o comprovativo para o WhatsApp: https://wa.me/258871002255${footer}`;
       
     case 'affiliate-approved':
       return `CANDIDATURA APROVADA - PAYGO 🎉\n\nParabéns ${escape(vars.customer_name || 'Cliente')}! O seu perfil de afiliado foi aprovado.\n\nO seu código: ${escape(vars.affiliate_code || 'AFF-XXXX')}\nComissão: 3% na primeira compra de cada amigo indicado.${footer}`;
