@@ -226,7 +226,7 @@ function generateEmailHTML(template, vars) {
     </style>
   `;
 
-  // ✅ URL base para links - SEM ESPAÇOS
+  // ✅ URL base para links - ✅ SEM ESPAÇOS
   const baseUrl = process.env.VERCEL_URL 
     ? `https://${process.env.VERCEL_URL}` 
     : (process.env.NEXT_PUBLIC_SITE_URL || 'https://paygo.co.mz');
@@ -381,7 +381,7 @@ function generateEmailText(template, vars) {
 
   const footer = `\n\n---\nPayGo Moçambique - Simples. Seguro. Moçambicano. 🇲🇿\nSuporte: contact@paygo.co.mz | WhatsApp: +258 87 100 2255`;
 
-  // ✅ URL base para links - SEM ESPAÇOS
+  // ✅ URL base para links - ✅ SEM ESPAÇOS
   const baseUrl = process.env.VERCEL_URL 
     ? `https://${process.env.VERCEL_URL}` 
     : (process.env.NEXT_PUBLIC_SITE_URL || 'https://paygo.co.mz');
