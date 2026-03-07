@@ -1642,8 +1642,285 @@ logout: window.logoutFromHeader
 "https://web.facebook.com/profile.php?id=61586222356575"
 ]
 }
+  // ========================================================================
+// 💳 PAYSUITE PAYMENT INTEGRATION
+// ========================================================================
+
+let paysuiteCurrentOrder = null;
+let paysuitePollingInterval = null;
+
+// Abrir modal de pagamento PaySuite
+window.openPaysuiteModal = async function(orderData) {
+  paysuiteCurrentOrder = orderData;
+  
+  // Resetar modal para step 1
+  document.getElementById('paysuiteStep1').classList.remove('hidden');
+  document.getElementById('paysuiteStep2').classList.add('hidden');
+  document.getElementById('paysuiteStep3').classList.add('hidden');
+  document.getElementById('paysuiteStep4').classList.add('hidden');
+  
+  // Preencher dados
+  document.getElementById('paysuiteAmount').textContent = 
+    `${parseFloat(orderData.total).toLocaleString('pt-MZ', {minimumFractionDigits: 2})} MT`;
+  document.getElementById('paysuiteOrderId').textContent = orderData.orderId;
+  
+  // Definir método padrão baseado no form
+  const formMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'mpesa';
+  selectPaysuiteMethod(formMethod);
+  document.querySelector(`input[name="paysuiteMethod"][value="${formMethod}"]`).checked = true;
+  
+  // Preencher telefone do form
+  document.getElementById('paysuitePhone').value = 
+    document.getElementById('userWhatsApp')?.value || '';
+  
+  // Mostrar modal
+  document.getElementById('paysuiteModal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+};
+
+// Fechar modal
+window.closePaysuiteModal = function() {
+  document.getElementById('paysuiteModal').classList.add('hidden');
+  document.body.style.overflow = '';
+  
+  // Limpar polling se existir
+  if (paysuitePollingInterval) {
+    clearInterval(paysuitePollingInterval);
+    paysuitePollingInterval = null;
+  }
+  
+  paysuiteCurrentOrder = null;
+};
+
+// Selecionar método de pagamento
+window.selectPaysuiteMethod = function(method) {
+  // Atualizar UI
+  document.querySelectorAll('.payment-option').forEach(opt => {
+    opt.classList.remove('border-brand-500', 'bg-brand-50', 'dark:bg-brand-900/20');
+  });
+  event?.target?.closest('.payment-option')?.classList.add('border-brand-500', 'bg-brand-50', 'dark:bg-brand-900/20');
+  
+  // Atualizar display
+  document.getElementById('paysuiteMethodDisplay').textContent = 
+    method === 'mpesa' ? 'M-Pesa' : 'e-Mola';
+  
+  // Atualizar placeholder do telefone
+  const phoneInput = document.getElementById('paysuitePhone');
+  phoneInput.placeholder = method === 'mpesa' ? '+258 84 XXX XXXX' : '+258 87 XXX XXXX';
+};
+
+// Iniciar pagamento via PaySuite
+window.initiatePaysuitePayment = async function() {
+  const phone = document.getElementById('paysuitePhone').value.trim();
+  const method = document.querySelector('input[name="paysuiteMethod"]:checked')?.value;
+  
+  // Validações
+  if (!phone || !/^\+?258\d{9}$/.test(phone.replace(/\s/g, ''))) {
+    showToast('Insira um número de telefone válido de Moçambique.', 'error');
+    return;
+  }
+  
+  if (!method) {
+    showToast('Selecione um método de pagamento.', 'error');
+    return;
+  }
+  
+  if (!paysuiteCurrentOrder) {
+    showToast('Erro: Dados do pedido não encontrados.', 'error');
+    return;
+  }
+  
+  // Mostrar step 2 (aguardando)
+  document.getElementById('paysuiteStep1').classList.add('hidden');
+  document.getElementById('paysuiteStep2').classList.remove('hidden');
+  
+  try {
+    // Chamar API para iniciar pagamento
+    const response = await fetch('/api/paysuite-payment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        orderId: paysuiteCurrentOrder.orderId,
+        amount: paysuiteCurrentOrder.total,
+        currency: 'MZN',
+        phone: phone,
+        method: method,
+        email: paysuiteCurrentOrder.email,
+        name: paysuiteCurrentOrder.name,
+        description: `Pedido PayGo #${paysuiteCurrentOrder.orderId}`,
+        userId: window.currentUser?.uid || null,
+        orderType: paysuiteCurrentOrder.type
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (!result.success) {
+      throw new Error(result.error || 'Falha ao iniciar pagamento');
+    }
+    
+    console.log('✅ PaySuite payment initiated:', result.data);
+    
+    // ✅ Iniciar polling para verificar status do pagamento
+    startPaymentPolling(result.data.paymentId);
+    
+  } catch (err) {
+    console.error('❌ PaySuite payment error:', err);
+    showPaysuiteError('Não foi possível iniciar o pagamento. Tente novamente.');
+  }
+};
+
+// Polling para verificar status do pagamento
+function startPaymentPolling(paymentId) {
+  let attempts = 0;
+  const maxAttempts = 30; // 5 minutos (10s interval)
+  
+  paysuitePollingInterval = setInterval(async () => {
+    attempts++;
+    
+    if (attempts >= maxAttempts) {
+      clearInterval(paysuitePollingInterval);
+      showPaysuiteError('Tempo limite excedido. Verifique seu aplicativo M-Pesa/e-Mola.');
+      return;
+    }
+    
+    try {
+      // ✅ Verificar status via API (ou usar WebSocket se disponível)
+      const response = await fetch(`/api/paysuite-status?paymentId=${paymentId}`);
+      const result = await response.json();
+      
+      if (result.success && result.data?.status === 'completed') {
+        // ✅ Pagamento confirmado!
+        clearInterval(paysuitePollingInterval);
+        showPaysuiteSuccess(result.data);
+        
+        // ✅ Atualizar pedido no frontend
+        if (paysuiteCurrentOrder) {
+          paysuiteCurrentOrder.paymentStatus = 'paid';
+          paysuiteCurrentOrder.paysuitePaymentId = result.data.payment_id;
+        }
+        
+      } else if (result.success && result.data?.status === 'failed') {
+        clearInterval(paysuitePollingInterval);
+        showPaysuiteError('Pagamento não autorizado ou cancelado.');
+      }
+      
+    } catch (err) {
+      console.warn('⚠️ Polling error:', err);
+      // Continuar tentando
+    }
+    
+  }, 10000); // Verificar a cada 10 segundos
+}
+
+// Mostrar sucesso
+function showPaysuiteSuccess(data) {
+  document.getElementById('paysuiteStep2').classList.add('hidden');
+  document.getElementById('paysuiteStep3').classList.remove('hidden');
+  document.getElementById('paysuiteRef').textContent = data.transaction_ref || 'N/A';
+  
+  showToast('✅ Pagamento confirmado! Seu pedido está sendo processado.', 'success', 6000);
+  
+  // ✅ Atualizar UI do formulário
+  const submitBtn = document.getElementById('submitBtn');
+  if (submitBtn) {
+    submitBtn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i> Pago com Sucesso';
+    submitBtn.disabled = true;
+    submitBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+    submitBtn.classList.remove('bg-slate-900', 'hover:bg-slate-800');
+  }
+  
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+// Mostrar erro
+function showPaysuiteError(message) {
+  document.getElementById('paysuiteStep2').classList.add('hidden');
+  document.getElementById('paysuiteStep4').classList.remove('hidden');
+  document.getElementById('paysuiteError').textContent = message;
+  
+  showToast('❌ Erro no pagamento. Tente novamente.', 'error');
+}
+
+// Resetar modal para tentar novamente
+window.resetPaysuiteModal = function() {
+  document.getElementById('paysuiteStep4').classList.add('hidden');
+  document.getElementById('paysuiteStep1').classList.remove('hidden');
+};
+
+// Cancelar pagamento
+window.cancelPaysuitePayment = function() {
+  if (paysuitePollingInterval) {
+    clearInterval(paysuitePollingInterval);
+    paysuitePollingInterval = null;
+  }
+  closePaysuiteModal();
+  showToast('Pagamento cancelado.', 'warning');
+};
+
+// ✅ Botão "Pagar Agora" no formulário
+document.addEventListener('DOMContentLoaded', function() {
+  const payNowBtn = document.createElement('button');
+  payNowBtn.type = 'button';
+  payNowBtn.id = 'payNowBtn';
+  payNowBtn.className = 'w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 rounded-xl font-bold hover:from-green-500 hover:to-emerald-500 transition-all flex items-center justify-center gap-2 shadow-xl shadow-green-500/20 transform active:scale-[0.98] mt-3';
+  payNowBtn.innerHTML = '<i data-lucide="credit-card" class="w-5 h-5"></i><span>Pagar Agora com PaySuite</span>';
+  payNowBtn.onclick = function() {
+    // Validar formulário primeiro
+    const form = document.getElementById('paygoForm');
+    if (form && !form.checkValidity()) {
+      form.reportValidity();
+      showToast('Por favor, preencha todos os campos obrigatórios.', 'error');
+      return;
+    }
+    
+    // Coletar dados do pedido
+    const orderData = {
+      orderId: 'PG-' + Date.now().toString().slice(-6),
+      name: document.getElementById('userName').value.trim(),
+      email: document.getElementById('userEmail').value.trim(),
+      whatsapp: document.getElementById('userWhatsApp').value.trim(),
+      total: parseFloat(document.getElementById('receipt-total').textContent) || 0,
+      type: document.getElementById('serviceType').value,
+      detail: document.getElementById('userLink').value.trim()
+    };
+    
+    if (!orderData.name || !orderData.email || !orderData.whatsapp || !orderData.total) {
+      showToast('Preencha todos os campos do pedido primeiro.', 'error');
+      return;
+    }
+    
+    // Salvar pedido no Firebase primeiro
+    saveOrderToFirebase({
+      ...orderData,
+      usd: parseFloat(document.getElementById('userUSD').value) || 0,
+      paymentMethod: document.querySelector('input[name="paymentMethod"]:checked')?.value || 'mpesa',
+      status: 'pending',
+      paymentStatus: 'pending'
+    }).then(result => {
+      if (result.success) {
+        orderData.orderId = result.orderId;
+        openPaysuiteModal(orderData);
+      } else {
+        showToast('Erro ao registrar pedido. Tente novamente.', 'error');
+      }
+    });
+  };
+  
+  // Inserir botão após o botão de WhatsApp
+  const submitBtn = document.getElementById('submitBtn');
+  if (submitBtn?.parentNode) {
+    submitBtn.parentNode.insertBefore(payNowBtn, submitBtn.nextSibling);
+  }
+  
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+});
 </script>
+  
 </body>
 </html>
+
 
 
