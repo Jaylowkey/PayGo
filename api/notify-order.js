@@ -4,12 +4,15 @@ import { Resend } from 'resend';
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export default async function handler(req, res) {
-  // ✅ Log inicial
-  console.log('🔔 [notify-order] Request received:', {
-    method: req.method,
-    url: req.url,
-    hasBody: !!req.body
-  });
+  // ✅ CORS headers para segurança
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  // ✅ Handle preflight request
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
 
   // ✅ Apenas POST
   if (req.method !== 'POST') {
@@ -29,7 +32,7 @@ export default async function handler(req, res) {
         console.log('📧 [notify-order] Sending email to:', orderData.email);
         
         const { data, error } = await resend.emails.send({
-          from: `PayGo Moçambique <noreply@paygo.co.mz>`,
+          from: 'PayGo Moçambique <noreply@paygo.co.mz>', // ✅ SEM espaços
           to: [orderData.email],
           subject: `✅ Pedido ${orderData.orderId} Confirmado - PayGo`,
           html: generateOrderConfirmationHTML(orderData),
@@ -83,6 +86,7 @@ export default async function handler(req, res) {
                     tag: "button",
                     text: { tag: "plain_text", content: "Ver no Admin" },
                     type: "primary",
+                    // ✅ URL SEM espaços no final
                     url: `${process.env.SITE_URL || 'https://paygo.co.mz'}/admin.html`
                   }
                 ]
@@ -110,6 +114,12 @@ export default async function handler(req, res) {
         } catch {
           result = { raw: responseText };
         }
+
+        console.log('📥 [notify-order] Lark response:', {
+          status: response.status,
+          statusText: response.statusText,
+          result: result
+        });
 
         // ✅ Lark retorna code: 0 para sucesso
         if (result.code === 0 || result.StatusCode === 0 || (!result.code && response.ok)) {
@@ -155,7 +165,7 @@ export default async function handler(req, res) {
   }
 }
 
-// ✅ HTML do Email de Confirmação
+// ✅ HTML do Email de Confirmação - TEMPLATE PROFISSIONAL
 function generateOrderConfirmationHTML(order) {
   return `
 <!DOCTYPE html>
@@ -176,6 +186,8 @@ function generateOrderConfirmationHTML(order) {
     .total-row .detail-label, .total-row .detail-value { color: white; }
     .cta-button { display: inline-block; background: #25D366; color: #fff !important; padding: 14px 32px; border-radius: 12px; text-decoration: none; font-weight: 600; margin: 20px 0; }
     .footer { background: #f8fafc; padding: 20px; text-align: center; color: #64748b; font-size: 12px; border-top: 1px solid #e2e8f0; }
+    a { color: #3b82f6; text-decoration: none; }
+    a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
@@ -200,7 +212,7 @@ function generateOrderConfirmationHTML(order) {
         </div>
         <div class="detail-row">
           <span style="color: #64748b;">Produto:</span>
-          <span style="color: #1e293b; font-weight: 600;"><a href="${order.detail || '#'}" style="color: #3b82f6;">Ver Link 🔗</a></span>
+          <span style="color: #1e293b; font-weight: 600;"><a href="${order.detail || '#'}">Ver Link 🔗</a></span>
         </div>
       </div>
 
@@ -231,7 +243,7 @@ function generateOrderConfirmationHTML(order) {
       
       <ol style="color: #334155; line-height: 2;">
         <li>Transfira o valor total (<strong>${(order.total || 0).toLocaleString('pt-MZ', {minimumFractionDigits: 2})} MT</strong>) para:
-          <ul>
+          <ul style="margin: 8px 0;">
             <li><strong>e-Mola:</strong> 87 752 2255</li>
             <li><strong>M-Pesa:</strong> 84 162 7519</li>
           </ul>
