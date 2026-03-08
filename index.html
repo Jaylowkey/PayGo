@@ -1025,17 +1025,20 @@ measurementId: "G-N9E391HCFL"
 // ⚙️ CONSTANTES DO SISTEMA
 // ========================================================================
 const BINANCE_RATE = 88.00;
-const WHATSAPP_NUMBER = '258837522255';
+const WHATSAPP_NUMBER = '25881002255';
 const COMPANY_EMAIL = 'contact@paygo.co.mz';
 // ========================================================================
 // 🚀 INICIALIZAÇÃO FIREBASE
 // ========================================================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
 const app = initializeApp(FIREBASE_CONFIG);
+// O seu banco de dados correto está aqui!
 const db = getFirestore(app, "paygodb");
-// Exportar para escopo global (apenas se necessário)
-window.PayGoDB = { db, collection, addDoc, serverTimestamp, query, where, getDocs };
+
+// Exportar para escopo global
+window.PayGoDB = { db, collection, addDoc, serverTimestamp, doc, getDoc };
 // ========================================================================
 // 🔔 SISTEMA DE TOAST NOTIFICATIONS
 // ========================================================================
@@ -1426,15 +1429,13 @@ window.location.href = 'index.html';
 console.error('❌ Erro no logout:', error);
 showToast('❌ Erro ao fazer logout. Tente novamente.', 'error');
 }
-};
-// ========================================================================
+};// ========================================================================
 // 💳 PAYMENT MODAL FUNCTIONS (PaySuite Real USSD Push)
 // ========================================================================
 let pollingInterval = null;
 let currentOrderData = null;
 
 window.openPaymentModal = async function() {
-  // 1. Validar Formulário
   const name = document.getElementById('userName').value.trim();
   const whatsapp = document.getElementById('userWhatsApp').value.trim();
   const email = document.getElementById('userEmail').value.trim();
@@ -1449,18 +1450,11 @@ window.openPaymentModal = async function() {
     return;
   }
 
-  if (!/^\+?258\d{9}$/.test(whatsapp.replace(/\s/g, ''))) {
-      showToast('Insira um número válido de Moçambique (+258...).', 'error');
-      return;
-  }
-  
-  // 2. Cálculos
   const converted = usd * BINANCE_RATE;
   const tax = (usd <= 5 && isFirst) ? 0 : (usd <= 20 ? 150 : usd <= 50 ? 250 : usd <= 100 ? 600 : converted * 0.07);
   const total = converted + tax;
   const orderId = 'PG-' + Date.now().toString().slice(-6).toUpperCase();
   
-  // 3. Preparar e exibir modal
   currentOrderData = {
     orderId, name, whatsapp, email, usd, detail, tax, total,
     exchangeRate: BINANCE_RATE, status: 'pending', paymentMethod,
@@ -1476,21 +1470,24 @@ window.openPaymentModal = async function() {
   document.getElementById('paymentStep3').classList.add('hidden');
   
   document.getElementById('paymentModalStatusTitle').textContent = 'A processar...';
-  document.getElementById('paymentModalStatusDesc').textContent = 'A criar o pedido de pagamento. Aguarde.';
+  document.getElementById('paymentModalStatusDesc').textContent = 'A comunicar com o servidor. Aguarde.';
   
   document.getElementById('paymentModal').classList.add('active');
   if (typeof lucide !== 'undefined') lucide.createIcons();
 
-  // 4. Iniciar Processo Real
   try {
-    // Salvar no Firebase como pendente
+    console.log("1. A guardar pedido no Firebase...");
     const fbResult = await saveOrderToFirebase(currentOrderData);
-    if(!fbResult.success) throw new Error("Erro ao salvar pedido no banco de dados.");
+    if(!fbResult.success) throw new Error("Erro ao salvar pedido no Firebase.");
 
-    // Chamar a API da PaySuite (A sua API no Vercel)
+    // Guardamos o ID real do documento do Firestore para consultar depois
+    currentOrderData.firestoreId = fbResult.orderId;
+
+    console.log("2. A contactar a API PaySuite...");
     await callPaySuiteAPI(currentOrderData);
 
   } catch (err) {
+    console.error("Erro principal no Modal:", err);
     showErrorStep(err.message || "Falha na comunicação com a operadora.");
   }
 };
@@ -1511,7 +1508,6 @@ function showErrorStep(message) {
     document.getElementById('modalErrorMsg').textContent = message;
 }
 
-// Call PaySuite API
 async function callPaySuiteAPI(orderData) {
   try {
       const response = await fetch('/api/paysuite-payment', {
@@ -1531,26 +1527,26 @@ async function callPaySuiteAPI(orderData) {
       
       const result = await response.json();
       
-      if (!result.success) {
-        throw new Error(result.error || result.message || 'Falha na API PaySuite');
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || result.message || 'O servidor da PaySuite rejeitou o pagamento.');
       }
 
-      // A API iniciou o pagamento. O utilizador deve ver o pop-up no telemóvel agora.
       document.getElementById('paymentModalStatusTitle').innerHTML = 'Verifique o seu telemóvel!';
-      document.getElementById('paymentModalStatusDesc').innerHTML = `Insira o seu PIN do <strong class="text-brand-600">${orderData.paymentMethod === 'mpesa' ? 'M-Pesa' : 'e-Mola'}</strong> para confirmar o valor de ${orderData.total} MT.`;
+      document.getElementById('paymentModalStatusDesc').innerHTML = `Insira o seu PIN do <strong class="text-brand-600">${orderData.paymentMethod === 'mpesa' ? 'M-Pesa' : 'e-Mola'}</strong> no seu telemóvel para confirmar o valor de ${orderData.total} MT.`;
       
-      // Começar a perguntar ao seu banco de dados se o Webhook já atualizou o status para "paid"
-      startPaymentPolling(orderData.orderId);
+      // Iniciar a verificação passando o ID do Firebase gerado no passo 1
+      startPaymentPolling(orderData.firestoreId, orderData.orderId);
 
   } catch (err) {
+     console.error("Erro no callPaySuiteAPI:", err);
      showErrorStep(err.message);
   }
 }
 
-// Poll for payment status no FIREBASE (O Webhook atualiza o Firebase)
-function startPaymentPolling(orderId) {
+// CORREÇÃO: Leitura direta com getDoc(). Resolve o problema WebChannel 400 Bad Request
+function startPaymentPolling(firestoreId, displayOrderId) {
     let attempts = 0;
-    const maxAttempts = 36; // 3 minutos de espera (a cada 5s)
+    const maxAttempts = 36; // 3 minutos
     
     pollingInterval = setInterval(async () => {
       attempts++;
@@ -1563,28 +1559,24 @@ function startPaymentPolling(orderId) {
       }
       
       try {
-        // Verifica diretamente no Firebase se o status mudou
-        const ordersRef = collection(db, "orders");
-        const q = query(ordersRef, where("orderId", "==", orderId));
-        const snapshot = await getDocs(q);
+        // Vai buscar o documento exato pelo seu ID. Isto nunca gera erro 400.
+        const orderDocRef = doc(db, "orders", firestoreId);
+        const orderSnap = await getDoc(orderDocRef);
         
-        if (!snapshot.empty) {
-            const orderDoc = snapshot.docs[0].data();
+        if (orderSnap.exists()) {
+            const orderDoc = orderSnap.data();
             
-            // O Webhook do Vercel alterou o status?
             if (orderDoc.status === 'processing' || orderDoc.paymentStatus === 'completed' || orderDoc.paymentStatus === 'paid') {
                 clearInterval(pollingInterval);
                 pollingInterval = null;
                 
-                // Sucesso!
                 document.getElementById('paymentStep1').classList.add('hidden');
                 document.getElementById('paymentStep3').classList.add('hidden');
                 document.getElementById('paymentStep2').classList.remove('hidden');
-                document.getElementById('successOrderId').textContent = orderId;
+                document.getElementById('successOrderId').textContent = displayOrderId;
                 
                 showToast('✅ Pagamento confirmado com sucesso!', 'success', 6000);
                 
-                // Limpar formulário se tudo deu certo
                 document.getElementById('paygoForm').reset();
                 calculate();
             } else if (orderDoc.paymentStatus === 'failed' || orderDoc.status === 'failed') {
@@ -1596,9 +1588,8 @@ function startPaymentPolling(orderId) {
       } catch (err) {
         console.warn('⚠️ Erro ao verificar status:', err);
       }
-    }, 5000); // Check a cada 5 segundos
+    }, 5000); 
 }
-
 // ========================================================================
 // 🎯 INICIALIZAÇÃO DA PÁGINA
 // ========================================================================
@@ -1761,3 +1752,4 @@ closePaymentModal: window.closePaymentModal
 </script>
 </body>
 </html>
+
