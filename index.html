@@ -1531,11 +1531,18 @@ async function callPaySuiteAPI(orderData) {
         throw new Error(result.error || result.message || 'O servidor da PaySuite rejeitou o pagamento.');
       }
 
-      document.getElementById('paymentModalStatusTitle').innerHTML = 'Verifique o seu telemóvel!';
-      document.getElementById('paymentModalStatusDesc').innerHTML = `Insira o seu PIN do <strong class="text-brand-600">${orderData.paymentMethod === 'mpesa' ? 'M-Pesa' : 'e-Mola'}</strong> no seu telemóvel para confirmar o valor de ${orderData.total} MT.`;
-      
-      // Iniciar a verificação passando o ID do Firebase gerado no passo 1
-      startPaymentPolling(orderData.firestoreId, orderData.orderId);
+      // Se a PaySuite devolveu o link com sucesso, redirecionamos o cliente!
+      if (result.data && result.data.checkoutUrl) {
+          document.getElementById('paymentModalStatusTitle').innerHTML = 'A redirecionar...';
+          document.getElementById('paymentModalStatusDesc').innerHTML = 'A abrir o portal seguro da PaySuite. Aguarde...';
+          
+          // Vai para a página da PaySuite onde o pop-up do M-Pesa é disparado
+          setTimeout(() => {
+             window.location.href = result.data.checkoutUrl;
+          }, 1500);
+      } else {
+          throw new Error("A PaySuite não devolveu o link de pagamento.");
+      }
 
   } catch (err) {
      console.error("Erro no callPaySuiteAPI:", err);
@@ -1752,4 +1759,5 @@ closePaymentModal: window.closePaymentModal
 </script>
 </body>
 </html>
+
 
