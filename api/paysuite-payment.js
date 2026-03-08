@@ -55,6 +55,7 @@ export default async function handler(req, res) {
       reference: orderId.replace(/[^a-zA-Z0-9]/g, ''), 
       description: description || `Pedido PayGo #${orderId}`,
       callback_url: `${process.env.SITE_URL || 'https://www.paygo.co.mz'}/api/paysuite-webhook`,
+      return_url: `${process.env.SITE_URL || 'https://www.paygo.co.mz'}`,
       // Opcional: telefone para USSD Push direto
       ...(cleanPhone && { phone: cleanPhone }),
       // Metadados extras para rastreio interno
