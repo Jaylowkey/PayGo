@@ -63,7 +63,7 @@ export default async function handler(req, res) {
     });
 
     // ✅ Chamar API PaySuite
-    const response = await fetch('https://api.paysuite.tech/v1/payment/initiate', {
+    const response = await fetch('https://paysuite.tech/api/v1/payments', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
