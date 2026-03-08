@@ -22,7 +22,11 @@ export default async function handler(req, res) {
       amount, 
       phone, 
       method, 
-      description 
+      description,
+      email,
+      name,
+      orderType,
+      userId 
     } = req.body;
 
     // ✅ 3. Validações Básicas
@@ -33,25 +37,43 @@ export default async function handler(req, res) {
       });
     }
 
-    if (amount < 1) {
+    if (isNaN(amount) || amount < 1) {
       return res.status(400).json({ success: false, error: 'O valor mínimo é 1 MT' });
     }
 
-    // Garantir que o método vai no formato exato que a PaySuite exige ('mpesa' ou 'emola', sem traços)
+    // Garantir que o método vai no formato exato que a PaySuite exige
     const cleanMethod = (method === 'mpesa' || method === 'm-pesa') ? 'mpesa' : 'emola';
+
+    // Normalizar telefone (remover espaços, traços, etc.)
+    const cleanPhone = phone ? phone.replace(/\D/g, '') : undefined;
 
     // ✅ 4. Construir o Payload Exato da Documentação da PaySuite
     const paysuitePayload = {
       amount: parseFloat(amount),
       method: cleanMethod,
-      reference: orderId, // OBRIGATÓRIO (Identificador único do pedido)
+      // 👈 CORREÇÃO: Removemos o traço do orderId (ex: de PG-123456 para PG123456)
+      reference: orderId.replace(/[^a-zA-Z0-9]/g, ''), 
       description: description || `Pedido PayGo #${orderId}`,
       callback_url: `${process.env.SITE_URL || 'https://www.paygo.co.mz'}/api/paysuite-webhook`,
-      // Enviamos o telefone para o caso de a operadora forçar o USSD Push direto
-      phone: phone ? phone.replace(/\D/g, '') : undefined 
+      // Opcional: telefone para USSD Push direto
+      ...(cleanPhone && { phone: cleanPhone }),
+      // Metadados extras para rastreio interno
+      metadata: {
+        customerName: name || '',
+        customerEmail: email || '',
+        orderType: orderType || 'compra',
+        userId: userId || null,
+        platform: 'paygo-web',
+        timestamp: new Date().toISOString()
+      }
     };
 
-    console.log('💳 [paysuite-payment] A iniciar pagamento na PaySuite:', paysuitePayload);
+    console.log('💳 [paysuite-payment] Iniciando pagamento:', {
+      orderId,
+      amount,
+      method: cleanMethod,
+      phone: cleanPhone ? '***' : null
+    });
 
     // ✅ 5. Chamar a API Oficial da PaySuite
     const response = await fetch('https://paysuite.tech/api/v1/payments', {
@@ -59,43 +81,70 @@ export default async function handler(req, res) {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        // ATENÇÃO: Confirme que a variável PAYSUITE_API_KEY está configurada no painel do Vercel
+        // ATENÇÃO: A variável PAYSUITE_API_KEY deve estar configurada no Vercel
         'Authorization': `Bearer ${process.env.PAYSUITE_API_KEY}` 
       },
-      body: JSON.stringify(paysuitePayload)
+      body: JSON.stringify(paysuitePayload),
+      // Timeout de 30 segundos para evitar requests pendentes
+      signal: AbortSignal.timeout(30000)
     });
 
     const result = await response.json();
 
-    // ✅ 6. Lidar com Erros da PaySuite (Se o status for "error")
+    // ✅ 6. Lidar com Erros da PaySuite
     if (!response.ok || result.status === 'error') {
-      console.error('❌ [paysuite-payment] Erro da API PaySuite:', result);
+      console.error('❌ [paysuite-payment] Erro da API PaySuite:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: result
+      });
+
       return res.status(400).json({ 
         success: false,
         error: result.message || 'O servidor da PaySuite rejeitou o pagamento.',
-        details: result 
+        details: process.env.NODE_ENV === 'development' ? result : undefined
       });
     }
 
-    console.log('✅ [paysuite-payment] Pagamento criado com sucesso:', result.data);
+    console.log('✅ [paysuite-payment] Pagamento criado:', {
+      paymentId: result.data?.id,
+      status: result.data?.status,
+      reference: result.data?.reference
+    });
 
-    // ✅ 7. Retornar Sucesso para o seu site (Frontend)
+    // ✅ 7. Retornar Sucesso para o Frontend
     return res.status(200).json({
       success: true,
       data: {
-        paymentId: result.data.id,
-        status: result.data.status,
-        checkoutUrl: result.data.checkout_url
+        paymentId: result.data?.id,
+        status: result.data?.status,
+        reference: result.data?.reference,
+        checkoutUrl: result.data?.checkout_url,
+        method: cleanMethod,
+        amount: result.data?.amount,
+        createdAt: result.data?.created_at
       },
       message: 'Pagamento iniciado com sucesso'
     });
 
   } catch (err) {
-    console.error('❌ [paysuite-payment] Erro Crítico no Servidor:', err);
+    // Log de erro completo para debugging
+    console.error('❌ [paysuite-payment] Erro Crítico:', {
+      name: err.name,
+      message: err.message,
+      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+      cause: err.cause
+    });
+
     return res.status(500).json({
       success: false,
       error: 'Erro interno do servidor',
-      message: err.message
+      message: process.env.NODE_ENV === 'development' ? err.message : 'Tente novamente mais tarde'
     });
   }
 }
+
+// ✅ Config para Vercel Edge (opcional - remove se não usar Edge Runtime)
+export const config = {
+  runtime: 'nodejs' // ou 'edge' se preferir Edge Functions
+};
