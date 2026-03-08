@@ -1,117 +1,101 @@
 // api/paysuite-payment.js
 export default async function handler(req, res) {
-  // ✅ CORS headers
+  // ✅ 1. Configurar CORS (Permitir que o seu site comunique com a API)
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-  if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  // Responder logo aos pedidos OPTIONS (Pre-flight do navegador)
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  // Apenas aceitar o método POST
+  if (req.method !== 'POST') {
+    return res.status(405).json({ success: false, error: 'Método não permitido' });
+  }
 
   try {
+    // ✅ 2. Receber os dados do Frontend
     const { 
       orderId, 
       amount, 
-      currency = 'MZN', 
       phone, 
-      method, // 'mpesa' | 'emola'
-      email,
-      name,
+      method, 
       description 
     } = req.body;
 
-    // ✅ Validações
-    if (!orderId || !amount || !phone || !method) {
+    // ✅ 3. Validações Básicas
+    if (!orderId || !amount || !method) {
       return res.status(400).json({ 
-        error: 'Missing required fields', 
-        required: ['orderId', 'amount', 'phone', 'method'] 
+        success: false,
+        error: 'Faltam campos obrigatórios (orderId, amount, method)' 
       });
     }
 
-    if (amount < 1 || amount > 100000) {
-      return res.status(400).json({ error: 'Invalid amount' });
+    if (amount < 1) {
+      return res.status(400).json({ success: false, error: 'O valor mínimo é 1 MT' });
     }
 
-    // ✅ Preparar payload para PaySuite API
+    // Garantir que o método vai no formato exato que a PaySuite exige ('mpesa' ou 'emola', sem traços)
+    const cleanMethod = (method === 'mpesa' || method === 'm-pesa') ? 'mpesa' : 'emola';
+
+    // ✅ 4. Construir o Payload Exato da Documentação da PaySuite
     const paysuitePayload = {
-      merchant_id: process.env.PAYSUITE_MERCHANT_ID,
-      transaction_id: orderId,
       amount: parseFloat(amount),
-      currency: currency.toUpperCase(),
+      method: cleanMethod,
+      reference: orderId, // OBRIGATÓRIO (Identificador único do pedido)
       description: description || `Pedido PayGo #${orderId}`,
-      customer: {
-        name: name || 'Cliente PayGo',
-        phone: phone.replace(/\D/g, ''), // Apenas números
-        email: email || null
-      },
-      payment_method: method === 'mpesa' ? 'm-pesa' : 'e-mola',
-      return_url: process.env.PAYSUITE_RETURN_URL,
-      cancel_url: process.env.PAYSUITE_CANCEL_URL,
-      webhook_url: `${process.env.SITE_URL}/api/paysuite-webhook`,
-      metadata: {
-        platform: 'paygo',
-        userId: req.body.userId || null,
-        orderType: req.body.orderType || 'compra'
-      }
+      callback_url: `${process.env.SITE_URL || 'https://www.paygo.co.mz'}/api/paysuite-webhook`,
+      // Enviamos o telefone para o caso de a operadora forçar o USSD Push direto
+      phone: phone ? phone.replace(/\D/g, '') : undefined 
     };
 
-    console.log('💳 [paysuite-payment] Initiating payment:', {
-      orderId,
-      amount,
-      method: paysuitePayload.payment_method,
-      phone: paysuitePayload.customer.phone
-    });
+    console.log('💳 [paysuite-payment] A iniciar pagamento na PaySuite:', paysuitePayload);
 
-    // ✅ Chamar API PaySuite
+    // ✅ 5. Chamar a API Oficial da PaySuite
     const response = await fetch('https://paysuite.tech/api/v1/payments', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.PAYSUITE_API_KEY}`,
-        'X-Merchant-ID': process.env.PAYSUITE_MERCHANT_ID
+        'Accept': 'application/json',
+        // ATENÇÃO: Confirme que a variável PAYSUITE_API_KEY está configurada no painel do Vercel
+        'Authorization': `Bearer ${process.env.PAYSUITE_API_KEY}` 
       },
       body: JSON.stringify(paysuitePayload)
     });
 
     const result = await response.json();
 
-    if (!response.ok || result.status !== 'success') {
-      console.error('❌ [paysuite-payment] API error:', result);
-      return res.status(500).json({ 
-        error: 'Payment initiation failed', 
-        paysuiteError: result 
+    // ✅ 6. Lidar com Erros da PaySuite (Se o status for "error")
+    if (!response.ok || result.status === 'error') {
+      console.error('❌ [paysuite-payment] Erro da API PaySuite:', result);
+      return res.status(400).json({ 
+        success: false,
+        error: result.message || 'O servidor da PaySuite rejeitou o pagamento.',
+        details: result 
       });
     }
 
-    console.log('✅ [paysuite-payment] Payment initiated:', {
-      paymentId: result.data?.payment_id,
-      status: result.data?.status
-    });
+    console.log('✅ [paysuite-payment] Pagamento criado com sucesso:', result.data);
 
-    // ✅ Retornar dados para frontend
+    // ✅ 7. Retornar Sucesso para o seu site (Frontend)
     return res.status(200).json({
       success: true,
       data: {
-        paymentId: result.data.payment_id,
+        paymentId: result.data.id,
         status: result.data.status,
-        paymentUrl: result.data.payment_url,
-        qrCode: result.data.qr_code,
-        instructions: result.data.instructions,
-        expiresAt: result.data.expires_at,
-        // Dados para modal
-        amount: result.data.amount,
-        currency: result.data.currency,
-        method: result.data.payment_method
+        checkoutUrl: result.data.checkout_url
       },
       message: 'Pagamento iniciado com sucesso'
     });
 
   } catch (err) {
-    console.error('❌ [paysuite-payment] Critical error:', err);
+    console.error('❌ [paysuite-payment] Erro Crítico no Servidor:', err);
     return res.status(500).json({
-      error: 'Internal server error',
-      message: err.message,
-      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+      success: false,
+      error: 'Erro interno do servidor',
+      message: err.message
     });
   }
 }
