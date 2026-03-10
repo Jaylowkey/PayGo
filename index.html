@@ -1438,30 +1438,32 @@ async function triggerNotifications(orderData) {
     try {
         console.log("A disparar notificações de sucesso para:", orderData.orderId);
         
-        // 1. Notificar Admin (WhatsApp / Notify-Order)
-        fetch('/api/notify-order', {
+        // Formatar os dados exatamente como o notify-order.js espera
+        const payload = {
+            orderData: orderData, // O backend espera esta chave!
+            sendEmail: true,      // Confirma que queremos enviar email ao cliente
+            sendLark: true        // Confirma que queremos notificar o admin
+        };
+
+        // Fazer a chamada à API
+        const response = await fetch('/api/notify-order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(orderData)
-        }).catch(err => console.error("Falha ao notificar admin:", err));
+            body: JSON.stringify(payload)
+        });
 
-        // 2. Notificar Cliente (Email)
-        if (orderData.email) {
-            fetch('/api/send-email', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    to: orderData.email,
-                    subject: `Pagamento Confirmado - Pedido ${orderData.orderId}`,
-                    data: orderData
-                })
-            }).catch(err => console.error("Falha ao enviar email:", err));
+        const result = await response.json();
+        
+        if (response.ok) {
+            console.log("✅ Notificações processadas com sucesso:", result);
+        } else {
+            console.error("❌ Falha na API de notificações:", result);
         }
+
     } catch (error) {
-        console.error("Erro na execução das notificações:", error);
+        console.error("❌ Erro fatal na comunicação com a API:", error);
     }
 }
-
 // ========================================================================
 // 💳 PAYMENT MODAL FUNCTIONS (PaySuite Real USSD Push)
 // ========================================================================
@@ -1795,3 +1797,4 @@ closePaymentModal: window.closePaymentModal
 </script>
 </body>
 </html>
+
