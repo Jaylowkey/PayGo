@@ -1429,7 +1429,40 @@ window.location.href = 'index.html';
 console.error('❌ Erro no logout:', error);
 showToast('❌ Erro ao fazer logout. Tente novamente.', 'error');
 }
-};// ========================================================================
+};
+
+// ========================================================================
+// 📩 DISPARAR NOTIFICAÇÕES (API VERCEL)
+// ========================================================================
+async function triggerNotifications(orderData) {
+    try {
+        console.log("A disparar notificações de sucesso para:", orderData.orderId);
+        
+        // 1. Notificar Admin (WhatsApp / Notify-Order)
+        fetch('/api/notify-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(orderData)
+        }).catch(err => console.error("Falha ao notificar admin:", err));
+
+        // 2. Notificar Cliente (Email)
+        if (orderData.email) {
+            fetch('/api/send-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    to: orderData.email,
+                    subject: `Pagamento Confirmado - Pedido ${orderData.orderId}`,
+                    data: orderData
+                })
+            }).catch(err => console.error("Falha ao enviar email:", err));
+        }
+    } catch (error) {
+        console.error("Erro na execução das notificações:", error);
+    }
+}
+
+// ========================================================================
 // 💳 PAYMENT MODAL FUNCTIONS (PaySuite Real USSD Push)
 // ========================================================================
 let pollingInterval = null;
@@ -1583,6 +1616,9 @@ function startPaymentPolling(firestoreId, displayOrderId) {
                 document.getElementById('successOrderId').textContent = displayOrderId;
                 
                 showToast('✅ Pagamento confirmado com sucesso!', 'success', 6000);
+                
+                // 🚀 ADICIONADO: DISPARAR NOTIFICAÇÕES AQUI
+                triggerNotifications(orderDoc);
                 
                 document.getElementById('paygoForm').reset();
                 calculate();
@@ -1759,5 +1795,3 @@ closePaymentModal: window.closePaymentModal
 </script>
 </body>
 </html>
-
-
