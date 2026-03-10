@@ -32,7 +32,7 @@ export default async function handler(req, res) {
         console.log('📧 [notify-order] Sending email to:', orderData.email);
         
         const { data, error } = await resend.emails.send({
-          from: 'PayGo Moçambique <noreply@paygo.co.mz>', // ✅ SEM espaços
+          from: 'PayGo Moçambique <noreply@paygo.co.mz>',
           to: [orderData.email],
           subject: `✅ Pedido ${orderData.orderId} Confirmado - PayGo`,
           html: generateOrderConfirmationHTML(orderData),
@@ -58,7 +58,7 @@ export default async function handler(req, res) {
     if (sendLark && process.env.LARK_WEBHOOK_URL) {
       try {
         console.log('🔔 [notify-order] Sending Lark notification');
-         
+        
         const larkPayload = {
           msg_type: "interactive",
           card: {
@@ -86,7 +86,6 @@ export default async function handler(req, res) {
                     tag: "button",
                     text: { tag: "plain_text", content: "Ver no Admin" },
                     type: "primary",
-                    // ✅ URL SEM espaços no final
                     url: `${process.env.SITE_URL || 'https://paygo.co.mz'}/admin.html`
                   }
                 ]
@@ -165,7 +164,7 @@ export default async function handler(req, res) {
   }
 }
 
-// ✅ HTML do Email de Confirmação - TEMPLATE PROFISSIONAL
+// ✅ HTML do Email de Confirmação - TEMPLATE PROFISSIONAL (PAGAMENTO AUTOMÁTICO)
 function generateOrderConfirmationHTML(order) {
   return `
 <!DOCTYPE html>
@@ -174,99 +173,88 @@ function generateOrderConfirmationHTML(order) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; padding: 20px; margin: 0; }
-    .container { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-    .header { background: linear-gradient(135deg, #3b82f6, #06b6d4); padding: 32px; text-align: center; color: white; }
-    .header h1 { margin: 0; font-size: 28px; }
-    .content { padding: 32px; color: #334155; line-height: 1.6; }
-    .order-details { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin: 20px 0; }
-    .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e2e8f0; }
-    .detail-row:last-child { border-bottom: none; }
-    .total-row { background: #1e293b; color: white; padding: 12px 16px; border-radius: 8px; margin-top: 16px; }
-    .total-row .detail-label, .total-row .detail-value { color: white; }
-    .cta-button { display: inline-block; background: #25D366; color: #fff !important; padding: 14px 32px; border-radius: 12px; text-decoration: none; font-weight: 600; margin: 20px 0; }
-    .footer { background: #f8fafc; padding: 20px; text-align: center; color: #64748b; font-size: 12px; border-top: 1px solid #e2e8f0; }
-    a { color: #3b82f6; text-decoration: none; }
-    a:hover { text-decoration: underline; }
+    body { font-family: Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 20px; }
+    .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.1); }
+    .header { background: linear-gradient(135deg, #3b82f6, #06b6d4); padding: 32px; text-align: center; }
+    .header h1 { color: #ffffff; margin: 0; font-size: 24px; }
+    .content { padding: 32px; }
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
+    .btn { display: inline-block; background-color: #25D366; color: #ffffff !important; padding: 14px 28px; text-decoration: none; border-radius: 12px; margin: 20px 0; }
+    .btn-secondary { display: inline-block; background-color: #3b82f6; color: #ffffff !important; padding: 14px 28px; text-decoration: none; border-radius: 12px; margin: 10px 0; }
+    .status-badge { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .status-pending { background-color: #fef3c7; color: #92400e; }
+    .status-paid { background-color: #dcfce7; color: #166534; }
+    .footer { background-color: #f8fafc; padding: 24px; text-align: center; color: #64748b; font-size: 12px; }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <h1>✅ Pedido Confirmado!</h1>
-      <p style="margin: 8px 0 0; opacity: 0.9;">PayGo Moçambique</p>
+      <h1>🛒 Pedido Confirmado!</h1>
     </div>
     <div class="content">
-      <p>Olá <strong>${order.name || 'Cliente'}</strong>,</p>
-      <p>O seu pedido <strong>#${order.orderId || 'N/A'}</strong> foi registado com sucesso e já está na nossa fila de processamento.</p>
+      <p>Olá, <strong>${order.name || 'Cliente'}</strong>.</p>
+      <p>O seu pedido <strong>#${order.orderId || 'N/A'}</strong> foi registado com sucesso no sistema PayGo.</p>
       
-      <div class="order-details">
-        <h3 style="margin: 0 0 16px 0; color: #1e293b;">📋 Detalhes do Pedido</h3>
-        <div class="detail-row">
-          <span style="color: #64748b;">Data:</span>
-          <span style="color: #1e293b; font-weight: 600;">${order.createdAt ? new Date(order.createdAt).toLocaleDateString('pt-MZ') : new Date().toLocaleDateString('pt-MZ')}</span>
-        </div>
-        <div class="detail-row">
-          <span style="color: #64748b;">Categoria:</span>
-          <span style="color: #1e293b; font-weight: 600;">${order.type === 'compra' ? '🛍️ Compras' : '🎮 Jogos'}</span>
-        </div>
-        <div class="detail-row">
-          <span style="color: #64748b;">Produto:</span>
-          <span style="color: #1e293b; font-weight: 600;"><a href="${order.detail || '#'}">Ver Link 🔗</a></span>
-        </div>
-      </div>
-
-      <div class="order-details">
-        <h3 style="margin: 0 0 16px 0; color: #1e293b;">💰 Resumo Financeiro</h3>
-        <div class="detail-row">
-          <span style="color: #64748b;">Valor USD:</span>
-          <span style="color: #1e293b; font-weight: 600;">$${(order.usd || 0).toFixed(2)}</span>
-        </div>
-        <div class="detail-row">
-          <span style="color: #64748b;">Câmbio:</span>
-          <span style="color: #1e293b; font-weight: 600;">${order.exchangeRate || 88.00} MT</span>
-        </div>
-        <div class="detail-row">
-          <span style="color: #64748b;">Taxas:</span>
-          <span style="color: #1e293b; font-weight: 600;">${(order.tax || 0).toLocaleString('pt-MZ', {minimumFractionDigits: 2})} MT</span>
-        </div>
-        <div class="total-row">
-          <div class="detail-row" style="border:none;">
-            <span style="color: #94a3b8;">TOTAL A PAGAR:</span>
-            <span style="color: #4ade80; font-weight: 700;">${(order.total || 0).toLocaleString('pt-MZ', {minimumFractionDigits: 2})} MT</span>
-          </div>
-        </div>
-      </div>
-
-      <p style="margin-top: 24px;"><strong>📍 Ação Necessária: Pagamento Manual</strong></p>
-      <p style="color: #64748b; font-size: 14px;">Como o nosso sistema automático encontra-se temporariamente em manutenção, activámos a via rápida manual para que o seu pedido não sofra atrasos.</p>
-      
-      <ol style="color: #334155; line-height: 2;">
-        <li>Transfira o valor total (<strong>${(order.total || 0).toLocaleString('pt-MZ', {minimumFractionDigits: 2})} MT</strong>) para:
-          <ul style="margin: 8px 0;">
-            <li><strong>e-Mola:</strong> 87 752 2255</li>
-            <li><strong>M-Pesa:</strong> 84 162 7519</li>
-          </ul>
-        </li>
-        <li>Valide o pagamento:
-          <p>Envie a foto ou PDF do comprovativo para o nosso WhatsApp de validação clicando no botão abaixo:</p>
-        </li>
-      </ol>
-
+      <!-- Status do Pedido -->
       <div style="text-align: center; margin: 24px 0;">
-        <a href="https://wa.me/258871002255" class="cta-button">📲 Enviar Comprovativo (87 100 2255)</a>
+        <span class="status-badge status-pending">⏳ Aguardando Pagamento</span>
       </div>
-
-      <p style="margin-top: 24px; color: #64748b; font-size: 14px;">
-        Precisa de ajuda? Contacte-nos:<br>
-        <strong>Email:</strong> contact@paygo.co.mz<br>
-        <strong>WhatsApp:</strong> +258 87 100 2255
+      
+      <h3>📋 Detalhes do Pedido</h3>
+      <table>
+        <tr><td><strong>Data:</strong></td><td>${order.createdAt ? new Date(order.createdAt).toLocaleDateString('pt-MZ') : new Date().toLocaleDateString('pt-MZ')}</td></tr>
+        <tr><td><strong>Categoria:</strong></td><td>${order.type === 'compra' ? '🛍️ Compras' : '🎮 Jogos'}</td></tr>
+        <tr><td><strong>Produto:</strong></td><td><a href="${order.detail || '#'}" style="color: #3b82f6;">Ver Link 🔗</a></td></tr>
+      </table>
+      
+      <h3>💰 Resumo Financeiro</h3>
+      <table>
+        <tr><td><strong>Valor USD:</strong></td><td>$${(order.usd || 0).toFixed(2)}</td></tr>
+        <tr><td><strong>Câmbio:</strong></td><td>${order.exchangeRate || 88.00} MT</td></tr>
+        <tr><td><strong>Taxas:</strong></td><td>${(order.tax || 0).toLocaleString('pt-MZ', {minimumFractionDigits: 2})} MT</td></tr>
+        <tr><td><strong>TOTAL:</strong></td><td><strong>${(order.total || 0).toLocaleString('pt-MZ', {minimumFractionDigits: 2})} MT</strong></td></tr>
+      </table>
+      
+      <p><strong>Método de Pagamento:</strong> ${order.paymentMethod === 'mpesa' ? '🔴 M-Pesa' : '🟡 e-Mola'}</p>
+      
+      <!-- ✅ NOVA SEÇÃO: PAGAMENTO AUTOMÁTICO -->
+      <div style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 2px solid #22c55e; border-radius: 12px; padding: 20px; margin: 24px 0;">
+        <h3 style="color: #166534; margin-top: 0;">🚀 Pagamento Automático PaySuite</h3>
+        <p style="color: #166534; margin-bottom: 16px;">O seu pagamento será processado automaticamente via <strong>PaySuite</strong>. Você receberá uma notificação USSD no seu celular para confirmar a transação.</p>
+        
+        <ol style="color: #166534; margin: 0; padding-left: 20px;">
+          <li style="margin-bottom: 8px;">Aguarde a notificação USSD no seu celular <strong>${order.whatsapp || 'seu número'}</strong></li>
+          <li style="margin-bottom: 8px;">Insira o seu PIN para autorizar o pagamento</li>
+          <li>Pronto! Seu pedido será processado imediatamente após confirmação</li>
+        </ol>
+      </div>
+      
+      <div style="background-color: #f1f5f9; border-radius: 12px; padding: 16px; margin: 24px 0;">
+        <p style="margin: 0; font-size: 14px; color: #475569;">
+          <strong>💡 Dica:</strong> Mantenha seu celular próximo e com saldo suficiente. O processo leva menos de 2 minutos.
+        </p>
+      </div>
+      
+      <!-- Botões de Ação -->
+      <div style="text-align: center; margin: 32px 0;">
+        <a href="https://wa.me/258837522255" class="btn">💬 Precisa de Ajuda? Fale Conosco</a>
+        <br>
+        <a href="${process.env.SITE_URL || 'https://paygo.co.mz'}/dashboard.html" class="btn-secondary">📊 Ver Meu Pedido no Dashboard</a>
+      </div>
+      
+      <p style="border-top: 1px solid #e2e8f0; padding-top: 24px; margin-top: 24px;">
+        <strong>PayGo Moçambique</strong><br>
+        Simples. Seguro. Moçambicano. 🇲🇿
+      </p>
+      <p style="margin: 0; font-size: 14px; color: #64748b;">
+        Suporte: contact@paygo.co.mz | WhatsApp: +258 83 752 2255
       </p>
     </div>
     <div class="footer">
-      <p style="margin: 0;">PayGo Moçambique</p>
-      <p style="margin: 8px 0 0;">Simples. Seguro. Moçambicano. 🇲🇿</p>
-      <p style="margin: 8px 0 0; font-size: 11px;">Suporte: contact@paygo.co.mz | WhatsApp: +258 87 100 2255</p>
+      <p style="margin: 0;">&copy; ${new Date().getFullYear()} PayGo Serviços Digitais. Todos direitos reservados.</p>
+      <p style="margin: 8px 0 0 0; font-size: 11px;">Este é um email automático. Por favor, não responda.</p>
     </div>
   </div>
 </body>
@@ -274,7 +262,7 @@ function generateOrderConfirmationHTML(order) {
   `;
 }
 
-// ✅ Versão texto simples (fallback)
+// ✅ Versão texto simples (fallback) - PAGAMENTO AUTOMÁTICO
 function generateOrderConfirmationText(order) {
   return `
 PEDIDO CONFIRMADO - PAYGO MOÇAMBIQUE ✅
@@ -295,20 +283,20 @@ O seu pedido #${order.orderId || 'N/A'} foi registado com sucesso!
 • TOTAL: ${(order.total || 0).toLocaleString('pt-MZ')} MT
 • Método: ${order.paymentMethod === 'mpesa' ? 'M-Pesa' : 'e-Mola'}
 
-📍 AÇÃO NECESSÁRIA: PAGAMENTO MANUAL
+🚀 PAGAMENTO AUTOMÁTICO PAYSUITE:
 
-Devido a manutenção temporária no sistema, por favor siga estes passos:
+O seu pagamento será processado automaticamente via PaySuite. Siga estes passos:
 
-1. Transfira o valor total de ${(order.total || 0).toLocaleString('pt-MZ')} MT para:
-   • e-Mola: 87 752 2255
-   • M-Pesa: 84 162 7519
+1. Aguarde a notificação USSD no seu celular: ${order.whatsapp || 'seu número'}
+2. Insira o seu PIN para autorizar o pagamento
+3. Pronto! Seu pedido será processado imediatamente após confirmação
 
-2. Envie o comprovativo para validação:
-   WhatsApp: https://wa.me/258871002255
+💡 Dica: Mantenha seu celular próximo e com saldo suficiente. O processo leva menos de 2 minutos.
 
 Precisa de ajuda? Contacte-nos:
 • Email: contact@paygo.co.mz
-• WhatsApp: +258 87 100 2255
+• WhatsApp: +258 83 752 2255
+• Dashboard: ${process.env.SITE_URL || 'https://paygo.co.mz'}/dashboard.html
 
 PayGo Moçambique - Simples. Seguro. Moçambicano. 🇲🇿
   `.trim();
