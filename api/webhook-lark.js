@@ -1,11 +1,11 @@
 // api/webhook-lark.js
 export default async function handler(req, res) {
-  // ✅ CORS headers para segurança
+  // ✅ CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  // ✅ Handle preflight request
+  // ✅ Handle preflight
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
@@ -58,7 +58,6 @@ export default async function handler(req, res) {
                     tag: "button",
                     text: { tag: "plain_text", content: "Ver no Admin" },
                     type: "primary",
-                    // ✅ URL SEM espaços no final
                     url: `${process.env.SITE_URL || 'https://paygo.co.mz'}/admin.html`
                   }
                 ]
@@ -68,12 +67,30 @@ export default async function handler(req, res) {
         };
         break;
 
+      case 'payment-marked-paid':
+        payload = {
+          msg_type: "text",
+          content: {
+            text: `✅ **Pagamento Marcado como PAGO**\n• Pedido: ${data.order_id || 'N/A'}\n• Data: ${new Date().toLocaleString('pt-MZ')}\n• Admin: ${data.admin_email || 'N/A'}`
+          }
+        };
+        break;
+
+      case 'order-deleted':
+        payload = {
+          msg_type: "text",
+          content: {
+            text: `🗑️ **Pedido Eliminado**\n• Pedido: ${data.order_id || 'N/A'}\n• Motivo: ${data.reason || 'N/A'}\n• Admin: ${data.admin_email || 'N/A'}`
+          }
+        };
+        break;
+
       case 'new-payment':
         payload = {
           msg_type: "text",
           content: {
             text: `💰 **Novo Pagamento Recebido**\n• Pedido: ${data.order_id || 'N/A'}\n• Cliente: ${data.customer || 'N/A'}\n• Total: ${data.total ? Number(data.total).toLocaleString('pt-MZ') + ' MT' : 'N/A'}\n• Pagamento: ${data.payment_method || 'N/A'}\n• Data: ${new Date().toLocaleString('pt-MZ')}`
-          } 
+          }
         };
         break;
 
@@ -106,7 +123,7 @@ export default async function handler(req, res) {
           msg_type: "text",
           content: {
             text: `🔐 **Recuperação de Senha Solicitada**\n• Email: ${data.email}\n• Hora: ${new Date().toLocaleString('pt-MZ')}\n• IP: ${data.ip || 'N/A'}`
-          } 
+          }
         };
         break;
 
@@ -153,7 +170,6 @@ export default async function handler(req, res) {
       console.error('❌ [webhook-lark] Lark API error:', result);
       return res.status(500).json({ error: 'Lark API error', data: result });
     }
-
   } catch (err) {
     console.error('❌ [webhook-lark] Critical error:', err);
     return res.status(500).json({
