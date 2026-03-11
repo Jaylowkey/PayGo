@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Clientes | PayGo Admin</title>
   <meta name="robots" content="noindex, nofollow">
-  <!-- ✅ URLs corrigidas SEM espaços -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script>
@@ -15,182 +14,227 @@
           colors: {
             brand: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 900: '#1e3a8a', 950: '#0f172a' },
             accent: { 400: '#22d3ee', 500: '#06b6d4' },
-            success: { 400: '#4ade80', 500: '#22c55e' }
+            success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' }
           }
         }
       }
     }
   </script>
   <style>
-    .sidebar-link.active { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border-right: 3px solid #3b82f6; }
-    .status-badge { padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 600; }
-    .status-completed { background: #dcfce7; color: #166534; }
-    .status-pending { background: #fef3c7; color: #92400e; }
-    .status-processing { background: #dbeafe; color: #1e40af; }
-    .status-cancelled { background: #fee2e2; color: #991b1b; }
-    .skeleton { background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: skeleton-loading 1.5s infinite; }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+    /* Sidebar Active Link */
+    .sidebar-link.active { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-right: 3px solid #3b82f6; }
+    
+    /* Loader Overlay */
+    #pageLoader { transition: opacity 0.5s ease, visibility 0.5s ease; }
+    .loader-spinner { border-top-color: #3b82f6; animation: spinner 1s linear infinite; }
+    @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* Skeleton Loading */
+    .skeleton { background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: skeleton-loading 1.5s infinite; color: transparent !important; border-radius: 4px; }
     @keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-    .client-row:hover { background: #f8fafc; }
-    .modal { display: none; position: fixed; inset: 0; z-index: 1000; align-items: center; justify-content: center; }
-    .modal.active { display: flex; }
-    .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
-    .modal-content { position: relative; background: white; border-radius: 24px; padding: 24px; max-width: 700px; width: 90%; max-height: 90vh; overflow-y: auto; }
+
+    /* Modal Animation */
+    .modal { display: none; position: fixed; inset: 0; z-index: 1000; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; }
+    .modal.active { display: flex; opacity: 1; }
+    .modal-overlay { position: absolute; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); }
+    .modal-content { position: relative; background: white; border-radius: 24px; padding: 0; max-width: 700px; width: 95%; max-height: 90vh; overflow-y: auto; transform: scale(0.95); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
+    .modal.active .modal-content { transform: scale(1); }
+
+    /* Table Hover */
+    .client-row:hover { background-color: #f8fafc; }
   </style>
 </head>
-<body class="bg-slate-50">
-  
-  <!-- ✅ SIDEBAR -->
-  <aside class="fixed left-0 top-0 h-full w-64 bg-slate-900 text-white p-6 z-50 flex flex-col">
-    <div class="flex items-center gap-3 mb-8 pb-6 border-b border-white/10">
-      <div class="w-10 h-10 bg-gradient-to-tr from-brand-500 to-accent-500 rounded-xl flex items-center justify-center">
-        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased overflow-x-hidden">
+
+  <div id="pageLoader" class="fixed inset-0 bg-slate-900 z-[100] flex flex-col items-center justify-center">
+    <div class="w-12 h-12 border-4 border-slate-700 border-t-brand-500 rounded-full loader-spinner mb-4"></div>
+    <h2 class="text-white text-xl font-bold tracking-wide">PayGo Admin</h2>
+    <p class="text-slate-400 text-sm mt-2">Carregando base de clientes...</p>
+  </div>
+
+  <div class="md:hidden fixed top-0 left-0 w-full bg-slate-900 text-white p-4 flex items-center justify-between z-40 shadow-md">
+    <div class="flex items-center gap-2">
+      <div class="w-8 h-8 bg-gradient-to-tr from-brand-500 to-accent-500 rounded-lg flex items-center justify-center">
+        <i data-lucide="zap" class="w-4 h-4 text-white"></i>
       </div>
-      <span class="text-xl font-bold">PayGo Admin</span>
+      <span class="font-bold text-lg">PayGo Admin</span>
     </div>
-    <nav class="flex-1 space-y-2">
-      <a href="dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-        Dashboard
+    <button id="mobileMenuBtn" class="p-2 text-slate-300 hover:text-white focus:outline-none">
+      <i data-lucide="menu" class="w-6 h-6"></i>
+    </button>
+  </div>
+
+  <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-40 hidden md:hidden transition-opacity opacity-0"></div>
+
+  <aside id="sidebar" class="fixed left-0 top-0 h-full w-64 bg-slate-900 text-white p-6 z-50 flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out shadow-2xl md:shadow-none">
+    <div class="flex items-center justify-between mb-8 pb-6 border-b border-white/10 mt-2 md:mt-0">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-gradient-to-tr from-brand-500 to-accent-500 rounded-xl flex items-center justify-center shadow-lg shadow-brand-500/20">
+          <i data-lucide="zap" class="w-6 h-6 fill-current text-white"></i>
+        </div>
+        <span class="text-xl font-bold tracking-tight">PayGo</span>
+      </div>
+      <button id="closeSidebarBtn" class="md:hidden p-1 text-slate-400 hover:text-white">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+
+    <nav class="flex-1 space-y-2 overflow-y-auto pr-2">
+      <a href="dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all font-medium">
+        <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
       </a>
-      <a href="relatorios.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-        Relatórios
+      <a href="relatorios.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all font-medium">
+        <i data-lucide="bar-chart-3" class="w-5 h-5"></i> Relatórios
       </a>
-      <a href="clientes.html" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-xl transition-all bg-brand-600/20 text-brand-400">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-        Clientes
+      <a href="clientes.html" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-semibold">
+        <i data-lucide="users" class="w-5 h-5"></i> Clientes
       </a>
-      <a href="configuracoes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-        Configurações
+      <a href="configuracoes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all font-medium">
+        <i data-lucide="settings" class="w-5 h-5"></i> Configurações
       </a>
     </nav>
-    <div class="pt-4 border-t border-white/10">
-      <div class="flex items-center gap-3 px-4 py-3 mb-2">
-        <div class="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-sm font-bold" id="userInitial">A</div>
+
+    <div class="pt-6 border-t border-white/10 mt-auto">
+      <div class="flex items-center gap-3 px-2 py-3 mb-3 bg-white/5 rounded-xl">
+        <div class="w-9 h-9 rounded-full bg-brand-600 flex items-center justify-center text-sm font-bold text-white shadow-inner" id="userInitial">A</div>
         <div class="flex-1 min-w-0">
-          <p class="text-sm font-medium truncate" id="userEmail">admin@paygo.co.mz</p>
-          <p class="text-xs text-slate-400">Administrador</p>
+          <p class="text-sm font-semibold text-white truncate" id="userEmail">admin@paygo.co.mz</p>
+          <p class="text-[10px] text-brand-300 uppercase tracking-widest font-bold">Administrador</p>
         </div>
       </div>
-      <button id="logoutBtn" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white/5 hover:bg-red-500/20 text-slate-400 hover:text-red-400 rounded-xl transition-all text-sm">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-        Sair
+      <button id="logoutBtn" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-slate-800 hover:bg-red-500/10 text-slate-300 hover:text-red-400 border border-slate-700 hover:border-red-500/30 rounded-xl transition-all text-sm font-medium">
+        <i data-lucide="log-out" class="w-4 h-4"></i> Encerrar Sessão
       </button>
     </div>
   </aside>
 
-  <!-- ✅ MAIN CONTENT -->
-  <main class="ml-64 p-8">
+  <main class="md:ml-64 p-4 md:p-8 pt-24 md:pt-8 min-h-screen">
+    
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
       <div>
-        <h1 class="text-3xl font-bold text-slate-900">👥 Clientes</h1>
-        <p class="text-slate-500 mt-1">Gestão de clientes e histórico de pedidos</p>
+        <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
+          Lista de Clientes
+        </h1>
+        <p class="text-slate-500 mt-1 text-sm">Gestão de perfil, contactos e histórico de transações.</p>
       </div>
-      <div class="flex flex-wrap items-center gap-3">
-        <div class="relative">
-          <input type="text" id="clientSearch" placeholder="Buscar cliente..." class="pl-10 pr-4 py-2.5 w-64 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 text-sm">
-          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+      
+      <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+        <div class="relative w-full sm:w-64">
+          <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+          <input type="text" id="clientSearch" placeholder="Buscar por nome, email ou nº..." class="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 transition text-sm">
         </div>
-        <button onclick="refreshClients()" class="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-medium transition flex items-center gap-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-          Atualizar
+        <button onclick="refreshClients()" class="flex-1 sm:flex-none px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-bold transition flex items-center justify-center gap-2 shadow-md shadow-brand-500/20 active:scale-95">
+          <i data-lucide="refresh-cw" class="w-4 h-4"></i> Atualizar
         </button>
       </div>
     </div>
 
-    <!-- ✅ Stats Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
         <div class="flex items-center justify-between mb-4">
-          <span class="text-sm font-medium text-slate-500">Total de Clientes</span>
-          <div class="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center"><svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg></div>
+          <span class="text-sm font-bold text-slate-500 uppercase tracking-wider">Total de Clientes</span>
+          <div class="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center">
+            <i data-lucide="users" class="w-5 h-5 text-brand-600"></i>
+          </div>
         </div>
-        <p class="text-3xl font-bold text-slate-900 skeleton" id="totalClients">0</p>
-        <p class="text-sm text-slate-500 mt-2">Clientes únicos</p>
+        <p class="text-3xl font-extrabold text-slate-900 skeleton inline-block min-w-[50px]" id="totalClients">0</p>
+        <p class="text-sm text-slate-500 mt-2">Cadastros únicos efetuados</p>
       </div>
-      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
         <div class="flex items-center justify-between mb-4">
-          <span class="text-sm font-medium text-slate-500">Cliente Mais Ativo</span>
-          <div class="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center"><svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+          <span class="text-sm font-bold text-slate-500 uppercase tracking-wider">Cliente Mais Ativo</span>
+          <div class="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
+            <i data-lucide="award" class="w-5 h-5 text-amber-600"></i>
+          </div>
         </div>
-        <p class="text-lg font-bold text-brand-600 mt-2 truncate skeleton" id="topClient">-</p>
-        <p class="text-sm text-slate-500 mt-2">Mais pedidos realizados</p>
+        <p class="text-lg font-bold text-brand-600 mt-2 truncate skeleton min-w-[100px]" id="topClient">-</p>
+        <p class="text-sm text-slate-500 mt-2">Com maior volume de pedidos</p>
       </div>
-      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
         <div class="flex items-center justify-between mb-4">
-          <span class="text-sm font-medium text-slate-500">Maior Gasto</span>
-          <div class="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center"><svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+          <span class="text-sm font-bold text-slate-500 uppercase tracking-wider">Maior Gasto</span>
+          <div class="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center">
+            <i data-lucide="banknote" class="w-5 h-5 text-green-600"></i>
+          </div>
         </div>
-        <p class="text-2xl font-bold text-green-600 mt-2 skeleton" id="topSpend">0 MT</p>
-        <p class="text-sm text-slate-500 mt-2">Valor total acumulado</p>
+        <p class="text-2xl font-extrabold text-green-600 mt-2 skeleton min-w-[120px]" id="topSpend">0 MT</p>
+        <p class="text-sm text-slate-500 mt-2">Valor acumulado por um cliente</p>
       </div>
     </div>
 
-    <!-- ✅ Clients Table -->
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-      <div class="p-6 border-b border-slate-200 flex justify-between items-center">
-        <h2 class="text-lg font-bold text-slate-900">Lista de Clientes</h2>
-        <span class="text-sm text-slate-500" id="clientsCount">0 clientes</span>
+      <div class="p-5 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
+        <h2 class="text-lg font-bold text-slate-900">Diretório de Clientes</h2>
+        <span class="text-sm font-medium text-brand-600 bg-brand-50 px-3 py-1 rounded-full" id="clientsCount">0 clientes</span>
       </div>
       
-      <!-- Loading State -->
-      <div id="loadingClients" class="p-12 text-center text-slate-500">
-        <svg class="w-8 h-8 animate-spin mx-auto mb-4 text-brand-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
-        Carregando clientes...
+      <div id="loadingClients" class="p-16 text-center text-slate-500">
+        <i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto mb-4 text-brand-600"></i>
+        <p class="font-medium">Sincronizando clientes...</p>
       </div>
       
-      <!-- Empty State -->
-      <div id="emptyClients" class="p-12 text-center text-slate-500 hidden">
-        <svg class="w-12 h-12 mx-auto mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-        <p class="font-medium">Nenhum cliente encontrado</p>
-        <p class="text-sm mt-1">Os clientes aparecerão aqui quando fizerem pedidos.</p>
+      <div id="emptyClients" class="p-16 text-center text-slate-500 hidden">
+        <i data-lucide="user-x" class="w-12 h-12 mx-auto mb-4 text-slate-300"></i>
+        <p class="font-bold text-lg text-slate-700">Nenhum cliente encontrado</p>
+        <p class="text-sm mt-1">Quando efetuarem compras, os clientes aparecerão aqui.</p>
       </div>
       
-      <!-- Table -->
       <div class="overflow-x-auto">
-        <table class="w-full">
-          <thead class="bg-slate-50">
-            <tr>
-              <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase">Cliente</th>
-              <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase">Email</th>
-              <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase">Pedidos</th>
-              <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase">Total Gasto</th>
-              <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase">Último Pedido</th>
-              <th class="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase">Ações</th>
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-white border-b border-slate-200">
+              <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Cliente / Contacto</th>
+              <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Email</th>
+              <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-center">Nº Pedidos</th>
+              <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Total Gasto</th>
+              <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Último Acesso</th>
+              <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Ação</th>
             </tr>
           </thead>
-          <tbody id="clientsTable" class="divide-y divide-slate-200"></tbody>
+          <tbody id="clientsTable" class="divide-y divide-slate-100">
+            </tbody>
         </table>
       </div>
     </div>
   </main>
 
-  <!-- ✅ Client Detail Modal -->
   <div id="clientModal" class="modal">
     <div class="modal-overlay" onclick="closeClientModal()"></div>
-    <div class="modal-content">
-      <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-200">
-        <h2 class="text-2xl font-bold text-slate-900">Histórico do Cliente</h2>
-        <button onclick="closeClientModal()" class="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+    <div class="modal-content flex flex-col h-full md:h-auto">
+      <div class="flex justify-between items-center p-6 border-b border-slate-100 bg-white sticky top-0 z-10 rounded-t-2xl">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-brand-100 text-brand-700 rounded-full flex items-center justify-center font-bold text-lg" id="modalClientInitials">C</div>
+          <div>
+            <h2 class="text-xl font-bold text-slate-900" id="modalClientName">Nome do Cliente</h2>
+            <p class="text-xs text-slate-500 font-medium">Histórico Completo</p>
+          </div>
+        </div>
+        <button onclick="closeClientModal()" class="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors text-slate-500">
+          <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
-      <div id="clientModalContent" class="space-y-4"></div>
+      
+      <div id="clientModalContent" class="p-6 overflow-y-auto bg-slate-50 flex-1">
+        </div>
     </div>
   </div>
 
-  <!-- ✅ Toast Container -->
-  <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2 pointer-events-none"></div>
+  <div id="toastContainer" class="fixed top-4 right-4 z-[110] space-y-2 pointer-events-none w-full max-w-sm px-4 md:px-0"></div>
 
-  <!-- ✅ Script Completo e Funcional -->
   <script type="module">
-    // ✅ Import Firebase - URLs corrigidas SEM espaços
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut, getIdTokenResult } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // ✅ Firebase Config
+    // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
       authDomain: "paygo-14311.firebaseapp.com",
@@ -201,63 +245,78 @@
       measurementId: "G-N9E391HCFL"
     };
 
-    // ✅ Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app, "paygodb");
     
-    // ✅ Emails de admin permitidos
     const ADMIN_EMAILS = ['admin@paygo.co.mz', 'app@paygo.co.mz', 'gestao@paygo.co.mz', 'superadmin@paygo.co.mz'];
     
     let allClients = [];
     let currentClient = null;
 
-    // ✅ Helper para formatar valores
+    // Mobile Sidebar Logic
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+    function toggleSidebar() {
+      const isClosed = sidebar.classList.contains('-translate-x-full');
+      if (isClosed) {
+        sidebar.classList.remove('-translate-x-full');
+        sidebarOverlay.classList.remove('hidden');
+        setTimeout(() => sidebarOverlay.classList.remove('opacity-0'), 10);
+      } else {
+        sidebar.classList.add('-translate-x-full');
+        sidebarOverlay.classList.add('opacity-0');
+        setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
+      }
+    }
+
+    mobileMenuBtn?.addEventListener('click', toggleSidebar);
+    closeSidebarBtn?.addEventListener('click', toggleSidebar);
+    sidebarOverlay?.addEventListener('click', toggleSidebar);
+
+    // Formatters
     function formatCurrency(value) {
       if (!value && value !== 0) return '0.00 MT';
       return `${Number(value).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`;
     }
 
-    // ✅ Helper para formatar data
     function formatDate(date) {
       if (!date) return 'N/A';
       const d = date?.toDate ? date.toDate() : new Date(date);
       return d.toLocaleDateString('pt-MZ', { day: '2-digit', month: '2-digit', year: 'numeric' });
     }
 
-    // ✅ Helper para formatar data/hora
     function formatDateTime(date) {
       if (!date) return 'N/A';
       const d = date?.toDate ? date.toDate() : new Date(date);
-      return d.toLocaleString('pt-MZ');
+      return d.toLocaleString('pt-MZ', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute:'2-digit' });
     }
 
-    // ✅ Verificar se usuário é admin
+    // Auth verification
     async function verifyAdmin() {
       return new Promise((resolve) => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
           unsubscribe();
           
           if (!user) {
-            showToast('❌ Faça login para acessar', 'error');
+            showToast('Sessão expirada. Faça login.', 'error');
             setTimeout(() => { window.location.href = 'login.html'; }, 1500);
-            resolve(false);
-            return;
+            resolve(false); return;
           }
           
           try {
             const tokenResult = await getIdTokenResult(user);
-            const isAdmin = tokenResult.claims?.admin === true || 
-                           ADMIN_EMAILS.includes(user.email?.toLowerCase());
+            const isAdmin = tokenResult.claims?.admin === true || ADMIN_EMAILS.includes(user.email?.toLowerCase());
             
             if (!isAdmin) {
-              showToast('❌ Acesso negado. Apenas administradores.', 'error');
+              showToast('Acesso negado.', 'error');
               setTimeout(() => { window.location.href = 'index.html'; }, 2000);
-              resolve(false);
-              return;
+              resolve(false); return;
             }
             
-            // Atualizar UI com dados do admin
             document.getElementById('userEmail').textContent = user.email || 'admin@paygo.co.mz';
             document.getElementById('userInitial').textContent = (user.email || 'A').charAt(0).toUpperCase();
             
@@ -265,7 +324,7 @@
             
           } catch (error) {
             console.error('Erro na verificação:', error);
-            showToast('❌ Erro de autenticação', 'error');
+            showToast('Erro de autenticação', 'error');
             setTimeout(() => { window.location.href = 'login.html'; }, 1500);
             resolve(false);
           }
@@ -273,7 +332,7 @@
       });
     }
 
-    // ✅ Carregar e agrupar clientes a partir dos pedidos
+    // Load Data
     async function loadClients() {
       const loadingEl = document.getElementById('loadingClients');
       const emptyEl = document.getElementById('emptyClients');
@@ -281,13 +340,13 @@
       
       loadingEl.classList.remove('hidden');
       emptyEl.classList.add('hidden');
+      tableEl.innerHTML = '';
       
       try {
         const ordersRef = collection(db, "orders");
         const q = query(ordersRef, orderBy("createdAt", "desc"));
         const snapshot = await getDocs(q);
         
-        // Agrupar pedidos por email do cliente
         const clientsMap = {};
         
         snapshot.forEach(doc => {
@@ -300,7 +359,7 @@
             clientsMap[email] = {
               email: order.email,
               name: order.name,
-              phone: order.whatsapp || order.phone || 'N/A',
+              phone: order.whatsapp || order.phone || 'Sem contacto',
               orders: 0,
               total: 0,
               lastOrder: null,
@@ -322,57 +381,46 @@
             detail: order.detail || 'N/A'
           });
           
-          // Atualizar último pedido (mais recente)
           const orderDate = order.createdAt?.toDate ? order.createdAt.toDate() : new Date(order.createdAt || 0);
           if (!client.lastOrder || orderDate > client.lastOrder) {
             client.lastOrder = orderDate;
           }
         });
         
-        // Converter para array e ordenar por total gasto
         allClients = Object.values(clientsMap).sort((a, b) => b.total - a.total);
         
-        // Atualizar stats
         updateStats();
-        
-        // Renderizar tabela
         renderClients(allClients);
         
-        // Atualizar contador
-        updateClientsCount(allClients);
-        
-        // Esconder loading, mostrar tabela
         loadingEl.classList.add('hidden');
         if (allClients.length === 0) {
           emptyEl.classList.remove('hidden');
-          tableEl.innerHTML = '';
-        } else {
-          emptyEl.classList.add('hidden');
         }
         
-        // Inicializar ícones
-        if (typeof lucide !== 'undefined') lucide.createIcons();
+        // Esconder o overlay de entrada geral da página
+        const pageLoader = document.getElementById('pageLoader');
+        if(pageLoader.style.opacity !== '0'){
+            pageLoader.style.opacity = '0';
+            setTimeout(() => pageLoader.style.display = 'none', 500);
+        }
         
       } catch (error) {
         console.error('Erro ao carregar clientes:', error);
         loadingEl.classList.add('hidden');
         emptyEl.classList.remove('hidden');
-        tableEl.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-red-500">Erro ao carregar clientes. Tente recarregar a página.</td></tr>';
-        showToast('❌ Erro ao carregar clientes', 'error');
+        tableEl.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-red-500 font-medium"><i data-lucide="alert-triangle" class="w-8 h-8 mx-auto mb-2"></i>Erro ao carregar clientes. Verifique a conexão.</td></tr>';
+        showToast('Erro ao sincronizar dados.', 'error');
+        lucide.createIcons();
       }
     }
 
-    // ✅ Atualizar cards de estatísticas
     function updateStats() {
-      // Remover skeleton e mostrar valores
       document.getElementById('totalClients').classList.remove('skeleton');
       document.getElementById('topClient').classList.remove('skeleton');
       document.getElementById('topSpend').classList.remove('skeleton');
       
-      // Total de clientes
       document.getElementById('totalClients').textContent = allClients.length;
       
-      // Cliente mais ativo (mais pedidos)
       if (allClients.length > 0) {
         const topClient = [...allClients].sort((a, b) => b.orders - a.orders)[0];
         document.getElementById('topClient').textContent = topClient.name || '-';
@@ -383,18 +431,15 @@
       }
     }
 
-    // ✅ Atualizar contador de clientes filtrados
     function updateClientsCount(clients) {
       const count = document.getElementById('clientsCount');
       count.textContent = `${clients.length} cliente${clients.length !== 1 ? 's' : ''}`;
     }
 
-    // ✅ Renderizar tabela de clientes
     function renderClients(clients) {
       const table = document.getElementById('clientsTable');
       const search = document.getElementById('clientSearch')?.value.toLowerCase() || '';
       
-      // Filtrar por busca
       const filtered = clients.filter(c => 
         c.name?.toLowerCase().includes(search) || 
         c.email?.toLowerCase().includes(search) ||
@@ -402,58 +447,67 @@
       );
       
       if (filtered.length === 0) {
-        table.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-slate-500">Nenhum cliente encontrado com esses filtros</td></tr>';
+        table.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-slate-500 font-medium">Nenhum cliente correspondente aos filtros.</td></tr>';
         updateClientsCount([]);
         return;
       }
       
       table.innerHTML = filtered.map(client => {
         const lastOrderDate = client.lastOrder ? formatDate(client.lastOrder) : 'N/A';
+        const initial = (client.name || 'C').charAt(0).toUpperCase();
         
         return `
-          <tr class="client-row transition-colors">
+          <tr class="client-row transition-colors group">
             <td class="px-6 py-4">
               <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-gradient-to-br from-brand-500 to-accent-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                  ${(client.name || 'C').charAt(0).toUpperCase()}
+                <div class="w-10 h-10 bg-slate-100 text-slate-700 rounded-full flex items-center justify-center text-sm font-bold group-hover:bg-brand-100 group-hover:text-brand-700 transition-colors">
+                  ${initial}
                 </div>
                 <div>
-                  <p class="font-medium text-slate-900">${client.name}</p>
-                  <p class="text-xs text-slate-500">${client.phone}</p>
+                  <p class="font-bold text-slate-900">${client.name}</p>
+                  <p class="text-xs text-slate-500 font-mono mt-0.5">${client.phone}</p>
                 </div>
               </div>
             </td>
-            <td class="px-6 py-4 text-slate-500 text-sm">${client.email}</td>
             <td class="px-6 py-4">
-              <span class="px-3 py-1 bg-brand-100 text-brand-700 rounded-full text-xs font-bold">${client.orders}</span>
+              <span class="text-sm text-slate-600 bg-slate-50 px-2 py-1 rounded-md border border-slate-100">${client.email}</span>
             </td>
-            <td class="px-6 py-4 font-bold text-slate-900">${formatCurrency(client.total)}</td>
-            <td class="px-6 py-4 text-slate-500 text-sm">${lastOrderDate}</td>
+            <td class="px-6 py-4 text-center">
+              <span class="px-3 py-1 bg-brand-50 text-brand-700 rounded-full text-xs font-bold border border-brand-100">${client.orders}</span>
+            </td>
+            <td class="px-6 py-4 font-extrabold text-slate-900">${formatCurrency(client.total)}</td>
+            <td class="px-6 py-4 text-slate-500 text-sm font-medium flex items-center gap-2">
+              <i data-lucide="calendar" class="w-4 h-4 text-slate-400"></i> ${lastOrderDate}
+            </td>
             <td class="px-6 py-4 text-right">
-              <button onclick="viewClient('${encodeURIComponent(client.email)}')" class="text-brand-600 hover:text-brand-800 font-medium text-sm hover:underline">Ver histórico</button>
+              <button onclick="viewClient('${encodeURIComponent(client.email)}')" class="px-3 py-1.5 bg-white border border-slate-200 hover:border-brand-300 hover:bg-brand-50 text-brand-600 font-bold text-sm rounded-lg transition-all shadow-sm flex items-center gap-2 ml-auto">
+                Abrir <i data-lucide="arrow-right" class="w-4 h-4"></i>
+              </button>
             </td>
           </tr>
         `;
       }).join('');
       
       updateClientsCount(filtered);
-      
-      if (typeof lucide !== 'undefined') lucide.createIcons();
+      lucide.createIcons();
     }
 
-    // ✅ Ver detalhes do cliente (modal)
+    // Modal view
     window.viewClient = (encodedEmail) => {
       const email = decodeURIComponent(encodedEmail);
       const client = allClients.find(c => c.email?.toLowerCase() === email.toLowerCase());
       
       if (!client) {
-        showToast('❌ Cliente não encontrado', 'error');
+        showToast('Cliente não encontrado na memória.', 'error');
         return;
       }
       
       currentClient = client;
       
-      // Ordenar pedidos por data (mais recente primeiro)
+      // Update Modal Header
+      document.getElementById('modalClientName').textContent = client.name;
+      document.getElementById('modalClientInitials').textContent = (client.name || 'C').charAt(0).toUpperCase();
+
       const sortedOrders = [...client.orderList].sort((a, b) => {
         const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
         const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
@@ -463,200 +517,175 @@
       const content = document.getElementById('clientModalContent');
       
       content.innerHTML = `
-        <!-- Client Info -->
-        <div class="grid grid-cols-2 gap-4 p-4 bg-slate-50 rounded-xl">
-          <div>
-            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Nome</p>
-            <p class="font-medium text-slate-900">${client.name}</p>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1"><i data-lucide="mail" class="w-3 h-3"></i> Email</p>
+            <p class="font-bold text-brand-600 text-sm truncate" title="${client.email}">${client.email}</p>
           </div>
-          <div>
-            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Email</p>
-            <p class="font-medium text-brand-600">${client.email}</p>
+          <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1"><i data-lucide="phone" class="w-3 h-3"></i> Telefone</p>
+            <p class="font-bold text-slate-900 text-sm font-mono">${client.phone}</p>
           </div>
-          <div>
-            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Telefone</p>
-            <p class="font-medium text-slate-900">${client.phone}</p>
+          <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1"><i data-lucide="shopping-bag" class="w-3 h-3"></i> Frequência</p>
+            <p class="font-bold text-slate-900 text-sm">${client.orders} pedidos</p>
           </div>
-          <div>
-            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total de Pedidos</p>
-            <p class="font-bold text-slate-900">${client.orders}</p>
-          </div>
-          <div>
-            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Gasto</p>
-            <p class="font-bold text-green-600">${formatCurrency(client.total)}</p>
-          </div>
-          <div>
-            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Último Pedido</p>
-            <p class="font-medium text-slate-900">${client.lastOrder ? formatDate(client.lastOrder) : 'N/A'}</p>
+          <div class="bg-white p-4 rounded-xl border border-green-100 bg-green-50 shadow-sm">
+            <p class="text-[10px] font-bold text-green-600 uppercase tracking-widest mb-1">Total LTV</p>
+            <p class="font-extrabold text-green-700 text-sm">${formatCurrency(client.total)}</p>
           </div>
         </div>
         
-        <!-- Orders List -->
-        <h4 class="font-bold text-slate-900 mt-6 mb-4">Histórico de Pedidos</h4>
-        <div class="space-y-3">
+        <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+          <i data-lucide="list" class="w-4 h-4"></i> Linha do Tempo de Compras
+        </h3>
+        
+        <div class="space-y-3 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
           ${sortedOrders.map(order => {
-            const statusClass = {
-              pending: 'status-pending',
-              processing: 'status-processing',
-              completed: 'status-completed',
-              cancelled: 'status-cancelled'
-            }[order.status] || 'bg-slate-100 text-slate-700';
+            const statusConfig = {
+              pending: { color: 'amber', icon: 'clock', text: 'Pendente' },
+              processing: { color: 'blue', icon: 'loader', text: 'Em Processo' },
+              completed: { color: 'green', icon: 'check-circle-2', text: 'Concluído' },
+              cancelled: { color: 'red', icon: 'x-circle', text: 'Cancelado' },
+              paid: { color: 'emerald', icon: 'check', text: 'Pago' }
+            }[order.status] || { color: 'slate', icon: 'help-circle', text: order.status };
             
-            const statusText = {
-              pending: '⏳ Pendente',
-              processing: '🔄 Processando',
-              completed: '✅ Concluído',
-              cancelled: '❌ Cancelado'
-            }[order.status] || order.status;
-            
-            const paymentIcon = order.paymentMethod === 'mpesa' ? '🔴' : '🟡';
-            const paymentText = order.paymentMethod === 'mpesa' ? 'M-Pesa' : 'e-Mola';
+            const methodColor = order.paymentMethod === 'mpesa' ? 'red' : 'blue';
+            const methodName = order.paymentMethod === 'mpesa' ? 'M-Pesa' : 'e-Mola';
             
             return `
-              <div class="p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition cursor-pointer" onclick="viewOrderDetails('${order.id}')">
-                <div class="flex justify-between items-start">
-                  <div class="flex-1">
-                    <div class="flex items-center gap-2 mb-1">
-                      <p class="font-mono font-bold text-brand-600 text-sm">${order.orderId}</p>
-                      <span class="status-badge ${statusClass}">${statusText}</span>
+              <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active cursor-pointer" onclick="viewOrderDetails('${order.id}')">
+                <div class="flex items-center justify-center w-10 h-10 rounded-full border-4 border-slate-50 bg-${statusConfig.color}-100 text-${statusConfig.color}-600 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 transition-transform group-hover:scale-110">
+                  <i data-lucide="${statusConfig.icon}" class="w-4 h-4"></i>
+                </div>
+                <div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow group-hover:border-brand-200">
+                  <div class="flex items-start justify-between mb-2">
+                    <div>
+                      <p class="font-bold font-mono text-brand-600 text-sm">${order.orderId}</p>
+                      <span class="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-md bg-${statusConfig.color}-50 text-${statusConfig.color}-700 text-[10px] font-bold uppercase tracking-wider border border-${statusConfig.color}-100">
+                        ${statusConfig.text}
+                      </span>
                     </div>
-                    <p class="text-sm text-slate-600 truncate">${order.detail}</p>
-                    <p class="text-xs text-slate-400 mt-1">
-                      ${order.type?.toUpperCase()} • ${paymentIcon} ${paymentText}
-                    </p>
+                    <div class="text-right">
+                      <p class="font-extrabold text-slate-900">${formatCurrency(order.total)}</p>
+                      <p class="text-[10px] text-slate-400 font-medium">${formatDateTime(order.createdAt)}</p>
+                    </div>
                   </div>
-                  <div class="text-right ml-4">
-                    <p class="font-bold text-slate-900">${formatCurrency(order.total)}</p>
-                    <p class="text-xs text-slate-400 mt-1">${formatDateTime(order.createdAt)}</p>
+                  <div class="bg-slate-50 rounded-lg p-2.5 mt-3 border border-slate-100">
+                    <p class="text-xs text-slate-600 line-clamp-2" title="${order.detail}">${order.detail}</p>
+                  </div>
+                  <div class="flex items-center justify-between mt-3">
+                    <span class="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded uppercase">${order.type}</span>
+                    <span class="text-[10px] font-bold text-${methodColor}-600 bg-${methodColor}-50 border border-${methodColor}-100 px-2 py-1 rounded-full flex items-center gap-1">
+                      <div class="w-1.5 h-1.5 rounded-full bg-${methodColor}-500"></div> ${methodName}
+                    </span>
                   </div>
                 </div>
               </div>
             `;
           }).join('')}
         </div>
-        
-        ${sortedOrders.length === 0 ? '<p class="text-center text-slate-500 py-4">Nenhum pedido registrado</p>' : ''}
+        ${sortedOrders.length === 0 ? '<div class="text-center py-10 bg-white rounded-2xl border border-dashed border-slate-300"><i data-lucide="package-x" class="w-10 h-10 mx-auto text-slate-300 mb-2"></i><p class="text-slate-500 font-medium">Nenhum pedido efetuado ainda.</p></div>' : ''}
       `;
       
       document.getElementById('clientModal').classList.add('active');
       document.body.style.overflow = 'hidden';
+      lucide.createIcons();
     };
 
-    // ✅ Ver detalhes de um pedido específico
     window.viewOrderDetails = (orderId) => {
       if (!currentClient) return;
-      
       const order = currentClient.orderList.find(o => o.id === orderId);
-      if (!order) return;
-      
-      showToast(`📋 Pedido ${order.orderId} - ${formatCurrency(order.total)}`, 'info');
-      // Aqui você pode expandir para mostrar mais detalhes ou abrir modal específico
+      if (order) {
+        showToast(`Copiado: ${order.orderId}`, 'info');
+        navigator.clipboard.writeText(order.orderId).catch(()=>{});
+      }
     };
 
-    // ✅ Fechar modal do cliente
     window.closeClientModal = () => {
       document.getElementById('clientModal').classList.remove('active');
       document.body.style.overflow = '';
-      currentClient = null;
+      setTimeout(() => { currentClient = null; }, 300);
     };
 
-    // ✅ Fechar modal ao clicar fora
-    document.getElementById('clientModal')?.addEventListener('click', (e) => {
-      if (e.target.id === 'clientModal' || e.target.classList.contains('modal-overlay')) {
+    document.addEventListener('keydown', (e) => {
+      if(e.key === 'Escape' && document.getElementById('clientModal').classList.contains('active')) {
         closeClientModal();
       }
     });
 
-    // ✅ Refresh clients
     window.refreshClients = () => {
-      showToast('🔄 Atualizando...', 'info');
-      loadClients();
+      const btn = document.querySelector('button[onclick="refreshClients()"] i');
+      btn?.classList.add('animate-spin');
+      showToast('Sincronizando banco de dados...', 'info');
+      loadClients().finally(() => btn?.classList.remove('animate-spin'));
     };
 
-    // ✅ Search with debounce
+    // Debounce Search
     let searchTimeout;
     document.getElementById('clientSearch')?.addEventListener('input', (e) => {
       clearTimeout(searchTimeout);
-      searchTimeout = setTimeout(() => {
-        renderClients(allClients);
-      }, 300);
+      searchTimeout = setTimeout(() => { renderClients(allClients); }, 300);
     });
 
-    // ✅ Logout
     window.handleLogout = async () => {
-      if (confirm('Tem certeza que deseja sair?')) {
+      if (confirm('Encerrar a sessão de Administrador?')) {
         try {
           await signOut(auth);
-          showToast('✅ Logout realizado com sucesso!', 'success');
-          setTimeout(() => { window.location.href = 'login.html'; }, 1500);
+          showToast('Sessão encerrada com sucesso.', 'success');
+          setTimeout(() => { window.location.href = 'login.html'; }, 1000);
         } catch (error) {
-          console.error('Erro no logout:', error);
-          showToast('❌ Erro ao fazer logout', 'error');
+          showToast('Erro ao sair do sistema.', 'error');
         }
       }
     };
-
     document.getElementById('logoutBtn')?.addEventListener('click', handleLogout);
 
-    // ✅ Toast notifications
+    // Modern Toasts
     function showToast(message, type = 'success') {
       const container = document.getElementById('toastContainer');
       const toast = document.createElement('div');
       
       const styles = {
-        success: 'bg-success-500 border-success-600',
-        error: 'bg-red-500 border-red-600',
-        warning: 'bg-amber-500 border-amber-600',
-        info: 'bg-blue-500 border-blue-600'
+        success: 'bg-green-600 text-white shadow-green-500/30',
+        error: 'bg-red-600 text-white shadow-red-500/30',
+        warning: 'bg-amber-500 text-white shadow-amber-500/30',
+        info: 'bg-blue-600 text-white shadow-blue-500/30'
       };
       
       const icons = {
-        success: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>',
-        error: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
-        warning: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01"></path></svg>',
-        info: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01"></path></svg>'
+        success: 'check-circle',
+        error: 'x-circle',
+        warning: 'alert-triangle',
+        info: 'info'
       };
       
-      toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-white border-l-4 ${styles[type]} transform transition-all duration-300 translate-x-full`;
+      toast.className = `pointer-events-auto flex items-center gap-3 px-5 py-4 rounded-2xl shadow-xl font-medium ${styles[type]} transform transition-all duration-300 translate-x-full border border-white/10`;
       toast.innerHTML = `
-        ${icons[type]}
-        <span class="text-sm font-medium">${message}</span>
-        <button onclick="this.parentElement.remove()" class="ml-2 hover:opacity-80 transition">✕</button>
+        <i data-lucide="${icons[type]}" class="w-5 h-5 flex-shrink-0"></i>
+        <span class="text-sm flex-1">${message}</span>
+        <button onclick="this.parentElement.remove()" class="p-1 hover:bg-white/20 rounded-md transition"><i data-lucide="x" class="w-4 h-4"></i></button>
       `;
       
       container.appendChild(toast);
+      lucide.createIcons();
       
-      // Animar entrada
-      requestAnimationFrame(() => {
-        toast.classList.remove('translate-x-full');
-      });
+      requestAnimationFrame(() => toast.classList.remove('translate-x-full'));
       
-      // Auto-remover
-      const duration = type === 'warning' ? 5000 : 3000;
       setTimeout(() => {
         toast.classList.add('opacity-0', 'translate-x-full');
         setTimeout(() => toast.remove(), 300);
-      }, duration);
+      }, type === 'error' ? 5000 : 3000);
     }
 
-    // ✅ Inicialização
+    // Inicialização
     async function initClientsPage() {
-      // Verificar autenticação de admin
+      if (typeof lucide !== 'undefined') lucide.createIcons();
       const isAdmin = await verifyAdmin();
       if (!isAdmin) return;
-      
-      // Inicializar ícones
-      if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-      }
-      
-      // Carregar clientes
       await loadClients();
-      
-      console.log('✅ Página de clientes inicializada');
     }
     
-    // Iniciar quando o DOM estiver pronto
     document.addEventListener('DOMContentLoaded', initClientsPage);
   </script>
 </body>
