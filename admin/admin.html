@@ -1,949 +1,1092 @@
 <!DOCTYPE html>
 <html lang="pt-MZ" class="scroll-smooth">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Admin - PayGo Moçambique</title>
-<meta name="description" content="Painel administrativo PayGo. Gerencie usuários, pedidos e afiliados.">
-<meta name="theme-color" content="#0f172a">
-<meta name="robots" content="noindex, nofollow">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233b82f6'><polygon points='13 2 3 14 12 14 11 22 21 10 12 10 13 2'/></svg>">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/lucide@latest"></script>
-<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-tailwind.config = {
-theme: {
-extend: {
-fontFamily: {
-sans: ['"Plus Jakarta Sans"', 'sans-serif'],
-display: ['"Outfit"', 'sans-serif'],
-},
-colors: {
-brand: { 50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af', 900: '#1e3a8a', 950: '#0f172a' },
-accent: { 400: '#22d3ee', 500: '#06b6d4', 600: '#0891b2' },
-success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' },
-warning: { 400: '#fbbf24', 500: '#f59e0b', 600: '#d97706' },
-danger: { 400: '#f87171', 500: '#ef4444', 600: '#dc2626' }
-},
-animation: {
-'blob': 'blob 7s infinite',
-'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
-'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-},
-keyframes: {
-blob: { '0%': { transform: 'translate(0px, 0px) scale(1)' }, '33%': { transform: 'translate(30px, -50px) scale(1.1)' }, '66%': { transform: 'translate(-20px, 20px) scale(0.9)' }, '100%': { transform: 'translate(0px, 0px) scale(1)' } },
-fadeInUp: { '0%': { opacity: '0', transform: 'translateY(30px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } }
-},
-boxShadow: {
-'glow': '0 0 20px rgba(59, 130, 246, 0.5)',
-'glow-lg': '0 0 40px rgba(59, 130, 246, 0.6)',
-}
-}
-}
-}
-</script>
-<style>
-::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-track { background: #0f172a; }
-::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-html { scroll-padding-top: 100px; }
-.bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
-.bg-noise { background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.025'/%3E%3C/svg%3E"); pointer-events: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
-.glass-nav { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.08); }
-.hero-gradient { background: radial-gradient(ellipse at top right, #1e293b 0%, #0f172a 35%, #020617 100%); }
-.glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); transition: all 0.3s ease; }
-.glass-card:hover { border-color: rgba(59, 130, 246, 0.4); transform: translateY(-2px); }
-.sidebar-link { position: relative; transition: all 0.3s ease; }
-.sidebar-link::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 0; height: 100%; background: rgba(59, 130, 246, 0.1); border-radius: 8px; transition: width 0.3s ease; z-index: -1; }
-.sidebar-link:hover::before { width: 100%; }
-.sidebar-link.active { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-left: 3px solid #60a5fa; }
-.status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; }
-.status-badge.active { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
-.status-badge.active::before { content: ''; width: 6px; height: 6px; background: #22c55e; border-radius: 50%; animation: pulse-fast 2s infinite; }
-.status-badge.pending { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
-.status-badge.blocked { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
-.status-badge.banned { background: rgba(100, 116, 139, 0.15); color: #94a3b8; border: 1px solid rgba(100, 116, 139, 0.3); }
-.order-status { padding: 4px 12px; border-radius: 12px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; cursor: pointer; transition: all 0.3s ease; }
-.order-status.pending { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
-.order-status.completed { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
-.order-status.processing { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
-.order-status.cancelled { background: rgba(239, 68, 68, 0.15); color: #f87171; }
-.order-status:hover { transform: scale(1.05); }
-.online-indicator { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; display: inline-block; animation: pulse-fast 2s infinite; }
-#toast-container { position: fixed; top: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
-.toast { pointer-events: auto; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 14px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 12px; max-width: 380px; transform: translateX(120%); transition: transform 0.4s ease, opacity 0.3s ease; opacity: 0; }
-.toast.show { transform: translateX(0); opacity: 1; }
-.toast.success { border-left-color: #22c55e; }
-.toast.error { border-left-color: #ef4444; }
-.toast.warning { border-left-color: #f59e0b; }
-.modal { display: none; position: fixed; inset: 0; z-index: 1000; align-items: center; justify-content: center; }
-.modal.active { display: flex; }
-.modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); }
-.modal-content { position: relative; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 32px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; }
-.action-btn { padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; transition: all 0.3s ease; cursor: pointer; }
-.action-btn.ban { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
-.action-btn.block { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
-.action-btn.activate { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
-.action-btn.view { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
-.action-btn:hover { transform: scale(1.05); }
-@media (max-width: 768px) { .toast { max-width: calc(100vw - 40px); } }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Admin - PayGo Moçambique</title>
+    <meta name="description" content="Painel administrativo PayGo. Gerencie usuários, pedidos e afiliados.">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233b82f6'><polygon points='13 2 3 14 12 14 11 22 21 10 12 10 13 2'/></svg>">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        display: ['"Outfit"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: { 50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af', 900: '#1e3a8a', 950: '#0f172a' },
+                        accent: { 400: '#22d3ee', 500: '#06b6d4', 600: '#0891b2' },
+                        success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' },
+                        warning: { 400: '#fbbf24', 500: '#f59e0b', 600: '#d97706' },
+                        danger: { 400: '#f87171', 500: '#ef4444', 600: '#dc2626' }
+                    },
+                    animation: {
+                        'blob': 'blob 7s infinite',
+                        'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
+                        'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        blob: { '0%': { transform: 'translate(0px, 0px) scale(1)' }, '33%': { transform: 'translate(30px, -50px) scale(1.1)' }, '66%': { transform: 'translate(-20px, 20px) scale(0.9)' }, '100%': { transform: 'translate(0px, 0px) scale(1)' } },
+                        fadeInUp: { '0%': { opacity: '0', transform: 'translateY(30px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } }
+                    },
+                    boxShadow: {
+                        'glow': '0 0 20px rgba(59, 130, 246, 0.5)',
+                        'glow-lg': '0 0 40px rgba(59, 130, 246, 0.6)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Styles & Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        html { scroll-padding-top: 100px; }
+        
+        /* Background Effects */
+        .bg-noise { background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.025'/%3E%3C/svg%3E"); pointer-events: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        .glass-nav { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); transition: all 0.3s ease; }
+        .glass-card:hover { border-color: rgba(59, 130, 246, 0.3); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5); }
+        
+        /* Sidebar Links */
+        .sidebar-link { position: relative; transition: all 0.3s ease; }
+        .sidebar-link::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 0; height: 100%; background: rgba(59, 130, 246, 0.1); border-radius: 8px; transition: width 0.3s ease; z-index: -1; }
+        .sidebar-link:hover::before { width: 100%; }
+        .sidebar-link.active { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-left: 3px solid #60a5fa; }
+        
+        /* Badges */
+        .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+        .status-badge.active { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
+        .status-badge.pending { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .status-badge.blocked { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .status-badge.banned { background: rgba(100, 116, 139, 0.15); color: #94a3b8; border: 1px solid rgba(100, 116, 139, 0.3); }
+        
+        /* Order Status Dropdown trigger */
+        .order-status { padding: 4px 12px; border-radius: 12px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; cursor: pointer; transition: all 0.2s ease; border: 1px solid transparent; }
+        .order-status.pending { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3); }
+        .order-status.completed { background: rgba(34, 197, 94, 0.15); color: #4ade80; border-color: rgba(34, 197, 94, 0.3); }
+        .order-status.processing { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.3); }
+        .order-status.cancelled { background: rgba(239, 68, 68, 0.15); color: #f87171; border-color: rgba(239, 68, 68, 0.3); }
+        .order-status:hover { transform: translateY(-1px); filter: brightness(1.2); }
+        
+        .online-indicator { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; display: inline-block; animation: pulse-fast 2s infinite; box-shadow: 0 0 8px #22c55e; }
+        
+        /* Toasts */
+        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
+        .toast { pointer-events: auto; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 14px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); display: flex; align-items: center; gap: 12px; max-width: 380px; transform: translateX(120%); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease; opacity: 0; }
+        .toast.show { transform: translateX(0); opacity: 1; }
+        .toast.success { border-left-color: #22c55e; }
+        .toast.error { border-left-color: #ef4444; }
+        .toast.warning { border-left-color: #f59e0b; }
+        
+        /* Modals */
+        .modal { display: none; position: fixed; inset: 0; z-index: 9999; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; }
+        .modal.active { display: flex; opacity: 1; }
+        .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); }
+        .modal-content { position: relative; background: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 32px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; transform: scale(0.95) translateY(10px); transition: transform 0.3s ease; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+        .modal.active .modal-content { transform: scale(1) translateY(0); }
+        
+        /* Action Buttons */
+        .action-btn { padding: 6px 14px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; transition: all 0.2s ease; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
+        .action-btn.ban { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .action-btn.ban:hover { background: #ef4444; color: white; }
+        .action-btn.block { background: rgba(245, 158, 11, 0.15); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .action-btn.block:hover { background: #f59e0b; color: white; }
+        .action-btn.activate { background: rgba(34, 197, 94, 0.15); color: #86efac; border: 1px solid rgba(34, 197, 94, 0.3); }
+        .action-btn.activate:hover { background: #22c55e; color: white; }
+        .action-btn.view { background: rgba(59, 130, 246, 0.15); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .action-btn.view:hover { background: #3b82f6; color: white; }
+        
+        @media (max-width: 768px) { .toast { max-width: calc(100vw - 40px); } }
+    </style>
 </head>
 <body class="bg-slate-950 text-slate-200 font-sans overflow-x-hidden selection:bg-brand-500 selection:text-white antialiased">
-<div class="bg-noise"></div>
-<div id="toast-container"></div>
-<!-- Header -->
-<header class="fixed w-full z-50 transition-all duration-300 glass-nav" id="navbar">
-<div class="container mx-auto px-6 h-20 flex justify-between items-center">
-<div class="flex items-center gap-2.5">
-<div class="bg-gradient-to-tr from-brand-500 to-accent-500 p-2.5 rounded-xl text-white shadow-lg shadow-brand-500/30">
-<i data-lucide="zap" class="w-5 h-5 fill-current"></i>
-</div>
-<div>
-<span class="text-2xl font-display font-bold text-white">PayGo</span>
-<span class="text-xs text-brand-400 ml-2 px-2 py-0.5 bg-brand-500/20 rounded-full">ADMIN</span>
-</div>
-</div>
-<div class="flex items-center gap-4">
-<div class="hidden md:flex items-center gap-3">
-<div class="text-right">
-<p class="text-sm font-semibold text-white" id="adminName">Administrador</p>
-<p class="text-xs text-slate-400">admin@paygo.co.mz</p>
-</div>
-<div class="w-10 h-10 bg-gradient-to-br from-brand-500 to-accent-500 rounded-full flex items-center justify-center text-white font-bold">A</div>
-</div>
-<button onclick="logout()" class="text-slate-400 hover:text-white transition p-2" title="Sair">
-<i data-lucide="log-out" class="w-5 h-5"></i>
-</button>
-</div>
-</div>
-</header>
-<div class="pt-20">
-<div class="container mx-auto px-6 py-10">
-<div class="grid lg:grid-cols-4 gap-6">
-<!-- Sidebar -->
-<div class="lg:col-span-1">
-<div class="glass-card rounded-2xl p-6 sticky top-24">
-<div class="text-center mb-6 pb-6 border-b border-white/10">
-<div class="w-20 h-20 bg-gradient-to-br from-brand-500 to-accent-500 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-3">A</div>
-<h3 class="text-lg font-bold text-white">Painel Admin</h3>
-<p class="text-sm text-slate-400">Gerenciamento Completo</p>
-</div>
-<nav class="space-y-2">
-<a href="admin.html" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
-<i data-lucide="layout-dashboard" class="w-5 h-5"></i>
-<span class="text-sm font-medium">Visão Geral</span>
-</a>
-<a href="clientes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
-<i data-lucide="users" class="w-5 h-5"></i>
-<span class="text-sm font-medium">Clientes</span>
-</a>
-<a href="relatorios.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
-<i data-lucide="bar-chart-3" class="w-5 h-5"></i>
-<span class="text-sm font-medium">Relatórios</span>
-</a>
-<a href="configuracoes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
-<i data-lucide="settings" class="w-5 h-5"></i>
-<span class="text-sm font-medium">Configurações</span>
-</a>
-<a href="index.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
-<i data-lucide="external-link" class="w-5 h-5"></i>
-<span class="text-sm font-medium">Ver Site</span>
-</a>
-</nav>
-<div class="mt-6 pt-6 border-t border-white/10">
-<p class="text-xs text-slate-400 mb-3">Estatísticas Rápidas</p>
-<div class="space-y-2 text-xs">
-<div class="flex justify-between">
-<span class="text-slate-500">Usuários Ativos</span>
-<span class="text-success-400 font-bold" id="quickActiveUsers">0</span>
-</div>
-<div class="flex justify-between">
-<span class="text-slate-500">Online Agora</span>
-<span class="text-success-400 font-bold flex items-center gap-1"><span class="online-indicator"></span><span id="quickOnlineUsers">0</span></span>
-</div>
-<div class="flex justify-between">
-<span class="text-slate-500">Pendentes</span>
-<span class="text-warning-400 font-bold" id="quickPendingUsers">0</span>
-</div>
-<div class="flex justify-between">
-<span class="text-slate-500">Bloqueados</span>
-<span class="text-danger-400 font-bold" id="quickBlockedUsers">0</span>
-</div>
-</div>
-</div>
-</div>
-</div>
-<!-- Main Content -->
-<div class="lg:col-span-3 space-y-6">
-<!-- Stats Overview -->
-<div class="grid md:grid-cols-4 gap-4" data-aos="fade-up" data-aos-delay="100">
-<div class="glass-card p-6 rounded-2xl">
-<div class="flex items-center justify-between mb-4">
-<div class="w-12 h-12 bg-brand-500/20 rounded-xl flex items-center justify-center"><i data-lucide="users" class="w-6 h-6 text-brand-400"></i></div>
-</div>
-<p class="text-3xl font-display font-bold text-white" id="statTotalUsers">0</p>
-<p class="text-xs text-slate-500 mt-1">Total de Usuários</p>
-</div>
-<div class="glass-card p-6 rounded-2xl">
-<div class="flex items-center justify-between mb-4">
-<div class="w-12 h-12 bg-success-500/20 rounded-xl flex items-center justify-center"><i data-lucide="user-check" class="w-6 h-6 text-success-400"></i></div>
-</div>
-<p class="text-3xl font-display font-bold text-white" id="statActiveUsers">0</p>
-<p class="text-xs text-slate-500 mt-1">Usuários Ativos</p>
-</div>
-<div class="glass-card p-6 rounded-2xl">
-<div class="flex items-center justify-between mb-4">
-<div class="w-12 h-12 bg-success-500/20 rounded-xl flex items-center justify-center"><i data-lucide="wifi" class="w-6 h-6 text-success-400"></i></div>
-<span class="online-indicator"></span>
-</div>
-<p class="text-3xl font-display font-bold text-white" id="statOnlineUsers">0</p>
-<p class="text-xs text-slate-500 mt-1">Online Agora</p>
-</div>
-<div class="glass-card p-6 rounded-2xl">
-<div class="flex items-center justify-between mb-4">
-<div class="w-12 h-12 bg-warning-500/20 rounded-xl flex items-center justify-center"><i data-lucide="user-clock" class="w-6 h-6 text-warning-400"></i></div>
-</div>
-<p class="text-3xl font-display font-bold text-white" id="statPendingUsers">0</p>
-<p class="text-xs text-slate-500 mt-1">Pendentes</p>
-</div>
-</div>
-<!-- Users Management -->
-<div class="glass-card rounded-2xl p-6" data-aos="fade-up" data-aos-delay="200" id="users">
-<div class="flex items-center justify-between mb-6">
-<h3 class="text-xl font-display font-bold text-white flex items-center gap-2">
-<i data-lucide="users" class="w-5 h-5 text-brand-400"></i>
-Gerenciar Usuários
-</h3>
-<div class="flex gap-2">
-<input type="text" id="searchUser" placeholder="Buscar usuário..." class="bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-brand-500 transition" oninput="filterUsers()">
-<select id="filterStatus" class="bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-brand-500 transition" onchange="filterUsers()">
-<option value="">Todos os Status</option>
-<option value="active">Ativo</option>
-<option value="pending">Pendente</option>
-<option value="blocked">Bloqueado</option>
-<option value="banned">Banido</option>
-</select>
-</div>
-</div>
-<div class="overflow-x-auto">
-<table class="w-full text-sm">
-<thead>
-<tr class="border-b border-white/10">
-<th class="text-left py-4 px-4 text-slate-400 font-medium">Usuário</th>
-<th class="text-left py-4 px-4 text-slate-400 font-medium">Email</th>
-<th class="text-left py-4 px-4 text-slate-400 font-medium">Telefone</th>
-<th class="text-left py-4 px-4 text-slate-400 font-medium">Status</th>
-<th class="text-left py-4 px-4 text-slate-400 font-medium">Online</th>
-<th class="text-left py-4 px-4 text-slate-400 font-medium">Email Verificado</th>
-<th class="text-left py-4 px-4 text-slate-400 font-medium">Pedidos</th>
-<th class="text-right py-4 px-4 text-slate-400 font-medium">Ações</th>
-</tr>
-</thead>
-<tbody id="usersTableBody" class="text-slate-300">
-<tr>
-<td colspan="8" class="text-center py-8 text-slate-500">
-<i data-lucide="loader-2" class="w-8 h-8 mx-auto mb-2 animate-spin opacity-50"></i>
-<p>Carregando usuários...</p>
-</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-<!-- Online Users -->
-<div class="glass-card rounded-2xl p-6" data-aos="fade-up" data-aos-delay="300" id="online-users">
-<div class="flex items-center justify-between mb-6">
-<h3 class="text-xl font-display font-bold text-white flex items-center gap-2">
-<i data-lucide="wifi" class="w-5 h-5 text-success-400"></i>
-Usuários Online Agora
-</h3>
-<span class="text-xs text-slate-400 flex items-center gap-2"><span class="online-indicator"></span>Ativo nos últimos 5 minutos</span>
-</div>
-<div class="overflow-x-auto">
-<table class="w-full text-sm">
-<thead>
-<tr class="border-b border-white/10">
-<th class="text-left py-4 px-4 text-slate-400 font-medium">Usuário</th>
-<th class="text-left py-4 px-4 text-slate-400 font-medium">Email</th>
-<th class="text-left py-4 px-4 text-slate-400 font-medium">Última Atividade</th>
-<th class="text-left py-4 px-4 text-slate-400 font-medium">Status</th>
-<th class="text-right py-4 px-4 text-slate-400 font-medium">Ações</th>
-</tr>
-</thead>
-<tbody id="onlineUsersTableBody" class="text-slate-300">
-<tr>
-<td colspan="5" class="text-center py-8 text-slate-500">
-<i data-lucide="wifi-off" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
-<p>Nenhum usuário online no momento</p>
-</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-<!-- Pending Affiliates -->
-<div class="glass-card rounded-2xl p-6" data-aos="fade-up" data-aos-delay="400" id="affiliates">
-<div class="flex items-center justify-between mb-6">
-<h3 class="text-xl font-display font-bold text-white flex items-center gap-2">
-<i data-lucide="user-plus" class="w-5 h-5 text-warning-400"></i>
-Afiliados Pendentes de Aprovação
-</h3>
-<span class="text-xs text-slate-400">Comissão: 3% na primeira compra</span>
-</div>
-<div class="overflow-x-auto">
-<table class="w-full text-sm">
-<thead>
-<tr class="border-b border-white/10">
-<th class="text-left py-4 px-4 text-slate-400 font-medium">Afiliado</th>
-<th class="text-left py-4 px-4 text-slate-400 font-medium">Email</th>
-<th class="text-left py-4 px-4 text-slate-400 font-medium">Método Promoção</th>
-<th class="text-left py-4 px-4 text-slate-400 font-medium">Indicações Esperadas</th>
-<th class="text-left py-4 px-4 text-slate-400 font-medium">Data Registro</th>
-<th class="text-right py-4 px-4 text-slate-400 font-medium">Ações</th>
-</tr>
-</thead>
-<tbody id="affiliatesTableBody" class="text-slate-300">
-<tr>
-<td colspan="6" class="text-center py-8 text-slate-500">
-<i data-lucide="check-circle" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
-<p>Nenhum afiliado pendente</p>
-</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-<!-- Orders -->
-<div class="glass-card rounded-2xl p-6" data-aos="fade-up" data-aos-delay="500" id="orders">
-<div class="flex items-center justify-between mb-6">
-<h3 class="text-xl font-display font-bold text-white flex items-center gap-2">
-<i data-lucide="package" class="w-5 h-5 text-brand-400"></i>
-Todos os Pedidos
-</h3>
-<span class="text-xs text-slate-400">Clique no status para editar</span>
-</div>
-<div class="overflow-x-auto">
-<table class="w-full text-sm">
-<thead>
-<tr class="border-b border-white/10">
-<th class="text-left py-4 px-4 text-slate-400 font-medium">ID</th>
-<th class="text-left py-4 px-4 text-slate-400 font-medium">Cliente</th>
-<th class="text-left py-4 px-4 text-slate-400 font-medium">Email</th>
-<th class="text-left py-4 px-4 text-slate-400 font-medium">Valor</th>
-<th class="text-left py-4 px-4 text-slate-400 font-medium">Status</th>
-<th class="text-left py-4 px-4 text-slate-400 font-medium">Data</th>
-<th class="text-right py-4 px-4 text-slate-400 font-medium">Ações</th>
-</tr>
-</thead>
-<tbody id="ordersTableBody" class="text-slate-300">
-<tr>
-<td colspan="7" class="text-center py-8 text-slate-500">
-<i data-lucide="loader-2" class="w-8 h-8 mx-auto mb-2 animate-spin opacity-50"></i>
-<p>Carregando pedidos...</p>
-</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<!-- Modal: User Profile -->
-<div id="userProfileModal" class="modal">
-<div class="modal-overlay" onclick="closeUserProfileModal()"></div>
-<div class="modal-content">
-<div class="flex items-center justify-between mb-6">
-<h3 class="text-xl font-bold text-white">Perfil do Usuário</h3>
-<button onclick="closeUserProfileModal()" class="text-slate-400 hover:text-white transition">
-<i data-lucide="x" class="w-6 h-6"></i>
-</button>
-</div>
-<div id="userProfileContent" class="space-y-4"></div>
-</div>
-</div>
-<!-- Modal: Edit Order Status -->
-<div id="orderStatusModal" class="modal">
-<div class="modal-overlay" onclick="closeOrderStatusModal()"></div>
-<div class="modal-content">
-<div class="flex items-center justify-between mb-6">
-<h3 class="text-xl font-bold text-white">Editar Status do Pedido</h3>
-<button onclick="closeOrderStatusModal()" class="text-slate-400 hover:text-white transition">
-<i data-lucide="x" class="w-6 h-6"></i>
-</button>
-</div>
-<input type="hidden" id="editOrderId">
-<div class="space-y-4">
-<div>
-<label class="block text-sm text-slate-400 mb-2">Novo Status</label>
-<select id="editOrderStatus" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-500 transition">
-<option value="pending">Pendente</option>
-<option value="processing">Processando</option>
-<option value="completed">Concluído</option>
-<option value="cancelled">Cancelado</option>
-</select>
-</div>
-<div class="flex gap-3">
-<button onclick="closeOrderStatusModal()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-xl font-medium transition">Cancelar</button>
-<button onclick="confirmOrderStatusUpdate()" class="flex-1 bg-brand-600 hover:bg-brand-500 text-white py-3 rounded-xl font-medium transition">Salvar</button>
-</div>
-</div>
-</div>
-</div>
-<!-- Scripts -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-const firebaseConfig = {
-apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
-authDomain: "paygo-14311.firebaseapp.com",
-projectId: "paygo-14311",
-storageBucket: "paygo-14311.firebasestorage.app",
-messagingSenderId: "208360646277",
-appId: "1:208360646277:web:aecc57cc0077ae48a52bec",
-measurementId: "G-N9E391HCFL"
-};
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app, "paygodb");
-let currentUser = null;
-let allUsers = [];
-let onlineUsers = [];
-let allOrders = [];
-onAuthStateChanged(auth, async (user) => {
-if (!user) {
-window.location.href = 'login.html';
-return;
-}
-const userDoc = await getDoc(doc(db, "users", user.uid));
-if (userDoc.exists()) {
-const userData = userDoc.data();
-if (userData.role !== 'admin') {
-showToast('❌ Acesso negado. Apenas administradores.', 'error');
-setTimeout(() => { window.location.href = 'index.html'; }, 2000);
-return;
-}
-currentUser = user;
-document.getElementById('adminName').textContent = userData.name || 'Administrador';
-}
-await loadAllUsers();
-await loadPendingAffiliates();
-await loadAllOrders();
-await updateStats();
-setInterval(updateOnlineUsers, 30000);
-updateOnlineUsers();
-});
-async function loadAllUsers() {
-try {
-const usersRef = collection(db, "users");
-const querySnapshot = await getDocs(usersRef);
-allUsers = [];
-querySnapshot.forEach((doc) => {
-const data = doc.data();
-if (data.role !== 'admin') {
-allUsers.push({ id: doc.id, ...data });
-}
-});
-renderUsersTable(allUsers);
-updateOnlineUsers();
-updateStats();
-} catch (error) {
-console.error('Error loading users:', error);
-showToast('❌ Erro ao carregar usuários.', 'error');
-}
-}
-async function updateOnlineUsers() {
-try {
-const now = Date.now();
-const fiveMinutesAgo = now - (5 * 60 * 1000);
-onlineUsers = allUsers.filter(user => {
-if (!user.lastActivity) return false;
-const lastActivity = user.lastActivity?.toDate ? user.lastActivity.toDate().getTime() : new Date(user.lastActivity).getTime();
-return lastActivity > fiveMinutesAgo && user.status === 'active';
-});
-renderOnlineUsersTable(onlineUsers);
-document.getElementById('onlineCountBadge').textContent = onlineUsers.length;
-document.getElementById('quickOnlineUsers').textContent = onlineUsers.length;
-document.getElementById('statOnlineUsers').textContent = onlineUsers.length;
-} catch (error) {
-console.error('Error updating online users:', error);
-}
-}
-function renderUsersTable(users) {
-const tbody = document.getElementById('usersTableBody');
-if (users.length === 0) {
-tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-slate-500"><i data-lucide="users" class="w-8 h-8 mx-auto mb-2 opacity-50"></i><p>Nenhum usuário encontrado</p></td></tr>`;
-return;
-}
-const now = Date.now();
-const fiveMinutesAgo = now - (5 * 60 * 1000);
-tbody.innerHTML = users.map(user => {
-const statusClass = user.status || 'pending';
-const statusLabels = { 'active': 'Ativo', 'pending': 'Pendente', 'blocked': 'Bloqueado', 'banned': 'Banido' };
-const isOnline = user.lastActivity && (() => {
-const lastActivity = user.lastActivity?.toDate ? user.lastActivity.toDate().getTime() : new Date(user.lastActivity).getTime();
-return lastActivity > fiveMinutesAgo;
-})();
-const onlineIndicator = isOnline ?
-'<span class="flex items-center gap-2"><span class="online-indicator"></span><span class="text-success-400 text-xs">Online</span></span>' :
-'<span class="flex items-center gap-2"><span class="offline-indicator" style="background:#64748b"></span><span class="text-slate-500 text-xs">Offline</span></span>';
-const emailVerified = user.emailVerified ?
-'<span class="text-success-400 flex items-center gap-1"><i data-lucide="check-circle" class="w-4 h-4"></i> Sim</span>' :
-'<span class="text-warning-400 flex items-center gap-1"><i data-lucide="alert-circle" class="w-4 h-4"></i> Não</span>';
-let actionButtons = `<button onclick="viewUserProfile('${user.id}')" class="action-btn view mr-1">Ver Perfil</button>`;
-if (statusClass === 'active') {
-actionButtons += `<button onclick="openUserActionModal('${user.id}', 'block')" class="action-btn block mr-1">Bloquear</button><button onclick="openUserActionModal('${user.id}', 'ban')" class="action-btn ban">Banir</button>`;
-} else if (statusClass === 'blocked') {
-actionButtons += `<button onclick="openUserActionModal('${user.id}', 'activate')" class="action-btn activate mr-1">Ativar</button><button onclick="openUserActionModal('${user.id}', 'ban')" class="action-btn ban">Banir</button>`;
-} else if (statusClass === 'banned') {
-actionButtons += `<button onclick="openUserActionModal('${user.id}', 'activate')" class="action-btn activate">Reativar</button>`;
-} else if (statusClass === 'pending') {
-actionButtons += `<button onclick="openUserActionModal('${user.id}', 'activate')" class="action-btn activate mr-1">Aprovar</button><button onclick="openUserActionModal('${user.id}', 'ban')" class="action-btn reject">Recusar</button>`;
-}
-return `
-<tr class="border-b border-white/5 hover:bg-white/5 transition">
-<td class="py-4 px-4">
-<div class="flex items-center gap-3">
-<div class="w-8 h-8 bg-gradient-to-br from-brand-500 to-accent-500 rounded-full flex items-center justify-center text-white text-xs font-bold">${(user.name || 'U').charAt(0).toUpperCase()}</div>
-<span class="font-medium text-white">${user.name || 'N/A'}</span>
-</div>
-</td>
-<td class="py-4 px-4">${user.email || 'N/A'}</td>
-<td class="py-4 px-4">${user.phone || 'N/A'}</td>
-<td class="py-4 px-4"><span class="status-badge ${statusClass}">${statusLabels[statusClass] || statusClass}</span></td>
-<td class="py-4 px-4">${onlineIndicator}</td>
-<td class="py-4 px-4">${emailVerified}</td>
-<td class="py-4 px-4">${user.totalPurchases || 0}</td>
-<td class="py-4 px-4 text-right">${actionButtons}</td>
-</tr>`;
-}).join('');
-if (typeof lucide !== 'undefined') lucide.createIcons();
-}
-function renderOnlineUsersTable(users) {
-const tbody = document.getElementById('onlineUsersTableBody');
-if (users.length === 0) {
-tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-slate-500"><i data-lucide="wifi-off" class="w-8 h-8 mx-auto mb-2 opacity-50"></i><p>Nenhum usuário online no momento</p></td></tr>`;
-return;
-}
-tbody.innerHTML = users.map(user => {
-const lastActivity = user.lastActivity?.toDate ? user.lastActivity.toDate() : new Date(user.lastActivity);
-const seconds = Math.floor((new Date() - lastActivity) / 1000);
-const timeAgo = seconds < 60 ? 'Agora mesmo' : seconds < 3600 ? `${Math.floor(seconds / 60)} min atrás` : `${Math.floor(seconds / 3600)} horas atrás`;
-return `
-<tr class="border-b border-white/5 hover:bg-white/5 transition">
-<td class="py-4 px-4">
-<div class="flex items-center gap-3">
-<div class="w-8 h-8 bg-gradient-to-br from-brand-500 to-accent-500 rounded-full flex items-center justify-center text-white text-xs font-bold">${(user.name || 'U').charAt(0).toUpperCase()}</div>
-<div>
-<span class="font-medium text-white">${user.name || 'N/A'}</span>
-<div class="flex items-center gap-2 mt-1"><span class="online-indicator"></span><span class="text-xs text-success-400">Online</span></div>
-</div>
-</div>
-</td>
-<td class="py-4 px-4">${user.email || 'N/A'}</td>
-<td class="py-4 px-4"><span class="text-slate-400 text-xs">${timeAgo}</span></td>
-<td class="py-4 px-4"><span class="status-badge ${user.status || 'active'}">${user.status || 'active'}</span></td>
-<td class="py-4 px-4 text-right"><button onclick="viewUserProfile('${user.id}')" class="action-btn view">Ver Perfil</button></td>
-</tr>`;
-}).join('');
-if (typeof lucide !== 'undefined') lucide.createIcons();
-}
-async function loadPendingAffiliates() {
-try {
-const usersRef = collection(db, "users");
-const q = query(usersRef, where("status", "==", "pending"));
-const querySnapshot = await getDocs(q);
-const pendingUsers = [];
-querySnapshot.forEach((doc) => {
-const data = doc.data();
-if (data.referredBy || data.role === 'affiliate') {
-pendingUsers.push({ id: doc.id, ...data });
-}
-});
-renderAffiliatesTable(pendingUsers);
-document.getElementById('pendingAffiliateBadge').textContent = pendingUsers.length;
-} catch (error) {
-console.error('Error loading pending affiliates:', error);
-}
-}
-function renderAffiliatesTable(users) {
-const tbody = document.getElementById('affiliatesTableBody');
-if (users.length === 0) {
-tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-500"><i data-lucide="check-circle" class="w-8 h-8 mx-auto mb-2 opacity-50"></i><p>Nenhum afiliado pendente</p></td></tr>`;
-return;
-}
-tbody.innerHTML = users.map(user => `
-<tr class="border-b border-white/5 hover:bg-white/5 transition">
-<td class="py-4 px-4">
-<div class="flex items-center gap-3">
-<div class="w-8 h-8 bg-gradient-to-br from-brand-500 to-accent-500 rounded-full flex items-center justify-center text-white text-xs font-bold">${(user.name || 'U').charAt(0).toUpperCase()}</div>
-<span class="font-medium text-white">${user.name || 'N/A'}</span>
-</div>
-</td>
-<td class="py-4 px-4">${user.email || 'N/A'}</td>
-<td class="py-4 px-4"><span class="text-brand-400">${user.promotionMethod || 'N/A'}</span></td>
-<td class="py-4 px-4">${user.expectedReferrals || 'N/A'}</td>
-<td class="py-4 px-4">${user.createdAt ? new Date(user.createdAt).toLocaleDateString('pt-MZ') : 'N/A'}</td>
-<td class="py-4 px-4 text-right">
-<button onclick="approveAffiliate('${user.id}')" class="action-btn activate mr-1">Aprovar</button>
-<button onclick="rejectAffiliate('${user.id}')" class="action-btn reject">Recusar</button>
-</td>
-</tr>`).join('');
-if (typeof lucide !== 'undefined') lucide.createIcons();
-}
-async function loadAllOrders() {
-try {
-const ordersRef = collection(db, "orders");
-const querySnapshot = await getDocs(ordersRef);
-allOrders = [];
-querySnapshot.forEach((docSnap) => {
-const orderData = docSnap.data();
-allOrders.push({ id: docSnap.id, ...orderData });
-});
-allOrders.sort((a, b) => {
-const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
-const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
-return dateB - dateA;
-});
-renderOrdersTable(allOrders);
-} catch (error) {
-console.error('Error loading orders:', error);
-showToast('❌ Erro ao carregar pedidos.', 'error');
-}
-}
-function renderOrdersTable(orders) {
-const tbody = document.getElementById('ordersTableBody');
-if (orders.length === 0) {
-tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-slate-500"><i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-50"></i><p>Nenhum pedido encontrado</p></td></tr>`;
-return;
-}
-tbody.innerHTML = orders.map(order => {
-const statusClass = order.status || 'pending';
-const statusLabels = { 'pending': 'Pendente', 'processing': 'Processando', 'completed': 'Concluído', 'cancelled': 'Cancelado' };
-const orderDate = order.createdAt?.toDate ? order.createdAt.toDate() : new Date(order.createdAt || 0);
-return `
-<tr class="border-b border-white/5 hover:bg-white/5 transition">
-<td class="py-4 px-4 font-mono text-sm">${order.orderId || 'N/A'}</td>
-<td class="py-4 px-4">${order.name || 'N/A'}</td>
-<td class="py-4 px-4">${order.email || 'N/A'}</td>
-<td class="py-4 px-4">${(order.total || 0).toLocaleString('pt-MZ')} MT</td>
-<td class="py-4 px-4">
-<span class="order-status ${statusClass}" onclick="openOrderStatusModal('${order.id}', '${statusClass}')">
-${statusLabels[statusClass] || statusClass} ▼
-</span>
-</td>
-<td class="py-4 px-4">${orderDate.toLocaleDateString('pt-MZ')}</td>
-<td class="py-4 px-4 text-right">
-<button onclick="viewOrderDetails('${order.id}')" class="text-brand-400 hover:text-brand-300 text-sm font-medium">Ver</button>
-</td>
-</tr>`;
-}).join('');
-if (typeof lucide !== 'undefined') lucide.createIcons();
-}
-async function updateStats() {
-const users = allUsers;
-const active = users.filter(u => u.status === 'active').length;
-const pending = users.filter(u => u.status === 'pending').length;
-const blocked = users.filter(u => u.status === 'blocked' || u.status === 'banned').length;
-document.getElementById('statTotalUsers').textContent = users.length;
-document.getElementById('statActiveUsers').textContent = active;
-document.getElementById('statPendingUsers').textContent = pending;
-document.getElementById('userCountBadge').textContent = users.length;
-document.getElementById('quickActiveUsers').textContent = active;
-document.getElementById('quickPendingUsers').textContent = pending;
-document.getElementById('quickBlockedUsers').textContent = blocked;
-}
-window.filterUsers = function() {
-const search = document.getElementById('searchUser').value.toLowerCase();
-const status = document.getElementById('filterStatus').value;
-let filtered = allUsers;
-if (search) {
-filtered = filtered.filter(u => (u.name && u.name.toLowerCase().includes(search)) || (u.email && u.email.toLowerCase().includes(search)) || (u.phone && u.phone.includes(search)));
-}
-if (status) {
-filtered = filtered.filter(u => u.status === status);
-}
-renderUsersTable(filtered);
-};
-window.viewUserProfile = async function(userId) {
-try {
-const userDoc = await getDoc(doc(db, "users", userId));
-if (!userDoc.exists()) {
-showToast('❌ Usuário não encontrado.', 'error');
-return;
-}
-const user = userDoc.data();
-const content = document.getElementById('userProfileContent');
-content.innerHTML = `
-<div class="flex items-center gap-4 mb-6">
-<div class="w-20 h-20 bg-gradient-to-br from-brand-500 to-accent-500 rounded-full flex items-center justify-center text-white text-2xl font-bold">${(user.name || 'U').charAt(0).toUpperCase()}</div>
-<div>
-<h4 class="text-lg font-bold text-white">${user.name || 'N/A'}</h4>
-<p class="text-sm text-slate-400">${user.email || 'N/A'}</p>
-<span class="status-badge ${user.status || 'active'}">${user.status || 'active'}</span>
-</div>
-</div>
-<div class="grid grid-cols-2 gap-4">
-<div class="bg-slate-800/50 rounded-xl p-4"><p class="text-xs text-slate-400 mb-1">Telefone</p><p class="text-sm text-white">${user.phone || 'N/A'}</p></div>
-<div class="bg-slate-800/50 rounded-xl p-4"><p class="text-xs text-slate-400 mb-1">Email Verificado</p><p class="text-sm text-white">${user.emailVerified ? '✅ Sim' : '❌ Não'}</p></div>
-<div class="bg-slate-800/50 rounded-xl p-4"><p class="text-xs text-slate-400 mb-1">Total Pedidos</p><p class="text-sm text-white">${user.totalPurchases || 0}</p></div>
-<div class="bg-slate-800/50 rounded-xl p-4"><p class="text-xs text-slate-400 mb-1">Total Gasto</p><p class="text-sm text-white">${(user.totalSpent || 0).toLocaleString('pt-MZ')} MT</p></div>
-<div class="bg-slate-800/50 rounded-xl p-4"><p class="text-xs text-slate-400 mb-1">Data Registro</p><p class="text-sm text-white">${user.createdAt ? new Date(user.createdAt).toLocaleDateString('pt-MZ') : 'N/A'}</p></div>
-<div class="bg-slate-800/50 rounded-xl p-4"><p class="text-xs text-slate-400 mb-1">Último Login</p><p class="text-sm text-white">${user.lastLogin ? new Date(user.lastLogin).toLocaleDateString('pt-MZ') : 'N/A'}</p></div>
-</div>
-${user.role === 'affiliate' ? `
-<div class="mt-4 pt-4 border-t border-white/10">
-<h5 class="text-sm font-bold text-white mb-3">Informações de Afiliado</h5>
-<div class="grid grid-cols-2 gap-4">
-<div class="bg-slate-800/50 rounded-xl p-4"><p class="text-xs text-slate-400 mb-1">Código de Afiliado</p><p class="text-sm text-white font-mono">${user.affiliateCode || 'N/A'}</p></div>
-<div class="bg-slate-800/50 rounded-xl p-4"><p class="text-xs text-slate-400 mb-1">Código Ativo</p><p class="text-sm text-white">${user.affiliateCodeActive ? '✅ Sim' : '❌ Não'}</p></div>
-<div class="bg-slate-800/50 rounded-xl p-4"><p class="text-xs text-slate-400 mb-1">Total Indicações</p><p class="text-sm text-white">${user.totalReferrals || 0}</p></div>
-<div class="bg-slate-800/50 rounded-xl p-4"><p class="text-xs text-slate-400 mb-1">Ganhos Acumulados</p><p class="text-sm text-success-400">${(user.affiliateEarnings || 0).toLocaleString('pt-MZ')} MT</p></div>
-</div>
-</div>` : ''}`;
-document.getElementById('userProfileModal').classList.add('active');
-if (typeof lucide !== 'undefined') lucide.createIcons();
-} catch (error) {
-console.error('Error loading user profile:', error);
-showToast('❌ Erro ao carregar perfil.', 'error');
-}
-};
-window.closeUserProfileModal = function() { document.getElementById('userProfileModal').classList.remove('active'); };
-window.openOrderStatusModal = function(orderId, currentStatus) {
-document.getElementById('editOrderId').value = orderId;
-document.getElementById('editOrderStatus').value = currentStatus;
-document.getElementById('orderStatusModal').classList.add('active');
-};
-window.closeOrderStatusModal = function() { document.getElementById('orderStatusModal').classList.remove('active'); };
-window.confirmOrderStatusUpdate = async function() {
-const orderId = document.getElementById('editOrderId').value;
-const newStatus = document.getElementById('editOrderStatus').value;
-try {
-const orderRef = doc(db, "orders", orderId);
-const orderDoc = await getDoc(orderRef);
-const orderData = orderDoc.data();
-await updateDoc(orderRef, {
-status: newStatus,
-updatedAt: serverTimestamp()
-});
-if (newStatus === 'completed' && orderData.userId && !orderData.commissionProcessed) {
-await processAffiliateCommission(orderData);
-await updateDoc(orderRef, { commissionProcessed: true });
-}
-showToast(`✅ Status do pedido atualizado para ${newStatus}`, 'success');
-closeOrderStatusModal();
-await loadAllOrders();
-} catch (error) {
-console.error('Error updating order status:', error);
-showToast('❌ Erro ao atualizar status.', 'error');
-}
-};
-async function processAffiliateCommission(orderData) {
-try {
-if (!orderData.userId || orderData.userId.startsWith('anon-')) return;
-const userRef = doc(db, "users", orderData.userId);
-const userSnap = await getDoc(userRef);
-if (!userSnap.exists()) return;
-const userData = userSnap.data();
-if (userData.firstPurchaseProcessed || !userData.referredBy || !userData.referrerId) {
-if (!userData.firstPurchaseProcessed) {
-await updateDoc(userRef, { firstPurchaseProcessed: true });
-}
-return;
-}
-const referrerRef = doc(db, "users", userData.referrerId);
-const referrerSnap = await getDoc(referrerRef);
-if (!referrerSnap.exists() || referrerSnap.data().role !== 'affiliate' || referrerSnap.data().status !== 'active') {
-await updateDoc(userRef, { firstPurchaseProcessed: true });
-return;
-}
-const referrerData = referrerSnap.data();
-const commission = Math.round(orderData.total * 0.03 * 100) / 100;
-await updateDoc(referrerRef, {
-affiliateEarnings: increment(commission),
-approvedReferrals: increment(1),
-pendingReferrals: increment(-1),
-lastCommissionDate: serverTimestamp()
-});
-await updateDoc(userRef, { firstPurchaseProcessed: true });
-await addDoc(collection(db, "commissions"), {
-orderId: orderData.orderId,
-customerId: orderData.userId,
-customerEmail: userData.email,
-affiliateId: userData.referrerId,
-affiliateEmail: referrerData.email,
-affiliateCode: userData.referredBy,
-orderTotal: orderData.total,
-commissionAmount: commission,
-commissionRate: 0.03,
-processedAt: serverTimestamp()
-});
-await sendEmailViaResend({
-to: referrerData.email,
-subject: '💰 Comissão Recebida!',
-template: 'affiliate-commission',
-variables: {
-customer_name: referrerData.name,
-commission_amount: commission.toLocaleString('pt-MZ'),
-order_id: orderData.orderId,
-referred_email: userData.email
-}
-});
-console.log(`✅ Comissão processada: ${commission} MT para afiliado ${userData.referrerId}`);
-} catch (error) {
-console.error('Error processing commission:', error);
-}
-}
-async function sendEmailViaResend({ to, subject, template, variables }) {
-try {
-const response = await fetch('/api/send-email', {
-method: 'POST',
-headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify({ to, subject, template, variables })
-});
-const result = await response.json();
-if (!response.ok || !result.success) throw new Error(result.error || `HTTP ${response.status}`);
-return { success: true };
-} catch (error) {
-console.error('Failed to send email:', error);
-return { success: false };
-}
-}
-window.approveAffiliate = async function(userId) {
-if (!confirm('Aprovar este afiliado? Ele receberá seu código de afiliado ativo.')) return;
-try {
-const userRef = doc(db, "users", userId);
-const userDoc = await getDoc(userRef);
-const userData = userDoc.data();
-await updateDoc(userRef, {
-status: 'active',
-affiliateCodeActive: true,
-approvedAt: serverTimestamp(),
-approvedBy: currentUser.uid,
-applicationReviewed: true,
-applicationReviewedAt: serverTimestamp()
-});
-await sendEmailViaResend({
-to: userData.email,
-subject: '🎉 Sua Candidatura de Afiliado Foi Aprovada!',
-template: 'affiliate-approved',
-variables: {
-customer_name: userData.name,
-affiliate_code: userData.affiliateCode,
-dashboard_link: 'https://paygo.co.mz/dashboard.html'
-}
-});
-await fetch('/api/webhook-lark', {
-method: 'POST',
-headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify({
-type: 'affiliate-approved',
-data: {
-name: userData.name,
-email: userData.email,
-affiliateCode: userData.affiliateCode
-}
-})
-});
-showToast(`✅ ${userData.name} aprovado como afiliado!`, 'success');
-await loadAllUsers();
-await loadPendingAffiliates();
-} catch (error) {
-console.error('Error approving affiliate:', error);
-showToast('❌ Erro ao aprovar afiliado.', 'error');
-}
-};
-window.rejectAffiliate = async function(userId) {
-if (!confirm('Recusar esta candidatura? O usuário voltará a ser cliente normal.')) return;
-try {
-const userRef = doc(db, "users", userId);
-const userDoc = await getDoc(userRef);
-const userData = userDoc.data();
-await updateDoc(userRef, {
-role: 'user',
-status: 'active',
-affiliateCode: null,
-affiliateCodeActive: false,
-rejectedAt: serverTimestamp(),
-applicationReviewed: true,
-applicationReviewedAt: serverTimestamp()
-});
-showToast(`❌ Candidatura de ${userData.name} recusada.`, 'warning');
-await loadAllUsers();
-await loadPendingAffiliates();
-} catch (error) {
-console.error('Error rejecting affiliate:', error);
-showToast('❌ Erro ao recusar afiliado.', 'error');
-}
-};
-window.openUserActionModal = function(userId, action) {
-const actions = {
-'ban': { title: 'Banir Usuário', message: 'Tem certeza que deseja BANIR este usuário?' },
-'block': { title: 'Bloquear Usuário', message: 'Tem certeza que deseja BLOQUEAR este usuário?' },
-'activate': { title: 'Ativar Usuário', message: 'Tem certeza que deseja ATIVAR este usuário?' }
-};
-if (confirm(actions[action].message)) {
-confirmUserAction(userId, action);
-}
-};
-window.confirmUserAction = async function(userId, action) {
-try {
-const userRef = doc(db, "users", userId);
-const userDoc = await getDoc(userRef);
-const userData = userDoc.data();
-let newStatus = action === 'ban' ? 'banned' : action === 'block' ? 'blocked' : 'active';
-await updateDoc(userRef, {
-status: newStatus,
-updatedAt: serverTimestamp(),
-lastActivity: serverTimestamp(),
-affiliateCodeActive: newStatus === 'active' && userData.role === 'affiliate'
-});
-showToast(`✅ Usuário ${newStatus === 'active' ? 'ativado' : newStatus === 'blocked' ? 'bloqueado' : 'banido'} com sucesso!`, 'success');
-await loadAllUsers();
-await loadPendingAffiliates();
-} catch (error) {
-console.error('Error updating user:', error);
-showToast('❌ Erro ao atualizar usuário.', 'error');
-}
-};
-window.logout = async function() {
-try {
-await signOut(auth);
-showToast('✅ Logout realizado!', 'success');
-setTimeout(() => { window.location.href = 'login.html'; }, 1500);
-} catch (error) {
-console.error('Logout error:', error);
-showToast('❌ Erro ao fazer logout.', 'error');
-}
-};
-function showToast(message, type = 'default') {
-const container = document.getElementById('toast-container');
-const toast = document.createElement('div');
-toast.className = `toast ${type}`;
-let icon = type === 'success' ? 'check-circle' : (type === 'error' ? 'alert-circle' : 'info');
-let color = type === 'success' ? 'text-success-400' : (type === 'error' ? 'text-danger-400' : 'text-brand-400');
-toast.innerHTML = `<i data-lucide="${icon}" class="${color} w-5 h-5 flex-shrink-0"></i><span class="text-sm font-medium text-slate-200">${message}</span>`;
-container.appendChild(toast);
-if (typeof lucide !== 'undefined') lucide.createIcons();
-requestAnimationFrame(() => toast.classList.add('show'));
-setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 5000);
-}
-document.addEventListener('DOMContentLoaded', function() {
-if (typeof lucide !== 'undefined') lucide.createIcons();
-if (typeof AOS !== 'undefined') AOS.init({ duration: 800, once: true, offset: 50, easing: 'ease-out-cubic' });
-window.addEventListener('scroll', function() {
-const nav = document.getElementById('navbar');
-if (nav) window.scrollY > 20 ? nav.classList.add('glass-nav') : nav.classList.remove('glass-nav');
-});
-});
-</script>
+    <div class="bg-noise"></div>
+    <div id="toast-container"></div>
+    
+    <header class="fixed w-full z-50 transition-all duration-300 glass-nav" id="navbar">
+        <div class="container mx-auto px-4 md:px-6 h-20 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <button id="mobileMenuBtn" class="lg:hidden text-slate-400 hover:text-white p-2 -ml-2 transition-colors">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+                
+                <div class="bg-gradient-to-tr from-brand-500 to-accent-500 p-2.5 rounded-xl text-white shadow-lg shadow-brand-500/30">
+                    <i data-lucide="zap" class="w-5 h-5 fill-current"></i>
+                </div>
+                <div class="hidden sm:block">
+                    <span class="text-2xl font-display font-bold text-white tracking-tight">PayGo</span>
+                    <span class="text-[10px] text-brand-400 ml-2 px-2 py-0.5 bg-brand-500/20 rounded-full font-bold uppercase tracking-wider">Admin</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <div class="hidden md:flex items-center gap-3">
+                    <div class="text-right">
+                        <p class="text-sm font-bold text-white" id="adminName">A carregar...</p>
+                        <p class="text-xs text-slate-400">Painel de Gestão</p>
+                    </div>
+                    <div class="w-10 h-10 bg-slate-800 border border-slate-700 rounded-full flex items-center justify-center text-white font-bold shadow-inner">
+                        <i data-lucide="shield-check" class="w-5 h-5 text-brand-400"></i>
+                    </div>
+                </div>
+                <button onclick="logout()" class="bg-slate-800/80 hover:bg-danger-500/20 text-slate-400 hover:text-danger-400 border border-slate-700 hover:border-danger-500/50 rounded-xl transition-all p-2.5" title="Sair do sistema">
+                    <i data-lucide="log-out" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div id="sidebarOverlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-40 hidden lg:hidden opacity-0 transition-opacity duration-300"></div>
+
+    <div class="pt-24 lg:pt-28 pb-10">
+        <div class="container mx-auto px-4 md:px-6">
+            <div class="grid lg:grid-cols-4 gap-6 relative">
+                
+                <div id="sidebar" class="lg:col-span-1 fixed lg:static top-0 left-0 h-full lg:h-auto w-72 lg:w-auto bg-slate-900 lg:bg-transparent z-50 lg:z-auto p-6 lg:p-0 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out border-r border-slate-800 lg:border-none overflow-y-auto lg:overflow-visible shadow-2xl lg:shadow-none">
+                    <div class="glass-card rounded-2xl p-0 lg:p-6 sticky top-28 border-none lg:border-solid bg-transparent lg:bg-[rgba(255,255,255,0.03)]">
+                        
+                        <div class="flex justify-between items-center mb-6 lg:hidden">
+                            <span class="text-xl font-display font-bold text-white tracking-tight">PayGo Admin</span>
+                            <button id="closeSidebarBtn" class="text-slate-400 hover:text-white p-2">
+                                <i data-lucide="x" class="w-6 h-6"></i>
+                            </button>
+                        </div>
+
+                        <div class="text-center mb-6 pb-6 border-b border-white/10 hidden lg:block">
+                            <div class="w-20 h-20 bg-slate-800 border-2 border-brand-500/30 rounded-full flex items-center justify-center text-brand-400 mx-auto mb-3 shadow-glow">
+                                <i data-lucide="layout-dashboard" class="w-8 h-8"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-white tracking-wide">Painel Admin</h3>
+                            <p class="text-xs text-slate-400 mt-1 uppercase tracking-wider">Sistema de Gestão</p>
+                        </div>
+                        
+                        <nav class="space-y-2">
+                            <a href="#dashboard" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
+                                <i data-lucide="activity" class="w-5 h-5"></i>
+                                <span class="text-sm font-medium">Visão Geral</span>
+                            </a>
+                            <a href="#users" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
+                                <i data-lucide="users" class="w-5 h-5"></i>
+                                <span class="text-sm font-medium">Clientes & Afiliados</span>
+                            </a>
+                            <a href="#orders" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
+                                <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                                <span class="text-sm font-medium">Todos Pedidos</span>
+                            </a>
+                            <a href="index.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition mt-4 border border-slate-800 bg-slate-900/50">
+                                <i data-lucide="external-link" class="w-5 h-5 text-brand-400"></i>
+                                <span class="text-sm font-medium">Ver Site Público</span>
+                            </a>
+                        </nav>
+                        
+                        <div class="mt-8 pt-6 border-t border-white/10">
+                            <p class="text-xs font-bold text-slate-500 mb-4 uppercase tracking-wider">Métricas Rápidas</p>
+                            <div class="space-y-3 text-sm">
+                                <div class="flex justify-between items-center bg-slate-800/30 px-3 py-2 rounded-lg">
+                                    <span class="text-slate-400 flex items-center gap-2"><i data-lucide="user-check" class="w-4 h-4"></i> Ativos</span>
+                                    <span class="text-white font-bold" id="quickActiveUsers">0</span>
+                                </div>
+                                <div class="flex justify-between items-center bg-brand-900/20 border border-brand-500/20 px-3 py-2 rounded-lg">
+                                    <span class="text-brand-300 flex items-center gap-2"><i data-lucide="wifi" class="w-4 h-4"></i> Online</span>
+                                    <span class="text-brand-400 font-bold flex items-center gap-2">
+                                        <span id="quickOnlineUsers">0</span>
+                                        <span class="online-indicator"></span>
+                                    </span>
+                                </div>
+                                <div class="flex justify-between items-center bg-slate-800/30 px-3 py-2 rounded-lg">
+                                    <span class="text-slate-400 flex items-center gap-2"><i data-lucide="clock" class="w-4 h-4"></i> Pendentes</span>
+                                    <span class="text-warning-400 font-bold" id="quickPendingUsers">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-3 space-y-6">
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4" data-aos="fade-up">
+                        <div class="glass-card p-5 md:p-6 rounded-2xl relative overflow-hidden group">
+                            <div class="absolute -right-4 -top-4 w-24 h-24 bg-brand-500/10 rounded-full blur-xl group-hover:bg-brand-500/20 transition-all"></div>
+                            <div class="flex items-center justify-between mb-4 relative z-10">
+                                <div class="w-10 h-10 md:w-12 md:h-12 bg-brand-500/20 rounded-xl flex items-center justify-center"><i data-lucide="users" class="w-5 h-5 md:w-6 md:h-6 text-brand-400"></i></div>
+                            </div>
+                            <p class="text-2xl md:text-3xl font-display font-bold text-white relative z-10" id="statTotalUsers">0</p>
+                            <p class="text-xs text-slate-400 mt-1 relative z-10">Total de Usuários</p>
+                        </div>
+                        
+                        <div class="glass-card p-5 md:p-6 rounded-2xl relative overflow-hidden group">
+                            <div class="absolute -right-4 -top-4 w-24 h-24 bg-success-500/10 rounded-full blur-xl group-hover:bg-success-500/20 transition-all"></div>
+                            <div class="flex items-center justify-between mb-4 relative z-10">
+                                <div class="w-10 h-10 md:w-12 md:h-12 bg-success-500/20 rounded-xl flex items-center justify-center"><i data-lucide="user-check" class="w-5 h-5 md:w-6 md:h-6 text-success-400"></i></div>
+                            </div>
+                            <p class="text-2xl md:text-3xl font-display font-bold text-white relative z-10" id="statActiveUsers">0</p>
+                            <p class="text-xs text-slate-400 mt-1 relative z-10">Usuários Ativos</p>
+                        </div>
+                        
+                        <div class="glass-card p-5 md:p-6 rounded-2xl relative overflow-hidden group border-brand-500/30 bg-brand-900/10">
+                            <div class="absolute -right-4 -top-4 w-24 h-24 bg-brand-500/10 rounded-full blur-xl group-hover:bg-brand-500/30 transition-all"></div>
+                            <div class="flex items-center justify-between mb-4 relative z-10">
+                                <div class="w-10 h-10 md:w-12 md:h-12 bg-brand-500/20 border border-brand-500/30 rounded-xl flex items-center justify-center"><i data-lucide="wifi" class="w-5 h-5 md:w-6 md:h-6 text-brand-400"></i></div>
+                                <span class="online-indicator shadow-[0_0_10px_#22c55e]"></span>
+                            </div>
+                            <p class="text-2xl md:text-3xl font-display font-bold text-white relative z-10" id="statOnlineUsers">0</p>
+                            <p class="text-xs text-brand-300 mt-1 relative z-10 font-medium">Online Agora</p>
+                        </div>
+                        
+                        <div class="glass-card p-5 md:p-6 rounded-2xl relative overflow-hidden group">
+                            <div class="absolute -right-4 -top-4 w-24 h-24 bg-warning-500/10 rounded-full blur-xl group-hover:bg-warning-500/20 transition-all"></div>
+                            <div class="flex items-center justify-between mb-4 relative z-10">
+                                <div class="w-10 h-10 md:w-12 md:h-12 bg-warning-500/20 rounded-xl flex items-center justify-center"><i data-lucide="clock" class="w-5 h-5 md:w-6 md:h-6 text-warning-400"></i></div>
+                            </div>
+                            <p class="text-2xl md:text-3xl font-display font-bold text-white relative z-10" id="statPendingUsers">0</p>
+                            <p class="text-xs text-slate-400 mt-1 relative z-10">Pendentes / Análise</p>
+                        </div>
+                    </div>
+
+                    <div class="glass-card rounded-2xl p-6 border-l-4 border-l-brand-500" data-aos="fade-up" id="online-users">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+                            <div>
+                                <h3 class="text-xl font-display font-bold text-white flex items-center gap-2">
+                                    <i data-lucide="activity" class="w-5 h-5 text-brand-400"></i> Monitoramento em Tempo Real
+                                </h3>
+                                <p class="text-xs text-slate-400 mt-1 flex items-center gap-2"><span class="online-indicator w-2 h-2"></span> Atualizado automaticamente a cada 30s</p>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto rounded-xl border border-white/5 bg-slate-900/50">
+                            <table class="w-full text-sm text-left">
+                                <thead class="bg-slate-800/80 text-xs uppercase text-slate-400">
+                                    <tr>
+                                        <th class="py-3 px-4 font-bold">Usuário</th>
+                                        <th class="py-3 px-4 font-bold">Email</th>
+                                        <th class="py-3 px-4 font-bold">Última Atividade</th>
+                                        <th class="py-3 px-4 font-bold">Status</th>
+                                        <th class="py-3 px-4 font-bold text-right">Ação</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="onlineUsersTableBody" class="divide-y divide-white/5">
+                                    <tr>
+                                        <td colspan="5" class="text-center py-8 text-slate-500">
+                                            <i data-lucide="loader-2" class="w-6 h-6 mx-auto mb-2 animate-spin"></i>
+                                            <p>A sincronizar dados...</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="glass-card rounded-2xl p-6" data-aos="fade-up" id="affiliates">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-2">
+                            <div>
+                                <h3 class="text-xl font-display font-bold text-white flex items-center gap-2">
+                                    <i data-lucide="user-plus" class="w-5 h-5 text-warning-400"></i> Afiliados Pendentes
+                                </h3>
+                                <p class="text-xs text-slate-400 mt-1">Aguardam aprovação para receber código promocional.</p>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto rounded-xl border border-white/5">
+                            <table class="w-full text-sm text-left">
+                                <thead class="bg-slate-800/50 text-xs uppercase text-slate-400 border-b border-white/10">
+                                    <tr>
+                                        <th class="py-3 px-4 font-bold">Afiliado</th>
+                                        <th class="py-3 px-4 font-bold">Email</th>
+                                        <th class="py-3 px-4 font-bold">Método Promoção</th>
+                                        <th class="py-3 px-4 font-bold">Data Registro</th>
+                                        <th class="py-3 px-4 font-bold text-right">Decisão</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="affiliatesTableBody" class="divide-y divide-white/5">
+                                    <tr>
+                                        <td colspan="5" class="text-center py-8 text-slate-500">
+                                            <i data-lucide="check-circle" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+                                            <p>Nenhum afiliado pendente no momento.</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="glass-card rounded-2xl p-6" data-aos="fade-up" id="users">
+                        <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-6 gap-4">
+                            <div>
+                                <h3 class="text-xl font-display font-bold text-white flex items-center gap-2">
+                                    <i data-lucide="database" class="w-5 h-5 text-brand-400"></i> Base de Dados: Usuários
+                                </h3>
+                            </div>
+                            <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+                                <div class="relative w-full sm:w-64">
+                                    <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                                    <input type="text" id="searchUser" placeholder="Buscar por nome, email..." class="w-full pl-9 pr-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-brand-500 transition-colors shadow-inner" oninput="filterUsers()">
+                                </div>
+                                <select id="filterStatus" class="w-full sm:w-40 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-brand-500 transition-colors cursor-pointer" onchange="filterUsers()">
+                                    <option value="">Todos Status</option>
+                                    <option value="active">Ativos</option>
+                                    <option value="pending">Pendentes</option>
+                                    <option value="blocked">Bloqueados</option>
+                                    <option value="banned">Banidos</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto rounded-xl border border-white/5">
+                            <table class="w-full text-sm text-left">
+                                <thead class="bg-slate-800/50 text-xs uppercase text-slate-400 border-b border-white/10">
+                                    <tr>
+                                        <th class="py-3 px-4 font-bold">Cliente</th>
+                                        <th class="py-3 px-4 font-bold">Contatos</th>
+                                        <th class="py-3 px-4 font-bold">Status</th>
+                                        <th class="py-3 px-4 font-bold">Verificado</th>
+                                        <th class="py-3 px-4 font-bold">Pedidos</th>
+                                        <th class="py-3 px-4 font-bold text-right">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersTableBody" class="divide-y divide-white/5">
+                                    <tr>
+                                        <td colspan="6" class="text-center py-8 text-slate-500">
+                                            <i data-lucide="loader-2" class="w-8 h-8 mx-auto mb-2 animate-spin opacity-50"></i>
+                                            <p>A carregar base de dados...</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="glass-card rounded-2xl p-6" data-aos="fade-up" id="orders">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-2">
+                            <div>
+                                <h3 class="text-xl font-display font-bold text-white flex items-center gap-2">
+                                    <i data-lucide="shopping-bag" class="w-5 h-5 text-brand-400"></i> Histórico de Pedidos
+                                </h3>
+                                <p class="text-xs text-slate-400 mt-1">Clique no status para o atualizar rapidamente.</p>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto rounded-xl border border-white/5">
+                            <table class="w-full text-sm text-left">
+                                <thead class="bg-slate-800/50 text-xs uppercase text-slate-400 border-b border-white/10">
+                                    <tr>
+                                        <th class="py-3 px-4 font-bold">ID Transação</th>
+                                        <th class="py-3 px-4 font-bold">Cliente / Contato</th>
+                                        <th class="py-3 px-4 font-bold">Valor (MT)</th>
+                                        <th class="py-3 px-4 font-bold">Status</th>
+                                        <th class="py-3 px-4 font-bold">Data</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ordersTableBody" class="divide-y divide-white/5">
+                                    <tr>
+                                        <td colspan="5" class="text-center py-8 text-slate-500">
+                                            <i data-lucide="loader-2" class="w-8 h-8 mx-auto mb-2 animate-spin opacity-50"></i>
+                                            <p>A sincronizar transações...</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="userProfileModal" class="modal">
+        <div class="modal-overlay" onclick="closeUserProfileModal()"></div>
+        <div class="modal-content">
+            <div class="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
+                <h3 class="text-xl font-display font-bold text-white flex items-center gap-2"><i data-lucide="user" class="w-5 h-5 text-brand-400"></i> Perfil Completo</h3>
+                <button onclick="closeUserProfileModal()" class="text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 p-1.5 rounded-lg transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div id="userProfileContent" class="space-y-4">
+                </div>
+        </div>
+    </div>
+
+    <div id="orderStatusModal" class="modal">
+        <div class="modal-overlay" onclick="closeOrderStatusModal()"></div>
+        <div class="modal-content max-w-sm">
+            <div class="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
+                <h3 class="text-xl font-display font-bold text-white">Atualizar Pedido</h3>
+                <button onclick="closeOrderStatusModal()" class="text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 p-1.5 rounded-lg transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <input type="hidden" id="editOrderId">
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-sm font-bold text-slate-300 mb-2">Novo Status</label>
+                    <select id="editOrderStatus" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-500 transition shadow-inner cursor-pointer">
+                        <option value="pending">⏳ Pendente (Aguardando)</option>
+                        <option value="processing">🔄 Em Processamento</option>
+                        <option value="completed">✅ Concluído (Sucesso)</option>
+                        <option value="cancelled">❌ Cancelado (Falha/Recusa)</option>
+                    </select>
+                </div>
+                <div class="flex gap-3 pt-2 border-t border-white/10">
+                    <button onclick="closeOrderStatusModal()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white py-3 rounded-xl font-bold transition-colors">Cancelar</button>
+                    <button onclick="confirmOrderStatusUpdate()" id="btnSaveStatus" class="flex-1 bg-brand-600 hover:bg-brand-500 text-white py-3 rounded-xl font-bold transition-colors shadow-[0_0_15px_rgba(37,99,235,0.4)] flex justify-center items-center gap-2">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, serverTimestamp, addDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
+            authDomain: "paygo-14311.firebaseapp.com",
+            projectId: "paygo-14311",
+            storageBucket: "paygo-14311.firebasestorage.app",
+            messagingSenderId: "208360646277",
+            appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app, "paygodb");
+
+        let currentUser = null;
+        let allUsers = [];
+        let onlineUsers = [];
+        let allOrders = [];
+
+        // Mobile Sidebar Logic
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+
+        function toggleMobileSidebar() {
+            sidebar.classList.toggle('-translate-x-full');
+            if(sidebarOverlay.classList.contains('hidden')) {
+                sidebarOverlay.classList.remove('hidden');
+                setTimeout(() => sidebarOverlay.classList.remove('opacity-0'), 10);
+            } else {
+                sidebarOverlay.classList.add('opacity-0');
+                setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
+            }
+        }
+        
+        mobileMenuBtn.addEventListener('click', toggleMobileSidebar);
+        closeSidebarBtn.addEventListener('click', toggleMobileSidebar);
+        sidebarOverlay.addEventListener('click', toggleMobileSidebar);
+
+        // Core App Logic
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            try {
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    if (userData.role !== 'admin') {
+                        showToast('Acesso restrito. Apenas administradores.', 'error');
+                        setTimeout(() => { window.location.href = 'index.html'; }, 2000);
+                        return;
+                    }
+                    currentUser = user;
+                    document.getElementById('adminName').textContent = userData.name || 'Administrador';
+                } else {
+                    throw new Error("Usuário não encontrado na base de dados.");
+                }
+                
+                await loadAllUsers();
+                await loadPendingAffiliates();
+                await loadAllOrders();
+                await updateStats();
+                
+                setInterval(updateOnlineUsers, 30000);
+                updateOnlineUsers();
+            } catch (error) {
+                console.error("Auth Error:", error);
+                showToast("Erro de autenticação", "error");
+            }
+        });
+
+        // ==========================================
+        // DATA LOADING & RENDERING
+        // ==========================================
+
+        async function loadAllUsers() {
+            try {
+                const usersRef = collection(db, "users");
+                const querySnapshot = await getDocs(usersRef);
+                allUsers = [];
+                
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    if (data.role !== 'admin') {
+                        allUsers.push({ id: doc.id, ...data });
+                    }
+                });
+                
+                renderUsersTable(allUsers);
+                updateOnlineUsers();
+                updateStats();
+            } catch (error) {
+                console.error('Error loading users:', error);
+                showToast('Erro ao carregar banco de usuários.', 'error');
+            }
+        }
+
+        async function updateOnlineUsers() {
+            try {
+                const now = Date.now();
+                const fiveMinutesAgo = now - (5 * 60 * 1000);
+                
+                onlineUsers = allUsers.filter(user => {
+                    if (!user.lastActivity) return false;
+                    const lastActivity = user.lastActivity?.toDate ? user.lastActivity.toDate().getTime() : new Date(user.lastActivity).getTime();
+                    return lastActivity > fiveMinutesAgo && user.status === 'active';
+                });
+                
+                renderOnlineUsersTable(onlineUsers);
+                document.getElementById('quickOnlineUsers').textContent = onlineUsers.length;
+                document.getElementById('statOnlineUsers').textContent = onlineUsers.length;
+            } catch (error) {
+                console.error('Error updating online users:', error);
+            }
+        }
+
+        function renderUsersTable(users) {
+            const tbody = document.getElementById('usersTableBody');
+            if (users.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-500"><i data-lucide="users" class="w-8 h-8 mx-auto mb-2 opacity-30"></i><p>Nenhum resultado encontrado.</p></td></tr>`;
+                return;
+            }
+            
+            const now = Date.now();
+            const fiveMinutesAgo = now - (5 * 60 * 1000);
+            
+            tbody.innerHTML = users.map(user => {
+                const statusClass = user.status || 'pending';
+                const statusLabels = { 'active': 'Ativo', 'pending': 'Pendente', 'blocked': 'Bloqueado', 'banned': 'Banido' };
+                
+                const isOnline = user.lastActivity && (() => {
+                    const lastActivity = user.lastActivity?.toDate ? user.lastActivity.toDate().getTime() : new Date(user.lastActivity).getTime();
+                    return lastActivity > fiveMinutesAgo;
+                })();
+                
+                const verifiedIcon = user.emailVerified 
+                    ? '<span class="text-success-400 bg-success-400/10 px-2 py-1 rounded flex items-center gap-1 w-max"><i data-lucide="check" class="w-3 h-3"></i> Sim</span>' 
+                    : '<span class="text-warning-400 bg-warning-400/10 px-2 py-1 rounded flex items-center gap-1 w-max"><i data-lucide="alert-circle" class="w-3 h-3"></i> Não</span>';
+                
+                let actionButtons = `<button onclick="viewUserProfile('${user.id}')" class="action-btn view mr-2"><i data-lucide="eye" class="w-3 h-3"></i></button>`;
+                
+                if (statusClass === 'active') {
+                    actionButtons += `<button onclick="openUserActionModal('${user.id}', 'block')" class="action-btn block mr-2" title="Bloquear"><i data-lucide="lock" class="w-3 h-3"></i></button><button onclick="openUserActionModal('${user.id}', 'ban')" class="action-btn ban" title="Banir"><i data-lucide="slash" class="w-3 h-3"></i></button>`;
+                } else if (statusClass === 'blocked' || statusClass === 'banned') {
+                    actionButtons += `<button onclick="openUserActionModal('${user.id}', 'activate')" class="action-btn activate" title="Reativar"><i data-lucide="unlock" class="w-3 h-3"></i></button>`;
+                } else if (statusClass === 'pending') {
+                    actionButtons += `<button onclick="openUserActionModal('${user.id}', 'activate')" class="action-btn activate mr-2"><i data-lucide="check" class="w-3 h-3"></i></button><button onclick="openUserActionModal('${user.id}', 'ban')" class="action-btn ban"><i data-lucide="x" class="w-3 h-3"></i></button>`;
+                }
+
+                return `
+                <tr class="hover:bg-slate-800/40 transition-colors group">
+                    <td class="py-3 px-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 bg-slate-800 rounded-full flex items-center justify-center text-brand-400 font-bold border border-slate-700 relative">
+                                ${(user.name || 'U').charAt(0).toUpperCase()}
+                                ${isOnline ? '<span class="absolute -bottom-1 -right-1 w-3 h-3 bg-success-500 border-2 border-slate-900 rounded-full"></span>' : ''}
+                            </div>
+                            <div>
+                                <span class="font-bold text-slate-200 block">${user.name || 'N/A'}</span>
+                                ${user.role === 'affiliate' ? '<span class="text-[10px] bg-brand-500/20 text-brand-400 px-1.5 rounded uppercase font-bold tracking-wider">Afiliado</span>' : ''}
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-3 px-4 text-xs">
+                        <div class="text-slate-300"><i data-lucide="mail" class="w-3 h-3 inline mr-1 text-slate-500"></i>${user.email || 'N/A'}</div>
+                        <div class="text-slate-400 mt-1"><i data-lucide="phone" class="w-3 h-3 inline mr-1 text-slate-500"></i>${user.phone || 'S/ Contato'}</div>
+                    </td>
+                    <td class="py-3 px-4"><span class="status-badge ${statusClass}">${statusLabels[statusClass] || statusClass}</span></td>
+                    <td class="py-3 px-4">${verifiedIcon}</td>
+                    <td class="py-3 px-4 font-mono font-bold text-slate-300">${user.totalPurchases || 0}</td>
+                    <td class="py-3 px-4 text-right whitespace-nowrap opacity-50 group-hover:opacity-100 transition-opacity">${actionButtons}</td>
+                </tr>`;
+            }).join('');
+            
+            lucide.createIcons();
+        }
+
+        function renderOnlineUsersTable(users) {
+            const tbody = document.getElementById('onlineUsersTableBody');
+            if (users.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-10 text-slate-500"><i data-lucide="wifi-off" class="w-10 h-10 mx-auto mb-3 opacity-30"></i><p>Ninguém conectado no momento.</p></td></tr>`;
+                return;
+            }
+            
+            tbody.innerHTML = users.map(user => {
+                const lastActivity = user.lastActivity?.toDate ? user.lastActivity.toDate() : new Date(user.lastActivity);
+                const seconds = Math.floor((new Date() - lastActivity) / 1000);
+                const timeAgo = seconds < 60 ? 'Agora mesmo' : seconds < 3600 ? `${Math.floor(seconds / 60)} min atrás` : `${Math.floor(seconds / 3600)}h atrás`;
+                
+                return `
+                <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="py-3 px-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 bg-brand-900 border border-brand-500/30 rounded-full flex items-center justify-center text-brand-400 font-bold relative">
+                                ${(user.name || 'U').charAt(0).toUpperCase()}
+                                <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-success-500 border border-slate-900 rounded-full animate-pulse"></span>
+                            </div>
+                            <span class="font-bold text-slate-200">${user.name || 'N/A'}</span>
+                        </div>
+                    </td>
+                    <td class="py-3 px-4 text-xs text-slate-400">${user.email || 'N/A'}</td>
+                    <td class="py-3 px-4 font-mono text-xs text-brand-300 bg-brand-900/10 rounded px-2 w-max">${timeAgo}</td>
+                    <td class="py-3 px-4"><span class="status-badge ${user.status || 'active'}">${user.status || 'active'}</span></td>
+                    <td class="py-3 px-4 text-right"><button onclick="viewUserProfile('${user.id}')" class="action-btn view"><i data-lucide="eye" class="w-4 h-4"></i></button></td>
+                </tr>`;
+            }).join('');
+            
+            lucide.createIcons();
+        }
+
+        async function loadPendingAffiliates() {
+            try {
+                const usersRef = collection(db, "users");
+                const q = query(usersRef, where("status", "==", "pending"));
+                const querySnapshot = await getDocs(q);
+                const pendingUsers = [];
+                
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    if (data.referredBy || data.role === 'affiliate') {
+                        pendingUsers.push({ id: doc.id, ...data });
+                    }
+                });
+                
+                renderAffiliatesTable(pendingUsers);
+            } catch (error) {
+                console.error('Error loading pending affiliates:', error);
+            }
+        }
+
+        function renderAffiliatesTable(users) {
+            const tbody = document.getElementById('affiliatesTableBody');
+            if (users.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-10 text-slate-500"><i data-lucide="check-circle" class="w-10 h-10 mx-auto mb-3 opacity-30 text-success-500"></i><p>Nenhuma candidatura pendente.</p></td></tr>`;
+                return;
+            }
+            
+            tbody.innerHTML = users.map(user => `
+            <tr class="hover:bg-slate-800/40 transition-colors">
+                <td class="py-3 px-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-warning-900/30 border border-warning-500/30 rounded-full flex items-center justify-center text-warning-500 font-bold">${(user.name || 'U').charAt(0).toUpperCase()}</div>
+                        <span class="font-bold text-slate-200">${user.name || 'N/A'}</span>
+                    </div>
+                </td>
+                <td class="py-3 px-4 text-xs text-slate-400">${user.email || 'N/A'}</td>
+                <td class="py-3 px-4 text-xs font-medium text-slate-300"><span class="bg-slate-800 px-2 py-1 rounded">${user.promotionMethod || 'Não informado'}</span></td>
+                <td class="py-3 px-4 text-xs text-slate-500">${user.createdAt ? new Date(user.createdAt).toLocaleDateString('pt-MZ') : 'N/A'}</td>
+                <td class="py-3 px-4 text-right whitespace-nowrap">
+                    <button onclick="approveAffiliate('${user.id}')" class="action-btn activate mr-2"><i data-lucide="check" class="w-4 h-4 mr-1"></i> Aprovar</button>
+                    <button onclick="rejectAffiliate('${user.id}')" class="action-btn ban"><i data-lucide="x" class="w-4 h-4 mr-1"></i> Recusar</button>
+                </td>
+            </tr>`).join('');
+            
+            lucide.createIcons();
+        }
+
+        async function loadAllOrders() {
+            try {
+                const ordersRef = collection(db, "orders");
+                const querySnapshot = await getDocs(ordersRef);
+                allOrders = [];
+                
+                querySnapshot.forEach((docSnap) => {
+                    const orderData = docSnap.data();
+                    allOrders.push({ id: docSnap.id, ...orderData });
+                });
+                
+                allOrders.sort((a, b) => {
+                    const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
+                    const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
+                    return dateB - dateA;
+                });
+                
+                renderOrdersTable(allOrders);
+            } catch (error) {
+                console.error('Error loading orders:', error);
+                showToast('Erro ao carregar lista de pedidos.', 'error');
+            }
+        }
+
+        function renderOrdersTable(orders) {
+            const tbody = document.getElementById('ordersTableBody');
+            if (orders.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-10 text-slate-500"><i data-lucide="package-x" class="w-10 h-10 mx-auto mb-3 opacity-30"></i><p>Nenhum pedido efetuado no sistema.</p></td></tr>`;
+                return;
+            }
+            
+            tbody.innerHTML = orders.map(order => {
+                const statusClass = order.status || 'pending';
+                const statusLabels = { 'pending': 'Pendente', 'processing': 'Processando', 'completed': 'Concluído', 'cancelled': 'Cancelado' };
+                const orderDate = order.createdAt?.toDate ? order.createdAt.toDate() : new Date(order.createdAt || 0);
+                
+                return `
+                <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="py-3 px-4 font-mono font-bold text-xs text-slate-400 bg-slate-900/50 rounded w-max">${order.orderId || 'N/A'}</td>
+                    <td class="py-3 px-4">
+                        <div class="font-bold text-slate-200 text-sm">${order.name || 'N/A'}</div>
+                        <div class="text-xs text-slate-500 mt-0.5">${order.email || order.whatsapp || 'N/A'}</div>
+                    </td>
+                    <td class="py-3 px-4 font-black text-white">${(order.total || 0).toLocaleString('pt-MZ')}</td>
+                    <td class="py-3 px-4">
+                        <span class="order-status ${statusClass} inline-flex items-center gap-1" onclick="openOrderStatusModal('${order.id}', '${statusClass}')">
+                            ${statusLabels[statusClass] || statusClass} <i data-lucide="chevron-down" class="w-3 h-3 ml-1 opacity-50"></i>
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 text-xs text-slate-400">${orderDate.toLocaleDateString('pt-MZ', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'})}</td>
+                </tr>`;
+            }).join('');
+            
+            lucide.createIcons();
+        }
+
+        async function updateStats() {
+            const users = allUsers;
+            const active = users.filter(u => u.status === 'active').length;
+            const pending = users.filter(u => u.status === 'pending').length;
+            const blocked = users.filter(u => u.status === 'blocked' || u.status === 'banned').length;
+            
+            // Remove skeletons
+            document.querySelectorAll('.skeleton').forEach(el => el.classList.remove('skeleton'));
+            
+            document.getElementById('statTotalUsers').textContent = users.length;
+            document.getElementById('statActiveUsers').textContent = active;
+            document.getElementById('statPendingUsers').textContent = pending;
+            
+            document.getElementById('quickActiveUsers').textContent = active;
+            document.getElementById('quickPendingUsers').textContent = pending;
+        }
+
+        // ==========================================
+        // FILTERS & MODALS & ACTIONS
+        // ==========================================
+
+        window.filterUsers = function() {
+            const search = document.getElementById('searchUser').value.toLowerCase();
+            const status = document.getElementById('filterStatus').value;
+            
+            let filtered = allUsers;
+            if (search) {
+                filtered = filtered.filter(u => 
+                    (u.name && u.name.toLowerCase().includes(search)) || 
+                    (u.email && u.email.toLowerCase().includes(search)) || 
+                    (u.phone && u.phone.includes(search))
+                );
+            }
+            if (status) {
+                filtered = filtered.filter(u => u.status === status);
+            }
+            renderUsersTable(filtered);
+        };
+
+        window.viewUserProfile = async function(userId) {
+            try {
+                const userDoc = await getDoc(doc(db, "users", userId));
+                if (!userDoc.exists()) {
+                    showToast('Usuário não encontrado.', 'error');
+                    return;
+                }
+                const user = userDoc.data();
+                const content = document.getElementById('userProfileContent');
+                
+                content.innerHTML = `
+                <div class="flex items-center gap-4 mb-6 bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50">
+                    <div class="w-16 h-16 bg-gradient-to-br from-brand-500 to-accent-500 rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-lg">${(user.name || 'U').charAt(0).toUpperCase()}</div>
+                    <div>
+                        <h4 class="text-xl font-bold text-white">${user.name || 'N/A'}</h4>
+                        <p class="text-sm text-brand-300 font-medium">${user.email || 'N/A'}</p>
+                        <div class="mt-2"><span class="status-badge ${user.status || 'active'} text-[10px]">${user.status || 'active'}</span></div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-3"><p class="text-xs text-slate-500 mb-1 uppercase font-bold tracking-wider">Telefone</p><p class="text-sm font-bold text-white">${user.phone || 'N/A'}</p></div>
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-3"><p class="text-xs text-slate-500 mb-1 uppercase font-bold tracking-wider">Email Confirmado</p><p class="text-sm font-bold text-white flex items-center gap-1">${user.emailVerified ? '<i data-lucide="check-circle" class="w-4 h-4 text-success-500"></i> Sim' : '<i data-lucide="x-circle" class="w-4 h-4 text-danger-500"></i> Não'}</p></div>
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-3"><p class="text-xs text-slate-500 mb-1 uppercase font-bold tracking-wider">Total Pedidos</p><p class="text-lg font-black text-white">${user.totalPurchases || 0}</p></div>
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-3"><p class="text-xs text-slate-500 mb-1 uppercase font-bold tracking-wider">Total Gasto</p><p class="text-lg font-black text-success-400">${(user.totalSpent || 0).toLocaleString('pt-MZ')} MT</p></div>
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-3"><p class="text-xs text-slate-500 mb-1 uppercase font-bold tracking-wider">Registro</p><p class="text-sm font-bold text-white">${user.createdAt ? new Date(user.createdAt).toLocaleDateString('pt-MZ') : 'N/A'}</p></div>
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-3"><p class="text-xs text-slate-500 mb-1 uppercase font-bold tracking-wider">Último Login</p><p class="text-sm font-bold text-white">${user.lastLogin ? new Date(user.lastLogin).toLocaleDateString('pt-MZ') : 'N/A'}</p></div>
+                </div>
+                
+                ${user.role === 'affiliate' ? `
+                <div class="mt-6 pt-6 border-t border-white/10">
+                    <h5 class="text-sm font-display font-bold text-white mb-4 flex items-center gap-2"><i data-lucide="medal" class="w-4 h-4 text-warning-500"></i> Módulo de Afiliado Oficial</h5>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-brand-900/20 border border-brand-500/30 rounded-xl p-3"><p class="text-xs text-brand-300 mb-1 uppercase font-bold tracking-wider">Código de Partilha</p><p class="text-sm font-mono font-bold text-white">${user.affiliateCode || 'N/A'}</p></div>
+                        <div class="bg-slate-900 border border-slate-800 rounded-xl p-3"><p class="text-xs text-slate-500 mb-1 uppercase font-bold tracking-wider">Status do Código</p><p class="text-sm font-bold text-white flex items-center gap-1">${user.affiliateCodeActive ? '<i data-lucide="power" class="w-4 h-4 text-success-500"></i> Ativo' : '<i data-lucide="power-off" class="w-4 h-4 text-danger-500"></i> Inativo'}</p></div>
+                        <div class="bg-slate-900 border border-slate-800 rounded-xl p-3"><p class="text-xs text-slate-500 mb-1 uppercase font-bold tracking-wider">Pessoas Indicadas</p><p class="text-lg font-black text-white">${user.totalReferrals || 0}</p></div>
+                        <div class="bg-success-900/20 border border-success-500/30 rounded-xl p-3"><p class="text-xs text-success-400 mb-1 uppercase font-bold tracking-wider">Saldo Ganho</p><p class="text-lg font-black text-success-400">${(user.affiliateEarnings || 0).toLocaleString('pt-MZ')} MT</p></div>
+                    </div>
+                </div>` : ''}`;
+                
+                document.getElementById('userProfileModal').classList.add('active');
+                lucide.createIcons();
+            } catch (error) {
+                console.error('Error loading user profile:', error);
+                showToast('Erro ao carregar detalhes.', 'error');
+            }
+        };
+
+        window.closeUserProfileModal = function() { document.getElementById('userProfileModal').classList.remove('active'); };
+
+        window.openOrderStatusModal = function(orderId, currentStatus) {
+            document.getElementById('editOrderId').value = orderId;
+            document.getElementById('editOrderStatus').value = currentStatus;
+            document.getElementById('orderStatusModal').classList.add('active');
+        };
+
+        window.closeOrderStatusModal = function() { 
+            document.getElementById('orderStatusModal').classList.remove('active'); 
+        };
+
+        window.confirmOrderStatusUpdate = async function() {
+            const orderId = document.getElementById('editOrderId').value;
+            const newStatus = document.getElementById('editOrderStatus').value;
+            const btn = document.getElementById('btnSaveStatus');
+            const originalHTML = btn.innerHTML;
+            
+            try {
+                btn.disabled = true;
+                btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A processar...`;
+                lucide.createIcons({root: btn});
+                
+                const orderRef = doc(db, "orders", orderId);
+                const orderDoc = await getDoc(orderRef);
+                const orderData = orderDoc.data();
+                
+                await updateDoc(orderRef, {
+                    status: newStatus,
+                    updatedAt: serverTimestamp()
+                });
+                
+                // Sistema de Afiliados (Processar Comissão)
+                if (newStatus === 'completed' && orderData.userId && !orderData.commissionProcessed) {
+                    await processAffiliateCommission(orderData);
+                    await updateDoc(orderRef, { commissionProcessed: true });
+                }
+                
+                showToast(`Status alterado com sucesso para "${newStatus}"`, 'success');
+                closeOrderStatusModal();
+                await loadAllOrders();
+            } catch (error) {
+                console.error('Error updating order status:', error);
+                showToast('Falha na comunicação com o servidor.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            }
+        };
+
+        async function processAffiliateCommission(orderData) {
+            try {
+                if (!orderData.userId || orderData.userId.startsWith('anon-')) return;
+                
+                const userRef = doc(db, "users", orderData.userId);
+                const userSnap = await getDoc(userRef);
+                
+                if (!userSnap.exists()) return;
+                
+                const userData = userSnap.data();
+                
+                if (userData.firstPurchaseProcessed || !userData.referredBy || !userData.referrerId) {
+                    if (!userData.firstPurchaseProcessed) {
+                        await updateDoc(userRef, { firstPurchaseProcessed: true });
+                    }
+                    return;
+                }
+                
+                const referrerRef = doc(db, "users", userData.referrerId);
+                const referrerSnap = await getDoc(referrerRef);
+                
+                if (!referrerSnap.exists() || referrerSnap.data().role !== 'affiliate' || referrerSnap.data().status !== 'active') {
+                    await updateDoc(userRef, { firstPurchaseProcessed: true });
+                    return;
+                }
+                
+                const referrerData = referrerSnap.data();
+                const commission = Math.round(orderData.total * 0.03 * 100) / 100;
+                
+                await updateDoc(referrerRef, {
+                    affiliateEarnings: increment(commission),
+                    approvedReferrals: increment(1),
+                    pendingReferrals: increment(-1),
+                    lastCommissionDate: serverTimestamp()
+                });
+                
+                await updateDoc(userRef, { firstPurchaseProcessed: true });
+                
+                await addDoc(collection(db, "commissions"), {
+                    orderId: orderData.orderId || orderData.id,
+                    customerId: orderData.userId,
+                    customerEmail: userData.email || 'N/A',
+                    affiliateId: userData.referrerId,
+                    affiliateEmail: referrerData.email || 'N/A',
+                    affiliateCode: userData.referredBy,
+                    orderTotal: orderData.total,
+                    commissionAmount: commission,
+                    commissionRate: 0.03,
+                    processedAt: serverTimestamp()
+                });
+                
+                console.log(`Comissão de ${commission} MT processada para o afiliado.`);
+                
+            } catch (error) {
+                console.error('Error processing commission:', error);
+            }
+        }
+
+        window.approveAffiliate = async function(userId) {
+            if (!confirm('Aprovar este usuário como parceiro oficial?')) return;
+            try {
+                const userRef = doc(db, "users", userId);
+                const userDoc = await getDoc(userRef);
+                const userData = userDoc.data();
+                
+                await updateDoc(userRef, {
+                    status: 'active',
+                    affiliateCodeActive: true,
+                    approvedAt: serverTimestamp(),
+                    approvedBy: currentUser.uid,
+                    applicationReviewed: true,
+                    applicationReviewedAt: serverTimestamp()
+                });
+                
+                showToast(`Afiliado aprovado com sucesso!`, 'success');
+                await loadAllUsers();
+                await loadPendingAffiliates();
+            } catch (error) {
+                console.error('Error approving affiliate:', error);
+                showToast('Erro ao tentar aprovar.', 'error');
+            }
+        };
+
+        window.rejectAffiliate = async function(userId) {
+            if (!confirm('Rejeitar e reverter para conta de cliente normal?')) return;
+            try {
+                const userRef = doc(db, "users", userId);
+                const userDoc = await getDoc(userRef);
+                const userData = userDoc.data();
+                
+                await updateDoc(userRef, {
+                    role: 'user',
+                    status: 'active',
+                    affiliateCode: null,
+                    affiliateCodeActive: false,
+                    rejectedAt: serverTimestamp(),
+                    applicationReviewed: true,
+                    applicationReviewedAt: serverTimestamp()
+                });
+                
+                showToast(`Candidatura rejeitada.`, 'warning');
+                await loadAllUsers();
+                await loadPendingAffiliates();
+            } catch (error) {
+                console.error('Error rejecting affiliate:', error);
+                showToast('Erro ao processar rejeição.', 'error');
+            }
+        };
+
+        window.openUserActionModal = function(userId, action) {
+            const actions = {
+                'ban': { message: 'Banir bloqueia permanentemente o acesso. Confirmar?' },
+                'block': { message: 'Suspender temporariamente o usuário. Confirmar?' },
+                'activate': { message: 'Restaurar acesso total à conta. Confirmar?' }
+            };
+            if (confirm(actions[action].message)) {
+                confirmUserAction(userId, action);
+            }
+        };
+
+        window.confirmUserAction = async function(userId, action) {
+            try {
+                const userRef = doc(db, "users", userId);
+                const userDoc = await getDoc(userRef);
+                const userData = userDoc.data();
+                
+                let newStatus = action === 'ban' ? 'banned' : action === 'block' ? 'blocked' : 'active';
+                
+                await updateDoc(userRef, {
+                    status: newStatus,
+                    updatedAt: serverTimestamp(),
+                    lastActivity: serverTimestamp(),
+                    affiliateCodeActive: newStatus === 'active' && userData.role === 'affiliate'
+                });
+                
+                showToast(`Status atualizado para: ${newStatus}`, 'success');
+                await loadAllUsers();
+            } catch (error) {
+                console.error('Error updating user:', error);
+                showToast('Erro no servidor ao mudar status.', 'error');
+            }
+        };
+
+        window.logout = async function() {
+            try {
+                await signOut(auth);
+                showToast('Sessão encerrada com segurança.', 'success');
+                setTimeout(() => { window.location.href = 'login.html'; }, 1000);
+            } catch (error) {
+                console.error('Logout error:', error);
+                showToast('Falha no logout.', 'error');
+            }
+        };
+
+        // UI Helpers
+        function showToast(message, type = 'default') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            let icon = type === 'success' ? 'check-circle' : (type === 'error' ? 'alert-octagon' : (type === 'warning' ? 'alert-triangle' : 'info'));
+            let color = type === 'success' ? 'text-success-500' : (type === 'error' ? 'text-danger-500' : (type==='warning' ? 'text-warning-500' : 'text-brand-400'));
+            
+            toast.innerHTML = `<i data-lucide="${icon}" class="${color} w-6 h-6 flex-shrink-0"></i><span class="text-sm font-bold text-white tracking-wide">${message}</span>`;
+            
+            container.appendChild(toast);
+            lucide.createIcons({root: toast});
+            
+            requestAnimationFrame(() => toast.classList.add('show'));
+            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 4000);
+        }
+
+        // Init UI
+        document.addEventListener('DOMContentLoaded', function() {
+            lucide.createIcons();
+            if (typeof AOS !== 'undefined') AOS.init({ duration: 600, once: true, offset: 50, easing: 'ease-out-cubic' });
+            
+            // Navbar blur effect on scroll
+            window.addEventListener('scroll', function() {
+                const nav = document.getElementById('navbar');
+                if (nav) window.scrollY > 10 ? nav.classList.add('glass-nav', 'shadow-lg') : nav.classList.remove('glass-nav', 'shadow-lg');
+            });
+        });
+    </script>
 </body>
 </html>
