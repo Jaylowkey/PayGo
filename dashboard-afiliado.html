@@ -8,7 +8,7 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <script>
         tailwind.config = {
@@ -42,13 +42,22 @@
         @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         .glass-card { background: white; border: 1px solid #e2e8f0; border-radius: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); transition: transform 0.3s ease, box-shadow 0.3s ease; }
-        .glass-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02); }
+        .glass-card:hover { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02); }
 
         /* Toasts */
         #toast-container { position: fixed; top: 24px; right: 24px; z-index: 1000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
         .toast { pointer-events: auto; background: white; border-left: 4px solid #22c55e; padding: 16px; border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 12px; max-width: 350px; transform: translateX(120%); transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); opacity: 0; }
         .toast.show { transform: translateX(0); opacity: 1; }
         .toast.error { border-left-color: #ef4444; }
+        .toast.warning { border-left-color: #f59e0b; }
+
+        /* Modals */
+        .modal-overlay { transition: opacity 0.3s ease; }
+        .modal-content { transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.3s ease; }
+        .modal-open .modal-overlay { opacity: 1; visibility: visible; }
+        .modal-open .modal-content { transform: scale(1) translateY(0); opacity: 1; }
+        .modal-closed .modal-overlay { opacity: 0; visibility: hidden; }
+        .modal-closed .modal-content { transform: scale(0.95) translateY(10px); opacity: 0; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans antialiased overflow-x-hidden">
@@ -93,11 +102,11 @@
             <a href="#" class="flex items-center gap-3 px-4 py-3 bg-success-500/10 text-success-400 border-r-2 border-success-500 rounded-xl font-semibold transition-all">
                 <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Visão Geral
             </a>
-            <a href="#" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl font-medium transition-all">
+            <a href="#" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl font-medium transition-all opacity-50 cursor-not-allowed" title="Em breve">
                 <i data-lucide="users" class="w-5 h-5"></i> Minhas Indicações
             </a>
-            <a href="#" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl font-medium transition-all">
-                <i data-lucide="wallet" class="w-5 h-5"></i> Saques e Pagamentos
+            <a href="#" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl font-medium transition-all opacity-50 cursor-not-allowed" title="Em breve">
+                <i data-lucide="wallet" class="w-5 h-5"></i> Histórico de Saques
             </a>
         </nav>
 
@@ -119,14 +128,14 @@
         
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
             <div>
-                <h1 class="text-3xl font-display font-extrabold text-slate-900 tracking-tight">
+                <h1 class="text-3xl font-display font-extrabold text-slate-900 tracking-tight" id="greetingTitle">
                     Visão Geral
                 </h1>
                 <p class="text-slate-500 mt-1 text-sm">Acompanhe os seus ganhos e o desempenho do seu link.</p>
             </div>
             
             <div id="statusBadge" class="hidden items-center gap-2 px-4 py-2 rounded-full text-sm font-bold shadow-sm border">
-                </div>
+            </div>
         </div>
 
         <div id="pendingAlert" class="hidden mb-8 bg-warning-50 border border-warning-200 rounded-2xl p-6 md:p-8 shadow-sm">
@@ -147,38 +156,47 @@
             <div class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-[2rem] p-6 md:p-8 shadow-xl text-white relative overflow-hidden">
                 <div class="absolute top-0 right-0 w-64 h-64 bg-success-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
                 
-                <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
-                    <i data-lucide="link" class="w-5 h-5 text-success-400"></i> O seu Link de Indicação
-                </h2>
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                    <h2 class="text-lg font-bold flex items-center gap-2">
+                        <i data-lucide="link" class="w-5 h-5 text-success-400"></i> O seu Link de Indicação
+                    </h2>
+                    <div class="flex items-center gap-2 bg-slate-950/50 px-3 py-1.5 rounded-lg border border-slate-700">
+                        <span class="text-xs text-slate-400">Código:</span>
+                        <span class="text-sm font-mono font-bold text-success-400" id="rawAffiliateCode">---</span>
+                        <button onclick="copyRawCode()" class="text-slate-400 hover:text-white ml-2" title="Copiar apenas o código">
+                            <i data-lucide="copy" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
                 
                 <div class="flex flex-col md:flex-row gap-4">
-                    <div class="relative flex-1">
-                        <input type="text" id="affiliateLinkInput" readonly class="w-full bg-slate-950/50 border border-slate-700 text-white px-5 py-4 rounded-xl font-mono text-sm focus:outline-none focus:border-success-500 transition-colors">
+                    <div class="relative flex-1 group">
+                        <input type="text" id="affiliateLinkInput" readonly class="w-full bg-slate-950/50 border border-slate-700 text-white px-5 py-4 rounded-xl font-mono text-sm sm:text-base focus:outline-none focus:border-success-500 transition-colors pr-28">
                         <button onclick="copyAffiliateLink()" class="absolute right-2 top-1/2 -translate-y-1/2 bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-2">
-                            <i data-lucide="copy" class="w-4 h-4"></i> Copiar
+                            <i data-lucide="copy" class="w-4 h-4"></i> <span class="hidden sm:inline">Copiar</span>
                         </button>
                     </div>
                     <button onclick="shareWhatsApp()" class="bg-[#25D366] hover:bg-[#128C7E] text-white px-6 py-4 rounded-xl font-bold transition-all shadow-lg shadow-[#25D366]/20 flex items-center justify-center gap-2 whitespace-nowrap active:scale-95">
                         <i data-lucide="message-circle" class="w-5 h-5"></i> Partilhar
                     </button>
                 </div>
-                <p class="text-xs text-slate-400 mt-3 flex items-center gap-1">
-                    <i data-lucide="info" class="w-3 h-3"></i> Partilhe este link. Se alguém se registar e comprar através dele, você ganha a comissão!
+                <p class="text-xs text-slate-400 mt-4 flex items-center gap-1.5">
+                    <i data-lucide="info" class="w-4 h-4"></i> Partilhe este link. Se alguém se registar e comprar através dele, você ganha a comissão!
                 </p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="glass-card p-6">
+                <div class="glass-card p-6 border-success-100 bg-gradient-to-b from-white to-success-50/30">
                     <div class="flex items-center justify-between mb-4">
-                        <span class="text-sm font-bold text-slate-500 uppercase tracking-wider">Ganhos Totais</span>
-                        <div class="w-10 h-10 bg-success-50 rounded-xl flex items-center justify-center">
+                        <span class="text-sm font-bold text-slate-500 uppercase tracking-wider">Ganhos Disponíveis</span>
+                        <div class="w-10 h-10 bg-success-100 rounded-xl flex items-center justify-center">
                             <i data-lucide="banknote" class="w-5 h-5 text-success-600"></i>
                         </div>
                     </div>
                     <p class="text-3xl font-display font-extrabold text-slate-900 skeleton" id="statEarnings">0,00 MT</p>
-                    <div class="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center">
-                        <span class="text-xs text-slate-500 font-medium">Disponível para saque</span>
-                        <button class="text-xs font-bold text-success-600 bg-success-50 hover:bg-success-100 px-3 py-1.5 rounded-lg transition-colors">Solicitar Saque</button>
+                    <div class="mt-4 pt-4 border-t border-success-100/50 flex justify-between items-center">
+                        <span class="text-xs text-slate-500 font-medium">Saldo pronto a levantar</span>
+                        <button onclick="openWithdrawModal()" class="text-xs font-bold text-white bg-success-600 hover:bg-success-700 px-4 py-2 rounded-lg transition-colors shadow-sm shadow-success-600/30">Solicitar Saque</button>
                     </div>
                 </div>
 
@@ -195,7 +213,7 @@
 
                 <div class="glass-card p-6">
                     <div class="flex items-center justify-between mb-4">
-                        <span class="text-sm font-bold text-slate-500 uppercase tracking-wider">Converteram (Compraram)</span>
+                        <span class="text-sm font-bold text-slate-500 uppercase tracking-wider">Vendas Feitas</span>
                         <div class="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center">
                             <i data-lucide="shopping-bag" class="w-5 h-5 text-purple-600"></i>
                         </div>
@@ -211,7 +229,7 @@
                 </div>
                 
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
+                    <table class="w-full text-left border-collapse min-w-[600px]">
                         <thead>
                             <tr class="bg-white border-b border-slate-100">
                                 <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Data</th>
@@ -226,7 +244,7 @@
                 </div>
                 
                 <div id="emptyReferrals" class="hidden p-12 text-center text-slate-500">
-                    <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100">
                         <i data-lucide="user-plus" class="w-8 h-8 text-slate-300"></i>
                     </div>
                     <p class="font-bold text-slate-700">Ainda não tem indicações</p>
@@ -237,12 +255,62 @@
         </div>
     </main>
 
+    <div id="withdrawModal" class="fixed inset-0 z-[110] modal-closed flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm modal-overlay" onclick="closeWithdrawModal()"></div>
+        
+        <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-md modal-content overflow-hidden">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <h3 class="text-xl font-display font-bold text-slate-900">Solicitar Levantamento</h3>
+                <button onclick="closeWithdrawModal()" class="text-slate-400 hover:text-slate-600 bg-white rounded-full p-1 border shadow-sm transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <div class="p-6">
+                <div class="bg-success-50 border border-success-100 rounded-xl p-4 mb-6 flex justify-between items-center">
+                    <div>
+                        <p class="text-sm text-success-700 font-medium">Saldo Disponível</p>
+                        <p class="text-2xl font-bold text-success-700" id="modalAvailableBalance">0,00 MT</p>
+                    </div>
+                    <div class="w-10 h-10 bg-success-100 text-success-600 rounded-full flex items-center justify-center">
+                        <i data-lucide="wallet" class="w-5 h-5"></i>
+                    </div>
+                </div>
+
+                <form id="withdrawForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">Valor a Levantar (MT) *</label>
+                        <input type="number" id="withdrawAmount" required min="600" placeholder="Ex: 600" class="w-full border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-success-500 focus:ring-2 focus:ring-success-500/20 transition-all">
+                        <p class="text-xs text-slate-500 mt-1">Mínimo: 600 MT</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">Método de Receção *</label>
+                        <select id="withdrawMethod" required class="w-full border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-success-500 focus:ring-2 focus:ring-success-500/20 transition-all appearance-none bg-white">
+                            <option value="mpesa">M-Pesa</option>
+                            <option value="emola">e-Mola</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">Número da Conta *</label>
+                        <input type="tel" id="withdrawPhone" required placeholder="84/85 ou 86/87" class="w-full border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-success-500 focus:ring-2 focus:ring-success-500/20 transition-all">
+                    </div>
+
+                    <button type="submit" id="withdrawBtnSubmit" class="w-full bg-success-600 hover:bg-success-700 text-white font-bold py-3.5 rounded-xl transition-colors shadow-lg shadow-success-600/20 mt-2 flex items-center justify-center gap-2">
+                        <span>Confirmar Pedido</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <div id="toastContainer"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, collection, query, where, getDocs, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, collection, query, where, getDocs, orderBy, limit, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         // Firebase Config
         const firebaseConfig = {
@@ -285,9 +353,9 @@
         window.showToast = function(message, type = 'success') {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
-            toast.className = `toast ${type === 'error' ? 'error' : ''}`;
-            const icon = type === 'success' ? 'check-circle' : 'alert-circle';
-            const color = type === 'success' ? 'text-success-500' : 'text-red-500';
+            toast.className = `toast ${type === 'error' ? 'error' : (type === 'warning' ? 'warning' : '')}`;
+            const icon = type === 'success' ? 'check-circle' : (type === 'warning' ? 'alert-triangle' : 'alert-circle');
+            const color = type === 'success' ? 'text-success-500' : (type === 'warning' ? 'text-warning-500' : 'text-red-500');
             
             toast.innerHTML = `<i data-lucide="${icon}" class="w-5 h-5 ${color}"></i><span class="text-sm font-bold text-slate-800">${message}</span>`;
             container.appendChild(toast);
@@ -300,12 +368,26 @@
             }, 3000);
         }
 
-        // Formatar Moeda
+        // Saudações Baseadas na Hora
+        function setGreeting() {
+            const hour = new Date().getHours();
+            let greeting = 'Olá';
+            if (hour >= 5 && hour < 12) greeting = 'Bom dia';
+            else if (hour >= 12 && hour < 18) greeting = 'Boa tarde';
+            else greeting = 'Boa noite';
+            
+            const titleEl = document.getElementById('greetingTitle');
+            if (titleEl && currentUserData) {
+                const firstName = (currentUserData.name || 'Afiliado').split(' ')[0];
+                titleEl.innerHTML = `${greeting}, <span class="text-brand-600">${firstName}</span>!`;
+            }
+        }
+
+        // Formatação
         function formatMT(value) {
             return Number(value || 0).toLocaleString('pt-MZ', { minimumFractionDigits: 2 }) + ' MT';
         }
 
-        // Mascarar Email (ex: jo***@gmail.com)
         function maskEmail(email) {
             if (!email) return 'Anónimo';
             const [name, domain] = email.split('@');
@@ -313,28 +395,104 @@
             return `${name.substring(0,2)}***@${domain}`;
         }
 
-        // Formatar Data
         function formatDate(isoString) {
             if(!isoString) return '-';
             const d = new Date(isoString);
             return d.toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short', year: 'numeric' });
         }
 
-        // Ações do Link
+        // Ações de Link e Partilha
         window.copyAffiliateLink = function() {
             const link = document.getElementById('affiliateLinkInput').value;
             if(!link) return;
             navigator.clipboard.writeText(link).then(() => {
-                showToast('Link copiado com sucesso!', 'success');
+                showToast('Link de indicação copiado!', 'success');
+            });
+        };
+
+        window.copyRawCode = function() {
+            if(!affiliateCodeLocal) return;
+            navigator.clipboard.writeText(affiliateCodeLocal).then(() => {
+                showToast('Código de Afiliado copiado!', 'success');
             });
         };
 
         window.shareWhatsApp = function() {
             const link = document.getElementById('affiliateLinkInput').value;
             if(!link) return;
-            const text = encodeURIComponent(`Olá! Descobri a PayGo, uma plataforma fantástica para comprar no AliExpress e Shein pagando com M-Pesa. Cria a tua conta por aqui:\n\n${link}`);
+            const text = encodeURIComponent(`Olá! Descobri a PayGo, uma plataforma fantástica para comprar no AliExpress e Shein pagando com M-Pesa. Cria a tua conta pelo meu link e vamos aproveitar:\n\n${link}`);
             window.open(`https://wa.me/?text=${text}`, '_blank');
         };
+
+        // Modal de Levantamento (Saque)
+        window.openWithdrawModal = function() {
+            const balance = currentUserData?.affiliateEarnings || 0;
+            if (balance < 600) {
+                showToast('O saldo mínimo para levantamento é 600 MT.', 'warning');
+                return;
+            }
+            
+            document.getElementById('modalAvailableBalance').textContent = formatMT(balance);
+            document.getElementById('withdrawAmount').max = balance;
+            document.getElementById('withdrawPhone').value = currentUserData?.phone || '';
+            
+            const modal = document.getElementById('withdrawModal');
+            modal.classList.remove('modal-closed');
+            modal.classList.add('modal-open');
+        };
+
+        window.closeWithdrawModal = function() {
+            const modal = document.getElementById('withdrawModal');
+            modal.classList.remove('modal-open');
+            modal.classList.add('modal-closed');
+            document.getElementById('withdrawForm').reset();
+        };
+
+        document.getElementById('withdrawForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('withdrawBtnSubmit');
+            const amount = parseFloat(document.getElementById('withdrawAmount').value);
+            const method = document.getElementById('withdrawMethod').value;
+            const phone = document.getElementById('withdrawPhone').value;
+            const availableBalance = currentUserData?.affiliateEarnings || 0;
+
+            if (amount > availableBalance) {
+                showToast('Valor inserido é maior que o saldo disponível.', 'error');
+                return;
+            }
+            
+            if (amount < 600) {
+                showToast('O valor mínimo é 600 MT.', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Processando...`;
+            lucide.createIcons();
+
+            try {
+                // Salvar pedido na base de dados
+                await addDoc(collection(db, "withdrawals"), {
+                    userId: currentUserData.uid,
+                    affiliateCode: affiliateCodeLocal,
+                    amount: amount,
+                    method: method,
+                    phone: phone,
+                    status: 'pending',
+                    createdAt: new Date().toISOString()
+                });
+                
+                showToast('Pedido de saque recebido! Será processado em breve.', 'success');
+                closeWithdrawModal();
+                
+            } catch (error) {
+                console.error("Erro ao solicitar saque:", error);
+                showToast('Erro ao processar o pedido. Tente novamente.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `Confirmar Pedido`;
+            }
+        });
 
         // Carregar Referidos (Tabela)
         async function loadReferrals(affiliateCode) {
@@ -343,12 +501,11 @@
             table.innerHTML = '';
             
             try {
-                // Busca utilizadores que se registaram com o código deste afiliado
                 const q = query(
                     collection(db, "users"), 
                     where("referredBy", "==", affiliateCode),
                     orderBy("createdAt", "desc"),
-                    limit(10)
+                    limit(15)
                 );
                 const snapshot = await getDocs(q);
                 
@@ -363,18 +520,15 @@
                     const refUser = doc.data();
                     const hasBought = refUser.totalPurchases > 0;
                     
-                    // Simulação de comissão ganha baseada se ele comprou ou não
-                    // Em produção, isso deve vir de uma subcoleção de "transações de comissão"
-                    const comissionEarned = hasBought ? 'Gerada' : 'Aguardando Compra';
-                    const comissionValue = hasBought ? '<span class="text-success-600 font-bold">+ Comissão</span>' : '<span class="text-slate-400">0,00 MT</span>';
+                    const comissionValue = hasBought ? '<span class="text-success-600 font-bold">+ Adicionada</span>' : '<span class="text-slate-400">Aguardando</span>';
                     
                     const statusBadge = hasBought 
-                        ? `<span class="bg-success-100 text-success-700 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider">Compra Realizada</span>`
+                        ? `<span class="bg-success-100 text-success-700 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider">Comprou</span>`
                         : `<span class="bg-slate-100 text-slate-600 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider">Apenas Registo</span>`;
                     
                     table.innerHTML += `
                         <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="px-6 py-4 text-sm text-slate-500">${formatDate(refUser.createdAt)}</td>
+                            <td class="px-6 py-4 text-sm text-slate-500 whitespace-nowrap">${formatDate(refUser.createdAt)}</td>
                             <td class="px-6 py-4 font-medium text-slate-900">${maskEmail(refUser.email)}</td>
                             <td class="px-6 py-4">${statusBadge}</td>
                             <td class="px-6 py-4 text-right">${comissionValue}</td>
@@ -384,11 +538,12 @@
                 
             } catch (error) {
                 console.error("Erro ao carregar referidos:", error);
-                table.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-red-500 text-sm">Erro ao carregar lista.</td></tr>`;
+                table.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-red-500 text-sm"><i data-lucide="alert-circle" class="w-5 h-5 inline mr-1"></i> Erro ao carregar a lista.</td></tr>`;
+                lucide.createIcons();
             }
         }
 
-        // Lógica Principal de Verificação
+        // Inicialização via Autenticação
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
                 window.location.href = 'login.html';
@@ -401,13 +556,14 @@
                 if (userDoc.exists()) {
                     currentUserData = userDoc.data();
                     
-                    // Preencher Sidebar
-                    document.getElementById('userName').textContent = currentUserData.name || user.email;
-                    document.getElementById('userInitial').textContent = (currentUserData.name || user.email).charAt(0).toUpperCase();
+                    // Preencher Sidebar & Header
+                    const nameToDisplay = currentUserData.name || user.email;
+                    document.getElementById('userName').textContent = nameToDisplay;
+                    document.getElementById('userInitial').textContent = nameToDisplay.charAt(0).toUpperCase();
+                    setGreeting();
 
-                    // Verificar se é afiliado
+                    // Bloqueio se não for afiliado
                     if (currentUserData.role !== 'affiliate') {
-                        // Se for um usuário normal que caiu aqui, envia pro dashboard normal
                         window.location.href = 'dashboard.html';
                         return;
                     }
@@ -416,9 +572,8 @@
                     const pendingAlert = document.getElementById('pendingAlert');
                     const dashboardContent = document.getElementById('dashboardContent');
 
-                    // Lidar com os Status
                     if (currentUserData.status === 'pending') {
-                        // Está Pendente
+                        // Pendente
                         badge.innerHTML = `<i data-lucide="clock" class="w-4 h-4"></i> Em Análise`;
                         badge.classList.add('bg-warning-50', 'text-warning-600', 'border-warning-200', 'flex');
                         badge.classList.remove('hidden');
@@ -427,34 +582,36 @@
                         dashboardContent.classList.add('hidden');
                         
                     } else if (currentUserData.status === 'approved' || currentUserData.affiliateCodeActive === true) {
-                        // Está Aprovado
-                        badge.innerHTML = `<i data-lucide="check-circle-2" class="w-4 h-4"></i> Conta Aprovada`;
+                        // Aprovado
+                        badge.innerHTML = `<i data-lucide="check-circle-2" class="w-4 h-4"></i> Conta Ativa`;
                         badge.classList.add('bg-success-50', 'text-success-600', 'border-success-200', 'flex');
                         badge.classList.remove('hidden');
                         
                         pendingAlert.classList.add('hidden');
                         dashboardContent.classList.remove('hidden');
                         
-                        // Remover skeletons e popular dados
+                        // Preencher Dados
                         document.querySelectorAll('.skeleton').forEach(el => el.classList.remove('skeleton'));
                         
                         document.getElementById('statEarnings').textContent = formatMT(currentUserData.affiliateEarnings);
                         document.getElementById('statReferrals').textContent = currentUserData.totalReferrals || 0;
                         document.getElementById('statConverted').textContent = currentUserData.approvedReferrals || 0;
                         
-                        // Setar Link
+                        // Links
                         affiliateCodeLocal = currentUserData.affiliateCode;
+                        document.getElementById('rawAffiliateCode').textContent = affiliateCodeLocal;
                         const affiliateUrl = `https://paygo.co.mz/register.html?ref=${affiliateCodeLocal}`;
                         document.getElementById('affiliateLinkInput').value = affiliateUrl;
                         
-                        // Carregar Tabela
+                        // Tabela
                         await loadReferrals(affiliateCodeLocal);
                         
                     } else {
-                        // Rejeitado ou Suspenso
+                        // Suspenso
                         badge.innerHTML = `<i data-lucide="x-circle" class="w-4 h-4"></i> Conta Suspensa`;
                         badge.classList.add('bg-red-50', 'text-red-600', 'border-red-200', 'flex');
                         badge.classList.remove('hidden');
+                        pendingAlert.classList.add('hidden');
                     }
                     
                 } else {
@@ -465,7 +622,6 @@
                 console.error("Erro ao carregar perfil:", error);
                 showToast('Erro ao ligar ao servidor.', 'error');
             } finally {
-                // Esconder loader
                 const loader = document.getElementById('pageLoader');
                 loader.style.opacity = '0';
                 setTimeout(() => loader.style.display = 'none', 500);
