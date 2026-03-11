@@ -239,7 +239,7 @@
                             </tr>
                         </thead>
                         <tbody id="referralsTable" class="divide-y divide-slate-50">
-                            </tbody>
+                        </tbody>
                     </table>
                 </div>
                 
@@ -310,7 +310,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, collection, query, where, getDocs, orderBy, limit, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, collection, query, where, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
@@ -328,7 +328,7 @@
         let currentUserData = null;
         let affiliateCodeLocal = '';
 
-        // UI Interactions
+        // Interações de UI
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
         const closeSidebarBtn = document.getElementById('closeSidebarBtn');
         const sidebar = document.getElementById('sidebar');
@@ -386,7 +386,10 @@
 
         function maskEmail(email) {
             if (!email) return 'Anónimo';
-            const [name, domain] = email.split('@');
+            const parts = email.split('@');
+            if (parts.length !== 2) return email; // Proteção extra
+            const name = parts[0];
+            const domain = parts[1];
             if(name.length <= 2) return `${name}***@${domain}`;
             return `${name.substring(0,2)}***@${domain}`;
         }
@@ -474,7 +477,7 @@
                     method: method,
                     phone: phone,
                     status: 'pending',
-                    createdAt: new Date()
+                    createdAt: new Date().toISOString()
                 });
                 
                 showToast('Pedido de saque recebido! Será processado em breve.', 'success');
@@ -489,18 +492,17 @@
             }
         });
 
-        // Tabela de Referidos
+        // Carregar Referidos (Com correção para não exigir Índice Composto no Firestore)
         async function loadReferrals(affiliateCode) {
             const table = document.getElementById('referralsTable');
             const emptyState = document.getElementById('emptyReferrals');
             table.innerHTML = '';
             
             try {
+                // Removemos o orderBy e limit da query para evitar o erro "Missing Index" do Firebase
                 const q = query(
                     collection(db, "users"), 
-                    where("referredBy", "==", affiliateCode),
-                    orderBy("createdAt", "desc"),
-                    limit(15)
+                    where("referredBy", "==", affiliateCode)
                 );
                 const snapshot = await getDocs(q);
                 
@@ -511,8 +513,15 @@
                 
                 emptyState.classList.add('hidden');
                 
-                snapshot.forEach(doc => {
-                    const refUser = doc.data();
+                // Ordenar no JavaScript para evitar erros do Firestore
+                const referrals = [];
+                snapshot.forEach(doc => referrals.push(doc.data()));
+                
+                // Ordena do mais recente para o mais antigo e limita a 15
+                referrals.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                const topReferrals = referrals.slice(0, 15);
+                
+                topReferrals.forEach(refUser => {
                     const hasBought = refUser.firstPurchaseProcessed === true || refUser.totalPurchases > 0;
                     
                     const comissionValue = hasBought 
@@ -553,15 +562,13 @@
                 
                 if (userDoc.exists()) {
                     currentUserData = userDoc.data();
-                    currentUserData.uid = user.uid; // Guarda o UID para ser usado nos saques
+                    currentUserData.uid = user.uid; 
                     
-                    // Preencher Sidebar & Header
                     const nameToDisplay = currentUserData.name || user.email || 'Usuário';
                     document.getElementById('userName').textContent = nameToDisplay;
                     document.getElementById('userInitial').textContent = nameToDisplay.charAt(0).toUpperCase();
                     setGreeting();
 
-                    // Bloqueio se não for afiliado
                     if (currentUserData.role !== 'affiliate') {
                         showToast('Acesso restrito a Parceiros.', 'error');
                         setTimeout(() => window.location.href = 'dashboard.html', 1500);
@@ -573,42 +580,41 @@
                     const dashboardContent = document.getElementById('dashboardContent');
 
                     if (currentUserData.status === 'pending') {
-                        // Pendente
                         badge.innerHTML = `<i data-lucide="clock" class="w-4 h-4"></i> Em Análise`;
                         badge.className = 'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold shadow-sm border bg-warning-50 text-warning-600 border-warning-200';
                         
                         pendingAlert.classList.remove('hidden');
                         dashboardContent.classList.add('hidden');
                         
-                    } else if (currentUserData.status === 'active' || currentUserData.affiliateCodeActive === true) {
-                        // Aprovado
+                    } else if (currentUserData.status === 'active' || currentUserData.status === 'approved' || currentUserData.affiliateCodeActive === true) {
+                        // APROVADO (Inclui check para 'active' e 'approved' previnindo falhas no Admin)
                         badge.innerHTML = `<i data-lucide="check-circle-2" class="w-4 h-4"></i> Conta Ativa`;
                         badge.className = 'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold shadow-sm border bg-success-50 text-success-600 border-success-200';
                         
                         pendingAlert.classList.add('hidden');
                         dashboardContent.classList.remove('hidden');
                         
-                        // Remover Skeletons
                         document.querySelectorAll('.skeleton').forEach(el => el.classList.remove('skeleton'));
                         
-                        // Dados Numéricos
                         document.getElementById('statEarnings').textContent = formatMT(currentUserData.affiliateEarnings);
                         document.getElementById('statReferrals').textContent = currentUserData.totalReferrals || 0;
                         document.getElementById('statConverted').textContent = currentUserData.approvedReferrals || 0;
                         
-                        // Lógica Correta do Link de Partilha
+                        // Link Seguro (Protege caso estejas a testar localmente na tua máquina file://)
                         affiliateCodeLocal = currentUserData.affiliateCode || '';
-                        const siteUrl = window.location.origin;
-                        const finalAffiliateUrl = `${siteUrl}/?ref=${affiliateCodeLocal}`; // <-- Redireciona para o index com o param de referência
+                        const siteOrigin = (window.location.hostname === 'localhost' || window.location.protocol === 'file:') 
+                                            ? 'https://paygo.co.mz' 
+                                            : window.location.origin;
+                                            
+                        const finalAffiliateUrl = `${siteOrigin}/?ref=${affiliateCodeLocal}`; 
                         
                         document.getElementById('rawAffiliateCode').textContent = affiliateCodeLocal;
                         document.getElementById('affiliateLinkInput').value = finalAffiliateUrl;
                         
-                        // Tabela de Indicações
                         await loadReferrals(affiliateCodeLocal);
                         
                     } else {
-                        // Suspenso/Banido
+                        // Suspenso
                         badge.innerHTML = `<i data-lucide="x-circle" class="w-4 h-4"></i> Conta Suspensa`;
                         badge.className = 'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold shadow-sm border bg-red-50 text-red-600 border-red-200';
                         pendingAlert.classList.add('hidden');
@@ -622,7 +628,6 @@
                 console.error("Erro ao carregar perfil:", error);
                 showToast('Erro ao ligar ao servidor.', 'error');
             } finally {
-                // Remover eclair do ecrã
                 const loader = document.getElementById('pageLoader');
                 if(loader) {
                     loader.style.opacity = '0';
