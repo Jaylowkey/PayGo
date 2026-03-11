@@ -119,7 +119,7 @@ export default async function handler(req, res) {
                     tag: "button",
                     text: { tag: "plain_text", content: "Ver no Admin" },
                     type: "primary",
-                    url: `${process.env.SITE_URL || 'https://paygo.co.mz'}/admin.html`
+                    url: `${process.env.SITE_URL || 'https://paygo.co.mz'}/admin/`
                   }
                 ]
               },
@@ -286,7 +286,7 @@ function generatePaymentSuccessHTML(order) {
       </table>
       
       <div style="text-align: center; margin: 32px 0;">
-        <a href="${process.env.SITE_URL || 'https://paygo.co.mz'}/admin/dashboard.html" class="btn">📊 Acompanhar Pedido</a>
+        <a href="${process.env.SITE_URL || 'https://paygo.co.mz'}/admin/" class="btn">📊 Acompanhar Pedido</a>
       </div>
     </div>
     <div class="footer">
@@ -299,5 +299,5 @@ function generatePaymentSuccessHTML(order) {
 }
 
 function generatePaymentSuccessText(order) {
-  return `PAGAMENTO RECEBIDO - PAYGO ✅\nOlá ${order.name},\nRecebemos o seu pagamento de ${order.total} MT referente ao pedido #${order.orderId}.\n\nO seu pedido está agora EM PROCESSAMENTO.\nAcompanhe o status no Dashboard: ${process.env.SITE_URL || 'https://paygo.co.mz'}/dashboard.html`;
+  return `PAGAMENTO RECEBIDO - PAYGO ✅\nOlá ${order.name},\nRecebemos o seu pagamento de ${order.total} MT referente ao pedido #${order.orderId}.\n\nO seu pedido está agora EM PROCESSAMENTO.\nAcompanhe o status no Dashboard: ${process.env.SITE_URL || 'https://paygo.co.mz'}/admin/`;
 }
