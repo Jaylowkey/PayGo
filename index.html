@@ -735,7 +735,7 @@ data-aos="fade-up" data-aos-delay="300">
                 <span class="btn-text text-[11px] sm:text-sm md:text-base whitespace-nowrap">WhatsApp</span>
                 <span class="btn-spinner hidden"><i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i></span>
               </button>
-              <button type="button" id="payNowBtn" class="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 md:py-4 rounded-xl font-bold hover:from-green-500 hover:to-emerald-500 transition-all flex items-center justify-center gap-2 group shadow-lg hover:shadow-xl transform active:scale-[0.98]" onclick="window.openPaymentModal()">
+              <button type="button" id="payNowBtn" class="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 md:py-4 rounded-xl font-bold hover:from-green-500 hover:to-emerald-500 transition-all flex items-center justify-center gap-2 group shadow-lg hover:shadow-xl transform active:scale-[0.98]" onclick="window.processPayment()">
                 <i data-lucide="credit-card" class="w-4 h-4 md:w-5 md:h-5"></i>
                 <span class="text-[11px] sm:text-sm md:text-base whitespace-nowrap">Pagar Agora</span>
               </button>
@@ -1008,22 +1008,22 @@ Fale Conosco
 </div>
 
 <div id="trackingModal" class="modal" role="dialog" aria-modal="true">
-    <div class="modal-overlay" onclick="closeTrackingModal()"></div>
-    <div class="modal-content text-center">
-        <div class="modal-header">
-            <h3 class="modal-title text-center w-full flex items-center justify-center gap-2"><i data-lucide="package-search" class="w-6 h-6 text-brand-600"></i> Rastrear Pedido PayGo</h3>
-            <button class="modal-close absolute right-6" onclick="closeTrackingModal()"><i data-lucide="x" class="w-5 h-5"></i></button>
-        </div>
-        <div class="py-4">
-            <p class="text-sm text-slate-500 mb-6">Insira o código do seu pedido (Ex: PG-123456) para consultar o estado interno da compra.</p>
-            <input type="text" id="trackOrderId" placeholder="PG-XXXXXX" class="w-full p-4 border border-slate-300 rounded-xl mb-4 text-center font-mono font-bold text-lg uppercase tracking-widest focus:ring-2 focus:ring-brand-500 focus:outline-none bg-slate-50">
-            <button onclick="window.trackOrderAction()" class="w-full bg-brand-600 text-white py-4 rounded-xl font-bold hover:bg-brand-700 transition flex items-center justify-center gap-2 shadow-lg shadow-brand-500/30">
-                <i data-lucide="search" class="w-5 h-5"></i> Buscar Status
-            </button>
-            <div id="trackResult" class="mt-8 hidden p-6 rounded-2xl border bg-slate-50 text-left">
-                </div>
-        </div>
-    </div>
+    <div class="modal-overlay" onclick="closeTrackingModal()"></div>
+    <div class="modal-content text-center">
+        <div class="modal-header">
+            <h3 class="modal-title text-center w-full flex items-center justify-center gap-2"><i data-lucide="package-search" class="w-6 h-6 text-brand-600"></i> Rastrear Pedido PayGo</h3>
+            <button class="modal-close absolute right-6" onclick="closeTrackingModal()"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+        <div class="py-4">
+            <p class="text-sm text-slate-500 mb-6">Insira o código do seu pedido (Ex: PG-123456) para consultar o estado interno da compra.</p>
+            <input type="text" id="trackOrderId" placeholder="PG-XXXXXX" class="w-full p-4 border border-slate-300 rounded-xl mb-4 text-center font-mono font-bold text-lg uppercase tracking-widest focus:ring-2 focus:ring-brand-500 focus:outline-none bg-slate-50">
+            <button onclick="window.trackOrderAction()" class="w-full bg-brand-600 text-white py-4 rounded-xl font-bold hover:bg-brand-700 transition flex items-center justify-center gap-2 shadow-lg shadow-brand-500/30">
+                <i data-lucide="search" class="w-5 h-5"></i> Buscar Status
+            </button>
+            <div id="trackResult" class="mt-8 hidden p-6 rounded-2xl border bg-slate-50 text-left">
+                </div>
+        </div>
+    </div>
 </div>
 
 <script type="module">
@@ -1090,113 +1090,113 @@ setTimeout(() => toast.remove(), 300);
 // 📦 SISTEMA DE RASTREAMENTO DE PEDIDOS
 // ========================================================================
 window.openTrackingModal = function() {
-    document.getElementById('trackingModal').classList.add('active');
-    document.getElementById('trackResult').classList.add('hidden');
-    document.getElementById('trackOrderId').value = '';
-    document.body.style.overflow = 'hidden';
+    document.getElementById('trackingModal').classList.add('active');
+    document.getElementById('trackResult').classList.add('hidden');
+    document.getElementById('trackOrderId').value = '';
+    document.body.style.overflow = 'hidden';
 };
 
 window.closeTrackingModal = function() {
-    document.getElementById('trackingModal').classList.remove('active');
-    document.body.style.overflow = '';
+    document.getElementById('trackingModal').classList.remove('active');
+    document.body.style.overflow = '';
 };
 
 window.copyToClipboard = function(text) {
-    navigator.clipboard.writeText(text).then(() => {
-        showToast('Código de rastreio copiado!', 'success');
-    }).catch(err => {
-        console.error('Erro ao copiar', err);
-    });
+    navigator.clipboard.writeText(text).then(() => {
+        showToast('Código de rastreio copiado!', 'success');
+    }).catch(err => {
+        console.error('Erro ao copiar', err);
+    });
 };
 
 window.trackOrderAction = async function() {
-    const idInput = document.getElementById('trackOrderId').value.trim().toUpperCase();
-    const resultDiv = document.getElementById('trackResult');
-    
-    if(!idInput) { showToast('Insira um código de pedido válido.', 'error'); return; }
-    
-    resultDiv.classList.remove('hidden');
-    resultDiv.innerHTML = '<div class="flex flex-col items-center"><i data-lucide="loader-2" class="animate-spin w-8 h-8 text-brand-500 mb-2"></i><p class="text-sm font-medium text-slate-500">A buscar informações...</p></div>';
-    lucide.createIcons();
+    const idInput = document.getElementById('trackOrderId').value.trim().toUpperCase();
+    const resultDiv = document.getElementById('trackResult');
+    
+    if(!idInput) { showToast('Insira um código de pedido válido.', 'error'); return; }
+    
+    resultDiv.classList.remove('hidden');
+    resultDiv.innerHTML = '<div class="flex flex-col items-center"><i data-lucide="loader-2" class="animate-spin w-8 h-8 text-brand-500 mb-2"></i><p class="text-sm font-medium text-slate-500">A buscar informações...</p></div>';
+    lucide.createIcons();
 
-    try {
-        const q = window.PayGoDB.query(window.PayGoDB.collection(window.PayGoDB.db, "orders"), window.PayGoDB.where("orderId", "==", idInput));
-        const snap = await window.PayGoDB.getDocs(q);
+    try {
+        const q = window.PayGoDB.query(window.PayGoDB.collection(window.PayGoDB.db, "orders"), window.PayGoDB.where("orderId", "==", idInput));
+        const snap = await window.PayGoDB.getDocs(q);
 
-        if(snap.empty) {
-            resultDiv.innerHTML = '<div class="text-center"><i data-lucide="search-x" class="w-10 h-10 text-slate-300 mx-auto mb-2"></i><p class="text-red-500 font-bold">Pedido não encontrado.</p><p class="text-xs text-slate-500 mt-1">Verifique o código e tente novamente.</p></div>';
-            lucide.createIcons();
-            return;
-        }
-        
-        const order = snap.docs[0].data();
-        let statusHtml = ''; let colorClass = '';
-        
-        if(order.status === 'pending') { statusHtml = '⏳ Aguardando Pagamento'; colorClass = 'text-amber-500 bg-amber-50 border-amber-200'; }
-        else if(order.status === 'processing') { statusHtml = '🔄 Em Processamento'; colorClass = 'text-blue-500 bg-blue-50 border-blue-200'; }
-        else if(order.status === 'completed') { statusHtml = '✅ Concluído / Entregue'; colorClass = 'text-green-600 bg-green-50 border-green-200'; }
-        else if(order.status === 'cancelled') { statusHtml = '❌ Cancelado'; colorClass = 'text-red-500 bg-red-50 border-red-200'; }
+        if(snap.empty) {
+            resultDiv.innerHTML = '<div class="text-center"><i data-lucide="search-x" class="w-10 h-10 text-slate-300 mx-auto mb-2"></i><p class="text-red-500 font-bold">Pedido não encontrado.</p><p class="text-xs text-slate-500 mt-1">Verifique o código e tente novamente.</p></div>';
+            lucide.createIcons();
+            return;
+        }
+        
+        const order = snap.docs[0].data();
+        let statusHtml = ''; let colorClass = '';
+        
+        if(order.status === 'pending') { statusHtml = '⏳ Aguardando Pagamento'; colorClass = 'text-amber-500 bg-amber-50 border-amber-200'; }
+        else if(order.status === 'processing') { statusHtml = '🔄 Em Processamento'; colorClass = 'text-blue-500 bg-blue-50 border-blue-200'; }
+        else if(order.status === 'completed') { statusHtml = '✅ Concluído / Entregue'; colorClass = 'text-green-600 bg-green-50 border-green-200'; }
+        else if(order.status === 'cancelled') { statusHtml = '❌ Cancelado'; colorClass = 'text-red-500 bg-red-50 border-red-200'; }
 
-        const dateStr = order.createdAt?.toDate ? order.createdAt.toDate().toLocaleDateString('pt-MZ') : 'N/A';
-        const isPaidBadge = order.isPaid || order.status === 'processing' || order.status === 'completed' || order.paymentStatus === 'paid'
-            ? '<span class="px-2 py-0.5 bg-green-100 text-green-700 rounded text-[10px] font-bold">PAGO</span>' 
-            : '<span class="px-2 py-0.5 bg-slate-100 text-slate-500 rounded text-[10px] font-bold">NÃO PAGO</span>';
+        const dateStr = order.createdAt?.toDate ? order.createdAt.toDate().toLocaleDateString('pt-MZ') : 'N/A';
+        const isPaidBadge = order.isPaid || order.status === 'processing' || order.status === 'completed' || order.paymentStatus === 'paid'
+            ? '<span class="px-2 py-0.5 bg-green-100 text-green-700 rounded text-[10px] font-bold">PAGO</span>' 
+            : '<span class="px-2 py-0.5 bg-slate-100 text-slate-500 rounded text-[10px] font-bold">NÃO PAGO</span>';
 
-        let trackingHtml = '';
-        if (order.trackingCode) {
-            trackingHtml = `
-            <div class="mt-4 p-4 bg-brand-50 border border-brand-200 rounded-xl">
-                <p class="text-[10px] font-bold text-brand-600 uppercase tracking-widest mb-2 flex items-center gap-1"><i data-lucide="plane" class="w-3 h-3"></i> Rastreio Internacional</p>
-                <div class="flex items-center justify-between bg-white p-3 rounded-lg border border-brand-100 mb-3 shadow-sm">
-                    <span class="font-mono font-bold text-slate-800 tracking-wider">${order.trackingCode}</span>
-                    <button onclick="window.copyToClipboard('${order.trackingCode}')" class="text-slate-400 hover:text-brand-600 transition"><i data-lucide="copy" class="w-5 h-5"></i></button>
-                </div>
-                <a href="https://global.cainiao.com/detail.htm?mailNo=${order.trackingCode}" target="_blank" class="w-full flex justify-center items-center gap-2 bg-brand-600 text-white py-3 rounded-xl text-sm font-bold hover:bg-brand-700 transition shadow-md">
-                    <i data-lucide="external-link" class="w-4 h-4"></i> Rastrear no Cainiao
-                </a>
-            </div>
-            `;
-        } else if (order.status === 'processing' || order.status === 'completed') {
-            trackingHtml = `
-            <div class="mt-4 p-4 bg-slate-100 rounded-xl text-center border border-slate-200">
-                <i data-lucide="box" class="w-6 h-6 text-slate-400 mx-auto mb-2"></i>
-                <p class="text-xs text-slate-500">O código de rastreio internacional será disponibilizado aqui assim que o vendedor despachar a encomenda.</p>
-            </div>
-            `;
-        }
+        let trackingHtml = '';
+        if (order.trackingCode) {
+            trackingHtml = `
+            <div class="mt-4 p-4 bg-brand-50 border border-brand-200 rounded-xl">
+                <p class="text-[10px] font-bold text-brand-600 uppercase tracking-widest mb-2 flex items-center gap-1"><i data-lucide="plane" class="w-3 h-3"></i> Rastreio Internacional</p>
+                <div class="flex items-center justify-between bg-white p-3 rounded-lg border border-brand-100 mb-3 shadow-sm">
+                    <span class="font-mono font-bold text-slate-800 tracking-wider">${order.trackingCode}</span>
+                    <button onclick="window.copyToClipboard('${order.trackingCode}')" class="text-slate-400 hover:text-brand-600 transition"><i data-lucide="copy" class="w-5 h-5"></i></button>
+                </div>
+                <a href="https://global.cainiao.com/detail.htm?mailNo=${order.trackingCode}" target="_blank" class="w-full flex justify-center items-center gap-2 bg-brand-600 text-white py-3 rounded-xl text-sm font-bold hover:bg-brand-700 transition shadow-md">
+                    <i data-lucide="external-link" class="w-4 h-4"></i> Rastrear no Cainiao
+                </a>
+            </div>
+            `;
+        } else if (order.status === 'processing' || order.status === 'completed') {
+            trackingHtml = `
+            <div class="mt-4 p-4 bg-slate-100 rounded-xl text-center border border-slate-200">
+                <i data-lucide="box" class="w-6 h-6 text-slate-400 mx-auto mb-2"></i>
+                <p class="text-xs text-slate-500">O código de rastreio internacional será disponibilizado aqui assim que o vendedor despachar a encomenda.</p>
+            </div>
+            `;
+        }
 
-        resultDiv.innerHTML = `
-            <div class="text-left space-y-3">
-                <div class="flex justify-between items-start border-b border-slate-200 pb-3">
-                    <div>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Código do Pedido</p>
-                        <p class="font-mono font-bold text-slate-800 text-lg">${order.orderId}</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Data</p>
-                        <p class="text-sm font-medium text-slate-700">${dateStr}</p>
-                    </div>
-                </div>
-                <div class="py-2">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Status Interno</p>
-                    <div class="inline-block px-4 py-2 rounded-lg border font-bold text-sm ${colorClass}">
-                        ${statusHtml}
-                    </div>
-                </div>
-                <div class="bg-white p-3 rounded-xl border border-slate-100">
-                    <div class="flex justify-between mb-1">
-                        <span class="text-xs text-slate-500">Valor Total:</span>
-                        <span class="font-bold text-slate-800">${order.total} MT ${isPaidBadge}</span>
-                    </div>
-                </div>
-                ${trackingHtml}
-            </div>
-        `;
-        lucide.createIcons();
-    } catch(e) {
-        console.error("Erro rastreio:", e);
-        resultDiv.innerHTML = '<p class="text-red-500 text-sm font-bold">Erro ao contactar o servidor.</p>';
-    }
+        resultDiv.innerHTML = `
+            <div class="text-left space-y-3">
+                <div class="flex justify-between items-start border-b border-slate-200 pb-3">
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Código do Pedido</p>
+                        <p class="font-mono font-bold text-slate-800 text-lg">${order.orderId}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Data</p>
+                        <p class="text-sm font-medium text-slate-700">${dateStr}</p>
+                    </div>
+                </div>
+                <div class="py-2">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Status Interno</p>
+                    <div class="inline-block px-4 py-2 rounded-lg border font-bold text-sm ${colorClass}">
+                        ${statusHtml}
+                    </div>
+                </div>
+                <div class="bg-white p-3 rounded-xl border border-slate-100">
+                    <div class="flex justify-between mb-1">
+                        <span class="text-xs text-slate-500">Valor Total:</span>
+                        <span class="font-bold text-slate-800">${order.total} MT ${isPaidBadge}</span>
+                    </div>
+                </div>
+                ${trackingHtml}
+            </div>
+        `;
+        lucide.createIcons();
+    } catch(e) {
+        console.error("Erro rastreio:", e);
+        resultDiv.innerHTML = '<p class="text-red-500 text-sm font-bold">Erro ao contactar o servidor.</p>';
+    }
 };
 
 // ========================================================================
@@ -1294,7 +1294,7 @@ receiptTotal.innerHTML = `${totalRounded.toLocaleString('pt-MZ')}<span class="te
 }
 };
 // ========================================================================
-// 💾 SALVAR PEDIDO NO FIREBASE
+// 💾 SALVAR PEDIDO NO FIREBASE (COMPLETO E COM MELHOR TRATAMENTO)
 // ========================================================================
 async function saveOrderToFirebase(orderData) {
 try {
@@ -1310,138 +1310,114 @@ const orderRef = await addDoc(collection(db, "orders"), orderData);
 console.log('✅ Pedido salvo com ID:', orderRef.id);
 return { success: true, orderId: orderRef.id };
 } catch (error) {
-console.error('❌ Erro ao salvar pedido:', error.code, error.message);
+console.error('❌ Erro ao salvar pedido no Firebase:', error.code, error.message);
 return { success: false, error: error.message, code: error.code, fallback: true };
 }
 }
 
 // ========================================================================
-// 💳 PAYMENT MODAL FUNCTIONS (PaySuite Real USSD Push)
+// 💳 PROCESSAR PAGAMENTO SEGURO VIA PAYSUITE (REDIRECIONAMENTO DIRETO)
 // ========================================================================
-let pollingInterval = null;
-let currentOrderData = null;
+window.processPayment = async function() {
+    const btn = document.getElementById('payNowBtn');
+    const originalContent = btn.innerHTML;
 
-window.openPaymentModal = async function() {
-  const name = document.getElementById('userName').value.trim();
-  const whatsapp = document.getElementById('userWhatsApp').value.trim();
-  const email = document.getElementById('userEmail').value.trim();
-  const usd = parseFloat(document.getElementById('userUSD').value) || 0;
-  const detail = document.getElementById('userLink').value.trim();
-  const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'mpesa';
-  const serviceType = document.getElementById('serviceType').value;
-  const isFirst = document.getElementById('chkFirstPurchase').checked;
-  
-  if (!name || !whatsapp || !email || !usd || !detail) {
-    showToast('Por favor, preencha todos os campos para pagar online.', 'error');
-    return;
-  }
+    const name = document.getElementById('userName').value.trim();
+    const whatsapp = document.getElementById('userWhatsApp').value.trim();
+    const email = document.getElementById('userEmail').value.trim();
+    const usd = parseFloat(document.getElementById('userUSD').value) || 0;
+    const detail = document.getElementById('userLink').value.trim();
+    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'mpesa';
+    const serviceType = document.getElementById('serviceType').value;
+    const isFirst = document.getElementById('chkFirstPurchase').checked;
 
-  const converted = usd * BINANCE_RATE;
-  const tax = (usd <= 5 && isFirst) ? 0 : (usd <= 20 ? 150 : usd <= 50 ? 250 : usd <= 100 ? 600 : converted * 0.07);
-  const total = converted + tax;
-  const orderId = 'PG-' + Date.now().toString().slice(-6).toUpperCase();
-  
-  currentOrderData = {
-    orderId, name, whatsapp, email, usd, detail, tax, total,
-    exchangeRate: BINANCE_RATE, status: 'pending', paymentMethod,
-    type: serviceType, isFirstPurchase: isFirst
-  };
-  
-  document.getElementById('modalTotal').textContent = `${total.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`;
-  document.getElementById('modalPhone').textContent = whatsapp;
-  document.getElementById('modalMethod').textContent = paymentMethod === 'mpesa' ? 'M-Pesa' : 'e-Mola';
-  
-  document.getElementById('paymentStep1').classList.remove('hidden');
-  document.getElementById('paymentStep2').classList.add('hidden');
-  document.getElementById('paymentStep3').classList.add('hidden');
-  
-  document.getElementById('paymentModalStatusTitle').textContent = 'A processar...';
-  document.getElementById('paymentModalStatusDesc').textContent = 'A comunicar com o servidor. Aguarde.';
-  
-  document.getElementById('paymentModal').classList.add('active');
-  if (typeof lucide !== 'undefined') lucide.createIcons();
+    if (!name || !whatsapp || !email || !usd || !detail) {
+        showToast('Por favor, preencha todos os campos para pagar online.', 'warning');
+        return;
+    }
 
-  try {
-    console.log("1. A guardar pedido no Firebase...");
-    const fbResult = await saveOrderToFirebase(currentOrderData);
-    if(!fbResult.success) throw new Error("Erro ao salvar pedido no Firebase.");
+    btn.disabled = true;
+    btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 md:w-5 md:h-5 animate-spin"></i> <span class="text-[11px] sm:text-sm md:text-base whitespace-nowrap">A processar...</span>`;
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 
-    currentOrderData.firestoreId = fbResult.orderId;
+    const converted = usd * BINANCE_RATE;
+    const tax = (usd <= 5 && isFirst) ? 0 : (usd <= 20 ? 150 : usd <= 50 ? 250 : usd <= 100 ? 600 : converted * 0.07);
+    const total = converted + tax;
+    const orderId = 'PG-' + Date.now().toString().slice(-6).toUpperCase();
 
-    console.log("2. A contactar a API PaySuite...");
-    await callPaySuiteAPI(currentOrderData);
+    const currentOrderData = {
+        orderId, name, whatsapp, email, usd, detail, tax, total,
+        exchangeRate: BINANCE_RATE, status: 'pending', paymentMethod,
+        type: serviceType, isFirstPurchase: isFirst
+    };
 
-  } catch (err) {
-    console.error("Erro principal no Modal:", err);
-    showErrorStep(err.message || "Falha na comunicação com a operadora.");
-  }
+    try {
+        const fbResult = await saveOrderToFirebase(currentOrderData);
+        if(!fbResult.success) {
+            if(fbResult.code === 'permission-denied') {
+                throw new Error("Permissão negada no banco de dados. Por favor, tente pelo botão do WhatsApp.");
+            }
+            throw new Error("Erro ao registar o seu pedido localmente.");
+        }
+        currentOrderData.firestoreId = fbResult.orderId;
+
+        showToast('A contactar a plataforma de pagamento...', 'success');
+
+        // Limpar o número de telefone (remover o + e espaços)
+        const cleanPhone = currentOrderData.whatsapp.replace(/\D/g, '');
+
+        const response = await fetch('/api/paysuite-payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                orderId: currentOrderData.orderId,
+                amount: currentOrderData.total,
+                currency: 'MZN',
+                phone: cleanPhone,
+                method: currentOrderData.paymentMethod, 
+                email: currentOrderData.email,
+                name: currentOrderData.name,
+                description: `Pedido PayGo #${currentOrderData.orderId}`
+            })
+        });
+
+        // Captura o erro bruto do backend
+        let result;
+        try {
+            result = await response.json();
+        } catch(e) {
+            if (response.status === 503) {
+                 throw new Error('A PaySuite está em manutenção. Por favor, conclua o pedido através do botão WhatsApp.');
+            }
+            throw new Error('A API não devolveu um formato de dados esperado.');
+        }
+
+        if (!response.ok || !result.success) {
+            console.error("🛑 DETALHES DO ERRO DA API PAYSUITE:", result);
+            const errorMsg = result.error || result.message || '';
+            // Tratamento especial para o erro 503 Service Unavailable que mostraste nos logs
+            if (errorMsg.includes('Service Unavailable') || response.status === 503) {
+                 throw new Error('A PaySuite está temporariamente indisponível. Por favor, use o botão "WhatsApp" para pagar.');
+            }
+            throw new Error(errorMsg || 'A transação não pôde ser iniciada. Tente via WhatsApp.');
+        }
+
+        if (result.data && result.data.checkoutUrl) {
+            setTimeout(() => {
+                window.location.href = result.data.checkoutUrl;
+            }, 800);
+        } else {
+            throw new Error("Não foi possível gerar a página de pagamento seguro.");
+        }
+
+    } catch (err) {
+        console.error("❌ Erro no processamento:", err);
+        showToast(err.message, 'error', 8000); // Mostramos a mensagem de erro mais tempo
+        btn.disabled = false;
+        btn.innerHTML = originalContent;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
 };
-
-window.closePaymentModal = function() {
-  document.getElementById('paymentModal').classList.remove('active');
-  currentOrderData = null;
-  if (pollingInterval) {
-    clearInterval(pollingInterval);
-    pollingInterval = null;
-  }
-};
-
-function showErrorStep(message) {
-    document.getElementById('paymentStep1').classList.add('hidden');
-    document.getElementById('paymentStep2').classList.add('hidden');
-    document.getElementById('paymentStep3').classList.remove('hidden');
-    document.getElementById('modalErrorMsg').textContent = message;
-}
-
-async function callPaySuiteAPI(orderData) {
-  try {
-      // ✅ CORREÇÃO APLICADA: Limpar o número de telefone removendo o '+' e eventuais espaços
-      const cleanPhone = orderData.whatsapp.replace(/\D/g, '');
-
-      const response = await fetch('/api/paysuite-payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          orderId: orderData.orderId,
-          amount: orderData.total,
-          currency: 'MZN',
-          phone: cleanPhone, // Número formatado enviado para a PaySuite
-          method: orderData.paymentMethod,
-          email: orderData.email,
-          name: orderData.name,
-          description: `Pedido PayGo #${orderData.orderId}`
-        })
-      });
-      
-      // ✅ CORREÇÃO APLICADA: Captura detalhada de erros JSON do backend
-      let result;
-      try {
-          result = await response.json();
-      } catch(e) {
-          throw new Error('A API não devolveu um formato válido.');
-      }
-      
-      if (!response.ok || !result.success) {
-        console.error("🛑 DETALHES DO ERRO DA API PAYSUITE:", result);
-        throw new Error(result.error || result.message || 'Dados rejeitados pela PaySuite (Erro 400).');
-      }
-
-      if (result.data && result.data.checkoutUrl) {
-          document.getElementById('paymentModalStatusTitle').innerHTML = 'A redirecionar...';
-          document.getElementById('paymentModalStatusDesc').innerHTML = 'A abrir o portal seguro da PaySuite. Aguarde...';
-          
-          setTimeout(() => {
-             window.location.href = result.data.checkoutUrl;
-          }, 1500);
-      } else {
-          throw new Error("A PaySuite não devolveu o link de pagamento.");
-      }
-
-  } catch (err) {
-     console.error("Erro no callPaySuiteAPI:", err);
-     showErrorStep(err.message);
-  }
-}
 // ========================================================================
 // 📤 HANDLE FORM SUBMIT (Orçamento via WhatsApp)
 // ========================================================================
@@ -1481,9 +1457,9 @@ const total = converted + tax;
 const orderId = 'PG-' + Date.now().toString().slice(-6);
 
 const methodNames = {
-  'mpesa': '🔴 M-Pesa',
-  'emola': '🟡 e-Mola',
-  'bank': '🏦 Transferência Bancária'
+  'mpesa': '🔴 M-Pesa',
+  'emola': '🟡 e-Mola',
+  'bank': '🏦 Transferência Bancária'
 };
 
 const orderData = {
@@ -1539,7 +1515,7 @@ showToast(`✅ Pedido ${orderId} registrado com sucesso!`, 'success', 5000);
 // 🚀 ACIONAR NOTIFICAÇÕES
 triggerNotifications(orderData, 'new_order');
 } else {
-showToast(`⚠️ Pedido registrado localmente. ID: ${orderId}`, 'warning', 6000);
+showToast(`⚠️ Pedido registrado apenas via WhatsApp. ID: ${orderId}`, 'warning', 6000);
 }
 
 setTimeout(() => {
@@ -1627,32 +1603,32 @@ showToast('❌ Erro ao fazer logout. Tente novamente.', 'error');
 // 📩 DISPARAR NOTIFICAÇÕES (API VERCEL)
 // ========================================================================
 async function triggerNotifications(orderData, action = 'new_order') {
-    try {
-        console.log("A disparar notificações para:", orderData.orderId, "Ação:", action);
-        
-        const payload = {
-            orderData: orderData,
-            action: action, 
-            sendEmail: true,
-            sendLark: true
-        };
+    try {
+        console.log("A disparar notificações para:", orderData.orderId, "Ação:", action);
+        
+        const payload = {
+            orderData: orderData,
+            action: action, 
+            sendEmail: true,
+            sendLark: true
+        };
 
-        const response = await fetch('/api/notify-order', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
+        const response = await fetch('/api/notify-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
 
-        const result = await response.json();
-        
-        if (response.ok) {
-            console.log("✅ Notificações processadas com sucesso:", result);
-        } else {
-            console.error("❌ Falha na API de notificações:", result);
-        }
-    } catch (error) {
-        console.error("❌ Erro fatal na comunicação com a API:", error);
-    }
+        const result = await response.json();
+        
+        if (response.ok) {
+            console.log("✅ Notificações processadas com sucesso:", result);
+        } else {
+            console.error("❌ Falha na API de notificações:", result);
+        }
+    } catch (error) {
+        console.error("❌ Erro fatal na comunicação com a API:", error);
+    }
 }
 
 // ========================================================================
@@ -1767,8 +1743,7 @@ updatePaymentMethod: window.updatePaymentMethod,
 calculate: window.calculate,
 showToast: showToast,
 logout: window.logoutFromHeader,
-openPaymentModal: window.openPaymentModal,
-closePaymentModal: window.closePaymentModal,
+processPayment: window.processPayment,
 openTrackingModal: window.openTrackingModal,
 closeTrackingModal: window.closeTrackingModal,
 trackOrderAction: window.trackOrderAction,
