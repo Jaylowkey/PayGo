@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel do Afiliado | PayGo</title>
+    <meta name="robots" content="noindex, nofollow">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        display: ['"Outfit"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 900: '#1e3a8a', 950: '#0f172a' },
+                        success: { 50: '#f0fdf4', 100: '#dcfce7', 400: '#4ade80', 500: '#22c55e', 600: '#16a34a', 700: '#15803d' },
+                        warning: { 50: '#fffbeb', 100: '#fef3c7', 500: '#f59e0b', 600: '#d97706' }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .skeleton { background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: skeleton-loading 1.5s infinite; color: transparent !important; border-radius: 4px; }
+        @keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        #pageLoader { transition: opacity 0.5s ease, visibility 0.5s ease; }
+        .loader-spinner { border-top-color: #22c55e; animation: spinner 1s linear infinite; }
+        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .glass-card { background: white; border: 1px solid #e2e8f0; border-radius: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .glass-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02); }
+
+        /* Toasts */
+        #toast-container { position: fixed; top: 24px; right: 24px; z-index: 1000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
+        .toast { pointer-events: auto; background: white; border-left: 4px solid #22c55e; padding: 16px; border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 12px; max-width: 350px; transform: translateX(120%); transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); opacity: 0; }
+        .toast.show { transform: translateX(0); opacity: 1; }
+        .toast.error { border-left-color: #ef4444; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased overflow-x-hidden">
+
+    <div id="pageLoader" class="fixed inset-0 bg-slate-900 z-[100] flex flex-col items-center justify-center">
+        <div class="w-12 h-12 border-4 border-slate-700 border-t-success-500 rounded-full loader-spinner mb-4"></div>
+        <h2 class="text-white text-xl font-display font-bold tracking-wide">Portal do Afiliado</h2>
+        <p class="text-slate-400 text-sm mt-2">A carregar os seus ganhos...</p>
+    </div>
+
+    <div class="md:hidden fixed top-0 left-0 w-full bg-slate-900 text-white p-4 flex items-center justify-between z-40 shadow-md">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-gradient-to-tr from-success-500 to-brand-500 rounded-lg flex items-center justify-center">
+                <i data-lucide="zap" class="w-4 h-4 text-white"></i>
+            </div>
+            <span class="font-bold font-display text-lg">Afiliados PayGo</span>
+        </div>
+        <button id="mobileMenuBtn" class="p-2 text-slate-300 hover:text-white">
+            <i data-lucide="menu" class="w-6 h-6"></i>
+        </button>
+    </div>
+
+    <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-40 hidden md:hidden transition-opacity opacity-0"></div>
+
+    <aside id="sidebar" class="fixed left-0 top-0 h-full w-64 bg-slate-900 text-white p-6 z-50 flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
+        <div class="flex items-center justify-between mb-8 pb-6 border-b border-white/10 mt-2 md:mt-0">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-tr from-success-500 to-brand-500 rounded-xl flex items-center justify-center shadow-lg shadow-success-500/20">
+                    <i data-lucide="zap" class="w-6 h-6 fill-current text-white"></i>
+                </div>
+                <div>
+                    <span class="text-xl font-display font-bold block leading-tight">PayGo</span>
+                    <span class="text-[10px] text-success-400 font-bold uppercase tracking-widest block">Partners</span>
+                </div>
+            </div>
+            <button id="closeSidebarBtn" class="md:hidden p-1 text-slate-400 hover:text-white">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <nav class="flex-1 space-y-2 overflow-y-auto pr-2">
+            <a href="#" class="flex items-center gap-3 px-4 py-3 bg-success-500/10 text-success-400 border-r-2 border-success-500 rounded-xl font-semibold transition-all">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Visão Geral
+            </a>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl font-medium transition-all">
+                <i data-lucide="users" class="w-5 h-5"></i> Minhas Indicações
+            </a>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl font-medium transition-all">
+                <i data-lucide="wallet" class="w-5 h-5"></i> Saques e Pagamentos
+            </a>
+        </nav>
+
+        <div class="pt-6 border-t border-white/10 mt-auto">
+            <div class="flex items-center gap-3 px-2 py-3 mb-3 bg-white/5 rounded-xl">
+                <div class="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center text-sm font-bold text-white shadow-inner" id="userInitial">U</div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold text-white truncate" id="userName">Usuário</p>
+                    <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Afiliado</p>
+                </div>
+            </div>
+            <button id="logoutBtn" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-slate-800 hover:bg-red-500/10 text-slate-300 hover:text-red-400 border border-slate-700 hover:border-red-500/30 rounded-xl transition-all text-sm font-medium">
+                <i data-lucide="log-out" class="w-4 h-4"></i> Sair da Conta
+            </button>
+        </div>
+    </aside>
+
+    <main class="md:ml-64 p-4 md:p-8 pt-24 md:pt-8 min-h-screen">
+        
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+            <div>
+                <h1 class="text-3xl font-display font-extrabold text-slate-900 tracking-tight">
+                    Visão Geral
+                </h1>
+                <p class="text-slate-500 mt-1 text-sm">Acompanhe os seus ganhos e o desempenho do seu link.</p>
+            </div>
+            
+            <div id="statusBadge" class="hidden items-center gap-2 px-4 py-2 rounded-full text-sm font-bold shadow-sm border">
+                </div>
+        </div>
+
+        <div id="pendingAlert" class="hidden mb-8 bg-warning-50 border border-warning-200 rounded-2xl p-6 md:p-8 shadow-sm">
+            <div class="flex flex-col md:flex-row items-center md:items-start gap-6 text-center md:text-left">
+                <div class="w-16 h-16 bg-warning-100 text-warning-600 rounded-full flex items-center justify-center flex-shrink-0 border-4 border-white shadow-sm">
+                    <i data-lucide="clock" class="w-8 h-8"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900 mb-2">Conta em Análise</h2>
+                    <p class="text-slate-600 mb-4">A sua candidatura a afiliado foi recebida e está atualmente em análise pela nossa equipa. Este processo costuma demorar até 48 horas úteis.</p>
+                    <p class="text-sm text-warning-700 font-medium bg-warning-100/50 inline-block px-3 py-1 rounded-lg">Assim que aprovado, o seu link de partilha e as estatísticas serão desbloqueados aqui.</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="dashboardContent" class="hidden space-y-8">
+            
+            <div class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-[2rem] p-6 md:p-8 shadow-xl text-white relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-success-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+                
+                <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+                    <i data-lucide="link" class="w-5 h-5 text-success-400"></i> O seu Link de Indicação
+                </h2>
+                
+                <div class="flex flex-col md:flex-row gap-4">
+                    <div class="relative flex-1">
+                        <input type="text" id="affiliateLinkInput" readonly class="w-full bg-slate-950/50 border border-slate-700 text-white px-5 py-4 rounded-xl font-mono text-sm focus:outline-none focus:border-success-500 transition-colors">
+                        <button onclick="copyAffiliateLink()" class="absolute right-2 top-1/2 -translate-y-1/2 bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-2">
+                            <i data-lucide="copy" class="w-4 h-4"></i> Copiar
+                        </button>
+                    </div>
+                    <button onclick="shareWhatsApp()" class="bg-[#25D366] hover:bg-[#128C7E] text-white px-6 py-4 rounded-xl font-bold transition-all shadow-lg shadow-[#25D366]/20 flex items-center justify-center gap-2 whitespace-nowrap active:scale-95">
+                        <i data-lucide="message-circle" class="w-5 h-5"></i> Partilhar
+                    </button>
+                </div>
+                <p class="text-xs text-slate-400 mt-3 flex items-center gap-1">
+                    <i data-lucide="info" class="w-3 h-3"></i> Partilhe este link. Se alguém se registar e comprar através dele, você ganha a comissão!
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="glass-card p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-sm font-bold text-slate-500 uppercase tracking-wider">Ganhos Totais</span>
+                        <div class="w-10 h-10 bg-success-50 rounded-xl flex items-center justify-center">
+                            <i data-lucide="banknote" class="w-5 h-5 text-success-600"></i>
+                        </div>
+                    </div>
+                    <p class="text-3xl font-display font-extrabold text-slate-900 skeleton" id="statEarnings">0,00 MT</p>
+                    <div class="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center">
+                        <span class="text-xs text-slate-500 font-medium">Disponível para saque</span>
+                        <button class="text-xs font-bold text-success-600 bg-success-50 hover:bg-success-100 px-3 py-1.5 rounded-lg transition-colors">Solicitar Saque</button>
+                    </div>
+                </div>
+
+                <div class="glass-card p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-sm font-bold text-slate-500 uppercase tracking-wider">Total Indicados</span>
+                        <div class="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center">
+                            <i data-lucide="users" class="w-5 h-5 text-brand-600"></i>
+                        </div>
+                    </div>
+                    <p class="text-3xl font-display font-extrabold text-slate-900 skeleton" id="statReferrals">0</p>
+                    <p class="text-sm text-slate-500 mt-2">Pessoas que usaram o seu link</p>
+                </div>
+
+                <div class="glass-card p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-sm font-bold text-slate-500 uppercase tracking-wider">Converteram (Compraram)</span>
+                        <div class="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center">
+                            <i data-lucide="shopping-bag" class="w-5 h-5 text-purple-600"></i>
+                        </div>
+                    </div>
+                    <p class="text-3xl font-display font-extrabold text-slate-900 skeleton" id="statConverted">0</p>
+                    <p class="text-sm text-slate-500 mt-2">Indicações que geraram comissão</p>
+                </div>
+            </div>
+
+            <div class="glass-card overflow-hidden">
+                <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                    <h2 class="text-lg font-bold text-slate-900">Indicações Recentes</h2>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-white border-b border-slate-100">
+                                <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Data</th>
+                                <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Indicado (Email Oculto)</th>
+                                <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Comissão Gerada</th>
+                            </tr>
+                        </thead>
+                        <tbody id="referralsTable" class="divide-y divide-slate-50">
+                            </tbody>
+                    </table>
+                </div>
+                
+                <div id="emptyReferrals" class="hidden p-12 text-center text-slate-500">
+                    <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="user-plus" class="w-8 h-8 text-slate-300"></i>
+                    </div>
+                    <p class="font-bold text-slate-700">Ainda não tem indicações</p>
+                    <p class="text-sm mt-1">Partilhe o seu link para começar a ganhar.</p>
+                </div>
+            </div>
+            
+        </div>
+    </main>
+
+    <div id="toastContainer"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, collection, query, where, getDocs, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
+            authDomain: "paygo-14311.firebaseapp.com",
+            projectId: "paygo-14311",
+            storageBucket: "paygo-14311.firebasestorage.app",
+            messagingSenderId: "208360646277",
+            appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app, "paygodb");
+
+        let currentUserData = null;
+        let affiliateCodeLocal = '';
+
+        // Mobile Menu Toggle
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('-translate-x-full');
+            if (sidebarOverlay.classList.contains('hidden')) {
+                sidebarOverlay.classList.remove('hidden');
+                setTimeout(() => sidebarOverlay.classList.remove('opacity-0'), 10);
+            } else {
+                sidebarOverlay.classList.add('opacity-0');
+                setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
+            }
+        }
+        mobileMenuBtn?.addEventListener('click', toggleSidebar);
+        closeSidebarBtn?.addEventListener('click', toggleSidebar);
+        sidebarOverlay?.addEventListener('click', toggleSidebar);
+
+        // Toast
+        window.showToast = function(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type === 'error' ? 'error' : ''}`;
+            const icon = type === 'success' ? 'check-circle' : 'alert-circle';
+            const color = type === 'success' ? 'text-success-500' : 'text-red-500';
+            
+            toast.innerHTML = `<i data-lucide="${icon}" class="w-5 h-5 ${color}"></i><span class="text-sm font-bold text-slate-800">${message}</span>`;
+            container.appendChild(toast);
+            lucide.createIcons();
+            
+            requestAnimationFrame(() => toast.classList.add('show'));
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 400);
+            }, 3000);
+        }
+
+        // Formatar Moeda
+        function formatMT(value) {
+            return Number(value || 0).toLocaleString('pt-MZ', { minimumFractionDigits: 2 }) + ' MT';
+        }
+
+        // Mascarar Email (ex: jo***@gmail.com)
+        function maskEmail(email) {
+            if (!email) return 'Anónimo';
+            const [name, domain] = email.split('@');
+            if(name.length <= 2) return `${name}***@${domain}`;
+            return `${name.substring(0,2)}***@${domain}`;
+        }
+
+        // Formatar Data
+        function formatDate(isoString) {
+            if(!isoString) return '-';
+            const d = new Date(isoString);
+            return d.toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+
+        // Ações do Link
+        window.copyAffiliateLink = function() {
+            const link = document.getElementById('affiliateLinkInput').value;
+            if(!link) return;
+            navigator.clipboard.writeText(link).then(() => {
+                showToast('Link copiado com sucesso!', 'success');
+            });
+        };
+
+        window.shareWhatsApp = function() {
+            const link = document.getElementById('affiliateLinkInput').value;
+            if(!link) return;
+            const text = encodeURIComponent(`Olá! Descobri a PayGo, uma plataforma fantástica para comprar no AliExpress e Shein pagando com M-Pesa. Cria a tua conta por aqui:\n\n${link}`);
+            window.open(`https://wa.me/?text=${text}`, '_blank');
+        };
+
+        // Carregar Referidos (Tabela)
+        async function loadReferrals(affiliateCode) {
+            const table = document.getElementById('referralsTable');
+            const emptyState = document.getElementById('emptyReferrals');
+            table.innerHTML = '';
+            
+            try {
+                // Busca utilizadores que se registaram com o código deste afiliado
+                const q = query(
+                    collection(db, "users"), 
+                    where("referredBy", "==", affiliateCode),
+                    orderBy("createdAt", "desc"),
+                    limit(10)
+                );
+                const snapshot = await getDocs(q);
+                
+                if (snapshot.empty) {
+                    emptyState.classList.remove('hidden');
+                    return;
+                }
+                
+                emptyState.classList.add('hidden');
+                
+                snapshot.forEach(doc => {
+                    const refUser = doc.data();
+                    const hasBought = refUser.totalPurchases > 0;
+                    
+                    // Simulação de comissão ganha baseada se ele comprou ou não
+                    // Em produção, isso deve vir de uma subcoleção de "transações de comissão"
+                    const comissionEarned = hasBought ? 'Gerada' : 'Aguardando Compra';
+                    const comissionValue = hasBought ? '<span class="text-success-600 font-bold">+ Comissão</span>' : '<span class="text-slate-400">0,00 MT</span>';
+                    
+                    const statusBadge = hasBought 
+                        ? `<span class="bg-success-100 text-success-700 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider">Compra Realizada</span>`
+                        : `<span class="bg-slate-100 text-slate-600 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider">Apenas Registo</span>`;
+                    
+                    table.innerHTML += `
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="px-6 py-4 text-sm text-slate-500">${formatDate(refUser.createdAt)}</td>
+                            <td class="px-6 py-4 font-medium text-slate-900">${maskEmail(refUser.email)}</td>
+                            <td class="px-6 py-4">${statusBadge}</td>
+                            <td class="px-6 py-4 text-right">${comissionValue}</td>
+                        </tr>
+                    `;
+                });
+                
+            } catch (error) {
+                console.error("Erro ao carregar referidos:", error);
+                table.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-red-500 text-sm">Erro ao carregar lista.</td></tr>`;
+            }
+        }
+
+        // Lógica Principal de Verificação
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                
+                if (userDoc.exists()) {
+                    currentUserData = userDoc.data();
+                    
+                    // Preencher Sidebar
+                    document.getElementById('userName').textContent = currentUserData.name || user.email;
+                    document.getElementById('userInitial').textContent = (currentUserData.name || user.email).charAt(0).toUpperCase();
+
+                    // Verificar se é afiliado
+                    if (currentUserData.role !== 'affiliate') {
+                        // Se for um usuário normal que caiu aqui, envia pro dashboard normal
+                        window.location.href = 'dashboard.html';
+                        return;
+                    }
+
+                    const badge = document.getElementById('statusBadge');
+                    const pendingAlert = document.getElementById('pendingAlert');
+                    const dashboardContent = document.getElementById('dashboardContent');
+
+                    // Lidar com os Status
+                    if (currentUserData.status === 'pending') {
+                        // Está Pendente
+                        badge.innerHTML = `<i data-lucide="clock" class="w-4 h-4"></i> Em Análise`;
+                        badge.classList.add('bg-warning-50', 'text-warning-600', 'border-warning-200', 'flex');
+                        badge.classList.remove('hidden');
+                        
+                        pendingAlert.classList.remove('hidden');
+                        dashboardContent.classList.add('hidden');
+                        
+                    } else if (currentUserData.status === 'approved' || currentUserData.affiliateCodeActive === true) {
+                        // Está Aprovado
+                        badge.innerHTML = `<i data-lucide="check-circle-2" class="w-4 h-4"></i> Conta Aprovada`;
+                        badge.classList.add('bg-success-50', 'text-success-600', 'border-success-200', 'flex');
+                        badge.classList.remove('hidden');
+                        
+                        pendingAlert.classList.add('hidden');
+                        dashboardContent.classList.remove('hidden');
+                        
+                        // Remover skeletons e popular dados
+                        document.querySelectorAll('.skeleton').forEach(el => el.classList.remove('skeleton'));
+                        
+                        document.getElementById('statEarnings').textContent = formatMT(currentUserData.affiliateEarnings);
+                        document.getElementById('statReferrals').textContent = currentUserData.totalReferrals || 0;
+                        document.getElementById('statConverted').textContent = currentUserData.approvedReferrals || 0;
+                        
+                        // Setar Link
+                        affiliateCodeLocal = currentUserData.affiliateCode;
+                        const affiliateUrl = `https://paygo.co.mz/register.html?ref=${affiliateCodeLocal}`;
+                        document.getElementById('affiliateLinkInput').value = affiliateUrl;
+                        
+                        // Carregar Tabela
+                        await loadReferrals(affiliateCodeLocal);
+                        
+                    } else {
+                        // Rejeitado ou Suspenso
+                        badge.innerHTML = `<i data-lucide="x-circle" class="w-4 h-4"></i> Conta Suspensa`;
+                        badge.classList.add('bg-red-50', 'text-red-600', 'border-red-200', 'flex');
+                        badge.classList.remove('hidden');
+                    }
+                    
+                } else {
+                    window.location.href = 'login.html';
+                }
+
+            } catch (error) {
+                console.error("Erro ao carregar perfil:", error);
+                showToast('Erro ao ligar ao servidor.', 'error');
+            } finally {
+                // Esconder loader
+                const loader = document.getElementById('pageLoader');
+                loader.style.opacity = '0';
+                setTimeout(() => loader.style.display = 'none', 500);
+                lucide.createIcons();
+            }
+        });
+
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            signOut(auth).then(() => {
+                window.location.href = 'login.html';
+            });
+        });
+
+    </script>
+</body>
+</html>
