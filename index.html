@@ -1288,7 +1288,6 @@ window.processPayment = async function() {
         return;
     }
 
-    // Altera o estado do botão
     btn.disabled = true;
     btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 md:w-5 md:h-5 animate-spin"></i> <span class="text-[11px] sm:text-sm md:text-base whitespace-nowrap">A processar...</span>`;
     if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -1305,14 +1304,15 @@ window.processPayment = async function() {
     };
 
     try {
-        // 1. Salvar no Firebase
         const fbResult = await saveOrderToFirebase(currentOrderData);
         if(!fbResult.success) throw new Error("Erro ao registar o seu pedido.");
         currentOrderData.firestoreId = fbResult.orderId;
 
         showToast('A redirecionar para o portal seguro da PaySuite...', 'success');
 
-        // 2. Chamar a API e obter a URL da PaySuite
+        // Limpar o número de telefone (remover o + e espaços)
+        const cleanPhone = currentOrderData.whatsapp.replace(/\D/g, '');
+
         const response = await fetch('/api/paysuite-payment', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1320,22 +1320,28 @@ window.processPayment = async function() {
                 orderId: currentOrderData.orderId,
                 amount: currentOrderData.total,
                 currency: 'MZN',
-                phone: currentOrderData.whatsapp,
-                method: currentOrderData.paymentMethod,
+                phone: cleanPhone, // Número formatado limpo
+                method: currentOrderData.paymentMethod, 
                 email: currentOrderData.email,
                 name: currentOrderData.name,
                 description: `Pedido PayGo #${currentOrderData.orderId}`
             })
         });
 
-        const result = await response.json();
+        // Captura o erro bruto do backend para ajudar no debug
+        let result;
+        try {
+            result = await response.json();
+        } catch(e) {
+            throw new Error('A API não devolveu um formato JSON válido.');
+        }
 
         if (!response.ok || !result.success) {
-            throw new Error(result.error || result.message || 'O servidor de pagamentos está indisponível.');
+            console.error("🛑 DETALHES DO ERRO DA API PAYSUITE:", result); // Vai imprimir o motivo exato do erro 400
+            throw new Error(result.error || result.message || 'Dados rejeitados pela PaySuite (Erro 400). Verifique a consola.');
         }
 
         if (result.data && result.data.checkoutUrl) {
-            // Redirecionamento directo para a PaySuite
             setTimeout(() => {
                 window.location.href = result.data.checkoutUrl;
             }, 800);
@@ -1344,14 +1350,13 @@ window.processPayment = async function() {
         }
 
     } catch (err) {
-        console.error("Erro no processamento:", err);
-        showToast(err.message || 'Falha na comunicação com o sistema de pagamentos.', 'error');
+        console.error("❌ Erro no processamento:", err);
+        showToast(err.message, 'error');
         btn.disabled = false;
         btn.innerHTML = originalContent;
         if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 };
-
 // ========================================================================
 // 📤 HANDLE FORM SUBMIT (Orçamento via WhatsApp)
 // ========================================================================
@@ -1712,3 +1717,4 @@ copyToClipboard: window.copyToClipboard
 </script>
 </body>
 </html>
+
