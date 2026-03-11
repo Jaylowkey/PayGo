@@ -297,17 +297,20 @@ async function sendNotificationEmail(order, actionType) {
 
         console.log(`A enviar email de [${actionType}] para:`, order.email);
         
-        // Chamada à sua API Vercel de Emails
+// Substitua a chamada ao fetch na função sendNotificationEmail() por isto:
         const response = await fetch('/api/send-email', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 to: order.email,
                 subject: subject,
-                template: 'default', // Usa o gerador HTML base do seu send-email.js
+                // A magia acontece aqui: Usamos o nome do template consoante a ação
+                template: actionType === 'paid' ? 'payment-confirmed' : 'order-completed',
                 type: 'transactional',
                 variables: {
-                    message: message
+                    customer_name: order.name,
+                    order_id: order.orderId,
+                    amount: formatValue(order.total, 'currency')
                 }
             })
         });
