@@ -1345,10 +1345,14 @@ window.processPayment = async function() {
     const total = converted + tax;
     const orderId = 'PG-' + Date.now().toString().slice(-6).toUpperCase();
 
+    // BUSCAR O CÓDIGO DE AFILIADO SALVO
+    const affiliateRef = localStorage.getItem('paygo_affiliate_ref') || null;
+
     const currentOrderData = {
         orderId, name, whatsapp, email, usd, detail, tax, total,
         exchangeRate: BINANCE_RATE, status: 'pending', paymentMethod,
-        type: serviceType, isFirstPurchase: isFirst
+        type: serviceType, isFirstPurchase: isFirst,
+        referredBy: affiliateRef // ADICIONADO AQUI
     };
 
     try {
@@ -1395,7 +1399,7 @@ window.processPayment = async function() {
         if (!response.ok || !result.success) {
             console.error("🛑 DETALHES DO ERRO DA API PAYSUITE:", result);
             const errorMsg = result.error || result.message || '';
-            // Tratamento especial para o erro 503 Service Unavailable que mostraste nos logs
+            // Tratamento especial para o erro 503 Service Unavailable
             if (errorMsg.includes('Service Unavailable') || response.status === 503) {
                  throw new Error('A PaySuite está temporariamente indisponível. Por favor, use o botão "WhatsApp" para pagar.');
             }
@@ -1412,12 +1416,13 @@ window.processPayment = async function() {
 
     } catch (err) {
         console.error("❌ Erro no processamento:", err);
-        showToast(err.message, 'error', 8000); // Mostramos a mensagem de erro mais tempo
+        showToast(err.message, 'error', 8000); 
         btn.disabled = false;
         btn.innerHTML = originalContent;
         if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 };
+
 // ========================================================================
 // 📤 HANDLE FORM SUBMIT (Orçamento via WhatsApp)
 // ========================================================================
@@ -1462,6 +1467,9 @@ const methodNames = {
   'bank': '🏦 Transferência Bancária'
 };
 
+// BUSCAR O CÓDIGO DE AFILIADO SALVO
+const affiliateRef = localStorage.getItem('paygo_affiliate_ref') || null;
+
 const orderData = {
 orderId,
 name: formData.name,
@@ -1476,6 +1484,7 @@ total: total,
 exchangeRate: BINANCE_RATE,
 status: 'pending',
 isFirstPurchase: formData.isFirst,
+referredBy: affiliateRef, // ADICIONADO AQUI
 clientIP: null,
 metadata: { userAgent: navigator.userAgent, timestamp: new Date().toISOString(), formVersion: '2.0' }
 };
@@ -1528,12 +1537,14 @@ updatePaymentMethod();
 toggleServiceType('compra');
 }, 1000);
 }, 1500);
+
 } catch (error) {
 console.error('❌ Erro no processamento:', error);
 showToast('❌ Ocorreu um erro. Tente novamente ou contate o suporte.', 'error');
 } finally {
 resetButton();
 }
+
 function resetButton() {
 btn.disabled = false;
 btn.setAttribute('aria-busy', 'false');
@@ -1635,6 +1646,14 @@ async function triggerNotifications(orderData, action = 'new_order') {
 // 🎯 INICIALIZAÇÃO DA PÁGINA
 // ========================================================================
 document.addEventListener('DOMContentLoaded', function() {
+// CAPTURAR E SALVAR O LINK DE AFILIADO
+const urlParams = new URLSearchParams(window.location.search);
+const refCode = urlParams.get('ref');
+if (refCode) {
+    localStorage.setItem('paygo_affiliate_ref', refCode);
+    console.log("Indicado por afiliado:", refCode);
+}
+
 if (typeof lucide !== 'undefined') {
 lucide.createIcons();
 }
