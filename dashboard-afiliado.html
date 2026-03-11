@@ -1,71 +1,95 @@
 <!DOCTYPE html>
 <html lang="pt-MZ" class="scroll-smooth">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Painel do Afiliado | PayGo</title>
-<meta name="robots" content="noindex, nofollow">
-<meta name="theme-color" content="#0f172a">
-
-<!-- Tailwind CSS -->
-<script src="https://cdn.tailwindcss.com"></script>
-<!-- Lucide Icons -->
-<script src="https://unpkg.com/lucide@latest"></script>
-<!-- Google Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-<script>
-tailwind.config = {
-  darkMode: 'class',
-  theme: {
-    extend: {
-      fontFamily: {
-        sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
-        display: ['"Outfit"', 'system-ui', 'sans-serif'],
-      },
-      colors: {
-        brand: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 900: '#1e3a8a', 950: '#0f172a' },
-        success: { 50: '#f0fdf4', 100: '#dcfce7', 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' },
-        warning: { 50: '#fffbeb', 100: '#fef3c7', 500: '#f59e0b' }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Painel do Afiliado | PayGo</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#0f172a">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'], display: ['"Outfit"', 'sans-serif'] },
+          colors: {
+            brand: { 50: '#eff6ff', 500: '#3b82f6', 600: '#2563eb', 900: '#1e3a8a' },
+            success: { 50: '#f0fdf4', 500: '#22c55e', 600: '#16a34a' },
+            warning: { 50: '#fffbeb', 500: '#f59e0b' }
+          }
+        }
       }
+    };
+  </script>
+  
+  <style>
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    
+    /* Skeleton */
+    .skeleton { 
+      background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); 
+      background-size: 200% 100%; 
+      animation: shimmer 1.5s infinite; 
     }
-  }
-}
-</script>
-
-<style>
-/* Scrollbar */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-/* Skeleton */
-.skeleton { background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; color: transparent !important; }
-@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
-/* Loader */
-#pageLoader { transition: opacity 0.5s ease; }
-.loader-spinner { border-top-color: #22c55e; animation: spin 1s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-/* Glass Card */
-.glass-card { background: white; border: 1px solid #e2e8f0; border-radius: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: transform 0.3s ease; }
-.glass-card:hover { transform: translateY(-2px); }
-/* Toast */
-#toast-container { position: fixed; top: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; }
-.toast { background: white; border-left: 4px solid #22c55e; padding: 16px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 12px; transform: translateX(120%); transition: transform 0.4s; max-width: 350px; }
-.toast.show { transform: translateX(0); }
-.toast.error { border-left-color: #ef4444; }
-.toast.warning { border-left-color: #f59e0b; }
-/* Modal */
-.modal-overlay { transition: opacity 0.3s; }
-.modal-content { transition: transform 0.3s, opacity 0.3s; }
-.modal-open .modal-overlay { opacity: 1; visibility: visible; }
-.modal-open .modal-content { transform: scale(1); opacity: 1; }
-.modal-closed .modal-overlay { opacity: 0; visibility: hidden; }
-.modal-closed .modal-content { transform: scale(0.95); opacity: 0; }
-/* Cursor pointer para elementos interativos */
-button, [role="button"], a[href], .btn-hover, #btnCopyLink, #btnCopyCode, #btnShareWp, #btnExportCSV, #btnOpenWithdraw, #logoutBtn, #mobileMenuBtn, #closeSidebarBtn, .sidebar-link { cursor: pointer !important; }
-/* Dark mode */
-.dark .glass-card { background: #1e293b; border-color: #334155; }
-.dark .toast { background: #1e293b; }
-</style>
+    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+    
+    /* Loader */
+    #pageLoader { transition: opacity 0.5s ease; }
+    .loader-spinner { border-top-color: #22c55e; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    /* Glass Card */
+    .glass-card { 
+      background: white; border: 1px solid #e2e8f0; border-radius: 1.5rem; 
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); 
+      transition: transform 0.3s ease; 
+    }
+    .glass-card:hover { transform: translateY(-2px); }
+    
+    /* Toast */
+    #toast-container { position: fixed; top: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; }
+    .toast { 
+      background: white; border-left: 4px solid #22c55e; padding: 16px; border-radius: 12px; 
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 12px; 
+      transform: translateX(120%); transition: transform 0.4s; max-width: 350px; 
+    }
+    .toast.show { transform: translateX(0); }
+    .toast.error { border-left-color: #ef4444; }
+    .toast.warning { border-left-color: #f59e0b; }
+    
+    /* Modal */
+    .modal-overlay { transition: opacity 0.3s; }
+    .modal-content { transition: transform 0.3s, opacity 0.3s; }
+    .modal-open .modal-overlay { opacity: 1; visibility: visible; }
+    .modal-open .modal-content { transform: scale(1); opacity: 1; }
+    .modal-closed .modal-overlay { opacity: 0; visibility: hidden; }
+    .modal-closed .modal-content { transform: scale(0.95); opacity: 0; }
+    
+    /* ✅ FORÇAR CURSOR POINTER EM BOTÕES */
+    button, [role="button"], #btnCopyLink, #btnCopyCode, #btnShareWp, #btnExportCSV, #btnOpenWithdraw, #logoutBtn, #mobileMenuBtn, #closeSidebarBtn {
+      cursor: pointer !important;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    /* Dark mode */
+    .dark .glass-card { background: #1e293b; border-color: #334155; }
+    .dark .toast { background: #1e293b; }
+    
+    /* Evitar clique em overlay */
+    .modal-overlay { pointer-events: none; }
+    .modal-open .modal-overlay { pointer-events: auto; }
+    .modal-content { pointer-events: auto; }
+  </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans antialiased overflow-x-hidden">
 
@@ -122,9 +146,6 @@ button, [role="button"], a[href], .btn-hover, #btnCopyLink, #btnCopyCode, #btnSh
     <a href="#" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl opacity-50 cursor-not-allowed" title="Em breve">
       <i data-lucide="wallet" class="w-5 h-5"></i> Histórico de Saques
     </a>
-    <a href="configuracoes.html" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl">
-      <i data-lucide="settings" class="w-5 h-5"></i> Configurações
-    </a>
   </nav>
 
   <div class="pt-6 border-t border-white/10 mt-auto">
@@ -146,8 +167,8 @@ button, [role="button"], a[href], .btn-hover, #btnCopyLink, #btnCopyCode, #btnSh
   
   <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
     <div>
-      <h1 class="text-3xl font-display font-extrabold text-slate-900 dark:text-white" id="greetingTitle">Visão Geral</h1>
-      <p class="text-slate-500 dark:text-slate-400 mt-1 text-sm">Acompanhe os seus ganhos e o desempenho do seu link.</p>
+      <h1 class="text-3xl font-display font-extrabold text-slate-900" id="greetingTitle">Visão Geral</h1>
+      <p class="text-slate-500 mt-1 text-sm">Acompanhe os seus ganhos e o desempenho do seu link.</p>
     </div>
     <div id="statusBadge" class="hidden items-center gap-2 px-4 py-2 rounded-full text-sm font-bold shadow-sm border bg-white"></div>
   </div>
@@ -185,15 +206,22 @@ button, [role="button"], a[href], .btn-hover, #btnCopyLink, #btnCopyCode, #btnSh
       
       <div class="flex flex-col md:flex-row gap-4">
         <div class="relative flex-1">
-          <input type="text" id="affiliateLinkInput" readonly class="w-full bg-slate-950/50 border border-slate-700 text-white px-4 py-3 rounded-xl font-mono text-sm focus:outline-none focus:border-success-500" value="">
-          <button id="btnCopyLink" class="absolute right-2 top-1/2 -translate-y-1/2 bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition">
-            <i data-lucide="copy" class="w-4 h-4 inline"></i> <span class="hidden sm:inline">Copiar</span>
+          <input type="text" id="affiliateLinkInput" readonly 
+                 class="w-full bg-slate-950/50 border border-slate-700 text-white px-5 py-4 rounded-xl font-mono text-sm focus:outline-none focus:border-success-500 pr-28 truncate" 
+                 value="" aria-label="Link de afiliado">
+          <button id="btnCopyLink" 
+                  class="absolute right-2 top-1/2 -translate-y-1/2 bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition flex items-center gap-2">
+            <i data-lucide="copy" class="w-4 h-4"></i> <span class="hidden sm:inline">Copiar</span>
           </button>
         </div>
-        <button id="btnShareWp" class="bg-[#25D366] hover:bg-[#128C7E] text-white px-6 py-3 rounded-xl font-bold transition flex items-center gap-2">
+        <button id="btnShareWp" 
+                class="bg-[#25D366] hover:bg-[#128C7E] text-white px-6 py-4 rounded-xl font-bold transition flex items-center justify-center gap-2 shadow-lg">
           <i data-lucide="message-circle" class="w-5 h-5"></i> Partilhar
         </button>
       </div>
+      <p class="text-xs text-slate-400 mt-4 flex items-center gap-1.5">
+        <i data-lucide="info" class="w-4 h-4 text-success-400/70"></i> Partilhe este link com os seus clientes.
+      </p>
     </div>
 
     <!-- Stats Cards -->
@@ -265,12 +293,12 @@ button, [role="button"], a[href], .btn-hover, #btnCopyLink, #btnCopyCode, #btnSh
 </main>
 
 <!-- Withdraw Modal -->
-<div id="withdrawModal" class="fixed inset-0 z-[110] modal-closed flex items-center justify-center p-4">
-  <div id="modalOverlayClose" class="absolute inset-0 bg-slate-900/60 modal-overlay"></div>
+<div id="withdrawModal" class="fixed inset-0 z-[110] modal-closed flex items-center justify-center p-4" role="dialog" aria-modal="true">
+  <div id="modalOverlayClose" class="absolute inset-0 bg-slate-900/60 modal-overlay" aria-hidden="true"></div>
   <div class="relative bg-white rounded-2xl w-full max-w-md modal-content">
     <div class="p-6 border-b flex justify-between items-center">
       <h3 class="text-xl font-bold">Solicitar Levantamento</h3>
-      <button id="btnCloseModal" class="p-2 hover:bg-slate-100 rounded-full">
+      <button id="btnCloseModal" class="p-2 hover:bg-slate-100 rounded-full" aria-label="Fechar">
         <i data-lucide="x" class="w-5 h-5"></i>
       </button>
     </div>
@@ -400,79 +428,138 @@ function debounce(func, wait) {
 }
 
 // ==========================================
-// 🎯 EVENT LISTENERS - Configurados após DOM ready
+// 🎯 CONFIGURAR EVENT LISTENERS
 // ==========================================
 function setupEventListeners() {
   console.log('🔧 Configurando event listeners...');
   
-  // Copiar Link
+  // ✅ Copiar Link - VERIFICAR SE ELEMENTO EXISTE
   const btnCopyLink = document.getElementById('btnCopyLink');
   if (btnCopyLink) {
     btnCopyLink.addEventListener('click', function(e) {
       e.preventDefault();
+      e.stopPropagation();
       const link = document.getElementById('affiliateLinkInput')?.value;
-      if (link) window.copyToClipboard(link, '✓ Link copiado!');
+      if (link) {
+        window.copyToClipboard(link, '✓ Link copiado!');
+      } else {
+        window.showToast('Link não disponível', 'error');
+      }
     });
+  } else {
+    console.warn('⚠️ btnCopyLink não encontrado no DOM');
   }
 
-  // Copiar Código
+  // ✅ Copiar Código
   const btnCopyCode = document.getElementById('btnCopyCode');
   if (btnCopyCode) {
     btnCopyCode.addEventListener('click', function(e) {
       e.preventDefault();
-      if (affiliateCodeLocal) window.copyToClipboard(affiliateCodeLocal, '✓ Código copiado!');
+      e.stopPropagation();
+      if (affiliateCodeLocal) {
+        window.copyToClipboard(affiliateCodeLocal, '✓ Código copiado!');
+      } else {
+        window.showToast('Código não disponível', 'error');
+      }
     });
   }
 
-  // WhatsApp
+  // ✅ WhatsApp - CORREÇÃO PRINCIPAL
   const btnShareWp = document.getElementById('btnShareWp');
   if (btnShareWp) {
     btnShareWp.addEventListener('click', function(e) {
       e.preventDefault();
+      e.stopPropagation();
+      console.log('🔗 Botão WhatsApp clicado');
+      
       const link = document.getElementById('affiliateLinkInput')?.value;
-      if (!link) { window.showToast('Link não disponível', 'error'); return; }
+      if (!link) {
+        window.showToast('Link não disponível', 'error');
+        return;
+      }
+      
       const text = encodeURIComponent(`Olá! Use meu link PayGo: ${link}`);
-      window.open(`https://wa.me/?text=${text}`, '_blank', 'noopener');
+      const url = `https://wa.me/?text=${text}`;
+      
+      console.log('🔗 Abrindo WhatsApp:', url);
+      window.open(url, '_blank', 'noopener,noreferrer');
     });
+  } else {
+    console.warn('⚠️ btnShareWp não encontrado no DOM');
   }
 
-  // Exportar CSV
+  // ✅ Exportar CSV
   const btnExportCSV = document.getElementById('btnExportCSV');
   if (btnExportCSV) {
     btnExportCSV.addEventListener('click', function(e) {
       e.preventDefault();
-      if (!currentUserData?.referrals?.length) { window.showToast('Nenhum dado para exportar', 'warning'); return; }
+      e.stopPropagation();
+      if (!currentUserData?.referrals?.length) {
+        window.showToast('Nenhum dado para exportar', 'warning');
+        return;
+      }
       exportToCSV(currentUserData.referrals);
     });
   }
 
-  // Abrir Modal Saque
+  // ✅ Abrir Modal Saque
   const btnOpenWithdraw = document.getElementById('btnOpenWithdraw');
   if (btnOpenWithdraw) {
     btnOpenWithdraw.addEventListener('click', function(e) {
       e.preventDefault();
+      e.stopPropagation();
       openWithdrawModal();
     });
   }
 
-  // Fechar Modal
+  // ✅ Fechar Modal
   const modalOverlay = document.getElementById('modalOverlayClose');
   const btnCloseModal = document.getElementById('btnCloseModal');
-  if (modalOverlay) modalOverlay.addEventListener('click', closeWithdrawModal);
-  if (btnCloseModal) btnCloseModal.addEventListener('click', closeWithdrawModal);
+  
+  if (modalOverlay) {
+    modalOverlay.addEventListener('click', function(e) {
+      if (e.target === modalOverlay) closeWithdrawModal();
+    });
+  }
+  if (btnCloseModal) {
+    btnCloseModal.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeWithdrawModal();
+    });
+  }
 
-  // ESC para fechar modal
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeWithdrawModal(); });
+  // ✅ ESC para fechar modal
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeWithdrawModal();
+  });
 
-  // Logout
+  // ✅ Logout
   const logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', async function(e) {
       e.preventDefault();
+      e.stopPropagation();
       if (!confirm('Sair da conta?')) return;
       await handleLogout();
     });
   }
+
+  // ✅ Mobile Sidebar
+  const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+  const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+  const sidebar = document.getElementById('sidebar');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  
+  function toggleSidebar() {
+    sidebar.classList.toggle('-translate-x-full');
+    sidebarOverlay.classList.toggle('hidden');
+    document.body.style.overflow = sidebar.classList.contains('-translate-x-full') ? '' : 'hidden';
+  }
+  
+  if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', toggleSidebar);
+  if (closeSidebarBtn) closeSidebarBtn.addEventListener('click', toggleSidebar);
+  if (sidebarOverlay) sidebarOverlay.addEventListener('click', toggleSidebar);
 
   console.log('✅ Event listeners configurados');
 }
@@ -482,11 +569,17 @@ function setupEventListeners() {
 // ==========================================
 function openWithdrawModal() {
   const balance = currentUserData?.affiliateEarnings || 0;
-  if (balance < 600) { window.showToast('Saldo mínimo: 600 MT', 'warning'); return; }
+  if (balance < 600) {
+    window.showToast('Saldo mínimo: 600 MT', 'warning');
+    return;
+  }
   
   document.getElementById('modalAvailableBalance').textContent = window.formatMT(balance);
   const amountInput = document.getElementById('withdrawAmount');
-  if (amountInput) { amountInput.max = balance; amountInput.value = ''; }
+  if (amountInput) {
+    amountInput.max = balance;
+    amountInput.value = '';
+  }
   const phoneInput = document.getElementById('withdrawPhone');
   if (phoneInput && currentUserData?.phone) phoneInput.value = currentUserData.phone;
   
@@ -526,7 +619,10 @@ async function handleWithdrawSubmit(e) {
   const amountInput = document.getElementById('withdrawAmount');
   const phoneInput = document.getElementById('withdrawPhone');
   
-  if (!btn || !amountInput || !phoneInput) { window.showToast('Erro: elementos não encontrados', 'error'); return; }
+  if (!btn || !amountInput || !phoneInput) {
+    window.showToast('Erro: elementos não encontrados', 'error');
+    return;
+  }
   
   const amount = parseFloat(amountInput.value);
   const method = document.getElementById('withdrawMethod')?.value;
@@ -783,7 +879,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Inicializar ícones
   if (typeof lucide !== 'undefined') lucide.createIcons();
   
-  // Configurar event listeners AGORA que o DOM está pronto
+  // ✅ CONFIGURAR EVENT LISTENERS AGORA QUE O DOM ESTÁ PRONTO
   setupEventListeners();
   
   // Debounce inputs
