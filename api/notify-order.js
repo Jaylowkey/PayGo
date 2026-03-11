@@ -21,22 +21,38 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { orderData, sendEmail = true, sendLark = true } = req.body;
+    // 🚀 Extraímos a 'action' (new_order ou payment_confirmed)
+    const { orderData, sendEmail = true, sendLark = true, action = 'new_order' } = req.body;
     const results = { email: null, lark: null };
 
-    console.log('📦 [notify-order] Processing order:', orderData?.orderId);
+    const isPaymentConfirmed = action === 'payment_confirmed';
+
+    console.log(`📦 [notify-order] Processing order: ${orderData?.orderId} | Action: ${action}`);
 
     // ✅ 1. Enviar Email ao Cliente (opcional)
     if (sendEmail && orderData?.email) {
       try {
         console.log('📧 [notify-order] Sending email to:', orderData.email);
         
+        // Define o assunto e o conteúdo com base na ação
+        const emailSubject = isPaymentConfirmed 
+          ? `✅ Pagamento Recebido - Pedido ${orderData.orderId} - PayGo`
+          : `🛒 Pedido ${orderData.orderId} Registado - PayGo`;
+
+        const emailHTML = isPaymentConfirmed 
+          ? generatePaymentSuccessHTML(orderData) 
+          : generateOrderConfirmationHTML(orderData);
+
+        const emailText = isPaymentConfirmed 
+          ? generatePaymentSuccessText(orderData) 
+          : generateOrderConfirmationText(orderData);
+
         const { data, error } = await resend.emails.send({
           from: 'PayGo Moçambique <noreply@paygo.co.mz>',
           to: [orderData.email],
-          subject: `✅ Pedido ${orderData.orderId} Confirmado - PayGo`,
-          html: generateOrderConfirmationHTML(orderData),
-          text: generateOrderConfirmationText(orderData)
+          subject: emailSubject,
+          html: emailHTML,
+          text: emailText
         });
 
         if (error) {
@@ -59,25 +75,42 @@ export default async function handler(req, res) {
       try {
         console.log('🔔 [notify-order] Sending Lark notification');
         
+        // Customiza o cartão Lark dependendo se o pagamento foi concluído ou não
+        const larkTemplate = isPaymentConfirmed ? "green" : "blue";
+        const larkTitle = isPaymentConfirmed ? "✅ PAGAMENTO RECEBIDO" : "🛒 Novo Pedido PayGo";
+        
+        // Campos base
+        const larkFields = [
+          { is_short: true, text: { tag: "lark_md", content: `**ID:**\n${orderData.orderId}` }},
+          { is_short: true, text: { tag: "lark_md", content: `**Cliente:**\n${orderData.name}` }},
+          { is_short: true, text: { tag: "lark_md", content: `**Total:**\n${orderData.total} MT` }},
+          { is_short: true, text: { tag: "lark_md", content: `**WhatsApp:**\n${orderData.whatsapp}` }},
+          { is_short: false, text: { tag: "lark_md", content: `**Email:**\n${orderData.email}` }},
+        ];
+
+        // Se o pagamento foi confirmado, adicionamos detalhes extra da PaySuite
+        if (isPaymentConfirmed) {
+            larkFields.push({ is_short: false, text: { tag: "lark_md", content: `**Status:**\nPago com sucesso via ${orderData.paymentMethod || 'PaySuite'} ✅` }});
+            if (orderData.paysuitePaymentId) {
+                larkFields.push({ is_short: true, text: { tag: "lark_md", content: `**Ref PaySuite:**\n${orderData.paysuitePaymentId}` }});
+            }
+        }
+
+        // Adiciona o detalhe do link do produto no final
+        larkFields.push({ is_short: false, text: { tag: "lark_md", content: `**Detalhe do Produto:**\n${(orderData.detail || '').substring(0, 150)}...` }});
+        
         const larkPayload = {
           msg_type: "interactive",
           card: {
             config: { wide_screen_mode: true },
             header: {
-              template: "blue",
-              title: { content: "🛒 Novo Pedido PayGo", tag: "plain_text" }
+              template: larkTemplate,
+              title: { content: larkTitle, tag: "plain_text" }
             },
             elements: [
               {
                 tag: "div",
-                fields: [
-                  { is_short: true, text: { tag: "lark_md", content: `**ID:**\n${orderData.orderId}` }},
-                  { is_short: true, text: { tag: "lark_md", content: `**Cliente:**\n${orderData.name}` }},
-                  { is_short: true, text: { tag: "lark_md", content: `**Total:**\n${orderData.total} MT` }},
-                  { is_short: true, text: { tag: "lark_md", content: `**WhatsApp:**\n${orderData.whatsapp}` }},
-                  { is_short: false, text: { tag: "lark_md", content: `**Email:**\n${orderData.email}` }},
-                  { is_short: false, text: { tag: "lark_md", content: `**Detalhe:**\n${(orderData.detail || '').substring(0, 100)}...` }}
-                ]
+                fields: larkFields
               },
               {
                 tag: "action",
@@ -114,13 +147,6 @@ export default async function handler(req, res) {
           result = { raw: responseText };
         }
 
-        console.log('📥 [notify-order] Lark response:', {
-          status: response.status,
-          statusText: response.statusText,
-          result: result
-        });
-
-        // ✅ Lark retorna code: 0 para sucesso
         if (result.code === 0 || result.StatusCode === 0 || (!result.code && response.ok)) {
           console.log('✅ [notify-order] Lark notification sent successfully');
           results.lark = { success: true, result };
@@ -133,11 +159,6 @@ export default async function handler(req, res) {
         console.error('❌ [notify-order] Lark exception:', err);
         results.lark = { success: false, error: err.message };
       }
-    } else {
-      console.log('⏭️ [notify-order] Lark skipped:', { 
-        sendLark, 
-        hasWebhook: !!process.env.LARK_WEBHOOK_URL 
-      });
     }
 
     console.log('✅ [notify-order] Completed:', results);
@@ -146,32 +167,27 @@ export default async function handler(req, res) {
       success: true,
       message: 'Notificações processadas',
       results,
-      debug: {
-        sendEmail,
-        sendLark,
-        hasResendKey: !!process.env.RESEND_API_KEY,
-        hasLarkWebhook: !!process.env.LARK_WEBHOOK_URL
-      }
+      debug: { sendEmail, sendLark }
     });
 
   } catch (err) {
     console.error('❌ [notify-order] Critical error:', err);
     return res.status(500).json({
       error: 'Internal server error',
-      message: err.message,
-      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+      message: err.message
     });
   }
 }
 
-// ✅ HTML do Email de Confirmação - TEMPLATE PROFISSIONAL (PAGAMENTO AUTOMÁTICO)
+// ============================================================================
+// TEMPLATES PARA "NEW ORDER" (Aguardando Pagamento)
+// ============================================================================
 function generateOrderConfirmationHTML(order) {
   return `
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body { font-family: Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 20px; }
     .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.1); }
@@ -181,80 +197,38 @@ function generateOrderConfirmationHTML(order) {
     table { width: 100%; border-collapse: collapse; margin: 20px 0; }
     td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
     .btn { display: inline-block; background-color: #25D366; color: #ffffff !important; padding: 14px 28px; text-decoration: none; border-radius: 12px; margin: 20px 0; }
-    .btn-secondary { display: inline-block; background-color: #3b82f6; color: #ffffff !important; padding: 14px 28px; text-decoration: none; border-radius: 12px; margin: 10px 0; }
-    .status-badge { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-    .status-pending { background-color: #fef3c7; color: #92400e; }
-    .status-paid { background-color: #dcfce7; color: #166534; }
+    .status-badge { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; background-color: #fef3c7; color: #92400e; }
     .footer { background-color: #f8fafc; padding: 24px; text-align: center; color: #64748b; font-size: 12px; }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <h1>🛒 Pedido Confirmado!</h1>
+      <h1>🛒 Pedido Registado!</h1>
     </div>
     <div class="content">
       <p>Olá, <strong>${order.name || 'Cliente'}</strong>.</p>
       <p>O seu pedido <strong>#${order.orderId || 'N/A'}</strong> foi registado com sucesso no sistema PayGo.</p>
       
-      <!-- Status do Pedido -->
       <div style="text-align: center; margin: 24px 0;">
-        <span class="status-badge status-pending">⏳ Aguardando Pagamento</span>
+        <span class="status-badge">⏳ Aguardando Pagamento</span>
       </div>
-      
-      <h3>📋 Detalhes do Pedido</h3>
-      <table>
-        <tr><td><strong>Data:</strong></td><td>${order.createdAt ? new Date(order.createdAt).toLocaleDateString('pt-MZ') : new Date().toLocaleDateString('pt-MZ')}</td></tr>
-        <tr><td><strong>Categoria:</strong></td><td>${order.type === 'compra' ? '🛍️ Compras' : '🎮 Jogos'}</td></tr>
-        <tr><td><strong>Produto:</strong></td><td><a href="${order.detail || '#'}" style="color: #3b82f6;">Ver Link 🔗</a></td></tr>
-      </table>
       
       <h3>💰 Resumo Financeiro</h3>
       <table>
         <tr><td><strong>Valor USD:</strong></td><td>$${(order.usd || 0).toFixed(2)}</td></tr>
-        <tr><td><strong>Câmbio:</strong></td><td>${order.exchangeRate || 88.00} MT</td></tr>
-        <tr><td><strong>Taxas:</strong></td><td>${(order.tax || 0).toLocaleString('pt-MZ', {minimumFractionDigits: 2})} MT</td></tr>
         <tr><td><strong>TOTAL:</strong></td><td><strong>${(order.total || 0).toLocaleString('pt-MZ', {minimumFractionDigits: 2})} MT</strong></td></tr>
       </table>
       
-      <p><strong>Método de Pagamento:</strong> ${order.paymentMethod === 'mpesa' ? '🔴 M-Pesa' : '🟡 e-Mola'}</p>
-      
-      <!-- ✅ NOVA SEÇÃO: PAGAMENTO AUTOMÁTICO -->
       <div style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 2px solid #22c55e; border-radius: 12px; padding: 20px; margin: 24px 0;">
-        <h3 style="color: #166534; margin-top: 0;">🚀 Pagamento Automático PaySuite</h3>
-        <p style="color: #166534; margin-bottom: 16px;">O seu pagamento será processado automaticamente via <strong>PaySuite</strong>. Você receberá uma notificação USSD no seu celular para confirmar a transação.</p>
-        
-        <ol style="color: #166534; margin: 0; padding-left: 20px;">
-          <li style="margin-bottom: 8px;">Aguarde a notificação USSD no seu celular <strong>${order.whatsapp || 'seu número'}</strong></li>
-          <li style="margin-bottom: 8px;">Insira o seu PIN para autorizar o pagamento</li>
-          <li>Pronto! Seu pedido será processado imediatamente após confirmação</li>
-        </ol>
+        <h3 style="color: #166534; margin-top: 0;">🚀 Pagamento Automático</h3>
+        <p style="color: #166534; margin-bottom: 16px;">Será notificado no seu celular <strong>${order.whatsapp || 'seu número'}</strong> para inserir o seu PIN e autorizar a transação.</p>
       </div>
       
-      <div style="background-color: #f1f5f9; border-radius: 12px; padding: 16px; margin: 24px 0;">
-        <p style="margin: 0; font-size: 14px; color: #475569;">
-          <strong>💡 Dica:</strong> Mantenha seu celular próximo e com saldo suficiente. O processo leva menos de 2 minutos.
-        </p>
-      </div>
-      
-      <!-- Botões de Ação -->
       <div style="text-align: center; margin: 32px 0;">
-        <a href="https://wa.me/258837522255" class="btn">💬 Precisa de Ajuda? Fale Conosco</a>
-        <br>
-        <a href="${process.env.SITE_URL || 'https://paygo.co.mz'}/dashboard.html" class="btn-secondary">📊 Ver Meu Pedido no Dashboard</a>
+        <a href="https://wa.me/258837522255" class="btn">💬 Fale Conosco</a>
       </div>
-      
-      <p style="border-top: 1px solid #e2e8f0; padding-top: 24px; margin-top: 24px;">
-        <strong>PayGo Moçambique</strong><br>
-        Simples. Seguro. Moçambicano. 🇲🇿
-      </p>
-      <p style="margin: 0; font-size: 14px; color: #64748b;">
-        Suporte: contact@paygo.co.mz | WhatsApp: +258 83 752 2255
-      </p>
-    </div>
-    <div class="footer">
-      <p style="margin: 0;">&copy; ${new Date().getFullYear()} PayGo Serviços Digitais. Todos direitos reservados.</p>
-      <p style="margin: 8px 0 0 0; font-size: 11px;">Este é um email automático. Por favor, não responda.</p>
+      <p style="text-align:center; font-size: 14px; color: #64748b;">Suporte: contact@paygo.co.mz</p>
     </div>
   </div>
 </body>
@@ -262,42 +236,68 @@ function generateOrderConfirmationHTML(order) {
   `;
 }
 
-// ✅ Versão texto simples (fallback) - PAGAMENTO AUTOMÁTICO
 function generateOrderConfirmationText(order) {
+  return `PEDIDO REGISTADO - PAYGO\nOlá ${order.name},\nSeu pedido #${order.orderId} foi registado.\nAguarde a notificação no seu celular para colocar o PIN e autorizar o pagamento no valor de ${order.total} MT.`;
+}
+
+// ============================================================================
+// TEMPLATES PARA "PAYMENT CONFIRMED" (Pagamento Efectuado com Sucesso)
+// ============================================================================
+function generatePaymentSuccessHTML(order) {
   return `
-PEDIDO CONFIRMADO - PAYGO MOÇAMBIQUE ✅
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 20px; }
+    .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.1); border-top: 6px solid #22c55e;}
+    .header { padding: 32px; text-align: center; }
+    .header h1 { color: #16a34a; margin: 0; font-size: 26px; }
+    .content { padding: 0 32px 32px 32px; }
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
+    .status-badge { display: inline-block; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: bold; background-color: #dcfce7; color: #166534; }
+    .btn { display: inline-block; background-color: #3b82f6; color: #ffffff !important; padding: 14px 28px; text-decoration: none; border-radius: 12px; margin: 20px 0; }
+    .footer { background-color: #f8fafc; padding: 24px; text-align: center; color: #64748b; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>✅ Pagamento Recebido!</h1>
+    </div>
+    <div class="content">
+      <p>Olá, <strong>${order.name || 'Cliente'}</strong>.</p>
+      <p>Recebemos o seu pagamento referente ao pedido <strong>#${order.orderId || 'N/A'}</strong>.</p>
+      
+      <div style="text-align: center; margin: 24px 0;">
+        <span class="status-badge">🔄 Em Processamento</span>
+      </div>
 
-Olá ${order.name || 'Cliente'},
+      <p style="color: #475569; line-height: 1.6;">A nossa equipa já está a efectuar o pagamento internacional do seu produto/serviço. O código de rastreio ou os detalhes da sua conta serão enviados em breve.</p>
+      
+      <h3>🧾 Recibo</h3>
+      <table>
+        <tr><td><strong>Valor Pago:</strong></td><td><strong>${(order.total || 0).toLocaleString('pt-MZ', {minimumFractionDigits: 2})} MT</strong></td></tr>
+        <tr><td><strong>Método:</strong></td><td>${order.paymentMethod === 'mpesa' ? 'M-Pesa' : 'e-Mola'}</td></tr>
+        <tr><td><strong>Data do Pagamento:</strong></td><td>${new Date().toLocaleString('pt-MZ')}</td></tr>
+        <tr><td><strong>Ref PaySuite:</strong></td><td>${order.paysuitePaymentId || 'N/A'}</td></tr>
+      </table>
+      
+      <div style="text-align: center; margin: 32px 0;">
+        <a href="${process.env.SITE_URL || 'https://paygo.co.mz'}/admin/dashboard.html" class="btn">📊 Acompanhar Pedido</a>
+      </div>
+    </div>
+    <div class="footer">
+      <p>&copy; ${new Date().getFullYear()} PayGo Moçambique.</p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+}
 
-O seu pedido #${order.orderId || 'N/A'} foi registado com sucesso!
-
-📋 DETALHES DO PEDIDO:
-• Data: ${order.createdAt ? new Date(order.createdAt).toLocaleDateString('pt-MZ') : new Date().toLocaleDateString('pt-MZ')}
-• Categoria: ${order.type === 'compra' ? 'Compras' : 'Jogos'}
-• Produto: ${order.detail || 'N/A'}
-
-💰 RESUMO FINANCEIRO:
-• Valor USD: $${(order.usd || 0).toFixed(2)}
-• Câmbio: ${order.exchangeRate || 88.00} MT
-• Taxas: ${(order.tax || 0).toLocaleString('pt-MZ')} MT
-• TOTAL: ${(order.total || 0).toLocaleString('pt-MZ')} MT
-• Método: ${order.paymentMethod === 'mpesa' ? 'M-Pesa' : 'e-Mola'}
-
-🚀 PAGAMENTO AUTOMÁTICO PAYSUITE:
-
-O seu pagamento será processado automaticamente via PaySuite. Siga estes passos:
-
-1. Aguarde a notificação USSD no seu celular: ${order.whatsapp || 'seu número'}
-2. Insira o seu PIN para autorizar o pagamento
-3. Pronto! Seu pedido será processado imediatamente após confirmação
-
-💡 Dica: Mantenha seu celular próximo e com saldo suficiente. O processo leva menos de 2 minutos.
-
-Precisa de ajuda? Contacte-nos:
-• Email: contact@paygo.co.mz
-• WhatsApp: +258 83 752 2255
-• Dashboard: ${process.env.SITE_URL || 'https://paygo.co.mz'}/dashboard.html
-
-PayGo Moçambique - Simples. Seguro. Moçambicano. 🇲🇿
-  `.trim();
+function generatePaymentSuccessText(order) {
+  return `PAGAMENTO RECEBIDO - PAYGO ✅\nOlá ${order.name},\nRecebemos o seu pagamento de ${order.total} MT referente ao pedido #${order.orderId}.\n\nO seu pedido está agora EM PROCESSAMENTO.\nAcompanhe o status no Dashboard: ${process.env.SITE_URL || 'https://paygo.co.mz'}/dashboard.html`;
 }
