@@ -1,911 +1,907 @@
 <!DOCTYPE html>
-<html lang="pt-MZ">
+<html lang="pt-MZ" class="scroll-smooth">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard | PayGo Moçambique</title>
-  <meta name="robots" content="noindex, nofollow">
-  <!-- ✅ URLs corrigidas SEM espaços -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            brand: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 900: '#1e3a8a', 950: '#0f172a' },
-            accent: { 400: '#22d3ee', 500: '#06b6d4' },
-            success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' }
-          }
-        }
-      }
-    }
-  </script>
-  <style>
-    .sidebar-link.active { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border-right: 3px solid #3b82f6; }
-    .sidebar-link.affiliate-active { background: rgba(34, 197, 94, 0.2); color: #4ade80; border-right: 3px solid #22c55e; }
-    .status-badge { padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 600; }
-    .status-pending { background: #fef3c7; color: #92400e; }
-    .status-processing { background: #dbeafe; color: #1e40af; }
-    .status-completed { background: #dcfce7; color: #166534; }
-    .status-cancelled { background: #fee2e2; color: #991b1b; }
-    .skeleton { background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: skeleton-loading 1.5s infinite; }
-    @keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-    .earnings-card { background: linear-gradient(135deg, #22c55e, #16a34a); }
-    .affiliate-badge { background: rgba(34, 197, 94, 0.15); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3); }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Dashboard | PayGo Moçambique</title>
+<meta name="robots" content="noindex, nofollow">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+tailwind.config = {
+theme: {
+extend: {
+colors: {
+brand: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 900: '#1e3a8a', 950: '#0f172a' },
+accent: { 400: '#22d3ee', 500: '#06b6d4' },
+success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' }
+}
+}
+}
+}
+</script>
+<style>
+/* Estilos Base e Animações */
+.sidebar-link.active { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border-right: 3px solid #3b82f6; }
+.sidebar-link.affiliate-active { background: rgba(34, 197, 94, 0.2); color: #4ade80; border-right: 3px solid #22c55e; }
+.status-badge { padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+.status-pending { background: #fef3c7; color: #92400e; }
+.status-processing { background: #dbeafe; color: #1e40af; }
+.status-completed { background: #dcfce7; color: #166534; }
+.status-cancelled { background: #fee2e2; color: #991b1b; }
+.skeleton { background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: skeleton-loading 1.5s infinite; color: transparent !important; border-radius: 8px; }
+@keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+.earnings-card { background: linear-gradient(135deg, #22c55e, #16a34a); }
+.affiliate-badge { background: rgba(34, 197, 94, 0.15); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3); }
+
+/* Scrollbar para tabela */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+</style>
 </head>
-<body class="bg-slate-50">
-  
-  <!-- ✅ SIDEBAR DINÂMICA: Admin ou Afiliado -->
-  <aside class="fixed left-0 top-0 h-full w-64 bg-slate-900 text-white p-6 z-50 flex flex-col" id="sidebar">
-    <div class="flex items-center gap-3 mb-8 pb-6 border-b border-white/10">
-      <div class="w-10 h-10 bg-gradient-to-tr from-brand-500 to-accent-500 rounded-xl flex items-center justify-center">
-        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-      </div>
-      <div>
-        <span class="text-xl font-bold">PayGo</span>
-        <span class="text-xs text-brand-400 ml-1 px-2 py-0.5 bg-brand-500/20 rounded-full" id="roleBadge">Admin</span>
-      </div>
-    </div>
-    
-    <!-- ✅ MENU ADMIN (padrão) -->
-    <nav class="flex-1 space-y-2" id="adminNav">
-      <a href="#dashboard" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-xl transition-all bg-brand-600/20 text-brand-400">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-        Dashboard
-      </a>
-      <a href="#orders" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
-        Pedidos
-      </a>
-      <a href="clientes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-        Usuários
-      </a>
-      <a href="afiliados.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
-        Afiliados
-      </a>
-      <a href="configuracoes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-        Configurações
-      </a>
-    </nav>
-    
-    <!-- ✅ MENU AFILIADO (oculto por padrão) -->
-    <nav class="flex-1 space-y-2 hidden" id="affiliateNav">
-      <a href="#affiliate-dashboard" class="sidebar-link affiliate-active flex items-center gap-3 px-4 py-3 rounded-xl transition-all bg-success-600/20 text-success-400">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-        Meus Ganhos
-      </a>
-      <a href="#my-referrals" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-        Minhas Indicações
-      </a>
-      <a href="#affiliate-settings" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-        Minha Conta
-      </a>
-    </nav>
-    
-    <div class="pt-4 border-t border-white/10">
-      <div class="flex items-center gap-3 px-4 py-3 mb-2">
-        <div class="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-sm font-bold" id="userInitial">A</div>
-        <div class="flex-1 min-w-0">
-          <p class="text-sm font-medium truncate" id="userName">Carregando...</p>
-          <p class="text-xs text-slate-400 truncate" id="userEmail">...</p>
-        </div>
-      </div>
-      <button id="logoutBtn" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white/5 hover:bg-red-500/20 text-slate-400 hover:text-red-400 rounded-xl transition-all text-sm">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-        Sair
-      </button>
-    </div>
-  </aside>
+<body class="bg-slate-50 overflow-x-hidden">
 
-  <!-- ✅ MAIN CONTENT DINÂMICO -->
-  <main class="ml-64 p-8">
-    
-    <!-- 🎯 VIEW: ADMIN DASHBOARD -->
-    <div id="adminView">
-      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+<div class="md:hidden bg-slate-900 text-white p-4 flex justify-between items-center fixed w-full z-40 top-0 shadow-md">
+    <div class="flex items-center gap-2">
+        <div class="w-8 h-8 bg-gradient-to-tr from-brand-500 to-accent-500 rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+        </div>
+        <span class="font-bold text-lg tracking-wide">PayGo</span>
+    </div>
+    <button onclick="toggleSidebar()" class="text-white p-2 focus:outline-none bg-white/10 rounded-lg">
+        <i data-lucide="menu" class="w-6 h-6"></i>
+    </button>
+</div>
+
+<div id="mobileOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/60 z-40 hidden md:hidden backdrop-blur-sm transition-opacity"></div>
+
+<aside class="fixed left-0 top-0 h-full w-64 bg-slate-900 text-white p-6 z-50 flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-300 shadow-2xl md:shadow-none" id="sidebar">
+<div class="flex items-center justify-between mb-8 pb-6 border-b border-white/10 mt-12 md:mt-0">
+    <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-gradient-to-tr from-brand-500 to-accent-500 rounded-xl flex items-center justify-center shadow-lg">
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+        </div>
         <div>
-          <h1 class="text-3xl font-bold text-slate-900">Dashboard Admin</h1>
-          <p class="text-slate-500 mt-1">Gestão completa de pedidos e usuários</p>
+            <span class="text-xl font-bold tracking-wide">PayGo</span>
+            <span class="text-xs text-brand-400 ml-1 px-2 py-0.5 bg-brand-500/20 rounded-full font-medium" id="roleBadge">...</span>
         </div>
-        <div class="flex flex-wrap items-center gap-3">
-          <div class="relative">
-            <input type="text" id="searchInput" placeholder="Buscar pedido..." class="pl-10 pr-4 py-2.5 w-64 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 text-sm">
-            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-          </div>
-          <select id="statusFilter" class="px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 text-sm bg-white">
-            <option value="all">Todos os Status</option>
-            <option value="pending">⏳ Pendentes</option>
-            <option value="processing">🔄 Processando</option>
-            <option value="completed">✅ Concluídos</option>
-            <option value="cancelled">❌ Cancelados</option>
-          </select>
-          <button onclick="refreshOrders()" class="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-medium transition flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-            Atualizar
-          </button>
-        </div>
-      </div>
-
-      <!-- Stats Cards Admin -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <div class="flex items-center justify-between mb-4">
-            <span class="text-sm font-medium text-slate-500">Total Pedidos</span>
-            <div class="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center"><svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg></div>
-          </div>
-          <p class="text-3xl font-bold text-slate-900 skeleton" id="statTotal">0</p>
-          <p class="text-sm text-green-600 mt-2 flex items-center gap-1"><span id="statGrowth">+0%</span> esta semana</p>
-        </div>
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <div class="flex items-center justify-between mb-4">
-            <span class="text-sm font-medium text-slate-500">Pendentes</span>
-            <div class="w-10 h-10 bg-yellow-50 rounded-xl flex items-center justify-center"><svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
-          </div>
-          <p class="text-3xl font-bold text-slate-900 skeleton" id="statPending">0</p>
-          <p class="text-sm text-slate-500 mt-2">Requer atenção</p>
-        </div>
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <div class="flex items-center justify-between mb-4">
-            <span class="text-sm font-medium text-slate-500">Concluídos</span>
-            <div class="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center"><svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
-          </div>
-          <p class="text-3xl font-bold text-slate-900 skeleton" id="statCompleted">0</p>
-          <p class="text-sm text-green-600 mt-2">Taxa: <span id="completionRate">0%</span></p>
-        </div>
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <div class="flex items-center justify-between mb-4">
-            <span class="text-sm font-medium text-slate-500">Receita (MT)</span>
-            <div class="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center"><svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
-          </div>
-          <p class="text-3xl font-bold text-slate-900 skeleton" id="statRevenue">0 MT</p>
-          <p class="text-sm text-slate-500 mt-2">Este mês</p>
-        </div>
-      </div>
-
-      <!-- Orders Table Admin -->
-      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div class="p-6 border-b border-slate-200 flex justify-between items-center">
-          <h2 class="text-lg font-bold text-slate-900">Pedidos Recentes</h2>
-          <span class="text-sm text-slate-500" id="ordersCount">0 pedidos</span>
-        </div>
-        <div id="loadingState" class="p-12 text-center text-slate-500">
-          <svg class="w-8 h-8 animate-spin mx-auto mb-4 text-brand-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
-          Carregando pedidos...
-        </div>
-        <div id="emptyState" class="p-12 text-center text-slate-500 hidden">
-          <svg class="w-12 h-12 mx-auto mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
-          <p class="font-medium">Nenhum pedido encontrado</p>
-          <p class="text-sm mt-1">Os pedidos aparecerão aqui quando os clientes enviarem.</p>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full">
-            <thead class="bg-slate-50">
-              <tr>
-                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase">ID</th>
-                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase">Cliente</th>
-                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase">Categoria</th>
-                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase">Valor</th>
-                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase">Total (MT)</th>
-                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase">Status</th>
-                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase">Data</th>
-                <th class="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase">Ações</th>
-              </tr>
-            </thead>
-            <tbody id="ordersTable" class="divide-y divide-slate-200"></tbody>
-          </table>
-        </div>
-      </div>
     </div>
+    <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+</div>
 
-    <!-- 🎯 VIEW: AFFILIATE DASHBOARD (oculto por padrão) -->
-    <div id="affiliateView" class="hidden">
-      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-        <div>
-          <h1 class="text-3xl font-bold text-slate-900 flex items-center gap-3">
-            <span class="affiliate-badge px-3 py-1 rounded-full text-sm">🎁 Afiliado</span>
-            Dashboard de Ganhos
-          </h1>
-          <p class="text-slate-500 mt-1">Acompanhe suas comissões e indicações</p>
-        </div>
-        <div class="bg-success-50 border border-success-200 rounded-xl px-4 py-2 flex items-center gap-2">
-          <svg class="w-4 h-4 text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-          <span class="text-sm text-success-700 font-medium">Comissão: 3% na 1ª compra</span>
-        </div>
-      </div>
+<nav class="flex-1 space-y-2 hidden" id="adminNav">
+<a href="#dashboard" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-xl transition-all bg-brand-600/20 text-brand-400 font-medium">
+<i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
+</a>
+<a href="pedidos.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all font-medium">
+<i data-lucide="shopping-bag" class="w-5 h-5"></i> Todos Pedidos
+</a>
+<a href="clientes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all font-medium">
+<i data-lucide="users" class="w-5 h-5"></i> Usuários
+</a>
+<a href="afiliados.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all font-medium">
+<i data-lucide="gift" class="w-5 h-5"></i> Afiliados
+</a>
+<a href="configuracoes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all font-medium">
+<i data-lucide="settings" class="w-5 h-5"></i> Configurações
+</a>
+</nav>
 
-      <!-- Stats Cards Affiliate -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div class="earnings-card p-6 rounded-2xl text-white shadow-lg">
-          <div class="flex items-center justify-between mb-4">
-            <span class="text-sm font-medium opacity-90">Total Ganho</span>
-            <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
-          </div>
-          <p class="text-3xl font-bold skeleton" id="affiliateEarnings">0 MT</p>
-          <p class="text-sm opacity-90 mt-2">Acumulado desde o início</p>
-        </div>
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <div class="flex items-center justify-between mb-4">
-            <span class="text-sm font-medium text-slate-500">Total Indicações</span>
-            <div class="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center"><svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg></div>
-          </div>
-          <p class="text-3xl font-bold text-slate-900 skeleton" id="affiliateReferrals">0</p>
-          <p class="text-sm text-slate-500 mt-2">Pessoas indicadas</p>
-        </div>
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <div class="flex items-center justify-between mb-4">
-            <span class="text-sm font-medium text-slate-500">Indicações Aprovadas</span>
-            <div class="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center"><svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
-          </div>
-          <p class="text-3xl font-bold text-slate-900 skeleton" id="affiliateApproved">0</p>
-          <p class="text-sm text-green-600 mt-2">Geraram comissão</p>
-        </div>
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <div class="flex items-center justify-between mb-4">
-            <span class="text-sm font-medium text-slate-500">Código de Afiliado</span>
-            <div class="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center"><svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg></div>
-          </div>
-          <p class="text-lg font-mono font-bold text-slate-900" id="affiliateCode">AFF-XXXX</p>
-          <button onclick="copyAffiliateCode()" class="text-xs text-brand-600 hover:text-brand-800 mt-1 font-medium">📋 Copiar código</button>
-        </div>
-      </div>
+<nav class="flex-1 space-y-2 hidden" id="affiliateNav">
+<a href="#affiliate-dashboard" class="sidebar-link affiliate-active flex items-center gap-3 px-4 py-3 rounded-xl transition-all bg-success-600/20 text-success-400 font-medium">
+<i data-lucide="wallet" class="w-5 h-5"></i> Meus Ganhos
+</a>
+<a href="#my-referrals" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all font-medium">
+<i data-lucide="users" class="w-5 h-5"></i> Minhas Indicações
+</a>
+<a href="#affiliate-settings" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all font-medium">
+<i data-lucide="user" class="w-5 h-5"></i> Minha Conta
+</a>
+</nav>
 
-      <!-- Affiliate Referrals Table -->
-      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div class="p-6 border-b border-slate-200">
-          <h2 class="text-lg font-bold text-slate-900">Minhas Indicações</h2>
-          <p class="text-sm text-slate-500">Pessoas que se registraram com seu código</p>
-        </div>
-        <div id="referralsLoading" class="p-12 text-center text-slate-500">
-          <svg class="w-8 h-8 animate-spin mx-auto mb-4 text-brand-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
-          Carregando indicações...
-        </div>
-        <div id="referralsEmpty" class="p-12 text-center text-slate-500 hidden">
-          <svg class="w-12 h-12 mx-auto mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-          <p class="font-medium">Nenhuma indicação ainda</p>
-          <p class="text-sm mt-1">Compartilhe seu código para começar a ganhar!</p>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full">
-            <thead class="bg-slate-50">
-              <tr>
-                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase">Indicado</th>
-                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase">Email</th>
-                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase">Data Registro</th>
-                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase">Primeira Compra</th>
-                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase">Comissão</th>
-                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase">Status</th>
-              </tr>
-            </thead>
-            <tbody id="referralsTable" class="divide-y divide-slate-200"></tbody>
-          </table>
-        </div>
-      </div>
+<div class="pt-4 border-t border-white/10">
+<div class="flex items-center gap-3 px-4 py-3 mb-2 bg-white/5 rounded-xl">
+<div class="w-9 h-9 rounded-full bg-brand-600 flex items-center justify-center text-sm font-bold shadow-inner" id="userInitial"></div>
+<div class="flex-1 min-w-0">
+<p class="text-sm font-bold truncate text-white" id="userName">A carregar...</p>
+<p class="text-xs text-slate-400 truncate" id="userEmail">...</p>
+</div>
+</div>
+<button id="logoutBtn" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white/5 hover:bg-red-500/20 text-slate-400 hover:text-red-400 rounded-xl transition-all text-sm font-bold mt-2">
+<i data-lucide="log-out" class="w-4 h-4"></i> Sair da Conta
+</button>
+</div>
+</aside>
 
-      <!-- Affiliate Share Section -->
-      <div class="mt-8 bg-gradient-to-r from-success-500 to-emerald-600 rounded-2xl p-6 text-white">
-        <h3 class="text-lg font-bold mb-4">🚀 Compartilhe seu Código</h3>
-        <p class="text-sm opacity-90 mb-4">Convide amigos e ganhe 3% na primeira compra de cada um!</p>
-        <div class="flex flex-col sm:flex-row gap-3">
-          <input type="text" id="affiliateLink" readonly class="flex-1 px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:border-white/40" value="https://paygo.co.mz/register.html?ref=AFF-XXXX">
-          <button onclick="copyAffiliateLink()" class="px-6 py-3 bg-white text-success-700 rounded-xl font-medium hover:bg-success-50 transition flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-            Copiar Link
-          </button>
-        </div>
-      </div>
-    </div>
+<main class="md:ml-64 p-4 md:p-8 pt-24 md:pt-8 min-h-screen transition-all">
 
-  </main>
+<div id="adminView" class="hidden">
+<div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 mb-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+<div>
+<h1 class="text-2xl md:text-3xl font-bold text-slate-900">Dashboard de Gestão</h1>
+<p class="text-slate-500 mt-1 text-sm">Visão geral do sistema e pedidos recentes</p>
+</div>
+<div class="flex flex-col sm:flex-row flex-wrap items-center gap-3 w-full xl:w-auto">
+<div class="relative w-full sm:w-auto">
+<input type="text" id="searchInput" placeholder="Buscar pedido, nome ou email..." class="pl-10 pr-4 py-2.5 w-full sm:w-64 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 text-sm bg-slate-50 transition-all">
+<i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+</div>
+<select id="statusFilter" class="w-full sm:w-auto px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/50 text-sm bg-slate-50 font-medium text-slate-700 cursor-pointer">
+<option value="all">Todos os Status</option>
+<option value="pending">Pendentes</option>
+<option value="processing">Em Processamento</option>
+<option value="completed">Concluídos</option>
+<option value="cancelled">Cancelados</option>
+</select>
+<button onclick="refreshOrders()" class="w-full sm:w-auto px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-slate-900/20">
+<i data-lucide="refresh-cw" class="w-4 h-4"></i> Atualizar
+</button>
+</div>
+</div>
 
-  <!-- ✅ MODAL: Order Detail (Admin) -->
-  <div id="orderModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl p-6 md:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-      <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-200">
-        <h2 class="text-2xl font-bold text-slate-900">Detalhes do Pedido</h2>
-        <button onclick="closeModal()" class="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
-      </div>
-      <div id="modalContent" class="space-y-5"></div>
-      <div class="mt-8 pt-6 border-t border-slate-200 flex flex-col sm:flex-row gap-3">
-        <select id="statusSelect" class="flex-1 px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 bg-white">
-          <option value="pending">⏳ Pendente</option>
-          <option value="processing">🔄 Processando</option>
-          <option value="completed">✅ Concluído</option>
-          <option value="cancelled">❌ Cancelado</option>
-        </select>
-        <button id="updateStatusBtn" class="px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-medium transition flex items-center justify-center gap-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-          Atualizar Status
-        </button>
-      </div>
-    </div>
-  </div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+<div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+<div class="flex items-center justify-between mb-4">
+<span class="text-sm font-bold text-slate-500 uppercase tracking-wider">Total Pedidos</span>
+<div class="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center"><i data-lucide="shopping-bag" class="w-5 h-5 text-brand-600"></i></div>
+</div>
+<p class="text-3xl font-bold text-slate-900 skeleton" id="statTotal">0</p>
+<p class="text-sm text-green-600 mt-2 font-medium flex items-center gap-1"><i data-lucide="trending-up" class="w-3 h-3"></i> <span id="statGrowth">+0%</span> esta semana</p>
+</div>
+<div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+<div class="flex items-center justify-between mb-4">
+<span class="text-sm font-bold text-slate-500 uppercase tracking-wider">Pendentes</span>
+<div class="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center"><i data-lucide="clock" class="w-5 h-5 text-amber-600"></i></div>
+</div>
+<p class="text-3xl font-bold text-slate-900 skeleton" id="statPending">0</p>
+<p class="text-sm text-slate-500 mt-2 font-medium">Requer atenção imediata</p>
+</div>
+<div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+<div class="flex items-center justify-between mb-4">
+<span class="text-sm font-bold text-slate-500 uppercase tracking-wider">Concluídos</span>
+<div class="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center"><i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i></div>
+</div>
+<p class="text-3xl font-bold text-slate-900 skeleton" id="statCompleted">0</p>
+<p class="text-sm text-green-600 mt-2 font-medium">Taxa de sucesso: <span id="completionRate">0%</span></p>
+</div>
+<div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+<div class="flex items-center justify-between mb-4">
+<span class="text-sm font-bold text-slate-500 uppercase tracking-wider">Lucro Est. (MT)</span>
+<div class="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center"><i data-lucide="banknote" class="w-5 h-5 text-purple-600"></i></div>
+</div>
+<p class="text-2xl font-bold text-slate-900 skeleton truncate" id="statRevenue">0 MT</p>
+<p class="text-sm text-slate-500 mt-2 font-medium">Baseado em taxas de serviço</p>
+</div>
+</div>
 
-  <!-- ✅ TOAST CONTAINER -->
-  <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
+<div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+<div class="p-6 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 bg-slate-50/50">
+<h2 class="text-lg font-bold text-slate-900">Últimos Pedidos</h2>
+<span class="text-xs font-bold px-3 py-1 bg-white border border-slate-200 rounded-full text-slate-600 shadow-sm" id="ordersCount">0 pedidos filtrados</span>
+</div>
 
-  <!-- ✅ Script Corrigido -->
-  <script type="module">
-    // ✅ URLs corrigidas (SEM espaços no final)
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut, getIdTokenResult } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, doc, updateDoc, onSnapshot, query, orderBy, getDoc, where, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+<div id="loadingState" class="p-16 text-center text-slate-500">
+<i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto mb-4 text-brand-600"></i>
+<p class="font-medium">A carregar banco de dados...</p>
+</div>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
-      authDomain: "paygo-14311.firebaseapp.com",
-      projectId: "paygo-14311",
-      storageBucket: "paygo-14311.firebasestorage.app",
-      messagingSenderId: "208360646277",
-      appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
+<div id="emptyState" class="p-16 text-center text-slate-500 hidden">
+<div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+<i data-lucide="inbox" class="w-8 h-8 text-slate-400"></i>
+</div>
+<p class="font-bold text-slate-700 text-lg">Nenhum pedido encontrado</p>
+<p class="text-sm mt-1">Ajuste os filtros ou aguarde novas submissões.</p>
+</div>
+
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead class="bg-slate-50 border-b border-slate-200">
+<tr>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">ID</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Cliente</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Categoria</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Total (MT)</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Data</th>
+<th class="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Ação</th>
+</tr>
+</thead>
+<tbody id="ordersTable" class="divide-y divide-slate-100"></tbody>
+</table>
+</div>
+</div>
+</div>
+
+<div id="affiliateView" class="hidden">
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+<div>
+<h1 class="text-2xl md:text-3xl font-bold text-slate-900 flex items-center gap-3">
+<span class="affiliate-badge px-3 py-1 rounded-full text-xs uppercase tracking-wider">Parceiro</span>
+Painel de Ganhos
+</h1>
+<p class="text-slate-500 mt-1 text-sm">Acompanhe suas comissões e métricas de indicação</p>
+</div>
+<div class="bg-success-50 border border-success-200 rounded-xl px-4 py-3 flex items-center gap-3 shadow-sm">
+<div class="w-8 h-8 bg-success-100 rounded-full flex items-center justify-center text-success-600"><i data-lucide="percent" class="w-4 h-4"></i></div>
+<div>
+    <p class="text-xs text-success-600 font-bold uppercase">Sua Comissão</p>
+    <p class="text-sm text-success-800 font-bold">3% na 1ª compra do cliente</p>
+</div>
+</div>
+</div>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+<div class="earnings-card p-6 rounded-2xl text-white shadow-lg shadow-green-500/20 relative overflow-hidden">
+<div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
+<div class="flex items-center justify-between mb-4 relative z-10">
+<span class="text-sm font-bold uppercase tracking-wider opacity-90">Comissão Aprovada</span>
+<div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm"><i data-lucide="wallet" class="w-5 h-5"></i></div>
+</div>
+<p class="text-3xl font-bold skeleton relative z-10" id="affiliateEarnings">0 MT</p>
+<p class="text-sm opacity-90 mt-2 relative z-10 font-medium">Saldo disponível em conta</p>
+</div>
+<div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+<div class="flex items-center justify-between mb-4">
+<span class="text-sm font-bold text-slate-500 uppercase tracking-wider">Indicações Totais</span>
+<div class="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center"><i data-lucide="users" class="w-5 h-5 text-brand-600"></i></div>
+</div>
+<p class="text-3xl font-bold text-slate-900 skeleton" id="affiliateReferrals">0</p>
+<p class="text-sm text-slate-500 mt-2 font-medium">Pessoas registradas</p>
+</div>
+<div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+<div class="flex items-center justify-between mb-4">
+<span class="text-sm font-bold text-slate-500 uppercase tracking-wider">Compras Efetuadas</span>
+<div class="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center"><i data-lucide="shopping-cart" class="w-5 h-5 text-green-600"></i></div>
+</div>
+<p class="text-3xl font-bold text-slate-900 skeleton" id="affiliateApproved">0</p>
+<p class="text-sm text-green-600 mt-2 font-medium">Converteram em comissão</p>
+</div>
+<div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+<div class="flex items-center justify-between mb-4">
+<span class="text-sm font-bold text-slate-500 uppercase tracking-wider">Seu Código Promocional</span>
+<div class="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center"><i data-lucide="tag" class="w-5 h-5 text-purple-600"></i></div>
+</div>
+<p class="text-xl font-mono font-bold text-slate-900 truncate" id="affiliateCode">A carregar...</p>
+<button onclick="copyAffiliateCode()" class="text-xs text-brand-600 hover:text-brand-800 mt-2 font-bold uppercase tracking-wider flex items-center gap-1"><i data-lucide="copy" class="w-3 h-3"></i> Copiar Código</button>
+</div>
+</div>
+
+<div class="mb-8 bg-slate-900 rounded-2xl p-6 md:p-8 text-white relative overflow-hidden shadow-xl">
+<div class="absolute top-0 right-0 w-64 h-64 bg-brand-500/20 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2"></div>
+<div class="relative z-10">
+<h3 class="text-xl font-bold mb-2 flex items-center gap-2"><i data-lucide="share-2" class="w-5 h-5 text-brand-400"></i> Ganhe mais com o seu Link</h3>
+<p class="text-sm text-slate-400 mb-6 max-w-2xl">Envie este link para os seus amigos e clientes. Quando eles se registrarem e fizerem o primeiro pagamento de serviços internacionais, 3% do valor vai direto para a sua carteira.</p>
+<div class="flex flex-col sm:flex-row gap-3 max-w-3xl">
+<input type="text" id="affiliateLink" readonly class="flex-1 px-5 py-3.5 rounded-xl bg-white/5 border border-white/10 text-white font-mono text-sm focus:outline-none focus:border-brand-500 transition-colors" value="A carregar link...">
+<button onclick="copyAffiliateLink()" class="px-6 py-3.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-brand-500/20 whitespace-nowrap">
+<i data-lucide="copy" class="w-4 h-4"></i> Copiar Link Oficial
+</button>
+</div>
+</div>
+</div>
+
+<div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+<div class="p-6 border-b border-slate-200 bg-slate-50/50">
+<h2 class="text-lg font-bold text-slate-900">Histórico de Indicações</h2>
+</div>
+<div id="referralsLoading" class="p-16 text-center text-slate-500">
+<i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto mb-4 text-brand-600"></i>
+<p class="font-medium">A buscar histórico...</p>
+</div>
+<div id="referralsEmpty" class="p-16 text-center text-slate-500 hidden">
+<div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+<i data-lucide="users" class="w-8 h-8 text-slate-400"></i>
+</div>
+<p class="font-bold text-slate-700 text-lg">Sem indicações registadas</p>
+<p class="text-sm mt-1">Partilhe o seu link acima para ver a lista crescer!</p>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead class="bg-slate-50 border-b border-slate-200">
+<tr>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Nome do Indicado</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Data de Registo</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Fez Compra?</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Sua Comissão</th>
+</tr>
+</thead>
+<tbody id="referralsTable" class="divide-y divide-slate-100"></tbody>
+</table>
+</div>
+</div>
+</div>
+</main>
+
+<div id="orderModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 transition-opacity">
+<div class="bg-white rounded-3xl p-0 max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl flex flex-col transform transition-transform scale-95" id="modalDialog">
+<div class="flex justify-between items-center p-6 border-b border-slate-200 bg-slate-50">
+<h2 class="text-xl font-bold text-slate-900 flex items-center gap-2"><i data-lucide="file-text" class="w-5 h-5 text-brand-600"></i> Ficha do Pedido</h2>
+<button onclick="closeModal()" class="w-8 h-8 rounded-full bg-white border border-slate-200 hover:bg-slate-100 hover:text-red-500 flex items-center justify-center transition focus:outline-none"><i data-lucide="x" class="w-4 h-4"></i></button>
+</div>
+<div id="modalContent" class="p-6 overflow-y-auto space-y-6">
+</div>
+<div class="p-6 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row gap-3">
+<select id="statusSelect" class="flex-1 px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 font-medium bg-white cursor-pointer">
+<option value="pending">⏳ Mudar para: Pendente</option>
+<option value="processing">🔄 Mudar para: Em Processamento</option>
+<option value="completed">✅ Mudar para: Concluído</option>
+<option value="cancelled">❌ Mudar para: Cancelado</option>
+</select>
+<button id="updateStatusBtn" class="px-8 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-brand-600/20">
+<i data-lucide="save" class="w-4 h-4"></i> Salvar Alteração
+</button>
+</div>
+</div>
+</div>
+
+<div id="toastContainer" class="fixed top-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, doc, updateDoc, onSnapshot, query, orderBy, getDoc, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
+authDomain: "paygo-14311.firebaseapp.com",
+projectId: "paygo-14311",
+storageBucket: "paygo-14311.firebasestorage.app",
+messagingSenderId: "208360646277",
+appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app, "paygodb");
+
+let currentUser = null;
+let userRole = null; 
+let orders = [];
+let currentOrderId = null;
+let ordersUnsubscribe = null;
+let affiliateData = null;
+
+// ==========================================
+// 📱 CONTROLO DO MENU MOBILE
+// ==========================================
+window.toggleSidebar = () => {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('mobileOverlay');
+    sidebar.classList.toggle('-translate-x-full');
+    overlay.classList.toggle('hidden');
+    // Prevenir scroll do body quando menu está aberto
+    document.body.style.overflow = sidebar.classList.contains('-translate-x-full') ? '' : 'hidden';
+};
+
+// ==========================================
+// 🔔 SISTEMA DE TOAST NOTIFICATIONS
+// ==========================================
+window.showToast = (message, type = 'success') => {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    
+    const colors = { 
+        success: 'bg-green-600 border-green-700', 
+        error: 'bg-red-600 border-red-700', 
+        warning: 'bg-amber-500 border-amber-600', 
+        info: 'bg-brand-600 border-brand-700' 
     };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app, "paygodb");
+    const icons = { success: 'check-circle', error: 'x-circle', warning: 'alert-triangle', info: 'info' };
     
-    const ADMIN_EMAILS = ['admin@paygo.co.mz', 'app@paygo.co.mz', 'gestao@paygo.co.mz', 'superadmin@paygo.co.mz'];
+    toast.className = `flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl border-b-4 text-white ${colors[type]} transform transition-all duration-400 translate-x-[120%] pointer-events-auto`;
+    toast.innerHTML = `
+        <i data-lucide="${icons[type]}" class="w-5 h-5 flex-shrink-0"></i>
+        <span class="text-sm font-semibold tracking-wide">${message}</span>
+        <button onclick="this.parentElement.remove()" class="ml-2 bg-black/10 hover:bg-black/20 p-1 rounded-md transition"><i data-lucide="x" class="w-3 h-3"></i></button>
+    `;
     
-    let currentUser = null;
-    let userRole = null; // 'admin' | 'affiliate' | 'user'
-    let orders = [];
-    let currentOrderId = null;
-    let ordersUnsubscribe = null;
-    let affiliateData = null;
+    container.appendChild(toast);
+    lucide.createIcons({root: toast}); // Inicia os icones apenas para este toast
+    
+    requestAnimationFrame(() => toast.classList.remove('translate-x-[120%]'));
+    
+    setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-x-full');
+        setTimeout(() => toast.remove(), 400);
+    }, 4000);
+};
 
-    // ✅ Helper para formatar valores
-    function formatValue(value, type = 'currency') {
-      if (value === null || value === undefined) return type === 'currency' ? '0.00 MT' : '0';
-      if (type === 'currency') return `${Number(value).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`;
-      if (type === 'usd') return `$${Number(value).toFixed(2)}`;
-      return String(value);
-    }
+// ==========================================
+// 🛠️ FUNÇÕES AUXILIARES
+// ==========================================
+function formatValue(value, type = 'currency') {
+    if (value === null || value === undefined) return type === 'currency' ? '0.00 MT' : '0';
+    if (type === 'currency') return `${Number(value).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`;
+    if (type === 'usd') return `$${Number(value).toFixed(2)}`;
+    return String(value);
+}
 
-    // ✅ Verificar acesso e role do usuário
-    async function verifyAccess() {
-      return new Promise((resolve) => {
+function getStatusBadge(status) {
+    const badges = {
+        pending: '<span class="status-badge status-pending"><i data-lucide="clock" class="w-3 h-3"></i> Pendente</span>',
+        processing: '<span class="status-badge status-processing"><i data-lucide="refresh-cw" class="w-3 h-3 animate-spin-slow"></i> Processando</span>',
+        completed: '<span class="status-badge status-completed"><i data-lucide="check" class="w-3 h-3"></i> Concluído</span>',
+        cancelled: '<span class="status-badge status-cancelled"><i data-lucide="x" class="w-3 h-3"></i> Cancelado</span>'
+    };
+    return badges[status] || `<span class="status-badge bg-slate-200 text-slate-700">${status}</span>`;
+}
+
+// ==========================================
+// 🔐 VERIFICAÇÃO DE ACESSO E AUTENTICAÇÃO
+// ==========================================
+async function verifyAccess() {
+    return new Promise((resolve) => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
-          unsubscribe();
-          if (!user) { 
-            window.location.href = 'login.html?redirect=dashboard'; 
-            resolve(false); 
-            return; 
-          }
-          
-          currentUser = user;
-          
-          try {
-            // Buscar dados do usuário no Firestore
-            const userRef = doc(db, "users", user.uid);
-            const userSnap = await getDoc(userRef);
-            
-            if (!userSnap.exists()) {
-              await signOut(auth);
-              window.location.href = 'login.html?error=user_not_found';
-              resolve(false);
-              return;
+            unsubscribe();
+            if (!user) {
+                window.location.href = 'login.html?redirect=dashboard.html';
+                resolve(false);
+                return;
             }
-            
-            const userData = userSnap.data();
-            userRole = userData.role;
-            
-            // Atualizar UI com dados do usuário
-            document.getElementById('userName').textContent = userData.name || 'Usuário';
-            document.getElementById('userEmail').textContent = userData.email || '';
-            document.getElementById('userInitial').textContent = (userData.name || 'U').charAt(0).toUpperCase();
-            
-            // ✅ Mostrar menu correto baseado no role
-            if (userRole === 'admin') {
-              document.getElementById('roleBadge').textContent = 'Admin';
-              document.getElementById('roleBadge').className = 'text-xs text-brand-400 ml-1 px-2 py-0.5 bg-brand-500/20 rounded-full';
-              document.getElementById('adminNav').classList.remove('hidden');
-              document.getElementById('affiliateNav').classList.add('hidden');
-              document.getElementById('adminView').classList.remove('hidden');
-              document.getElementById('affiliateView').classList.add('hidden');
-              resolve(true);
-              
-            } else if (userRole === 'affiliate' && userData.affiliateCodeActive) {
-              document.getElementById('roleBadge').textContent = 'Afiliado';
-              document.getElementById('roleBadge').className = 'text-xs text-success-400 ml-1 px-2 py-0.5 bg-success-500/20 rounded-full';
-              document.getElementById('adminNav').classList.add('hidden');
-              document.getElementById('affiliateNav').classList.remove('hidden');
-              document.getElementById('adminView').classList.add('hidden');
-              document.getElementById('affiliateView').classList.remove('hidden');
-              
-              // Carregar dados do afiliado
-              affiliateData = userData;
-              await loadAffiliateDashboard();
-              resolve(true);
-              
-            } else {
-              // ✅ Usuário normal não tem acesso ao dashboard
-              showToast('❌ Acesso restrito. Redirecionando...', 'error');
-              setTimeout(() => { window.location.href = 'index.html'; }, 2000);
-              resolve(false);
+            currentUser = user;
+            try {
+                const userRef = doc(db, "users", user.uid);
+                const userSnap = await getDoc(userRef);
+                
+                if (!userSnap.exists()) {
+                    await signOut(auth);
+                    window.location.href = 'login.html?error=user_not_found';
+                    resolve(false);
+                    return;
+                }
+                
+                const userData = userSnap.data();
+                userRole = userData.role || 'user';
+                
+                document.getElementById('userName').textContent = userData.name || 'Usuário';
+                document.getElementById('userEmail').textContent = userData.email || '';
+                document.getElementById('userInitial').textContent = (userData.name || 'U').charAt(0).toUpperCase();
+
+                if (userRole === 'admin') {
+                    setupAdminView();
+                    resolve(true);
+                } else if (userRole === 'affiliate' && userData.affiliateCodeActive) {
+                    affiliateData = userData;
+                    setupAffiliateView();
+                    resolve(true);
+                } else {
+                    showToast('Área restrita. Você será redirecionado.', 'error');
+                    setTimeout(() => { window.location.href = 'index.html'; }, 2000);
+                    resolve(false);
+                }
+            } catch (error) {
+                console.error('Erro de Auth:', error);
+                resolve(false);
             }
-            
-          } catch (error) {
-            console.error('Erro na verificação:', error);
-            window.location.href = 'login.html?error=auth_failed';
-            resolve(false);
-          }
         });
-      });
-    }
+    });
+}
 
-    // ✅ Carregar Dashboard do Afiliado
-    async function loadAffiliateDashboard() {
-      if (!affiliateData || !currentUser) return;
-      
-      // Atualizar stats do afiliado
-      document.getElementById('affiliateEarnings').classList.remove('skeleton');
-      document.getElementById('affiliateReferrals').classList.remove('skeleton');
-      document.getElementById('affiliateApproved').classList.remove('skeleton');
-      
-      document.getElementById('affiliateEarnings').textContent = formatValue(affiliateData.affiliateEarnings || 0, 'currency');
-      document.getElementById('affiliateReferrals').textContent = affiliateData.totalReferrals || 0;
-      document.getElementById('affiliateApproved').textContent = affiliateData.approvedReferrals || 0;
-      document.getElementById('affiliateCode').textContent = affiliateData.affiliateCode || 'N/A';
-      document.getElementById('affiliateLink').value = `https://paygo.co.mz/register.html?ref=${affiliateData.affiliateCode || ''}`;
-      
-      // Carregar indicações do afiliado
-      await loadAffiliateReferrals();
-    }
+function setupAdminView() {
+    document.getElementById('roleBadge').textContent = 'Administrador';
+    document.getElementById('roleBadge').className = 'text-xs text-brand-700 ml-1 px-2 py-0.5 bg-brand-100 rounded-full font-bold uppercase tracking-wider border border-brand-200';
+    document.getElementById('adminNav').classList.remove('hidden');
+    document.getElementById('adminView').classList.remove('hidden');
+    document.getElementById('affiliateNav').classList.add('hidden');
+    document.getElementById('affiliateView').classList.add('hidden');
+}
 
-    // ✅ Carregar indicações do afiliado
-    async function loadAffiliateReferrals() {
-      if (!affiliateData?.affiliateCode) {
+function setupAffiliateView() {
+    document.getElementById('roleBadge').textContent = 'Afiliado Oficial';
+    document.getElementById('roleBadge').className = 'text-xs text-success-700 ml-1 px-2 py-0.5 bg-success-100 rounded-full font-bold uppercase tracking-wider border border-success-200';
+    document.getElementById('adminNav').classList.add('hidden');
+    document.getElementById('adminView').classList.add('hidden');
+    document.getElementById('affiliateNav').classList.remove('hidden');
+    document.getElementById('affiliateView').classList.remove('hidden');
+    loadAffiliateDashboard();
+}
+
+// ==========================================
+// 🤝 DASHBOARD DO AFILIADO
+// ==========================================
+async function loadAffiliateDashboard() {
+    if (!affiliateData || !currentUser) return;
+    
+    document.getElementById('affiliateEarnings').classList.remove('skeleton');
+    document.getElementById('affiliateReferrals').classList.remove('skeleton');
+    document.getElementById('affiliateApproved').classList.remove('skeleton');
+    
+    document.getElementById('affiliateEarnings').textContent = formatValue(affiliateData.affiliateEarnings || 0, 'currency');
+    document.getElementById('affiliateReferrals').textContent = affiliateData.totalReferrals || 0;
+    document.getElementById('affiliateApproved').textContent = affiliateData.approvedReferrals || 0;
+    document.getElementById('affiliateCode').textContent = affiliateData.affiliateCode || 'N/A';
+    
+    const siteUrl = window.location.origin; // Adapta-se automaticamente ao dominio
+    document.getElementById('affiliateLink').value = `${siteUrl}/register.html?ref=${affiliateData.affiliateCode || ''}`;
+    
+    await loadAffiliateReferrals();
+}
+
+async function loadAffiliateReferrals() {
+    if (!affiliateData?.affiliateCode) {
         document.getElementById('referralsLoading').classList.add('hidden');
         document.getElementById('referralsEmpty').classList.remove('hidden');
         return;
-      }
-      
-      try {
+    }
+    
+    try {
         const usersRef = collection(db, "users");
         const q = query(usersRef, where("referredBy", "==", affiliateData.affiliateCode));
         const snapshot = await getDocs(q);
-        
         const referrals = [];
+        
         snapshot.forEach(doc => {
-          const data = doc.data();
-          referrals.push({
-            id: doc.id,
-            name: data.name || 'N/A',
-            email: data.email || 'N/A',
-            createdAt: data.createdAt,
-            firstPurchaseProcessed: data.firstPurchaseProcessed || false,
-            totalSpent: data.totalSpent || 0
-          });
+            const data = doc.data();
+            referrals.push({
+                name: data.name || 'N/A',
+                createdAt: data.createdAt,
+                firstPurchaseProcessed: data.firstPurchaseProcessed || false,
+                totalSpent: data.totalSpent || 0
+            });
         });
         
         renderReferralsTable(referrals);
-        
-      } catch (error) {
-        console.error('Error loading referrals:', error);
+    } catch (error) {
+        console.error('Error referrals:', error);
         document.getElementById('referralsLoading').classList.add('hidden');
         document.getElementById('referralsEmpty').classList.remove('hidden');
-      }
     }
+}
 
-    // ✅ Renderizar tabela de indicações
-    function renderReferralsTable(referrals) {
-      const table = document.getElementById('referralsTable');
-      const loading = document.getElementById('referralsLoading');
-      const empty = document.getElementById('referralsEmpty');
-      
-      loading.classList.add('hidden');
-      
-      if (referrals.length === 0) {
-        empty.classList.remove('hidden');
+function renderReferralsTable(referrals) {
+    const table = document.getElementById('referralsTable');
+    document.getElementById('referralsLoading').classList.add('hidden');
+    
+    if (referrals.length === 0) {
+        document.getElementById('referralsEmpty').classList.remove('hidden');
         table.innerHTML = '';
         return;
-      }
-      
-      empty.classList.add('hidden');
-      
-      table.innerHTML = referrals.map(ref => {
+    }
+    
+    document.getElementById('referralsEmpty').classList.add('hidden');
+    table.innerHTML = referrals.map(ref => {
         const hasCommission = ref.firstPurchaseProcessed;
         const commission = hasCommission ? (ref.totalSpent * 0.03) : 0;
-        const registerDate = ref.createdAt ? new Date(ref.createdAt).toLocaleDateString('pt-MZ') : 'N/A';
+        const dateStr = ref.createdAt ? new Date(ref.createdAt).toLocaleDateString('pt-MZ') : 'N/A';
         
         return `
-          <tr class="hover:bg-slate-50 transition-colors">
-            <td class="px-6 py-4">
-              <div class="text-sm font-medium text-slate-900">${ref.name}</div>
-            </td>
-            <td class="px-6 py-4 text-sm text-slate-500">${ref.email}</td>
-            <td class="px-6 py-4 text-sm text-slate-500">${registerDate}</td>
-            <td class="px-6 py-4">
-              ${hasCommission ? 
-                `<span class="text-green-600 font-medium">✅ Sim</span>` : 
-                `<span class="text-slate-400">⏳ Aguardando</span>`
-              }
-            </td>
-            <td class="px-6 py-4 text-sm font-bold ${hasCommission ? 'text-success-600' : 'text-slate-400'}">
-              ${hasCommission ? formatValue(commission, 'currency') : '-'}
-            </td>
-            <td class="px-6 py-4">
-              <span class="status-badge ${hasCommission ? 'status-completed' : 'status-pending'}">
-                ${hasCommission ? '✅ Aprovado' : '⏳ Pendente'}
-              </span>
-            </td>
-          </tr>
+            <tr class="hover:bg-slate-50 transition-colors">
+                <td class="px-6 py-4">
+                    <div class="font-bold text-slate-800">${ref.name}</div>
+                </td>
+                <td class="px-6 py-4 text-sm text-slate-500">${dateStr}</td>
+                <td class="px-6 py-4">
+                    ${hasCommission 
+                        ? `<span class="inline-flex items-center gap-1 text-success-600 font-bold bg-success-50 px-2.5 py-1 rounded-md text-xs"><i data-lucide="check" class="w-3 h-3"></i> Sim</span>` 
+                        : `<span class="inline-flex items-center gap-1 text-slate-500 font-medium bg-slate-100 px-2.5 py-1 rounded-md text-xs"><i data-lucide="clock" class="w-3 h-3"></i> Pendente</span>`}
+                </td>
+                <td class="px-6 py-4 font-bold ${hasCommission ? 'text-success-600' : 'text-slate-400'}">
+                    ${hasCommission ? formatValue(commission, 'currency') : '0.00 MT'}
+                </td>
+            </tr>
         `;
-      }).join('');
-      
-      if (typeof lucide !== 'undefined') lucide.createIcons();
-    }
+    }).join('');
+    lucide.createIcons();
+}
 
-    // ✅ Carregar pedidos (Admin)
-    function loadOrders() {
-      if (userRole !== 'admin') return;
-      
-      const loadingState = document.getElementById('loadingState');
-      const emptyState = document.getElementById('emptyState');
-      const ordersTable = document.getElementById('ordersTable');
-      
-      loadingState.classList.remove('hidden');
-      emptyState.classList.add('hidden');
-      
-      if (ordersUnsubscribe) ordersUnsubscribe();
-      
-      const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
-      
-      ordersUnsubscribe = onSnapshot(q, 
-        (snapshot) => {
-          loadingState.classList.add('hidden');
-          
-          orders = snapshot.docs.map(doc => {
+// ==========================================
+// ⚙️ DASHBOARD DO ADMIN (GESTÃO DE PEDIDOS)
+// ==========================================
+function loadOrders() {
+    if (userRole !== 'admin') return;
+    document.getElementById('loadingState').classList.remove('hidden');
+    document.getElementById('emptyState').classList.add('hidden');
+    
+    if (ordersUnsubscribe) ordersUnsubscribe();
+    
+    const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
+    ordersUnsubscribe = onSnapshot(q, (snapshot) => {
+        document.getElementById('loadingState').classList.add('hidden');
+        
+        orders = snapshot.docs.map(doc => {
             const data = doc.data();
             return {
-              id: doc.id,
-              orderId: data.orderId || `ORD-${doc.id.slice(0, 8)}`,
-              name: data.name || 'N/A',
-              email: data.email || 'N/A',
-              type: data.type || 'unknown',
-              usd: Number(data.usd) || 0,
-              total: Number(data.total) || 0,
-              tax: Number(data.tax) || 0,
-              status: data.status || 'pending',
-              paymentMethod: data.paymentMethod || 'mpesa',
-              detail: data.detail || 'N/A',
-              createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : new Date())
+                id: doc.id,
+                orderId: data.orderId || `ORD-${doc.id.slice(0, 8)}`,
+                name: data.name || 'Sem Nome',
+                email: data.email || 'N/A',
+                type: data.type || 'unknown',
+                usd: Number(data.usd) || 0,
+                total: Number(data.total) || 0,
+                tax: Number(data.tax) || 0,
+                status: data.status || 'pending',
+                paymentMethod: data.paymentMethod || 'mpesa',
+                detail: data.detail || 'N/A',
+                whatsapp: data.whatsapp || 'N/A',
+                createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : new Date())
             };
-          });
-          
-          if (orders.length === 0) { 
-            emptyState.classList.remove('hidden'); 
-            ordersTable.innerHTML = ''; 
-          } else { 
-            emptyState.classList.add('hidden'); 
-            renderOrders(); 
-          }
-          updateStats();
-          updateOrdersCount();
-          
-          if (typeof lucide !== 'undefined') lucide.createIcons();
-        },
-        (error) => {
-          console.error('Erro ao carregar pedidos:', error);
-          loadingState.classList.add('hidden');
-          if (error.code === 'permission-denied') { 
-            showToast('Acesso negado. Faça login novamente.', 'error'); 
-            setTimeout(() => { signOut(auth); window.location.href = 'login.html'; }, 2000); 
-          } else { 
-            showToast('Erro ao carregar: ' + (error.message || 'Tente recarregar a página'), 'error'); 
-          }
-        }
-      );
-      
-      return ordersUnsubscribe;
-    }
+        });
+        
+        renderOrders();
+        updateStats();
+    }, (error) => {
+        console.error('Firebase erro:', error);
+        document.getElementById('loadingState').classList.add('hidden');
+        showToast('Erro de permissão no banco de dados', 'error');
+    });
+}
 
-    // ✅ Renderizar tabela de pedidos (Admin)
-    function renderOrders() {
-      const table = document.getElementById('ordersTable');
-      const search = document.getElementById('searchInput')?.value.toLowerCase() || '';
-      const statusFilter = document.getElementById('statusFilter')?.value || 'all';
-      
-      const filtered = orders.filter(order => {
-        const matchSearch = 
-          order.name?.toLowerCase().includes(search) || 
-          order.orderId?.toLowerCase().includes(search) ||
-          order.email?.toLowerCase().includes(search);
+function renderOrders() {
+    const table = document.getElementById('ordersTable');
+    const emptyState = document.getElementById('emptyState');
+    const search = document.getElementById('searchInput')?.value.toLowerCase() || '';
+    const statusFilter = document.getElementById('statusFilter')?.value || 'all';
+    
+    const filtered = orders.filter(order => {
+        const matchSearch = order.name.toLowerCase().includes(search) || order.orderId.toLowerCase().includes(search) || order.email.toLowerCase().includes(search);
         const matchStatus = statusFilter === 'all' || order.status === statusFilter;
         return matchSearch && matchStatus;
-      });
-
-      if (filtered.length === 0) {
-        table.innerHTML = `<tr><td colspan="8" class="px-6 py-12 text-center text-slate-500">Nenhum pedido encontrado com esses filtros</td></tr>`;
+    });
+    
+    document.getElementById('ordersCount').textContent = `${filtered.length} filtrados`;
+    
+    if (filtered.length === 0) {
+        emptyState.classList.remove('hidden');
+        table.innerHTML = '';
         return;
-      }
-
-      table.innerHTML = filtered.map(order => {
-        const statusClass = { 
-          pending: 'status-pending', 
-          processing: 'status-processing', 
-          completed: 'status-completed', 
-          cancelled: 'status-cancelled' 
-        }[order.status] || 'bg-slate-100 text-slate-700';
+    }
+    
+    emptyState.classList.add('hidden');
+    table.innerHTML = filtered.map(order => {
+        const dateStr = order.createdAt.toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short', hour: '2-digit', minute:'2-digit' });
         
-        const statusText = { 
-          pending: '⏳ Pendente', 
-          processing: '🔄 Processando', 
-          completed: '✅ Concluído', 
-          cancelled: '❌ Cancelado' 
-        }[order.status] || order.status;
-
-        const orderDate = order.createdAt ? new Date(order.createdAt).toLocaleDateString('pt-MZ', {
-          day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
-        }) : 'N/A';
-
         return `
-          <tr class="hover:bg-slate-50 transition-colors group">
-            <td class="px-6 py-4 whitespace-nowrap">
-              <span class="text-sm font-mono font-bold text-brand-600">${order.orderId}</span>
-            </td>
-            <td class="px-6 py-4">
-              <div class="text-sm font-medium text-slate-900">${order.name}</div>
-              <div class="text-xs text-slate-500 truncate max-w-[150px]">${order.email}</div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <span class="px-2.5 py-1 text-xs font-semibold rounded-full ${order.type === 'compra' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}">
-                ${order.type.toUpperCase()}
-              </span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900 font-medium">
-              ${formatValue(order.usd, 'usd')}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900">
-              ${formatValue(order.total, 'currency')}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <span class="status-badge ${statusClass}">${statusText}</span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-              ${orderDate}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-right">
-              <button onclick="openModal('${order.id}')" class="text-brand-600 hover:text-brand-800 font-medium text-sm hover:underline">Ver</button>
-            </td>
-          </tr>
+            <tr class="hover:bg-brand-50/30 transition-colors group cursor-pointer" onclick="openModal('${order.id}')">
+                <td class="px-6 py-4"><span class="text-sm font-mono font-bold text-slate-700 bg-slate-100 px-2 py-1 rounded">${order.orderId}</span></td>
+                <td class="px-6 py-4">
+                    <div class="text-sm font-bold text-slate-900 group-hover:text-brand-600 transition-colors">${order.name}</div>
+                    <div class="text-xs text-slate-500">${order.whatsapp}</div>
+                </td>
+                <td class="px-6 py-4">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-lg border ${order.type === 'compra' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-purple-50 text-purple-700 border-purple-200'}">
+                        <i data-lucide="${order.type === 'compra' ? 'shopping-bag' : 'gamepad-2'}" class="w-3 h-3"></i>
+                        ${order.type.toUpperCase()}
+                    </span>
+                </td>
+                <td class="px-6 py-4 text-sm font-black text-slate-900">${formatValue(order.total, 'currency')}</td>
+                <td class="px-6 py-4">${getStatusBadge(order.status)}</td>
+                <td class="px-6 py-4 text-xs font-medium text-slate-500">${dateStr}</td>
+                <td class="px-6 py-4 text-right">
+                    <button class="w-8 h-8 inline-flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 group-hover:bg-brand-600 group-hover:text-white transition-all shadow-sm">
+                        <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                    </button>
+                </td>
+            </tr>
         `;
-      }).join('');
+    }).join('');
+    
+    lucide.createIcons({root: table});
+}
+
+function updateStats() {
+    const total = orders.length;
+    const pending = orders.filter(o => o.status === 'pending').length;
+    const completed = orders.filter(o => o.status === 'completed').length;
+    const revenue = orders.filter(o => o.status === 'completed' && o.tax).reduce((sum, o) => sum + Number(o.tax), 0);
+    
+    document.getElementById('statTotal').classList.remove('skeleton');
+    document.getElementById('statPending').classList.remove('skeleton');
+    document.getElementById('statCompleted').classList.remove('skeleton');
+    document.getElementById('statRevenue').classList.remove('skeleton');
+    
+    document.getElementById('statTotal').textContent = total;
+    document.getElementById('statPending').textContent = pending;
+    document.getElementById('statCompleted').textContent = completed;
+    document.getElementById('statRevenue').textContent = formatValue(revenue, 'currency');
+    
+    const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+    document.getElementById('completionRate').textContent = rate + '%';
+}
+
+// ==========================================
+// 🔍 MODAL DE DETALHES DO PEDIDO
+// ==========================================
+window.openModal = (orderId) => {
+    const order = orders.find(o => o.id === orderId);
+    if (!order) return;
+    
+    currentOrderId = orderId;
+    const isMpesa = order.paymentMethod === 'mpesa';
+    
+    // Preparar os links se for AliExpress
+    let productHtml = `<p class="font-medium break-all bg-white border border-slate-200 p-3 rounded-xl text-sm mt-1 shadow-inner">${order.detail}</p>`;
+    
+    if (order.detail.includes('http')) {
+        productHtml = `
+            <div class="mt-1 flex flex-col gap-2">
+                <input type="text" readonly value="${order.detail}" class="w-full text-xs p-3 rounded-xl bg-slate-50 border border-slate-200 outline-none font-mono text-slate-500">
+                <a href="${order.detail}" target="_blank" class="inline-flex items-center justify-center gap-2 bg-slate-900 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-800 transition shadow-md w-full sm:w-auto">
+                    <i data-lucide="external-link" class="w-4 h-4"></i> Abrir Link do Produto
+                </a>
+            </div>
+        `;
     }
 
-    // ✅ Atualizar stats (Admin)
-    function updateStats() {
-      if (userRole !== 'admin') return;
-      
-      const total = orders.length;
-      const pending = orders.filter(o => o.status === 'pending').length;
-      const completed = orders.filter(o => o.status === 'completed').length;
-      
-      const revenue = orders
-        .filter(o => o.status === 'completed' && o.tax)
-        .reduce((sum, o) => sum + Number(o.tax), 0);
-      
-      document.getElementById('statTotal').classList.remove('skeleton');
-      document.getElementById('statPending').classList.remove('skeleton');
-      document.getElementById('statCompleted').classList.remove('skeleton');
-      document.getElementById('statRevenue').classList.remove('skeleton');
-      
-      document.getElementById('statTotal').textContent = total;
-      document.getElementById('statPending').textContent = pending;
-      document.getElementById('statCompleted').textContent = completed;
-      document.getElementById('statRevenue').textContent = formatValue(revenue, 'currency');
-      
-      const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
-      document.getElementById('completionRate').textContent = rate + '%';
-      document.getElementById('statGrowth').textContent = '+12%';
-    }
-
-    function updateOrdersCount() {
-      if (userRole !== 'admin') return;
-      
-      const count = document.getElementById('ordersCount');
-      const search = document.getElementById('searchInput')?.value || '';
-      const status = document.getElementById('statusFilter')?.value || 'all';
-      
-      let filtered = orders;
-      if (search) {
-        filtered = filtered.filter(o => 
-          o.name?.toLowerCase().includes(search.toLowerCase()) ||
-          o.orderId?.toLowerCase().includes(search.toLowerCase())
-        );
-      }
-      if (status !== 'all') {
-        filtered = filtered.filter(o => o.status === status);
-      }
-      
-      count.textContent = `${filtered.length} pedido${filtered.length !== 1 ? 's' : ''}`;
-    }
-
-    // ✅ Modal de detalhes do pedido (Admin)
-    window.openModal = (orderId) => {
-      if (userRole !== 'admin') return;
-      
-      const order = orders.find(o => o.id === orderId);
-      if (!order) return;
-      
-      currentOrderId = orderId;
-      
-      const orderDate = order.createdAt ? new Date(order.createdAt).toLocaleString('pt-MZ') : 'N/A';
-      const paymentMethod = order.paymentMethod === 'mpesa' ? '🔴 M-Pesa' : '🟡 e-Mola';
-      
-      document.getElementById('modalContent').innerHTML = `
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div><p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">ID do Pedido</p><p class="font-mono font-bold text-brand-600 text-lg">${order.orderId}</p></div>
-          <div><p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Data/Hora</p><p class="font-medium">${orderDate}</p></div>
-          <div><p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Cliente</p><p class="font-medium">${order.name}</p></div>
-          <div><p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Email</p><p class="font-medium text-brand-600">${order.email}</p></div>
-          <div><p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Categoria</p><p class="font-medium">${order.type.toUpperCase()}</p></div>
-          <div><p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Pagamento</p><p class="font-medium">${paymentMethod}</p></div>
-          <div class="md:col-span-2"><p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Link/ID do Produto</p><p class="font-medium break-all bg-slate-50 p-3 rounded-lg text-sm">${order.detail}</p></div>
-          <div><p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Valor USD</p><p class="font-bold text-lg">${formatValue(order.usd, 'usd')}</p></div>
-          <div><p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total MT</p><p class="font-bold text-lg">${formatValue(order.total, 'currency')}</p></div>
-          <div><p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Taxa PayGo</p><p class="font-medium">${formatValue(order.tax, 'currency')}</p></div>
-          <div><p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Status Atual</p><p class="font-medium">${getStatusText(order.status)}</p></div>
+    document.getElementById('modalContent').innerHTML = `
+        <div class="bg-slate-100 p-4 rounded-2xl flex justify-between items-center border border-slate-200">
+            <div>
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">ID do Pedido</p>
+                <p class="font-mono font-black text-brand-700 text-xl tracking-tight">${order.orderId}</p>
+            </div>
+            <div class="text-right">
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Data Registo</p>
+                <p class="font-bold text-slate-800 text-sm">${order.createdAt.toLocaleString('pt-MZ')}</p>
+            </div>
         </div>
-      `;
-      
-      document.getElementById('statusSelect').value = order.status;
-      document.getElementById('orderModal').classList.remove('hidden');
-      document.body.style.overflow = 'hidden';
-    };
-
-    window.closeModal = () => { 
-      document.getElementById('orderModal').classList.add('hidden'); 
-      document.body.style.overflow = ''; 
-      currentOrderId = null; 
-    };
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
+            <div class="space-y-4">
+                <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider border-b border-slate-200 pb-2"><i data-lucide="user" class="w-4 h-4 inline mr-1 text-slate-400"></i> Dados do Cliente</h3>
+                <div><p class="text-xs font-semibold text-slate-500 mb-1">Nome Completo</p><p class="font-bold text-slate-900">${order.name}</p></div>
+                <div><p class="text-xs font-semibold text-slate-500 mb-1">WhatsApp</p><a href="https://wa.me/${order.whatsapp.replace(/\D/g,'')}" target="_blank" class="font-bold text-success-600 hover:underline flex items-center gap-1">${order.whatsapp} <i data-lucide="external-link" class="w-3 h-3"></i></a></div>
+                <div><p class="text-xs font-semibold text-slate-500 mb-1">Email</p><p class="font-medium text-slate-700">${order.email}</p></div>
+            </div>
+            
+            <div class="space-y-4 bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider border-b border-slate-200 pb-2"><i data-lucide="banknote" class="w-4 h-4 inline mr-1 text-slate-400"></i> Finanças</h3>
+                <div class="flex justify-between"><p class="text-xs font-semibold text-slate-500">Valor (Dólares)</p><p class="font-bold text-slate-900">${formatValue(order.usd, 'usd')}</p></div>
+                <div class="flex justify-between"><p class="text-xs font-semibold text-slate-500">Taxa PayGo</p><p class="font-bold text-brand-600">${formatValue(order.tax, 'currency')}</p></div>
+                <div class="flex justify-between pt-3 border-t border-slate-200"><p class="text-sm font-bold text-slate-800">TOTAL RECEBIDO</p><p class="font-black text-lg text-slate-900">${formatValue(order.total, 'currency')}</p></div>
+                
+                <div class="mt-4 pt-4 border-t border-slate-200">
+                    <p class="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">Via de Pagamento</p>
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border font-bold text-xs ${isMpesa ? 'bg-red-50 text-red-700 border-red-200' : 'bg-yellow-50 text-yellow-800 border-yellow-300'}">
+                        <div class="w-2 h-2 rounded-full ${isMpesa ? 'bg-red-600' : 'bg-yellow-500'}"></div> ${isMpesa ? 'M-PESA' : 'E-MOLA'}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-2">
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Detalhe do Produto / Pedido</p>
+            ${productHtml}
+        </div>
+    `;
     
-    function getStatusText(status) { 
-      return { pending: '⏳ Pendente', processing: '🔄 Processando', completed: '✅ Concluído', cancelled: '❌ Cancelado' }[status] || status; 
-    }
+    document.getElementById('statusSelect').value = order.status;
+    
+    const modal = document.getElementById('orderModal');
+    const dialog = document.getElementById('modalDialog');
+    
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden'; // Prevents background scrolling
+    
+    // Animate entrance
+    requestAnimationFrame(() => {
+        dialog.classList.remove('scale-95', 'opacity-0');
+        dialog.classList.add('scale-100', 'opacity-100');
+    });
+    
+    lucide.createIcons({root: modal});
+};
 
-    // ✅ Atualizar status do pedido (Admin)
-    document.getElementById('updateStatusBtn')?.addEventListener('click', async () => {
-      if (!currentOrderId || userRole !== 'admin') return;
-      const newStatus = document.getElementById('statusSelect').value;
-      const btn = document.getElementById('updateStatusBtn');
-      const originalText = btn.innerHTML;
-      
-      btn.disabled = true;
-      btn.innerHTML = `<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Atualizando...`;
-      
-      try {
-        await updateDoc(doc(db, "orders", currentOrderId), { 
-          status: newStatus, 
-          updatedAt: serverTimestamp() 
-        });
-        showToast('✅ Status atualizado!', 'success');
+window.closeModal = () => {
+    const modal = document.getElementById('orderModal');
+    const dialog = document.getElementById('modalDialog');
+    
+    dialog.classList.remove('scale-100');
+    dialog.classList.add('scale-95');
+    
+    setTimeout(() => {
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+        currentOrderId = null;
+    }, 150);
+};
+
+// Fechar modal no ESC e clique fora
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !document.getElementById('orderModal').classList.contains('hidden')) {
         closeModal();
-      } catch (error) { 
-        console.error('Erro ao atualizar:', error); 
-        showToast('❌ Erro ao atualizar', 'error'); 
-      } finally { 
-        btn.disabled = false; 
-        btn.innerHTML = originalText; 
-      }
-    });
+    }
+});
+document.getElementById('orderModal')?.addEventListener('click', (e) => {
+    if (e.target.id === 'orderModal') closeModal();
+});
 
-    // ✅ Copiar código de afiliado
-    window.copyAffiliateCode = async () => {
-      if (!affiliateData?.affiliateCode) return;
-      try {
+// Atualizar Status via Botão do Modal
+document.getElementById('updateStatusBtn')?.addEventListener('click', async () => {
+    if (!currentOrderId || userRole !== 'admin') return;
+    
+    const newStatus = document.getElementById('statusSelect').value;
+    const btn = document.getElementById('updateStatusBtn');
+    const originalText = btn.innerHTML;
+    
+    btn.disabled = true;
+    btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A guardar...`;
+    lucide.createIcons({root: btn});
+    
+    try {
+        await updateDoc(doc(db, "orders", currentOrderId), {
+            status: newStatus,
+            updatedAt: serverTimestamp()
+        });
+        showToast('Status atualizado e salvo com sucesso!', 'success');
+        closeModal();
+    } catch (error) {
+        console.error(error);
+        showToast('Falha na conexão ao atualizar o pedido', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        lucide.createIcons({root: btn});
+    }
+});
+
+// ==========================================
+// 📋 AÇÕES DE CLIPEBOARD (CÓPIA)
+// ==========================================
+window.copyAffiliateCode = async () => {
+    if (!affiliateData?.affiliateCode) return;
+    try {
         await navigator.clipboard.writeText(affiliateData.affiliateCode);
-        showToast('📋 Código copiado!', 'success');
-      } catch (err) {
-        showToast('❌ Erro ao copiar', 'error');
-      }
-    };
+        showToast('Código copiado para a área de transferência!', 'success');
+    } catch (err) {
+        showToast('O seu navegador não suporta cópia automática', 'error');
+    }
+};
 
-    // ✅ Copiar link de afiliado
-    window.copyAffiliateLink = async () => {
-      const link = document.getElementById('affiliateLink').value;
-      try {
+window.copyAffiliateLink = async () => {
+    const link = document.getElementById('affiliateLink').value;
+    try {
         await navigator.clipboard.writeText(link);
-        showToast('🔗 Link copiado!', 'success');
-      } catch (err) {
-        showToast('❌ Erro ao copiar', 'error');
-      }
-    };
+        showToast('Link promocional copiado!', 'success');
+    } catch (err) {
+        showToast('Erro ao copiar link', 'error');
+    }
+};
 
-    // ✅ Event listeners
-    document.getElementById('logoutBtn')?.addEventListener('click', async () => { 
-      if (confirm('Tem certeza que deseja sair?')) { 
-        await signOut(auth); 
-        window.location.href = 'login.html'; 
-      } 
-    });
-    
-    // Debounce para busca
-    let searchTimeout;
-    document.getElementById('searchInput')?.addEventListener('input', (e) => {
-      clearTimeout(searchTimeout);
-      searchTimeout = setTimeout(() => {
-        if (userRole === 'admin') {
-          renderOrders();
-          updateOrdersCount();
-        }
-      }, 300);
-    });
-    
-    document.getElementById('statusFilter')?.addEventListener('change', () => { 
-      if (userRole === 'admin') {
-        renderOrders(); 
-        updateOrdersCount(); 
-      }
-    });
-
-    // ✅ Toast notifications
-    window.showToast = (message, type = 'success') => {
-      const container = document.getElementById('toastContainer');
-      const toast = document.createElement('div');
-      const colors = { success: 'bg-green-500', error: 'bg-red-500', warning: 'bg-yellow-500', info: 'bg-blue-500' };
-      const icons = { 
-        success: 'M5 13l4 4L19 7', 
-        error: 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z', 
-        warning: 'M12 9v2m0 4h.01', 
-        info: 'M13 16h-1v-4h-1' 
-      };
-      
-      toast.className = `flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-white ${colors[type]} transform transition-all duration-300 translate-x-full`;
-      toast.innerHTML = `
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${icons[type]}"></path>
-        </svg>
-        <span class="text-sm font-medium">${message}</span>
-        <button onclick="this.parentElement.remove()" class="ml-2 hover:opacity-80">✕</button>
-      `;
-      container.appendChild(toast);
-      requestAnimationFrame(() => { toast.classList.remove('translate-x-full'); });
-      setTimeout(() => { 
-        toast.classList.add('opacity-0'); 
-        setTimeout(() => toast.remove(), 300); 
-      }, 4000);
-    };
-
-    window.refreshOrders = () => { 
-      if (userRole === 'admin') {
-        showToast('🔄 Atualizando...', 'info'); 
-        loadOrders(); 
-      }
-    };
-    
-    document.getElementById('orderModal')?.addEventListener('click', (e) => { 
-      if (e.target.id === 'orderModal') closeModal(); 
-    });
-
-    // ✅ Inicialização com cleanup
-    async function initDashboard() {
-      const hasAccess = await verifyAccess();
-      if (!hasAccess) return;
-      
-      if (typeof lucide !== 'undefined') lucide.createIcons();
-      
-      if (userRole === 'admin') {
+// ==========================================
+// 🔄 FILTROS E EVENTOS
+// ==========================================
+window.refreshOrders = () => {
+    if (userRole === 'admin') {
+        showToast('A atualizar lista de pedidos...', 'info');
         loadOrders();
-      }
-      
-      // Cleanup ao sair da página
-      window.addEventListener('beforeunload', () => {
-        if (ordersUnsubscribe) ordersUnsubscribe();
-      });
-      
-      console.log('✅ Dashboard PayGo carregado - Role:', userRole);
+    }
+};
+
+let searchTimeout;
+document.getElementById('searchInput')?.addEventListener('input', () => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => { if (userRole === 'admin') renderOrders(); }, 400);
+});
+
+document.getElementById('statusFilter')?.addEventListener('change', () => {
+    if (userRole === 'admin') renderOrders();
+});
+
+document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+    if (confirm('Tem a certeza que deseja terminar sessão?')) {
+        await signOut(auth);
+        window.location.href = 'login.html';
+    }
+});
+
+// ==========================================
+// 🚀 INICIALIZAÇÃO
+// ==========================================
+async function initDashboard() {
+    lucide.createIcons(); // Carrega ícones base
+    const hasAccess = await verifyAccess();
+    if (hasAccess && userRole === 'admin') {
+        loadOrders();
     }
     
-    initDashboard();
-  </script>
+    // Cleanup de listeners ao sair
+    window.addEventListener('beforeunload', () => {
+        if (ordersUnsubscribe) ordersUnsubscribe();
+    });
+}
+
+initDashboard();
+</script>
 </body>
 </html>
-
-
