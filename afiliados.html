@@ -251,7 +251,7 @@
                                 </li>
                                 <li class="flex items-start gap-2">
                                     <i data-lucide="chevron-right" class="w-4 h-4 text-success-400 mt-0.5 flex-shrink-0"></i>
-                                    <span>Email válido e verificado</span>
+                                    <span>Email válido e ativo</span>
                                 </li>
                                 <li class="flex items-start gap-2">
                                     <i data-lucide="chevron-right" class="w-4 h-4 text-success-400 mt-0.5 flex-shrink-0"></i>
@@ -455,7 +455,7 @@
 
     <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, updateProfile, onAuthStateChanged, signOut, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getAuth, createUserWithEmailAndPassword, updateProfile, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -526,7 +526,6 @@
             authNotice.classList.remove('hidden');
             passwordSection.classList.add('hidden');
             
-            // Preencher email automaticamente e bloquear edição
             emailInput.value = user.email;
             emailInput.readOnly = true;
             emailInput.classList.add('opacity-50');
@@ -543,7 +542,6 @@
                     if (data.phone) document.getElementById('affiliatePhone').value = data.phone;
                 }
                 
-                // Atualizar Header
                 if (document.getElementById('headerUserName')) document.getElementById('headerUserName').textContent = userName;
                 if (document.getElementById('headerUserAvatar')) document.getElementById('headerUserAvatar').textContent = userName.charAt(0).toUpperCase();
                 if (document.getElementById('mobileUserName')) document.getElementById('mobileUserName').textContent = userName;
@@ -560,7 +558,6 @@
             emailInput.readOnly = false;
             emailInput.classList.remove('opacity-50');
             
-            // Atualizar Header para Visitante
             if (userSection) userSection.style.display = 'none';
             if (guestSection) guestSection.style.display = 'flex';
             if (mobileUserSection) { mobileUserSection.classList.add('hidden'); mobileUserSection.classList.remove('flex'); }
@@ -610,7 +607,7 @@
             };
 
             if (currentUser) {
-                // UTILIZADOR LOGADO - Atualizar Perfil Existente
+                // UTILIZADOR LOGADO
                 userId = currentUser.uid;
                 const userDoc = await getDoc(doc(db, "users", userId));
                 const userData = userDoc.exists() ? userDoc.data() : {};
@@ -620,11 +617,10 @@
                     btn.classList.remove('btn-loading');
                     return;
                 }
-
                 await updateDoc(doc(db, "users", userId), applicationData);
                 
             } else {
-                // NOVO UTILIZADOR - Criar Conta e Enviar Email Firebase
+                // NOVO UTILIZADOR
                 const password = document.getElementById('affiliatePassword').value;
                 const confirmPassword = document.getElementById('affiliateConfirmPassword').value;
 
@@ -650,61 +646,66 @@
                     totalReferrals: 0,
                     approvedReferrals: 0
                 });
-
-                // NOVIDADE: Envia o link de confirmação oficial do Firebase
-                try {
-                    await sendEmailVerification(cred.user);
-                    console.log("Email de verificação disparado com sucesso!");
-                } catch(err) {
-                    console.error("Falha ao enviar email do Firebase:", err);
-                }
             }
 
-            // --- BLOCO DE NOTIFICAÇÕES GERAIS (Admin & Cliente) ---
+            // ==========================================
+            // DISPARO DE EMAILS E NOTIFICAÇÕES (Resend + Lark)
+            // ==========================================
             
-            // 1. Enviar email avançado ao cliente via API (se estiver configurada)
+            // 1. Enviar Email de Confirmação via Resend (Chamando a tua API Backend)
             try {
                 await fetch('/api/send-email', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         to: email,
-                        subject: '🎉 Recebemos a sua Candidatura de Afiliado!',
-                        template: 'affiliate-pending',
-                        variables: { customer_name: name }
+                        subject: 'Bem-vindo(a) à PayGo! Confirme a sua candidatura',
+                        template: 'affiliate-registration', // O nome do template que configuraste no backend
+                        variables: { 
+                            customer_name: name,
+                            email: email
+                        }
                     })
                 });
-            } catch(e) {}
+                console.log("Email de confirmação via Resend enviado.");
+            } catch(e) {
+                console.error('Falha ao acionar a API do Resend:', e);
+            }
 
-            // 2. Notificar Admin (Lark Webhook direto)
-            try {
-                await fetch(LARK_WEBHOOK, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        msg_type: "text",
-                        content: { text: `🚨 NOVA CANDIDATURA DE AFILIADO 🚨\n\n👤 Nome: ${name}\n📧 Email: ${email}\n📱 Tel: ${phone}\n📢 Método: ${promoMethod}\n📈 Potencial: ${expectedRef} /mês\n\nAceda ao painel Admin para rever e aprovar.` }
-                    })
-                });
-            } catch(e) { console.log('Erro de CORS no Lark direto.'); }
-
-            // 3. Notificar Admin (Fallback via Rota Local para fugir ao erro CORS do navegador)
+            // 2. Notificar o Administrador via Lark (usando rota backend para evitar CORS)
             try {
                 await fetch('/api/webhook-lark', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         type: 'new-affiliate',
-                        data: { name, email, phone, promoMethod }
+                        data: {
+                            name: name,
+                            email: email,
+                            phone: phone,
+                            promoMethod: promoMethod,
+                            expectedReferrals: expectedRef
+                        }
                     })
                 });
-            } catch(e) {}
+            } catch(e) {
+                console.error('Falha ao acionar webhook do Lark:', e);
+            }
 
-            // ----------------------------------------------------
+            // Fallback direto ao webhook do Lark caso a API /api/webhook-lark não exista ainda
+            fetch(LARK_WEBHOOK, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                mode: 'no-cors', // Evita erros no navegador
+                body: JSON.stringify({
+                    msg_type: "text",
+                    content: { text: `🚨 NOVA CANDIDATURA DE AFILIADO\nNome: ${name}\nEmail: ${email}\nTel: ${phone}\nMétodo: ${promoMethod}` }
+                })
+            }).catch(e => console.log(e));
+            // ==========================================
 
             showToast('Candidatura enviada com sucesso! Verifique a sua caixa de entrada.', 'success');
             
-            // Redireciona com aviso visual
             setTimeout(() => {
                 window.location.href = `login.html?affiliate_pending=true&email=${encodeURIComponent(email)}`;
             }, 3000);
@@ -724,7 +725,6 @@
 
     // Animações, Inicializações e Menu Mobile
     document.addEventListener('DOMContentLoaded', () => {
-        // Capturar ref link se partilhado
         const urlParams = new URLSearchParams(window.location.search);
         const refCode = urlParams.get('ref');
         if (refCode) {
@@ -740,7 +740,6 @@
             else nav.classList.remove('glass-nav');
         });
 
-        // Menu Mobile Toggle
         const menuBtn = document.getElementById('menu-btn');
         const mobileMenu = document.getElementById('mobile-menu');
         const closeMenuBtn = document.getElementById('close-menu-btn');
