@@ -45,7 +45,7 @@
         .glass-card:hover { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02); }
 
         /* Toasts */
-        #toast-container { position: fixed; top: 24px; right: 24px; z-index: 1000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
+        #toast-container { position: fixed; top: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
         .toast { pointer-events: auto; background: white; border-left: 4px solid #22c55e; padding: 16px; border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 12px; max-width: 350px; transform: translateX(120%); transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); opacity: 0; }
         .toast.show { transform: translateX(0); opacity: 1; }
         .toast.error { border-left-color: #ef4444; }
@@ -65,7 +65,7 @@
     <div id="pageLoader" class="fixed inset-0 bg-slate-900 z-[100] flex flex-col items-center justify-center">
         <div class="w-12 h-12 border-4 border-slate-700 border-t-success-500 rounded-full loader-spinner mb-4"></div>
         <h2 class="text-white text-xl font-display font-bold tracking-wide">Portal do Afiliado</h2>
-        <p class="text-slate-400 text-sm mt-2">A carregar os seus ganhos...</p>
+        <p class="text-slate-400 text-sm mt-2">A sincronizar os seus ganhos...</p>
     </div>
 
     <div class="md:hidden fixed top-0 left-0 w-full bg-slate-900 text-white p-4 flex items-center justify-between z-40 shadow-md">
@@ -156,20 +156,20 @@
             <div class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-[2rem] p-6 md:p-8 shadow-xl text-white relative overflow-hidden">
                 <div class="absolute top-0 right-0 w-64 h-64 bg-success-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
                 
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 relative z-10">
                     <h2 class="text-lg font-bold flex items-center gap-2">
                         <i data-lucide="link" class="w-5 h-5 text-success-400"></i> O seu Link de Indicação
                     </h2>
                     <div class="flex items-center gap-2 bg-slate-950/50 px-3 py-1.5 rounded-lg border border-slate-700">
                         <span class="text-xs text-slate-400">Código:</span>
                         <span class="text-sm font-mono font-bold text-success-400" id="rawAffiliateCode">---</span>
-                        <button onclick="copyRawCode()" class="text-slate-400 hover:text-white ml-2" title="Copiar apenas o código">
+                        <button onclick="copyRawCode()" class="text-slate-400 hover:text-white ml-2 transition-colors" title="Copiar apenas o código">
                             <i data-lucide="copy" class="w-4 h-4"></i>
                         </button>
                     </div>
                 </div>
                 
-                <div class="flex flex-col md:flex-row gap-4">
+                <div class="flex flex-col md:flex-row gap-4 relative z-10">
                     <div class="relative flex-1 group">
                         <input type="text" id="affiliateLinkInput" readonly class="w-full bg-slate-950/50 border border-slate-700 text-white px-5 py-4 rounded-xl font-mono text-sm sm:text-base focus:outline-none focus:border-success-500 transition-colors pr-28">
                         <button onclick="copyAffiliateLink()" class="absolute right-2 top-1/2 -translate-y-1/2 bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-2">
@@ -180,8 +180,8 @@
                         <i data-lucide="message-circle" class="w-5 h-5"></i> Partilhar
                     </button>
                 </div>
-                <p class="text-xs text-slate-400 mt-4 flex items-center gap-1.5">
-                    <i data-lucide="info" class="w-4 h-4"></i> Partilhe este link. Se alguém se registar e comprar através dele, você ganha a comissão!
+                <p class="text-xs text-slate-400 mt-4 flex items-center gap-1.5 relative z-10">
+                    <i data-lucide="info" class="w-4 h-4 text-success-400/70"></i> Partilhe este link com os seus clientes. Quando eles efetuarem o pagamento de um serviço, a sua comissão é garantida.
                 </p>
             </div>
 
@@ -233,9 +233,9 @@
                         <thead>
                             <tr class="bg-white border-b border-slate-100">
                                 <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Data</th>
-                                <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Indicado (Email Oculto)</th>
+                                <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Indicado (Email)</th>
                                 <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Status</th>
-                                <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Comissão Gerada</th>
+                                <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Comissão</th>
                             </tr>
                         </thead>
                         <tbody id="referralsTable" class="divide-y divide-slate-50">
@@ -248,7 +248,7 @@
                         <i data-lucide="user-plus" class="w-8 h-8 text-slate-300"></i>
                     </div>
                     <p class="font-bold text-slate-700">Ainda não tem indicações</p>
-                    <p class="text-sm mt-1">Partilhe o seu link para começar a ganhar.</p>
+                    <p class="text-sm mt-1">Partilhe o seu link para começar a ver resultados.</p>
                 </div>
             </div>
             
@@ -261,7 +261,7 @@
         <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-md modal-content overflow-hidden">
             <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                 <h3 class="text-xl font-display font-bold text-slate-900">Solicitar Levantamento</h3>
-                <button onclick="closeWithdrawModal()" class="text-slate-400 hover:text-slate-600 bg-white rounded-full p-1 border shadow-sm transition-colors">
+                <button onclick="closeWithdrawModal()" class="text-slate-400 hover:text-slate-600 bg-white rounded-full p-1 border shadow-sm transition-colors focus:outline-none">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
@@ -272,7 +272,7 @@
                         <p class="text-sm text-success-700 font-medium">Saldo Disponível</p>
                         <p class="text-2xl font-bold text-success-700" id="modalAvailableBalance">0,00 MT</p>
                     </div>
-                    <div class="w-10 h-10 bg-success-100 text-success-600 rounded-full flex items-center justify-center">
+                    <div class="w-10 h-10 bg-success-100 text-success-600 rounded-full flex items-center justify-center shadow-inner">
                         <i data-lucide="wallet" class="w-5 h-5"></i>
                     </div>
                 </div>
@@ -280,13 +280,13 @@
                 <form id="withdrawForm" class="space-y-4">
                     <div>
                         <label class="block text-sm font-bold text-slate-700 mb-1">Valor a Levantar (MT) *</label>
-                        <input type="number" id="withdrawAmount" required min="600" placeholder="Ex: 600" class="w-full border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-success-500 focus:ring-2 focus:ring-success-500/20 transition-all">
+                        <input type="number" id="withdrawAmount" required min="600" placeholder="Ex: 600" class="w-full border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-success-500 focus:ring-2 focus:ring-success-500/20 transition-all font-medium">
                         <p class="text-xs text-slate-500 mt-1">Mínimo: 600 MT</p>
                     </div>
 
                     <div>
                         <label class="block text-sm font-bold text-slate-700 mb-1">Método de Receção *</label>
-                        <select id="withdrawMethod" required class="w-full border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-success-500 focus:ring-2 focus:ring-success-500/20 transition-all appearance-none bg-white">
+                        <select id="withdrawMethod" required class="w-full border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-success-500 focus:ring-2 focus:ring-success-500/20 transition-all appearance-none bg-white font-medium cursor-pointer">
                             <option value="mpesa">M-Pesa</option>
                             <option value="emola">e-Mola</option>
                         </select>
@@ -294,10 +294,10 @@
 
                     <div>
                         <label class="block text-sm font-bold text-slate-700 mb-1">Número da Conta *</label>
-                        <input type="tel" id="withdrawPhone" required placeholder="84/85 ou 86/87" class="w-full border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-success-500 focus:ring-2 focus:ring-success-500/20 transition-all">
+                        <input type="tel" id="withdrawPhone" required placeholder="84/85 ou 86/87" class="w-full border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-success-500 focus:ring-2 focus:ring-success-500/20 transition-all font-medium">
                     </div>
 
-                    <button type="submit" id="withdrawBtnSubmit" class="w-full bg-success-600 hover:bg-success-700 text-white font-bold py-3.5 rounded-xl transition-colors shadow-lg shadow-success-600/20 mt-2 flex items-center justify-center gap-2">
+                    <button type="submit" id="withdrawBtnSubmit" class="w-full bg-success-600 hover:bg-success-700 text-white font-bold py-3.5 rounded-xl transition-colors shadow-lg shadow-success-600/20 mt-4 flex items-center justify-center gap-2 active:scale-[0.98]">
                         <span>Confirmar Pedido</span>
                     </button>
                 </form>
@@ -312,7 +312,6 @@
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, collection, query, where, getDocs, orderBy, limit, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
             authDomain: "paygo-14311.firebaseapp.com",
@@ -329,7 +328,7 @@
         let currentUserData = null;
         let affiliateCodeLocal = '';
 
-        // Mobile Menu Toggle
+        // UI Interactions
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
         const closeSidebarBtn = document.getElementById('closeSidebarBtn');
         const sidebar = document.getElementById('sidebar');
@@ -349,7 +348,6 @@
         closeSidebarBtn?.addEventListener('click', toggleSidebar);
         sidebarOverlay?.addEventListener('click', toggleSidebar);
 
-        // Toast
         window.showToast = function(message, type = 'success') {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
@@ -359,16 +357,15 @@
             
             toast.innerHTML = `<i data-lucide="${icon}" class="w-5 h-5 ${color}"></i><span class="text-sm font-bold text-slate-800">${message}</span>`;
             container.appendChild(toast);
-            lucide.createIcons();
+            lucide.createIcons({root: toast});
             
             requestAnimationFrame(() => toast.classList.add('show'));
             setTimeout(() => {
                 toast.classList.remove('show');
                 setTimeout(() => toast.remove(), 400);
-            }, 3000);
+            }, 3500);
         }
 
-        // Saudações Baseadas na Hora
         function setGreeting() {
             const hour = new Date().getHours();
             let greeting = 'Olá';
@@ -383,7 +380,6 @@
             }
         }
 
-        // Formatação
         function formatMT(value) {
             return Number(value || 0).toLocaleString('pt-MZ', { minimumFractionDigits: 2 }) + ' MT';
         }
@@ -397,17 +393,17 @@
 
         function formatDate(isoString) {
             if(!isoString) return '-';
-            const d = new Date(isoString);
+            const d = new Date(isoString?.toDate ? isoString.toDate() : isoString);
             return d.toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short', year: 'numeric' });
         }
 
-        // Ações de Link e Partilha
+        // Ações de Partilha
         window.copyAffiliateLink = function() {
             const link = document.getElementById('affiliateLinkInput').value;
             if(!link) return;
             navigator.clipboard.writeText(link).then(() => {
                 showToast('Link de indicação copiado!', 'success');
-            });
+            }).catch(() => showToast('Erro ao copiar', 'error'));
         };
 
         window.copyRawCode = function() {
@@ -420,11 +416,11 @@
         window.shareWhatsApp = function() {
             const link = document.getElementById('affiliateLinkInput').value;
             if(!link) return;
-            const text = encodeURIComponent(`Olá! Descobri a PayGo, uma plataforma fantástica para comprar no AliExpress e Shein pagando com M-Pesa. Cria a tua conta pelo meu link e vamos aproveitar:\n\n${link}`);
+            const text = encodeURIComponent(`Olá! Descobri a PayGo, uma plataforma fantástica para comprar no AliExpress e Shein pagando com M-Pesa/e-Mola. Regista-te através do meu link e vamos aproveitar:\n\n${link}`);
             window.open(`https://wa.me/?text=${text}`, '_blank');
         };
 
-        // Modal de Levantamento (Saque)
+        // Modais de Saque
         window.openWithdrawModal = function() {
             const balance = currentUserData?.affiliateEarnings || 0;
             if (balance < 600) {
@@ -462,24 +458,23 @@
             }
             
             if (amount < 600) {
-                showToast('O valor mínimo é 600 MT.', 'error');
+                showToast('O valor mínimo de saque é 600 MT.', 'error');
                 return;
             }
 
             btn.disabled = true;
             btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Processando...`;
-            lucide.createIcons();
+            lucide.createIcons({root: btn});
 
             try {
-                // Salvar pedido na base de dados
                 await addDoc(collection(db, "withdrawals"), {
-                    userId: currentUserData.uid,
+                    userId: currentUserData.uid || auth.currentUser.uid,
                     affiliateCode: affiliateCodeLocal,
                     amount: amount,
                     method: method,
                     phone: phone,
                     status: 'pending',
-                    createdAt: new Date().toISOString()
+                    createdAt: new Date()
                 });
                 
                 showToast('Pedido de saque recebido! Será processado em breve.', 'success');
@@ -494,7 +489,7 @@
             }
         });
 
-        // Carregar Referidos (Tabela)
+        // Tabela de Referidos
         async function loadReferrals(affiliateCode) {
             const table = document.getElementById('referralsTable');
             const emptyState = document.getElementById('emptyReferrals');
@@ -518,32 +513,35 @@
                 
                 snapshot.forEach(doc => {
                     const refUser = doc.data();
-                    const hasBought = refUser.totalPurchases > 0;
+                    const hasBought = refUser.firstPurchaseProcessed === true || refUser.totalPurchases > 0;
                     
-                    const comissionValue = hasBought ? '<span class="text-success-600 font-bold">+ Adicionada</span>' : '<span class="text-slate-400">Aguardando</span>';
+                    const comissionValue = hasBought 
+                        ? '<span class="text-success-600 font-bold bg-success-50 px-2 py-1 rounded-md text-xs">+ Adicionada</span>' 
+                        : '<span class="text-slate-400 font-medium text-xs"><i data-lucide="clock" class="w-3 h-3 inline"></i> Aguardando</span>';
                     
                     const statusBadge = hasBought 
-                        ? `<span class="bg-success-100 text-success-700 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider">Comprou</span>`
-                        : `<span class="bg-slate-100 text-slate-600 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider">Apenas Registo</span>`;
+                        ? `<span class="bg-brand-50 text-brand-700 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider border border-brand-100">Comprou</span>`
+                        : `<span class="bg-slate-100 text-slate-600 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider border border-slate-200">Apenas Registo</span>`;
                     
                     table.innerHTML += `
                         <tr class="hover:bg-slate-50 transition-colors">
                             <td class="px-6 py-4 text-sm text-slate-500 whitespace-nowrap">${formatDate(refUser.createdAt)}</td>
-                            <td class="px-6 py-4 font-medium text-slate-900">${maskEmail(refUser.email)}</td>
+                            <td class="px-6 py-4 font-bold text-slate-700">${maskEmail(refUser.email)}</td>
                             <td class="px-6 py-4">${statusBadge}</td>
                             <td class="px-6 py-4 text-right">${comissionValue}</td>
                         </tr>
                     `;
                 });
+                lucide.createIcons({root: table});
                 
             } catch (error) {
                 console.error("Erro ao carregar referidos:", error);
-                table.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-red-500 text-sm"><i data-lucide="alert-circle" class="w-5 h-5 inline mr-1"></i> Erro ao carregar a lista.</td></tr>`;
+                table.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-red-500 text-sm"><i data-lucide="alert-circle" class="w-5 h-5 inline mr-1"></i> Erro de ligação com a base de dados.</td></tr>`;
                 lucide.createIcons();
             }
         }
 
-        // Inicialização via Autenticação
+        // Firebase Auth Listener
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
                 window.location.href = 'login.html';
@@ -555,16 +553,18 @@
                 
                 if (userDoc.exists()) {
                     currentUserData = userDoc.data();
+                    currentUserData.uid = user.uid; // Guarda o UID para ser usado nos saques
                     
                     // Preencher Sidebar & Header
-                    const nameToDisplay = currentUserData.name || user.email;
+                    const nameToDisplay = currentUserData.name || user.email || 'Usuário';
                     document.getElementById('userName').textContent = nameToDisplay;
                     document.getElementById('userInitial').textContent = nameToDisplay.charAt(0).toUpperCase();
                     setGreeting();
 
                     // Bloqueio se não for afiliado
                     if (currentUserData.role !== 'affiliate') {
-                        window.location.href = 'dashboard.html';
+                        showToast('Acesso restrito a Parceiros.', 'error');
+                        setTimeout(() => window.location.href = 'dashboard.html', 1500);
                         return;
                     }
 
@@ -575,42 +575,42 @@
                     if (currentUserData.status === 'pending') {
                         // Pendente
                         badge.innerHTML = `<i data-lucide="clock" class="w-4 h-4"></i> Em Análise`;
-                        badge.classList.add('bg-warning-50', 'text-warning-600', 'border-warning-200', 'flex');
-                        badge.classList.remove('hidden');
+                        badge.className = 'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold shadow-sm border bg-warning-50 text-warning-600 border-warning-200';
                         
                         pendingAlert.classList.remove('hidden');
                         dashboardContent.classList.add('hidden');
                         
-                    } else if (currentUserData.status === 'approved' || currentUserData.affiliateCodeActive === true) {
+                    } else if (currentUserData.status === 'active' || currentUserData.affiliateCodeActive === true) {
                         // Aprovado
                         badge.innerHTML = `<i data-lucide="check-circle-2" class="w-4 h-4"></i> Conta Ativa`;
-                        badge.classList.add('bg-success-50', 'text-success-600', 'border-success-200', 'flex');
-                        badge.classList.remove('hidden');
+                        badge.className = 'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold shadow-sm border bg-success-50 text-success-600 border-success-200';
                         
                         pendingAlert.classList.add('hidden');
                         dashboardContent.classList.remove('hidden');
                         
-                        // Preencher Dados
+                        // Remover Skeletons
                         document.querySelectorAll('.skeleton').forEach(el => el.classList.remove('skeleton'));
                         
+                        // Dados Numéricos
                         document.getElementById('statEarnings').textContent = formatMT(currentUserData.affiliateEarnings);
                         document.getElementById('statReferrals').textContent = currentUserData.totalReferrals || 0;
                         document.getElementById('statConverted').textContent = currentUserData.approvedReferrals || 0;
                         
-                        // Links
-                        affiliateCodeLocal = currentUserData.affiliateCode;
-                        document.getElementById('rawAffiliateCode').textContent = affiliateCodeLocal;
-                        document.getElementById('affiliateLink').value = `${siteUrl}/?ref=${affiliateData.affiliateCode || ''}`;
-                        document.getElementById('affiliateLinkInput').value = affiliateUrl;
+                        // Lógica Correta do Link de Partilha
+                        affiliateCodeLocal = currentUserData.affiliateCode || '';
+                        const siteUrl = window.location.origin;
+                        const finalAffiliateUrl = `${siteUrl}/?ref=${affiliateCodeLocal}`; // <-- Redireciona para o index com o param de referência
                         
-                        // Tabela
+                        document.getElementById('rawAffiliateCode').textContent = affiliateCodeLocal;
+                        document.getElementById('affiliateLinkInput').value = finalAffiliateUrl;
+                        
+                        // Tabela de Indicações
                         await loadReferrals(affiliateCodeLocal);
                         
                     } else {
-                        // Suspenso
+                        // Suspenso/Banido
                         badge.innerHTML = `<i data-lucide="x-circle" class="w-4 h-4"></i> Conta Suspensa`;
-                        badge.classList.add('bg-red-50', 'text-red-600', 'border-red-200', 'flex');
-                        badge.classList.remove('hidden');
+                        badge.className = 'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold shadow-sm border bg-red-50 text-red-600 border-red-200';
                         pendingAlert.classList.add('hidden');
                     }
                     
@@ -622,9 +622,12 @@
                 console.error("Erro ao carregar perfil:", error);
                 showToast('Erro ao ligar ao servidor.', 'error');
             } finally {
+                // Remover eclair do ecrã
                 const loader = document.getElementById('pageLoader');
-                loader.style.opacity = '0';
-                setTimeout(() => loader.style.display = 'none', 500);
+                if(loader) {
+                    loader.style.opacity = '0';
+                    setTimeout(() => loader.style.display = 'none', 500);
+                }
                 lucide.createIcons();
             }
         });
