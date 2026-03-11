@@ -163,7 +163,7 @@
                     <div class="flex items-center gap-2 bg-slate-950/50 px-3 py-1.5 rounded-lg border border-slate-700">
                         <span class="text-xs text-slate-400">Código:</span>
                         <span class="text-sm font-mono font-bold text-success-400" id="rawAffiliateCode">---</span>
-                        <button onclick="copyRawCode()" class="text-slate-400 hover:text-white ml-2 transition-colors" title="Copiar apenas o código">
+                        <button id="btnCopyCode" class="text-slate-400 hover:text-white ml-2 transition-colors" title="Copiar apenas o código">
                             <i data-lucide="copy" class="w-4 h-4"></i>
                         </button>
                     </div>
@@ -172,11 +172,11 @@
                 <div class="flex flex-col md:flex-row gap-4 relative z-10">
                     <div class="relative flex-1 group">
                         <input type="text" id="affiliateLinkInput" readonly class="w-full bg-slate-950/50 border border-slate-700 text-white px-5 py-4 rounded-xl font-mono text-sm sm:text-base focus:outline-none focus:border-success-500 transition-colors pr-28">
-                        <button onclick="copyAffiliateLink()" class="absolute right-2 top-1/2 -translate-y-1/2 bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-2">
+                        <button id="btnCopyLink" class="absolute right-2 top-1/2 -translate-y-1/2 bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-2">
                             <i data-lucide="copy" class="w-4 h-4"></i> <span class="hidden sm:inline">Copiar</span>
                         </button>
                     </div>
-                    <button onclick="shareWhatsApp()" class="bg-[#25D366] hover:bg-[#128C7E] text-white px-6 py-4 rounded-xl font-bold transition-all shadow-lg shadow-[#25D366]/20 flex items-center justify-center gap-2 whitespace-nowrap active:scale-95">
+                    <button id="btnShareWp" class="bg-[#25D366] hover:bg-[#128C7E] text-white px-6 py-4 rounded-xl font-bold transition-all shadow-lg shadow-[#25D366]/20 flex items-center justify-center gap-2 whitespace-nowrap active:scale-95">
                         <i data-lucide="message-circle" class="w-5 h-5"></i> Partilhar
                     </button>
                 </div>
@@ -196,7 +196,7 @@
                     <p class="text-3xl font-display font-extrabold text-slate-900 skeleton" id="statEarnings">0,00 MT</p>
                     <div class="mt-4 pt-4 border-t border-success-100/50 flex justify-between items-center">
                         <span class="text-xs text-slate-500 font-medium">Saldo pronto a levantar</span>
-                        <button onclick="openWithdrawModal()" class="text-xs font-bold text-white bg-success-600 hover:bg-success-700 px-4 py-2 rounded-lg transition-colors shadow-sm shadow-success-600/30">Solicitar Saque</button>
+                        <button id="btnOpenWithdraw" class="text-xs font-bold text-white bg-success-600 hover:bg-success-700 px-4 py-2 rounded-lg transition-colors shadow-sm shadow-success-600/30">Solicitar Saque</button>
                     </div>
                 </div>
 
@@ -256,12 +256,12 @@
     </main>
 
     <div id="withdrawModal" class="fixed inset-0 z-[110] modal-closed flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm modal-overlay" onclick="closeWithdrawModal()"></div>
+        <div id="modalOverlayClose" class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm modal-overlay"></div>
         
         <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-md modal-content overflow-hidden">
             <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                 <h3 class="text-xl font-display font-bold text-slate-900">Solicitar Levantamento</h3>
-                <button onclick="closeWithdrawModal()" class="text-slate-400 hover:text-slate-600 bg-white rounded-full p-1 border shadow-sm transition-colors focus:outline-none">
+                <button id="btnCloseModal" class="text-slate-400 hover:text-slate-600 bg-white rounded-full p-1 border shadow-sm transition-colors focus:outline-none">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
@@ -328,7 +328,9 @@
         let currentUserData = null;
         let affiliateCodeLocal = '';
 
-        // Interações de UI
+        // ==========================================
+        // UI & EVENTOS
+        // ==========================================
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
         const closeSidebarBtn = document.getElementById('closeSidebarBtn');
         const sidebar = document.getElementById('sidebar');
@@ -344,11 +346,12 @@
                 setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
             }
         }
+        
         mobileMenuBtn?.addEventListener('click', toggleSidebar);
         closeSidebarBtn?.addEventListener('click', toggleSidebar);
         sidebarOverlay?.addEventListener('click', toggleSidebar);
 
-        window.showToast = function(message, type = 'success') {
+        const showToast = (message, type = 'success') => {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
             toast.className = `toast ${type === 'error' ? 'error' : (type === 'warning' ? 'warning' : '')}`;
@@ -364,9 +367,12 @@
                 toast.classList.remove('show');
                 setTimeout(() => toast.remove(), 400);
             }, 3500);
-        }
+        };
 
-        function setGreeting() {
+        // ==========================================
+        // FUNÇÕES DE UTILIDADE
+        // ==========================================
+        const setGreeting = () => {
             const hour = new Date().getHours();
             let greeting = 'Olá';
             if (hour >= 5 && hour < 12) greeting = 'Bom dia';
@@ -378,53 +384,67 @@
                 const firstName = (currentUserData.name || 'Afiliado').split(' ')[0];
                 titleEl.innerHTML = `${greeting}, <span class="text-brand-600">${firstName}</span>!`;
             }
-        }
+        };
 
-        function formatMT(value) {
-            return Number(value || 0).toLocaleString('pt-MZ', { minimumFractionDigits: 2 }) + ' MT';
-        }
-
-        function maskEmail(email) {
-            if (!email) return 'Anónimo';
-            const parts = email.split('@');
-            if (parts.length !== 2) return email; // Proteção extra
-            const name = parts[0];
-            const domain = parts[1];
+        const formatMT = (value) => Number(value || 0).toLocaleString('pt-MZ', { minimumFractionDigits: 2 }) + ' MT';
+        
+        const maskEmail = (email) => {
+            if (!email || !email.includes('@')) return 'Anónimo';
+            const [name, domain] = email.split('@');
             if(name.length <= 2) return `${name}***@${domain}`;
             return `${name.substring(0,2)}***@${domain}`;
-        }
+        };
 
-        function formatDate(isoString) {
+        const formatDate = (isoString) => {
             if(!isoString) return '-';
             const d = new Date(isoString?.toDate ? isoString.toDate() : isoString);
             return d.toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short', year: 'numeric' });
-        }
+        };
 
-        // Ações de Partilha
-        window.copyAffiliateLink = function() {
+        // Fallback seguro para copiar (funciona em HTTP e HTTPs)
+        const copyToClipboard = async (text, successMsg) => {
+            try {
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(text);
+                    showToast(successMsg, 'success');
+                } else {
+                    const textArea = document.createElement("textarea");
+                    textArea.value = text;
+                    textArea.style.position = "absolute";
+                    textArea.style.opacity = "0";
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    document.execCommand('copy');
+                    textArea.remove();
+                    showToast(successMsg, 'success');
+                }
+            } catch (err) {
+                showToast('Erro ao copiar', 'error');
+            }
+        };
+
+        // ==========================================
+        // AÇÕES DE BOTÕES
+        // ==========================================
+        document.getElementById('btnCopyLink')?.addEventListener('click', () => {
             const link = document.getElementById('affiliateLinkInput').value;
-            if(!link) return;
-            navigator.clipboard.writeText(link).then(() => {
-                showToast('Link de indicação copiado!', 'success');
-            }).catch(() => showToast('Erro ao copiar', 'error'));
-        };
+            if(link) copyToClipboard(link, 'Link de indicação copiado!');
+        });
 
-        window.copyRawCode = function() {
-            if(!affiliateCodeLocal) return;
-            navigator.clipboard.writeText(affiliateCodeLocal).then(() => {
-                showToast('Código de Afiliado copiado!', 'success');
-            });
-        };
+        document.getElementById('btnCopyCode')?.addEventListener('click', () => {
+            if(affiliateCodeLocal) copyToClipboard(affiliateCodeLocal, 'Código de Afiliado copiado!');
+        });
 
-        window.shareWhatsApp = function() {
+        document.getElementById('btnShareWp')?.addEventListener('click', () => {
             const link = document.getElementById('affiliateLinkInput').value;
             if(!link) return;
             const text = encodeURIComponent(`Olá! Descobri a PayGo, uma plataforma fantástica para comprar no AliExpress e Shein pagando com M-Pesa/e-Mola. Regista-te através do meu link e vamos aproveitar:\n\n${link}`);
             window.open(`https://wa.me/?text=${text}`, '_blank');
-        };
+        });
 
-        // Modais de Saque
-        window.openWithdrawModal = function() {
+        // Modal de Saque
+        document.getElementById('btnOpenWithdraw')?.addEventListener('click', () => {
             const balance = currentUserData?.affiliateEarnings || 0;
             if (balance < 600) {
                 showToast('O saldo mínimo para levantamento é 600 MT.', 'warning');
@@ -438,14 +458,17 @@
             const modal = document.getElementById('withdrawModal');
             modal.classList.remove('modal-closed');
             modal.classList.add('modal-open');
-        };
+        });
 
-        window.closeWithdrawModal = function() {
+        const closeWithdrawModal = () => {
             const modal = document.getElementById('withdrawModal');
             modal.classList.remove('modal-open');
             modal.classList.add('modal-closed');
             document.getElementById('withdrawForm').reset();
         };
+
+        document.getElementById('modalOverlayClose')?.addEventListener('click', closeWithdrawModal);
+        document.getElementById('btnCloseModal')?.addEventListener('click', closeWithdrawModal);
 
         document.getElementById('withdrawForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -459,7 +482,6 @@
                 showToast('Valor inserido é maior que o saldo disponível.', 'error');
                 return;
             }
-            
             if (amount < 600) {
                 showToast('O valor mínimo de saque é 600 MT.', 'error');
                 return;
@@ -482,7 +504,6 @@
                 
                 showToast('Pedido de saque recebido! Será processado em breve.', 'success');
                 closeWithdrawModal();
-                
             } catch (error) {
                 console.error("Erro ao solicitar saque:", error);
                 showToast('Erro ao processar o pedido. Tente novamente.', 'error');
@@ -492,18 +513,21 @@
             }
         });
 
-        // Carregar Referidos (Com correção para não exigir Índice Composto no Firestore)
+        // ==========================================
+        // DADOS E BASE DE DADOS
+        // ==========================================
         async function loadReferrals(affiliateCode) {
             const table = document.getElementById('referralsTable');
             const emptyState = document.getElementById('emptyReferrals');
             table.innerHTML = '';
             
+            if (!affiliateCode) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
             try {
-                // Removemos o orderBy e limit da query para evitar o erro "Missing Index" do Firebase
-                const q = query(
-                    collection(db, "users"), 
-                    where("referredBy", "==", affiliateCode)
-                );
+                const q = query(collection(db, "users"), where("referredBy", "==", affiliateCode));
                 const snapshot = await getDocs(q);
                 
                 if (snapshot.empty) {
@@ -513,11 +537,9 @@
                 
                 emptyState.classList.add('hidden');
                 
-                // Ordenar no JavaScript para evitar erros do Firestore
                 const referrals = [];
                 snapshot.forEach(doc => referrals.push(doc.data()));
                 
-                // Ordena do mais recente para o mais antigo e limita a 15
                 referrals.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
                 const topReferrals = referrals.slice(0, 15);
                 
@@ -545,12 +567,21 @@
                 
             } catch (error) {
                 console.error("Erro ao carregar referidos:", error);
-                table.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-red-500 text-sm"><i data-lucide="alert-circle" class="w-5 h-5 inline mr-1"></i> Erro de ligação com a base de dados.</td></tr>`;
+                let errorMsg = error.message;
+                
+                // Aviso caso o Firestore esteja a bloquear a leitura
+                if (errorMsg.includes("Missing or insufficient permissions")) {
+                    errorMsg = "O Firebase está a bloquear a leitura (Falta atualizar as Regras de Segurança / Firestore Rules).";
+                }
+
+                table.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-red-500 text-sm"><i data-lucide="alert-circle" class="w-5 h-5 inline mr-1"></i> Erro: ${errorMsg}</td></tr>`;
                 lucide.createIcons();
             }
         }
 
-        // Firebase Auth Listener
+        // ==========================================
+        // INICIALIZAÇÃO E AUTENTICAÇÃO
+        // ==========================================
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
                 window.location.href = 'login.html';
@@ -587,7 +618,6 @@
                         dashboardContent.classList.add('hidden');
                         
                     } else if (currentUserData.status === 'active' || currentUserData.status === 'approved' || currentUserData.affiliateCodeActive === true) {
-                        // APROVADO (Inclui check para 'active' e 'approved' previnindo falhas no Admin)
                         badge.innerHTML = `<i data-lucide="check-circle-2" class="w-4 h-4"></i> Conta Ativa`;
                         badge.className = 'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold shadow-sm border bg-success-50 text-success-600 border-success-200';
                         
@@ -600,7 +630,6 @@
                         document.getElementById('statReferrals').textContent = currentUserData.totalReferrals || 0;
                         document.getElementById('statConverted').textContent = currentUserData.approvedReferrals || 0;
                         
-                        // Link Seguro (Protege caso estejas a testar localmente na tua máquina file://)
                         affiliateCodeLocal = currentUserData.affiliateCode || '';
                         const siteOrigin = (window.location.hostname === 'localhost' || window.location.protocol === 'file:') 
                                             ? 'https://paygo.co.mz' 
@@ -614,7 +643,6 @@
                         await loadReferrals(affiliateCodeLocal);
                         
                     } else {
-                        // Suspenso
                         badge.innerHTML = `<i data-lucide="x-circle" class="w-4 h-4"></i> Conta Suspensa`;
                         badge.className = 'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold shadow-sm border bg-red-50 text-red-600 border-red-200';
                         pendingAlert.classList.add('hidden');
@@ -637,11 +665,8 @@
             }
         });
 
-        // Logout
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            signOut(auth).then(() => {
-                window.location.href = 'login.html';
-            });
+        document.getElementById('logoutBtn')?.addEventListener('click', () => {
+            signOut(auth).then(() => window.location.href = 'login.html');
         });
 
     </script>
