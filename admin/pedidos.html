@@ -27,6 +27,7 @@ success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' }
 .status-processing { background: #dbeafe; color: #1e40af; }
 .status-completed { background: #dcfce7; color: #166534; }
 .status-cancelled { background: #fee2e2; color: #991b1b; }
+.date-group-header { background: #f8fafc; border-y: 1px solid #e2e8f0; }
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: #f1f5f9; }
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -64,29 +65,17 @@ success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' }
 </div>
 
 <nav class="flex-1 space-y-2" id="adminNav">
-<a href="dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all font-medium">
-<i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
-</a>
-<a href="pedidos.html" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-xl transition-all bg-brand-600/20 text-brand-400 font-medium">
-<i data-lucide="shopping-bag" class="w-5 h-5"></i> Todos Pedidos
-</a>
-<a href="clientes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all font-medium">
-<i data-lucide="users" class="w-5 h-5"></i> Usuários
-</a>
-<a href="afiliados.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all font-medium">
-<i data-lucide="gift" class="w-5 h-5"></i> Afiliados
-</a>
-<a href="configuracoes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all font-medium">
-<i data-lucide="settings" class="w-5 h-5"></i> Configurações
-</a>
+<a href="dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all font-medium"><i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard</a>
+<a href="pedidos.html" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-xl transition-all bg-brand-600/20 text-brand-400 font-medium"><i data-lucide="shopping-bag" class="w-5 h-5"></i> Todos Pedidos</a>
+<a href="clientes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all font-medium"><i data-lucide="users" class="w-5 h-5"></i> Usuários</a>
+<a href="afiliados.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all font-medium"><i data-lucide="gift" class="w-5 h-5"></i> Afiliados</a>
+<a href="configuracoes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all font-medium"><i data-lucide="settings" class="w-5 h-5"></i> Configurações</a>
 </nav>
 
 <div class="pt-4 border-t border-white/10">
 <div class="flex items-center gap-3 px-4 py-3 mb-2 bg-white/5 rounded-xl">
 <div class="w-9 h-9 rounded-full bg-brand-600 flex items-center justify-center text-sm font-bold shadow-inner" id="userInitial"></div>
-<div class="flex-1 min-w-0">
-<p class="text-sm font-bold truncate text-white" id="userName">A carregar...</p>
-</div>
+<div class="flex-1 min-w-0"><p class="text-sm font-bold truncate text-white" id="userName">A carregar...</p></div>
 </div>
 <button id="logoutBtn" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white/5 hover:bg-red-500/20 text-slate-400 hover:text-red-400 rounded-xl transition-all text-sm font-bold mt-2">
 <i data-lucide="log-out" class="w-4 h-4"></i> Sair da Conta
@@ -99,25 +88,30 @@ success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' }
 <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 mb-6">
     <div>
         <h1 class="text-2xl md:text-3xl font-bold text-slate-900">Histórico de Pedidos</h1>
-        <p class="text-slate-500 mt-1 text-sm">Gerencie e filtre todos os pedidos da plataforma</p>
+        <p class="text-slate-500 mt-1 text-sm">Gerencie, filtre e elimine pedidos do sistema</p>
     </div>
     
-    <button onclick="exportToCSV()" class="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-green-600/20">
-        <i data-lucide="download" class="w-4 h-4"></i> Exportar CSV
-    </button>
+    <div class="flex flex-wrap items-center gap-3">
+        <button onclick="clearHistory()" class="px-5 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl text-sm font-bold transition flex items-center justify-center gap-2">
+            <i data-lucide="trash-2" class="w-4 h-4"></i> Eliminar Histórico
+        </button>
+        <button onclick="exportToCSV()" class="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-green-600/20">
+            <i data-lucide="download" class="w-4 h-4"></i> Exportar CSV
+        </button>
+    </div>
 </div>
 
 <div class="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-slate-200 mb-6">
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div class="relative">
             <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Pesquisa Livre</label>
-            <input type="text" id="searchInput" placeholder="ID, Nome, Email, Link..." class="pl-10 pr-4 py-2.5 w-full border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 text-sm bg-slate-50 transition-all">
+            <input type="text" id="searchInput" placeholder="ID, Nome, Email, Link..." class="pl-10 pr-4 py-2.5 w-full border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/50 text-sm bg-slate-50">
             <i data-lucide="search" class="absolute left-3 top-9 w-4 h-4 text-slate-400"></i>
         </div>
         
         <div>
             <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Status</label>
-            <select id="statusFilter" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/50 text-sm bg-slate-50 font-medium text-slate-700">
+            <select id="statusFilter" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/50 text-sm bg-slate-50 font-medium">
                 <option value="all">Todos os Status</option>
                 <option value="pending">⏳ Pendentes</option>
                 <option value="processing">🔄 Em Processamento</option>
@@ -127,11 +121,11 @@ success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' }
         </div>
 
         <div>
-            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Tipo de Serviço</label>
-            <select id="typeFilter" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/50 text-sm bg-slate-50 font-medium text-slate-700">
-                <option value="all">Todos os Tipos</option>
-                <option value="compra">🛍️ Compras (AliExpress, Shein)</option>
-                <option value="jogos">🎮 Jogos e Streaming</option>
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Pagamento</label>
+            <select id="paymentFilter" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/50 text-sm bg-slate-50 font-medium">
+                <option value="all">Todos</option>
+                <option value="paid">🟢 Pagos</option>
+                <option value="unpaid">🔴 Não Pagos</option>
             </select>
         </div>
         
@@ -145,9 +139,7 @@ success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' }
 
 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex-1 flex flex-col">
     <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
-        <h2 class="text-sm font-bold text-slate-700 flex items-center gap-2">
-            <i data-lucide="list" class="w-4 h-4"></i> Resultados
-        </h2>
+        <h2 class="text-sm font-bold text-slate-700 flex items-center gap-2"><i data-lucide="list" class="w-4 h-4"></i> Resultados</h2>
         <span class="text-xs font-bold px-3 py-1 bg-white border border-slate-200 rounded-full text-brand-600 shadow-sm" id="ordersCount">0 pedidos filtrados</span>
     </div>
 
@@ -157,24 +149,21 @@ success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' }
     </div>
 
     <div id="emptyState" class="p-20 text-center text-slate-500 hidden flex-1 flex flex-col items-center justify-center">
-        <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4">
-            <i data-lucide="search-x" class="w-10 h-10 text-slate-400"></i>
-        </div>
+        <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-10 h-10 text-slate-400"></i></div>
         <p class="font-bold text-slate-700 text-xl">Nenhum pedido encontrado</p>
-        <p class="text-sm mt-2">Tente ajustar os filtros de pesquisa.</p>
     </div>
 
     <div class="overflow-x-auto flex-1">
         <table class="w-full text-left border-collapse whitespace-nowrap">
             <thead class="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
                 <tr>
-                    <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">ID / Data</th>
-                    <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Cliente</th>
-                    <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Categoria</th>
-                    <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Valor (USD)</th>
-                    <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Total Pago (MT)</th>
-                    <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                    <th class="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Ação</th>
+                    <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">ID / Hora</th>
+                    <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Cliente</th>
+                    <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Valor (USD)</th>
+                    <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Total Pago (MT)</th>
+                    <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Pagamento</th>
+                    <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Status</th>
+                    <th class="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase">Ação</th>
                 </tr>
             </thead>
             <tbody id="ordersTable" class="divide-y divide-slate-100"></tbody>
@@ -200,7 +189,7 @@ success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' }
 <option value="cancelled">❌ Mudar para: Cancelado</option>
 </select>
 <button id="updateStatusBtn" class="px-8 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-brand-600/20">
-<i data-lucide="save" class="w-4 h-4"></i> Salvar Alteração
+<i data-lucide="save" class="w-4 h-4"></i> Salvar Status
 </button>
 </div>
 </div>
@@ -211,7 +200,7 @@ success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' }
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, collection, doc, updateDoc, onSnapshot, query, orderBy, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, doc, updateDoc, onSnapshot, query, orderBy, getDoc, serverTimestamp, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
 apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
@@ -227,11 +216,12 @@ const auth = getAuth(app);
 const db = getFirestore(app, "paygodb");
 
 let orders = [];
+let currentFilteredOrders = []; // Usado para exportar e apagar histórico em massa
 let currentOrderId = null;
 let ordersUnsubscribe = null;
 
 // ==========================================
-// 📱 CONTROLO UI
+// 📱 CONTROLO UI E TOAST
 // ==========================================
 window.toggleSidebar = () => {
     const sidebar = document.getElementById('sidebar');
@@ -276,8 +266,64 @@ function getStatusBadge(status) {
     return badges[status] || `<span class="status-badge bg-slate-200 text-slate-700">${status}</span>`;
 }
 
+// Data Helper ("Hoje", "Ontem" ou "DD/MM/YYYY")
+function getRelativeDateLabel(date) {
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    if (date.toDateString() === today.toDateString()) return 'Hoje';
+    if (date.toDateString() === yesterday.toDateString()) return 'Ontem';
+    return date.toLocaleDateString('pt-MZ');
+}
+
 // ==========================================
-// 🔐 AUTENTICAÇÃO
+// 📧 SISTEMA DE NOTIFICAÇÃO (EMAIL API)
+// ==========================================
+async function sendNotificationEmail(order, actionType) {
+    try {
+        let subject = "";
+        let message = "";
+        
+        if (actionType === 'paid') {
+            subject = `✅ Pagamento Confirmado - Pedido #${order.orderId}`;
+            message = `Olá <strong>${order.name}</strong>!<br><br>Recebemos o seu pagamento de <strong>${formatValue(order.total, 'currency')}</strong> com sucesso. O seu pedido #${order.orderId} está agora a ser processado pela nossa equipa.<br><br>Receberá outra notificação assim que estiver concluído.`;
+        } else if (actionType === 'completed') {
+            subject = `🎉 Pedido Concluído - #${order.orderId}`;
+            message = `Olá <strong>${order.name}</strong>,<br><br>Boas notícias! O seu pedido <strong>#${order.orderId}</strong> foi concluído e finalizado com sucesso. O serviço/produto foi entregue conforme solicitado.<br><br>Obrigado por usar a PayGo Moçambique! 🇲🇿`;
+        } else {
+            return; // Outras ações não disparam email
+        }
+
+        console.log(`A enviar email de [${actionType}] para:`, order.email);
+        
+        // Chamada à sua API Vercel de Emails
+        const response = await fetch('/api/send-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                to: order.email,
+                subject: subject,
+                template: 'default', // Usa o gerador HTML base do seu send-email.js
+                type: 'transactional',
+                variables: {
+                    message: message
+                }
+            })
+        });
+        
+        if (response.ok) {
+            showToast('Cliente notificado por email com sucesso!', 'info');
+        } else {
+            console.error('Falha na API de Email:', await response.text());
+        }
+    } catch (error) {
+        console.error('Erro ao enviar email:', error);
+    }
+}
+
+// ==========================================
+// 🔐 AUTENTICAÇÃO E CARREGAMENTO
 // ==========================================
 async function verifyAccess() {
     return new Promise((resolve) => {
@@ -303,9 +349,6 @@ async function verifyAccess() {
     });
 }
 
-// ==========================================
-// 📦 GESTÃO DE DADOS E TABELA
-// ==========================================
 function loadOrders() {
     document.getElementById('loadingState').classList.remove('hidden');
     document.getElementById('emptyState').classList.add('hidden');
@@ -327,6 +370,7 @@ function loadOrders() {
                 total: Number(data.total) || 0,
                 tax: Number(data.tax) || 0,
                 status: data.status || 'pending',
+                isPaid: data.isPaid || false, // NOVA PROPRIEDADE
                 paymentMethod: data.paymentMethod || 'mpesa',
                 detail: data.detail || 'N/A',
                 createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : new Date())
@@ -346,52 +390,67 @@ function renderOrders() {
     
     const search = document.getElementById('searchInput').value.toLowerCase();
     const statusFilter = document.getElementById('statusFilter').value;
-    const typeFilter = document.getElementById('typeFilter').value;
+    const paymentFilter = document.getElementById('paymentFilter').value; // Novo Filtro
     
-    const filtered = orders.filter(order => {
+    currentFilteredOrders = orders.filter(order => {
         const matchSearch = order.name.toLowerCase().includes(search) || 
                             order.orderId.toLowerCase().includes(search) || 
                             order.email.toLowerCase().includes(search) ||
-                            order.whatsapp.includes(search) ||
-                            order.detail.toLowerCase().includes(search);
+                            order.whatsapp.includes(search);
         
         const matchStatus = statusFilter === 'all' || order.status === statusFilter;
-        const matchType = typeFilter === 'all' || order.type === typeFilter;
         
-        return matchSearch && matchStatus && matchType;
+        let matchPayment = true;
+        if (paymentFilter === 'paid') matchPayment = order.isPaid === true;
+        if (paymentFilter === 'unpaid') matchPayment = order.isPaid === false;
+        
+        return matchSearch && matchStatus && matchPayment;
     });
     
-    document.getElementById('ordersCount').textContent = `${filtered.length} pedidos encontrados`;
+    document.getElementById('ordersCount').textContent = `${currentFilteredOrders.length} pedidos encontrados`;
     
-    if (filtered.length === 0) {
+    if (currentFilteredOrders.length === 0) {
         emptyState.classList.remove('hidden');
         table.innerHTML = '';
         return;
     }
     
     emptyState.classList.add('hidden');
-    table.innerHTML = filtered.map(order => {
-        const dateStr = order.createdAt.toLocaleDateString('pt-MZ');
+    
+    let htmlContent = '';
+    let lastDateGroup = '';
+    
+    currentFilteredOrders.forEach(order => {
+        const dateLabel = getRelativeDateLabel(order.createdAt);
         const timeStr = order.createdAt.toLocaleTimeString('pt-MZ', { hour: '2-digit', minute:'2-digit' });
         
-        return `
-            <tr class="hover:bg-brand-50/30 transition-colors group cursor-pointer border-b border-slate-100 last:border-0" onclick="openModal('${order.id}')">
+        // Se mudou de dia, injetamos uma linha separadora
+        if (dateLabel !== lastDateGroup) {
+            lastDateGroup = dateLabel;
+            htmlContent += `
+                <tr class="date-group-header">
+                    <td colspan="7" class="px-6 py-2 text-xs font-black text-slate-500 uppercase tracking-widest">📅 ${dateLabel}</td>
+                </tr>
+            `;
+        }
+        
+        const paymentBadge = order.isPaid 
+            ? `<span class="bg-green-100 text-green-700 px-2.5 py-1 rounded-md text-xs font-bold border border-green-200">✅ Pago</span>`
+            : `<span class="bg-red-50 text-red-600 px-2.5 py-1 rounded-md text-xs font-bold border border-red-200">❌ Por Pagar</span>`;
+            
+        htmlContent += `
+            <tr class="hover:bg-brand-50/50 transition-colors group cursor-pointer border-b border-slate-100 last:border-0" onclick="openModal('${order.id}')">
                 <td class="px-6 py-4">
                     <div class="text-sm font-mono font-bold text-slate-700">${order.orderId}</div>
-                    <div class="text-xs text-slate-400">${dateStr} às ${timeStr}</div>
+                    <div class="text-xs text-slate-400"><i data-lucide="clock" class="w-3 h-3 inline"></i> ${timeStr}</div>
                 </td>
                 <td class="px-6 py-4">
                     <div class="text-sm font-bold text-slate-900 group-hover:text-brand-600 transition-colors">${order.name}</div>
                     <div class="text-xs text-slate-500">${order.whatsapp}</div>
                 </td>
-                <td class="px-6 py-4">
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-lg border ${order.type === 'compra' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-purple-50 text-purple-700 border-purple-200'}">
-                        <i data-lucide="${order.type === 'compra' ? 'shopping-bag' : 'gamepad-2'}" class="w-3 h-3"></i>
-                        ${order.type.toUpperCase()}
-                    </span>
-                </td>
                 <td class="px-6 py-4 text-sm font-medium text-slate-700">${formatValue(order.usd, 'usd')}</td>
                 <td class="px-6 py-4 text-sm font-black text-slate-900">${formatValue(order.total, 'currency')}</td>
+                <td class="px-6 py-4">${paymentBadge}</td>
                 <td class="px-6 py-4">${getStatusBadge(order.status)}</td>
                 <td class="px-6 py-4 text-right">
                     <button class="w-8 h-8 inline-flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 group-hover:bg-brand-600 group-hover:text-white transition-all shadow-sm">
@@ -400,13 +459,14 @@ function renderOrders() {
                 </td>
             </tr>
         `;
-    }).join('');
+    });
     
+    table.innerHTML = htmlContent;
     lucide.createIcons({root: table});
 }
 
 // ==========================================
-// 🔍 MODAL DE DETALHES DO PEDIDO
+// 🔍 MODAL DE DETALHES & ELIMINAÇÃO INDIVIDUAL
 // ==========================================
 window.openModal = (orderId) => {
     const order = orders.find(o => o.id === orderId);
@@ -416,17 +476,6 @@ window.openModal = (orderId) => {
     const isMpesa = order.paymentMethod === 'mpesa';
     let productHtml = `<p class="font-medium break-all bg-white border border-slate-200 p-3 rounded-xl text-sm mt-1 shadow-inner">${order.detail}</p>`;
     
-    if (order.detail.includes('http')) {
-        productHtml = `
-            <div class="mt-1 flex flex-col gap-2">
-                <input type="text" readonly value="${order.detail}" class="w-full text-xs p-3 rounded-xl bg-slate-50 border border-slate-200 outline-none font-mono text-slate-500">
-                <a href="${order.detail}" target="_blank" class="inline-flex items-center justify-center gap-2 bg-slate-900 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-800 transition shadow-md w-full sm:w-auto">
-                    <i data-lucide="external-link" class="w-4 h-4"></i> Abrir Link do Produto
-                </a>
-            </div>
-        `;
-    }
-
     document.getElementById('modalContent').innerHTML = `
         <div class="bg-slate-100 p-4 rounded-2xl flex justify-between items-center border border-slate-200">
             <div><p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">ID do Pedido</p><p class="font-mono font-black text-brand-700 text-xl tracking-tight">${order.orderId}</p></div>
@@ -434,31 +483,39 @@ window.openModal = (orderId) => {
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
             <div class="space-y-4">
-                <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider border-b border-slate-200 pb-2"><i data-lucide="user" class="w-4 h-4 inline mr-1 text-slate-400"></i> Cliente</h3>
-                <div><p class="text-xs font-semibold text-slate-500 mb-1">Nome Completo</p><p class="font-bold text-slate-900">${order.name}</p></div>
-                <div><p class="text-xs font-semibold text-slate-500 mb-1">WhatsApp</p><a href="https://wa.me/${order.whatsapp.replace(/\D/g,'')}" target="_blank" class="font-bold text-success-600 hover:underline flex items-center gap-1">${order.whatsapp} <i data-lucide="external-link" class="w-3 h-3"></i></a></div>
+                <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider border-b border-slate-200 pb-2">Cliente</h3>
+                <div><p class="text-xs font-semibold text-slate-500 mb-1">Nome</p><p class="font-bold text-slate-900">${order.name}</p></div>
+                <div><p class="text-xs font-semibold text-slate-500 mb-1">WhatsApp</p><a href="https://wa.me/${order.whatsapp.replace(/\D/g,'')}" target="_blank" class="font-bold text-success-600 hover:underline flex items-center gap-1">${order.whatsapp}</a></div>
                 <div><p class="text-xs font-semibold text-slate-500 mb-1">Email</p><p class="font-medium text-slate-700">${order.email}</p></div>
             </div>
             <div class="space-y-4 bg-slate-50 p-5 rounded-2xl border border-slate-200">
-                <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider border-b border-slate-200 pb-2"><i data-lucide="banknote" class="w-4 h-4 inline mr-1 text-slate-400"></i> Finanças</h3>
+                <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider border-b border-slate-200 pb-2">Finanças</h3>
                 <div class="flex justify-between"><p class="text-xs font-semibold text-slate-500">Valor USD</p><p class="font-bold text-slate-900">${formatValue(order.usd, 'usd')}</p></div>
-                <div class="flex justify-between"><p class="text-xs font-semibold text-slate-500">Taxa Serviço</p><p class="font-bold text-brand-600">${formatValue(order.tax, 'currency')}</p></div>
-                <div class="flex justify-between pt-3 border-t border-slate-200"><p class="text-sm font-bold text-slate-800">TOTAL</p><p class="font-black text-lg text-slate-900">${formatValue(order.total, 'currency')}</p></div>
-                <div class="mt-4 pt-4 border-t border-slate-200">
-                    <p class="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">Via de Pagamento</p>
-                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border font-bold text-xs ${isMpesa ? 'bg-red-50 text-red-700 border-red-200' : 'bg-yellow-50 text-yellow-800 border-yellow-300'}">
-                        <div class="w-2 h-2 rounded-full ${isMpesa ? 'bg-red-600' : 'bg-yellow-500'}"></div> ${isMpesa ? 'M-PESA' : 'E-MOLA'}
-                    </div>
-                </div>
+                <div class="flex justify-between pt-3 border-t border-slate-200"><p class="text-sm font-bold text-slate-800">TOTAL RECEBIDO</p><p class="font-black text-lg text-slate-900">${formatValue(order.total, 'currency')}</p></div>
             </div>
         </div>
-        <div class="mt-2"><p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Produto / Pedido</p>${productHtml}</div>
+        
+        <div class="mt-4 pt-4 border-t border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-red-50/30 p-4 rounded-xl">
+            <div>
+                <p class="text-xs font-bold text-slate-600 uppercase mb-2">Estado do Pagamento</p>
+                <button onclick="togglePaymentStatus('${order.id}', ${order.isPaid})" class="px-5 py-2.5 rounded-lg font-bold text-sm transition-all shadow-sm ${order.isPaid ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-white border border-red-300 text-red-600 hover:bg-red-50'} flex items-center gap-2">
+                    <i data-lucide="${order.isPaid ? 'check-circle' : 'circle'}" class="w-4 h-4"></i>
+                    ${order.isPaid ? 'Marcar como NÃO PAGO' : 'Assinalar como PAGO'}
+                </button>
+                ${!order.isPaid ? '<p class="text-[10px] text-slate-400 mt-1">*O cliente receberá um email de confirmação.</p>' : ''}
+            </div>
+            
+            <div>
+                <button onclick="deleteSingleOrder('${order.id}')" class="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-sm font-bold transition flex items-center gap-2">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i> Eliminar Pedido
+                </button>
+            </div>
+        </div>
     `;
     
     document.getElementById('statusSelect').value = order.status;
     const modal = document.getElementById('orderModal');
     const dialog = document.getElementById('modalDialog');
-    
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
     requestAnimationFrame(() => {
@@ -473,112 +530,139 @@ window.closeModal = () => {
     const dialog = document.getElementById('modalDialog');
     dialog.classList.remove('scale-100');
     dialog.classList.add('scale-95');
-    setTimeout(() => {
-        modal.classList.add('hidden');
-        document.body.style.overflow = '';
-        currentOrderId = null;
-    }, 150);
+    setTimeout(() => { modal.classList.add('hidden'); document.body.style.overflow = ''; currentOrderId = null; }, 150);
 };
 
+// ==========================================
+// ⚙️ AÇÕES DE ATUALIZAÇÃO E ELIMINAÇÃO
+// ==========================================
+
+// ALTERAR STATUS GERAL (E Notificar Concluído)
 document.getElementById('updateStatusBtn')?.addEventListener('click', async () => {
     if (!currentOrderId) return;
     const newStatus = document.getElementById('statusSelect').value;
+    const order = orders.find(o => o.id === currentOrderId);
+    const oldStatus = order.status;
+    
     const btn = document.getElementById('updateStatusBtn');
     const originalText = btn.innerHTML;
-    
-    btn.disabled = true;
-    btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A guardar...`;
-    lucide.createIcons({root: btn});
+    btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A guardar...`; lucide.createIcons({root: btn});
     
     try {
         await updateDoc(doc(db, "orders", currentOrderId), { status: newStatus, updatedAt: serverTimestamp() });
         showToast('Status atualizado com sucesso!', 'success');
+        
+        // Se mudou para Concluído agora, envia email
+        if (newStatus === 'completed' && oldStatus !== 'completed') {
+            await sendNotificationEmail(order, 'completed');
+        }
         closeModal();
     } catch (error) {
         showToast('Falha ao atualizar o pedido', 'error');
     } finally {
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-        lucide.createIcons({root: btn});
+        btn.disabled = false; btn.innerHTML = originalText; lucide.createIcons({root: btn});
     }
 });
 
-// ==========================================
-// 📄 EXPORTAÇÃO PARA CSV (EXCEL)
-// ==========================================
-window.exportToCSV = () => {
-    if (orders.length === 0) {
-        showToast('Não há dados para exportar.', 'warning');
+// MARCAR COMO PAGO / NÃO PAGO (E Notificar)
+window.togglePaymentStatus = async (orderId, isCurrentlyPaid) => {
+    const newStatus = !isCurrentlyPaid;
+    const order = orders.find(o => o.id === orderId);
+    
+    try {
+        await updateDoc(doc(db, "orders", orderId), { isPaid: newStatus });
+        showToast(newStatus ? 'Marcado como Pago!' : 'Pagamento removido!', 'success');
+        
+        // Se foi marcado como pago agora, envia email
+        if (newStatus === true) {
+            showToast('A notificar o cliente...', 'info');
+            await sendNotificationEmail(order, 'paid');
+        }
+        
+        closeModal(); // Fecha para forçar refresh visual
+    } catch (e) {
+        showToast('Erro ao atualizar pagamento', 'error');
+    }
+};
+
+// ELIMINAR 1 PEDIDO
+window.deleteSingleOrder = async (orderId) => {
+    if (!confirm('Tem a certeza absoluta que deseja eliminar este pedido? Esta ação não pode ser desfeita.')) return;
+    try {
+        await deleteDoc(doc(db, "orders", orderId));
+        showToast('Pedido eliminado permanentemente.', 'success');
+        closeModal();
+    } catch (e) {
+        showToast('Erro ao eliminar pedido.', 'error');
+    }
+};
+
+// ELIMINAR HISTÓRICO EM MASSA
+window.clearHistory = async () => {
+    if (currentFilteredOrders.length === 0) {
+        showToast('Nenhum pedido visível para eliminar.', 'warning');
         return;
     }
     
-    showToast('A gerar ficheiro Excel/CSV...', 'info');
+    const qty = currentFilteredOrders.length;
+    const confirmMsg = `ATENÇÃO: Vai eliminar PERMANENTEMENTE os ${qty} pedidos que estão atualmente visíveis na lista.\n\nDeseja mesmo continuar?`;
+    if (!confirm(confirmMsg)) return;
+    if (!confirm('ÚLTIMA CHANCE: Tem a certeza? O histórico será apagado do banco de dados.')) return;
     
-    // Cabeçalhos
-    let csvContent = "ID do Pedido,Data,Hora,Nome do Cliente,Email,WhatsApp,Serviço,Via de Pagamento,Valor Produto (USD),Taxa PayGo (MT),Total Pago (MT),Status,Detalhes do Produto\n";
-    
-    // Pegamos os pedidos atuais filtrados se quisermos, mas por padrão exportamos TODOS os listados na memória
-    orders.forEach(order => {
-        const dateStr = order.createdAt.toLocaleDateString('pt-MZ');
-        const timeStr = order.createdAt.toLocaleTimeString('pt-MZ');
-        
-        // Tratar campos que podem ter vírgulas (para não quebrar o CSV)
-        const name = `"${order.name.replace(/"/g, '""')}"`;
-        const email = `"${order.email}"`;
-        const detail = `"${order.detail.replace(/"/g, '""')}"`;
-        const statusText = { pending: 'Pendente', processing: 'Processando', completed: 'Concluido', cancelled: 'Cancelado' }[order.status] || order.status;
-        const methodText = order.paymentMethod === 'mpesa' ? 'M-Pesa' : 'e-Mola';
-        
-        csvContent += `${order.orderId},${dateStr},${timeStr},${name},${email},${order.whatsapp},${order.type},${methodText},${order.usd},${order.tax},${order.total},${statusText},${detail}\n`;
-    });
-    
-    // Download
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", `paygo_pedidos_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    showToast('A limpar histórico, aguarde...', 'info');
+    try {
+        const batch = writeBatch(db);
+        currentFilteredOrders.forEach(order => {
+            const orderRef = doc(db, "orders", order.id);
+            batch.delete(orderRef);
+        });
+        await batch.commit();
+        showToast(`${qty} pedidos eliminados com sucesso!`, 'success');
+    } catch (e) {
+        console.error(e);
+        showToast('Erro ao limpar histórico em massa.', 'error');
+    }
 };
 
 // ==========================================
-// 🔄 FILTROS E EVENTOS
+// 📄 EXPORTAÇÃO E EVENTOS
 // ==========================================
+window.exportToCSV = () => {
+    if (currentFilteredOrders.length === 0) { showToast('Não há dados para exportar.', 'warning'); return; }
+    let csvContent = "ID do Pedido,Data,Hora,Nome do Cliente,Email,WhatsApp,Pagamento,Total Pago (MT),Status,Detalhes do Produto\n";
+    currentFilteredOrders.forEach(order => {
+        const dateStr = order.createdAt.toLocaleDateString('pt-MZ');
+        const timeStr = order.createdAt.toLocaleTimeString('pt-MZ');
+        const name = `"${order.name.replace(/"/g, '""')}"`;
+        const detail = `"${order.detail.replace(/"/g, '""')}"`;
+        const payStatus = order.isPaid ? 'Pago' : 'Nao Pago';
+        csvContent += `${order.orderId},${dateStr},${timeStr},${name},${order.email},${order.whatsapp},${payStatus},${order.total},${order.status},${detail}\n`;
+    });
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `paygo_pedidos_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+};
+
 window.clearFilters = () => {
     document.getElementById('searchInput').value = '';
     document.getElementById('statusFilter').value = 'all';
-    document.getElementById('typeFilter').value = 'all';
+    document.getElementById('paymentFilter').value = 'all';
     renderOrders();
 };
 
 let searchTimeout;
-document.getElementById('searchInput').addEventListener('input', () => {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(renderOrders, 400);
-});
+document.getElementById('searchInput').addEventListener('input', () => { clearTimeout(searchTimeout); searchTimeout = setTimeout(renderOrders, 400); });
 document.getElementById('statusFilter').addEventListener('change', renderOrders);
-document.getElementById('typeFilter').addEventListener('change', renderOrders);
+document.getElementById('paymentFilter').addEventListener('change', renderOrders);
+document.getElementById('logoutBtn').addEventListener('click', async () => { if (confirm('Tem a certeza que deseja terminar sessão?')) { await signOut(auth); window.location.href = 'login.html'; } });
 
-document.getElementById('logoutBtn').addEventListener('click', async () => {
-    if (confirm('Tem a certeza que deseja terminar sessão?')) {
-        await signOut(auth);
-        window.location.href = 'login.html';
-    }
-});
-
-// Fechar modal no ESC e fora
+// Fechar modal no ESC
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !document.getElementById('orderModal').classList.contains('hidden')) closeModal(); });
-document.getElementById('orderModal').addEventListener('click', (e) => { if (e.target.id === 'orderModal') closeModal(); });
 
 // Inicialização
-async function init() {
-    lucide.createIcons();
-    const isAuth = await verifyAccess();
-    if (isAuth) loadOrders();
-}
+async function init() { lucide.createIcons(); const isAuth = await verifyAccess(); if (isAuth) loadOrders(); }
 init();
 </script>
 </body>
