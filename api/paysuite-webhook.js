@@ -93,42 +93,26 @@ export default async function handler(req, res) {
       paymentStatus: updateData.paymentStatus
     });
 
-    // ✅ Enviar notificações (email + Lark)
+    // ✅ Enviar notificações centralizadas (Email Cliente + Admin Lark)
     if (payload.event === 'payment.completed') {
       try {
-        // Notificar cliente por email
-        await fetch(`${process.env.SITE_URL}/api/send-email`, {
+        // Combina os dados originais com a atualização de pagamento para o template
+        const mergedOrderData = { ...orderData, ...updateData };
+        const siteUrl = process.env.SITE_URL || 'https://paygo.co.mz';
+
+        // Dispara a rota centralizada para notificar o sucesso financeiro
+        await fetch(`${siteUrl}/api/notify-order`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            to: orderData.email,
-            subject: `✅ Pagamento Confirmado - Pedido ${paymentData.transaction_id}`,
-            template: 'payment-success',
-            variables: {
-              customer_name: orderData.name,
-              order_id: paymentData.transaction_id,
-              amount: paymentData.amount,
-              currency: paymentData.currency,
-              payment_method: paymentData.payment_method === 'm-pesa' ? 'M-Pesa' : 'e-Mola',
-              transaction_ref: paymentData.transaction_ref
-            }
+            orderData: mergedOrderData,
+            action: 'payment_confirmed',
+            sendEmail: true,
+            sendLark: true
           })
-        }).catch(err => console.error('Email error:', err));
+        });
 
-        // Notificar admin via Lark
-        await fetch(`${process.env.SITE_URL}/api/webhook-lark`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: 'payment_completed',
-            orderId: paymentData.transaction_id,
-            customer: orderData.name,
-            amount: paymentData.amount,
-            method: paymentData.payment_method,
-            phone: paymentData.customer?.phone
-          })
-        }).catch(err => console.error('Lark error:', err));
-
+        console.log('✅ [paysuite-webhook] Notificação de pagamento disparada para o Admin e Cliente.');
       } catch (notifyErr) {
         console.error('⚠️ [paysuite-webhook] Notification error:', notifyErr);
         // Não falhar o webhook por causa de notificações
