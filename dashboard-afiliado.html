@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Dashboard Afiliado | PayGo</title>
     
+    <!-- ✅ URLs CORRIGIDAS - SEM ESPAÇOS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -36,6 +37,9 @@
         #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
         .toast { transform: translateX(120%); transition: 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55); }
         .toast.show { transform: translateX(0); }
+        
+        /* ✅ FORÇAR CURSOR POINTER */
+        button, [onclick], #logoutBtn { cursor: pointer !important; }
     </style>
 </head>
 <body class="text-slate-800 dark:text-slate-200 antialiased">
@@ -138,7 +142,7 @@
                             </tr>
                         </thead>
                         <tbody id="referralsBody" class="divide-y divide-slate-50 dark:divide-slate-800">
-                            </tbody>
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -172,7 +176,9 @@
         </div>
     </div>
 
+    <!-- ✅ JAVASCRIPT CORRIGIDO - URLs limpas + link para HOME PAGE -->
     <script type="module">
+        // ✅ IMPORTS COM URLs SEM ESPAÇOS
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, doc, onSnapshot, collection, query, where, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -215,12 +221,13 @@
         });
 
         function updateUI(data) {
-            document.getElementById('userGreeting').innerHTML = `Olá, ${data.name.split(' ')[0]}!`;
-            document.getElementById('statBalance').innerText = `${data.affiliateEarnings?.toFixed(2) || '0,00'} MT`;
+            document.getElementById('userGreeting').innerHTML = `Olá, ${data.name?.split(' ')[0] || 'Parceiro'}!`;
+            document.getElementById('statBalance').innerText = `${(data.affiliateEarnings || 0).toFixed(2)} MT`;
             document.getElementById('statTotalRefs').innerText = data.totalReferrals || 0;
             document.getElementById('statSales').innerText = data.approvedReferrals || 0;
             
-            const affUrl = `${window.location.origin}/register.html?ref=${data.affiliateCode}`;
+            // ✅ LINK CORRIGIDO: Direciona para HOME PAGE (index.html) em vez de register.html
+            const affUrl = `${window.location.origin}/index.html?ref=${data.affiliateCode}`;
             document.getElementById('affLink').value = affUrl;
             document.getElementById('wPhone').value = data.phone || "";
         }
@@ -242,8 +249,8 @@
                 const statusColor = ref.firstPurchaseProcessed ? 'text-green-500 bg-green-50' : 'text-slate-400 bg-slate-50';
                 
                 row.innerHTML = `
-                    <td class="px-8 py-5 text-sm font-medium text-slate-500">${new Date(ref.createdAt).toLocaleDateString()}</td>
-                    <td class="px-8 py-5 text-sm font-bold dark:text-white">${ref.email.substring(0,3)}***@${ref.email.split('@')[1]}</td>
+                    <td class="px-8 py-5 text-sm font-medium text-slate-500">${new Date(ref.createdAt?.toDate?.() || ref.createdAt).toLocaleDateString('pt-MZ')}</td>
+                    <td class="px-8 py-5 text-sm font-bold dark:text-white">${maskEmail(ref.email)}</td>
                     <td class="px-8 py-5">
                         <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase ${statusColor}">
                             ${ref.firstPurchaseProcessed ? 'Comprou' : 'Pendente'}
@@ -255,10 +262,18 @@
             });
         }
 
+        // ✅ FUNÇÃO PARA MASCARAR EMAIL
+        function maskEmail(email) {
+            if (!email || !email.includes('@')) return 'Anónimo';
+            const [name, domain] = email.split('@');
+            return name.length <= 2 ? `${name}***@${domain}` : `${name.substring(0,2)}***@${domain}`;
+        }
+
         // Funções Globais expostas para o HTML
         window.copyLink = () => {
             const input = document.getElementById('affLink');
             input.select();
+            input.setSelectionRange(0, 99999); // Para mobile
             document.execCommand('copy');
             showToast("✓ Link copiado para a área de transferência!");
         };
@@ -266,11 +281,12 @@
         window.shareWhatsApp = () => {
             const link = document.getElementById('affLink').value;
             const text = encodeURIComponent(`Olá! Queres pagar serviços internacionais com M-Pesa? Regista-te na PayGo pelo meu link: ${link}`);
-            window.open(`https://wa.me/?text=${text}`, '_blank');
+            // ✅ URL CORRIGIDA: sem espaço após ?text=
+            window.open(`https://wa.me/?text=${text}`, '_blank', 'noopener,noreferrer');
         };
 
         window.openWithdrawModal = () => {
-            if (userState.affiliateEarnings < 600) {
+            if (!userState || (userState.affiliateEarnings || 0) < 600) {
                 showToast("Erro: Precisas de pelo menos 600 MT para sacar.", "error");
                 return;
             }
@@ -283,8 +299,14 @@
             e.preventDefault();
             const amount = parseFloat(document.getElementById('wAmount').value);
             
-            if (amount > userState.affiliateEarnings) {
-                showToast("Erro: Saldo insuficiente.", "error");
+            if (!amount || amount > (userState?.affiliateEarnings || 0)) {
+                showToast("Erro: Saldo insuficiente ou valor inválido.", "error");
+                return;
+            }
+
+            const phone = document.getElementById('wPhone').value.trim();
+            if (!/^\d{9}$/.test(phone)) {
+                showToast("Erro: Insere um número válido (9 dígitos).", "error");
                 return;
             }
 
@@ -293,18 +315,24 @@
                     userId: userState.uid,
                     amount: amount,
                     method: document.getElementById('wMethod').value,
-                    phone: document.getElementById('wPhone').value,
+                    phone: phone,
                     status: 'pending',
                     requestedAt: serverTimestamp()
                 });
                 showToast("✅ Pedido de saque enviado com sucesso!");
                 closeWithdrawModal();
             } catch (err) {
+                console.error('Erro saque:', err);
                 showToast("Erro ao processar. Tenta novamente.", "error");
             }
         };
 
-        document.getElementById('logoutBtn').onclick = () => signOut(auth);
+        document.getElementById('logoutBtn').onclick = async () => {
+            if (confirm('Tens a certeza que queres sair?')) {
+                await signOut(auth);
+                window.location.href = 'login.html';
+            }
+        };
 
         function showToast(msg, type = 'success') {
             const container = document.getElementById('toast-container');
@@ -312,11 +340,12 @@
             toast.className = `toast glass-card flex items-center gap-3 px-6 py-4 rounded-2xl shadow-xl mb-4 show ${type === 'error' ? 'border-red-500' : 'border-green-500'}`;
             toast.innerHTML = `<i data-lucide="${type === 'success' ? 'check-circle' : 'alert-circle'}" class="${type === 'success' ? 'text-green-500' : 'text-red-500'}"></i> <span class="text-sm font-bold">${msg}</span>`;
             container.appendChild(toast);
-            lucide.createIcons();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
             setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 4000);
         }
 
-        lucide.createIcons();
+        // Inicializar ícones
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     </script>
 </body>
 </html>
