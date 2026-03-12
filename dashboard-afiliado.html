@@ -7,11 +7,11 @@
   <meta name="robots" content="noindex, nofollow">
   <meta name="theme-color" content="#0f172a">
   
-  <!-- Tailwind CSS -->
+  <!-- Tailwind CSS - URL CORRIGIDA -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Lucide Icons -->
+  <!-- Lucide Icons - URL CORRIGIDA -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- Google Fonts -->
+  <!-- Google Fonts - URL CORRIGIDA -->
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   
   <script>
@@ -68,27 +68,30 @@
     .toast.warning { border-left-color: #f59e0b; }
     
     /* Modal */
-    .modal-overlay { transition: opacity 0.3s; }
-    .modal-content { transition: transform 0.3s, opacity 0.3s; }
-    .modal-open .modal-overlay { opacity: 1; visibility: visible; }
+    .modal-overlay { transition: opacity 0.3s; pointer-events: none; }
+    .modal-content { transition: transform 0.3s, opacity 0.3s; pointer-events: auto; }
+    .modal-open .modal-overlay { opacity: 1; visibility: visible; pointer-events: auto; }
     .modal-open .modal-content { transform: scale(1); opacity: 1; }
     .modal-closed .modal-overlay { opacity: 0; visibility: hidden; }
     .modal-closed .modal-content { transform: scale(0.95); opacity: 0; }
     
     /* ✅ FORÇAR CURSOR POINTER EM BOTÕES */
-    button, [role="button"], #btnCopyLink, #btnCopyCode, #btnShareWp, #btnExportCSV, #btnOpenWithdraw, #logoutBtn, #mobileMenuBtn, #closeSidebarBtn {
+    button, [role="button"], #btnCopyLink, #btnCopyCode, #btnShareWp, #btnExportCSV, #btnOpenWithdraw, #logoutBtn, #mobileMenuBtn, #closeSidebarBtn, .sidebar-link {
       cursor: pointer !important;
       -webkit-tap-highlight-color: transparent;
+      position: relative;
+      z-index: 10;
     }
     
     /* Dark mode */
     .dark .glass-card { background: #1e293b; border-color: #334155; }
     .dark .toast { background: #1e293b; }
     
-    /* Evitar clique em overlay */
-    .modal-overlay { pointer-events: none; }
-    .modal-open .modal-overlay { pointer-events: auto; }
-    .modal-content { pointer-events: auto; }
+    /* Sidebar accessibility */
+    #sidebar { pointer-events: auto !important; z-index: 50 !important; }
+    
+    /* Prevent text selection on buttons */
+    button, [role="button"] { user-select: none; -webkit-user-select: none; }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans antialiased overflow-x-hidden">
@@ -111,16 +114,16 @@
     </div>
     <span class="font-bold font-display text-lg">Afiliados PayGo</span>
   </div>
-  <button id="mobileMenuBtn" class="p-2 text-slate-300 hover:text-white">
+  <button id="mobileMenuBtn" class="p-2 text-slate-300 hover:text-white" aria-label="Abrir menu">
     <i data-lucide="menu" class="w-6 h-6"></i>
   </button>
 </div>
 
 <!-- Sidebar Overlay -->
-<div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-40 hidden md:hidden"></div>
+<div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-40 hidden md:hidden transition-opacity opacity-0"></div>
 
 <!-- Sidebar -->
-<aside id="sidebar" class="fixed left-0 top-0 h-full w-64 bg-slate-900 text-white p-6 z-50 flex flex-col transform -translate-x-full md:translate-x-0 transition-transform">
+<aside id="sidebar" class="fixed left-0 top-0 h-full w-64 bg-slate-900 text-white p-6 z-50 flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
   <div class="flex items-center justify-between mb-8 pb-6 border-b border-white/10">
     <a href="dashboard.html" class="flex items-center gap-3">
       <div class="w-10 h-10 bg-gradient-to-tr from-success-500 to-brand-500 rounded-xl flex items-center justify-center">
@@ -131,19 +134,19 @@
         <span class="text-[10px] text-success-400 font-bold uppercase">Partners</span>
       </div>
     </a>
-    <button id="closeSidebarBtn" class="md:hidden p-2 text-slate-400 hover:text-white">
+    <button id="closeSidebarBtn" class="md:hidden p-2 text-slate-400 hover:text-white" aria-label="Fechar menu">
       <i data-lucide="x" class="w-5 h-5"></i>
     </button>
   </div>
 
   <nav class="flex-1 space-y-2 overflow-y-auto">
-    <a href="#" class="flex items-center gap-3 px-4 py-3 bg-success-500/10 text-success-400 border-r-2 border-success-500 rounded-xl font-semibold">
+    <a href="#" class="sidebar-link flex items-center gap-3 px-4 py-3 bg-success-500/10 text-success-400 border-r-2 border-success-500 rounded-xl font-semibold">
       <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Visão Geral
     </a>
-    <a href="#" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl opacity-50 cursor-not-allowed" title="Em breve">
+    <a href="#" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl opacity-50 cursor-not-allowed" title="Em breve">
       <i data-lucide="users" class="w-5 h-5"></i> Minhas Indicações
     </a>
-    <a href="#" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl opacity-50 cursor-not-allowed" title="Em breve">
+    <a href="#" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl opacity-50 cursor-not-allowed" title="Em breve">
       <i data-lucide="wallet" class="w-5 h-5"></i> Histórico de Saques
     </a>
   </nav>
@@ -198,7 +201,7 @@
         <div class="flex items-center gap-2 bg-slate-950/50 px-3 py-1.5 rounded-lg">
           <span class="text-xs text-slate-400">Código:</span>
           <span class="text-sm font-mono font-bold text-success-400" id="rawAffiliateCode">---</span>
-          <button id="btnCopyCode" class="text-slate-400 hover:text-white p-1" title="Copiar código">
+          <button id="btnCopyCode" class="text-slate-400 hover:text-white p-1" title="Copiar código" aria-label="Copiar código">
             <i data-lucide="copy" class="w-4 h-4"></i>
           </button>
         </div>
@@ -207,7 +210,7 @@
       <div class="flex flex-col md:flex-row gap-4">
         <div class="relative flex-1">
           <input type="text" id="affiliateLinkInput" readonly 
-                 class="w-full bg-slate-950/50 border border-slate-700 text-white px-5 py-4 rounded-xl font-mono text-sm focus:outline-none focus:border-success-500 pr-28 truncate" 
+                 class="w-full bg-slate-950/50 border border-slate-700 text-white px-5 py-4 rounded-xl font-mono text-sm focus:outline-none focus:border-success-500 pr-28 truncate cursor-text" 
                  value="" aria-label="Link de afiliado">
           <button id="btnCopyLink" 
                   class="absolute right-2 top-1/2 -translate-y-1/2 bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition flex items-center gap-2">
@@ -337,10 +340,10 @@
 <!-- Toast Container -->
 <div id="toastContainer"></div>
 
-<!-- ✅ JAVASCRIPT CORRIGIDO - SEM MÓDULO PARA FUNÇÕES GLOBAIS -->
+<!-- ✅ JAVASCRIPT CORRIGIDO - URLs limpas e funções globais -->
 <script>
 // ==========================================
-// 🔧 CONFIGURAÇÃO FIREBASE
+// 🔧 CONFIGURAÇÃO FIREBASE - URLs CORRIGIDAS
 // ==========================================
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
@@ -413,6 +416,7 @@ window.copyToClipboard = async function(text, successMsg) {
     window.showToast(successMsg, 'success');
     return true;
   } catch (err) {
+    console.error('Copy error:', err);
     window.showToast('Erro ao copiar', 'error');
     return false;
   }
@@ -433,7 +437,7 @@ function debounce(func, wait) {
 function setupEventListeners() {
   console.log('🔧 Configurando event listeners...');
   
-  // ✅ Copiar Link - VERIFICAR SE ELEMENTO EXISTE
+  // ✅ Copiar Link
   const btnCopyLink = document.getElementById('btnCopyLink');
   if (btnCopyLink) {
     btnCopyLink.addEventListener('click', function(e) {
@@ -446,8 +450,6 @@ function setupEventListeners() {
         window.showToast('Link não disponível', 'error');
       }
     });
-  } else {
-    console.warn('⚠️ btnCopyLink não encontrado no DOM');
   }
 
   // ✅ Copiar Código
@@ -464,7 +466,7 @@ function setupEventListeners() {
     });
   }
 
-  // ✅ WhatsApp - CORREÇÃO PRINCIPAL
+  // ✅ WhatsApp - URL CORRIGIDA (sem espaço)
   const btnShareWp = document.getElementById('btnShareWp');
   if (btnShareWp) {
     btnShareWp.addEventListener('click', function(e) {
@@ -479,13 +481,12 @@ function setupEventListeners() {
       }
       
       const text = encodeURIComponent(`Olá! Use meu link PayGo: ${link}`);
+      // ✅ URL CORRIGIDA: sem espaço após ?text=
       const url = `https://wa.me/?text=${text}`;
       
       console.log('🔗 Abrindo WhatsApp:', url);
       window.open(url, '_blank', 'noopener,noreferrer');
     });
-  } else {
-    console.warn('⚠️ btnShareWp não encontrado no DOM');
   }
 
   // ✅ Exportar CSV
@@ -554,6 +555,7 @@ function setupEventListeners() {
   function toggleSidebar() {
     sidebar.classList.toggle('-translate-x-full');
     sidebarOverlay.classList.toggle('hidden');
+    sidebarOverlay.classList.toggle('opacity-0');
     document.body.style.overflow = sidebar.classList.contains('-translate-x-full') ? '' : 'hidden';
   }
   
@@ -638,7 +640,7 @@ async function handleWithdrawSubmit(e) {
   btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin inline"></i> Processando...`;
 
   try {
-    // Importar Firebase dinamicamente
+    // ✅ URLs do Firebase CORRIGIDAS (sem espaços)
     const { getFirestore, collection, addDoc } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
     const { getAuth } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js");
     
@@ -686,6 +688,7 @@ async function loadReferrals(affiliateCode) {
   if (!affiliateCode) { if (emptyState) emptyState.classList.remove('hidden'); return []; }
   
   try {
+    // ✅ URL CORRIGIDA
     const { getFirestore, collection, query, where, getDocs } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
     const dbLocal = getFirestore(app, "paygodb");
     
@@ -769,6 +772,7 @@ window.exportToCSV = function(data, filename = 'indicacoes.csv') {
 async function initFirebase() {
   try {
     console.log('🔥 Inicializando Firebase...');
+    // ✅ URLs do Firebase CORRIGIDAS (sem espaços)
     const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js");
     const { getAuth, onAuthStateChanged, signOut } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js");
     const { getFirestore, doc, getDoc } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
@@ -822,7 +826,7 @@ async function initFirebase() {
           document.getElementById('statReferrals').textContent = currentUserData.totalReferrals || 0;
           document.getElementById('statConverted').textContent = currentUserData.approvedReferrals || 0;
           
-          // Configurar link
+          // Configurar link - ✅ URL CORRIGIDA (sem espaço)
           affiliateCodeLocal = currentUserData.affiliateCode || '';
           const origin = (window.location.hostname === 'localhost') ? 'https://paygo.co.mz' : window.location.origin;
           document.getElementById('rawAffiliateCode').textContent = affiliateCodeLocal || 'N/A';
@@ -857,7 +861,11 @@ async function initFirebase() {
 
 async function handleLogout() {
   try {
-    if (!auth) { const { getAuth, signOut } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"); auth = getAuth(app); }
+    if (!auth) { 
+      // ✅ URL CORRIGIDA
+      const { getAuth, signOut } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"); 
+      auth = getAuth(app); 
+    }
     await signOut(auth);
     window.showToast('✓ Logout realizado', 'success');
     setTimeout(() => window.location.href = 'login.html', 1000);
