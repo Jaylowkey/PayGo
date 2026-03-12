@@ -446,3 +446,4 @@ Acompanhe no WhatsApp: +258 87 100 2255
 PayGo - Simples. Seguro. Moçambicano. 🇲🇿
   `.trim();
 }
+
