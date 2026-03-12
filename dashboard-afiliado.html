@@ -3,17 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dashboard Afiliado | PayGo Partners</title>
-    <meta name="description" content="Acompanhe seus ganhos, indicações e comissões no programa de afiliados PayGo">
-    <meta name="robots" content="noindex, nofollow">
-    <meta name="theme-color" content="#0f172a">
-    
-    <!-- PWA Meta Tags -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="PayGo Afiliados">
-    <link rel="apple-touch-icon" href="/icons/icon-192.png">
-    <link rel="manifest" href="/manifest.json">
+    <title>Dashboard Afiliado | PayGo</title>
     
     <!-- ✅ URLs CORRIGIDAS - SEM ESPAÇOS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -25,258 +15,133 @@
             darkMode: 'class',
             theme: {
                 extend: {
-                    fontFamily: { 
-                        sans: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'], 
-                        display: ['"Outfit"', 'system-ui', 'sans-serif'] 
-                    },
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'], display: ['"Outfit"', 'sans-serif'] },
                     colors: {
-                        brand: { 
-                            50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd',
-                            400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8',
-                            800: '#1e40af', 900: '#1e3a8a', 950: '#0f172a'
-                        },
-                        success: { 
-                            50: '#f0fdf4', 100: '#dcfce7', 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' 
-                        },
-                        warning: { 50: '#fffbeb', 100: '#fef3c7', 500: '#f59e0b' }
-                    },
-                    animation: {
-                        'fade-in': 'fadeIn 0.3s ease-out',
-                        'slide-up': 'slideUp 0.4s ease-out',
-                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                        'shimmer': 'shimmer 2s linear infinite'
-                    },
-                    keyframes: {
-                        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
-                        slideUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
-                        shimmer: { '0%': { backgroundPosition: '-200% 0' }, '100%': { backgroundPosition: '200% 0' } }
-                    },
-                    boxShadow: {
-                        'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
-                        'glow-success': '0 0 20px rgba(34, 197, 94, 0.3)',
-                        'glow-brand': '0 0 20px rgba(59, 130, 246, 0.3)'
+                        brand: { 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 950: '#0f172a' },
+                        success: { 500: '#22c55e', 600: '#16a34a' }
                     }
                 }
             }
-        };
+        }
     </script>
 
     <style>
-        /* Base Styles */
         body { background-color: #f8fafc; }
         .dark body { background-color: #0f172a; }
-        
-        /* Glassmorphism Cards */
-        .glass-card { 
-            background: rgba(255, 255, 255, 0.8); 
-            backdrop-filter: blur(12px); 
-            border: 1px solid rgba(226, 232, 240, 0.8); 
-            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-        }
-        .dark .glass-card { 
-            background: rgba(30, 41, 59, 0.7); 
-            border: 1px solid rgba(51, 65, 85, 0.5); 
-        }
-        .glass-card:hover { 
-            transform: translateY(-4px); 
-            box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.1); 
-            border-color: #cbd5e1;
-        }
-        
-        /* Stat Cards */
+        .glass-card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(226, 232, 240, 0.8); }
+        .dark .glass-card { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(51, 65, 85, 0.5); }
         .stat-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
         .stat-card:hover { transform: translateY(-4px); box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.1); }
         
-        /* Toast Notifications */
-        #toast-container { 
-            position: fixed; 
-            top: 20px; 
-            right: 20px; 
-            z-index: 9999; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 12px;
-            pointer-events: none;
-        }
-        .toast { 
-            pointer-events: auto;
-            transform: translateX(120%); 
-            transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.3s ease;
-            opacity: 0;
-        }
-        .toast.show { transform: translateX(0); opacity: 1; }
-        .toast.success { border-left: 4px solid #22c55e; }
-        .toast.error { border-left: 4px solid #ef4444; }
-        .toast.warning { border-left: 4px solid #f59e0b; }
-        
-        /* Modal Styles */
-        .modal-overlay { transition: opacity 0.3s ease; }
-        .modal-content { transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.3s ease; }
-        .modal-open .modal-overlay { opacity: 1; visibility: visible; }
-        .modal-open .modal-content { transform: scale(1) translateY(0); opacity: 1; }
-        .modal-closed .modal-overlay { opacity: 0; visibility: hidden; }
-        .modal-closed .modal-content { transform: scale(0.95) translateY(10px); opacity: 0; }
-        
-        /* Button Micro-interactions */
-        .btn-hover { transition: all 0.2s ease; }
-        .btn-hover:active { transform: scale(0.98); }
-        .btn-hover:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-        
-        /* Input Focus */
-        .input-focus:focus {
-            outline: none;
-            border-color: #22c55e;
-            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
-        }
-        
-        /* Table Row Hover */
-        .table-row-hover:hover { background: #f8fafc; }
-        .dark .table-row-hover:hover { background: #334155; }
-        
-        /* Accessibility */
-        :focus-visible {
-            outline: 2px solid #3b82f6;
-            outline-offset: 2px;
-            border-radius: 4px;
-        }
-        
-        /* Reduced Motion */
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
-            }
-            html { scroll-behavior: auto; }
-        }
-        
-        /* Mobile Optimizations */
-        @media (max-width: 768px) {
-            .glass-card { border-radius: 1rem; }
-            .toast { max-width: calc(100vw - 40px); }
-        }
+        /* Toast Animation */
+        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+        .toast { transform: translateX(120%); transition: 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55); }
+        .toast.show { transform: translateX(0); }
         
         /* ✅ FORÇAR CURSOR POINTER */
-        button, [onclick], [role="button"], #logoutBtn { cursor: pointer !important; }
+        button, [onclick], #logoutBtn { cursor: pointer !important; }
     </style>
 </head>
-<body class="text-slate-800 dark:text-slate-200 antialiased transition-colors duration-300">
+<body class="text-slate-800 dark:text-slate-200 antialiased">
 
-    <div id="toast-container" role="region" aria-label="Notificações"></div>
+    <div id="toast-container"></div>
 
-    <!-- Page Loader -->
-    <div id="loader" class="fixed inset-0 z-[9999] bg-white dark:bg-slate-950 flex items-center justify-center transition-opacity duration-500">
+    <div id="loader" class="fixed inset-0 z-[9999] bg-white dark:bg-slate-950 flex items-center justify-center">
         <div class="flex flex-col items-center">
-            <div class="w-12 h-12 border-4 border-slate-200 border-t-brand-600 rounded-full animate-spin" role="status" aria-label="Carregando"></div>
-            <p class="mt-4 font-display font-bold text-slate-500 dark:text-slate-400">A carregar o teu império...</p>
+            <div class="w-12 h-12 border-4 border-slate-200 border-t-brand-600 rounded-full animate-spin"></div>
+            <p class="mt-4 font-display font-bold text-slate-500">A carregar o teu império...</p>
         </div>
     </div>
 
-    <!-- Navigation -->
-    <nav class="fixed top-0 left-0 right-0 z-40 glass-card border-b" role="banner">
+    <nav class="fixed top-0 left-0 right-0 z-40 glass-card border-b">
         <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
-            <a href="index.html" class="flex items-center gap-3 group" aria-label="PayGo - Página Inicial">
-                <div class="w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center shadow-lg shadow-brand-600/30 group-hover:scale-105 transition-transform">
-                    <i data-lucide="zap" class="text-white w-6 h-6" aria-hidden="true"></i>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center shadow-lg shadow-brand-600/30">
+                    <i data-lucide="zap" class="text-white w-6 h-6"></i>
                 </div>
                 <span class="text-xl font-display font-bold tracking-tight dark:text-white">PayGo <span class="text-brand-600">Partners</span></span>
-            </a>
+            </div>
             
             <div class="flex items-center gap-4">
-                <button id="logoutBtn" class="text-sm font-bold text-slate-500 hover:text-red-500 transition-colors flex items-center gap-2 btn-hover" aria-label="Sair da conta">
-                    <i data-lucide="log-out" class="w-4 h-4" aria-hidden="true"></i> <span class="hidden sm:inline">Sair</span>
+                <button id="logoutBtn" class="text-sm font-bold text-slate-500 hover:text-red-500 transition-colors flex items-center gap-2">
+                    <i data-lucide="log-out" class="w-4 h-4"></i> <span class="hidden sm:inline">Sair</span>
                 </button>
             </div>
         </div>
     </nav>
 
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-6 pt-32 pb-20" role="main">
+    <main class="max-w-7xl mx-auto px-6 pt-32 pb-20">
         
-        <!-- Page Header -->
         <header class="mb-10">
-            <h1 class="text-3xl font-display font-extrabold dark:text-white" id="userGreeting" aria-live="polite">Olá, Parceiro!</h1>
+            <h1 class="text-3xl font-display font-extrabold dark:text-white" id="userGreeting">Olá, Parceiro!</h1>
             <p class="text-slate-500 dark:text-slate-400">Acompanha o teu desempenho e lucros em tempo real.</p>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            <!-- Affiliate Link Card -->
             <div class="lg:col-span-3 glass-card rounded-[2rem] p-8 shadow-sm overflow-hidden relative">
-                <div class="absolute top-0 right-0 w-64 h-64 bg-brand-600/5 rounded-full -translate-y-1/2 translate-x-1/2" aria-hidden="true"></div>
+                <div class="absolute top-0 right-0 w-64 h-64 bg-brand-600/5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
                 
                 <div class="relative z-10">
                     <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
-                        <i data-lucide="share-2" class="text-brand-600 w-5 h-5" aria-hidden="true"></i> O teu Link Único
+                        <i data-lucide="share-2" class="text-brand-600 w-5 h-5"></i> O teu Link Único
                     </h2>
                     <div class="flex flex-col sm:flex-row gap-3">
-                        <input type="text" id="affLink" readonly 
-                               class="flex-1 bg-slate-100 dark:bg-slate-800 border-0 rounded-xl px-5 py-4 font-mono text-sm focus:ring-2 focus:ring-brand-600 outline-none transition-all" 
-                               value="A carregar link..."
-                               aria-label="Link de afiliado"
-                               aria-live="polite">
-                        <button onclick="copyLink()" 
-                                class="bg-brand-600 hover:bg-brand-700 text-white px-8 py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-brand-600/20 btn-hover"
-                                aria-label="Copiar link de afiliado">
-                            <i data-lucide="copy" class="w-5 h-5" aria-hidden="true"></i> Copiar Link
+                        <input type="text" id="affLink" readonly class="flex-1 bg-slate-100 dark:bg-slate-800 border-0 rounded-xl px-5 py-4 font-mono text-sm focus:ring-2 focus:ring-brand-600 outline-none transition-all" value="A carregar link...">
+                        <button onclick="copyLink()" class="bg-brand-600 hover:bg-brand-700 text-white px-8 py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-brand-600/20">
+                            <i data-lucide="copy" class="w-5 h-5"></i> Copiar Link
                         </button>
-                        <button onclick="shareWhatsApp()" 
-                                class="bg-green-500 hover:bg-green-600 text-white px-6 py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95 btn-hover"
-                                aria-label="Partilhar link no WhatsApp">
-                            <i data-lucide="message-circle" class="w-5 h-5" aria-hidden="true"></i> Partilhar
+                        <button onclick="shareWhatsApp()" class="bg-green-500 hover:bg-green-600 text-white px-6 py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95">
+                            <i data-lucide="message-circle" class="w-5 h-5"></i> Partilhar
                         </button>
                     </div>
-                    <p class="mt-4 text-xs text-slate-400 italic" aria-label="Dica de uso">Dica: Ganhas comissões por cada cliente que pagar o seu primeiro serviço.</p>
+                    <p class="mt-4 text-xs text-slate-400 italic">Dica: Ganhas comissões por cada cliente que pagar o seu primeiro serviço.</p>
                 </div>
             </div>
 
-            <!-- Stats Cards -->
             <div class="stat-card glass-card rounded-3xl p-6 shadow-sm">
-                <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-2xl flex items-center justify-center mb-4" aria-hidden="true">
+                <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-2xl flex items-center justify-center mb-4">
                     <i data-lucide="wallet" class="text-green-600 w-6 h-6"></i>
                 </div>
                 <span class="text-sm font-bold text-slate-400 uppercase tracking-widest">Saldo Disponível</span>
-                <div class="text-3xl font-display font-extrabold mt-1 dark:text-white skeleton" id="statBalance" aria-live="polite">0,00 MT</div>
-                <button onclick="openWithdrawModal()" 
-                        class="mt-4 w-full py-3 bg-slate-100 dark:bg-slate-800 hover:bg-green-500 hover:text-white rounded-xl text-sm font-bold transition-all btn-hover"
-                        aria-label="Solicitar saque de ganhos">Solicitar Saque</button>
+                <div class="text-3xl font-display font-extrabold mt-1 dark:text-white" id="statBalance">0,00 MT</div>
+                <button onclick="openWithdrawModal()" class="mt-4 w-full py-3 bg-slate-100 dark:bg-slate-800 hover:bg-green-500 hover:text-white rounded-xl text-sm font-bold transition-all">Solicitar Saque</button>
             </div>
 
             <div class="stat-card glass-card rounded-3xl p-6 shadow-sm">
-                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center mb-4" aria-hidden="true">
+                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center mb-4">
                     <i data-lucide="users" class="text-blue-600 w-6 h-6"></i>
                 </div>
                 <span class="text-sm font-bold text-slate-400 uppercase tracking-widest">Total Indicados</span>
-                <div class="text-3xl font-display font-extrabold mt-1 dark:text-white skeleton" id="statTotalRefs" aria-live="polite">0</div>
+                <div class="text-3xl font-display font-extrabold mt-1 dark:text-white" id="statTotalRefs">0</div>
                 <p class="mt-2 text-xs text-slate-400">Pessoas que se registaram com o teu link.</p>
             </div>
 
             <div class="stat-card glass-card rounded-3xl p-6 shadow-sm">
-                <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center mb-4" aria-hidden="true">
+                <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center mb-4">
                     <i data-lucide="shopping-cart" class="text-purple-600 w-6 h-6"></i>
                 </div>
                 <span class="text-sm font-bold text-slate-400 uppercase tracking-widest">Vendas Convertidas</span>
-                <div class="text-3xl font-display font-extrabold mt-1 dark:text-white skeleton" id="statSales" aria-live="polite">0</div>
+                <div class="text-3xl font-display font-extrabold mt-1 dark:text-white" id="statSales">0</div>
                 <p class="mt-2 text-xs text-slate-400">Vendas que geraram lucro para ti.</p>
             </div>
 
-            <!-- Referrals Table -->
             <div class="lg:col-span-3 glass-card rounded-3xl shadow-sm overflow-hidden">
                 <div class="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
                     <h2 class="text-lg font-bold dark:text-white">Indicações Recentes</h2>
-                    <a href="https://wa.me/258871002255" target="_blank" rel="noopener noreferrer" class="text-xs font-bold text-brand-600 hover:underline">Problemas? Fala com o Suporte</a>
+                    <a href="https://wa.me/258871002255" target="_blank" class="text-xs font-bold text-brand-600 hover:underline">Problemas? Fala com o Suporte</a>
                 </div>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left" role="table" aria-label="Tabela de indicações recentes">
+                    <table class="w-full text-left">
                         <thead>
                             <tr class="bg-slate-50 dark:bg-slate-800/50 text-slate-400 text-[10px] uppercase font-bold tracking-widest">
-                                <th scope="col" class="px-8 py-4">Data</th>
-                                <th scope="col" class="px-8 py-4">Cliente (Email)</th>
-                                <th scope="col" class="px-8 py-4">Estado</th>
-                                <th scope="col" class="px-8 py-4 text-right">Comissão</th>
+                                <th class="px-8 py-4">Data</th>
+                                <th class="px-8 py-4">Cliente (Email)</th>
+                                <th class="px-8 py-4">Estado</th>
+                                <th class="px-8 py-4 text-right">Comissão</th>
                             </tr>
                         </thead>
-                        <tbody id="referralsBody" class="divide-y divide-slate-50 dark:divide-slate-800" aria-live="polite">
+                        <tbody id="referralsBody" class="divide-y divide-slate-50 dark:divide-slate-800">
                         </tbody>
                     </table>
                 </div>
@@ -284,48 +149,36 @@
         </div>
     </main>
 
-    <!-- Withdraw Modal -->
-    <div id="withdrawModal" class="fixed inset-0 z-50 modal-closed flex items-center justify-center p-6" role="dialog" aria-modal="true" aria-labelledby="withdrawModalTitle">
-        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm modal-overlay" onclick="closeWithdrawModal()" aria-hidden="true"></div>
-        <div class="glass-card w-full max-w-md rounded-[2.5rem] p-10 relative z-10 shadow-2xl modal-content">
-            <div class="flex justify-between items-center mb-6">
-                <h2 id="withdrawModalTitle" class="text-2xl font-display font-bold dark:text-white">Solicitar Levantamento</h2>
-                <button onclick="closeWithdrawModal()" class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 flex items-center justify-center transition btn-hover" aria-label="Fechar modal">
-                    <i data-lucide="x" class="w-5 h-5" aria-hidden="true"></i>
-                </button>
-            </div>
-            <p class="text-slate-500 dark:text-slate-400 text-sm mb-6">Mínimo para saque: 600,00 MT</p>
+    <div id="withdrawModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-6">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeWithdrawModal()"></div>
+        <div class="glass-card w-full max-w-md rounded-[2.5rem] p-10 relative z-10 shadow-2xl">
+            <h2 class="text-2xl font-display font-bold mb-2 dark:text-white">Solicitar Levantamento</h2>
+            <p class="text-slate-500 text-sm mb-6">Mínimo para saque: 600,00 MT</p>
             
-            <form id="withdrawForm" class="space-y-4" novalidate>
+            <form id="withdrawForm" class="space-y-4">
                 <div>
-                    <label for="wAmount" class="block text-xs font-bold text-slate-400 uppercase mb-2">Valor (MT)</label>
-                    <input type="number" id="wAmount" required min="600" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl p-4 font-bold text-lg outline-none focus:ring-2 focus:ring-brand-600 input-focus" aria-describedby="amountHelp">
-                    <p id="amountHelp" class="text-xs text-slate-500 mt-1">Mínimo: 600 MT</p>
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Valor (MT)</label>
+                    <input type="number" id="wAmount" required class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl p-4 font-bold text-lg outline-none focus:ring-2 focus:ring-brand-600">
                 </div>
                 <div>
-                    <label for="wMethod" class="block text-xs font-bold text-slate-400 uppercase mb-2">Método de Receção</label>
-                    <select id="wMethod" required class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl p-4 font-bold outline-none input-focus cursor-pointer">
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Método de Receção</label>
+                    <select id="wMethod" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl p-4 font-bold outline-none">
                         <option value="mpesa">M-Pesa</option>
                         <option value="emola">e-Mola</option>
                     </select>
                 </div>
                 <div>
-                    <label for="wPhone" class="block text-xs font-bold text-slate-400 uppercase mb-2">Teu Número (Confirmação)</label>
-                    <input type="tel" id="wPhone" required placeholder="84/85/87..." pattern="^8[4-7]\d{7}$" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl p-4 font-bold outline-none input-focus" aria-describedby="phoneHelp">
-                    <p id="phoneHelp" class="text-xs text-slate-500 mt-1">Formato: 841234567</p>
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Teu Número (Confirmação)</label>
+                    <input type="tel" id="wPhone" required placeholder="84/85/87..." class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl p-4 font-bold outline-none">
                 </div>
-                <button type="submit" class="w-full py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg shadow-green-600/20 transition-all btn-hover disabled:opacity-50 disabled:cursor-not-allowed" aria-busy="false">
-                    Confirmar Levantamento
-                </button>
+                <button type="submit" class="w-full py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg shadow-green-600/20 transition-all">Confirmar Levantamento</button>
             </form>
         </div>
     </div>
 
-    <!-- ✅ JAVASCRIPT ULTRA PROFISSIONAL -->
+    <!-- ✅ JAVASCRIPT CORRIGIDO - URLs limpas + link para HOME PAGE -->
     <script type="module">
-        // ==========================================
-        // 🔧 CONFIGURAÇÃO FIREBASE - URLs 100% LIMPAS
-        // ==========================================
+        // ✅ IMPORTS COM URLs SEM ESPAÇOS
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, doc, onSnapshot, collection, query, where, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -345,138 +198,88 @@
 
         let userState = null;
 
-        // ==========================================
-        // 🔔 SISTEMA DE TOAST NOTIFICATIONS
-        // ==========================================
-        function showToast(message, type = 'success', duration = 4000) {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            
-            toast.className = `toast glass-card flex items-center gap-3 px-6 py-4 rounded-2xl shadow-xl mb-4 border-l-4 ${
-                type === 'error' ? 'border-red-500' : 
-                type === 'warning' ? 'border-warning-500' : 
-                'border-green-500'
-            }`;
-            toast.setAttribute('role', 'alert');
-            toast.setAttribute('aria-live', 'assertive');
-            
-            const icons = {
-                success: 'check-circle',
-                error: 'alert-circle',
-                warning: 'alert-triangle'
-            };
-            const colors = {
-                success: 'text-green-500',
-                error: 'text-red-500',
-                warning: 'text-warning-500'
-            };
-            
-            toast.innerHTML = `
-                <i data-lucide="${icons[type] || icons.success}" class="${colors[type] || colors.success} w-5 h-5 flex-shrink-0" aria-hidden="true"></i>
-                <span class="text-sm font-bold text-slate-800 dark:text-slate-200">${message}</span>
-            `;
-            
-            container.appendChild(toast);
-            
-            // Re-inicializar ícones
-            if (typeof lucide !== 'undefined') {
-                try { lucide.createIcons({ root: toast }); } catch(e) {}
+        // 1. Monitorizar Autenticação
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
             }
-            
-            // Animar entrada
-            requestAnimationFrame(() => {
-                toast.classList.add('show');
+
+            // 2. Real-time Listener para dados do utilizador
+            onSnapshot(doc(db, "users", user.uid), (docSnap) => {
+                if (!docSnap.exists() || docSnap.data().role !== 'affiliate') {
+                    alert("Acesso restrito a parceiros.");
+                    window.location.href = 'dashboard.html';
+                    return;
+                }
+
+                userState = { uid: user.uid, ...docSnap.data() };
+                updateUI(userState);
+                loadReferrals(userState.affiliateCode);
+                document.getElementById('loader').style.display = 'none';
             });
+        });
+
+        function updateUI(data) {
+            document.getElementById('userGreeting').innerHTML = `Olá, ${data.name?.split(' ')[0] || 'Parceiro'}!`;
+            document.getElementById('statBalance').innerText = `${(data.affiliateEarnings || 0).toFixed(2)} MT`;
+            document.getElementById('statTotalRefs').innerText = data.totalReferrals || 0;
+            document.getElementById('statSales').innerText = data.approvedReferrals || 0;
             
-            // Auto-remover
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 300);
-            }, duration);
+            // ✅ LINK CORRIGIDO: Direciona para HOME PAGE (index.html) em vez de register.html
+            const affUrl = `${window.location.origin}/index.html?ref=${data.affiliateCode}`;
+            document.getElementById('affLink').value = affUrl;
+            document.getElementById('wPhone').value = data.phone || "";
         }
 
-        // ==========================================
-        // 🛠️ FUNÇÕES DE UTILIDADE
-        // ==========================================
-        function formatMT(value) {
-            const num = Number(value || 0);
-            return num.toLocaleString('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' MT';
+        async function loadReferrals(code) {
+            const q = query(collection(db, "users"), where("referredBy", "==", code));
+            const snap = await getDocs(q);
+            const container = document.getElementById('referralsBody');
+            container.innerHTML = "";
+
+            if (snap.empty) {
+                container.innerHTML = `<tr><td colspan="4" class="px-8 py-10 text-center text-slate-400 italic">Ainda não tens indicações. Começa a partilhar!</td></tr>`;
+                return;
+            }
+
+            snap.forEach(doc => {
+                const ref = doc.data();
+                const row = document.createElement('tr');
+                const statusColor = ref.firstPurchaseProcessed ? 'text-green-500 bg-green-50' : 'text-slate-400 bg-slate-50';
+                
+                row.innerHTML = `
+                    <td class="px-8 py-5 text-sm font-medium text-slate-500">${new Date(ref.createdAt?.toDate?.() || ref.createdAt).toLocaleDateString('pt-MZ')}</td>
+                    <td class="px-8 py-5 text-sm font-bold dark:text-white">${maskEmail(ref.email)}</td>
+                    <td class="px-8 py-5">
+                        <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase ${statusColor}">
+                            ${ref.firstPurchaseProcessed ? 'Comprou' : 'Pendente'}
+                        </span>
+                    </td>
+                    <td class="px-8 py-5 text-right font-bold text-green-600">${ref.firstPurchaseProcessed ? '+ 3%' : '-'}</td>
+                `;
+                container.appendChild(row);
+            });
         }
 
+        // ✅ FUNÇÃO PARA MASCARAR EMAIL
         function maskEmail(email) {
             if (!email || !email.includes('@')) return 'Anónimo';
             const [name, domain] = email.split('@');
-            return name.length <= 2 ? `${name}***@${domain}` : `${name.substring(0, 2)}***@${domain}`;
+            return name.length <= 2 ? `${name}***@${domain}` : `${name.substring(0,2)}***@${domain}`;
         }
 
-        function formatDate(dateValue) {
-            if (!dateValue) return '-';
-            try {
-                const date = dateValue?.toDate ? dateValue.toDate() : new Date(dateValue);
-                return date.toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short', year: 'numeric' });
-            } catch {
-                return '-';
-            }
-        }
-
-        // Copy to Clipboard (com fallback seguro)
-        async function copyToClipboard(text, successMsg) {
-            try {
-                if (navigator.clipboard && window.isSecureContext) {
-                    await navigator.clipboard.writeText(text);
-                } else {
-                    // Fallback para HTTP ou contextos não seguros
-                    const textArea = document.createElement("textarea");
-                    textArea.value = text;
-                    textArea.style.position = "absolute";
-                    textArea.style.left = "-9999px";
-                    textArea.setAttribute("aria-hidden", "true");
-                    document.body.appendChild(textArea);
-                    textArea.focus();
-                    textArea.select();
-                    document.execCommand('copy');
-                    textArea.remove();
-                }
-                showToast(successMsg, 'success');
-                return true;
-            } catch (err) {
-                console.error('Copy error:', err);
-                showToast('Erro ao copiar para a área de transferência', 'error');
-                return false;
-            }
-        }
-
-        // Debounce para performance
-        function debounce(func, wait) {
-            let timeout;
-            return function executedFunction(...args) {
-                const later = () => {
-                    clearTimeout(timeout);
-                    func(...args);
-                };
-                clearTimeout(timeout);
-                timeout = setTimeout(later, wait);
-            };
-        }
-
-        // ==========================================
-        // 🎯 FUNÇÕES GLOBAIS PARA BOTÕES
-        // ==========================================
-        window.copyLink = async () => {
+        // Funções Globais expostas para o HTML
+        window.copyLink = () => {
             const input = document.getElementById('affLink');
-            if (!input?.value) {
-                showToast('Link não disponível', 'error');
-                return;
-            }
-            await copyToClipboard(input.value, '✓ Link copiado para a área de transferência!');
+            input.select();
+            input.setSelectionRange(0, 99999); // Para mobile
+            document.execCommand('copy');
+            showToast("✓ Link copiado para a área de transferência!");
         };
 
         window.shareWhatsApp = () => {
-            const link = document.getElementById('affLink')?.value;
-            if (!link) {
-                showToast('Link não disponível', 'error');
-                return;
-            }
+            const link = document.getElementById('affLink').value;
             const text = encodeURIComponent(`Olá! Queres pagar serviços internacionais com M-Pesa? Regista-te na PayGo pelo meu link: ${link}`);
             // ✅ URL CORRIGIDA: sem espaço após ?text=
             window.open(`https://wa.me/?text=${text}`, '_blank', 'noopener,noreferrer');
@@ -484,284 +287,65 @@
 
         window.openWithdrawModal = () => {
             if (!userState || (userState.affiliateEarnings || 0) < 600) {
-                showToast('💡 O saldo mínimo para levantamento é 600 MT.', 'warning');
+                showToast("Erro: Precisas de pelo menos 600 MT para sacar.", "error");
                 return;
             }
-            document.getElementById('withdrawModal').classList.remove('modal-closed');
-            document.getElementById('withdrawModal').classList.add('modal-open');
-            document.body.style.overflow = 'hidden';
+            document.getElementById('withdrawModal').classList.remove('hidden');
         };
 
-        window.closeWithdrawModal = () => {
-            const modal = document.getElementById('withdrawModal');
-            modal.classList.remove('modal-open');
-            modal.classList.add('modal-closed');
-            document.getElementById('withdrawForm')?.reset();
-            document.body.style.overflow = '';
-        };
+        window.closeWithdrawModal = () => document.getElementById('withdrawModal').classList.add('hidden');
 
-        // Fechar modal com ESC
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                closeWithdrawModal();
-            }
-        });
-
-        // ==========================================
-        // 💰 FORM SUBMIT - SAQUE COM VALIDAÇÃO
-        // ==========================================
-        document.getElementById('withdrawForm')?.addEventListener('submit', async (e) => {
+        document.getElementById('withdrawForm').onsubmit = async (e) => {
             e.preventDefault();
-            const btn = e.target.querySelector('button[type="submit"]');
-            const amount = parseFloat(document.getElementById('wAmount')?.value);
-            const method = document.getElementById('wMethod')?.value;
-            const phone = document.getElementById('wPhone')?.value.trim();
-            const availableBalance = userState?.affiliateEarnings || 0;
+            const amount = parseFloat(document.getElementById('wAmount').value);
+            
+            if (!amount || amount > (userState?.affiliateEarnings || 0)) {
+                showToast("Erro: Saldo insuficiente ou valor inválido.", "error");
+                return;
+            }
 
-            // Validações robustas
-            if (!amount || isNaN(amount)) {
-                showToast('Por favor, insira um valor válido', 'error');
-                document.getElementById('wAmount')?.focus();
-                return;
-            }
-            if (amount > availableBalance) {
-                showToast('Valor inserido é maior que o saldo disponível.', 'error');
-                return;
-            }
-            if (amount < 600) {
-                showToast('O valor mínimo de saque é 600 MT.', 'error');
-                return;
-            }
+            const phone = document.getElementById('wPhone').value.trim();
             if (!/^\d{9}$/.test(phone)) {
-                showToast('Insira um número de telefone válido (9 dígitos)', 'error');
-                document.getElementById('wPhone')?.focus();
+                showToast("Erro: Insere um número válido (9 dígitos).", "error");
                 return;
             }
-
-            // Estado de loading
-            btn.disabled = true;
-            btn.setAttribute('aria-busy', 'true');
-            btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin inline"></i> Processando...`;
-            if (typeof lucide !== 'undefined') lucide.createIcons({ root: btn });
 
             try {
                 await addDoc(collection(db, "withdrawals"), {
-                    userId: userState?.uid || auth.currentUser?.uid,
+                    userId: userState.uid,
                     amount: amount,
-                    method: method,
+                    method: document.getElementById('wMethod').value,
                     phone: phone,
                     status: 'pending',
-                    requestedAt: serverTimestamp(),
-                    userAgent: navigator.userAgent
+                    requestedAt: serverTimestamp()
                 });
-                showToast('✅ Pedido de saque enviado com sucesso!', 'success', 5000);
+                showToast("✅ Pedido de saque enviado com sucesso!");
                 closeWithdrawModal();
             } catch (err) {
-                console.error('Erro ao solicitar saque:', err);
-                showToast('❌ Erro ao processar o pedido. Tente novamente.', 'error');
-            } finally {
-                btn.disabled = false;
-                btn.removeAttribute('aria-busy');
-                btn.innerHTML = 'Confirmar Levantamento';
+                console.error('Erro saque:', err);
+                showToast("Erro ao processar. Tenta novamente.", "error");
             }
-        });
-
-        // ==========================================
-        // 📊 CARREGAR INDICAÇÕES
-        // ==========================================
-        async function loadReferrals(code) {
-            const container = document.getElementById('referralsBody');
-            container.innerHTML = '';
-
-            if (!code) {
-                container.innerHTML = `<tr><td colspan="4" class="px-8 py-10 text-center text-slate-400 italic">Ainda não tens indicações. Começa a partilhar!</td></tr>`;
-                return;
-            }
-
-            try {
-                const q = query(collection(db, "users"), where("referredBy", "==", code));
-                const snap = await getDocs(q);
-
-                if (snap.empty) {
-                    container.innerHTML = `<tr><td colspan="4" class="px-8 py-10 text-center text-slate-400 italic">Ainda não tens indicações. Começa a partilhar!</td></tr>`;
-                    return;
-                }
-
-                snap.forEach(docSnap => {
-                    const ref = docSnap.data();
-                    const row = document.createElement('tr');
-                    row.className = 'table-row-hover transition-colors';
-                    
-                    const hasBought = ref.firstPurchaseProcessed === true || (ref.totalPurchases || 0) > 0;
-                    const statusColor = hasBought ? 'text-green-500 bg-green-50 dark:bg-green-900/20' : 'text-slate-400 bg-slate-50 dark:bg-slate-700/50';
-                    const statusText = hasBought ? 'Comprou' : 'Pendente';
-                    
-                    row.innerHTML = `
-                        <td class="px-8 py-5 text-sm font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap">${formatDate(ref.createdAt)}</td>
-                        <td class="px-8 py-5 text-sm font-bold dark:text-white" title="${ref.email || ''}">${maskEmail(ref.email)}</td>
-                        <td class="px-8 py-5">
-                            <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase ${statusColor}">
-                                ${statusText}
-                            </span>
-                        </td>
-                        <td class="px-8 py-5 text-right font-bold ${hasBought ? 'text-green-600 dark:text-green-400' : 'text-slate-400 dark:text-slate-500'}">
-                            ${hasBought ? '+ 3%' : '-'}
-                        </td>
-                    `;
-                    container.appendChild(row);
-                });
-
-                // Re-inicializar ícones na tabela
-                if (typeof lucide !== 'undefined') {
-                    try { lucide.createIcons({ root: container }); } catch(e) {}
-                }
-            } catch (error) {
-                console.error('Erro ao carregar indicações:', error);
-                container.innerHTML = `<tr><td colspan="4" class="px-8 py-10 text-center text-red-500">Erro ao carregar indicações. Tente recarregar a página.</td></tr>`;
-            }
-        }
-
-        // ==========================================
-        // 🔐 AUTENTICAÇÃO E INICIALIZAÇÃO
-        // ==========================================
-        onAuthStateChanged(auth, (user) => {
-            if (!user) {
-                window.location.href = 'login.html';
-                return;
-            }
-
-            // Real-time Listener para dados do utilizador
-            onSnapshot(doc(db, "users", user.uid), (docSnap) => {
-                if (!docSnap.exists() || docSnap.data().role !== 'affiliate') {
-                    showToast('⚠️ Acesso restrito a parceiros.', 'error');
-                    setTimeout(() => window.location.href = 'dashboard.html', 1500);
-                    return;
-                }
-
-                userState = { uid: user.uid, ...docSnap.data() };
-                updateUI(userState);
-                loadReferrals(userState.affiliateCode);
-                
-                // Esconder loader
-                const loader = document.getElementById('loader');
-                if (loader) {
-                    loader.style.opacity = '0';
-                    setTimeout(() => loader.style.display = 'none', 500);
-                }
-            });
-        });
-
-        function updateUI(data) {
-            // Greeting personalizado
-            const firstName = data.name?.split(' ')[0] || 'Parceiro';
-            document.getElementById('userGreeting').innerHTML = `Olá, <span class="text-brand-600 dark:text-brand-400">${firstName}</span>!`;
-            
-            // Stats com formatação
-            document.getElementById('statBalance').innerText = formatMT(data.affiliateEarnings);
-            document.getElementById('statTotalRefs').innerText = data.totalReferrals || 0;
-            document.getElementById('statSales').innerText = data.approvedReferrals || 0;
-            
-            // Remover skeleton
-            document.querySelectorAll('.skeleton').forEach(el => {
-                el.classList.remove('skeleton');
-                el.style.opacity = '1';
-            });
-            
-            // ✅ LINK PARA HOME PAGE (index.html) - NÃO register.html
-            const affUrl = `${window.location.origin}/index.html?ref=${data.affiliateCode}`;
-            document.getElementById('affLink').value = affUrl;
-            
-            // Phone para saque
-            if (data.phone) {
-                document.getElementById('wPhone').value = data.phone;
-            }
-        }
-
-        // ==========================================
-        // 🚪 LOGOUT
-        // ==========================================
-        document.getElementById('logoutBtn')?.addEventListener('click', async () => {
-            if (!confirm('Tens a certeza que queres sair da tua conta?')) return;
-            try {
-                await signOut(auth);
-                showToast('✓ Logout realizado com sucesso!', 'success');
-                setTimeout(() => {
-                    window.location.href = 'login.html';
-                }, 1000);
-            } catch (error) {
-                console.error('Erro no logout:', error);
-                showToast('❌ Erro ao fazer logout. Tente novamente.', 'error');
-            }
-        });
-
-        // ==========================================
-        // 🚀 INICIALIZAÇÃO DA PÁGINA
-        // ==========================================
-        document.addEventListener('DOMContentLoaded', () => {
-            // Inicializar ícones Lucide
-            if (typeof lucide !== 'undefined') {
-                try {
-                    lucide.createIcons();
-                    console.log('✅ Lucide icons initialized');
-                } catch(err) {
-                    console.warn('⚠️ Lucide init error:', err);
-                }
-            }
-            
-            // Debounce para input de telefone no modal
-            const phoneInput = document.getElementById('wPhone');
-            if (phoneInput) {
-                phoneInput.addEventListener('input', debounce((e) => {
-                    // Formatar número: remover não-digitos e limitar a 9 dígitos
-                    let value = e.target.value.replace(/\D/g, '').slice(0, 9);
-                    e.target.value = value;
-                }, 300));
-            }
-            
-            // Debounce para input de valor
-            const amountInput = document.getElementById('wAmount');
-            if (amountInput) {
-                amountInput.addEventListener('input', debounce((e) => {
-                    // Garantir que é um número válido
-                    let value = e.target.value;
-                    if (value && !isNaN(value)) {
-                        e.target.value = parseFloat(value).toFixed(2);
-                    }
-                }, 300));
-            }
-            
-            console.log('✅ PayGo Affiliate Dashboard carregado - Ultra Professional Edition 🇲🇿');
-        });
-
-        // ==========================================
-        // 📦 EXPORTAR FUNÇÕES GLOBAIS (para debug)
-        // ==========================================
-        window.PayGoAffiliate = {
-            showToast,
-            copyToClipboard,
-            formatMT,
-            loadReferrals,
-            userState: () => userState
         };
-    </script>
 
-    <!-- Structured Data para SEO -->
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "WebPage",
-        "name": "Dashboard Afiliado - PayGo Moçambique",
-        "description": "Acompanhe seus ganhos, indicações e comissões no programa de afiliados PayGo",
-        "url": "https://paygo.co.mz/dashboard-afiliado.html",
-        "publisher": {
-            "@type": "Organization",
-            "name": "PayGo Moçambique",
-            "logo": {
-                "@type": "ImageObject",
-                "url": "https://paygo.co.mz/logo.png"
+        document.getElementById('logoutBtn').onclick = async () => {
+            if (confirm('Tens a certeza que queres sair?')) {
+                await signOut(auth);
+                window.location.href = 'login.html';
             }
+        };
+
+        function showToast(msg, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast glass-card flex items-center gap-3 px-6 py-4 rounded-2xl shadow-xl mb-4 show ${type === 'error' ? 'border-red-500' : 'border-green-500'}`;
+            toast.innerHTML = `<i data-lucide="${type === 'success' ? 'check-circle' : 'alert-circle'}" class="${type === 'success' ? 'text-green-500' : 'text-red-500'}"></i> <span class="text-sm font-bold">${msg}</span>`;
+            container.appendChild(toast);
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 4000);
         }
-    }
+
+        // Inicializar ícones
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     </script>
 </body>
 </html>
