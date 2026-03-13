@@ -19,6 +19,12 @@
 <meta name="twitter:title" content="PayGo | Pagamentos Internacionais">
 <meta name="twitter:description" content="Compre no mundo todo usando M-Pesa. Rápido, seguro e moçambicano.">
 <meta name="twitter:image" content="https://paygo.co.mz/twitter-image.jpg">
+
+<link rel="manifest" href="/manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PayGo">
+
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233b82f6'><polygon points='13 2 3 14 12 14 11 22 21 10 12 10 13 2'/></svg>">
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -79,10 +85,6 @@ backdropBlur: { xs: '2px' },
 }
 }
 </script>
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="PayGo">
-<link rel="apple-touch-icon" href="/icons/icon-192.png">
 <style>
 /* Scrollbar Personalizado */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -231,16 +233,19 @@ opacity: 1;
 transform: scale(1);
 }
 .payment-method .check-indicator svg { width: 10px; height: 10px; color: white; }
-/* Social Icons Hover */
+
+/* Social Icons Hover - Agora redondos */
 .social-icon {
 position: relative;
 overflow: hidden;
+border-radius: 50% !important; /* Força o formato redondo */
 transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .social-icon:hover {
-transform: translateY(-3px) scale(1.05);
-box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+transform: translateY(-3px) scale(1.1);
+box-shadow: 0 10px 30px rgba(0,0,0,0.3);
 }
+
 /* Gradient Text */
 .gradient-text {
 background: linear-gradient(135deg, #60a5fa, #22d3ee, #a78bfa);
@@ -315,6 +320,35 @@ html { scroll-behavior: auto; }
 .payment-status.error .icon { color: #ef4444; }
 .payment-status.pending .icon { color: #f59e0b; animation: pulse 2s infinite; }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+/* Anúncios AdSense Organizer */
+.ads-wrapper {
+    position: relative;
+    background-color: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 16px;
+    padding: 20px;
+    margin: 2rem auto;
+    text-align: center;
+    min-height: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.ads-wrapper::before {
+    content: 'Publicidade';
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    background: #e2e8f0;
+    color: #64748b;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 2px 10px;
+    border-radius: 12px;
+    letter-spacing: 0.05em;
+}
 </style>
 </head>
 <body class="bg-slate-50 text-slate-900 font-sans overflow-x-hidden selection:bg-brand-500 selection:text-white antialiased">
@@ -328,14 +362,15 @@ html { scroll-behavior: auto; }
 </div>
 <span class="text-2xl font-display font-bold text-white">PayGo</span>
 </a>
-<nav class="hidden md:flex items-center space-x-8 text-sm font-medium text-slate-300/80" role="navigation" aria-label="Navegação Principal">
+
+<nav class="hidden lg:flex items-center space-x-8 text-sm font-medium text-slate-300/80" role="navigation" aria-label="Navegação Principal">
 <a href="#como-usar" class="anchor-link hover:text-white hover:shadow-[0_2px_0_0_currentColor] transition-all duration-200 focus:outline-none focus:text-white">Como Funciona</a>
 <a href="#vantagens" class="anchor-link hover:text-white hover:shadow-[0_2px_0_0_currentColor] transition-all duration-200 focus:outline-none focus:text-white">Vantagens</a>
 <a href="#precos" class="anchor-link hover:text-white hover:shadow-[0_2px_0_0_currentColor] transition-all duration-200 focus:outline-none focus:text-white">Taxas</a>
 
 <div class="relative group">
   <button class="flex items-center gap-1 text-slate-300 hover:text-white transition-all duration-200 focus:outline-none font-medium">
-    <i data-lucide="box" class="w-4 h-4"></i> Rastrear Pedido <i data-lucide="chevron-down" class="w-3 h-3"></i>
+    <i data-lucide="box" class="w-4 h-4"></i> Rastrear <i data-lucide="chevron-down" class="w-3 h-3"></i>
   </button>
   <div class="absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 flex flex-col py-2 overflow-hidden z-50">
     <a href="#" onclick="openTrackingModal()" class="px-4 py-3 hover:bg-slate-50 text-slate-700 hover:text-brand-600 text-sm font-semibold flex items-center gap-2 transition-colors border-b border-slate-50">
@@ -347,11 +382,20 @@ html { scroll-behavior: auto; }
   </div>
 </div>
 
+<a href="/admin/" class="anchor-link hover:text-brand-400 text-brand-300 transition-all duration-200 focus:outline-none flex items-center gap-1">
+  <i data-lucide="shield" class="w-4 h-4"></i> Admin
+</a>
+
+<button id="btnInstallAppDesk" onclick="installPWA()" class="hidden bg-white/10 hover:bg-white/20 text-white border border-white/20 px-4 py-2 rounded-full font-bold transition-all flex items-center gap-2 backdrop-blur-md">
+  <i data-lucide="download" class="w-4 h-4"></i> Instalar App
+</button>
+
 <a href="#formulario" class="anchor-link bg-white text-brand-900 px-6 py-2.5 rounded-full font-bold hover:bg-brand-50 transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_25px_rgba(255,255,255,0.3)] flex items-center gap-2 transform hover:scale-105 active:scale-95 group focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-slate-900">
 <span>Simular Pedido</span>
 <i data-lucide="arrow-right" class="w-4 h-4 text-brand-600 group-hover:translate-x-1 transition-transform" aria-hidden="true"></i>
 </a>
 </nav>
+
 <div class="flex items-center gap-3" id="authSection">
 <div class="hidden md:flex items-center gap-3" id="userSection" style="display: none;" role="group" aria-label="Conta do Usuário">
 <div class="flex items-center gap-3">
@@ -368,13 +412,14 @@ html { scroll-behavior: auto; }
 <i data-lucide="log-out" class="w-5 h-5" aria-hidden="true"></i>
 </button>
 </div>
-<button id="menu-btn" class="md:hidden text-white relative z-50 p-2 hover:bg-white/10 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-500" aria-label="Abrir menu" aria-expanded="false" aria-controls="mobile-menu">
+<button id="menu-btn" class="lg:hidden text-white relative z-50 p-2 hover:bg-white/10 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-500" aria-label="Abrir menu" aria-expanded="false" aria-controls="mobile-menu">
 <i data-lucide="menu" class="w-7 h-7" aria-hidden="true"></i>
 </button>
 </div>
 </div>
 </header>
-<div id="mobile-menu" class="fixed inset-0 z-40 bg-[#0f172a]/98 backdrop-blur-2xl translate-x-full transition-transform duration-300 flex flex-col justify-center items-center px-8 md:hidden text-white overflow-y-auto" role="dialog" aria-modal="true" aria-label="Menu Mobile">
+
+<div id="mobile-menu" class="fixed inset-0 z-40 bg-[#0f172a]/98 backdrop-blur-2xl translate-x-full transition-transform duration-300 flex flex-col justify-center items-center px-8 lg:hidden text-white overflow-y-auto" role="dialog" aria-modal="true" aria-label="Menu Mobile">
 <button id="close-menu-btn" class="absolute top-6 right-6 text-slate-400 p-2 hover:text-white transition focus:outline-none focus:ring-2 focus:ring-brand-500 rounded-lg" aria-label="Fechar menu">
 <i data-lucide="x" class="w-8 h-8" aria-hidden="true"></i>
 </button>
@@ -392,6 +437,14 @@ html { scroll-behavior: auto; }
     <i data-lucide="package" class="w-5 h-5"></i> Rastreio AliExpress
   </a>
 </div>
+
+<a href="/admin/" class="text-xl font-display font-bold text-brand-300 hover:text-brand-200 transition flex items-center justify-center gap-2 mt-4">
+  <i data-lucide="shield" class="w-5 h-5"></i> Painel Admin
+</a>
+
+<button id="btnInstallAppMob" onclick="installPWA()" class="hidden text-xl font-display font-bold text-green-400 hover:text-green-300 transition flex items-center justify-center gap-2 mt-2">
+  <i data-lucide="download" class="w-5 h-5"></i> Instalar Aplicação
+</button>
 
 <div class="hidden mt-4" id="mobileUserSection">
 <p class="text-white font-semibold" id="mobileUserName">Usuário</p>
@@ -587,6 +640,19 @@ data-aos="fade-up" data-aos-delay="300">
 </div>
 </div>
 </section>
+
+<div class="ads-wrapper container mx-auto" data-aos="fade-up">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5084926593017837" crossorigin="anonymous"></script>
+    <ins class="adsbygoogle"
+         style="display:block; width:100%; text-align:center;"
+         data-ad-layout="in-article"
+         data-ad-format="fluid"
+         data-ad-client="ca-pub-5084926593017837"
+         data-ad-slot="5039302434"></ins>
+    <script>
+         (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+</div>
 
 <section class="py-12 relative overflow-hidden bg-slate-900 border-y border-white/10">
     <div class="absolute inset-0 bg-brand-600/20 mix-blend-multiply pointer-events-none"></div>
@@ -796,22 +862,25 @@ data-aos="fade-up" data-aos-delay="300">
   </div>
 </section>
 
+<div class="ads-wrapper container mx-auto" data-aos="fade-up">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5084926593017837" crossorigin="anonymous"></script>
+    <ins class="adsbygoogle"
+         style="display:block; width:100%; text-align:center;"
+         data-ad-format="autorelaxed"
+         data-ad-client="ca-pub-5084926593017837"
+         data-ad-slot="1715464668"></ins>
+    <script>
+         (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+</div>
+
 <section id="precos" class="py-24 bg-white" aria-labelledby="pricing-title">
 <div class="container mx-auto px-6">
 <div class="text-center mb-16" data-aos="fade-up">
 <h2 id="pricing-title" class="text-3xl font-display font-bold mb-4 text-slate-900">Taxas Fixas e Transparentes</h2>
 <p class="text-slate-500">Sem custos escondidos. Você sabe exatamente quanto vai pagar.</p>
 </div>
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5084926593017837"
-crossorigin="anonymous"></script>
-<ins class="adsbygoogle"
-style="display:block"
-data-ad-format="autorelaxed"
-data-ad-client="ca-pub-5084926593017837"
-data-ad-slot="1715464668"></ins>
-<script>
-(adsbygoogle = window.adsbygoogle || []).push({});
-</script>
+
 <div class="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto items-center">
 <article class="bg-slate-50 p-8 rounded-3xl shadow-sm border border-slate-100 opacity-90 hover:opacity-100 transition relative overflow-hidden group hover:-translate-y-1 duration-300"
 data-aos="fade-up" data-aos-delay="100">
@@ -866,94 +935,89 @@ data-aos="fade-up" data-aos-delay="300">
 </div>
 </section>
 </main>
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5084926593017837"
-crossorigin="anonymous"></script>
-<ins class="adsbygoogle"
-style="display:block"
-data-ad-client="ca-pub-5084926593017837"
-data-ad-slot="5039302434"
-data-ad-format="auto"
-data-full-width-responsive="true"></ins>
-<script>
-(adsbygoogle = window.adsbygoogle || []).push({});
-</script>
+
 <footer class="bg-slate-950 text-slate-400 py-16 border-t border-slate-900 relative overflow-hidden" role="contentinfo">
 <div class="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-brand-900 to-transparent" aria-hidden="true"></div>
-<div class="container mx-auto px-6 grid md:grid-cols-4 gap-12 text-sm">
-<div class="col-span-1" data-aos="fade-right" data-aos-delay="100">
-<div class="flex items-center space-x-2 text-white italic mb-6">
-<i data-lucide="zap" class="w-6 h-6 fill-blue-600 text-blue-600" aria-hidden="true"></i>
-<span class="text-2xl font-extrabold tracking-tight">PayGo</span>
+<div class="container mx-auto px-6 grid md:grid-cols-5 gap-10 text-sm">
+    
+    <div class="col-span-1 md:col-span-2" data-aos="fade-right" data-aos-delay="100">
+        <div class="flex items-center space-x-2 text-white italic mb-6">
+            <i data-lucide="zap" class="w-6 h-6 fill-blue-600 text-blue-600" aria-hidden="true"></i>
+            <span class="text-2xl font-extrabold tracking-tight">PayGo</span>
+        </div>
+        <p class="mb-6 opacity-80 leading-relaxed text-slate-500 max-w-sm">
+            Sua ponte segura para o comércio global. Compre no mundo todo usando M-Pesa e e-Mola sem fronteiras.
+        </p>
+        <div class="mb-6 p-4 bg-white/5 rounded-xl border border-white/5 hover:border-brand-500/30 transition-colors max-w-sm">
+            <div class="flex items-start gap-3">
+                <i data-lucide="map-pin" class="w-5 h-5 text-brand-500 flex-shrink-0 mt-0.5" aria-hidden="true"></i>
+                <div>
+                    <p class="text-white font-bold text-xs uppercase tracking-wider mb-1">Nossa Localização</p>
+                    <address class="text-sm leading-snug not-italic">
+                        Rua de Bárue, Centro Comercial MK,<br>
+                        Loja nº 6 - <span class="text-brand-400 font-semibold">Chimoio</span>
+                    </address>
+                </div>
+            </div>
+        </div>
+        
+        <div class="flex gap-3" role="navigation" aria-label="Redes Sociais">
+            <a href="https://www.instagram.com/paygo_mz" target="_blank" rel="noopener noreferrer" class="social-icon w-10 h-10 bg-gradient-to-br from-[#f09433] via-[#dc2743] to-[#bc1888] flex items-center justify-center text-white focus:outline-none focus:ring-2 focus:ring-white/50" aria-label="Instagram da PayGo">
+                <i data-lucide="instagram" class="w-5 h-5 fill-current" aria-hidden="true"></i>
+            </a>
+            <a href="https://web.facebook.com/profile.php?id=61586222356575" target="_blank" rel="noopener noreferrer" class="social-icon w-10 h-10 bg-gradient-to-br from-[#1877f2] to-[#0d5fbc] flex items-center justify-center text-white focus:outline-none focus:ring-2 focus:ring-white/50" aria-label="Facebook da PayGo">
+                <i data-lucide="facebook" class="w-5 h-5 fill-current" aria-hidden="true"></i>
+            </a>
+            <a href="https://wa.me/258837522255" target="_blank" rel="noopener noreferrer" class="social-icon w-10 h-10 bg-gradient-to-br from-[#25D366] to-[#128C7E] flex items-center justify-center text-white focus:outline-none focus:ring-2 focus:ring-white/50" aria-label="WhatsApp da PayGo">
+                <i data-lucide="message-circle" class="w-5 h-5 fill-current" aria-hidden="true"></i>
+            </a>
+            <a href="mailto:contact@paygo.co.mz" class="social-icon w-10 h-10 bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center text-white focus:outline-none focus:ring-2 focus:ring-white/50" aria-label="Email de contato">
+                <i data-lucide="mail" class="w-5 h-5" aria-hidden="true"></i>
+            </a>
+        </div>
+    </div>
+
+    <div data-aos="fade-up" data-aos-delay="200">
+        <h5 class="text-white font-bold mb-6 tracking-wide uppercase text-xs">Suporte</h5>
+        <ul class="space-y-4" role="list">
+            <li><a href="faq.html" class="hover:text-white hover:translate-x-1 transition-all inline-block flex items-center gap-2 focus:outline-none focus:text-white"><i data-lucide="help-circle" class="w-4 h-4" aria-hidden="true"></i> FAQ - Perguntas</a></li>
+            <li><a href="contacto.html" class="hover:text-white hover:translate-x-1 transition-all inline-block flex items-center gap-2 focus:outline-none focus:text-white"><i data-lucide="headphones" class="w-4 h-4" aria-hidden="true"></i> Central de Ajuda</a></li>
+            <li><a href="como-funciona.html" class="hover:text-white hover:translate-x-1 transition-all inline-block flex items-center gap-2 focus:outline-none focus:text-white"><i data-lucide="info" class="w-4 h-4" aria-hidden="true"></i> Como Funciona</a></li>
+        </ul>
+    </div>
+
+    <div data-aos="fade-up" data-aos-delay="300">
+        <h5 class="text-white font-bold mb-6 tracking-wide uppercase text-xs">Legal & Conta</h5>
+        <ul class="space-y-4" role="list">
+            <li><a href="termos.html" class="hover:text-white hover:translate-x-1 transition-all inline-block text-slate-300 flex items-center gap-2 focus:outline-none focus:text-white"><i data-lucide="file-text" class="w-4 h-4" aria-hidden="true"></i> Termos de Uso</a></li>
+            <li><a href="privacidade.html" class="hover:text-white hover:translate-x-1 transition-all inline-block flex items-center gap-2 focus:outline-none focus:text-white"><i data-lucide="shield" class="w-4 h-4" aria-hidden="true"></i> Privacidade</a></li>
+            <li><a href="afiliados.html" class="hover:text-white hover:translate-x-1 transition-all inline-block flex items-center gap-2 text-success-400 focus:outline-none focus:text-success-300"><i data-lucide="gift" class="w-4 h-4" aria-hidden="true"></i> Afiliados PayGo</a></li>
+        </ul>
+    </div>
+
+    <div data-aos="fade-left" data-aos-delay="400">
+        <h5 class="text-white font-bold mb-6 tracking-wide uppercase text-xs">Acesso Restrito</h5>
+        <ul class="space-y-4" role="list">
+            <li>
+                <a href="/admin/" class="w-full inline-block bg-slate-800 text-brand-300 px-4 py-2.5 rounded-xl font-semibold text-center hover:bg-slate-700 transition flex items-center justify-center gap-2 border border-slate-700">
+                    <i data-lucide="shield-alert" class="w-4 h-4"></i> Painel Admin
+                </a>
+            </li>
+            <li>
+                <button onclick="installPWA()" class="w-full bg-gradient-to-r from-brand-600 to-accent-600 text-white px-4 py-2.5 rounded-xl font-bold text-center hover:shadow-lg hover:shadow-brand-500/20 transition flex items-center justify-center gap-2">
+                    <i data-lucide="download-cloud" class="w-4 h-4"></i> Baixar App
+                </button>
+            </li>
+        </ul>
+    </div>
 </div>
-<p class="mb-6 opacity-80 leading-relaxed text-slate-500">
-Sua ponte segura para o comércio global. Compre no mundo todo usando M-Pesa e e-Mola sem fronteiras.
-</p>
-<div class="mb-6 p-4 bg-white/5 rounded-xl border border-white/5 hover:border-brand-500/30 transition-colors">
-<div class="flex items-start gap-3 mb-4">
-<i data-lucide="map-pin" class="w-5 h-5 text-brand-500 flex-shrink-0 mt-0.5" aria-hidden="true"></i>
-<div>
-<p class="text-white font-bold text-xs uppercase tracking-wider mb-1">Nossa Localização</p>
-<address class="text-sm leading-snug not-italic">
-Rua de Bárue, Centro Comercial MK,<br>
-Loja nº 6 - <span class="text-brand-400 font-semibold">Chimoio</span>
-</address>
-</div>
-</div>
-<div class="map-mini">
-<iframe
-src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3599.9666!2d33.4!3d-19.1!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTnCsDA2JzAwLjAiUyAzM8KwMjQnMDAuMCJF!5e0!3m2!1spt-PT!2smz!4v1600000000000!5m2!1spt-PT!2smz"
-width="100%"
-height="100%"
-style="border:0;"
-allowfullscreen=""
-loading="lazy"
-referrerpolicy="no-referrer-when-downgrade"
-title="Localização da PayGo em Chimoio, Moçambique">
-</iframe>
-</div>
-</div>
-<div class="flex gap-3" role="navigation" aria-label="Redes Sociais">
-<a href="https://www.instagram.com/paygo_mz" target="_blank" rel="noopener noreferrer" class="social-icon w-10 h-10 rounded-xl bg-gradient-to-br from-[#f09433] via-[#dc2743] to-[#bc1888] flex items-center justify-center text-white shadow-lg hover:shadow-[0_10px_30px_rgba(220,39,67,0.4)] transition-all focus:outline-none focus:ring-2 focus:ring-white/50" aria-label="Instagram da PayGo">
-<i data-lucide="instagram" class="w-5 h-5 fill-current" aria-hidden="true"></i>
-</a>
-<a href="https://web.facebook.com/profile.php?id=61586222356575" target="_blank" rel="noopener noreferrer" class="social-icon w-10 h-10 rounded-xl bg-gradient-to-br from-[#1877f2] to-[#0d5fbc] flex items-center justify-center text-white shadow-lg hover:shadow-[0_10px_30px_rgba(24,119,242,0.4)] transition-all focus:outline-none focus:ring-2 focus:ring-white/50" aria-label="Facebook da PayGo">
-<i data-lucide="facebook" class="w-5 h-5 fill-current" aria-hidden="true"></i>
-</a>
-<a href="https://wa.me/258837522255" target="_blank" rel="noopener noreferrer" class="social-icon w-10 h-10 rounded-xl bg-gradient-to-br from-[#25D366] to-[#128C7E] flex items-center justify-center text-white shadow-lg hover:shadow-[0_10px_30px_rgba(37,211,102,0.4)] transition-all focus:outline-none focus:ring-2 focus:ring-white/50" aria-label="WhatsApp da PayGo">
-<i data-lucide="message-circle" class="w-5 h-5 fill-current" aria-hidden="true"></i>
-</a>
-<a href="mailto:contact@paygo.co.mz" class="social-icon w-10 h-10 rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center text-white shadow-lg hover:shadow-[0_10px_30px_rgba(100,116,139,0.4)] transition-all focus:outline-none focus:ring-2 focus:ring-white/50" aria-label="Email de contato">
-<i data-lucide="mail" class="w-5 h-5" aria-hidden="true"></i>
-</a>
-</div>
-</div>
-<div data-aos="fade-up" data-aos-delay="200">
-<h5 class="text-white font-bold mb-6 text-base tracking-wide uppercase text-xs">Suporte</h5>
-<ul class="space-y-4" role="list">
-<li><a href="faq.html" class="hover:text-white hover:translate-x-1 transition-all inline-block flex items-center gap-2 focus:outline-none focus:text-white"><i data-lucide="help-circle" class="w-4 h-4" aria-hidden="true"></i> FAQ - Perguntas Frequentes</a></li>
-<li><a href="contacto.html" class="hover:text-white hover:translate-x-1 transition-all inline-block flex items-center gap-2 focus:outline-none focus:text-white"><i data-lucide="headphones" class="w-4 h-4" aria-hidden="true"></i> Central de Ajuda</a></li>
-<li><a href="como-funciona.html" class="hover:text-white hover:translate-x-1 transition-all inline-block flex items-center gap-2 focus:outline-none focus:text-white"><i data-lucide="info" class="w-4 h-4" aria-hidden="true"></i> Como Funciona</a></li>
-</ul>
-</div>
-<div data-aos="fade-up" data-aos-delay="300">
-<h5 class="text-white font-bold mb-6 text-base tracking-wide uppercase text-xs">Legal</h5>
-<ul class="space-y-4" role="list">
-<li><a href="termos.html" class="hover:text-white hover:translate-x-1 transition-all inline-block font-semibold text-slate-200 flex items-center gap-2 focus:outline-none focus:text-white"><i data-lucide="file-text" class="w-4 h-4" aria-hidden="true"></i> Termos e Condições</a></li>
-<li><a href="privacidade.html" class="hover:text-white hover:translate-x-1 transition-all inline-block flex items-center gap-2 focus:outline-none focus:text-white"><i data-lucide="shield" class="w-4 h-4" aria-hidden="true"></i> Política de Privacidade</a></li>
-</ul>
-</div>
-<div data-aos="fade-left" data-aos-delay="400">
-<h5 class="text-white font-bold mb-6 text-base tracking-wide uppercase text-xs">Conta</h5>
-<ul class="space-y-4" role="list">
-<li><a href="afiliados.html" class="hover:text-white hover:translate-x-1 transition-all inline-block flex items-center gap-2 text-success-400 focus:outline-none focus:text-success-300"><i data-lucide="gift" class="w-4 h-4" aria-hidden="true"></i> Programa de Afiliados</a></li>
-</ul>
-</div>
-</div>
-<div class="border-t border-slate-900 mt-16 pt-8 text-center text-xs opacity-30 flex flex-col md:flex-row justify-between items-center px-6">
-<span>© <time datetime="2026">2026</time> PayGo Serviços Digitais. Todos direitos reservados.</span>
-<span class="mt-2 md:mt-0">Desenvolvido pela PayGo Team 🇲🇿</span>
+
+<div class="border-t border-slate-900 mt-16 pt-8 text-center text-xs opacity-40 flex flex-col md:flex-row justify-between items-center px-6 container mx-auto">
+    <span>© <time datetime="2026">2026</time> PayGo Serviços Digitais. Todos direitos reservados.</span>
+    <span class="mt-2 md:mt-0">Desenvolvido pela Equipa Técnica 🇲🇿</span>
 </div>
 </footer>
+
 <a href="https://wa.me/258837522255" target="_blank" rel="noopener noreferrer"
 class="fixed bottom-6 right-6 z-50 bg-[#25D366] text-white p-4 rounded-full shadow-[0_10px_40px_-10px_rgba(37,211,102,0.6)] hover:bg-[#128C7E] transition-all hover:-translate-y-1 hover:scale-110 flex items-center justify-center group focus:outline-none focus:ring-4 focus:ring-[#25D366]/50"
 aria-label="Fale conosco no WhatsApp">
@@ -965,70 +1029,70 @@ Fale Conosco
 </a>
 
 <div id="paymentModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="paymentModalTitle">
-  <div class="modal-overlay" onclick="closePaymentModal()" aria-hidden="true"></div>
-  <div class="modal-content text-center">
-    <div class="modal-header">
-      <h3 id="paymentModalTitle" class="modal-title text-center w-full">💳 Pagamento Seguro</h3>
-      <button class="modal-close absolute right-6" onclick="closePaymentModal()" aria-label="Fechar"><i data-lucide="x" class="w-5 h-5"></i></button>
-    </div>
+  <div class="modal-overlay" onclick="closePaymentModal()" aria-hidden="true"></div>
+  <div class="modal-content text-center">
+    <div class="modal-header">
+      <h3 id="paymentModalTitle" class="modal-title text-center w-full">💳 Pagamento Seguro</h3>
+      <button class="modal-close absolute right-6" onclick="closePaymentModal()" aria-label="Fechar"><i data-lucide="x" class="w-5 h-5"></i></button>
+    </div>
 
-    <div id="paymentStep1" class="py-6">
-      <div class="payment-status pending">
-        <svg class="icon w-20 h-20 mx-auto text-brand-500 mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-        <h4 class="text-xl font-bold text-slate-900 mb-3" id="paymentModalStatusTitle">A iniciar pagamento...</h4>
-        <p class="text-slate-600 mb-6" id="paymentModalStatusDesc">Aguarde, a comunicar com o servidor.</p>
-        
-        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 inline-block text-left w-full max-w-sm mx-auto shadow-inner">
-           <p class="text-sm flex justify-between mb-2"><span class="text-slate-500">Valor a pagar:</span> <span class="font-bold text-slate-900" id="modalTotal">0 MT</span></p>
-           <p class="text-sm flex justify-between mb-2"><span class="text-slate-500">Número:</span> <span class="font-bold text-slate-900" id="modalPhone">---</span></p>
-           <p class="text-sm flex justify-between"><span class="text-slate-500">Método:</span> <span class="font-bold text-slate-900" id="modalMethod">---</span></p>
-        </div>
-      </div>
-    </div>
+    <div id="paymentStep1" class="py-6">
+      <div class="payment-status pending">
+        <svg class="icon w-20 h-20 mx-auto text-brand-500 mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+        <h4 class="text-xl font-bold text-slate-900 mb-3" id="paymentModalStatusTitle">A iniciar pagamento...</h4>
+        <p class="text-slate-600 mb-6" id="paymentModalStatusDesc">Aguarde, a comunicar com o servidor.</p>
+        
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 inline-block text-left w-full max-w-sm mx-auto shadow-inner">
+           <p class="text-sm flex justify-between mb-2"><span class="text-slate-500">Valor a pagar:</span> <span class="font-bold text-slate-900" id="modalTotal">0 MT</span></p>
+           <p class="text-sm flex justify-between mb-2"><span class="text-slate-500">Número:</span> <span class="font-bold text-slate-900" id="modalPhone">---</span></p>
+           <p class="text-sm flex justify-between"><span class="text-slate-500">Método:</span> <span class="font-bold text-slate-900" id="modalMethod">---</span></p>
+        </div>
+      </div>
+    </div>
 
-    <div id="paymentStep2" class="hidden py-6">
-      <div class="payment-status success">
-        <svg class="icon w-20 h-20 mx-auto text-green-500 mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-        <h4 class="text-xl font-bold text-green-600 mb-3">Pagamento Aprovado!</h4>
-        <p class="text-slate-600">O seu pedido foi processado e pago com sucesso.</p>
-        <p class="text-sm text-slate-500 mt-6">ID do Pedido: <span class="font-mono font-bold bg-slate-100 p-1 rounded" id="successOrderId">PG-XXXXXX</span></p>
-        <button class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-slate-800 transition-all mt-8" onclick="closePaymentModal()">Concluir</button>
-      </div>
-    </div>
-    
-     <div id="paymentStep3" class="hidden py-6">
-      <div class="payment-status error">
-        <svg class="icon w-20 h-20 mx-auto text-red-500 mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-        <h4 class="text-xl font-bold text-red-600 mb-3">Pagamento Falhou</h4>
-        <p class="text-slate-600" id="modalErrorMsg">Tempo limite excedido ou pagamento rejeitado.</p>
-        <button class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-slate-800 transition-all mt-8" onclick="closePaymentModal()">Tentar Novamente</button>
-      </div>
-    </div>
-  </div>
+    <div id="paymentStep2" class="hidden py-6">
+      <div class="payment-status success">
+        <svg class="icon w-20 h-20 mx-auto text-green-500 mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <h4 class="text-xl font-bold text-green-600 mb-3">Pagamento Aprovado!</h4>
+        <p class="text-slate-600">O seu pedido foi processado e pago com sucesso.</p>
+        <p class="text-sm text-slate-500 mt-6">ID do Pedido: <span class="font-mono font-bold bg-slate-100 p-1 rounded" id="successOrderId">PG-XXXXXX</span></p>
+        <button class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-slate-800 transition-all mt-8" onclick="closePaymentModal()">Concluir</button>
+      </div>
+    </div>
+    
+     <div id="paymentStep3" class="hidden py-6">
+      <div class="payment-status error">
+        <svg class="icon w-20 h-20 mx-auto text-red-500 mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <h4 class="text-xl font-bold text-red-600 mb-3">Pagamento Falhou</h4>
+        <p class="text-slate-600" id="modalErrorMsg">Tempo limite excedido ou pagamento rejeitado.</p>
+        <button class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-slate-800 transition-all mt-8" onclick="closePaymentModal()">Tentar Novamente</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div id="trackingModal" class="modal" role="dialog" aria-modal="true">
-    <div class="modal-overlay" onclick="closeTrackingModal()"></div>
-    <div class="modal-content text-center">
-        <div class="modal-header">
-            <h3 class="modal-title text-center w-full flex items-center justify-center gap-2"><i data-lucide="package-search" class="w-6 h-6 text-brand-600"></i> Rastrear Pedido PayGo</h3>
-            <button class="modal-close absolute right-6" onclick="closeTrackingModal()"><i data-lucide="x" class="w-5 h-5"></i></button>
-        </div>
-        <div class="py-4">
-            <p class="text-sm text-slate-500 mb-6">Insira o código do seu pedido (Ex: PG-123456) para consultar o estado interno da compra.</p>
-            <input type="text" id="trackOrderId" placeholder="PG-XXXXXX" class="w-full p-4 border border-slate-300 rounded-xl mb-4 text-center font-mono font-bold text-lg uppercase tracking-widest focus:ring-2 focus:ring-brand-500 focus:outline-none bg-slate-50">
-            <button onclick="window.trackOrderAction()" class="w-full bg-brand-600 text-white py-4 rounded-xl font-bold hover:bg-brand-700 transition flex items-center justify-center gap-2 shadow-lg shadow-brand-500/30">
-                <i data-lucide="search" class="w-5 h-5"></i> Buscar Status
-            </button>
-            <div id="trackResult" class="mt-8 hidden p-6 rounded-2xl border bg-slate-50 text-left">
-                </div>
-        </div>
-    </div>
+    <div class="modal-overlay" onclick="closeTrackingModal()"></div>
+    <div class="modal-content text-center">
+        <div class="modal-header">
+            <h3 class="modal-title text-center w-full flex items-center justify-center gap-2"><i data-lucide="package-search" class="w-6 h-6 text-brand-600"></i> Rastrear Pedido PayGo</h3>
+            <button class="modal-close absolute right-6" onclick="closeTrackingModal()"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+        <div class="py-4">
+            <p class="text-sm text-slate-500 mb-6">Insira o código do seu pedido (Ex: PG-123456) para consultar o estado interno da compra.</p>
+            <input type="text" id="trackOrderId" placeholder="PG-XXXXXX" class="w-full p-4 border border-slate-300 rounded-xl mb-4 text-center font-mono font-bold text-lg uppercase tracking-widest focus:ring-2 focus:ring-brand-500 focus:outline-none bg-slate-50">
+            <button onclick="window.trackOrderAction()" class="w-full bg-brand-600 text-white py-4 rounded-xl font-bold hover:bg-brand-700 transition flex items-center justify-center gap-2 shadow-lg shadow-brand-500/30">
+                <i data-lucide="search" class="w-5 h-5"></i> Buscar Status
+            </button>
+            <div id="trackResult" class="mt-8 hidden p-6 rounded-2xl border bg-slate-50 text-left">
+                </div>
+        </div>
+    </div>
 </div>
 
 <script type="module">
 // ========================================================================
-// 🔧 CONFIGURAÇÃO FIREBASE (Centralizada)
+// 🔧 CONFIGURAÇÃO FIREBASE
 // ========================================================================
 const FIREBASE_CONFIG = {
 apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
@@ -1045,9 +1109,7 @@ measurementId: "G-N9E391HCFL"
 const BINANCE_RATE = 88.00;
 const WHATSAPP_NUMBER = '258871002255';
 const COMPANY_EMAIL = 'contact@paygo.co.mz';
-// ========================================================================
-// 🚀 INICIALIZAÇÃO FIREBASE (Com exports para Rastreio)
-// ========================================================================
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -1055,6 +1117,42 @@ const app = initializeApp(FIREBASE_CONFIG);
 const db = getFirestore(app, "paygodb");
 
 window.PayGoDB = { db, collection, addDoc, serverTimestamp, doc, getDoc, query, where, getDocs };
+
+// ========================================================================
+// 📱 INSTALAÇÃO PWA (Baixar para Mobile / Desktop)
+// ========================================================================
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+    // Impede o Chrome de mostrar o prompt nativo automaticamente
+    e.preventDefault();
+    deferredPrompt = e;
+    
+    // Mostra os nossos botões personalizados
+    const btnDesk = document.getElementById('btnInstallAppDesk');
+    const btnMob = document.getElementById('btnInstallAppMob');
+    if(btnDesk) btnDesk.classList.remove('hidden');
+    if(btnMob) btnMob.classList.remove('hidden');
+});
+
+window.installPWA = function() {
+    if (!deferredPrompt) {
+        showToast("O teu navegador não suporta a instalação direta, ou o App já está instalado.", "info");
+        return;
+    }
+    // Mostra o prompt de instalação
+    deferredPrompt.prompt();
+    // Aguarda a resposta do usuário
+    deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+            console.log('App PayGo Instalado com sucesso!');
+        }
+        deferredPrompt = null;
+        
+        // Esconde os botões após instalar
+        document.getElementById('btnInstallAppDesk')?.classList.add('hidden');
+        document.getElementById('btnInstallAppMob')?.classList.add('hidden');
+    });
+};
 
 // ========================================================================
 // 🔔 SISTEMA DE TOAST NOTIFICATIONS
@@ -1090,113 +1188,113 @@ setTimeout(() => toast.remove(), 300);
 // 📦 SISTEMA DE RASTREAMENTO DE PEDIDOS
 // ========================================================================
 window.openTrackingModal = function() {
-    document.getElementById('trackingModal').classList.add('active');
-    document.getElementById('trackResult').classList.add('hidden');
-    document.getElementById('trackOrderId').value = '';
-    document.body.style.overflow = 'hidden';
+    document.getElementById('trackingModal').classList.add('active');
+    document.getElementById('trackResult').classList.add('hidden');
+    document.getElementById('trackOrderId').value = '';
+    document.body.style.overflow = 'hidden';
 };
 
 window.closeTrackingModal = function() {
-    document.getElementById('trackingModal').classList.remove('active');
-    document.body.style.overflow = '';
+    document.getElementById('trackingModal').classList.remove('active');
+    document.body.style.overflow = '';
 };
 
 window.copyToClipboard = function(text) {
-    navigator.clipboard.writeText(text).then(() => {
-        showToast('Código de rastreio copiado!', 'success');
-    }).catch(err => {
-        console.error('Erro ao copiar', err);
-    });
+    navigator.clipboard.writeText(text).then(() => {
+        showToast('Código de rastreio copiado!', 'success');
+    }).catch(err => {
+        console.error('Erro ao copiar', err);
+    });
 };
 
 window.trackOrderAction = async function() {
-    const idInput = document.getElementById('trackOrderId').value.trim().toUpperCase();
-    const resultDiv = document.getElementById('trackResult');
-    
-    if(!idInput) { showToast('Insira um código de pedido válido.', 'error'); return; }
-    
-    resultDiv.classList.remove('hidden');
-    resultDiv.innerHTML = '<div class="flex flex-col items-center"><i data-lucide="loader-2" class="animate-spin w-8 h-8 text-brand-500 mb-2"></i><p class="text-sm font-medium text-slate-500">A buscar informações...</p></div>';
-    lucide.createIcons();
+    const idInput = document.getElementById('trackOrderId').value.trim().toUpperCase();
+    const resultDiv = document.getElementById('trackResult');
+    
+    if(!idInput) { showToast('Insira um código de pedido válido.', 'error'); return; }
+    
+    resultDiv.classList.remove('hidden');
+    resultDiv.innerHTML = '<div class="flex flex-col items-center"><i data-lucide="loader-2" class="animate-spin w-8 h-8 text-brand-500 mb-2"></i><p class="text-sm font-medium text-slate-500">A buscar informações...</p></div>';
+    lucide.createIcons();
 
-    try {
-        const q = window.PayGoDB.query(window.PayGoDB.collection(window.PayGoDB.db, "orders"), window.PayGoDB.where("orderId", "==", idInput));
-        const snap = await window.PayGoDB.getDocs(q);
+    try {
+        const q = window.PayGoDB.query(window.PayGoDB.collection(window.PayGoDB.db, "orders"), window.PayGoDB.where("orderId", "==", idInput));
+        const snap = await window.PayGoDB.getDocs(q);
 
-        if(snap.empty) {
-            resultDiv.innerHTML = '<div class="text-center"><i data-lucide="search-x" class="w-10 h-10 text-slate-300 mx-auto mb-2"></i><p class="text-red-500 font-bold">Pedido não encontrado.</p><p class="text-xs text-slate-500 mt-1">Verifique o código e tente novamente.</p></div>';
-            lucide.createIcons();
-            return;
-        }
-        
-        const order = snap.docs[0].data();
-        let statusHtml = ''; let colorClass = '';
-        
-        if(order.status === 'pending') { statusHtml = '⏳ Aguardando Pagamento'; colorClass = 'text-amber-500 bg-amber-50 border-amber-200'; }
-        else if(order.status === 'processing') { statusHtml = '🔄 Em Processamento'; colorClass = 'text-blue-500 bg-blue-50 border-blue-200'; }
-        else if(order.status === 'completed') { statusHtml = '✅ Concluído / Entregue'; colorClass = 'text-green-600 bg-green-50 border-green-200'; }
-        else if(order.status === 'cancelled') { statusHtml = '❌ Cancelado'; colorClass = 'text-red-500 bg-red-50 border-red-200'; }
+        if(snap.empty) {
+            resultDiv.innerHTML = '<div class="text-center"><i data-lucide="search-x" class="w-10 h-10 text-slate-300 mx-auto mb-2"></i><p class="text-red-500 font-bold">Pedido não encontrado.</p><p class="text-xs text-slate-500 mt-1">Verifique o código e tente novamente.</p></div>';
+            lucide.createIcons();
+            return;
+        }
+        
+        const order = snap.docs[0].data();
+        let statusHtml = ''; let colorClass = '';
+        
+        if(order.status === 'pending') { statusHtml = '⏳ Aguardando Pagamento'; colorClass = 'text-amber-500 bg-amber-50 border-amber-200'; }
+        else if(order.status === 'processing') { statusHtml = '🔄 Em Processamento'; colorClass = 'text-blue-500 bg-blue-50 border-blue-200'; }
+        else if(order.status === 'completed') { statusHtml = '✅ Concluído / Entregue'; colorClass = 'text-green-600 bg-green-50 border-green-200'; }
+        else if(order.status === 'cancelled') { statusHtml = '❌ Cancelado'; colorClass = 'text-red-500 bg-red-50 border-red-200'; }
 
-        const dateStr = order.createdAt?.toDate ? order.createdAt.toDate().toLocaleDateString('pt-MZ') : 'N/A';
-        const isPaidBadge = order.isPaid || order.status === 'processing' || order.status === 'completed' || order.paymentStatus === 'paid'
-            ? '<span class="px-2 py-0.5 bg-green-100 text-green-700 rounded text-[10px] font-bold">PAGO</span>' 
-            : '<span class="px-2 py-0.5 bg-slate-100 text-slate-500 rounded text-[10px] font-bold">NÃO PAGO</span>';
+        const dateStr = order.createdAt?.toDate ? order.createdAt.toDate().toLocaleDateString('pt-MZ') : 'N/A';
+        const isPaidBadge = order.isPaid || order.status === 'processing' || order.status === 'completed' || order.paymentStatus === 'paid'
+            ? '<span class="px-2 py-0.5 bg-green-100 text-green-700 rounded text-[10px] font-bold">PAGO</span>' 
+            : '<span class="px-2 py-0.5 bg-slate-100 text-slate-500 rounded text-[10px] font-bold">NÃO PAGO</span>';
 
-        let trackingHtml = '';
-        if (order.trackingCode) {
-            trackingHtml = `
-            <div class="mt-4 p-4 bg-brand-50 border border-brand-200 rounded-xl">
-                <p class="text-[10px] font-bold text-brand-600 uppercase tracking-widest mb-2 flex items-center gap-1"><i data-lucide="plane" class="w-3 h-3"></i> Rastreio Internacional</p>
-                <div class="flex items-center justify-between bg-white p-3 rounded-lg border border-brand-100 mb-3 shadow-sm">
-                    <span class="font-mono font-bold text-slate-800 tracking-wider">${order.trackingCode}</span>
-                    <button onclick="window.copyToClipboard('${order.trackingCode}')" class="text-slate-400 hover:text-brand-600 transition"><i data-lucide="copy" class="w-5 h-5"></i></button>
-                </div>
-                <a href="https://global.cainiao.com/detail.htm?mailNo=${order.trackingCode}" target="_blank" class="w-full flex justify-center items-center gap-2 bg-brand-600 text-white py-3 rounded-xl text-sm font-bold hover:bg-brand-700 transition shadow-md">
-                    <i data-lucide="external-link" class="w-4 h-4"></i> Rastrear no Cainiao
-                </a>
-            </div>
-            `;
-        } else if (order.status === 'processing' || order.status === 'completed') {
-            trackingHtml = `
-            <div class="mt-4 p-4 bg-slate-100 rounded-xl text-center border border-slate-200">
-                <i data-lucide="box" class="w-6 h-6 text-slate-400 mx-auto mb-2"></i>
-                <p class="text-xs text-slate-500">O código de rastreio internacional será disponibilizado aqui assim que o vendedor despachar a encomenda.</p>
-            </div>
-            `;
-        }
+        let trackingHtml = '';
+        if (order.trackingCode) {
+            trackingHtml = `
+            <div class="mt-4 p-4 bg-brand-50 border border-brand-200 rounded-xl">
+                <p class="text-[10px] font-bold text-brand-600 uppercase tracking-widest mb-2 flex items-center gap-1"><i data-lucide="plane" class="w-3 h-3"></i> Rastreio Internacional</p>
+                <div class="flex items-center justify-between bg-white p-3 rounded-lg border border-brand-100 mb-3 shadow-sm">
+                    <span class="font-mono font-bold text-slate-800 tracking-wider">${order.trackingCode}</span>
+                    <button onclick="window.copyToClipboard('${order.trackingCode}')" class="text-slate-400 hover:text-brand-600 transition"><i data-lucide="copy" class="w-5 h-5"></i></button>
+                </div>
+                <a href="https://global.cainiao.com/detail.htm?mailNo=${order.trackingCode}" target="_blank" class="w-full flex justify-center items-center gap-2 bg-brand-600 text-white py-3 rounded-xl text-sm font-bold hover:bg-brand-700 transition shadow-md">
+                    <i data-lucide="external-link" class="w-4 h-4"></i> Rastrear no Cainiao
+                </a>
+            </div>
+            `;
+        } else if (order.status === 'processing' || order.status === 'completed') {
+            trackingHtml = `
+            <div class="mt-4 p-4 bg-slate-100 rounded-xl text-center border border-slate-200">
+                <i data-lucide="box" class="w-6 h-6 text-slate-400 mx-auto mb-2"></i>
+                <p class="text-xs text-slate-500">O código de rastreio internacional será disponibilizado aqui assim que o vendedor despachar a encomenda.</p>
+            </div>
+            `;
+        }
 
-        resultDiv.innerHTML = `
-            <div class="text-left space-y-3">
-                <div class="flex justify-between items-start border-b border-slate-200 pb-3">
-                    <div>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Código do Pedido</p>
-                        <p class="font-mono font-bold text-slate-800 text-lg">${order.orderId}</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Data</p>
-                        <p class="text-sm font-medium text-slate-700">${dateStr}</p>
-                    </div>
-                </div>
-                <div class="py-2">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Status Interno</p>
-                    <div class="inline-block px-4 py-2 rounded-lg border font-bold text-sm ${colorClass}">
-                        ${statusHtml}
-                    </div>
-                </div>
-                <div class="bg-white p-3 rounded-xl border border-slate-100">
-                    <div class="flex justify-between mb-1">
-                        <span class="text-xs text-slate-500">Valor Total:</span>
-                        <span class="font-bold text-slate-800">${order.total} MT ${isPaidBadge}</span>
-                    </div>
-                </div>
-                ${trackingHtml}
-            </div>
-        `;
-        lucide.createIcons();
-    } catch(e) {
-        console.error("Erro rastreio:", e);
-        resultDiv.innerHTML = '<p class="text-red-500 text-sm font-bold">Erro ao contactar o servidor.</p>';
-    }
+        resultDiv.innerHTML = `
+            <div class="text-left space-y-3">
+                <div class="flex justify-between items-start border-b border-slate-200 pb-3">
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Código do Pedido</p>
+                        <p class="font-mono font-bold text-slate-800 text-lg">${order.orderId}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Data</p>
+                        <p class="text-sm font-medium text-slate-700">${dateStr}</p>
+                    </div>
+                </div>
+                <div class="py-2">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Status Interno</p>
+                    <div class="inline-block px-4 py-2 rounded-lg border font-bold text-sm ${colorClass}">
+                        ${statusHtml}
+                    </div>
+                </div>
+                <div class="bg-white p-3 rounded-xl border border-slate-100">
+                    <div class="flex justify-between mb-1">
+                        <span class="text-xs text-slate-500">Valor Total:</span>
+                        <span class="font-bold text-slate-800">${order.total} MT ${isPaidBadge}</span>
+                    </div>
+                </div>
+                ${trackingHtml}
+            </div>
+        `;
+        lucide.createIcons();
+    } catch(e) {
+        console.error("Erro rastreio:", e);
+        resultDiv.innerHTML = '<p class="text-red-500 text-sm font-bold">Erro ao contactar o servidor.</p>';
+    }
 };
 
 // ========================================================================
@@ -1238,9 +1336,7 @@ inputHidden.value = type;
 if (typeof lucide !== 'undefined') lucide.createIcons();
 input.focus();
 };
-// ========================================================================
-// 💳 UPDATE PAYMENT METHOD
-// ========================================================================
+
 window.updatePaymentMethod = function() {
 const methods = document.querySelectorAll('.payment-method');
 methods.forEach(method => {
@@ -1255,9 +1351,7 @@ method.setAttribute('aria-checked', 'false');
 }
 });
 };
-// ========================================================================
-// 🧮 CALCULADORA DE VALORES
-// ========================================================================
+
 window.calculate = function() {
 const usdInput = document.getElementById('userUSD');
 const usd = parseFloat(usdInput.value) || 0;
@@ -1293,9 +1387,7 @@ const cents = Math.round((total % 1) * 100).toString().padStart(2, '0');
 receiptTotal.innerHTML = `${totalRounded.toLocaleString('pt-MZ')}<span class="text-lg text-slate-400 font-normal">.${cents} MT</span>`;
 }
 };
-// ========================================================================
-// 💾 SALVAR PEDIDO NO FIREBASE (COMPLETO E COM MELHOR TRATAMENTO)
-// ========================================================================
+
 async function saveOrderToFirebase(orderData) {
 try {
 if (!window.PayGoDB?.db) {
@@ -1315,117 +1407,105 @@ return { success: false, error: error.message, code: error.code, fallback: true 
 }
 }
 
-// ========================================================================
-// 💳 PROCESSAR PAGAMENTO SEGURO VIA PAYSUITE (REDIRECIONAMENTO DIRETO)
-// ========================================================================
 window.processPayment = async function() {
-    const btn = document.getElementById('payNowBtn');
-    const originalContent = btn.innerHTML;
+    const btn = document.getElementById('payNowBtn');
+    const originalContent = btn.innerHTML;
 
-    const name = document.getElementById('userName').value.trim();
-    const whatsapp = document.getElementById('userWhatsApp').value.trim();
-    const email = document.getElementById('userEmail').value.trim();
-    const usd = parseFloat(document.getElementById('userUSD').value) || 0;
-    const detail = document.getElementById('userLink').value.trim();
-    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'mpesa';
-    const serviceType = document.getElementById('serviceType').value;
-    const isFirst = document.getElementById('chkFirstPurchase').checked;
+    const name = document.getElementById('userName').value.trim();
+    const whatsapp = document.getElementById('userWhatsApp').value.trim();
+    const email = document.getElementById('userEmail').value.trim();
+    const usd = parseFloat(document.getElementById('userUSD').value) || 0;
+    const detail = document.getElementById('userLink').value.trim();
+    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'mpesa';
+    const serviceType = document.getElementById('serviceType').value;
+    const isFirst = document.getElementById('chkFirstPurchase').checked;
 
-    if (!name || !whatsapp || !email || !usd || !detail) {
-        showToast('Por favor, preencha todos os campos para pagar online.', 'warning');
-        return;
-    }
+    if (!name || !whatsapp || !email || !usd || !detail) {
+        showToast('Por favor, preencha todos os campos para pagar online.', 'warning');
+        return;
+    }
 
-    btn.disabled = true;
-    btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 md:w-5 md:h-5 animate-spin"></i> <span class="text-[11px] sm:text-sm md:text-base whitespace-nowrap">A processar...</span>`;
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+    btn.disabled = true;
+    btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 md:w-5 md:h-5 animate-spin"></i> <span class="text-[11px] sm:text-sm md:text-base whitespace-nowrap">A processar...</span>`;
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 
-    const converted = usd * BINANCE_RATE;
-    const tax = (usd <= 5 && isFirst) ? 0 : (usd <= 20 ? 150 : usd <= 50 ? 250 : usd <= 100 ? 600 : converted * 0.07);
-    const total = converted + tax;
-    const orderId = 'PG-' + Date.now().toString().slice(-6).toUpperCase();
+    const converted = usd * BINANCE_RATE;
+    const tax = (usd <= 5 && isFirst) ? 0 : (usd <= 20 ? 150 : usd <= 50 ? 250 : usd <= 100 ? 600 : converted * 0.07);
+    const total = converted + tax;
+    const orderId = 'PG-' + Date.now().toString().slice(-6).toUpperCase();
 
-    // BUSCAR O CÓDIGO DE AFILIADO SALVO
-    const affiliateRef = localStorage.getItem('paygo_affiliate_ref') || null;
+    const affiliateRef = localStorage.getItem('paygo_affiliate_ref') || null;
 
-    const currentOrderData = {
-        orderId, name, whatsapp, email, usd, detail, tax, total,
-        exchangeRate: BINANCE_RATE, status: 'pending', paymentMethod,
-        type: serviceType, isFirstPurchase: isFirst,
-        referredBy: affiliateRef // ADICIONADO AQUI
-    };
+    const currentOrderData = {
+        orderId, name, whatsapp, email, usd, detail, tax, total,
+        exchangeRate: BINANCE_RATE, status: 'pending', paymentMethod,
+        type: serviceType, isFirstPurchase: isFirst,
+        referredBy: affiliateRef 
+    };
 
-    try {
-        const fbResult = await saveOrderToFirebase(currentOrderData);
-        if(!fbResult.success) {
-            if(fbResult.code === 'permission-denied') {
-                throw new Error("Permissão negada no banco de dados. Por favor, tente pelo botão do WhatsApp.");
-            }
-            throw new Error("Erro ao registar o seu pedido localmente.");
-        }
-        currentOrderData.firestoreId = fbResult.orderId;
+    try {
+        const fbResult = await saveOrderToFirebase(currentOrderData);
+        if(!fbResult.success) {
+            if(fbResult.code === 'permission-denied') {
+                throw new Error("Permissão negada no banco de dados. Por favor, tente pelo botão do WhatsApp.");
+            }
+            throw new Error("Erro ao registar o seu pedido localmente.");
+        }
+        currentOrderData.firestoreId = fbResult.orderId;
 
-        showToast('A contactar a plataforma de pagamento...', 'success');
+        showToast('A contactar a plataforma de pagamento...', 'success');
 
-        // Limpar o número de telefone (remover o + e espaços)
-        const cleanPhone = currentOrderData.whatsapp.replace(/\D/g, '');
+        const cleanPhone = currentOrderData.whatsapp.replace(/\D/g, '');
 
-        const response = await fetch('/api/paysuite-payment', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                orderId: currentOrderData.orderId,
-                amount: currentOrderData.total,
-                currency: 'MZN',
-                phone: cleanPhone,
-                method: currentOrderData.paymentMethod, 
-                email: currentOrderData.email,
-                name: currentOrderData.name,
-                description: `Pedido PayGo #${currentOrderData.orderId}`
-            })
-        });
+        const response = await fetch('/api/paysuite-payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                orderId: currentOrderData.orderId,
+                amount: currentOrderData.total,
+                currency: 'MZN',
+                phone: cleanPhone,
+                method: currentOrderData.paymentMethod, 
+                email: currentOrderData.email,
+                name: currentOrderData.name,
+                description: `Pedido PayGo #${currentOrderData.orderId}`
+            })
+        });
 
-        // Captura o erro bruto do backend
-        let result;
-        try {
-            result = await response.json();
-        } catch(e) {
-            if (response.status === 503) {
-                 throw new Error('A PaySuite está em manutenção. Por favor, conclua o pedido através do botão WhatsApp.');
-            }
-            throw new Error('A API não devolveu um formato de dados esperado.');
-        }
+        let result;
+        try {
+            result = await response.json();
+        } catch(e) {
+            if (response.status === 503) {
+                 throw new Error('A PaySuite está em manutenção. Por favor, conclua o pedido através do botão WhatsApp.');
+            }
+            throw new Error('A API não devolveu um formato de dados esperado.');
+        }
 
-        if (!response.ok || !result.success) {
-            console.error("🛑 DETALHES DO ERRO DA API PAYSUITE:", result);
-            const errorMsg = result.error || result.message || '';
-            // Tratamento especial para o erro 503 Service Unavailable
-            if (errorMsg.includes('Service Unavailable') || response.status === 503) {
-                 throw new Error('A PaySuite está temporariamente indisponível. Por favor, use o botão "WhatsApp" para pagar.');
-            }
-            throw new Error(errorMsg || 'A transação não pôde ser iniciada. Tente via WhatsApp.');
-        }
+        if (!response.ok || !result.success) {
+            const errorMsg = result.error || result.message || '';
+            if (errorMsg.includes('Service Unavailable') || response.status === 503) {
+                 throw new Error('A PaySuite está temporariamente indisponível. Por favor, use o botão "WhatsApp".');
+            }
+            throw new Error(errorMsg || 'A transação não pôde ser iniciada. Tente via WhatsApp.');
+        }
 
-        if (result.data && result.data.checkoutUrl) {
-            setTimeout(() => {
-                window.location.href = result.data.checkoutUrl;
-            }, 800);
-        } else {
-            throw new Error("Não foi possível gerar a página de pagamento seguro.");
-        }
+        if (result.data && result.data.checkoutUrl) {
+            setTimeout(() => {
+                window.location.href = result.data.checkoutUrl;
+            }, 800);
+        } else {
+            throw new Error("Não foi possível gerar a página de pagamento seguro.");
+        }
 
-    } catch (err) {
-        console.error("❌ Erro no processamento:", err);
-        showToast(err.message, 'error', 8000); 
-        btn.disabled = false;
-        btn.innerHTML = originalContent;
-        if (typeof lucide !== 'undefined') lucide.createIcons();
-    }
+    } catch (err) {
+        showToast(err.message, 'error', 8000); 
+        btn.disabled = false;
+        btn.innerHTML = originalContent;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
 };
 
-// ========================================================================
-// 📤 HANDLE FORM SUBMIT (Orçamento via WhatsApp)
-// ========================================================================
 async function handleFormSubmit(e) {
 e.preventDefault();
 const btn = document.getElementById('submitBtn');
@@ -1462,12 +1542,11 @@ const total = converted + tax;
 const orderId = 'PG-' + Date.now().toString().slice(-6);
 
 const methodNames = {
-  'mpesa': '🔴 M-Pesa',
-  'emola': '🟡 e-Mola',
-  'bank': '🏦 Transferência Bancária'
+  'mpesa': '🔴 M-Pesa',
+  'emola': '🟡 e-Mola',
+  'bank': '🏦 Transferência Bancária'
 };
 
-// BUSCAR O CÓDIGO DE AFILIADO SALVO
 const affiliateRef = localStorage.getItem('paygo_affiliate_ref') || null;
 
 const orderData = {
@@ -1484,7 +1563,7 @@ total: total,
 exchangeRate: BINANCE_RATE,
 status: 'pending',
 isFirstPurchase: formData.isFirst,
-referredBy: affiliateRef, // ADICIONADO AQUI
+referredBy: affiliateRef,
 clientIP: null,
 metadata: { userAgent: navigator.userAgent, timestamp: new Date().toISOString(), formVersion: '2.0' }
 };
@@ -1521,7 +1600,6 @@ const whatsappMsg = `━━━━━━━━━━━━━━━━━━━
 
 if (firebaseResult.success) {
 showToast(`✅ Pedido ${orderId} registrado com sucesso!`, 'success', 5000);
-// 🚀 ACIONAR NOTIFICAÇÕES
 triggerNotifications(orderData, 'new_order');
 } else {
 showToast(`⚠️ Pedido registrado apenas via WhatsApp. ID: ${orderId}`, 'warning', 6000);
@@ -1539,7 +1617,6 @@ toggleServiceType('compra');
 }, 1500);
 
 } catch (error) {
-console.error('❌ Erro no processamento:', error);
 showToast('❌ Ocorreu um erro. Tente novamente ou contate o suporte.', 'error');
 } finally {
 resetButton();
@@ -1552,9 +1629,7 @@ btn.innerHTML = originalContent;
 if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 }
-// ========================================================================
-// 👤 HEADER AUTH DYNAMIC
-// ========================================================================
+
 async function updateAuthHeader() {
 try {
 const { getAuth, onAuthStateChanged } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js");
@@ -1577,9 +1652,7 @@ if(document.getElementById('headerUserEmail')) document.getElementById('headerUs
 if(document.getElementById('headerUserAvatar')) document.getElementById('headerUserAvatar').textContent = userInitial;
 if (document.getElementById('mobileUserName')) document.getElementById('mobileUserName').textContent = userName;
 }
-} catch (err) {
-console.warn('⚠️ Não foi possível carregar dados do usuário:', err);
-}
+} catch (err) {}
 if (userSection) userSection.style.display = 'flex';
 if (mobileUser) mobileUser.classList.remove('hidden');
 } else {
@@ -1588,14 +1661,11 @@ if (mobileUser) mobileUser.classList.add('hidden');
 }
 });
 } catch (error) {
-console.log('ℹ️ Auth header check bypass:', error.message);
 const userSection = document.getElementById('userSection');
 if (userSection) userSection.style.display = 'none';
 }
 }
-// ========================================================================
-// 🚪 LOGOUT FUNCTION
-// ========================================================================
+
 window.logoutFromHeader = async function() {
 if (!confirm('Tem certeza que deseja sair da sua conta?')) return;
 try {
@@ -1605,53 +1675,32 @@ await signOut(auth);
 showToast('✅ Logout realizado com sucesso!', 'success');
 setTimeout(() => { window.location.href = 'index.html'; }, 1000);
 } catch (error) {
-console.error('❌ Erro no logout:', error);
 showToast('❌ Erro ao fazer logout. Tente novamente.', 'error');
 }
 };
 
-// ========================================================================
-// 📩 DISPARAR NOTIFICAÇÕES (API VERCEL)
-// ========================================================================
 async function triggerNotifications(orderData, action = 'new_order') {
-    try {
-        console.log("A disparar notificações para:", orderData.orderId, "Ação:", action);
-        
-        const payload = {
-            orderData: orderData,
-            action: action, 
-            sendEmail: true,
-            sendLark: true
-        };
+    try {
+        const payload = {
+            orderData: orderData,
+            action: action, 
+            sendEmail: true,
+            sendLark: true
+        };
 
-        const response = await fetch('/api/notify-order', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-        const result = await response.json();
-        
-        if (response.ok) {
-            console.log("✅ Notificações processadas com sucesso:", result);
-        } else {
-            console.error("❌ Falha na API de notificações:", result);
-        }
-    } catch (error) {
-        console.error("❌ Erro fatal na comunicação com a API:", error);
-    }
+        const response = await fetch('/api/notify-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+    } catch (error) {}
 }
 
-// ========================================================================
-// 🎯 INICIALIZAÇÃO DA PÁGINA
-// ========================================================================
 document.addEventListener('DOMContentLoaded', function() {
-// CAPTURAR E SALVAR O LINK DE AFILIADO
 const urlParams = new URLSearchParams(window.location.search);
 const refCode = urlParams.get('ref');
 if (refCode) {
-    localStorage.setItem('paygo_affiliate_ref', refCode);
-    console.log("Indicado por afiliado:", refCode);
+    localStorage.setItem('paygo_affiliate_ref', refCode);
 }
 
 if (typeof lucide !== 'undefined') {
@@ -1683,9 +1732,7 @@ nav.classList.remove('glass-nav');
 }
 }
 }, { passive: true });
-// ======================================================================
-// 📱 MOBILE MENU TOGGLE
-// ======================================================================
+
 const menuBtn = document.getElementById('menu-btn');
 const mobileMenu = document.getElementById('mobile-menu');
 const closeMenuBtn = document.getElementById('close-menu-btn');
@@ -1712,9 +1759,7 @@ toggleMenu();
 if (menuBtn) menuBtn.focus();
 }
 });
-// ======================================================================
-// 🎨 MICRO-INTERAÇÕES ADICIONAIS
-// ======================================================================
+
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 anchor.addEventListener('click', function(e) {
 const href = this.getAttribute('href');
@@ -1753,9 +1798,7 @@ e.target.value = '258' + value.slice(-9);
 }
 console.log('✅ PayGo initialized successfully! 🇲🇿');
 });
-// ========================================================================
-// 📦 EXPORTAR FUNÇÕES GLOBAIS
-// ========================================================================
+
 window.PayGo = {
 toggleServiceType: window.toggleServiceType,
 updatePaymentMethod: window.updatePaymentMethod,
@@ -1766,7 +1809,8 @@ processPayment: window.processPayment,
 openTrackingModal: window.openTrackingModal,
 closeTrackingModal: window.closeTrackingModal,
 trackOrderAction: window.trackOrderAction,
-copyToClipboard: window.copyToClipboard
+copyToClipboard: window.copyToClipboard,
+installPWA: window.installPWA
 };
 </script>
 <script type="application/ld+json">
@@ -1785,7 +1829,7 @@ copyToClipboard: window.copyToClipboard
 "currenciesAccepted": "MZN, USD",
 "contactPoint": {
 "@type": "ContactPoint",
-"telephone": "+258-83-752-2255",
+"telephone": "+258-87-100-2255",
 "contactType": "customer service",
 "availableLanguage": ["Portuguese"]
 },
@@ -1796,75 +1840,53 @@ copyToClipboard: window.copyToClipboard
 }
 </script>
 
-    <div id="cookieConsent" class="fixed bottom-0 left-0 w-full sm:w-auto sm:bottom-6 sm:left-6 z-[9999] p-4 sm:p-0 transition-all duration-500 translate-y-full opacity-0 pointer-events-none">
-    
-    <div class="bg-white/95 backdrop-blur-md border border-slate-200 shadow-2xl rounded-2xl p-6 sm:max-w-sm flex flex-col gap-4 relative overflow-hidden pointer-events-auto">
-        
-        <div class="absolute -top-12 -right-12 w-32 h-32 bg-brand-500/10 rounded-full blur-2xl pointer-events-none"></div>
-
-        <div class="flex items-start gap-4 relative z-10">
-            <div class="w-10 h-10 shrink-0 bg-brand-50 text-brand-600 rounded-xl flex items-center justify-center border border-brand-100">
-                <i data-lucide="cookie" class="w-5 h-5"></i>
-            </div>
-            
-            <div>
-                <h3 class="font-display font-bold text-slate-900 text-lg leading-tight mb-1">A tua privacidade</h3>
-                <p class="text-sm text-slate-500 leading-relaxed">
-                    Utilizamos cookies para garantir a segurança das tuas transações e melhorar a experiência na plataforma.
-                    <a href="/privacidade.html" class="text-brand-600 font-medium hover:text-brand-700 underline underline-offset-2 transition-colors">Saber mais</a>.
-                </p>
-            </div>
-        </div>
-
-        <div class="flex flex-col sm:flex-row gap-3 mt-2 relative z-10">
-            <button id="btnAcceptCookies" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white px-4 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md shadow-brand-600/20 active:scale-[0.98]">
-                Aceitar e Continuar
-            </button>
-            <button id="btnRejectCookies" class="sm:w-auto bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-[0.98]">
-                Apenas Essenciais
-            </button>
-        </div>
-        
-    </div>
+<div id="cookieConsent" class="fixed bottom-0 left-0 w-full sm:w-auto sm:bottom-6 sm:left-6 z-[9999] p-4 sm:p-0 transition-all duration-500 translate-y-full opacity-0 pointer-events-none">
+    <div class="bg-white/95 backdrop-blur-md border border-slate-200 shadow-2xl rounded-2xl p-6 sm:max-w-sm flex flex-col gap-4 relative overflow-hidden pointer-events-auto">
+        <div class="absolute -top-12 -right-12 w-32 h-32 bg-brand-500/10 rounded-full blur-2xl pointer-events-none"></div>
+        <div class="flex items-start gap-4 relative z-10">
+            <div class="w-10 h-10 shrink-0 bg-brand-50 text-brand-600 rounded-xl flex items-center justify-center border border-brand-100">
+                <i data-lucide="cookie" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <h3 class="font-display font-bold text-slate-900 text-lg leading-tight mb-1">A tua privacidade</h3>
+                <p class="text-sm text-slate-500 leading-relaxed">
+                    Utilizamos cookies para garantir a segurança das tuas transações e melhorar a experiência na plataforma.
+                    <a href="/privacidade.html" class="text-brand-600 font-medium hover:text-brand-700 underline underline-offset-2 transition-colors">Saber mais</a>.
+                </p>
+            </div>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-3 mt-2 relative z-10">
+            <button id="btnAcceptCookies" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white px-4 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md shadow-brand-600/20 active:scale-[0.98]">
+                Aceitar e Continuar
+            </button>
+            <button id="btnRejectCookies" class="sm:w-auto bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-[0.98]">
+                Apenas Essenciais
+            </button>
+        </div>
+    </div>
 </div>
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-    const cookieConsent = document.getElementById("cookieConsent");
-    const btnAccept = document.getElementById("btnAcceptCookies");
-    const btnReject = document.getElementById("btnRejectCookies");
-    
-    // Nome da chave no LocalStorage
-    const cookieKey = "paygo_cookies_accepted";
+    const cookieConsent = document.getElementById("cookieConsent");
+    const btnAccept = document.getElementById("btnAcceptCookies");
+    const btnReject = document.getElementById("btnRejectCookies");
+    const cookieKey = "paygo_cookies_accepted";
 
-    // Verifica se já aceitou/rejeitou antes
-    if (!localStorage.getItem(cookieKey)) {
-        // Mostra o aviso com uma animação suave após 1 segundo
-        setTimeout(() => {
-            cookieConsent.classList.remove("translate-y-full", "opacity-0");
-        }, 1000);
-    }
+    if (!localStorage.getItem(cookieKey)) {
+        setTimeout(() => {
+            cookieConsent.classList.remove("translate-y-full", "opacity-0");
+        }, 1000);
+    }
 
-    // Função para fechar e guardar a preferência
-    const closeAndSave = (value) => {
-        localStorage.setItem(cookieKey, value);
-        cookieConsent.classList.add("translate-y-full", "opacity-0");
-        
-        // Se precisares disparar algum evento do Google Analytics ou Pixel aqui, podes fazê-lo:
-        if (value === 'all') {
-            console.log("🍪 Cookies aceites: Carregar scripts de tracking.");
-            // loadAnalytics(); 
-        } else {
-            console.log("🍪 Cookies essenciais: Tracking bloqueado.");
-        }
-    };
+    const closeAndSave = (value) => {
+        localStorage.setItem(cookieKey, value);
+        cookieConsent.classList.add("translate-y-full", "opacity-0");
+    };
 
-    // Eventos dos botões
-    btnAccept.addEventListener("click", () => closeAndSave('all'));
-    btnReject.addEventListener("click", () => closeAndSave('essential'));
+    btnAccept.addEventListener("click", () => closeAndSave('all'));
+    btnReject.addEventListener("click", () => closeAndSave('essential'));
 });
 </script>
 </body>
 </html>
-
-
