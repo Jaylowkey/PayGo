@@ -382,10 +382,6 @@ html { scroll-behavior: auto; }
   </div>
 </div>
 
-<a href="/admin/" class="anchor-link hover:text-brand-400 text-brand-300 transition-all duration-200 focus:outline-none flex items-center gap-1">
-  <i data-lucide="shield" class="w-4 h-4"></i> Admin
-</a>
-
 <button id="btnInstallAppDesk" onclick="installPWA()" class="hidden bg-white/10 hover:bg-white/20 text-white border border-white/20 px-4 py-2 rounded-full font-bold transition-all flex items-center gap-2 backdrop-blur-md">
   <i data-lucide="download" class="w-4 h-4"></i> Instalar App
 </button>
@@ -405,7 +401,7 @@ html { scroll-behavior: auto; }
 </div>
 <div class="w-10 h-10 bg-gradient-to-br from-brand-500 to-accent-500 rounded-full flex items-center justify-center text-white font-bold" id="headerUserAvatar" aria-hidden="true">U</div>
 </div>
-<a href="dashboard.html" class="text-slate-300 hover:text-white transition p-2" title="Dashboard" aria-label="Acessar Dashboard">
+<a href="/admin/" class="text-slate-300 hover:text-white transition p-2" title="Dashboard" aria-label="Acessar Dashboard">
 <i data-lucide="layout-dashboard" class="w-5 h-5" aria-hidden="true"></i>
 </a>
 <button onclick="logoutFromHeader()" class="text-slate-400 hover:text-white transition p-2" title="Sair" aria-label="Sair da conta">
@@ -438,17 +434,13 @@ html { scroll-behavior: auto; }
   </a>
 </div>
 
-<a href="/admin/" class="text-xl font-display font-bold text-brand-300 hover:text-brand-200 transition flex items-center justify-center gap-2 mt-4">
-  <i data-lucide="shield" class="w-5 h-5"></i> Painel Admin
-</a>
-
 <button id="btnInstallAppMob" onclick="installPWA()" class="hidden text-xl font-display font-bold text-green-400 hover:text-green-300 transition flex items-center justify-center gap-2 mt-2">
   <i data-lucide="download" class="w-5 h-5"></i> Instalar Aplicação
 </button>
 
 <div class="hidden mt-4" id="mobileUserSection">
 <p class="text-white font-semibold" id="mobileUserName">Usuário</p>
-<a href="dashboard.html" class="text-brand-400 hover:text-brand-300 transition block mt-2">Acessar Dashboard</a>
+<a href="/admin/" class="text-brand-400 hover:text-brand-300 transition block mt-2">Acessar Dashboard</a>
 </div>
 <a href="#formulario" class="anchor-link mt-6 bg-gradient-to-r from-brand-600 to-accent-600 text-white py-4 px-8 rounded-2xl text-xl font-bold shadow-xl hover:shadow-glow-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-500 w-full">
 Começar Agora
@@ -949,7 +941,7 @@ data-aos="fade-up" data-aos-delay="300">
             Sua ponte segura para o comércio global. Compre no mundo todo usando M-Pesa e e-Mola sem fronteiras.
         </p>
         <div class="mb-6 p-4 bg-white/5 rounded-xl border border-white/5 hover:border-brand-500/30 transition-colors max-w-sm">
-            <div class="flex items-start gap-3">
+            <div class="flex items-start gap-3 mb-4">
                 <i data-lucide="map-pin" class="w-5 h-5 text-brand-500 flex-shrink-0 mt-0.5" aria-hidden="true"></i>
                 <div>
                     <p class="text-white font-bold text-xs uppercase tracking-wider mb-1">Nossa Localização</p>
@@ -958,6 +950,19 @@ data-aos="fade-up" data-aos-delay="300">
                         Loja nº 6 - <span class="text-brand-400 font-semibold">Chimoio</span>
                     </address>
                 </div>
+            </div>
+            
+            <div class="map-mini">
+                <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d120915.26343513686!2d33.39396342880562!3d-19.106518413157143!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x18d5bb13c0b24dc1%3A0xc34190cbb1d334e2!2sChimoio!5e0!3m2!1spt-MZ!2smz!4v1700000000000!5m2!1spt-MZ!2smz"
+                width="100%"
+                height="100%"
+                style="border:0;"
+                allowfullscreen=""
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"
+                title="Localização da PayGo em Chimoio, Moçambique">
+                </iframe>
             </div>
         </div>
         
@@ -998,11 +1003,6 @@ data-aos="fade-up" data-aos-delay="300">
     <div data-aos="fade-left" data-aos-delay="400">
         <h5 class="text-white font-bold mb-6 tracking-wide uppercase text-xs">Acesso Restrito</h5>
         <ul class="space-y-4" role="list">
-            <li>
-                <a href="/admin/" class="w-full inline-block bg-slate-800 text-brand-300 px-4 py-2.5 rounded-xl font-semibold text-center hover:bg-slate-700 transition flex items-center justify-center gap-2 border border-slate-700">
-                    <i data-lucide="shield-alert" class="w-4 h-4"></i> Painel Admin
-                </a>
-            </li>
             <li>
                 <button onclick="installPWA()" class="w-full bg-gradient-to-r from-brand-600 to-accent-600 text-white px-4 py-2.5 rounded-xl font-bold text-center hover:shadow-lg hover:shadow-brand-500/20 transition flex items-center justify-center gap-2">
                     <i data-lucide="download-cloud" class="w-4 h-4"></i> Baixar App
@@ -1123,35 +1123,35 @@ window.PayGoDB = { db, collection, addDoc, serverTimestamp, doc, getDoc, query, 
 // ========================================================================
 let deferredPrompt;
 window.addEventListener('beforeinstallprompt', (e) => {
-    // Impede o Chrome de mostrar o prompt nativo automaticamente
-    e.preventDefault();
-    deferredPrompt = e;
-    
-    // Mostra os nossos botões personalizados
-    const btnDesk = document.getElementById('btnInstallAppDesk');
-    const btnMob = document.getElementById('btnInstallAppMob');
-    if(btnDesk) btnDesk.classList.remove('hidden');
-    if(btnMob) btnMob.classList.remove('hidden');
+    // Impede o Chrome de mostrar o prompt nativo automaticamente
+    e.preventDefault();
+    deferredPrompt = e;
+    
+    // Mostra os nossos botões personalizados
+    const btnDesk = document.getElementById('btnInstallAppDesk');
+    const btnMob = document.getElementById('btnInstallAppMob');
+    if(btnDesk) btnDesk.classList.remove('hidden');
+    if(btnMob) btnMob.classList.remove('hidden');
 });
 
 window.installPWA = function() {
-    if (!deferredPrompt) {
-        showToast("O teu navegador não suporta a instalação direta, ou o App já está instalado.", "info");
-        return;
-    }
-    // Mostra o prompt de instalação
-    deferredPrompt.prompt();
-    // Aguarda a resposta do usuário
-    deferredPrompt.userChoice.then((choiceResult) => {
-        if (choiceResult.outcome === 'accepted') {
-            console.log('App PayGo Instalado com sucesso!');
-        }
-        deferredPrompt = null;
-        
-        // Esconde os botões após instalar
-        document.getElementById('btnInstallAppDesk')?.classList.add('hidden');
-        document.getElementById('btnInstallAppMob')?.classList.add('hidden');
-    });
+    if (!deferredPrompt) {
+        showToast("O teu navegador não suporta a instalação direta, ou o App já está instalado.", "info");
+        return;
+    }
+    // Mostra o prompt de instalação
+    deferredPrompt.prompt();
+    // Aguarda a resposta do usuário
+    deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+            console.log('App PayGo Instalado com sucesso!');
+        }
+        deferredPrompt = null;
+        
+        // Esconde os botões após instalar
+        document.getElementById('btnInstallAppDesk')?.classList.add('hidden');
+        document.getElementById('btnInstallAppMob')?.classList.add('hidden');
+    });
 };
 
 // ========================================================================
