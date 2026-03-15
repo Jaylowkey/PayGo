@@ -89,8 +89,8 @@
 
         lucide.createIcons();
 
-        // Variável global para guardar o base64 do último PDF gerado
-        let lastPdfBase64 = null;
+        // ⚠️ COLOCA AQUI A MESMA SENHA QUE ESTÁ NA VERCEL
+        const ADMIN_SECRET = "PayGo@Admin#2026!Sec"; 
 
         window.processInvoice = async function(action) {
             const btnDown = document.getElementById('btnGenerate');
@@ -100,7 +100,6 @@
 
             if (!input) { showStatus('Insira o ID do Pedido.', 'error'); return; }
 
-            // Loading state
             const activeBtn = action === 'download' ? btnDown : btnWa;
             const originalHtml = activeBtn.innerHTML;
             activeBtn.disabled = true;
@@ -118,15 +117,12 @@
                 }
 
                 const orderData = snap.docs[0].data();
-                
-                // Gerar o PDF com QR Code (Retorna o documento jsPDF)
                 const doc = await generatePDF(orderData);
                 
                 if (action === 'download') {
                     doc.save(`Fatura_PayGo_${orderData.orderId}.pdf`);
                     showStatus(`Fatura baixada com sucesso!`, 'success');
                 } else if (action === 'whatsapp') {
-                    // Converter PDF para Base64 para enviar para a API Node.js
                     const pdfBase64 = doc.output('datauristring');
                     await sendToEvolutionApi(orderData, pdfBase64);
                 }
@@ -155,7 +151,6 @@
             const convertedValue = (order.usd * order.exchangeRate);
             const isFreeTax = order.tax === 0;
 
-            // --- CABEÇALHO ---
             doc.setFillColor(...darkColor);
             doc.rect(0, 0, 210, 45, 'F');
 
@@ -167,21 +162,18 @@
             doc.setFont("helvetica", "normal");
             doc.text("O Mundo no seu Bolso.", 50, 25);
 
-            // --- GERAR QR CODE ANTI-FRAUDE ---
             const validationUrl = `https://paygo.co.mz/validar?id=${order.orderId}`;
             const qrDataUrl = await QRCode.toDataURL(validationUrl, { 
                 errorCorrectionLevel: 'H', 
                 margin: 0,
-                color: { dark: '#ffffff', light: '#0f172a' } // Cores que combinam com o header
+                color: { dark: '#ffffff', light: '#0f172a' } 
             });
             
-            // Adicionar QR Code no header
             doc.addImage(qrDataUrl, 'PNG', 170, 10, 22, 22);
             doc.setFontSize(7);
             doc.setFont("helvetica", "bold");
             doc.text("DOCUMENTO OFICIAL", 181, 37, null, null, "center");
 
-            // --- INFORMAÇÕES ---
             doc.setTextColor(...darkColor);
             doc.setFontSize(10);
             
@@ -206,7 +198,6 @@
             doc.text(`Nº do Pedido: ${order.orderId}`, 120, 84);
             doc.text(`Data: ${dateStr}`, 120, 90);
 
-            // --- TABELA ---
             doc.autoTable({
                 startY: 105,
                 head: [['Descrição', 'Câmbio', 'Valor Original', 'Total (MT)']],
@@ -224,7 +215,6 @@
                 columnStyles: { 3: { halign: 'right', fontStyle: 'bold' } }
             });
 
-            // --- TOTAIS ---
             let finalY = doc.lastAutoTable.finalY + 15;
             
             doc.setTextColor(...grayColor);
@@ -249,18 +239,20 @@
         }
 
         async function sendToEvolutionApi(order, base64Pdf) {
-            showStatus('A conectar com a API do WhatsApp...', 'info');
+            showStatus('A conectar com o servidor seguro...', 'info');
             
             try {
-                // Aqui chamas o TEU servidor Node.js (que configuramos abaixo)
                 const response = await fetch('/api/send-whatsapp-invoice', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'x-admin-secret': ADMIN_SECRET // INJEÇÃO DA BARREIRA DE SEGURANÇA
+                    },
                     body: JSON.stringify({
                         orderId: order.orderId,
                         clientName: order.name,
                         phone: order.whatsapp,
-                        pdfData: base64Pdf // O base64 começa com "data:application/pdf;filename=generated.pdf;base64,"
+                        pdfData: base64Pdf 
                     })
                 });
 
