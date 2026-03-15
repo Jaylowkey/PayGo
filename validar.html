@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validação de Comprovativo | PayGo</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        display: ['"Outfit"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: { 50: '#eff6ff', 500: '#3b82f6', 600: '#2563eb', 900: '#1e3a8a', 950: '#0f172a' }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden">
+    
+    <div class="absolute top-0 w-full h-1/2 bg-slate-950 -z-10 rounded-b-[3rem]"></div>
+    <div class="absolute top-10 w-96 h-96 bg-brand-500/20 blur-[100px] rounded-full -z-10 pointer-events-none"></div>
+
+    <div class="w-full max-w-md">
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center gap-2 text-white">
+                <div class="bg-brand-500 p-2 rounded-lg"><i data-lucide="zap" class="w-6 h-6"></i></div>
+                <span class="text-2xl font-display font-bold">PayGo</span>
+            </div>
+            <p class="text-slate-400 text-sm mt-2 font-medium tracking-wide uppercase">Sistema Central de Validação</p>
+        </div>
+
+        <div class="bg-white rounded-3xl shadow-2xl border border-slate-100 p-8 relative overflow-hidden transition-all duration-500 min-h-[400px] flex flex-col justify-center" id="validationCard">
+            
+            <div id="stateLoading" class="text-center">
+                <div class="relative w-20 h-20 mx-auto mb-6">
+                    <div class="absolute inset-0 border-4 border-slate-100 rounded-full"></div>
+                    <div class="absolute inset-0 border-4 border-brand-500 rounded-full border-t-transparent animate-spin"></div>
+                    <i data-lucide="scan-line" class="w-8 h-8 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-brand-500 animate-pulse"></i>
+                </div>
+                <h2 class="text-xl font-bold text-slate-900 mb-2">A verificar autenticidade...</h2>
+                <p class="text-slate-500 text-sm">Conectando aos servidores seguros da PayGo.</p>
+            </div>
+
+            <div id="stateValid" class="hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-green-500/10 rounded-bl-full pointer-events-none"></div>
+                <div class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_40px_rgba(34,197,94,0.3)] ring-8 ring-green-50">
+                    <i data-lucide="shield-check" class="w-10 h-10"></i>
+                </div>
+                <h2 class="text-2xl font-display font-bold text-slate-900 text-center mb-1">Documento Oficial</h2>
+                <p class="text-green-600 font-bold text-sm text-center tracking-widest uppercase mb-8 flex items-center justify-center gap-1">
+                    <i data-lucide="check-circle-2" class="w-4 h-4"></i> Válido e Verificado
+                </p>
+
+                <div class="bg-slate-50 rounded-2xl p-5 border border-slate-100 space-y-4">
+                    <div class="flex justify-between items-center border-b border-slate-200 pb-3">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Código</span>
+                        <span class="font-mono font-bold text-slate-900" id="valOrderId">---</span>
+                    </div>
+                    <div class="flex justify-between items-center border-b border-slate-200 pb-3">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Titular</span>
+                        <span class="font-bold text-slate-700" id="valClientName">---</span>
+                    </div>
+                    <div class="flex justify-between items-center border-b border-slate-200 pb-3">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Data de Emissão</span>
+                        <span class="font-medium text-slate-700" id="valDate">---</span>
+                    </div>
+                    <div class="flex justify-between items-center pt-1">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Valor Processado</span>
+                        <span class="font-display font-bold text-xl text-brand-600" id="valAmount">---</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="stateInvalid" class="hidden text-center">
+                <div class="w-20 h-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_40px_rgba(239,68,68,0.3)] ring-8 ring-red-50">
+                    <i data-lucide="shield-alert" class="w-10 h-10"></i>
+                </div>
+                <h2 class="text-2xl font-display font-bold text-slate-900 mb-2">Documento Inválido</h2>
+                <p class="text-slate-500 text-sm mb-8 px-4">Não encontrámos registo desta transação nos nossos sistemas. Este documento pode ser falsificado.</p>
+                <div class="bg-red-50 text-red-700 p-4 rounded-xl text-sm font-medium border border-red-100 text-left flex gap-3">
+                    <i data-lucide="info" class="w-5 h-5 flex-shrink-0"></i>
+                    Em caso de dúvida, contacte imediatamente o suporte oficial da PayGo via WhatsApp.
+                </div>
+            </div>
+
+        </div>
+
+        <div class="text-center mt-8">
+            <a href="index.html" class="text-sm font-bold text-slate-500 hover:text-brand-600 transition flex items-center justify-center gap-2">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar à página inicial
+            </a>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const FIREBASE_CONFIG = {
+            apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
+            authDomain: "paygo-14311.firebaseapp.com",
+            projectId: "paygo-14311"
+        };
+
+        const app = initializeApp(FIREBASE_CONFIG);
+        const db = getFirestore(app);
+
+        lucide.createIcons();
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            // Capturar tanto id=PG-123456 como orderId=PG-123456 para flexibilidade
+            const orderId = urlParams.get('id') || urlParams.get('orderId');
+
+            const stateLoading = document.getElementById('stateLoading');
+            const stateValid = document.getElementById('stateValid');
+            const stateInvalid = document.getElementById('stateInvalid');
+
+            if (!orderId) {
+                showState(stateInvalid);
+                return;
+            }
+
+            try {
+                // Simular um ligeiro atraso para mostrar a UI de verificação hiper profissional
+                await new Promise(r => setTimeout(r, 1500)); 
+
+                const q = query(collection(db, "orders"), where("orderId", "==", orderId.toUpperCase()));
+                const snap = await getDocs(q);
+
+                if (snap.empty) {
+                    showState(stateInvalid);
+                } else {
+                    const order = snap.docs[0].data();
+                    
+                    document.getElementById('valOrderId').textContent = order.orderId;
+                    
+                    // Ocultar apelidos por privacidade (ex: Arlindo Sousa -> Arlindo S***)
+                    const nameParts = order.name.split(' ');
+                    let safeName = nameParts[0];
+                    if (nameParts.length > 1) safeName += ' ' + nameParts[nameParts.length - 1].charAt(0) + '***';
+                    document.getElementById('valClientName').textContent = safeName;
+                    
+                    const dateStr = order.createdAt?.toDate ? order.createdAt.toDate().toLocaleDateString('pt-MZ') : 'Data não disponível';
+                    document.getElementById('valDate').textContent = dateStr;
+                    
+                    const formatMoney = (val) => Number(val).toLocaleString('pt-MZ', { minimumFractionDigits: 2 }) + ' MT';
+                    document.getElementById('valAmount').textContent = formatMoney(order.total);
+
+                    showState(stateValid);
+                }
+            } catch (error) {
+                console.error("Erro na validação:", error);
+                showState(stateInvalid);
+            }
+        });
+
+        function showState(elementToShow) {
+            document.getElementById('stateLoading').classList.add('hidden');
+            document.getElementById('stateValid').classList.add('hidden');
+            document.getElementById('stateInvalid').classList.add('hidden');
+            
+            elementToShow.classList.remove('hidden');
+            
+            // Re-renderizar ícones no estado novo
+            lucide.createIcons();
+        }
+    </script>
+</body>
+</html>
