@@ -1,33 +1,34 @@
 <!DOCTYPE html>
-<html lang="pt-MZ" class="scroll-smooth">
+<html lang="pt-MZ">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Painel do Afiliado | PayGo</title>
-  <meta name="description" content="Acompanhe seus ganhos, indicações e comissões no programa de afiliados PayGo">
+  <title>Gerador de Faturas | Admin PayGo</title>
   <meta name="robots" content="noindex, nofollow">
   <meta name="theme-color" content="#0f172a">
-  
-  <!-- PWA -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="PayGo Afiliados">
-  <link rel="apple-touch-icon" href="/icons/icon-192.png">
-  <link rel="manifest" href="/manifest.json">
   
   <!-- ✅ URLs 100% LIMPAS - SEM ESPAÇOS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <script>
     tailwind.config = {
-      darkMode: 'class',
       theme: {
         extend: {
-          fontFamily: { sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'], display: ['"Outfit"', 'system-ui', 'sans-serif'] },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+            display: ['"Outfit"', 'system-ui', 'sans-serif'],
+            mono: ['"Fira Code"', 'monospace']
+          },
           colors: {
-            brand: { 50: '#eff6ff', 100: '#dbeafe', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 900: '#1e3a8a', 950: '#0f172a' },
+            brand: { 50: '#eff6ff', 100: '#dbeafe', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 900: '#1e3a8a', 950: '#0f172a' },
             success: { 50: '#f0fdf4', 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' },
             warning: { 50: '#fffbeb', 400: '#fbbf24', 500: '#f59e0b' },
             danger: { 50: '#fef2f2', 400: '#f87171', 500: '#ef4444' }
@@ -38,348 +39,257 @@
   </script>
   
   <style>
-    /* Scrollbar */
     ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    html { scroll-behavior: smooth; }
     
-    /* Glass Card */
     .glass-card {
       background: white;
       border: 1px solid #e2e8f0;
       border-radius: 1.5rem;
       box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
       transition: transform 0.3s ease, box-shadow 0.3s ease;
-      cursor: pointer;
     }
     .glass-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-    .dark .glass-card { background: #1e293b; border-color: #334155; }
     
-    /* Toast */
-    #toast-container { position: fixed; top: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
-    .toast { pointer-events: auto; background: white; border-left: 4px solid #22c55e; padding: 16px 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 12px; max-width: 350px; transform: translateX(120%); transition: all 0.4s ease; opacity: 0; }
-    .toast.show { transform: translateX(0); opacity: 1; }
-    .toast.error { border-left-color: #ef4444; }
-    .toast.warning { border-left-color: #f59e0b; }
+    .btn-primary { transition: all 0.2s ease; cursor: pointer; }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
     
-    /* Modal */
-    .modal { display: none; position: fixed; inset: 0; z-index: 110; align-items: center; justify-content: center; padding: 1rem; }
-    .modal.active { display: flex; }
-    .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); }
-    .modal-content { position: relative; background: white; border-radius: 1.5rem; padding: 1.5rem; width: 100%; max-width: 28rem; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 50px rgba(0,0,0,0.25); }
+    .input-focus:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
     
-    /* Skeleton Loading */
-    .skeleton { background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; color: transparent !important; border-radius: 0.5rem; }
-    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+    /* Loader */
+    #pageLoader { transition: opacity 0.5s ease, visibility 0.5s ease; }
+    .loader-spinner { border-top-color: #22c55e; animation: spinner 1s linear infinite; }
+    @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     
-    /* Dark Mode Toggle */
-    .dark-toggle { position: relative; width: 48px; height: 26px; cursor: pointer; }
-    .dark-toggle input { opacity: 0; width: 0; height: 0; }
-    .dark-toggle-slider { position: absolute; inset: 0; background: #cbd5e1; transition: 0.3s; border-radius: 34px; }
-    .dark-toggle-slider::before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background: white; transition: 0.3s; border-radius: 50%; }
-    input:checked + .dark-toggle-slider { background: #1e293b; }
-    input:checked + .dark-toggle-slider::before { transform: translateX(22px); }
+    /* Status Banner */
+    .status-banner {
+      transition: all 0.3s ease;
+    }
     
-    /* Buttons */
-    .btn-hover { transition: all 0.2s ease; cursor: pointer; }
-    .btn-hover:active { transform: scale(0.98); }
-    .btn-hover:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-    
-    /* Accessibility */
-    :focus-visible { outline: 2px solid #3b82f6; outline-offset: 2px; border-radius: 4px; }
-    
-    /* Reduced Motion */
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
     }
     
-    @media (max-width: 768px) { .glass-card { border-radius: 1rem; } .toast { max-width: calc(100vw - 48px); } }
+    @media (max-width: 768px) { .glass-card { border-radius: 1rem; } }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans antialiased overflow-x-hidden transition-colors duration-300">
-
-<div class="fixed inset-0 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 -z-10"></div>
-
-<!-- Toast Container -->
-<div id="toast-container"></div>
+<body class="bg-slate-50 text-slate-900 font-sans antialiased overflow-x-hidden">
 
 <!-- Page Loader -->
-<div id="pageLoader" class="fixed inset-0 bg-slate-900 z-[100] flex flex-col items-center justify-center transition-opacity duration-500">
-  <div class="w-14 h-14 border-4 border-slate-700 border-t-success-500 rounded-full animate-spin mb-5"></div>
-  <h2 class="text-white text-xl font-display font-bold">Portal do Afiliado</h2>
-  <p class="text-slate-400 text-sm mt-2">A sincronizar os seus ganhos...</p>
+<div id="pageLoader" class="fixed inset-0 bg-slate-900 z-[100] flex flex-col items-center justify-center">
+  <div class="w-14 h-14 border-4 border-slate-700 border-t-success-500 rounded-full loader-spinner mb-5"></div>
+  <h2 class="text-white text-xl font-display font-bold">Gerador de Faturas</h2>
+  <p class="text-slate-400 text-sm mt-2">A carregar sistema...</p>
 </div>
 
-<!-- Connection Error Banner -->
-<div id="connectionError" class="hidden fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-2 shadow-lg max-w-md">
-  <i data-lucide="alert-circle" class="w-5 h-5 flex-shrink-0"></i>
-  <span id="connectionErrorMsg">Erro de conexão com o servidor</span>
-  <button onclick="retryConnection()" class="ml-2 text-red-600 hover:text-red-800 font-bold">Tentar Novamente</button>
+<!-- Connection Status Banner -->
+<div id="connectionBanner" class="hidden fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-2 shadow-lg max-w-md status-banner">
+  <i data-lucide="alert-triangle" class="w-5 h-5 flex-shrink-0"></i>
+  <span id="connectionMessage">Modo Demonstração: Banco de dados não configurado</span>
+  <button onclick="retryConnection()" class="ml-2 text-amber-700 hover:text-amber-900 font-bold">Tentar Novamente</button>
 </div>
-
-<!-- Mobile Header -->
-<div class="md:hidden fixed top-0 left-0 right-0 bg-slate-900 text-white p-4 flex items-center justify-between z-40">
-  <div class="flex items-center gap-2">
-    <div class="w-9 h-9 bg-gradient-to-tr from-success-500 to-brand-500 rounded-xl flex items-center justify-center">
-      <i data-lucide="zap" class="w-5 h-5 text-white"></i>
-    </div>
-    <span class="font-bold font-display text-lg">Afiliados PayGo</span>
-  </div>
-  <div class="flex items-center gap-2">
-    <label class="dark-toggle mr-2">
-      <input type="checkbox" id="darkModeToggleMobile">
-      <span class="dark-toggle-slider"></span>
-    </label>
-    <button id="mobileMenuBtn" class="p-2 text-slate-300 hover:text-white rounded-lg hover:bg-white/10" aria-label="Abrir menu">
-      <i data-lucide="menu" class="w-6 h-6"></i>
-    </button>
-  </div>
-</div>
-
-<!-- Sidebar Overlay -->
-<div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-40 hidden md:hidden"></div>
 
 <!-- Sidebar -->
-<aside id="sidebar" class="fixed left-0 top-0 h-full w-64 bg-slate-900 text-white p-6 z-50 flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-300">
-  <div class="flex items-center justify-between mb-8 pb-6 border-b border-white/10">
-    <a href="dashboard.html" class="flex items-center gap-3">
-      <div class="w-10 h-10 bg-gradient-to-tr from-success-500 to-brand-500 rounded-xl flex items-center justify-center">
-        <i data-lucide="zap" class="w-6 h-6 fill-current text-white"></i>
-      </div>
-      <div>
-        <span class="text-xl font-display font-bold">PayGo</span>
-        <span class="text-[10px] text-success-400 font-bold uppercase block">Partners</span>
-      </div>
-    </a>
-    <button id="closeSidebarBtn" class="md:hidden p-2 text-slate-400 hover:text-white rounded-lg hover:bg-white/10">
-      <i data-lucide="x" class="w-5 h-5"></i>
-    </button>
+<aside class="fixed left-0 top-0 h-full w-64 bg-slate-950 text-slate-300 hidden md:flex flex-col z-40">
+  <div class="p-6 border-b border-white/10 flex items-center gap-3">
+    <div class="bg-gradient-to-tr from-brand-500 to-accent-500 p-2.5 rounded-xl text-white shadow-lg">
+      <i data-lucide="zap" class="w-5 h-5 fill-current"></i>
+    </div>
+    <span class="text-xl font-display font-bold text-white">PayGo Admin</span>
   </div>
   
-  <nav class="flex-1 space-y-2 overflow-y-auto">
-    <a href="#" class="flex items-center gap-3 px-4 py-3 bg-success-500/10 text-success-400 border-r-2 border-success-500 rounded-xl font-semibold">
-      <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Visão Geral
+  <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+    <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition">
+      <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
     </a>
-    <a href="#" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl opacity-50 cursor-not-allowed" title="Em breve">
-      <i data-lucide="users" class="w-5 h-5"></i> Minhas Indicações
+    <a href="#" class="flex items-center gap-3 px-4 py-3 bg-brand-500/10 text-brand-400 border-r-2 border-brand-500 rounded-xl">
+      <i data-lucide="file-text" class="w-5 h-5"></i> Faturas & Envios
     </a>
-    <a href="#" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl opacity-50 cursor-not-allowed" title="Em breve">
-      <i data-lucide="wallet" class="w-5 h-5"></i> Histórico de Saques
+    <a href="clientes.html" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition">
+      <i data-lucide="users" class="w-5 h-5"></i> Clientes
     </a>
-    <a href="configuracoes.html" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl">
+    <a href="configuracoes.html" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition">
       <i data-lucide="settings" class="w-5 h-5"></i> Configurações
-    </a>
-    <a href="https://wa.me/258837522255" target="_blank" rel="noopener" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl">
-      <i data-lucide="message-circle" class="w-5 h-5"></i> Suporte
     </a>
   </nav>
   
-  <div class="pt-6 border-t border-white/10">
-    <div class="flex items-center justify-between px-2 py-3 mb-3">
-      <span class="text-sm text-slate-400">Modo Escuro</span>
-      <label class="dark-toggle">
-        <input type="checkbox" id="darkModeToggle">
-        <span class="dark-toggle-slider"></span>
-      </label>
-    </div>
+  <div class="p-4 border-t border-white/10">
     <div class="flex items-center gap-3 px-2 py-3 mb-3 bg-white/5 rounded-xl">
-      <div class="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center text-sm font-bold text-white" id="userInitial">U</div>
+      <div class="w-9 h-9 rounded-full bg-brand-600 flex items-center justify-center text-sm font-bold text-white">A</div>
       <div class="flex-1 min-w-0">
-        <p class="text-sm font-semibold text-white truncate" id="userName">Usuário</p>
-        <p class="text-[10px] text-slate-400 uppercase font-bold">Afiliado</p>
+        <p class="text-sm font-semibold text-white truncate">Administrador</p>
+        <p class="text-xs text-slate-400 truncate">admin@paygo.co.mz</p>
       </div>
     </div>
-    <button id="logoutBtn" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-slate-800 hover:bg-red-500/10 text-slate-300 hover:text-red-400 border border-slate-700 rounded-xl text-sm font-medium btn-hover">
-      <i data-lucide="log-out" class="w-4 h-4"></i> Sair da Conta
-    </button>
+    <a href="login.html" class="flex items-center justify-center gap-2 px-4 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl transition text-sm font-medium">
+      <i data-lucide="log-out" class="w-4 h-4"></i> Sair
+    </a>
   </div>
 </aside>
 
 <!-- Main Content -->
-<main class="md:ml-64 p-4 md:p-8 pt-24 md:pt-8 min-h-screen">
+<main class="md:ml-64 p-4 md:p-8 min-h-screen">
   
-  <!-- Page Header -->
-  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-    <div>
-      <h1 class="text-3xl font-display font-extrabold text-slate-900 dark:text-white" id="greetingTitle">Visão Geral</h1>
-      <p class="text-slate-500 dark:text-slate-400 mt-1 text-sm">Acompanhe os seus ganhos e o desempenho do seu link.</p>
-    </div>
-    <div id="statusBadge" class="hidden items-center gap-2 px-4 py-2 rounded-full text-sm font-bold shadow-sm border bg-white dark:bg-slate-800"></div>
-  </div>
-
-  <!-- Pending Alert -->
-  <div id="pendingAlert" class="hidden mb-8 bg-warning-50 dark:bg-warning-900/20 border border-warning-200 dark:border-warning-700 rounded-2xl p-6 md:p-8">
-    <div class="flex flex-col md:flex-row items-center gap-6 text-center md:text-left">
-      <div class="w-16 h-16 bg-warning-100 dark:bg-warning-900/50 text-warning-600 rounded-full flex items-center justify-center flex-shrink-0">
-        <i data-lucide="clock" class="w-8 h-8"></i>
+  <!-- Mobile Header -->
+  <div class="md:hidden fixed top-0 left-0 right-0 bg-white border-b border-slate-200 p-4 flex items-center justify-between z-30">
+    <div class="flex items-center gap-2">
+      <div class="bg-brand-500 p-2 rounded-lg text-white">
+        <i data-lucide="zap" class="w-5 h-5 fill-current"></i>
       </div>
-      <div>
-        <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Conta em Análise</h2>
-        <p class="text-slate-600 dark:text-slate-300 mb-4">A sua candidatura a afiliado foi recebida e está em análise. Este processo costuma demorar até 48 horas úteis.</p>
-        <p class="text-sm text-warning-700 dark:text-warning-300 font-medium bg-warning-100/50 dark:bg-warning-900/30 inline-block px-3 py-1 rounded-lg">Assim que aprovado, o seu link e estatísticas serão desbloqueados.</p>
-      </div>
+      <span class="font-display font-bold text-slate-900">PayGo Admin</span>
     </div>
+    <a href="dashboard.html" class="p-2 text-slate-500 hover:text-slate-700">
+      <i data-lucide="arrow-left" class="w-5 h-5"></i>
+    </a>
   </div>
-
-  <!-- Dashboard Content -->
-  <div id="dashboardContent" class="hidden space-y-8">
+  
+  <div class="max-w-3xl mx-auto md:pt-8">
     
-    <!-- Affiliate Link Card -->
-    <div class="bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-800 dark:to-slate-900 rounded-2xl p-6 md:p-8 shadow-xl text-white">
-      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <h2 class="text-lg font-bold flex items-center gap-2">
-          <i data-lucide="link" class="w-5 h-5 text-success-400"></i> O seu Link de Indicação
-        </h2>
-        <div class="flex items-center gap-2 bg-slate-950/50 px-3 py-1.5 rounded-lg border border-slate-700">
-          <span class="text-xs text-slate-400">Código:</span>
-          <span class="text-sm font-mono font-bold text-success-400" id="rawAffiliateCode">---</span>
-          <button id="btnCopyCode" class="text-slate-400 hover:text-white ml-2 p-1 rounded hover:bg-white/10" title="Copiar código">
-            <i data-lucide="copy" class="w-4 h-4"></i>
-          </button>
-        </div>
-      </div>
-      
-      <div class="flex flex-col md:flex-row gap-4">
+    <!-- Page Header -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-display font-bold text-slate-900 mb-2">Gerador de Faturas</h1>
+      <p class="text-slate-500">Gere faturas em PDF e envie para clientes via WhatsApp</p>
+    </div>
+    
+    <!-- Search Form -->
+    <div class="glass-card p-6 mb-6">
+      <label class="block text-sm font-bold text-slate-700 mb-2">Buscar Pedido por ID</label>
+      <div class="flex gap-3">
         <div class="relative flex-1">
-          <input type="text" id="affiliateLinkInput" readonly class="w-full bg-slate-950/50 border border-slate-700 text-white px-5 py-4 rounded-xl font-mono text-sm focus:outline-none focus:border-success-500 pr-28 truncate" value="">
-          <button id="btnCopyLink" class="absolute right-2 top-1/2 -translate-y-1/2 bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg text-sm font-bold btn-hover">
-            <i data-lucide="copy" class="w-4 h-4"></i> <span class="hidden sm:inline">Copiar</span>
-          </button>
+          <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
+          <input 
+            type="text" 
+            id="orderIdInput" 
+            placeholder="Ex: PG-145340" 
+            class="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 font-mono uppercase"
+            maxlength="10"
+          >
         </div>
-        <button id="btnShareWp" class="bg-[#25D366] hover:bg-[#128C7E] text-white px-6 py-4 rounded-xl font-bold btn-hover flex items-center justify-center gap-2">
-          <i data-lucide="message-circle" class="w-5 h-5"></i> Partilhar
+        <button 
+          onclick="searchOrder()" 
+          class="px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold btn-primary flex items-center gap-2"
+        >
+          <i data-lucide="search" class="w-5 h-5"></i>
+          <span class="hidden sm:inline">Buscar</span>
         </button>
+      </div>
+      <p class="text-xs text-slate-400 mt-2">💡 Em modo demo, use: PG-145340 ou PG-999999</p>
+    </div>
+    
+    <!-- Order Details (Hidden by default) -->
+    <div id="orderDetails" class="hidden glass-card p-6 mb-6">
+      <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-200">
+        <h2 class="text-xl font-display font-bold text-slate-900">Detalhes do Pedido</h2>
+        <span id="orderStatus" class="px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700">Pendente</span>
       </div>
       
-      <p class="text-xs text-slate-400 mt-4 flex items-center gap-1.5">
-        <i data-lucide="info" class="w-4 h-4 text-success-400/70"></i> Partilhe este link. Quando seus clientes pagarem um serviço, sua comissão é garantida.
-      </p>
-    </div>
-
-    <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <!-- Earnings -->
-      <div class="glass-card p-6 border-success-100 dark:border-success-900/30">
-        <div class="flex items-center justify-between mb-4">
-          <span class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase">Ganhos Disponíveis</span>
-          <div class="w-10 h-10 bg-success-100 dark:bg-success-900/30 rounded-xl flex items-center justify-center">
-            <i data-lucide="banknote" class="w-5 h-5 text-success-600 dark:text-success-400"></i>
+      <div class="grid md:grid-cols-2 gap-6 mb-6">
+        <div>
+          <h3 class="text-sm font-bold text-slate-500 uppercase mb-3">Cliente</h3>
+          <div class="space-y-2">
+            <p class="text-slate-900"><span class="font-semibold">Nome:</span> <span id="clientName">-</span></p>
+            <p class="text-slate-900"><span class="font-semibold">Email:</span> <span id="clientEmail">-</span></p>
+            <p class="text-slate-900"><span class="font-semibold">WhatsApp:</span> <span id="clientPhone">-</span></p>
           </div>
         </div>
-        <p class="text-3xl font-display font-extrabold text-slate-900 dark:text-white skeleton" id="statEarnings">0,00 MT</p>
-        <div class="mt-4 pt-4 border-t border-success-100/50 dark:border-success-900/20 flex justify-between items-center">
-          <span class="text-xs text-slate-500 dark:text-slate-400">Saldo pronto a levantar</span>
-          <button id="btnOpenWithdraw" class="text-xs font-bold text-white bg-success-600 hover:bg-success-700 px-4 py-2 rounded-lg btn-hover">Solicitar Saque</button>
-        </div>
-      </div>
-
-      <!-- Referrals -->
-      <div class="glass-card p-6">
-        <div class="flex items-center justify-between mb-4">
-          <span class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase">Total Indicados</span>
-          <div class="w-10 h-10 bg-brand-50 dark:bg-brand-900/30 rounded-xl flex items-center justify-center">
-            <i data-lucide="users" class="w-5 h-5 text-brand-600 dark:text-brand-400"></i>
+        <div>
+          <h3 class="text-sm font-bold text-slate-500 uppercase mb-3">Pedido</h3>
+          <div class="space-y-2">
+            <p class="text-slate-900"><span class="font-semibold">ID:</span> <span id="orderId" class="font-mono">-</span></p>
+            <p class="text-slate-900"><span class="font-semibold">Data:</span> <span id="orderDate">-</span></p>
+            <p class="text-slate-900"><span class="font-semibold">Método:</span> <span id="paymentMethod">-</span></p>
           </div>
         </div>
-        <p class="text-3xl font-display font-extrabold text-slate-900 dark:text-white skeleton" id="statReferrals">0</p>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">Pessoas que usaram o seu link</p>
       </div>
-
-      <!-- Converted -->
-      <div class="glass-card p-6">
-        <div class="flex items-center justify-between mb-4">
-          <span class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase">Vendas Feitas</span>
-          <div class="w-10 h-10 bg-purple-50 dark:bg-purple-900/30 rounded-xl flex items-center justify-center">
-            <i data-lucide="shopping-bag" class="w-5 h-5 text-purple-600 dark:text-purple-400"></i>
+      
+      <div class="bg-slate-50 rounded-xl p-4 mb-6">
+        <h3 class="text-sm font-bold text-slate-500 uppercase mb-3">Resumo Financeiro</h3>
+        <div class="space-y-2">
+          <div class="flex justify-between">
+            <span class="text-slate-600">Valor USD:</span>
+            <span class="font-semibold" id="orderUSD">-</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-600">Câmbio:</span>
+            <span class="font-semibold" id="orderExchange">-</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-600">Taxa:</span>
+            <span class="font-semibold" id="orderTax">-</span>
+          </div>
+          <div class="flex justify-between pt-3 border-t border-slate-200">
+            <span class="text-slate-900 font-bold">TOTAL:</span>
+            <span class="font-bold text-brand-600 text-lg" id="orderTotal">-</span>
           </div>
         </div>
-        <p class="text-3xl font-display font-extrabold text-slate-900 dark:text-white skeleton" id="statConverted">0</p>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">Indicações que geraram comissão</p>
       </div>
-    </div>
-
-    <!-- Referrals Table -->
-    <div class="glass-card overflow-hidden">
-      <div class="p-5 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
-        <h2 class="text-lg font-bold text-slate-900 dark:text-white">Indicações Recentes</h2>
-        <button id="btnExportCSV" class="text-xs font-medium text-brand-600 dark:text-brand-400 hover:text-brand-700 btn-hover">
-          <i data-lucide="download" class="w-4 h-4 inline"></i> Exportar CSV
+      
+      <!-- Action Buttons -->
+      <div class="flex flex-col sm:flex-row gap-3">
+        <button 
+          onclick="generatePDF()" 
+          class="flex-1 px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold btn-primary flex items-center justify-center gap-2"
+        >
+          <i data-lucide="download" class="w-5 h-5"></i>
+          Baixar PDF
+        </button>
+        <button 
+          onclick="sendWhatsApp()" 
+          class="flex-1 px-6 py-3 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-xl font-bold btn-primary flex items-center justify-center gap-2"
+        >
+          <i data-lucide="message-circle" class="w-5 h-5"></i>
+          Enviar WhatsApp
         </button>
       </div>
-      <div class="overflow-x-auto">
-        <table class="w-full text-left">
-          <thead>
-            <tr class="bg-slate-50 dark:bg-slate-800/50 text-slate-400 text-[10px] uppercase font-bold">
-              <th class="px-6 py-4">Data</th>
-              <th class="px-6 py-4">Indicado (Email)</th>
-              <th class="px-6 py-4">Status</th>
-              <th class="px-6 py-4 text-right">Comissão</th>
-            </tr>
-          </thead>
-          <tbody id="referralsTable" class="divide-y divide-slate-50 dark:divide-slate-700"></tbody>
-        </table>
-      </div>
-      <div id="emptyReferrals" class="hidden p-12 text-center text-slate-500 dark:text-slate-400">
-        <div class="w-16 h-16 bg-slate-50 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
-          <i data-lucide="user-plus" class="w-8 h-8 text-slate-300"></i>
+    </div>
+    
+    <!-- Demo Mode Notice -->
+    <div id="demoNotice" class="hidden glass-card p-6 bg-blue-50 border-blue-200">
+      <div class="flex items-start gap-3">
+        <i data-lucide="info" class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5"></i>
+        <div>
+          <h3 class="font-bold text-blue-900 mb-2">Modo Demonstração Ativo</h3>
+          <p class="text-sm text-blue-700 mb-3">O banco de dados Firestore não está configurado. Para usar dados reais:</p>
+          <ol class="list-decimal list-inside text-sm text-blue-700 space-y-1">
+            <li>Acesse <a href="https://console.firebase.google.com/project/paygo-14311/firestore" target="_blank" class="underline font-medium">Firebase Console</a></li>
+            <li>Clique em "Criar banco de dados"</li>
+            <li>Escolha "Modo de Teste"</li>
+            <li>Selecione região (eur3 ou nam5)</li>
+          </ol>
+          <button onclick="retryConnection()" class="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold btn-primary">
+            Verificar Conexão
+          </button>
         </div>
-        <p class="font-bold">Ainda não tem indicações</p>
-        <p class="text-sm mt-1">Partilhe o seu link para começar a ver resultados.</p>
       </div>
     </div>
+    
+    <!-- Error State -->
+    <div id="errorState" class="hidden glass-card p-8 text-center">
+      <i data-lucide="alert-circle" class="w-16 h-16 text-red-500 mx-auto mb-4"></i>
+      <h3 class="text-xl font-bold text-slate-900 mb-2">Pedido Não Encontrado</h3>
+      <p class="text-slate-500 mb-6">O ID do pedido inserido não existe no sistema.</p>
+      <button onclick="clearSearch()" class="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold btn-primary">
+        Nova Busca
+      </button>
+    </div>
+    
   </div>
 </main>
 
-<!-- Withdraw Modal -->
-<div id="withdrawModal" class="modal">
-  <div class="modal-overlay" onclick="closeWithdrawModal()"></div>
-  <div class="modal-content">
-    <div class="flex justify-between items-center mb-6 pb-4 border-b">
-      <h3 class="text-xl font-display font-bold">Solicitar Levantamento</h3>
-      <button onclick="closeWithdrawModal()" class="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center">
-        <i data-lucide="x" class="w-5 h-5"></i>
-      </button>
-    </div>
-    
-    <div class="bg-success-50 dark:bg-success-900/20 border border-success-100 dark:border-success-800 rounded-xl p-4 mb-6 flex justify-between items-center">
-      <div>
-        <p class="text-sm text-success-700 dark:text-success-300 font-medium">Saldo Disponível</p>
-        <p class="text-2xl font-bold text-success-700 dark:text-success-400" id="modalAvailableBalance">0,00 MT</p>
-      </div>
-      <div class="w-10 h-10 bg-success-100 dark:bg-success-900/30 text-success-600 dark:text-success-400 rounded-full flex items-center justify-center">
-        <i data-lucide="wallet" class="w-5 h-5"></i>
-      </div>
-    </div>
-    
-    <form id="withdrawForm" class="space-y-4">
-      <div>
-        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Valor a Levantar (MT) *</label>
-        <input type="number" id="withdrawAmount" required min="600" placeholder="Ex: 600" class="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 focus:outline-none focus:border-success-500 bg-white dark:bg-slate-700 dark:text-white">
-        <p class="text-xs text-slate-500 mt-1">Mínimo: 600 MT</p>
-      </div>
-      <div>
-        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Método de Receção *</label>
-        <select id="withdrawMethod" required class="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 focus:outline-none focus:border-success-500 bg-white dark:bg-slate-700 dark:text-white">
-          <option value="mpesa">M-Pesa</option>
-          <option value="emola">e-Mola</option>
-        </select>
-      </div>
-      <div>
-        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Número da Conta *</label>
-        <input type="tel" id="withdrawPhone" required placeholder="84/85 ou 86/87" pattern="^8[4-7]\d{7}$" class="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 focus:outline-none focus:border-success-500 bg-white dark:bg-slate-700 dark:text-white">
-        <p class="text-xs text-slate-500 mt-1">Formato: 841234567</p>
-      </div>
-      <button type="submit" id="withdrawBtnSubmit" class="w-full bg-success-600 hover:bg-success-700 text-white font-bold py-3.5 rounded-xl btn-hover">
-        Confirmar Pedido
-      </button>
-    </form>
-  </div>
-</div>
+<!-- Toast Container -->
+<div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2 pointer-events-none"></div>
 
-<!-- ✅ JAVASCRIPT CORRIGIDO - SEM MÓDULOS PARA MÁXIMA COMPATIBILIDADE -->
+<!-- JavaScript -->
 <script>
 // ==========================================
-// 🔧 CONFIGURAÇÃO FIREBASE - URLs LIMPAS
+// 🔧 CONFIGURAÇÃO
 // ==========================================
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
@@ -391,507 +301,437 @@ const FIREBASE_CONFIG = {
 };
 
 // Estado Global
-let currentUserData = null;
-let affiliateCodeLocal = '';
-let darkModeEnabled = localStorage.getItem('darkMode') === 'true';
+let app = null;
+let db = null;
 let firebaseLoaded = false;
-let firebaseError = null;
+let currentOrder = null;
 
-// Dados de exemplo para modo offline/demo
-const DEMO_DATA = {
-  affiliateCode: 'AFF-DEMO',
-  affiliateEarnings: 1250.50,
-  totalReferrals: 23,
-  approvedReferrals: 8,
-  referrals: [
-    { email: 'jo***@email.com', createdAt: new Date().toISOString(), firstPurchaseProcessed: true },
-    { email: 'ma***@email.com', createdAt: new Date(Date.now() - 86400000).toISOString(), firstPurchaseProcessed: false },
-    { email: 'ca***@email.com', createdAt: new Date(Date.now() - 172800000).toISOString(), firstPurchaseProcessed: true }
-  ]
+// Dados de exemplo para modo demo
+const DEMO_ORDERS = {
+  'PG-145340': {
+    orderId: 'PG-145340',
+    name: 'João Silva',
+    email: 'joao@email.com',
+    whatsapp: '+258841234567',
+    usd: 25.50,
+    detail: 'https://pt.aliexpress.com/item/1005001234567890.html',
+    tax: 250,
+    total: 2494,
+    exchangeRate: 88,
+    status: 'pending',
+    paymentMethod: 'mpesa',
+    type: 'compra',
+    createdAt: new Date().toISOString()
+  },
+  'PG-999999': {
+    orderId: 'PG-999999',
+    name: 'Maria Santos',
+    email: 'maria@email.com',
+    whatsapp: '+258871122334',
+    usd: 12.00,
+    detail: 'Recarga Netflix Premium',
+    tax: 150,
+    total: 1206,
+    exchangeRate: 88,
+    status: 'completed',
+    paymentMethod: 'emola',
+    type: 'jogo',
+    createdAt: new Date(Date.now() - 86400000).toISOString()
+  }
 };
 
 // ==========================================
 // 🔔 TOAST NOTIFICATIONS
 // ==========================================
 function showToast(message, type = 'success', duration = 4000) {
-  const container = document.getElementById('toast-container');
-  if (!container) return;
-  
+  const container = document.getElementById('toastContainer');
   const toast = document.createElement('div');
-  toast.className = `toast ${type === 'error' ? 'error' : type === 'warning' ? 'warning' : ''}`;
-  toast.innerHTML = `
-    <i data-lucide="${type === 'error' ? 'alert-circle' : 'check-circle'}" class="w-5 h-5 ${type === 'error' ? 'text-red-500' : 'text-success-500'}"></i>
-    <span class="text-sm font-bold">${message}</span>
-  `;
-  container.appendChild(toast);
+  toast.className = `flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-white transform transition-all duration-300 translate-x-full ${
+    type === 'error' ? 'bg-red-500' : 
+    type === 'warning' ? 'bg-amber-500' : 
+    type === 'info' ? 'bg-blue-500' : 
+    'bg-green-500'
+  }`;
+  toast.style.pointerEvents = 'auto';
   
+  const icons = { success: 'check-circle', error: 'alert-circle', warning: 'alert-triangle', info: 'info' };
+  const icon = icons[type] || icons.success;
+  
+  toast.innerHTML = `
+    <i data-lucide="${icon}" class="w-5 h-5 flex-shrink-0"></i>
+    <span class="text-sm font-medium">${message}</span>
+    <button onclick="this.parentElement.remove()" class="ml-2 hover:opacity-80">
+      <i data-lucide="x" class="w-4 h-4"></i>
+    </button>
+  `;
+  
+  container.appendChild(toast);
   if (typeof lucide !== 'undefined') lucide.createIcons({root: toast});
   
-  requestAnimationFrame(() => toast.classList.add('show'));
+  requestAnimationFrame(() => toast.classList.remove('translate-x-full'));
   setTimeout(() => {
-    toast.classList.remove('show');
+    toast.classList.add('opacity-0');
     setTimeout(() => toast.remove(), 300);
   }, duration);
 }
 
 // ==========================================
-// 🛠️ FUNÇÕES DE UTILIDADE
-// ==========================================
-function formatMT(value) {
-  const num = Number(value || 0);
-  return num.toLocaleString('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' MT';
-}
-
-function maskEmail(email) {
-  if (!email || !email.includes('@')) return 'Anónimo';
-  const [name, domain] = email.split('@');
-  return name.length <= 2 ? `${name}***@${domain}` : `${name.substring(0,2)}***@${domain}`;
-}
-
-function formatDate(isoString) {
-  if (!isoString) return '-';
-  try {
-    const d = isoString?.toDate ? isoString.toDate() : new Date(isoString);
-    return d.toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short', year: 'numeric' });
-  } catch { return '-'; }
-}
-
-async function copyToClipboard(text, successMsg) {
-  try {
-    if (navigator.clipboard && window.isSecureContext) {
-      await navigator.clipboard.writeText(text);
-    } else {
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      ta.style.position = 'absolute';
-      ta.style.left = '-9999px';
-      document.body.appendChild(ta);
-      ta.focus();
-      ta.select();
-      document.execCommand('copy');
-      ta.remove();
-    }
-    showToast(successMsg, 'success');
-    return true;
-  } catch (err) {
-    console.error('Copy error:', err);
-    showToast('Erro ao copiar', 'error');
-    return false;
-  }
-}
-
-function debounce(func, wait) {
-  let timeout;
-  return function(...args) {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func.apply(this, args), wait);
-  };
-}
-
-// ==========================================
-// 🌐 VERIFICAÇÃO DE CONEXÃO REAL
-// ==========================================
-async function checkFirebaseConnection() {
-  try {
-    // Teste simples de conectividade
-    const response = await fetch('https://firestore.googleapis.com/v1/projects/paygo-14311/databases/(default)/documents?pageSize=1', {
-      method: 'HEAD',
-      mode: 'cors'
-    });
-    // Se retornar 200 ou 401/403 (autenticação), o servidor está acessível
-    return response.ok || response.status === 401 || response.status === 403;
-  } catch (e) {
-    // Erro de rede = offline ou servidor indisponível
-    return false;
-  }
-}
-
-// ==========================================
-// 🔥 INICIALIZAÇÃO FIREBASE ROBUSTA
+// 🔥 INICIALIZAÇÃO FIREBASE
 // ==========================================
 async function initFirebase() {
   try {
-    console.log('🔥 Tentando conectar ao Firebase...');
+    console.log('🔥 Inicializando Firebase...');
     
-    // Verificar conectividade primeiro
-    const isOnline = await checkFirebaseConnection();
-    if (!isOnline) {
-      throw new Error('Servidor Firestore não acessível');
-    }
-    
-    // Carregar Firebase dinamicamente
     const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js");
-    const { getAuth, onAuthStateChanged, signOut } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js");
-    const { getFirestore, doc, getDoc, collection, query, where, getDocs, addDoc } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+    const { getFirestore } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
     
-    const app = initializeApp(FIREBASE_CONFIG);
-    const auth = getAuth(app);
-    const db = getFirestore(app); // ✅ SEM "paygodb" - Firestore usa (default)
+    app = initializeApp(FIREBASE_CONFIG);
     
-    // Teste REAL de conexão com o banco
-    try {
-      await getDocs(collection(db, '_test_connection_')).catch(() => {});
-      console.log('✅ Firestore conectado');
-      firebaseLoaded = true;
-      firebaseError = null;
-      return { auth, db, app };
-    } catch (dbError) {
-      if (dbError.code === 'not-found' || dbError.message?.includes('does not exist')) {
-        console.warn('📋 Banco Firestore não criado');
-        throw new Error('BANCO_NAO_CRIADO');
-      }
-      throw dbError;
-    }
+    // Teste REAL de conexão
+    db = getFirestore(app);
+    
+    // Tentar buscar algo para testar conexão
+    const { collection, getDocs } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+    await getDocs(collection(db, '_test_')).catch(() => {});
+    
+    firebaseLoaded = true;
+    console.log('✅ Firebase conectado');
+    hideConnectionBanner();
+    return true;
     
   } catch (error) {
-    console.error('❌ Firebase error:', error.message);
-    firebaseError = error.message;
+    console.warn('⚠️ Firebase não disponível:', error.message);
     firebaseLoaded = false;
     
-    // Mostrar banner de erro específico
-    const errorBanner = document.getElementById('connectionError');
-    const errorMsg = document.getElementById('connectionErrorMsg');
-    if (errorBanner && errorMsg) {
-      if (error.message === 'BANCO_NAO_CRIADO') {
-        errorMsg.textContent = 'Banco de dados não configurado. Clique para criar.';
-        errorBanner.querySelector('button').onclick = () => {
-          window.open('https://console.firebase.google.com/project/paygo-14311/firestore', '_blank');
-        };
-      } else if (error.message.includes('não acessível')) {
-        errorMsg.textContent = 'Sem conexão com o servidor. Verifique sua internet.';
-      } else {
-        errorMsg.textContent = 'Erro de conexão: ' + error.message;
-      }
-      errorBanner.classList.remove('hidden');
-    }
-    
-    return null;
+    // Mostrar banner de erro
+    showConnectionBanner(error.message);
+    return false;
   }
 }
 
 // ==========================================
-// 📊 CARREGAR DADOS DO AFILIADO
+// 📊 UI HELPERS
 // ==========================================
-async function loadAffiliateData(firebase) {
-  if (!firebase || !firebaseLoaded) {
-    // Usar dados de demonstração
-    console.log('📋 Usando modo demonstração');
-    return { ...DEMO_DATA, isDemo: true };
+function showConnectionBanner(errorMsg) {
+  const banner = document.getElementById('connectionBanner');
+  const msg = document.getElementById('connectionMessage');
+  const demoNotice = document.getElementById('demoNotice');
+  
+  if (banner) {
+    if (errorMsg.includes('does not exist')) {
+      msg.textContent = 'Banco Firestore não criado. Clique para criar.';
+    } else {
+      msg.textContent = 'Erro de conexão. Verifique sua internet.';
+    }
+    banner.classList.remove('hidden');
   }
+  
+  if (demoNotice) demoNotice.classList.remove('hidden');
+}
+
+function hideConnectionBanner() {
+  const banner = document.getElementById('connectionBanner');
+  const demoNotice = document.getElementById('demoNotice');
+  if (banner) banner.classList.add('hidden');
+  if (demoNotice) demoNotice.classList.add('hidden');
+}
+
+function showOrderDetails(order) {
+  currentOrder = order;
+  
+  document.getElementById('clientName').textContent = order.name || '-';
+  document.getElementById('clientEmail').textContent = order.email || '-';
+  document.getElementById('clientPhone').textContent = order.whatsapp || '-';
+  document.getElementById('orderId').textContent = order.orderId || '-';
+  document.getElementById('orderDate').textContent = order.createdAt ? new Date(order.createdAt).toLocaleDateString('pt-MZ') : '-';
+  document.getElementById('paymentMethod').textContent = order.paymentMethod === 'mpesa' ? 'M-Pesa' : 'e-Mola';
+  document.getElementById('orderUSD').textContent = `$${(order.usd || 0).toFixed(2)}`;
+  document.getElementById('orderExchange').textContent = `${(order.exchangeRate || 88).toFixed(2)} MT`;
+  document.getElementById('orderTax').textContent = formatMT(order.tax);
+  document.getElementById('orderTotal').textContent = formatMT(order.total);
+  
+  const statusEl = document.getElementById('orderStatus');
+  const statusConfig = {
+    'pending': { text: 'Pendente', class: 'bg-yellow-100 text-yellow-700' },
+    'processing': { text: 'Processando', class: 'bg-blue-100 text-blue-700' },
+    'completed': { text: 'Concluído', class: 'bg-green-100 text-green-700' },
+    'cancelled': { text: 'Cancelado', class: 'bg-red-100 text-red-700' }
+  };
+  const status = statusConfig[order.status] || statusConfig.pending;
+  statusEl.textContent = status.text;
+  statusEl.className = `px-3 py-1 rounded-full text-xs font-bold ${status.class}`;
+  
+  document.getElementById('orderDetails').classList.remove('hidden');
+  document.getElementById('errorState').classList.add('hidden');
+}
+
+function hideOrderDetails() {
+  document.getElementById('orderDetails').classList.add('hidden');
+  document.getElementById('errorState').classList.add('hidden');
+}
+
+function showError() {
+  hideOrderDetails();
+  document.getElementById('errorState').classList.remove('hidden');
+}
+
+function formatMT(value) {
+  return Number(value || 0).toLocaleString('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' MT';
+}
+
+// ==========================================
+// 🔍 BUSCAR PEDIDO
+// ==========================================
+async function searchOrder() {
+  const orderId = document.getElementById('orderIdInput').value.trim().toUpperCase();
+  
+  if (!orderId || !/^PG-\d{6}$/.test(orderId)) {
+    showToast('Insira um ID válido (ex: PG-145340)', 'error');
+    return;
+  }
+  
+  hideOrderDetails();
+  showToast('Buscando pedido...', 'info');
   
   try {
-    const { auth, db } = firebase;
-    const user = auth.currentUser;
-    if (!user) return null;
+    let order = null;
     
-    const userDoc = await getDoc(doc(db, "users", user.uid));
-    if (!userDoc.exists()) return null;
-    
-    const data = userDoc.data();
-    return { ...data, uid: user.uid, isDemo: false };
-    
-  } catch (error) {
-    console.error('Erro ao carregar dados:', error);
-    // Fallback para demo
-    return { ...DEMO_DATA, isDemo: true, error: true };
-  }
-}
-
-// ==========================================
-// 🎨 ATUALIZAR UI
-// ==========================================
-function updateUI(data) {
-  // Greeting
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
-  const firstName = (data?.name || 'Afiliado').split(' ')[0];
-  document.getElementById('greetingTitle').innerHTML = `${greeting}, <span class="text-brand-600">${firstName}</span>!`;
-  
-  // User info
-  document.getElementById('userName').textContent = data?.name || 'Usuário';
-  document.getElementById('userInitial').textContent = (data?.name || 'U').charAt(0).toUpperCase();
-  
-  // Stats
-  document.querySelectorAll('.skeleton').forEach(el => {
-    el.classList.remove('skeleton');
-    el.style.opacity = '1';
-  });
-  
-  document.getElementById('statEarnings').textContent = formatMT(data?.affiliateEarnings || 0);
-  document.getElementById('statReferrals').textContent = data?.totalReferrals || 0;
-  document.getElementById('statConverted').textContent = data?.approvedReferrals || 0;
-  
-  // Affiliate link
-  affiliateCodeLocal = data?.affiliateCode || DEMO_DATA.affiliateCode;
-  const origin = window.location.hostname === 'localhost' ? 'https://paygo.co.mz' : window.location.origin;
-  const link = `${origin}/index.html?ref=${affiliateCodeLocal}`;
-  
-  document.getElementById('rawAffiliateCode').textContent = affiliateCodeLocal;
-  document.getElementById('affiliateLinkInput').value = link;
-  
-  // Status badge
-  const badge = document.getElementById('statusBadge');
-  if (data?.isDemo) {
-    badge.innerHTML = `<i data-lucide="info" class="w-4 h-4"></i> Modo Demonstração`;
-    badge.className = 'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold bg-blue-50 text-blue-700 border border-blue-200';
-    badge.classList.remove('hidden');
-  } else if (data?.status === 'pending' || !data?.affiliateCodeActive) {
-    badge.innerHTML = `<i data-lucide="clock" class="w-4 h-4"></i> Em Análise`;
-    badge.className = 'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold bg-warning-50 text-warning-700 border border-warning-200';
-    badge.classList.remove('hidden');
-    document.getElementById('pendingAlert').classList.remove('hidden');
-    document.getElementById('dashboardContent').classList.add('hidden');
-    return;
-  } else {
-    badge.innerHTML = `<i data-lucide="check-circle-2" class="w-4 h-4"></i> Conta Ativa`;
-    badge.className = 'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold bg-success-50 text-success-700 border border-success-200';
-    badge.classList.remove('hidden');
-  }
-  
-  // Show dashboard
-  document.getElementById('pendingAlert').classList.add('hidden');
-  document.getElementById('dashboardContent').classList.remove('hidden');
-  
-  // Load referrals table
-  loadReferralsTable(data?.referrals || []);
-}
-
-function loadReferralsTable(referrals) {
-  const table = document.getElementById('referralsTable');
-  const empty = document.getElementById('emptyReferrals');
-  
-  if (!referrals.length) {
-    empty.classList.remove('hidden');
-    table.innerHTML = '';
-    return;
-  }
-  
-  empty.classList.add('hidden');
-  table.innerHTML = referrals.slice(0, 15).map(ref => {
-    const hasBought = ref.firstPurchaseProcessed;
-    return `
-      <tr class="table-row-hover">
-        <td class="px-6 py-4 text-sm text-slate-500">${formatDate(ref.createdAt)}</td>
-        <td class="px-6 py-4 font-bold">${maskEmail(ref.email)}</td>
-        <td class="px-6 py-4">
-          <span class="px-2 py-1 rounded text-[10px] font-bold uppercase ${hasBought ? 'bg-brand-50 text-brand-700' : 'bg-slate-100 text-slate-600'}">
-            ${hasBought ? 'Comprou' : 'Aguardando'}
-          </span>
-        </td>
-        <td class="px-6 py-4 text-right ${hasBought ? 'text-success-600 font-bold' : 'text-slate-400'}">
-          ${hasBought ? '+ Adicionada' : '-'}
-        </td>
-      </tr>
-    `;
-  }).join('');
-  
-  if (typeof lucide !== 'undefined') lucide.createIcons({root: table});
-}
-
-// ==========================================
-// 💰 MODAL DE SAQUE
-// ==========================================
-function openWithdrawModal() {
-  const balance = currentUserData?.affiliateEarnings || 0;
-  if (balance < 600) {
-    showToast('💡 Saldo mínimo para saque: 600 MT', 'warning');
-    return;
-  }
-  document.getElementById('modalAvailableBalance').textContent = formatMT(balance);
-  document.getElementById('withdrawAmount').max = balance;
-  document.getElementById('withdrawModal').classList.add('active');
-  document.body.style.overflow = 'hidden';
-}
-
-function closeWithdrawModal() {
-  document.getElementById('withdrawModal').classList.remove('active');
-  document.getElementById('withdrawForm').reset();
-  document.body.style.overflow = '';
-}
-
-// ==========================================
-// 🎯 EVENT LISTENERS
-// ==========================================
-function setupEventListeners() {
-  // Copy buttons
-  document.getElementById('btnCopyLink')?.addEventListener('click', () => {
-    const link = document.getElementById('affiliateLinkInput').value;
-    if (link) copyToClipboard(link, '✓ Link copiado!');
-  });
-  
-  document.getElementById('btnCopyCode')?.addEventListener('click', () => {
-    if (affiliateCodeLocal) copyToClipboard(affiliateCodeLocal, '✓ Código copiado!');
-  });
-  
-  // WhatsApp share
-  document.getElementById('btnShareWp')?.addEventListener('click', () => {
-    const link = document.getElementById('affiliateLinkInput').value;
-    if (!link) { showToast('Link não disponível', 'error'); return; }
-    const text = encodeURIComponent(`Olá! Use meu link PayGo: ${link}`);
-    window.open(`https://wa.me/?text=${text}`, '_blank', 'noopener');
-  });
-  
-  // Export CSV
-  document.getElementById('btnExportCSV')?.addEventListener('click', () => {
-    const data = currentUserData?.referrals || [];
-    if (!data.length) { showToast('Nenhum dado para exportar', 'warning'); return; }
-    
-    const csv = ['Data,Email,Status,Comissao', ...data.map(r => 
-      `"${formatDate(r.createdAt)}","${maskEmail(r.email)}","${r.firstPurchaseProcessed?'Comprou':'Aguardando'}","${r.firstPurchaseProcessed?'Adicionada':'-'}"`
-    )].join('\n');
-    
-    const blob = new Blob([csv], {type: 'text/csv'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `indicacoes-${affiliateCodeLocal}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast('✓ Dados exportados!', 'success');
-  });
-  
-  // Withdraw modal
-  document.getElementById('btnOpenWithdraw')?.addEventListener('click', openWithdrawModal);
-  
-  // Withdraw form
-  document.getElementById('withdrawForm')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = document.getElementById('withdrawBtnSubmit');
-    const amount = parseFloat(document.getElementById('withdrawAmount').value);
-    const phone = document.getElementById('withdrawPhone').value.trim();
-    
-    if (!amount || amount < 600 || !/^\d{9}$/.test(phone)) {
-      showToast('Verifique os dados inseridos', 'error');
-      return;
-    }
-    
-    btn.disabled = true;
-    btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin inline"></i> Processando...';
-    
-    try {
-      // Em produção: enviar para Firebase
-      // await addDoc(collection(db, "withdrawals"), {...});
+    if (firebaseLoaded && db) {
+      // Buscar no Firestore
+      const { collection, query, where, getDocs } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+      const q = query(collection(db, "orders"), where("orderId", "==", orderId));
+      const snap = await getDocs(q);
       
-      showToast('✓ Pedido recebido! Processaremos em breve.', 'success', 5000);
-      closeWithdrawModal();
-    } catch (err) {
-      showToast('❌ Erro ao processar', 'error');
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = 'Confirmar Pedido';
-    }
-  });
-  
-  // Logout
-  document.getElementById('logoutBtn')?.addEventListener('click', async () => {
-    if (!confirm('Sair da conta?')) return;
-    try {
-      if (firebaseLoaded) {
-        const { getAuth, signOut } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js");
-        await signOut(getAuth());
+      if (!snap.empty) {
+        order = { id: snap.docs[0].id, ...snap.docs[0].data() };
       }
-      showToast('✓ Logout realizado', 'success');
-      setTimeout(() => window.location.href = 'login.html', 1000);
-    } catch (err) {
-      showToast('❌ Erro ao sair', 'error');
-    }
-  });
-  
-  // Dark mode
-  document.getElementById('darkModeToggle')?.addEventListener('change', (e) => {
-    document.documentElement.classList.toggle('dark', e.target.checked);
-    localStorage.setItem('darkMode', e.target.checked);
-  });
-  document.getElementById('darkModeToggleMobile')?.addEventListener('change', (e) => {
-    document.documentElement.classList.toggle('dark', e.target.checked);
-    localStorage.setItem('darkMode', e.target.checked);
-  });
-  
-  // Mobile menu
-  const toggleSidebar = () => {
-    const sb = document.getElementById('sidebar');
-    const ov = document.getElementById('sidebarOverlay');
-    sb.classList.toggle('-translate-x-full');
-    ov.classList.toggle('hidden');
-    ov.classList.toggle('opacity-0');
-    document.body.style.overflow = sb.classList.contains('-translate-x-full') ? '' : 'hidden';
-  };
-  document.getElementById('mobileMenuBtn')?.addEventListener('click', toggleSidebar);
-  document.getElementById('closeSidebarBtn')?.addEventListener('click', toggleSidebar);
-  document.getElementById('sidebarOverlay')?.addEventListener('click', toggleSidebar);
-  
-  // Retry connection
-  window.retryConnection = async () => {
-    document.getElementById('connectionError').classList.add('hidden');
-    document.getElementById('pageLoader').style.display = 'flex';
-    document.getElementById('pageLoader').style.opacity = '1';
-    
-    const fb = await initFirebase();
-    if (fb) {
-      const data = await loadAffiliateData(fb);
-      if (data) updateUI(data);
     }
     
-    // Hide loader after 2s even if failed
-    setTimeout(() => {
-      document.getElementById('pageLoader').style.opacity = '0';
-      setTimeout(() => document.getElementById('pageLoader').style.display = 'none', 500);
-    }, 2000);
-  };
-}
-
-// ==========================================
-// 🚀 INICIALIZAÇÃO PRINCIPAL
-// ==========================================
-async function initApp() {
-  try {
-    // Setup listeners primeiro (para botões funcionarem mesmo sem Firebase)
-    setupEventListeners();
+    // Fallback para modo demo
+    if (!order) {
+      order = DEMO_ORDERS[orderId];
+      if (order) {
+        order.isDemo = true;
+        console.log('📋 Usando dados de demonstração');
+      }
+    }
     
-    // Inicializar Firebase
-    const firebase = await initFirebase();
-    
-    // Carregar dados do afiliado
-    const data = await loadAffiliateData(firebase);
-    
-    // Atualizar UI
-    if (data) updateUI(data);
-    
-    // Inicializar ícones
-    if (typeof lucide !== 'undefined') lucide.createIcons();
-    
-    // Esconder loader
-    const loader = document.getElementById('pageLoader');
-    loader.style.opacity = '0';
-    setTimeout(() => loader.style.display = 'none', 500);
-    
-    console.log('✅ PayGo Affiliate Dashboard loaded');
+    if (order) {
+      showOrderDetails(order);
+      showToast('Pedido encontrado!', 'success');
+    } else {
+      showError();
+      showToast('Pedido não encontrado', 'error');
+    }
     
   } catch (error) {
-    console.error('❌ Critical error:', error);
-    
-    // Fallback: mostrar UI com dados demo mesmo com erro
-    updateUI({ ...DEMO_DATA, isDemo: true, error: true });
-    
-    // Esconder loader
-    const loader = document.getElementById('pageLoader');
-    loader.style.opacity = '0';
-    setTimeout(() => loader.style.display = 'none', 500);
-    
-    showToast('⚠️ Modo offline ativado. Alguns recursos podem estar limitados.', 'warning', 6000);
+    console.error('Erro na busca:', error);
+    // Tentar modo demo mesmo com erro
+    const order = DEMO_ORDERS[orderId];
+    if (order) {
+      order.isDemo = true;
+      showOrderDetails(order);
+      showToast('Mostrando dados de demonstração', 'warning');
+    } else {
+      showError();
+      showToast('Erro ao buscar pedido', 'error');
+    }
   }
 }
 
-// Start
-document.addEventListener('DOMContentLoaded', initApp);
+function clearSearch() {
+  document.getElementById('orderIdInput').value = '';
+  hideOrderDetails();
+  document.getElementById('orderIdInput').focus();
+}
 
-// Expor para debug
-window.PayGoAffiliate = { showToast, copyToClipboard, formatMT, retryConnection };
-</script>
+// ==========================================
+// 📄 GERAR PDF
+// ==========================================
+async function generatePDF() {
+  if (!currentOrder) {
+    showToast('Nenhum pedido selecionado', 'error');
+    return;
+  }
+  
+  showToast('Gerando PDF...', 'info');
+  
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    // Cores
+    const brandColor = [59, 130, 246];
+    const darkColor = [15, 23, 42];
+    
+    // Header
+    doc.setFillColor(...darkColor);
+    doc.rect(0, 0, 210, 40, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(24);
+    doc.setFont("helvetica", "bold");
+    doc.text("PayGo", 14, 25);
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text("O Mundo no seu Bolso.", 50, 25);
+    
+    // QR Code (se disponível)
+    if (typeof QRCode !== 'undefined') {
+      try {
+        const qrDataUrl = await QRCode.toDataURL(`https://paygo.co.mz/validar?id=${currentOrder.orderId}`, {
+          errorCorrectionLevel: 'H',
+          margin: 0,
+          color: { dark: '#ffffff', light: '#0f172a' }
+        });
+        doc.addImage(qrDataUrl, 'PNG', 170, 10, 20, 20);
+      } catch (e) {
+        console.warn('QR Code não gerado:', e);
+      }
+    }
+    
+    // Info do cliente
+    doc.setTextColor(...darkColor);
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text("Faturado a:", 14, 55);
+    
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(100, 116, 139);
+    doc.text(currentOrder.name || "Cliente", 14, 62);
+    doc.text(currentOrder.email || "", 14, 68);
+    doc.text(currentOrder.whatsapp || "", 14, 74);
+    
+    // Detalhes do pedido
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...darkColor);
+    doc.text("Detalhes do Pedido:", 14, 85);
+    
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(100, 116, 139);
+    doc.text(`ID: ${currentOrder.orderId}`, 14, 92);
+    doc.text(`Data: ${currentOrder.createdAt ? new Date(currentOrder.createdAt).toLocaleDateString('pt-MZ') : '-'}`, 14, 98);
+    
+    // Tabela financeira
+    doc.autoTable({
+      startY: 110,
+      head: [['Descrição', 'Valor']],
+      body: [
+        ['Valor USD', `$${(currentOrder.usd || 0).toFixed(2)}`],
+        ['Câmbio', `${(currentOrder.exchangeRate || 88).toFixed(2)} MT`],
+        ['Subtotal', formatMT((currentOrder.usd || 0) * (currentOrder.exchangeRate || 88))],
+        ['Taxa', formatMT(currentOrder.tax || 0)],
+      ],
+      theme: 'striped',
+      headStyles: { fillColor: brandColor, textColor: 255 },
+      styles: { font: 'helvetica', fontSize: 10 },
+      columnStyles: { 1: { halign: 'right', fontStyle: 'bold' } }
+    });
+    
+    // Total
+    let finalY = doc.lastAutoTable.finalY + 10;
+    doc.setFontSize(14);
+    doc.setTextColor(...brandColor);
+    doc.text("TOTAL:", 140, finalY);
+    doc.text(formatMT(currentOrder.total), 195, finalY, null, null, "right");
+    
+    // Footer
+    doc.setFontSize(8);
+    doc.setTextColor(100, 116, 139);
+    doc.text("PayGo Moçambique - Simples. Seguro. Moçambicano.", 105, 280, null, null, "center");
+    
+    // Demo watermark
+    if (currentOrder.isDemo) {
+      doc.setTextColor(239, 68, 68);
+      doc.setFontSize(40);
+      doc.setFont("helvetica", "bold");
+      doc.text("DEMO", 105, 150, null, null, "center");
+      doc.setGAlpha(0.1);
+    }
+    
+    // Salvar
+    doc.save(`Fatura_PayGo_${currentOrder.orderId}.pdf`);
+    showToast('PDF gerado com sucesso!', 'success');
+    
+  } catch (error) {
+    console.error('Erro ao gerar PDF:', error);
+    showToast('Erro ao gerar PDF', 'error');
+  }
+}
 
-<!-- Structured Data -->
-<script type="application/ld+json">
-{"@context":"https://schema.org","@type":"WebPage","name":"Painel do Afiliado - PayGo","url":"https://paygo.co.mz/afiliados.html"}
+// ==========================================
+// 📤 ENVIAR WHATSAPP
+// ==========================================
+function sendWhatsApp() {
+  if (!currentOrder) {
+    showToast('Nenhum pedido selecionado', 'error');
+    return;
+  }
+  
+  const message = encodeURIComponent(
+    `Olá ${currentOrder.name || 'Cliente'},\n\n` +
+    `Sua fatura PayGo #${currentOrder.orderId} está pronta!\n\n` +
+    `💰 Valor Total: ${formatMT(currentOrder.total)}\n` +
+    `📅 Data: ${currentOrder.createdAt ? new Date(currentOrder.createdAt).toLocaleDateString('pt-MZ') : '-'}\n\n` +
+    `Por favor, confirme o recebimento. Obrigado! 🙏`
+  );
+  
+  const phone = currentOrder.whatsapp?.replace(/\D/g, '') || '';
+  if (phone) {
+    const cleanPhone = phone.startsWith('258') ? phone : `258${phone}`;
+    window.open(`https://wa.me/${cleanPhone}?text=${message}`, '_blank', 'noopener,noreferrer');
+    showToast('WhatsApp aberto!', 'success');
+  } else {
+    showToast('Número de WhatsApp não encontrado', 'error');
+  }
+}
+
+// ==========================================
+// 🔄 RETRY CONNECTION
+// ==========================================
+window.retryConnection = async function() {
+  const banner = document.getElementById('connectionBanner');
+  if (banner) banner.classList.add('hidden');
+  
+  showToast('Verificando conexão...', 'info');
+  const success = await initFirebase();
+  
+  if (success) {
+    showToast('Conexão estabelecida!', 'success');
+  } else {
+    showConnectionBanner('Ainda não foi possível conectar.');
+    showToast('Modo demonstração ativo', 'warning');
+  }
+};
+
+// ==========================================
+// 🚀 INICIALIZAÇÃO
+// ==========================================
+document.addEventListener('DOMContentLoaded', async function() {
+  // Inicializar ícones
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+  
+  // Inicializar Firebase
+  await initFirebase();
+  
+  // Enter para buscar
+  document.getElementById('orderIdInput')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') searchOrder();
+  });
+  
+  console.log('✅ Gerador de Faturas carregado');
+  console.log('📊 Firebase:', firebaseLoaded ? '✅ Conectado' : '❌ Offline (Modo Demo)');
+});
+
+// Expor funções globais
+window.PayGoInvoice = {
+  showToast,
+  searchOrder,
+  generatePDF,
+  sendWhatsApp,
+  retryConnection
+};
 </script>
 </body>
 </html>
