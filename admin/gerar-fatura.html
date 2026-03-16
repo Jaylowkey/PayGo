@@ -7,9 +7,9 @@
   <meta name="robots" content="noindex, nofollow">
   <meta name="theme-color" content="#0f172a">
   
-  <!-- ✅ URLs 100% LIMPAS - SEM ESPAÇOS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
+  
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
@@ -51,710 +51,473 @@
       box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
       transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
-    .glass-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+    .glass-card:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.1); }
     
-    .btn-primary { transition: all 0.2s ease; cursor: pointer; }
-    .btn-primary:active { transform: scale(0.98); }
-    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .btn-primary { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
+    .btn-primary:active { transform: scale(0.97); }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
     
-    .input-focus:focus {
-      outline: none;
-      border-color: #2563eb;
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-    }
-    
-    /* Loader */
-    #pageLoader { transition: opacity 0.5s ease, visibility 0.5s ease; }
-    .loader-spinner { border-top-color: #22c55e; animation: spinner 1s linear infinite; }
+    #pageLoader { transition: opacity 0.4s ease, visibility 0.4s ease; }
+    .loader-spinner { border-top-color: #3b82f6; animation: spinner 1s linear infinite; }
     @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    
-    /* Status Banner */
-    .status-banner { transition: all 0.3s ease; }
-    
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
-    }
-    
-    @media (max-width: 768px) { .glass-card { border-radius: 1rem; } }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-900 font-sans antialiased overflow-x-hidden">
 
-<!-- Page Loader -->
-<div id="pageLoader" class="fixed inset-0 bg-slate-900 z-[100] flex flex-col items-center justify-center">
-  <div class="w-14 h-14 border-4 border-slate-700 border-t-success-500 rounded-full loader-spinner mb-5"></div>
-  <h2 class="text-white text-xl font-display font-bold">Gerador de Faturas</h2>
-  <p class="text-slate-400 text-sm mt-2">A carregar sistema...</p>
+<div id="pageLoader" class="fixed inset-0 bg-slate-950 z-[100] flex flex-col items-center justify-center">
+  <div class="w-14 h-14 border-4 border-slate-800 border-t-brand-500 rounded-full loader-spinner mb-5"></div>
+  <h2 class="text-white text-xl font-display font-bold">PayGo Workspace</h2>
+  <p class="text-slate-400 text-sm mt-2 font-medium tracking-wide">A sincronizar com os servidores...</p>
 </div>
 
-<!-- Connection Status Banner -->
-<div id="connectionBanner" class="hidden fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-2 shadow-lg max-w-md status-banner">
-  <i data-lucide="alert-triangle" class="w-5 h-5 flex-shrink-0"></i>
-  <span id="connectionMessage">Modo Demonstração: Banco de dados não configurado</span>
-  <button onclick="retryConnection()" class="ml-2 text-amber-700 hover:text-amber-900 font-bold">Tentar Novamente</button>
-</div>
-
-<!-- Sidebar -->
 <aside class="fixed left-0 top-0 h-full w-64 bg-slate-950 text-slate-300 hidden md:flex flex-col z-40">
   <div class="p-6 border-b border-white/10 flex items-center gap-3">
-    <div class="bg-gradient-to-tr from-brand-500 to-accent-500 p-2.5 rounded-xl text-white shadow-lg">
+    <div class="bg-gradient-to-tr from-brand-500 to-accent-500 p-2.5 rounded-xl text-white shadow-lg shadow-brand-500/20">
       <i data-lucide="zap" class="w-5 h-5 fill-current"></i>
     </div>
-    <span class="text-xl font-display font-bold text-white">PayGo Admin</span>
+    <span class="text-xl font-display font-bold text-white tracking-tight">PayGo Admin</span>
   </div>
   
   <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
-    <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition">
+    <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition font-medium">
       <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
     </a>
-    <a href="#" class="flex items-center gap-3 px-4 py-3 bg-brand-500/10 text-brand-400 border-r-2 border-brand-500 rounded-xl">
-      <i data-lucide="file-text" class="w-5 h-5"></i> Faturas & Envios
+    <a href="#" class="flex items-center gap-3 px-4 py-3 bg-brand-500/10 text-brand-400 border-r-2 border-brand-500 rounded-xl font-bold">
+      <i data-lucide="file-check-2" class="w-5 h-5"></i> Emissão de Faturas
     </a>
-    <a href="clientes.html" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition">
+    <a href="clientes.html" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition font-medium">
       <i data-lucide="users" class="w-5 h-5"></i> Clientes
-    </a>
-    <a href="configuracoes.html" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition">
-      <i data-lucide="settings" class="w-5 h-5"></i> Configurações
     </a>
   </nav>
   
   <div class="p-4 border-t border-white/10">
-    <div class="flex items-center gap-3 px-2 py-3 mb-3 bg-white/5 rounded-xl">
-      <div class="w-9 h-9 rounded-full bg-brand-600 flex items-center justify-center text-sm font-bold text-white">A</div>
+    <div class="flex items-center gap-3 px-2 py-3 mb-3 bg-white/5 rounded-xl border border-white/5">
+      <div class="w-9 h-9 rounded-full bg-brand-600 flex items-center justify-center text-sm font-bold text-white shadow-inner">A</div>
       <div class="flex-1 min-w-0">
-        <p class="text-sm font-semibold text-white truncate">Administrador</p>
-        <p class="text-xs text-slate-400 truncate">admin@paygo.co.mz</p>
+        <p class="text-sm font-bold text-white truncate">Administrador</p>
+        <p class="text-[10px] text-slate-400 truncate uppercase tracking-wider">Gestão Global</p>
       </div>
     </div>
-    <a href="login.html" class="flex items-center justify-center gap-2 px-4 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl transition text-sm font-medium">
-      <i data-lucide="log-out" class="w-4 h-4"></i> Sair
-    </a>
   </div>
 </aside>
 
-<!-- Main Content -->
-<main class="md:ml-64 p-4 md:p-8 min-h-screen">
-  
-  <!-- Mobile Header -->
-  <div class="md:hidden fixed top-0 left-0 right-0 bg-white border-b border-slate-200 p-4 flex items-center justify-between z-30">
+<main class="md:ml-64 p-4 md:p-8 min-h-screen relative">
+  <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-brand-400/10 rounded-full blur-[120px] pointer-events-none -z-10"></div>
+
+  <div class="md:hidden fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-md border-b border-slate-200 p-4 flex items-center justify-between z-30">
     <div class="flex items-center gap-2">
-      <div class="bg-brand-500 p-2 rounded-lg text-white">
-        <i data-lucide="zap" class="w-5 h-5 fill-current"></i>
-      </div>
+      <div class="bg-brand-500 p-2 rounded-lg text-white"><i data-lucide="zap" class="w-5 h-5 fill-current"></i></div>
       <span class="font-display font-bold text-slate-900">PayGo Admin</span>
     </div>
-    <a href="dashboard.html" class="p-2 text-slate-500 hover:text-slate-700">
-      <i data-lucide="arrow-left" class="w-5 h-5"></i>
-    </a>
   </div>
   
-  <div class="max-w-3xl mx-auto md:pt-8">
+  <div class="max-w-4xl mx-auto md:pt-4 pt-20">
     
-    <!-- Page Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-display font-bold text-slate-900 mb-2">Gerador de Faturas</h1>
-      <p class="text-slate-500">Gere faturas em PDF e envie para clientes via WhatsApp</p>
+    <div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div>
+        <h1 class="text-3xl font-display font-bold text-slate-900 mb-2">Gerador de Faturas</h1>
+        <p class="text-slate-500 font-medium">Emita comprovativos oficiais e envie via WhatsApp instantaneamente.</p>
+      </div>
+      <div id="dbStatus" class="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-200 text-slate-600 rounded-full text-xs font-bold transition-colors">
+        <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-slate-500"></span></span>
+        A conectar...
+      </div>
     </div>
     
-    <!-- Search Form -->
-    <div class="glass-card p-6 mb-6">
-      <label class="block text-sm font-bold text-slate-700 mb-2">Buscar Pedido por ID</label>
-      <div class="flex gap-3">
-        <div class="relative flex-1">
-          <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
-          <input 
-            type="text" 
-            id="orderIdInput" 
-            placeholder="Ex: PG-145340" 
-            class="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 font-mono uppercase"
-            maxlength="10"
-          >
-        </div>
-        <button 
-          onclick="searchOrder()" 
-          class="px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold btn-primary flex items-center gap-2"
-        >
-          <i data-lucide="search" class="w-5 h-5"></i>
-          <span class="hidden sm:inline">Buscar</span>
-        </button>
-      </div>
-      <p class="text-xs text-slate-400 mt-2">💡 Em modo demo, use: PG-145340 ou PG-999999</p>
-    </div>
-    
-    <!-- Order Details (Hidden by default) -->
-    <div id="orderDetails" class="hidden glass-card p-6 mb-6">
-      <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-200">
-        <h2 class="text-xl font-display font-bold text-slate-900">Detalhes do Pedido</h2>
-        <span id="orderStatus" class="px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700">Pendente</span>
-      </div>
-      
-      <div class="grid md:grid-cols-2 gap-6 mb-6">
-        <div>
-          <h3 class="text-sm font-bold text-slate-500 uppercase mb-3">Cliente</h3>
-          <div class="space-y-2">
-            <p class="text-slate-900"><span class="font-semibold">Nome:</span> <span id="clientName">-</span></p>
-            <p class="text-slate-900"><span class="font-semibold">Email:</span> <span id="clientEmail">-</span></p>
-            <p class="text-slate-900"><span class="font-semibold">WhatsApp:</span> <span id="clientPhone">-</span></p>
-          </div>
-        </div>
-        <div>
-          <h3 class="text-sm font-bold text-slate-500 uppercase mb-3">Pedido</h3>
-          <div class="space-y-2">
-            <p class="text-slate-900"><span class="font-semibold">ID:</span> <span id="orderId" class="font-mono">-</span></p>
-            <p class="text-slate-900"><span class="font-semibold">Data:</span> <span id="orderDate">-</span></p>
-            <p class="text-slate-900"><span class="font-semibold">Método:</span> <span id="paymentMethod">-</span></p>
-          </div>
-        </div>
-      </div>
-      
-      <div class="bg-slate-50 rounded-xl p-4 mb-6">
-        <h3 class="text-sm font-bold text-slate-500 uppercase mb-3">Resumo Financeiro</h3>
-        <div class="space-y-2">
-          <div class="flex justify-between">
-            <span class="text-slate-600">Valor USD:</span>
-            <span class="font-semibold" id="orderUSD">-</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-slate-600">Câmbio:</span>
-            <span class="font-semibold" id="orderExchange">-</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-slate-600">Taxa:</span>
-            <span class="font-semibold" id="orderTax">-</span>
-          </div>
-          <div class="flex justify-between pt-3 border-t border-slate-200">
-            <span class="text-slate-900 font-bold">TOTAL:</span>
-            <span class="font-bold text-brand-600 text-lg" id="orderTotal">-</span>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Action Buttons -->
+    <div class="glass-card p-6 mb-8 relative overflow-hidden">
+      <div class="absolute right-0 top-0 w-32 h-32 bg-brand-50 rounded-bl-full -z-10 opacity-50"></div>
+      <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Localizar Pedido</label>
       <div class="flex flex-col sm:flex-row gap-3">
-        <button 
-          onclick="generatePDF()" 
-          class="flex-1 px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold btn-primary flex items-center justify-center gap-2"
-        >
-          <i data-lucide="download" class="w-5 h-5"></i>
-          Baixar PDF
-        </button>
-        <button 
-          onclick="sendWhatsApp()" 
-          class="flex-1 px-6 py-3 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-xl font-bold btn-primary flex items-center justify-center gap-2"
-        >
-          <i data-lucide="message-circle" class="w-5 h-5"></i>
-          Enviar WhatsApp
+        <div class="relative flex-1 group">
+          <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-brand-500 transition-colors"></i>
+          <input type="text" id="orderIdInput" placeholder="Ex: PG-145340" class="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 font-mono text-lg font-bold uppercase transition-all" maxlength="10">
+        </div>
+        <button id="btnSearch" onclick="searchOrder()" class="px-8 py-4 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold btn-primary flex items-center justify-center gap-2 shadow-lg shadow-brand-500/20">
+          <i data-lucide="search" class="w-5 h-5"></i>
+          <span>Buscar Sistema</span>
         </button>
       </div>
     </div>
     
-    <!-- Demo Mode Notice -->
-    <div id="demoNotice" class="hidden glass-card p-6 bg-blue-50 border-blue-200">
-      <div class="flex items-start gap-3">
-        <i data-lucide="info" class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5"></i>
-        <div>
-          <h3 class="font-bold text-blue-900 mb-2">Modo Demonstração Ativo</h3>
-          <p class="text-sm text-blue-700 mb-3">O banco de dados Firestore não está configurado. Para usar dados reais:</p>
-          <ol class="list-decimal list-inside text-sm text-blue-700 space-y-1">
-            <li>Acesse <a href="https://console.firebase.google.com/project/paygo-14311/firestore" target="_blank" class="underline font-medium">Firebase Console</a></li>
-            <li>Clique em "Criar banco de dados"</li>
-            <li>Escolha "Modo de Teste"</li>
-            <li>Selecione região (eur3 ou nam5)</li>
-          </ol>
-          <button onclick="retryConnection()" class="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold btn-primary">
-            Verificar Conexão
-          </button>
+    <div id="orderDetails" class="hidden glass-card p-8 mb-6 animate-[fadeIn_0.5s_ease-out]">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 pb-6 border-b border-slate-100 gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 bg-brand-50 text-brand-600 rounded-full flex items-center justify-center border border-brand-100"><i data-lucide="receipt" class="w-6 h-6"></i></div>
+          <div>
+            <h2 class="text-xl font-display font-bold text-slate-900">Resumo da Operação</h2>
+            <p class="text-xs text-slate-500 font-mono" id="orderIdDisplay">PG-XXXXXX</p>
+          </div>
+        </div>
+        <span id="orderStatus" class="px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider">STATUS</span>
+      </div>
+      
+      <div class="grid md:grid-cols-2 gap-8 mb-8">
+        <div class="space-y-4">
+          <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2"><i data-lucide="user" class="w-4 h-4"></i> Dados do Cliente</h3>
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-3">
+            <p class="text-sm flex justify-between"><span class="text-slate-500">Nome:</span> <span class="font-bold text-slate-900" id="clientName">-</span></p>
+            <p class="text-sm flex justify-between"><span class="text-slate-500">WhatsApp:</span> <span class="font-bold text-slate-900" id="clientPhone">-</span></p>
+            <p class="text-sm flex justify-between"><span class="text-slate-500">Email:</span> <span class="font-medium text-slate-700 truncate max-w-[150px]" id="clientEmail">-</span></p>
+          </div>
+        </div>
+        <div class="space-y-4">
+          <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2"><i data-lucide="credit-card" class="w-4 h-4"></i> Dados Financeiros</h3>
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-3">
+            <p class="text-sm flex justify-between"><span class="text-slate-500">Valor (USD):</span> <span class="font-bold text-slate-900" id="orderUSD">-</span></p>
+            <p class="text-sm flex justify-between"><span class="text-slate-500">Taxa Serviço:</span> <span class="font-bold text-slate-900" id="orderTax">-</span></p>
+            <div class="pt-3 border-t border-slate-200 flex justify-between items-center">
+              <span class="text-slate-500 font-bold uppercase text-xs">Total Pago:</span>
+              <span class="font-display font-bold text-brand-600 text-xl" id="orderTotal">-</span>
+            </div>
+          </div>
         </div>
       </div>
+      
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+        <button id="btnPdf" onclick="generatePDF()" class="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold btn-primary flex items-center justify-center gap-2 shadow-lg shadow-slate-900/20">
+          <i data-lucide="file-down" class="w-5 h-5"></i> Emitir PDF Oficial
+        </button>
+        <button id="btnWa" onclick="sendWhatsApp()" class="w-full py-4 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-xl font-bold btn-primary flex items-center justify-center gap-2 shadow-lg shadow-[#25D366]/20">
+          <i data-lucide="send" class="w-5 h-5"></i> Enviar Fatura Cliente
+        </button>
+      </div>
     </div>
     
-    <!-- Error State -->
-    <div id="errorState" class="hidden glass-card p-8 text-center">
-      <i data-lucide="alert-circle" class="w-16 h-16 text-red-500 mx-auto mb-4"></i>
-      <h3 class="text-xl font-bold text-slate-900 mb-2">Pedido Não Encontrado</h3>
-      <p class="text-slate-500 mb-6">O ID do pedido inserido não existe no sistema.</p>
-      <button onclick="clearSearch()" class="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold btn-primary">
-        Nova Busca
+    <div id="errorState" class="hidden glass-card p-12 text-center border-red-100 bg-red-50/30">
+      <div class="w-20 h-20 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6"><i data-lucide="search-x" class="w-10 h-10"></i></div>
+      <h3 class="text-2xl font-display font-bold text-slate-900 mb-2">Pedido não encontrado</h3>
+      <p class="text-slate-500 mb-8 max-w-sm mx-auto">O código inserido não existe na base de dados. Verifique possíveis espaços ou erros de digitação.</p>
+      <button onclick="document.getElementById('orderIdInput').focus(); document.getElementById('orderIdInput').select();" class="px-8 py-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl font-bold btn-primary shadow-sm">
+        Tentar Novamente
       </button>
     </div>
     
   </div>
 </main>
 
-<!-- Toast Container -->
-<div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2 pointer-events-none"></div>
+<div id="toastContainer" class="fixed top-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none"></div>
 
-<!-- ✅ JavaScript Corrigido - SEM MÓDULOS PARA MÁXIMA COMPATIBILIDADE -->
-<script>
-// ==========================================
-// 🔧 CONFIGURAÇÃO FIREBASE
-// ==========================================
-const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
-  authDomain: "paygo-14311.firebaseapp.com",
-  projectId: "paygo-14311",
-  storageBucket: "paygo-14311.firebasestorage.app",
-  messagingSenderId: "208360646277",
-  appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
-};
+<script type="module">
+  // 1. Importação modular e limpa (apenas v10+)
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { initializeFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// Estado Global
-let app = null;
-let db = null;
-let firebaseLoaded = false;
-let currentOrder = null;
-
-// Dados de exemplo para modo demo
-const DEMO_ORDERS = {
-  'PG-145340': {
-    orderId: 'PG-145340',
-    name: 'João Silva',
-    email: 'joao@email.com',
-    whatsapp: '+258841234567',
-    usd: 25.50,
-    detail: 'https://pt.aliexpress.com/item/1005001234567890.html',
-    tax: 250,
-    total: 2494,
-    exchangeRate: 88,
-    status: 'pending',
-    paymentMethod: 'mpesa',
-    type: 'compra',
-    createdAt: new Date().toISOString()
-  },
-  'PG-999999': {
-    orderId: 'PG-999999',
-    name: 'Maria Santos',
-    email: 'maria@email.com',
-    whatsapp: '+258871122334',
-    usd: 12.00,
-    detail: 'Recarga Netflix Premium',
-    tax: 150,
-    total: 1206,
-    exchangeRate: 88,
-    status: 'completed',
-    paymentMethod: 'emola',
-    type: 'jogo',
-    createdAt: new Date(Date.now() - 86400000).toISOString()
-  }
-};
-
-// ==========================================
-// 🔔 TOAST NOTIFICATIONS
-// ==========================================
-function showToast(message, type = 'success', duration = 4000) {
-  const container = document.getElementById('toastContainer');
-  const toast = document.createElement('div');
-  toast.className = `flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-white transform transition-all duration-300 translate-x-full ${
-    type === 'error' ? 'bg-red-500' : 
-    type === 'warning' ? 'bg-amber-500' : 
-    type === 'info' ? 'bg-blue-500' : 
-    'bg-green-500'
-  }`;
-  toast.style.pointerEvents = 'auto';
-  
-  const icons = { success: 'check-circle', error: 'alert-circle', warning: 'alert-triangle', info: 'info' };
-  const icon = icons[type] || icons.success;
-  
-  toast.innerHTML = `
-    <i data-lucide="${icon}" class="w-5 h-5 flex-shrink-0"></i>
-    <span class="text-sm font-medium">${message}</span>
-    <button onclick="this.parentElement.remove()" class="ml-2 hover:opacity-80">
-      <i data-lucide="x" class="w-4 h-4"></i>
-    </button>
-  `;
-  
-  container.appendChild(toast);
-  if (typeof lucide !== 'undefined') lucide.createIcons({root: toast});
-  
-  requestAnimationFrame(() => toast.classList.remove('translate-x-full'));
-  setTimeout(() => {
-    toast.classList.add('opacity-0');
-    setTimeout(() => toast.remove(), 300);
-  }, duration);
-}
-
-// ==========================================
-// 🔥 INICIALIZAÇÃO FIREBASE (COM Fallback Seguro)
-// ==========================================
-async function initFirebase() {
-  try {
-    console.log('🔥 Inicializando Firebase...');
-    
-    // Carregar Firebase via script tags (já carregados no head)
-    // Verificar se Firebase está disponível globalmente
-    if (typeof firebase !== 'undefined') {
-      app = firebase.initializeApp(FIREBASE_CONFIG);
-      db = firebase.firestore(app);
-      
-      // Teste de conexão simples
-      await db.collection('_test_').limit(1).get().catch(() => {});
-      
-      firebaseLoaded = true;
-      console.log('✅ Firebase conectado');
-      hideConnectionBanner();
-      return true;
-    }
-    
-    // Fallback: tentar carregar via import dinâmico
-    const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js");
-    const { getFirestore } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
-    
-    app = initializeApp(FIREBASE_CONFIG);
-    db = getFirestore(app);
-    
-    const { collection, getDocs } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
-    await getDocs(collection(db, '_test_')).catch(() => {});
-    
-    firebaseLoaded = true;
-    console.log('✅ Firebase conectado via import');
-    hideConnectionBanner();
-    return true;
-    
-  } catch (error) {
-    console.warn('⚠️ Firebase não disponível:', error.message);
-    firebaseLoaded = false;
-    showConnectionBanner(error.message);
-    return false;
-  }
-}
-
-// ==========================================
-// 📊 UI HELPERS
-// ==========================================
-function showConnectionBanner(errorMsg) {
-  const banner = document.getElementById('connectionBanner');
-  const msg = document.getElementById('connectionMessage');
-  const demoNotice = document.getElementById('demoNotice');
-  
-  if (banner) {
-    if (errorMsg.includes('does not exist')) {
-      msg.textContent = 'Banco Firestore não criado. Clique para criar.';
-    } else {
-      msg.textContent = 'Erro de conexão. Verifique sua internet.';
-    }
-    banner.classList.remove('hidden');
-  }
-  
-  if (demoNotice) demoNotice.classList.remove('hidden');
-}
-
-function hideConnectionBanner() {
-  const banner = document.getElementById('connectionBanner');
-  const demoNotice = document.getElementById('demoNotice');
-  if (banner) banner.classList.add('hidden');
-  if (demoNotice) demoNotice.classList.add('hidden');
-}
-
-function showOrderDetails(order) {
-  currentOrder = order;
-  
-  document.getElementById('clientName').textContent = order.name || '-';
-  document.getElementById('clientEmail').textContent = order.email || '-';
-  document.getElementById('clientPhone').textContent = order.whatsapp || '-';
-  document.getElementById('orderId').textContent = order.orderId || '-';
-  document.getElementById('orderDate').textContent = order.createdAt ? new Date(order.createdAt).toLocaleDateString('pt-MZ') : '-';
-  document.getElementById('paymentMethod').textContent = order.paymentMethod === 'mpesa' ? 'M-Pesa' : 'e-Mola';
-  document.getElementById('orderUSD').textContent = `$${(order.usd || 0).toFixed(2)}`;
-  document.getElementById('orderExchange').textContent = `${(order.exchangeRate || 88).toFixed(2)} MT`;
-  document.getElementById('orderTax').textContent = formatMT(order.tax);
-  document.getElementById('orderTotal').textContent = formatMT(order.total);
-  
-  const statusEl = document.getElementById('orderStatus');
-  const statusConfig = {
-    'pending': { text: 'Pendente', class: 'bg-yellow-100 text-yellow-700' },
-    'processing': { text: 'Processando', class: 'bg-blue-100 text-blue-700' },
-    'completed': { text: 'Concluído', class: 'bg-green-100 text-green-700' },
-    'cancelled': { text: 'Cancelado', class: 'bg-red-100 text-red-700' }
+  // 2. Credenciais
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
+    authDomain: "paygo-14311.firebaseapp.com",
+    projectId: "paygo-14311",
+    storageBucket: "paygo-14311.firebasestorage.app",
+    messagingSenderId: "208360646277",
+    appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
   };
-  const status = statusConfig[order.status] || statusConfig.pending;
-  statusEl.textContent = status.text;
-  statusEl.className = `px-3 py-1 rounded-full text-xs font-bold ${status.class}`;
-  
-  document.getElementById('orderDetails').classList.remove('hidden');
-  document.getElementById('errorState').classList.add('hidden');
-}
 
-function hideOrderDetails() {
-  document.getElementById('orderDetails').classList.add('hidden');
-  document.getElementById('errorState').classList.add('hidden');
-}
+  // ⚠️ Chave de Segurança para a Evolution API na Vercel
+  const ADMIN_SECRET = "PayGo@Admin#2026!Sec"; 
 
-function showError() {
-  hideOrderDetails();
-  document.getElementById('errorState').classList.remove('hidden');
-}
+  // Variáveis Globais
+  let db;
+  let currentOrder = null;
 
-function formatMT(value) {
-  return Number(value || 0).toLocaleString('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' MT';
-}
-
-// ==========================================
-// 🔍 BUSCAR PEDIDO
-// ==========================================
-async function searchOrder() {
-  const orderId = document.getElementById('orderIdInput').value.trim().toUpperCase();
-  
-  if (!orderId || !/^PG-\d{6}$/.test(orderId)) {
-    showToast('Insira um ID válido (ex: PG-145340)', 'error');
-    return;
-  }
-  
-  hideOrderDetails();
-  showToast('Buscando pedido...', 'info');
-  
+  // 3. Inicialização e Correção do Timeout (Long Polling)
   try {
-    let order = null;
+    const app = initializeApp(FIREBASE_CONFIG);
+    db = initializeFirestore(app, {
+      experimentalForceLongPolling: true // <- Resolve o bloqueio de rede!
+    });
     
-    if (firebaseLoaded && db) {
-      try {
-        // Tentar buscar no Firestore
-        let q, snap;
-        if (typeof firebase !== 'undefined') {
-          // Firebase v8 style
-          q = db.collection("orders").where("orderId", "==", orderId);
-          snap = await q.get();
-        } else {
-          // Firebase v10+ style
-          const { collection, query, where, getDocs } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
-          q = query(collection(db, "orders"), where("orderId", "==", orderId));
-          snap = await getDocs(q);
-        }
-        
-        if (!snap.empty) {
-          order = { id: snap.docs[0].id, ...snap.docs[0].data() };
-        }
-      } catch (dbError) {
-        console.warn('⚠️ Erro ao buscar no Firestore:', dbError.message);
-      }
-    }
-    
-    // Fallback para modo demo
-    if (!order) {
-      order = DEMO_ORDERS[orderId];
-      if (order) {
-        order.isDemo = true;
-        console.log('📋 Usando dados de demonstração');
-      }
-    }
-    
-    if (order) {
-      showOrderDetails(order);
-      showToast('Pedido encontrado!', 'success');
-    } else {
-      showError();
-      showToast('Pedido não encontrado', 'error');
-    }
-    
+    updateDbStatus('✅ Conectado', 'bg-green-100 text-green-700', 'bg-green-500');
+    setTimeout(() => {
+      document.getElementById('pageLoader').style.opacity = '0';
+      setTimeout(() => document.getElementById('pageLoader').style.visibility = 'hidden', 400);
+    }, 800);
   } catch (error) {
-    console.error('Erro na busca:', error);
-    // Tentar modo demo mesmo com erro
-    const order = DEMO_ORDERS[orderId];
-    if (order) {
-      order.isDemo = true;
-      showOrderDetails(order);
-      showToast('Mostrando dados de demonstração', 'warning');
-    } else {
-      showError();
-      showToast('Erro ao buscar pedido', 'error');
+    console.error("Erro Firebase:", error);
+    updateDbStatus('❌ Offline', 'bg-red-100 text-red-700', 'bg-red-500');
+    document.getElementById('pageLoader').style.display = 'none';
+  }
+
+  // Inicializar ícones
+  lucide.createIcons();
+
+  // ==========================================
+  // FUNÇÕES GLOBAIS EXPOSTAS
+  // ==========================================
+  
+  window.searchOrder = async function() {
+    const inputEl = document.getElementById('orderIdInput');
+    const orderId = inputEl.value.trim().toUpperCase();
+    const btn = document.getElementById('btnSearch');
+    const originalBtn = btn.innerHTML;
+    
+    if (!orderId) { showToast('Insira um ID de pedido.', 'warning'); return; }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A procurar...';
+    lucide.createIcons();
+    
+    document.getElementById('orderDetails').classList.add('hidden');
+    document.getElementById('errorState').classList.add('hidden');
+
+    try {
+      const q = query(collection(db, "orders"), where("orderId", "==", orderId));
+      const snap = await getDocs(q);
+
+      if (snap.empty) {
+        document.getElementById('errorState').classList.remove('hidden');
+        showToast('Pedido não encontrado.', 'error');
+      } else {
+        currentOrder = snap.docs[0].data();
+        renderOrderDetails(currentOrder);
+        showToast('Pedido localizado!', 'success');
+      }
+    } catch (error) {
+      console.error("Busca falhou:", error);
+      showToast('Erro de conexão ao procurar.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = originalBtn;
+      lucide.createIcons();
     }
-  }
-}
+  };
 
-function clearSearch() {
-  document.getElementById('orderIdInput').value = '';
-  hideOrderDetails();
-  document.getElementById('orderIdInput').focus();
-}
+  window.generatePDF = async function() {
+    if (!currentOrder) return;
+    const btn = document.getElementById('btnPdf');
+    const orig = btn.innerHTML;
+    
+    try {
+      btn.disabled = true;
+      btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A gerar PDF...';
+      lucide.createIcons();
+      
+      const doc = await buildInvoiceDoc(currentOrder);
+      doc.save(`Fatura_PayGo_${currentOrder.orderId}.pdf`);
+      showToast('Download concluído!', 'success');
+    } catch (e) {
+      console.error(e);
+      showToast('Erro ao criar o documento.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = orig;
+      lucide.createIcons();
+    }
+  };
 
-// ==========================================
-// 📄 GERAR PDF
-// ==========================================
-async function generatePDF() {
-  if (!currentOrder) {
-    showToast('Nenhum pedido selecionado', 'error');
-    return;
-  }
-  
-  showToast('Gerando PDF...', 'info');
-  
-  try {
+  window.sendWhatsApp = async function() {
+    if (!currentOrder) return;
+    const btn = document.getElementById('btnWa');
+    const orig = btn.innerHTML;
+    
+    try {
+      btn.disabled = true;
+      btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A conectar à API...';
+      lucide.createIcons();
+      
+      // 1. Gera o PDF em background (sem fazer download)
+      const doc = await buildInvoiceDoc(currentOrder);
+      const pdfBase64 = doc.output('datauristring');
+      
+      // 2. Tenta enviar via Evolution API (Vercel)
+      try {
+        const response = await fetch('/api/send-whatsapp-invoice', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'x-admin-secret': ADMIN_SECRET 
+          },
+          body: JSON.stringify({
+            orderId: currentOrder.orderId,
+            clientName: currentOrder.name || 'Cliente',
+            phone: currentOrder.whatsapp,
+            pdfData: pdfBase64 
+          })
+        });
+
+        const result = await response.json();
+        if (response.ok && result.success) {
+          showToast('Fatura enviada com sucesso no WhatsApp do cliente!', 'success');
+          return; // Termina aqui se a API funcionou
+        }
+        throw new Error("API falhou, usando fallback");
+      } catch (apiError) {
+        console.warn("Evolution API falhou, a usar WhatsApp Web Fallback:", apiError);
+        
+        // 3. FALLBACK: Se a API falhar, abre o WhatsApp Web
+        const msg = encodeURIComponent(`Olá ${currentOrder.name || 'Cliente'}! 👋\n\nA tua fatura da PayGo (Pedido: ${currentOrder.orderId}) foi gerada.\n\nTotal: ${formatMT(currentOrder.total)}\n\nO documento oficial em PDF segue em anexo a esta mensagem.`);
+        let cleanPhone = currentOrder.whatsapp.replace(/\D/g, '');
+        if (cleanPhone.length <= 9) cleanPhone = '258' + cleanPhone;
+        
+        window.open(`https://wa.me/${cleanPhone}?text=${msg}`, '_blank');
+        
+        // Dispara o download do PDF para o admin poder anexar manualmente no WhatsApp Web
+        doc.save(`Fatura_${currentOrder.orderId}.pdf`);
+        showToast('API indisponível. PDF baixado para envio manual.', 'warning');
+      }
+
+    } catch (e) {
+      console.error(e);
+      showToast('Erro crítico ao processar envio.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = orig;
+      lucide.createIcons();
+    }
+  };
+
+  // ==========================================
+  // FUNÇÕES AUXILIARES
+  // ==========================================
+
+  async function buildInvoiceDoc(order) {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     
-    // Cores
-    const brandColor = [59, 130, 246];
-    const darkColor = [15, 23, 42];
-    
-    // Header
+    const brandColor = [59, 130, 246]; 
+    const darkColor = [15, 23, 42];    
+    const grayColor = [100, 116, 139]; 
+    const formatMoney = (val) => Number(val || 0).toLocaleString('pt-MZ', { minimumFractionDigits: 2 }) + ' MT';
+    const convertedValue = (order.usd * (order.exchangeRate || 88));
+
+    // Header Visual
     doc.setFillColor(...darkColor);
-    doc.rect(0, 0, 210, 40, 'F');
-    
+    doc.rect(0, 0, 210, 45, 'F');
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(24);
+    doc.setFontSize(26);
     doc.setFont("helvetica", "bold");
     doc.text("PayGo", 14, 25);
-    
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
     doc.text("O Mundo no seu Bolso.", 50, 25);
-    
-    // QR Code (se disponível) - ✅ URL CORRIGIDA SEM ESPAÇOS
-    if (typeof QRCode !== 'undefined') {
-      try {
-        const validationUrl = `https://paygo.co.mz/validar?id=${currentOrder.orderId}`;
-        const qrDataUrl = await QRCode.toDataURL(validationUrl, {
-          errorCorrectionLevel: 'H',
-          margin: 0,
-          color: { dark: '#ffffff', light: '#0f172a' }
-        });
-        doc.addImage(qrDataUrl, 'PNG', 170, 10, 20, 20);
-      } catch (e) {
-        console.warn('QR Code não gerado:', e);
-      }
-    }
-    
-    // Info do cliente
+
+    // QR Code Anti-Fraude
+    try {
+      const qrUrl = await QRCode.toDataURL(`https://paygo.co.mz/validar?id=${order.orderId}`, { 
+        errorCorrectionLevel: 'H', margin: 0, color: { dark: '#ffffff', light: '#0f172a' } 
+      });
+      doc.addImage(qrUrl, 'PNG', 170, 10, 22, 22);
+      doc.setFontSize(7);
+      doc.setFont("helvetica", "bold");
+      doc.text("DOCUMENTO VÁLIDO", 181, 37, null, null, "center");
+    } catch(e) { console.warn("Erro no QR", e); }
+
+    // Dados da Empresa e Cliente
     doc.setTextColor(...darkColor);
-    doc.setFontSize(11);
+    doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
-    doc.text("Faturado a:", 14, 55);
+    doc.text("PayGo Serviços Digitais", 14, 60);
+    doc.text("Faturado a:", 120, 60);
     
     doc.setFont("helvetica", "normal");
-    doc.setTextColor(100, 116, 139);
-    doc.text(currentOrder.name || "Cliente", 14, 62);
-    doc.text(currentOrder.email || "", 14, 68);
-    doc.text(currentOrder.whatsapp || "", 14, 74);
+    doc.setTextColor(...grayColor);
+    doc.text("Rua de Bárue, Centro Comercial MK", 14, 66);
+    doc.text("Loja nº 6 - Chimoio, Moçambique", 14, 72);
     
-    // Detalhes do pedido
+    doc.text(order.name || "Cliente Final", 120, 66);
+    doc.text(order.whatsapp || "N/A", 120, 72);
+    doc.text(`Email: ${order.email || "N/A"}`, 120, 78);
+    
     doc.setFont("helvetica", "bold");
     doc.setTextColor(...darkColor);
-    doc.text("Detalhes do Pedido:", 14, 85);
-    
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(100, 116, 139);
-    doc.text(`ID: ${currentOrder.orderId}`, 14, 92);
-    doc.text(`Data: ${currentOrder.createdAt ? new Date(currentOrder.createdAt).toLocaleDateString('pt-MZ') : '-'}`, 14, 98);
-    
-    // Tabela financeira
+    doc.text(`Fatura Nº: ${order.orderId}`, 14, 90);
+    doc.text(`Data: ${order.createdAt?.toDate ? order.createdAt.toDate().toLocaleDateString('pt-MZ') : new Date().toLocaleDateString('pt-MZ')}`, 14, 96);
+
+    // Tabela
     doc.autoTable({
-      startY: 110,
-      head: [['Descrição', 'Valor']],
+      startY: 105,
+      head: [['Descrição', 'Câmbio', 'Valor Base', 'Total (MT)']],
       body: [
-        ['Valor USD', `$${(currentOrder.usd || 0).toFixed(2)}`],
-        ['Câmbio', `${(currentOrder.exchangeRate || 88).toFixed(2)} MT`],
-        ['Subtotal', formatMT((currentOrder.usd || 0) * (currentOrder.exchangeRate || 88))],
-        ['Taxa', formatMT(currentOrder.tax || 0)],
+        [
+          `Intermediação de Compra\nRef: ${(order.detail || "S/N").substring(0, 40)}...`,
+          `${(order.exchangeRate || 88).toFixed(2)} MT/$`,
+          `$${(order.usd || 0).toFixed(2)}`,
+          formatMoney(convertedValue)
+        ]
       ],
       theme: 'striped',
       headStyles: { fillColor: brandColor, textColor: 255 },
-      styles: { font: 'helvetica', fontSize: 10 },
-      columnStyles: { 1: { halign: 'right', fontStyle: 'bold' } }
+      styles: { font: 'helvetica', fontSize: 10, cellPadding: 6 },
+      columnStyles: { 3: { halign: 'right', fontStyle: 'bold' } }
     });
+
+    let finalY = doc.lastAutoTable.finalY + 15;
     
-    // Total
-    let finalY = doc.lastAutoTable.finalY + 10;
+    doc.setTextColor(...grayColor);
+    doc.setFontSize(10);
+    doc.text("Subtotal:", 140, finalY);
+    doc.text("Taxa de Serviço:", 140, finalY + 8);
+    
+    doc.setTextColor(...darkColor);
+    doc.setFont("helvetica", "bold");
+    doc.text(formatMoney(convertedValue), 195, finalY, null, null, "right");
+    doc.text(order.tax === 0 ? "GRÁTIS" : formatMoney(order.tax), 195, finalY + 8, null, null, "right");
+
+    doc.setDrawColor(226, 232, 240);
+    doc.line(140, finalY + 12, 195, finalY + 12);
+
     doc.setFontSize(14);
     doc.setTextColor(...brandColor);
-    doc.text("TOTAL:", 140, finalY);
-    doc.text(formatMT(currentOrder.total), 195, finalY, null, null, "right");
+    doc.text("TOTAL GERAL:", 140, finalY + 22);
+    doc.text(formatMoney(order.total), 195, finalY + 22, null, null, "right");
+
+    return doc;
+  }
+
+  function renderOrderDetails(order) {
+    document.getElementById('orderIdDisplay').textContent = order.orderId;
+    document.getElementById('clientName').textContent = order.name || '-';
+    document.getElementById('clientPhone').textContent = order.whatsapp || '-';
+    document.getElementById('clientEmail').textContent = order.email || '-';
+    document.getElementById('orderUSD').textContent = `$${(order.usd || 0).toFixed(2)}`;
+    document.getElementById('orderTax').textContent = formatMT(order.tax);
+    document.getElementById('orderTotal').textContent = formatMT(order.total);
     
-    // Footer
-    doc.setFontSize(8);
-    doc.setTextColor(100, 116, 139);
-    doc.text("PayGo Moçambique - Simples. Seguro. Moçambicano.", 105, 280, null, null, "center");
-    
-    // Demo watermark
-    if (currentOrder.isDemo) {
-      doc.setTextColor(239, 68, 68);
-      doc.setFontSize(40);
-      doc.setFont("helvetica", "bold");
-      doc.text("DEMO", 105, 150, null, null, "center");
-      doc.setGAlpha(0.1);
+    const statusEl = document.getElementById('orderStatus');
+    if(order.status === 'completed') {
+      statusEl.textContent = 'CONCLUÍDO';
+      statusEl.className = 'px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-green-100 text-green-700';
+    } else {
+      statusEl.textContent = 'PENDENTE';
+      statusEl.className = 'px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-yellow-100 text-yellow-700';
     }
     
-    // Salvar
-    doc.save(`Fatura_PayGo_${currentOrder.orderId}.pdf`);
-    showToast('PDF gerado com sucesso!', 'success');
+    document.getElementById('orderDetails').classList.remove('hidden');
+  }
+
+  function formatMT(value) {
+    return Number(value || 0).toLocaleString('pt-MZ', { minimumFractionDigits: 2 }) + ' MT';
+  }
+
+  function updateDbStatus(text, bgClass, dotClass) {
+    const el = document.getElementById('dbStatus');
+    el.className = `inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${bgClass}`;
+    el.innerHTML = `<span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${dotClass}"></span><span class="relative inline-flex rounded-full h-2 w-2 ${dotClass}"></span></span> ${text}`;
+  }
+
+  function showToast(msg, type) {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    const isError = type === 'error';
+    const isWarn = type === 'warning';
     
-  } catch (error) {
-    console.error('Erro ao gerar PDF:', error);
-    showToast('Erro ao gerar PDF', 'error');
+    toast.className = `flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl text-white transform transition-all duration-300 translate-x-full ${isError ? 'bg-red-600' : isWarn ? 'bg-amber-500' : 'bg-slate-900'}`;
+    toast.style.pointerEvents = 'auto';
+    toast.innerHTML = `<i data-lucide="${isError ? 'x-circle' : isWarn ? 'alert-triangle' : 'check-circle-2'}" class="w-5 h-5"></i><span class="text-sm font-medium">${msg}</span>`;
+    
+    container.appendChild(toast);
+    lucide.createIcons({root: toast});
+    
+    requestAnimationFrame(() => toast.classList.remove('translate-x-full'));
+    setTimeout(() => {
+      toast.classList.add('translate-x-full', 'opacity-0');
+      setTimeout(() => toast.remove(), 300);
+    }, 4000);
   }
-}
 
-// ==========================================
-// 📤 ENVIAR WHATSAPP - ✅ URL CORRIGIDA
-// ==========================================
-function sendWhatsApp() {
-  if (!currentOrder) {
-    showToast('Nenhum pedido selecionado', 'error');
-    return;
-  }
-  
-  const message = encodeURIComponent(
-    `Olá ${currentOrder.name || 'Cliente'},\n\n` +
-    `Sua fatura PayGo #${currentOrder.orderId} está pronta!\n\n` +
-    `💰 Valor Total: ${formatMT(currentOrder.total)}\n` +
-    `📅 Data: ${currentOrder.createdAt ? new Date(currentOrder.createdAt).toLocaleDateString('pt-MZ') : '-'}\n\n` +
-    `Por favor, confirme o recebimento. Obrigado! 🙏`
-  );
-  
-  const phone = currentOrder.whatsapp?.replace(/\D/g, '') || '';
-  if (phone) {
-    // ✅ URL CORRIGIDA: sem espaço após https://wa.me/
-    const cleanPhone = phone.startsWith('258') ? phone : `258${phone}`;
-    window.open(`https://wa.me/${cleanPhone}?text=${message}`, '_blank', 'noopener,noreferrer');
-    showToast('WhatsApp aberto!', 'success');
-  } else {
-    showToast('Número de WhatsApp não encontrado', 'error');
-  }
-}
-
-// ==========================================
-// 🔄 RETRY CONNECTION
-// ==========================================
-window.retryConnection = async function() {
-  const banner = document.getElementById('connectionBanner');
-  if (banner) banner.classList.add('hidden');
-  
-  showToast('Verificando conexão...', 'info');
-  const success = await initFirebase();
-  
-  if (success) {
-    showToast('Conexão estabelecida!', 'success');
-  } else {
-    showConnectionBanner('Ainda não foi possível conectar.');
-    showToast('Modo demonstração ativo', 'warning');
-  }
-};
-
-// ==========================================
-// 🚀 INICIALIZAÇÃO
-// ==========================================
-document.addEventListener('DOMContentLoaded', async function() {
-  // Inicializar ícones
-  if (typeof lucide !== 'undefined') lucide.createIcons();
-  
-  // Inicializar Firebase
-  await initFirebase();
-  
-  // Enter para buscar
-  document.getElementById('orderIdInput')?.addEventListener('keydown', (e) => {
+  // Permite buscar pressionando Enter
+  document.getElementById('orderIdInput').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') searchOrder();
   });
-  
-  console.log('✅ Gerador de Faturas carregado');
-  console.log('📊 Firebase:', firebaseLoaded ? '✅ Conectado' : '❌ Offline (Modo Demo)');
-});
-
-// Expor funções globais
-window.PayGoInvoice = {
-  showToast,
-  searchOrder,
-  generatePDF,
-  sendWhatsApp,
-  retryConnection
-};
 </script>
 </body>
 </html>
