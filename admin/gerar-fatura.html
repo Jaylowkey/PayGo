@@ -1,831 +1,937 @@
 <!DOCTYPE html>
 <html lang="pt-MZ">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gerador de Faturas | Admin PayGo Moçambique</title>
-    <meta name="description" content="Painel administrativo para geração e envio de faturas validadas PayGo">
-    <meta name="robots" content="noindex, nofollow">
-    <meta name="theme-color" content="#0f172a">
-    
-    <!-- PWA -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="PayGo Admin">
-    <link rel="apple-touch-icon" href="/icons/icon-192.png">
-    <link rel="manifest" href="/manifest.json">
-    
-    <!-- ✅ URLs CORRIGIDAS - SEM ESPAÇOS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Gerador de Faturas | Admin PayGo</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#0f172a">
+  
+  <!-- ✅ REMOVIDO manifest.json para evitar 404 -->
+  <!-- <link rel="manifest" href="/manifest.json"> -->
+  
+  <!-- ✅ URLs CORRIGIDAS - SEM ESPAÇOS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
-                        display: ['"Outfit"', 'system-ui', 'sans-serif'],
-                        mono: ['"Fira Code"', 'monospace']
-                    },
-                    colors: {
-                        brand: {
-                            50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd',
-                            400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8',
-                            800: '#1e40af', 900: '#1e3a8a', 950: '#0f172a'
-                        },
-                        success: { 50: '#f0fdf4', 500: '#22c55e', 600: '#16a34a' },
-                        warning: { 50: '#fffbeb', 500: '#f59e0b' },
-                        danger: { 50: '#fef2f2', 500: '#ef4444' }
-                    },
-                    animation: {
-                        'fade-in': 'fadeIn 0.3s ease-out',
-                        'slide-up': 'slideUp 0.4s ease-out',
-                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                        'shimmer': 'shimmer 2s linear infinite'
-                    },
-                    keyframes: {
-                        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
-                        slideUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
-                        shimmer: { '0%': { backgroundPosition: '-200% 0' }, '100%': { backgroundPosition: '200% 0' } }
-                    },
-                    boxShadow: {
-                        'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
-                        'glow-brand': '0 0 20px rgba(59, 130, 246, 0.3)'
-                    }
-                }
-            }
-        };
-    </script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+            display: ['"Outfit"', 'system-ui', 'sans-serif'],
+            mono: ['"Fira Code"', 'monospace']
+          },
+          colors: {
+            brand: {
+              50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd',
+              400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8',
+              800: '#1e40af', 900: '#1e3a8a', 950: '#0f172a'
+            },
+            success: { 50: '#f0fdf4', 500: '#22c55e', 600: '#16a34a' },
+            warning: { 50: '#fffbeb', 500: '#f59e0b' },
+            danger: { 50: '#fef2f2', 500: '#ef4444' }
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.3s ease-out',
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+          },
+          keyframes: {
+            fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+            pulse: { '0%, 100%': { opacity: '1' }, '50%': { opacity: '0.5' } }
+          }
+        }
+      }
+    };
+  </script>
 
-    <style>
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f5f9; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        
-        /* Smooth Scroll */
-        html { scroll-behavior: smooth; }
-        
-        /* Glass Card */
-        .glass-card {
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 1.5rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .glass-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
-        }
-        
-        /* Button Styles */
-        .btn-primary {
-            transition: all 0.2s ease;
-        }
-        .btn-primary:active { transform: scale(0.98); }
-        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-        
-        /* Input Focus */
-        .input-focus:focus {
-            outline: none;
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-        }
-        
-        /* Status Badge */
-        .status-badge {
-            padding: 4px 12px;
-            border-radius: 9999px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        .status-success { background: #dcfce7; color: #166534; }
-        .status-error { background: #fee2e2; color: #991b1b; }
-        .status-info { background: #dbeafe; color: #1e40af; }
-        
-        /* Loading Animation */
-        .loading-dots::after {
-            content: '...';
-            animation: dots 1.5s steps(5, end) infinite;
-        }
-        @keyframes dots {
-            0%, 20% { content: '.'; }
-            40% { content: '..'; }
-            60%, 100% { content: '...'; }
-        }
-        
-        /* Accessibility */
-        :focus-visible {
-            outline: 2px solid #2563eb;
-            outline-offset: 2px;
-            border-radius: 4px;
-        }
-        
-        /* Reduced Motion */
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
-            }
-        }
-        
-        /* Mobile */
-        @media (max-width: 768px) {
-            .glass-card { border-radius: 1rem; }
-        }
-    </style>
+  <style>
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    html { scroll-behavior: smooth; }
+    
+    .glass-card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 1.5rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .glass-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn-primary {
+      transition: all 0.2s ease;
+    }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    
+    .input-focus:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+    
+    .status-badge {
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .status-success { background: #dcfce7; color: #166534; }
+    .status-error { background: #fee2e2; color: #991b1b; }
+    .status-info { background: #dbeafe; color: #1e40af; }
+    .status-warning { background: #fef3c7; color: #92400e; }
+    
+    .loading-dots::after {
+      content: '...';
+      animation: dots 1.5s steps(5, end) infinite;
+    }
+    @keyframes dots {
+      0%, 20% { content: '.'; }
+      40% { content: '..'; }
+      60%, 100% { content: '...'; }
+    }
+    
+    :focus-visible {
+      outline: 2px solid #2563eb;
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+    
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .glass-card { border-radius: 1rem; }
+    }
+  </style>
 </head>
 <body class="bg-slate-50 text-slate-900 font-sans min-h-screen flex">
 
-    <!-- Sidebar -->
-    <aside class="w-64 bg-slate-950 text-slate-300 hidden md:flex flex-col fixed h-full z-40" role="navigation" aria-label="Menu principal">
-        <div class="p-6 border-b border-white/10 flex items-center gap-3">
-            <div class="bg-gradient-to-tr from-brand-500 to-brand-600 p-2.5 rounded-xl text-white shadow-lg shadow-brand-500/30">
-                <i data-lucide="zap" class="w-5 h-5 fill-current" aria-hidden="true"></i>
-            </div>
-            <span class="text-xl font-display font-bold text-white">PayGo Admin</span>
+  <!-- Sidebar -->
+  <aside class="w-64 bg-slate-950 text-slate-300 hidden md:flex flex-col fixed h-full z-40" role="navigation">
+    <div class="p-6 border-b border-white/10 flex items-center gap-3">
+      <div class="bg-gradient-to-tr from-brand-500 to-brand-600 p-2.5 rounded-xl text-white shadow-lg">
+        <i data-lucide="zap" class="w-5 h-5 fill-current" aria-hidden="true"></i>
+      </div>
+      <span class="text-xl font-display font-bold text-white">PayGo Admin</span>
+    </div>
+    
+    <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+      <a href="dashboard.html" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-slate-950">
+        <i data-lucide="layout-dashboard" class="w-5 h-5" aria-hidden="true"></i>
+        <span>Dashboard</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 p-3 rounded-xl bg-brand-500/10 text-brand-400 border border-brand-500/20 transition" aria-current="page">
+        <i data-lucide="file-text" class="w-5 h-5" aria-hidden="true"></i>
+        <span>Faturas & Envios</span>
+      </a>
+      <a href="clientes.html" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-slate-950">
+        <i data-lucide="users" class="w-5 h-5" aria-hidden="true"></i>
+        <span>Clientes</span>
+      </a>
+    </nav>
+    
+    <div class="p-4 border-t border-white/10">
+      <div class="flex items-center gap-3 p-3 bg-white/5 rounded-xl">
+        <div class="w-9 h-9 rounded-full bg-brand-600 flex items-center justify-center text-white font-bold text-sm" aria-hidden="true">A</div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-white truncate">Administrador</p>
+          <p class="text-xs text-slate-400 truncate">admin@paygo.co.mz</p>
         </div>
-        
-        <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
-            <a href="dashboard.html" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-all focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-slate-950" aria-label="Voltar ao Dashboard">
-                <i data-lucide="layout-dashboard" class="w-5 h-5" aria-hidden="true"></i>
-                <span>Dashboard</span>
-            </a>
-            <a href="#" class="flex items-center gap-3 p-3 rounded-xl bg-brand-500/10 text-brand-400 border border-brand-500/20 transition-all" aria-current="page">
-                <i data-lucide="file-text" class="w-5 h-5" aria-hidden="true"></i>
-                <span>Faturas & Envios</span>
-            </a>
-            <a href="clientes.html" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-all focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-slate-950">
-                <i data-lucide="users" class="w-5 h-5" aria-hidden="true"></i>
-                <span>Clientes</span>
-            </a>
-            <a href="configuracoes.html" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-all focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-slate-950">
-                <i data-lucide="settings" class="w-5 h-5" aria-hidden="true"></i>
-                <span>Configurações</span>
-            </a>
-        </nav>
-        
-        <!-- User Profile -->
-        <div class="p-4 border-t border-white/10">
-            <div class="flex items-center gap-3 p-3 bg-white/5 rounded-xl">
-                <div class="w-9 h-9 rounded-full bg-brand-600 flex items-center justify-center text-white font-bold text-sm" aria-hidden="true">A</div>
-                <div class="flex-1 min-w-0">
-                    <p class="text-sm font-semibold text-white truncate">Administrador</p>
-                    <p class="text-xs text-slate-400 truncate">admin@paygo.co.mz</p>
-                </div>
-            </div>
-            <a href="login.html" class="mt-3 flex items-center justify-center gap-2 px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl transition-all text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-slate-950">
-                <i data-lucide="log-out" class="w-4 h-4" aria-hidden="true"></i>
-                <span>Sair</span>
-            </a>
+      </div>
+      <a href="login.html" class="mt-3 flex items-center justify-center gap-2 px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl transition text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-500">
+        <i data-lucide="log-out" class="w-4 h-4" aria-hidden="true"></i>
+        <span>Sair</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="flex-1 md:ml-64 p-4 md:p-8 flex flex-col items-center justify-center relative overflow-hidden min-h-screen">
+    <div class="absolute top-0 right-0 w-96 h-96 bg-brand-500/10 rounded-full blur-[100px] pointer-events-none" aria-hidden="true"></div>
+
+    <!-- Status Banner -->
+    <div id="connectionStatus" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 hidden">
+      <div class="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 shadow-lg">
+        <i data-lucide="wifi-off" class="w-4 h-4" aria-hidden="true"></i>
+        <span>Modo Offline: Funcionalidades limitadas</span>
+      </div>
+    </div>
+
+    <!-- Invoice Generator Card -->
+    <div class="w-full max-w-lg glass-card p-6 md:p-8 rounded-3xl shadow-xl relative z-10 mt-16 md:mt-0">
+      
+      <!-- Card Header -->
+      <div class="text-center mb-8">
+        <div class="w-16 h-16 bg-brand-50 text-brand-600 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-brand-100 shadow-inner" aria-hidden="true">
+          <i data-lucide="file-check-2" class="w-8 h-8"></i>
         </div>
-    </aside>
+        <h1 class="text-2xl font-display font-bold text-slate-900">Emissão de Faturas</h1>
+        <p class="text-slate-500 text-sm mt-1">Gere o PDF validado e envie direto para o cliente.</p>
+      </div>
 
-    <!-- Main Content -->
-    <main class="flex-1 md:ml-64 p-4 md:p-8 flex flex-col items-center justify-center relative overflow-hidden min-h-screen">
-        <!-- Background Decoration -->
-        <div class="absolute top-0 right-0 w-96 h-96 bg-brand-500/10 rounded-full blur-[100px] pointer-events-none" aria-hidden="true"></div>
-        <div class="absolute bottom-0 left-0 w-64 h-64 bg-success-500/10 rounded-full blur-[80px] pointer-events-none" aria-hidden="true"></div>
-
-        <!-- Header Mobile -->
-        <div class="md:hidden fixed top-0 left-0 right-0 bg-white border-b border-slate-200 p-4 flex items-center justify-between z-30">
-            <div class="flex items-center gap-2">
-                <div class="bg-brand-500 p-2 rounded-lg text-white">
-                    <i data-lucide="zap" class="w-5 h-5 fill-current" aria-hidden="true"></i>
-                </div>
-                <span class="font-display font-bold text-slate-900">PayGo Admin</span>
-            </div>
-            <a href="dashboard.html" class="p-2 text-slate-500 hover:text-slate-700 transition" aria-label="Voltar ao Dashboard">
-                <i data-lucide="arrow-left" class="w-5 h-5" aria-hidden="true"></i>
-            </a>
-        </div>
-
-        <!-- Invoice Generator Card -->
-        <div class="w-full max-w-lg glass-card p-6 md:p-8 rounded-3xl shadow-xl relative z-10 mt-16 md:mt-0">
-            
-            <!-- Card Header -->
-            <div class="text-center mb-8">
-                <div class="w-16 h-16 bg-brand-50 text-brand-600 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-brand-100 shadow-inner" aria-hidden="true">
-                    <i data-lucide="file-check-2" class="w-8 h-8"></i>
-                </div>
-                <h1 class="text-2xl font-display font-bold text-slate-900">Emissão de Faturas</h1>
-                <p class="text-slate-500 text-sm mt-1">Gere o PDF validado e envie direto para o cliente via WhatsApp.</p>
-            </div>
-
-            <!-- Search Form -->
-            <div class="space-y-5">
-                <div>
-                    <label for="orderIdInput" class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">
-                        ID do Pedido <span class="text-danger-500">*</span>
-                    </label>
-                    <div class="relative">
-                        <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" aria-hidden="true"></i>
-                        <input 
-                            type="text" 
-                            id="orderIdInput" 
-                            class="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-mono font-bold uppercase text-lg input-focus" 
-                            placeholder="Ex: PG-123456"
-                            pattern="^PG-\d{6}$"
-                            maxlength="10"
-                            autocomplete="off"
-                            aria-describedby="orderIdHelp"
-                            aria-required="true"
-                        >
-                    </div>
-                    <p id="orderIdHelp" class="text-xs text-slate-400 mt-1.5">Formato: PG-XXXXXX (6 dígitos)</p>
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <button 
-                        id="btnGenerate" 
-                        onclick="processInvoice('download')" 
-                        class="btn-primary w-full bg-slate-100 text-slate-700 py-4 rounded-xl font-bold hover:bg-slate-200 transition-all flex items-center justify-center gap-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
-                        aria-label="Baixar fatura em PDF"
-                    >
-                        <i data-lucide="download" class="w-5 h-5" aria-hidden="true"></i>
-                        <span>Baixar PDF</span>
-                    </button>
-                    <button 
-                        id="btnSendWa" 
-                        onclick="processInvoice('whatsapp')" 
-                        class="btn-primary w-full bg-green-500 text-white py-4 rounded-xl font-bold hover:bg-green-600 transition-all flex items-center justify-center gap-2 shadow-lg shadow-green-500/30 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                        aria-label="Enviar fatura via WhatsApp"
-                    >
-                        <i data-lucide="send" class="w-5 h-5" aria-hidden="true"></i>
-                        <span>Enviar WhatsApp</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Status Area -->
-            <div id="statusArea" class="mt-6 hidden p-4 rounded-xl border text-sm font-medium flex items-start gap-3" role="status" aria-live="polite"></div>
-
-            <!-- Security Notice -->
-            <div class="mt-8 pt-6 border-t border-slate-100">
-                <div class="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-xl">
-                    <i data-lucide="shield-alert" class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" aria-hidden="true"></i>
-                    <p class="text-xs text-amber-800">
-                        <strong class="font-bold">Aviso de Segurança:</strong> Esta ação requer autenticação administrativa. Todas as operações são registradas para auditoria.
-                    </p>
-                </div>
-            </div>
+      <!-- Search Form -->
+      <div class="space-y-5">
+        <div>
+          <label for="orderIdInput" class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">
+            ID do Pedido <span class="text-danger-500">*</span>
+          </label>
+          <div class="relative">
+            <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" aria-hidden="true"></i>
+            <input 
+              type="text" 
+              id="orderIdInput" 
+              class="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-mono font-bold uppercase text-lg input-focus" 
+              placeholder="Ex: PG-123456"
+              pattern="^PG-\d{6}$"
+              maxlength="10"
+              autocomplete="off"
+              aria-describedby="orderIdHelp"
+              aria-required="true"
+            >
+          </div>
+          <p id="orderIdHelp" class="text-xs text-slate-400 mt-1.5">Formato: PG-XXXXXX (6 dígitos)</p>
         </div>
 
-        <!-- Footer -->
-        <footer class="mt-auto pt-8 text-center text-xs text-slate-400">
-            <p>© <time datetime="2026">2026</time> PayGo Serviços Digitais. Todos direitos reservados. 🇲🇿</p>
-            <p class="mt-1">Painel Administrativo v2.1.0</p>
-        </footer>
-    </main>
+        <!-- Action Buttons -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button 
+            id="btnGenerate" 
+            onclick="processInvoice('download')" 
+            class="btn-primary w-full bg-slate-100 text-slate-700 py-4 rounded-xl font-bold hover:bg-slate-200 transition-all flex items-center justify-center gap-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
+            aria-label="Baixar fatura em PDF"
+          >
+            <i data-lucide="download" class="w-5 h-5" aria-hidden="true"></i>
+            <span>Baixar PDF</span>
+          </button>
+          <button 
+            id="btnSendWa" 
+            onclick="processInvoice('whatsapp')" 
+            class="btn-primary w-full bg-green-500 text-white py-4 rounded-xl font-bold hover:bg-green-600 transition-all flex items-center justify-center gap-2 shadow-lg shadow-green-500/30 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+            aria-label="Enviar fatura via WhatsApp"
+          >
+            <i data-lucide="send" class="w-5 h-5" aria-hidden="true"></i>
+            <span>Enviar WhatsApp</span>
+          </button>
+        </div>
+      </div>
 
-    <!-- Toast Container -->
-    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2 pointer-events-none" role="region" aria-label="Notificações"></div>
+      <!-- Status Area -->
+      <div id="statusArea" class="mt-6 hidden p-4 rounded-xl border text-sm font-medium flex items-start gap-3" role="status" aria-live="polite"></div>
 
-    <!-- ✅ JAVASCRIPT CORRIGIDO E COMPLETO -->
-    <script type="module">
-        // ==========================================
-        // 🔧 CONFIGURAÇÃO FIREBASE - URLs 100% LIMPAS
-        // ==========================================
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { initializeFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+      <!-- Demo Mode Notice -->
+      <div id="demoNotice" class="hidden mt-6 p-4 rounded-xl bg-blue-50 border border-blue-200 text-blue-800 text-sm">
+        <div class="flex items-start gap-3">
+          <i data-lucide="info" class="w-5 h-5 flex-shrink-0 mt-0.5" aria-hidden="true"></i>
+          <div>
+            <p class="font-bold">Modo Demonstração</p>
+            <p class="mt-1">Como o banco de dados ainda não está configurado, usando dados de exemplo. Para usar dados reais, crie o banco Firestore no console do Firebase.</p>
+            <a href="https://console.firebase.google.com/project/paygo-14311/firestore" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 mt-2 text-blue-700 hover:underline font-medium">
+              Criar banco de dados <i data-lucide="external-link" class="w-3 h-3" aria-hidden="true"></i>
+            </a>
+          </div>
+        </div>
+      </div>
 
-        const FIREBASE_CONFIG = {
-            apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
-            authDomain: "paygo-14311.firebaseapp.com",
-            projectId: "paygo-14311",
-            storageBucket: "paygo-14311.firebasestorage.app",
-            messagingSenderId: "208360646277",
-            appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
-        };
+      <!-- Security Notice -->
+      <div class="mt-8 pt-6 border-t border-slate-100">
+        <div class="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+          <i data-lucide="shield-alert" class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" aria-hidden="true"></i>
+          <p class="text-xs text-amber-800">
+            <strong class="font-bold">Aviso de Segurança:</strong> Esta ação requer autenticação administrativa. Todas as operações são registradas para auditoria.
+          </p>
+        </div>
+      </div>
+    </div>
 
+    <!-- Footer -->
+    <footer class="mt-auto pt-8 text-center text-xs text-slate-400">
+      <p>© <time datetime="2026">2026</time> PayGo Serviços Digitais. Todos direitos reservados. 🇲🇿</p>
+      <p class="mt-1">Painel Administrativo v2.1.0</p>
+    </footer>
+  </main>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2 pointer-events-none" role="region" aria-label="Notificações"></div>
+
+  <!-- ✅ JAVASCRIPT COM FALLBACK OFFLINE -->
+  <script type="module">
+    // ==========================================
+    // 🔧 CONFIGURAÇÃO FIREBASE - URLs 100% LIMPAS
+    // ==========================================
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { initializeFirestore, collection, query, where, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const FIREBASE_CONFIG = {
+      apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
+      authDomain: "paygo-14311.firebaseapp.com",
+      projectId: "paygo-14311",
+      storageBucket: "paygo-14311.firebasestorage.app",
+      messagingSenderId: "208360646277",
+      appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
+    };
+
+    // Estado global
+    let db = null;
+    let firestoreAvailable = false;
+    let demoMode = false;
+
+    // Dados de exemplo para modo demo
+    const DEMO_ORDERS = {
+      'PG-145340': {
+        orderId: 'PG-145340',
+        name: 'João Silva',
+        whatsapp: '+258841234567',
+        email: 'joao@email.com',
+        usd: 25.50,
+        detail: 'https://pt.aliexpress.com/item/1005001234567890.html',
+        tax: 250,
+        total: 2494,
+        exchangeRate: 88,
+        status: 'pending',
+        paymentMethod: 'mpesa',
+        type: 'compra',
+        isFirstPurchase: false,
+        createdAt: new Date().toISOString()
+      },
+      'PG-999999': {
+        orderId: 'PG-999999',
+        name: 'Maria Santos',
+        whatsapp: '+258871122334',
+        email: 'maria@email.com',
+        usd: 12.00,
+        detail: 'Recarga Netflix Premium',
+        tax: 150,
+        total: 1206,
+        exchangeRate: 88,
+        status: 'completed',
+        paymentMethod: 'emola',
+        type: 'jogo',
+        isFirstPurchase: true,
+        createdAt: new Date(Date.now() - 86400000).toISOString()
+      }
+    };
+
+    // Inicializar Firebase com fallback
+    async function initFirebase() {
+      try {
+        console.log('🔥 Tentando conectar ao Firebase...');
         const app = initializeApp(FIREBASE_CONFIG);
         
-        // 🚀 Forçar Long Polling para contornar bloqueios de rede
-        const db = initializeFirestore(app, {
-            experimentalForceLongPolling: true,
-            useFetchStreams: false
+        // Tentar inicializar Firestore com configurações resilientes
+        db = initializeFirestore(app, {
+          experimentalForceLongPolling: true,
+          useFetchStreams: false,
+          ignoreUndefinedProperties: true
         });
-
-        // ==========================================
-        // 🎨 INICIALIZAÇÃO DA PÁGINA
-        // ==========================================
-        document.addEventListener('DOMContentLoaded', function() {
-            // Inicializar ícones Lucide
-            if (typeof lucide !== 'undefined') {
-                lucide.createIcons();
-                console.log('✅ Lucide icons initialized');
-            }
-            
-            // Auto-focus no input de ID
-            const orderIdInput = document.getElementById('orderIdInput');
-            if (orderIdInput) {
-                orderIdInput.focus();
-                
-                // Format input: PG-XXXXXX
-                orderIdInput.addEventListener('input', function(e) {
-                    let value = e.target.value.toUpperCase().replace(/[^PG-\d]/g, '');
-                    if (value && !value.startsWith('PG-')) {
-                        value = 'PG-' + value.replace('PG-', '');
-                    }
-                    if (value.length > 10) value = value.slice(0, 10);
-                    e.target.value = value;
-                });
-                
-                // Submit com Enter
-                orderIdInput.addEventListener('keydown', function(e) {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        processInvoice('download');
-                    }
-                });
-            }
-            
-            console.log('✅ PayGo Invoice Generator loaded');
-        });
-
-        // ==========================================
-        // 🔔 SISTEMA DE TOAST NOTIFICATIONS
-        // ==========================================
-        function showToast(message, type = 'success', duration = 4000) {
-            const container = document.getElementById('toast-container');
-            if (!container) return;
-            
-            const toast = document.createElement('div');
-            toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-white transform transition-all duration-300 translate-x-full ${
-                type === 'error' ? 'bg-red-500' : 
-                type === 'warning' ? 'bg-amber-500' : 
-                type === 'info' ? 'bg-blue-500' : 
-                'bg-green-500'
-            }`;
-            toast.setAttribute('role', 'alert');
-            toast.setAttribute('aria-live', 'assertive');
-            
-            const icons = {
-                success: 'check-circle',
-                error: 'alert-circle',
-                warning: 'alert-triangle',
-                info: 'info'
-            };
-            const icon = icons[type] || icons.success;
-            
-            toast.innerHTML = `
-                <i data-lucide="${icon}" class="w-5 h-5 flex-shrink-0" aria-hidden="true"></i>
-                <span class="text-sm font-medium">${message}</span>
-                <button onclick="this.parentElement.remove()" class="ml-2 hover:opacity-80 focus:outline-none" aria-label="Fechar">
-                    <i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>
-                </button>
-            `;
-            
-            container.appendChild(toast);
-            
-            // Re-inicializar ícones
-            if (typeof lucide !== 'undefined') {
-                try { lucide.createIcons({ root: toast }); } catch(e) {}
-            }
-            
-            // Animar entrada
-            requestAnimationFrame(() => {
-                toast.classList.remove('translate-x-full');
-            });
-            
-            // Auto-remover
-            setTimeout(() => {
-                toast.classList.add('opacity-0');
-                setTimeout(() => toast.remove(), 300);
-            }, duration);
-        }
-
-        // ==========================================
-        // 📊 STATUS AREA UPDATES
-        // ==========================================
-        function showStatus(msg, type) {
-            const area = document.getElementById('statusArea');
-            if (!area) return;
-            
-            area.className = 'mt-6 p-4 rounded-xl border text-sm font-medium flex items-start gap-3';
-            
-            if (type === 'error') {
-                area.classList.add('bg-red-50', 'text-red-700', 'border-red-200');
-            } else if (type === 'info') {
-                area.classList.add('bg-blue-50', 'text-blue-700', 'border-blue-200');
-            } else {
-                area.classList.add('bg-green-50', 'text-green-700', 'border-green-200');
-            }
-            
-            const icons = {
-                success: 'check-circle-2',
-                error: 'alert-circle',
-                info: 'loader-2'
-            };
-            const icon = icons[type] || icons.success;
-            const spin = type === 'info' ? 'animate-spin' : '';
-            
-            area.innerHTML = `
-                <i data-lucide="${icon}" class="w-5 h-5 flex-shrink-0 ${spin}" aria-hidden="true"></i>
-                <span>${msg}</span>
-            `;
-            
-            if (typeof lucide !== 'undefined') {
-                try { lucide.createIcons({ root: area }); } catch(e) {}
-            }
-            
-            area.classList.remove('hidden');
-        }
-
-        // ==========================================
-        // 💾 BUSCAR PEDIDO NO FIREBASE
-        // ==========================================
-        async function fetchOrderData(orderId) {
-            try {
-                console.log('🔍 Buscando pedido:', orderId);
-                
-                const q = query(collection(db, "orders"), where("orderId", "==", orderId));
-                const snap = await getDocs(q);
-                
-                if (snap.empty) {
-                    return null;
-                }
-                
-                const doc = snap.docs[0];
-                return { id: doc.id, ...doc.data() };
-                
-            } catch (error) {
-                console.error('❌ Erro ao buscar pedido:', error);
-                throw new Error(`Erro de conexão: ${error.message}`);
-            }
-        }
-
-        // ==========================================
-        // 📄 GERAR PDF DA FATURA
-        // ==========================================
-        async function generatePDF(order) {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF({
-                orientation: 'portrait',
-                unit: 'mm',
-                format: 'a4'
-            });
-            
-            // Cores da marca
-            const brandColor = [59, 130, 246];
-            const darkColor = [15, 23, 42];
-            const grayColor = [100, 116, 139];
-            const successColor = [34, 197, 94];
-            
-            // Formatadores
-            const formatDate = (dateValue) => {
-                if (!dateValue) return new Date().toLocaleDateString('pt-MZ');
-                const date = dateValue.toDate ? dateValue.toDate() : new Date(dateValue);
-                return date.toLocaleDateString('pt-MZ', { 
-                    day: '2-digit', month: '2-digit', year: 'numeric',
-                    hour: '2-digit', minute: '2-digit'
-                });
-            };
-            
-            const formatMoney = (val) => {
-                return Number(val || 0).toLocaleString('pt-MZ', { 
-                    minimumFractionDigits: 2, 
-                    maximumFractionDigits: 2 
-                }) + ' MT';
-            };
-            
-            // Cálculos
-            const convertedValue = (order.usd || 0) * (order.exchangeRate || 88);
-            const isFreeTax = (order.tax || 0) === 0;
-            const orderDate = formatDate(order.createdAt);
-            
-            // ==========================================
-            // HEADER - Fundo escuro com logo
-            // ==========================================
-            doc.setFillColor(...darkColor);
-            doc.rect(0, 0, 210, 45, 'F');
-            
-            // Logo e título
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(26);
-            doc.setFont("helvetica", "bold");
-            doc.text("PayGo", 14, 25);
-            
-            doc.setFontSize(10);
-            doc.setFont("helvetica", "normal");
-            doc.text("O Mundo no seu Bolso.", 50, 25);
-            
-            // QR Code para validação
-            const validationUrl = `https://paygo.co.mz/validar?id=${order.orderId}`;
-            try {
-                const qrDataUrl = await QRCode.toDataURL(validationUrl, { 
-                    errorCorrectionLevel: 'H', 
-                    margin: 0,
-                    color: { dark: '#ffffff', light: '#0f172a' } 
-                });
-                doc.addImage(qrDataUrl, 'PNG', 170, 10, 22, 22);
-            } catch (e) {
-                console.warn('⚠️ QR Code não gerado:', e);
-            }
-            
-            doc.setFontSize(7);
-            doc.setFont("helvetica", "bold");
-            doc.text("VALIDAR ONLINE", 181, 37, null, null, "center");
-            
-            // ==========================================
-            // INFORMAÇÕES DA EMPRESA
-            // ==========================================
-            doc.setTextColor(...darkColor);
-            doc.setFontSize(10);
-            
-            doc.setFont("helvetica", "bold");
-            doc.text("PayGo Serviços Digitais", 14, 60);
-            
-            doc.setFont("helvetica", "normal");
-            doc.setTextColor(...grayColor);
-            doc.text("Rua de Bárue, Centro Comercial MK", 14, 66);
-            doc.text("Loja nº 6 - Chimoio, Moçambique", 14, 72);
-            doc.text("Email: contact@paygo.co.mz", 14, 78);
-            doc.text("WhatsApp: +258 83 752 2255", 14, 84);
-            
-            // ==========================================
-            // INFORMAÇÕES DO CLIENTE
-            // ==========================================
-            doc.setTextColor(...darkColor);
-            doc.setFont("helvetica", "bold");
-            doc.text("Faturado a:", 120, 60);
-            
-            doc.setFont("helvetica", "normal");
-            doc.setTextColor(...grayColor);
-            doc.text(order.name || "Cliente Não Identificado", 120, 66);
-            doc.text(order.whatsapp || "N/A", 120, 72);
-            doc.text(order.email || "N/A", 120, 78);
-            
-            // ==========================================
-            // DETALHES DO PEDIDO
-            // ==========================================
-            doc.setTextColor(...darkColor);
-            doc.setFont("helvetica", "bold");
-            doc.text("Detalhes do Pedido:", 120, 92);
-            
-            doc.setFont("helvetica", "normal");
-            doc.setTextColor(...grayColor);
-            doc.text(`Nº do Pedido: ${order.orderId}`, 120, 98);
-            doc.text(`Data: ${orderDate}`, 120, 104);
-            doc.text(`Método: ${order.paymentMethod === 'mpesa' ? 'M-Pesa' : 'e-Mola'}`, 120, 110);
-            
-            // ==========================================
-            // TABELA DE ITENS
-            // ==========================================
-            doc.autoTable({
-                startY: 120,
-                head: [['Descrição', 'Câmbio', 'Valor Original', 'Total (MT)']],
-                body: [
-                    [
-                        `Serviço de Intermediação Internacional\nRef: ${(order.detail || "Produto não especificado").substring(0, 50)}${(order.detail?.length > 50) ? '...' : ''}`,
-                        `${(order.exchangeRate || 88).toFixed(2)} MT / USD`,
-                        `$${(order.usd || 0).toFixed(2)} USD`,
-                        formatMoney(convertedValue)
-                    ]
-                ],
-                theme: 'striped',
-                headStyles: { 
-                    fillColor: brandColor, 
-                    textColor: 255,
-                    fontSize: 9,
-                    fontStyle: 'bold'
-                },
-                styles: { 
-                    font: 'helvetica', 
-                    fontSize: 9, 
-                    cellPadding: 5,
-                    lineColor: [226, 232, 240],
-                    lineWidth: 0.3
-                },
-                columnStyles: { 
-                    0: { cellWidth: 90 },
-                    1: { cellWidth: 35, halign: 'center' },
-                    2: { cellWidth: 35, halign: 'center' },
-                    3: { cellWidth: 40, halign: 'right', fontStyle: 'bold' }
-                }
-            });
-            
-            // ==========================================
-            // RESUMO FINANCEIRO
-            // ==========================================
-            let finalY = doc.lastAutoTable.finalY + 20;
-            
-            doc.setTextColor(...grayColor);
-            doc.setFontSize(10);
-            doc.setFont("helvetica", "normal");
-            
-            doc.text("Subtotal:", 140, finalY);
-            doc.text("Taxa de Serviço:", 140, finalY + 8);
-            
-            doc.setTextColor(...darkColor);
-            doc.setFont("helvetica", "bold");
-            doc.text(formatMoney(convertedValue), 195, finalY, null, null, "right");
-            doc.text(isFreeTax ? "GRÁTIS" : formatMoney(order.tax), 195, finalY + 8, null, null, "right");
-            
-            // Linha divisória
-            doc.setDrawColor(226, 232, 240);
-            doc.setLineWidth(0.5);
-            doc.line(140, finalY + 12, 195, finalY + 12);
-            
-            // TOTAL
-            doc.setFontSize(14);
-            doc.setTextColor(...brandColor);
-            doc.text("TOTAL:", 140, finalY + 24);
-            doc.text(formatMoney(order.total), 195, finalY + 24, null, null, "right");
-            
-            // ==========================================
-            // RODAPÉ E VALIDAÇÃO
-            // ==========================================
-            finalY += 40;
-            
-            doc.setFillColor(...brandColor);
-            doc.roundedRect(14, finalY, 182, 25, 3, 3, 'F');
-            
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(9);
-            doc.setFont("helvetica", "bold");
-            doc.text("✅ Documento Oficial PayGo", 105, finalY + 10, null, null, "center");
-            
-            doc.setFontSize(8);
-            doc.setFont("helvetica", "normal");
-            doc.text(`Validação: ${validationUrl}`, 105, finalY + 17, null, null, "center");
-            
-            // Footer page number
-            const pageCount = doc.internal.getNumberOfPages();
-            doc.setFontSize(8);
-            doc.setTextColor(...grayColor);
-            doc.text(`Página 1 de ${pageCount}`, 105, 290, null, null, "center");
-            
-            return doc;
-        }
-
-        // ==========================================
-        // 📤 ENVIAR VIA WHATSAPP (Evolution API)
-        // ==========================================
-        async function sendToEvolutionApi(order, base64Pdf) {
-            showStatus('🔄 Conectando ao servidor seguro...', 'info');
-            
-            try {
-                // ⚠️ Em produção: usar variáveis de ambiente no backend
-                const ADMIN_SECRET = "PayGo@Admin#2026!Sec";
-                
-                const response = await fetch('/api/send-whatsapp-invoice', {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'x-admin-secret': ADMIN_SECRET
-                    },
-                    body: JSON.stringify({
-                        orderId: order.orderId,
-                        clientName: order.name,
-                        phone: order.whatsapp,
-                        pdfData: base64Pdf,
-                        timestamp: new Date().toISOString()
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (response.ok && result.success) {
-                    showToast('✅ Fatura enviada com sucesso!', 'success', 6000);
-                    showStatus('Fatura enviada para WhatsApp do cliente.', 'success');
-                    return true;
-                } else {
-                    throw new Error(result.error || 'Erro desconhecido na API.');
-                }
-                
-            } catch (err) {
-                console.error('❌ Erro ao enviar WhatsApp:', err);
-                
-                // Fallback: abrir WhatsApp manualmente
-                const message = encodeURIComponent(
-                    `Olá ${order.name || 'Cliente'},\n\nSua fatura PayGo #${order.orderId} está pronta!\n\nTotal: ${formatMoney(order.total)}\n\nPor favor, confirme o recebimento. 🙏`
-                );
-                const phone = order.whatsapp?.replace(/\D/g, '') || '';
-                
-                if (phone) {
-                    window.open(`https://wa.me/258${phone}?text=${message}`, '_blank');
-                    showStatus('⚠️ Abrindo WhatsApp manualmente. Baixe o PDF acima.', 'warning');
-                } else {
-                    throw new Error('Número de WhatsApp não encontrado.');
-                }
-            }
-        }
-
-        // ==========================================
-        // 🎯 FUNÇÃO PRINCIPAL: PROCESSAR FATURA
-        // ==========================================
-        window.processInvoice = async function(action) {
-            const btnDown = document.getElementById('btnGenerate');
-            const btnWa = document.getElementById('btnSendWa');
-            const input = document.getElementById('orderIdInput');
-            const orderId = input?.value.trim().toUpperCase();
-            const statusArea = document.getElementById('statusArea');
-            
-            // Validação do ID
-            if (!orderId || !/^PG-\d{6}$/.test(orderId)) {
-                showStatus('⚠️ Insira um ID válido (ex: PG-123456)', 'error');
-                showToast('ID do pedido inválido', 'error');
-                input?.focus();
-                return;
-            }
-            
-            // Estado de loading
-            const activeBtn = action === 'download' ? btnDown : btnWa;
-            const originalHtml = activeBtn?.innerHTML;
-            
-            if (activeBtn) {
-                activeBtn.disabled = true;
-                activeBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Processando<span class="loading-dots"></span>';
-                if (typeof lucide !== 'undefined') lucide.createIcons();
-            }
-            
-            statusArea?.classList.add('hidden');
-            
-            try {
-                // 1. Buscar dados do pedido
-                showStatus('🔍 Buscando pedido no sistema...', 'info');
-                const orderData = await fetchOrderData(orderId);
-                
-                if (!orderData) {
-                    showStatus(`❌ Pedido ${orderId} não encontrado.`, 'error');
-                    showToast('Pedido não encontrado', 'error');
-                    return;
-                }
-                
-                // 2. Gerar PDF
-                showStatus('📄 Gerando fatura PDF...', 'info');
-                const doc = await generatePDF(orderData);
-                
-                // 3. Ação solicitada
-                if (action === 'download') {
-                    const fileName = `Fatura_PayGo_${orderData.orderId}.pdf`;
-                    doc.save(fileName);
-                    showStatus(`✅ Fatura "${fileName}" baixada com sucesso!`, 'success');
-                    showToast('Fatura baixada!', 'success');
-                    
-                } else if (action === 'whatsapp') {
-                    showStatus('📤 Preparando envio para WhatsApp...', 'info');
-                    const pdfBase64 = doc.output('datauristring');
-                    await sendToEvolutionApi(orderData, pdfBase64);
-                }
-                
-            } catch (error) {
-                console.error('❌ Erro no processInvoice:', error);
-                showStatus(`❌ Erro: ${error.message || 'Tente novamente'}`, 'error');
-                showToast('Erro ao processar fatura', 'error');
-            } finally {
-                // Resetar botões
-                if (activeBtn && originalHtml) {
-                    activeBtn.disabled = false;
-                    activeBtn.innerHTML = originalHtml;
-                    if (typeof lucide !== 'undefined') lucide.createIcons();
-                }
-            }
-        };
         
-        // Helper para formatar dinheiro (fallback)
-        function formatMoney(val) {
-            return Number(val || 0).toLocaleString('pt-MZ', { 
-                minimumFractionDigits: 2, 
-                maximumFractionDigits: 2 
-            }) + ' MT';
+        // Testar conexão com uma query simples
+        await getDocs(collection(db, '_test_connection_')).catch(() => {});
+        
+        firestoreAvailable = true;
+        console.log('✅ Firestore conectado com sucesso');
+        return true;
+        
+      } catch (error) {
+        console.warn('⚠️ Firestore não disponível:', error.message);
+        
+        // Verificar se é erro de banco não existente
+        if (error.message?.includes('does not exist') || error.code === 'not-found') {
+          console.warn('📋 Banco de dados Firestore não criado. Ativando modo demonstração.');
+          demoMode = true;
+          showConnectionStatus('Modo Offline: Dados de exemplo', 'warning');
+          return false;
         }
         
-        // Expor funções para debug
-        window.PayGoInvoice = {
-            fetchOrderData,
-            generatePDF,
-            sendToEvolutionApi,
-            showToast,
-            showStatus
-        };
-    </script>
-    
-    <!-- Structured Data para SEO -->
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "WebApplication",
-        "name": "Gerador de Faturas PayGo Admin",
-        "description": "Painel administrativo para geração e envio de faturas validadas PayGo",
-        "url": "https://paygo.co.mz/admin/faturas.html",
-        "applicationCategory": "BusinessApplication",
-        "operatingSystem": "Web",
-        "offers": {
-            "@type": "Offer",
-            "price": "0",
-            "priceCurrency": "MZN"
-        }
+        // Outros erros de conexão
+        console.warn('📡 Problema de conexão. Ativando modo offline.');
+        demoMode = true;
+        showConnectionStatus('Conexão instável: Modo offline', 'warning');
+        return false;
+      }
     }
-    </script>
+
+    // ==========================================
+    // 🔔 SISTEMA DE TOAST NOTIFICATIONS
+    // ==========================================
+    function showToast(message, type = 'success', duration = 4000) {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+      
+      const toast = document.createElement('div');
+      toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-white transform transition-all duration-300 translate-x-full ${
+        type === 'error' ? 'bg-red-500' : 
+        type === 'warning' ? 'bg-amber-500' : 
+        type === 'info' ? 'bg-blue-500' : 
+        'bg-green-500'
+      }`;
+      toast.setAttribute('role', 'alert');
+      toast.setAttribute('aria-live', 'assertive');
+      
+      const icons = {
+        success: 'check-circle',
+        error: 'alert-circle',
+        warning: 'alert-triangle',
+        info: 'info'
+      };
+      const icon = icons[type] || icons.success;
+      
+      toast.innerHTML = `
+        <i data-lucide="${icon}" class="w-5 h-5 flex-shrink-0" aria-hidden="true"></i>
+        <span class="text-sm font-medium">${message}</span>
+        <button onclick="this.parentElement.remove()" class="ml-2 hover:opacity-80 focus:outline-none" aria-label="Fechar">
+          <i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>
+        </button>
+      `;
+      
+      container.appendChild(toast);
+      
+      if (typeof lucide !== 'undefined') {
+        try { lucide.createIcons({ root: toast }); } catch(e) {}
+      }
+      
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-x-full');
+      });
+      
+      setTimeout(() => {
+        toast.classList.add('opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, duration);
+    }
+
+    // ==========================================
+    // 📊 STATUS AREA UPDATES
+    // ==========================================
+    function showStatus(msg, type) {
+      const area = document.getElementById('statusArea');
+      if (!area) return;
+      
+      area.className = 'mt-6 p-4 rounded-xl border text-sm font-medium flex items-start gap-3';
+      
+      if (type === 'error') {
+        area.classList.add('bg-red-50', 'text-red-700', 'border-red-200');
+      } else if (type === 'info') {
+        area.classList.add('bg-blue-50', 'text-blue-700', 'border-blue-200');
+      } else if (type === 'warning') {
+        area.classList.add('bg-amber-50', 'text-amber-700', 'border-amber-200');
+      } else {
+        area.classList.add('bg-green-50', 'text-green-700', 'border-green-200');
+      }
+      
+      const icons = {
+        success: 'check-circle-2',
+        error: 'alert-circle',
+        info: 'loader-2',
+        warning: 'alert-triangle'
+      };
+      const icon = icons[type] || icons.success;
+      const spin = type === 'info' ? 'animate-spin' : '';
+      
+      area.innerHTML = `
+        <i data-lucide="${icon}" class="w-5 h-5 flex-shrink-0 ${spin}" aria-hidden="true"></i>
+        <span>${msg}</span>
+      `;
+      
+      if (typeof lucide !== 'undefined') {
+        try { lucide.createIcons({ root: area }); } catch(e) {}
+      }
+      
+      area.classList.remove('hidden');
+    }
+
+    function showConnectionStatus(message, type = 'info') {
+      const banner = document.getElementById('connectionStatus');
+      if (!banner) return;
+      
+      const colors = {
+        info: 'bg-blue-50 border-blue-200 text-blue-800',
+        warning: 'bg-amber-50 border-amber-200 text-amber-800',
+        error: 'bg-red-50 border-red-200 text-red-800'
+      };
+      const icons = {
+        info: 'info',
+        warning: 'wifi-off',
+        error: 'alert-circle'
+      };
+      
+      banner.className = `fixed top-4 left-1/2 -translate-x-1/2 z-50 ${colors[type] || colors.info} px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 shadow-lg`;
+      banner.innerHTML = `
+        <i data-lucide="${icons[type] || icons.info}" class="w-4 h-4" aria-hidden="true"></i>
+        <span>${message}</span>
+      `;
+      banner.classList.remove('hidden');
+      
+      if (typeof lucide !== 'undefined') {
+        try { lucide.createIcons({ root: banner }); } catch(e) {}
+      }
+      
+      // Auto-hide após 10 segundos para warnings/info
+      if (type !== 'error') {
+        setTimeout(() => {
+          banner.classList.add('hidden');
+        }, 10000);
+      }
+    }
+
+    // ==========================================
+    // 💾 BUSCAR PEDIDO (Com fallback demo)
+    // ==========================================
+    async function fetchOrderData(orderId) {
+      // Se em modo demo, usar dados de exemplo
+      if (demoMode || !firestoreAvailable) {
+        console.log('📋 Usando dados de exemplo para:', orderId);
+        await new Promise(resolve => setTimeout(resolve, 800)); // Simular delay de rede
+        
+        const demoOrder = DEMO_ORDERS[orderId];
+        if (demoOrder) {
+          return { ...demoOrder, isDemo: true };
+        }
+        return null;
+      }
+      
+      // Tentar buscar no Firestore real
+      try {
+        console.log('🔍 Buscando pedido no Firestore:', orderId);
+        
+        const q = query(collection(db, "orders"), where("orderId", "==", orderId));
+        const snap = await getDocs(q);
+        
+        if (snap.empty) {
+          return null;
+        }
+        
+        const docSnap = snap.docs[0];
+        return { id: docSnap.id, ...docSnap.data() };
+        
+      } catch (error) {
+        console.error('❌ Erro ao buscar no Firestore:', error);
+        
+        // Fallback para modo demo se falhar
+        if (!demoMode) {
+          console.warn('⚠️ Ativando modo demo após erro');
+          demoMode = true;
+          showConnectionStatus('Erro de conexão: Usando dados de exemplo', 'warning');
+          return fetchOrderData(orderId); // Recursivo para usar demo
+        }
+        
+        throw error;
+      }
+    }
+
+    // ==========================================
+    // 📄 GERAR PDF DA FATURA
+    // ==========================================
+    async function generatePDF(order) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
+      // Cores
+      const brandColor = [59, 130, 246];
+      const darkColor = [15, 23, 42];
+      const grayColor = [100, 116, 139];
+      
+      // Formatadores
+      const formatDate = (dateValue) => {
+        if (!dateValue) return new Date().toLocaleDateString('pt-MZ');
+        const date = dateValue?.toDate ? dateValue.toDate() : new Date(dateValue);
+        return date.toLocaleDateString('pt-MZ', { 
+          day: '2-digit', month: '2-digit', year: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        });
+      };
+      
+      const formatMoney = (val) => {
+        return Number(val || 0).toLocaleString('pt-MZ', { 
+          minimumFractionDigits: 2, 
+          maximumFractionDigits: 2 
+        }) + ' MT';
+      };
+      
+      // Cálculos
+      const convertedValue = (order.usd || 0) * (order.exchangeRate || 88);
+      const isFreeTax = (order.tax || 0) === 0;
+      const orderDate = formatDate(order.createdAt);
+      
+      // HEADER
+      doc.setFillColor(...darkColor);
+      doc.rect(0, 0, 210, 45, 'F');
+      
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(26);
+      doc.setFont("helvetica", "bold");
+      doc.text("PayGo", 14, 25);
+      
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text("O Mundo no seu Bolso.", 50, 25);
+      
+      // QR Code
+      const validationUrl = `https://paygo.co.mz/validar?id=${order.orderId}`;
+      try {
+        const qrDataUrl = await QRCode.toDataURL(validationUrl, { 
+          errorCorrectionLevel: 'H', 
+          margin: 0,
+          color: { dark: '#ffffff', light: '#0f172a' } 
+        });
+        doc.addImage(qrDataUrl, 'PNG', 170, 10, 22, 22);
+      } catch (e) {
+        console.warn('⚠️ QR Code não gerado:', e);
+        // Fallback: texto simples
+        doc.setFontSize(6);
+        doc.text("Validar: " + validationUrl, 170, 35, { maxWidth: 30 });
+      }
+      
+      doc.setFontSize(7);
+      doc.setFont("helvetica", "bold");
+      doc.text("DOCUMENTO OFICIAL", 181, 37, null, null, "center");
+      
+      // EMPRESA
+      doc.setTextColor(...darkColor);
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.text("PayGo Serviços Digitais", 14, 60);
+      
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(...grayColor);
+      doc.text("Rua de Bárue, Centro Comercial MK", 14, 66);
+      doc.text("Loja nº 6 - Chimoio, Moçambique", 14, 72);
+      doc.text("Email: contact@paygo.co.mz", 14, 78);
+      doc.text("WhatsApp: +258 83 752 2255", 14, 84);
+      
+      // CLIENTE
+      doc.setTextColor(...darkColor);
+      doc.setFont("helvetica", "bold");
+      doc.text("Faturado a:", 120, 60);
+      
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(...grayColor);
+      doc.text(order.name || "Cliente Não Identificado", 120, 66);
+      doc.text(order.whatsapp || "N/A", 120, 72);
+      doc.text(order.email || "N/A", 120, 78);
+      
+      // DETALHES DO PEDIDO
+      doc.setTextColor(...darkColor);
+      doc.setFont("helvetica", "bold");
+      doc.text("Detalhes do Pedido:", 120, 92);
+      
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(...grayColor);
+      doc.text(`Nº do Pedido: ${order.orderId}`, 120, 98);
+      doc.text(`Data: ${orderDate}`, 120, 104);
+      doc.text(`Método: ${order.paymentMethod === 'mpesa' ? 'M-Pesa' : 'e-Mola'}`, 120, 110);
+      
+      // TABELA
+      doc.autoTable({
+        startY: 120,
+        head: [['Descrição', 'Câmbio', 'Valor Original', 'Total (MT)']],
+        body: [
+          [
+            `Serviço de Intermediação\nRef: ${(order.detail || "Produto não especificado").substring(0, 50)}${(order.detail?.length > 50) ? '...' : ''}`,
+            `${(order.exchangeRate || 88).toFixed(2)} MT / USD`,
+            `$${(order.usd || 0).toFixed(2)} USD`,
+            formatMoney(convertedValue)
+          ]
+        ],
+        theme: 'striped',
+        headStyles: { 
+          fillColor: brandColor, 
+          textColor: 255,
+          fontSize: 9,
+          fontStyle: 'bold'
+        },
+        styles: { 
+          font: 'helvetica', 
+          fontSize: 9, 
+          cellPadding: 5,
+          lineColor: [226, 232, 240],
+          lineWidth: 0.3
+        },
+        columnStyles: { 
+          0: { cellWidth: 90 },
+          1: { cellWidth: 35, halign: 'center' },
+          2: { cellWidth: 35, halign: 'center' },
+          3: { cellWidth: 40, halign: 'right', fontStyle: 'bold' }
+        }
+      });
+      
+      // RESUMO FINANCEIRO
+      let finalY = doc.lastAutoTable.finalY + 20;
+      
+      doc.setTextColor(...grayColor);
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      
+      doc.text("Subtotal:", 140, finalY);
+      doc.text("Taxa de Serviço:", 140, finalY + 8);
+      
+      doc.setTextColor(...darkColor);
+      doc.setFont("helvetica", "bold");
+      doc.text(formatMoney(convertedValue), 195, finalY, null, null, "right");
+      doc.text(isFreeTax ? "GRÁTIS" : formatMoney(order.tax), 195, finalY + 8, null, null, "right");
+      
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.5);
+      doc.line(140, finalY + 12, 195, finalY + 12);
+      
+      // TOTAL
+      doc.setFontSize(14);
+      doc.setTextColor(...brandColor);
+      doc.text("TOTAL:", 140, finalY + 24);
+      doc.text(formatMoney(order.total), 195, finalY + 24, null, null, "right");
+      
+      // RODAPÉ
+      finalY += 40;
+      
+      doc.setFillColor(...brandColor);
+      doc.roundedRect(14, finalY, 182, 25, 3, 3, 'F');
+      
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      doc.text("✅ Documento Oficial PayGo", 105, finalY + 10, null, null, "center");
+      
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Validação: ${validationUrl}`, 105, finalY + 17, null, null, "center");
+      
+      // Demo watermark
+      if (order.isDemo) {
+        doc.setTextColor(239, 68, 68);
+        doc.setFontSize(48);
+        doc.setFont("helvetica", "bold");
+        doc.text("DEMO", 105, 150, null, null, "center");
+        doc.setGAlpha(0.1);
+      }
+      
+      // Page number
+      const pageCount = doc.internal.getNumberOfPages();
+      doc.setFontSize(8);
+      doc.setTextColor(...grayColor);
+      doc.text(`Página 1 de ${pageCount}`, 105, 290, null, null, "center");
+      
+      return doc;
+    }
+
+    // ==========================================
+    // 📤 ENVIAR VIA WHATSAPP (Com fallback)
+    // ==========================================
+    async function sendToEvolutionApi(order, base64Pdf) {
+      showStatus('🔄 Conectando ao servidor...', 'info');
+      
+      try {
+        // Em produção: usar variáveis de ambiente
+        const ADMIN_SECRET = "PayGo@Admin#2026!Sec";
+        
+        const response = await fetch('/api/send-whatsapp-invoice', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'x-admin-secret': ADMIN_SECRET
+          },
+          body: JSON.stringify({
+            orderId: order.orderId,
+            clientName: order.name,
+            phone: order.whatsapp,
+            pdfData: base64Pdf,
+            timestamp: new Date().toISOString()
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.success) {
+          showToast('✅ Fatura enviada com sucesso!', 'success', 6000);
+          showStatus('Fatura enviada para WhatsApp do cliente.', 'success');
+          return true;
+        } else {
+          throw new Error(result.error || 'Erro na API.');
+        }
+        
+      } catch (err) {
+        console.error('❌ Erro ao enviar WhatsApp:', err);
+        
+        // Fallback: abrir WhatsApp manualmente
+        const message = encodeURIComponent(
+          `Olá ${order.name || 'Cliente'},\n\nSua fatura PayGo #${order.orderId} está pronta!\n\nTotal: ${formatMoney(order.total)}\n\nPor favor, confirme o recebimento. 🙏`
+        );
+        const phone = order.whatsapp?.replace(/\D/g, '') || '';
+        
+        if (phone) {
+          const cleanPhone = phone.startsWith('258') ? phone : `258${phone}`;
+          window.open(`https://wa.me/${cleanPhone}?text=${message}`, '_blank', 'noopener,noreferrer');
+          showStatus('⚠️ Abrindo WhatsApp manualmente. Baixe o PDF acima.', 'warning');
+          showToast('📱 WhatsApp aberto. Envie o PDF manualmente.', 'info');
+        } else {
+          throw new Error('Número de WhatsApp não encontrado.');
+        }
+      }
+    }
+
+    // ==========================================
+    // 🎯 FUNÇÃO PRINCIPAL: PROCESSAR FATURA
+    // ==========================================
+    window.processInvoice = async function(action) {
+      const btnDown = document.getElementById('btnGenerate');
+      const btnWa = document.getElementById('btnSendWa');
+      const input = document.getElementById('orderIdInput');
+      const orderId = input?.value.trim().toUpperCase();
+      const statusArea = document.getElementById('statusArea');
+      
+      // Validação do ID
+      if (!orderId || !/^PG-\d{6}$/.test(orderId)) {
+        showStatus('⚠️ Insira um ID válido (ex: PG-123456)', 'error');
+        showToast('ID do pedido inválido', 'error');
+        input?.focus();
+        return;
+      }
+      
+      // Estado de loading
+      const activeBtn = action === 'download' ? btnDown : btnWa;
+      const originalHtml = activeBtn?.innerHTML;
+      
+      if (activeBtn) {
+        activeBtn.disabled = true;
+        activeBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Processando<span class="loading-dots"></span>';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+      }
+      
+      statusArea?.classList.add('hidden');
+      
+      try {
+        // 1. Buscar dados do pedido
+        showStatus('🔍 Buscando pedido no sistema...', 'info');
+        const orderData = await fetchOrderData(orderId);
+        
+        if (!orderData) {
+          showStatus(`❌ Pedido ${orderId} não encontrado.`, 'error');
+          showToast('Pedido não encontrado', 'error');
+          
+          // Sugestão em modo demo
+          if (demoMode) {
+            showStatus('💡 Em modo demo, tente: PG-145340 ou PG-999999', 'info');
+          }
+          return;
+        }
+        
+        // Mostrar aviso se for demo
+        if (orderData.isDemo) {
+          document.getElementById('demoNotice')?.classList.remove('hidden');
+          showToast('📋 Usando dados de exemplo (modo demo)', 'info', 6000);
+        }
+        
+        // 2. Gerar PDF
+        showStatus('📄 Gerando fatura PDF...', 'info');
+        const doc = await generatePDF(orderData);
+        
+        // 3. Ação solicitada
+        if (action === 'download') {
+          const fileName = `Fatura_PayGo_${orderData.orderId}.pdf`;
+          doc.save(fileName);
+          showStatus(`✅ Fatura "${fileName}" baixada com sucesso!`, 'success');
+          showToast('Fatura baixada!', 'success');
+          
+        } else if (action === 'whatsapp') {
+          showStatus('📤 Preparando envio para WhatsApp...', 'info');
+          const pdfBase64 = doc.output('datauristring');
+          await sendToEvolutionApi(orderData, pdfBase64);
+        }
+        
+      } catch (error) {
+        console.error('❌ Erro no processInvoice:', error);
+        showStatus(`❌ Erro: ${error.message || 'Tente novamente'}`, 'error');
+        showToast('Erro ao processar fatura', 'error');
+      } finally {
+        // Resetar botões
+        if (activeBtn && originalHtml) {
+          activeBtn.disabled = false;
+          activeBtn.innerHTML = originalHtml;
+          if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+      }
+    };
+
+    // Helper para formatar dinheiro
+    function formatMoney(val) {
+      return Number(val || 0).toLocaleString('pt-MZ', { 
+        minimumFractionDigits: 2, 
+        maximumFractionDigits: 2 
+      }) + ' MT';
+    }
+
+    // ==========================================
+    // 🚀 INICIALIZAÇÃO DA PÁGINA
+    // ==========================================
+    document.addEventListener('DOMContentLoaded', async function() {
+      // Inicializar ícones Lucide
+      if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+        console.log('✅ Lucide icons initialized');
+      }
+      
+      // Inicializar Firebase
+      await initFirebase();
+      
+      // Auto-focus no input de ID
+      const orderIdInput = document.getElementById('orderIdInput');
+      if (orderIdInput) {
+        orderIdInput.focus();
+        
+        // Format input: PG-XXXXXX
+        orderIdInput.addEventListener('input', function(e) {
+          let value = e.target.value.toUpperCase().replace(/[^PG-\d]/g, '');
+          if (value && !value.startsWith('PG-')) {
+            value = 'PG-' + value.replace('PG-', '');
+          }
+          if (value.length > 10) value = value.slice(0, 10);
+          e.target.value = value;
+        });
+        
+        // Submit com Enter
+        orderIdInput.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            processInvoice('download');
+          }
+        });
+      }
+      
+      // Mostrar aviso de demo se aplicável
+      if (demoMode) {
+        document.getElementById('demoNotice')?.classList.remove('hidden');
+      }
+      
+      console.log('✅ PayGo Invoice Generator loaded');
+      console.log('📊 Firestore:', firestoreAvailable ? '✅ Conectado' : '❌ Offline');
+      console.log('🎭 Demo mode:', demoMode ? '✅ Ativo' : '❌ Inativo');
+    });
+
+    // Expor funções para debug
+    window.PayGoInvoice = {
+      showToast,
+      showStatus,
+      fetchOrderData,
+      generatePDF,
+      demoMode: () => demoMode,
+      firestoreAvailable: () => firestoreAvailable
+    };
+  </script>
 </body>
 </html>
