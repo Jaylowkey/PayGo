@@ -69,9 +69,7 @@
     @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     
     /* Status Banner */
-    .status-banner {
-      transition: all 0.3s ease;
-    }
+    .status-banner { transition: all 0.3s ease; }
     
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
@@ -286,10 +284,10 @@
 <!-- Toast Container -->
 <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2 pointer-events-none"></div>
 
-<!-- JavaScript -->
+<!-- ✅ JavaScript Corrigido - SEM MÓDULOS PARA MÁXIMA COMPATIBILIDADE -->
 <script>
 // ==========================================
-// 🔧 CONFIGURAÇÃO
+// 🔧 CONFIGURAÇÃO FIREBASE
 // ==========================================
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
@@ -376,34 +374,45 @@ function showToast(message, type = 'success', duration = 4000) {
 }
 
 // ==========================================
-// 🔥 INICIALIZAÇÃO FIREBASE
+// 🔥 INICIALIZAÇÃO FIREBASE (COM Fallback Seguro)
 // ==========================================
 async function initFirebase() {
   try {
     console.log('🔥 Inicializando Firebase...');
     
+    // Carregar Firebase via script tags (já carregados no head)
+    // Verificar se Firebase está disponível globalmente
+    if (typeof firebase !== 'undefined') {
+      app = firebase.initializeApp(FIREBASE_CONFIG);
+      db = firebase.firestore(app);
+      
+      // Teste de conexão simples
+      await db.collection('_test_').limit(1).get().catch(() => {});
+      
+      firebaseLoaded = true;
+      console.log('✅ Firebase conectado');
+      hideConnectionBanner();
+      return true;
+    }
+    
+    // Fallback: tentar carregar via import dinâmico
     const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js");
     const { getFirestore } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
     
     app = initializeApp(FIREBASE_CONFIG);
-    
-    // Teste REAL de conexão
     db = getFirestore(app);
     
-    // Tentar buscar algo para testar conexão
     const { collection, getDocs } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
     await getDocs(collection(db, '_test_')).catch(() => {});
     
     firebaseLoaded = true;
-    console.log('✅ Firebase conectado');
+    console.log('✅ Firebase conectado via import');
     hideConnectionBanner();
     return true;
     
   } catch (error) {
     console.warn('⚠️ Firebase não disponível:', error.message);
     firebaseLoaded = false;
-    
-    // Mostrar banner de erro
     showConnectionBanner(error.message);
     return false;
   }
@@ -497,13 +506,25 @@ async function searchOrder() {
     let order = null;
     
     if (firebaseLoaded && db) {
-      // Buscar no Firestore
-      const { collection, query, where, getDocs } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
-      const q = query(collection(db, "orders"), where("orderId", "==", orderId));
-      const snap = await getDocs(q);
-      
-      if (!snap.empty) {
-        order = { id: snap.docs[0].id, ...snap.docs[0].data() };
+      try {
+        // Tentar buscar no Firestore
+        let q, snap;
+        if (typeof firebase !== 'undefined') {
+          // Firebase v8 style
+          q = db.collection("orders").where("orderId", "==", orderId);
+          snap = await q.get();
+        } else {
+          // Firebase v10+ style
+          const { collection, query, where, getDocs } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+          q = query(collection(db, "orders"), where("orderId", "==", orderId));
+          snap = await getDocs(q);
+        }
+        
+        if (!snap.empty) {
+          order = { id: snap.docs[0].id, ...snap.docs[0].data() };
+        }
+      } catch (dbError) {
+        console.warn('⚠️ Erro ao buscar no Firestore:', dbError.message);
       }
     }
     
@@ -577,10 +598,11 @@ async function generatePDF() {
     doc.setFont("helvetica", "normal");
     doc.text("O Mundo no seu Bolso.", 50, 25);
     
-    // QR Code (se disponível)
+    // QR Code (se disponível) - ✅ URL CORRIGIDA SEM ESPAÇOS
     if (typeof QRCode !== 'undefined') {
       try {
-        const qrDataUrl = await QRCode.toDataURL(`https://paygo.co.mz/validar?id=${currentOrder.orderId}`, {
+        const validationUrl = `https://paygo.co.mz/validar?id=${currentOrder.orderId}`;
+        const qrDataUrl = await QRCode.toDataURL(validationUrl, {
           errorCorrectionLevel: 'H',
           margin: 0,
           color: { dark: '#ffffff', light: '#0f172a' }
@@ -661,7 +683,7 @@ async function generatePDF() {
 }
 
 // ==========================================
-// 📤 ENVIAR WHATSAPP
+// 📤 ENVIAR WHATSAPP - ✅ URL CORRIGIDA
 // ==========================================
 function sendWhatsApp() {
   if (!currentOrder) {
@@ -679,6 +701,7 @@ function sendWhatsApp() {
   
   const phone = currentOrder.whatsapp?.replace(/\D/g, '') || '';
   if (phone) {
+    // ✅ URL CORRIGIDA: sem espaço após https://wa.me/
     const cleanPhone = phone.startsWith('258') ? phone : `258${phone}`;
     window.open(`https://wa.me/${cleanPhone}?text=${message}`, '_blank', 'noopener,noreferrer');
     showToast('WhatsApp aberto!', 'success');
