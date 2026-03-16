@@ -7,9 +7,6 @@
   <meta name="robots" content="noindex, nofollow">
   <meta name="theme-color" content="#0f172a">
   
-  <!-- ✅ REMOVIDO manifest.json para evitar 404 -->
-  <!-- <link rel="manifest" href="/manifest.json"> -->
-  
   <!-- ✅ URLs CORRIGIDAS - SEM ESPAÇOS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -123,7 +120,7 @@
   <!-- Sidebar -->
   <aside class="w-64 bg-slate-950 text-slate-300 hidden md:flex flex-col fixed h-full z-40" role="navigation">
     <div class="p-6 border-b border-white/10 flex items-center gap-3">
-      <div class="bg-gradient-to-tr from-brand-500 to-brand-600 p-2.5 rounded-xl text-white shadow-lg">
+      <div class="bg-gradient-to-tr from-brand-500 to-brand-600 p-2.5 rounded-xl text-white shadow-lg shadow-brand-500/30">
         <i data-lucide="zap" class="w-5 h-5 fill-current" aria-hidden="true"></i>
       </div>
       <span class="text-xl font-display font-bold text-white">PayGo Admin</span>
@@ -161,13 +158,12 @@
 
   <!-- Main Content -->
   <main class="flex-1 md:ml-64 p-4 md:p-8 flex flex-col items-center justify-center relative overflow-hidden min-h-screen">
-    <div class="absolute top-0 right-0 w-96 h-96 bg-brand-500/10 rounded-full blur-[100px] pointer-events-none" aria-hidden="true"></div>
-
-    <!-- Status Banner -->
-    <div id="connectionStatus" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 hidden">
+    
+    <!-- Connection Status Banner -->
+    <div id="connectionBanner" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 hidden">
       <div class="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 shadow-lg">
         <i data-lucide="wifi-off" class="w-4 h-4" aria-hidden="true"></i>
-        <span>Modo Offline: Funcionalidades limitadas</span>
+        <span id="connectionMessage">Modo Offline: Funcionalidades limitadas</span>
       </div>
     </div>
 
@@ -238,10 +234,12 @@
           <i data-lucide="info" class="w-5 h-5 flex-shrink-0 mt-0.5" aria-hidden="true"></i>
           <div>
             <p class="font-bold">Modo Demonstração</p>
-            <p class="mt-1">Como o banco de dados ainda não está configurado, usando dados de exemplo. Para usar dados reais, crie o banco Firestore no console do Firebase.</p>
-            <a href="https://console.firebase.google.com/project/paygo-14311/firestore" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 mt-2 text-blue-700 hover:underline font-medium">
-              Criar banco de dados <i data-lucide="external-link" class="w-3 h-3" aria-hidden="true"></i>
-            </a>
+            <p class="mt-1">Como o banco de dados Firestore ainda não está configurado, usando dados de exemplo. Para usar dados reais:</p>
+            <ol class="list-decimal list-inside mt-2 space-y-1 text-xs">
+              <li>Acesse <a href="https://console.firebase.google.com/project/paygo-14311/firestore" target="_blank" class="text-blue-700 hover:underline">Console Firebase</a></li>
+              <li>Clique em "Criar banco de dados"</li>
+              <li>Escolha "Modo de Teste" para desenvolvimento</li>
+            </ol>
           </div>
         </div>
       </div>
@@ -267,7 +265,7 @@
   <!-- Toast Container -->
   <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2 pointer-events-none" role="region" aria-label="Notificações"></div>
 
-  <!-- ✅ JAVASCRIPT COM FALLBACK OFFLINE -->
+  <!-- ✅ JAVASCRIPT COM INDICADOR REAL DE CONEXÃO -->
   <script type="module">
     // ==========================================
     // 🔧 CONFIGURAÇÃO FIREBASE - URLs 100% LIMPAS
@@ -325,7 +323,7 @@
       }
     };
 
-    // Inicializar Firebase com fallback
+    // Inicializar Firebase com fallback e indicador real
     async function initFirebase() {
       try {
         console.log('🔥 Tentando conectar ao Firebase...');
@@ -341,8 +339,11 @@
         // Testar conexão com uma query simples
         await getDocs(collection(db, '_test_connection_')).catch(() => {});
         
+        // ✅ Conexão real estabelecida
         firestoreAvailable = true;
+        demoMode = false;
         console.log('✅ Firestore conectado com sucesso');
+        showConnectionStatus('✅ Conectado ao Firestore', 'success');
         return true;
         
       } catch (error) {
@@ -352,14 +353,18 @@
         if (error.message?.includes('does not exist') || error.code === 'not-found') {
           console.warn('📋 Banco de dados Firestore não criado. Ativando modo demonstração.');
           demoMode = true;
-          showConnectionStatus('Modo Offline: Dados de exemplo', 'warning');
+          firestoreAvailable = false;
+          showConnectionStatus('🔧 Modo Demo: Banco Firestore não criado', 'warning');
+          showDemoNotice();
           return false;
         }
         
         // Outros erros de conexão
         console.warn('📡 Problema de conexão. Ativando modo offline.');
         demoMode = true;
-        showConnectionStatus('Conexão instável: Modo offline', 'warning');
+        firestoreAvailable = false;
+        showConnectionStatus('⚠️ Conexão instável: Modo offline', 'warning');
+        showDemoNotice();
         return false;
       }
     }
@@ -454,15 +459,18 @@
     }
 
     function showConnectionStatus(message, type = 'info') {
-      const banner = document.getElementById('connectionStatus');
-      if (!banner) return;
+      const banner = document.getElementById('connectionBanner');
+      const msgEl = document.getElementById('connectionMessage');
+      if (!banner || !msgEl) return;
       
       const colors = {
+        success: 'bg-green-50 border-green-200 text-green-800',
         info: 'bg-blue-50 border-blue-200 text-blue-800',
         warning: 'bg-amber-50 border-amber-200 text-amber-800',
         error: 'bg-red-50 border-red-200 text-red-800'
       };
       const icons = {
+        success: 'check-circle',
         info: 'info',
         warning: 'wifi-off',
         error: 'alert-circle'
@@ -471,7 +479,7 @@
       banner.className = `fixed top-4 left-1/2 -translate-x-1/2 z-50 ${colors[type] || colors.info} px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 shadow-lg`;
       banner.innerHTML = `
         <i data-lucide="${icons[type] || icons.info}" class="w-4 h-4" aria-hidden="true"></i>
-        <span>${message}</span>
+        <span id="connectionMessage">${message}</span>
       `;
       banner.classList.remove('hidden');
       
@@ -479,12 +487,17 @@
         try { lucide.createIcons({ root: banner }); } catch(e) {}
       }
       
-      // Auto-hide após 10 segundos para warnings/info
+      // Auto-hide após 10 segundos para warnings/info/success
       if (type !== 'error') {
         setTimeout(() => {
           banner.classList.add('hidden');
         }, 10000);
       }
+    }
+
+    function showDemoNotice() {
+      const notice = document.getElementById('demoNotice');
+      if (notice) notice.classList.remove('hidden');
     }
 
     // ==========================================
@@ -524,7 +537,9 @@
         if (!demoMode) {
           console.warn('⚠️ Ativando modo demo após erro');
           demoMode = true;
+          firestoreAvailable = false;
           showConnectionStatus('Erro de conexão: Usando dados de exemplo', 'warning');
+          showDemoNotice();
           return fetchOrderData(orderId); // Recursivo para usar demo
         }
         
@@ -833,7 +848,7 @@
         
         // Mostrar aviso se for demo
         if (orderData.isDemo) {
-          document.getElementById('demoNotice')?.classList.remove('hidden');
+          showDemoNotice();
           showToast('📋 Usando dados de exemplo (modo demo)', 'info', 6000);
         }
         
@@ -915,7 +930,7 @@
       
       // Mostrar aviso de demo se aplicável
       if (demoMode) {
-        document.getElementById('demoNotice')?.classList.remove('hidden');
+        showDemoNotice();
       }
       
       console.log('✅ PayGo Invoice Generator loaded');
