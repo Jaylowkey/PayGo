@@ -9,7 +9,6 @@
   
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
-  
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
@@ -25,13 +24,11 @@
           fontFamily: {
             sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
             display: ['"Outfit"', 'system-ui', 'sans-serif'],
-            mono: ['"Fira Code"', 'monospace']
           },
           colors: {
             brand: { 50: '#eff6ff', 100: '#dbeafe', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 900: '#1e3a8a', 950: '#0f172a' },
-            success: { 50: '#f0fdf4', 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' },
-            warning: { 50: '#fffbeb', 400: '#fbbf24', 500: '#f59e0b' },
-            danger: { 50: '#fef2f2', 400: '#f87171', 500: '#ef4444' }
+            success: { 50: '#f0fdf4', 500: '#22c55e', 600: '#16a34a' },
+            danger: { 50: '#fef2f2', 500: '#ef4444' }
           }
         }
       }
@@ -42,167 +39,116 @@
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: #f1f5f9; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-    html { scroll-behavior: smooth; }
     
     .glass-card {
-      background: white;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
       border: 1px solid #e2e8f0;
       border-radius: 1.5rem;
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 4px 20px -5px rgba(0,0,0,0.05);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .glass-card:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.1); }
+    .glass-card:hover { transform: translateY(-3px); box-shadow: 0 20px 40px -10px rgba(37, 99, 235, 0.15); }
     
-    .btn-primary { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
-    .btn-primary:active { transform: scale(0.97); }
-    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .btn-action {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-action:active { transform: scale(0.96); }
     
-    #pageLoader { transition: opacity 0.4s ease, visibility 0.4s ease; }
-    .loader-spinner { border-top-color: #3b82f6; animation: spinner 1s linear infinite; }
-    @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-in { animation: fadeIn 0.4s ease-out forwards; }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-900 font-sans antialiased overflow-x-hidden">
 
 <div id="pageLoader" class="fixed inset-0 bg-slate-950 z-[100] flex flex-col items-center justify-center">
-  <div class="w-14 h-14 border-4 border-slate-800 border-t-brand-500 rounded-full loader-spinner mb-5"></div>
-  <h2 class="text-white text-xl font-display font-bold">PayGo Workspace</h2>
-  <p class="text-slate-400 text-sm mt-2 font-medium tracking-wide">A sincronizar com os servidores...</p>
+  <div class="relative w-20 h-20">
+    <div class="absolute inset-0 border-4 border-white/10 rounded-full"></div>
+    <div class="absolute inset-0 border-4 border-t-brand-500 rounded-full animate-spin"></div>
+  </div>
+  <h2 class="text-white text-xl font-display font-bold mt-6 tracking-tight">PayGo Workspace</h2>
+  <p class="text-slate-400 text-sm mt-2 font-medium animate-pulse">Sincronizando infraestrutura...</p>
 </div>
 
-<aside class="fixed left-0 top-0 h-full w-64 bg-slate-950 text-slate-300 hidden md:flex flex-col z-40">
+<aside class="fixed left-0 top-0 h-full w-64 bg-slate-950 text-slate-300 hidden md:flex flex-col z-40 border-r border-white/5">
   <div class="p-6 border-b border-white/10 flex items-center gap-3">
-    <div class="bg-gradient-to-tr from-brand-500 to-accent-500 p-2.5 rounded-xl text-white shadow-lg shadow-brand-500/20">
-      <i data-lucide="zap" class="w-5 h-5 fill-current"></i>
+    <div class="bg-brand-600 p-2 rounded-xl text-white shadow-lg">
+      <i data-lucide="zap" class="w-5 h-5 fill-current text-yellow-300"></i>
     </div>
-    <span class="text-xl font-display font-bold text-white tracking-tight">PayGo Admin</span>
+    <span class="text-xl font-display font-bold text-white">PayGo Admin</span>
   </div>
   
-  <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
-    <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition font-medium">
-      <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
+  <nav class="flex-1 p-4 space-y-2">
+    <a href="#" class="flex items-center gap-3 px-4 py-3 bg-brand-500/10 text-brand-400 border-r-4 border-brand-500 rounded-xl font-bold">
+      <i data-lucide="file-text" class="w-5 h-5"></i> Faturas
     </a>
-    <a href="#" class="flex items-center gap-3 px-4 py-3 bg-brand-500/10 text-brand-400 border-r-2 border-brand-500 rounded-xl font-bold">
-      <i data-lucide="file-check-2" class="w-5 h-5"></i> Emissão de Faturas
-    </a>
-    <a href="clientes.html" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition font-medium">
+    <a href="clientes.html" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition">
       <i data-lucide="users" class="w-5 h-5"></i> Clientes
     </a>
+    <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition">
+      <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
+    </a>
   </nav>
-  
-  <div class="p-4 border-t border-white/10">
-    <div class="flex items-center gap-3 px-2 py-3 mb-3 bg-white/5 rounded-xl border border-white/5">
-      <div class="w-9 h-9 rounded-full bg-brand-600 flex items-center justify-center text-sm font-bold text-white shadow-inner">A</div>
-      <div class="flex-1 min-w-0">
-        <p class="text-sm font-bold text-white truncate">Administrador</p>
-        <p class="text-[10px] text-slate-400 truncate uppercase tracking-wider">Gestão Global</p>
+
+  <div class="p-4 mt-auto">
+    <div class="bg-white/5 rounded-2xl p-4 border border-white/5">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-brand-500 to-indigo-600 flex items-center justify-center text-white font-bold">A</div>
+        <div>
+          <p class="text-xs font-bold text-white">Admin Master</p>
+          <p class="text-[10px] text-slate-500 uppercase tracking-tighter">Acesso Total</p>
+        </div>
       </div>
     </div>
   </div>
 </aside>
 
-<main class="md:ml-64 p-4 md:p-8 min-h-screen relative">
-  <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-brand-400/10 rounded-full blur-[120px] pointer-events-none -z-10"></div>
-
-  <div class="md:hidden fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-md border-b border-slate-200 p-4 flex items-center justify-between z-30">
-    <div class="flex items-center gap-2">
-      <div class="bg-brand-500 p-2 rounded-lg text-white"><i data-lucide="zap" class="w-5 h-5 fill-current"></i></div>
-      <span class="font-display font-bold text-slate-900">PayGo Admin</span>
-    </div>
-  </div>
-  
-  <div class="max-w-4xl mx-auto md:pt-4 pt-20">
+<main class="md:ml-64 p-4 md:p-10 min-h-screen">
+  <div class="max-w-4xl mx-auto pt-16 md:pt-0">
     
-    <div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
       <div>
-        <h1 class="text-3xl font-display font-bold text-slate-900 mb-2">Gerador de Faturas</h1>
-        <p class="text-slate-500 font-medium">Emita comprovativos oficiais e envie via WhatsApp instantaneamente.</p>
+        <h1 class="text-4xl font-display font-extrabold text-slate-900 tracking-tight">Gerador Pro</h1>
+        <p class="text-slate-500 font-medium">Controle de emissão e envio automatizado.</p>
       </div>
-      <div id="dbStatus" class="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-200 text-slate-600 rounded-full text-xs font-bold transition-colors">
-        <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-slate-500"></span></span>
-        A conectar...
+      <div id="dbStatus" class="flex items-center gap-2 px-4 py-2 bg-slate-100 rounded-full text-[11px] font-black uppercase tracking-widest text-slate-500">
+        <span class="w-2 h-2 rounded-full bg-slate-400 animate-pulse"></span> Offline
       </div>
     </div>
-    
-    <div class="glass-card p-6 mb-8 relative overflow-hidden">
-      <div class="absolute right-0 top-0 w-32 h-32 bg-brand-50 rounded-bl-full -z-10 opacity-50"></div>
-      <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Localizar Pedido</label>
-      <div class="flex flex-col sm:flex-row gap-3">
-        <div class="relative flex-1 group">
-          <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-brand-500 transition-colors"></i>
-          <input type="text" id="orderIdInput" placeholder="Ex: PG-145340" class="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 font-mono text-lg font-bold uppercase transition-all" maxlength="10">
+
+    <div class="glass-card p-2 mb-10">
+      <div class="flex flex-col sm:flex-row gap-2">
+        <div class="relative flex-1">
+          <i data-lucide="search" class="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
+          <input type="text" id="orderIdInput" placeholder="ID DO PEDIDO (EX: PG-100)" 
+            class="w-full pl-14 pr-4 py-5 bg-transparent border-none focus:ring-0 text-xl font-mono font-bold uppercase placeholder:text-slate-300">
         </div>
-        <button id="btnSearch" onclick="searchOrder()" class="px-8 py-4 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold btn-primary flex items-center justify-center gap-2 shadow-lg shadow-brand-500/20">
-          <i data-lucide="search" class="w-5 h-5"></i>
-          <span>Buscar Sistema</span>
+        <button onclick="searchOrder()" id="btnSearch" class="btn-action px-10 py-5 bg-slate-900 hover:bg-brand-600 text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-xl shadow-slate-200 transition-all">
+          <span>Localizar</span>
+          <i data-lucide="arrow-right" class="w-5 h-5"></i>
         </button>
       </div>
     </div>
-    
-    <div id="orderDetails" class="hidden glass-card p-8 mb-6 animate-[fadeIn_0.5s_ease-out]">
-      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 pb-6 border-b border-slate-100 gap-4">
-        <div class="flex items-center gap-3">
-          <div class="w-12 h-12 bg-brand-50 text-brand-600 rounded-full flex items-center justify-center border border-brand-100"><i data-lucide="receipt" class="w-6 h-6"></i></div>
-          <div>
-            <h2 class="text-xl font-display font-bold text-slate-900">Resumo da Operação</h2>
-            <p class="text-xs text-slate-500 font-mono" id="orderIdDisplay">PG-XXXXXX</p>
-          </div>
+
+    <div id="resultContainer">
+      <div id="emptyState" class="py-20 text-center">
+        <div class="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <i data-lucide="search" class="w-10 h-10 text-slate-300"></i>
         </div>
-        <span id="orderStatus" class="px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider">STATUS</span>
-      </div>
-      
-      <div class="grid md:grid-cols-2 gap-8 mb-8">
-        <div class="space-y-4">
-          <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2"><i data-lucide="user" class="w-4 h-4"></i> Dados do Cliente</h3>
-          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-3">
-            <p class="text-sm flex justify-between"><span class="text-slate-500">Nome:</span> <span class="font-bold text-slate-900" id="clientName">-</span></p>
-            <p class="text-sm flex justify-between"><span class="text-slate-500">WhatsApp:</span> <span class="font-bold text-slate-900" id="clientPhone">-</span></p>
-            <p class="text-sm flex justify-between"><span class="text-slate-500">Email:</span> <span class="font-medium text-slate-700 truncate max-w-[150px]" id="clientEmail">-</span></p>
-          </div>
-        </div>
-        <div class="space-y-4">
-          <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2"><i data-lucide="credit-card" class="w-4 h-4"></i> Dados Financeiros</h3>
-          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-3">
-            <p class="text-sm flex justify-between"><span class="text-slate-500">Valor (USD):</span> <span class="font-bold text-slate-900" id="orderUSD">-</span></p>
-            <p class="text-sm flex justify-between"><span class="text-slate-500">Taxa Serviço:</span> <span class="font-bold text-slate-900" id="orderTax">-</span></p>
-            <div class="pt-3 border-t border-slate-200 flex justify-between items-center">
-              <span class="text-slate-500 font-bold uppercase text-xs">Total Pago:</span>
-              <span class="font-display font-bold text-brand-600 text-xl" id="orderTotal">-</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-        <button id="btnPdf" onclick="generatePDF()" class="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold btn-primary flex items-center justify-center gap-2 shadow-lg shadow-slate-900/20">
-          <i data-lucide="file-down" class="w-5 h-5"></i> Emitir PDF Oficial
-        </button>
-        <button id="btnWa" onclick="sendWhatsApp()" class="w-full py-4 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-xl font-bold btn-primary flex items-center justify-center gap-2 shadow-lg shadow-[#25D366]/20">
-          <i data-lucide="send" class="w-5 h-5"></i> Enviar Fatura Cliente
-        </button>
+        <p class="text-slate-400 font-medium">Aguardando busca de pedido...</p>
       </div>
     </div>
-    
-    <div id="errorState" class="hidden glass-card p-12 text-center border-red-100 bg-red-50/30">
-      <div class="w-20 h-20 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6"><i data-lucide="search-x" class="w-10 h-10"></i></div>
-      <h3 class="text-2xl font-display font-bold text-slate-900 mb-2">Pedido não encontrado</h3>
-      <p class="text-slate-500 mb-8 max-w-sm mx-auto">O código inserido não existe na base de dados. Verifique possíveis espaços ou erros de digitação.</p>
-      <button onclick="document.getElementById('orderIdInput').focus(); document.getElementById('orderIdInput').select();" class="px-8 py-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl font-bold btn-primary shadow-sm">
-        Tentar Novamente
-      </button>
-    </div>
-    
   </div>
 </main>
 
-<div id="toastContainer" class="fixed top-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none"></div>
+<div id="toastContainer" class="fixed bottom-6 right-6 z-[9999] space-y-3"></div>
 
 <script type="module">
-  // 1. Importação modular e limpa (apenas v10+)
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
   import { initializeFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-  // 2. Credenciais
   const FIREBASE_CONFIG = {
     apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
     authDomain: "paygo-14311.firebaseapp.com",
@@ -212,312 +158,290 @@
     appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
   };
 
-  // ⚠️ Chave de Segurança para a Evolution API na Vercel
-  const ADMIN_SECRET = "PayGo@Admin#2026!Sec"; 
-
-  // Variáveis Globais
   let db;
   let currentOrder = null;
 
-  // 3. Inicialização e Correção do Timeout (Long Polling)
-  try {
-    const app = initializeApp(FIREBASE_CONFIG);
-    db = initializeFirestore(app, {
-      experimentalForceLongPolling: true // <- Resolve o bloqueio de rede!
-    });
-    
-    updateDbStatus('✅ Conectado', 'bg-green-100 text-green-700', 'bg-green-500');
-    setTimeout(() => {
-      document.getElementById('pageLoader').style.opacity = '0';
-      setTimeout(() => document.getElementById('pageLoader').style.visibility = 'hidden', 400);
-    }, 800);
-  } catch (error) {
-    console.error("Erro Firebase:", error);
-    updateDbStatus('❌ Offline', 'bg-red-100 text-red-700', 'bg-red-500');
-    document.getElementById('pageLoader').style.display = 'none';
+  // Inicialização Profissional
+  async function initSystem() {
+    try {
+      const app = initializeApp(FIREBASE_CONFIG);
+      // 🔥 CORREÇÃO CRÍTICA: Definindo o nome da base de dados explicitamente
+      db = initializeFirestore(app, {
+        experimentalForceLongPolling: true
+      }, "paygo-14311");
+
+      updateStatusUI('✅ Online', 'bg-success-500', 'text-success-600 bg-success-50');
+      
+      setTimeout(() => {
+        const loader = document.getElementById('pageLoader');
+        loader.style.opacity = '0';
+        setTimeout(() => loader.remove(), 500);
+      }, 1000);
+      
+      lucide.createIcons();
+    } catch (error) {
+      console.error("Erro Crítico:", error);
+      showToast("Falha na conexão com os servidores", "error");
+    }
   }
 
-  // Inicializar ícones
-  lucide.createIcons();
+  // --- Funções de Negócio ---
 
-  // ==========================================
-  // FUNÇÕES GLOBAIS EXPOSTAS
-  // ==========================================
-  
   window.searchOrder = async function() {
-    const inputEl = document.getElementById('orderIdInput');
-    const orderId = inputEl.value.trim().toUpperCase();
+    const input = document.getElementById('orderIdInput');
+    const id = input.value.trim().toUpperCase();
     const btn = document.getElementById('btnSearch');
-    const originalBtn = btn.innerHTML;
-    
-    if (!orderId) { showToast('Insira um ID de pedido.', 'warning'); return; }
 
-    btn.disabled = true;
-    btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A procurar...';
-    lucide.createIcons();
-    
-    document.getElementById('orderDetails').classList.add('hidden');
-    document.getElementById('errorState').classList.add('hidden');
+    if (!id) return showToast("Por favor, digite um ID.", "warning");
+
+    // Cache local para performance
+    const cached = sessionStorage.getItem(`order_${id}`);
+    if (cached) {
+      renderResult(JSON.parse(cached));
+      return showToast("Pedido carregado do cache", "success");
+    }
+
+    setBtnLoading(btn, true);
 
     try {
-      const q = query(collection(db, "orders"), where("orderId", "==", orderId));
+      const q = query(collection(db, "orders"), where("orderId", "==", id));
       const snap = await getDocs(q);
 
       if (snap.empty) {
-        document.getElementById('errorState').classList.remove('hidden');
-        showToast('Pedido não encontrado.', 'error');
+        renderNotFound();
+        showToast("Pedido não encontrado.", "error");
       } else {
         currentOrder = snap.docs[0].data();
-        renderOrderDetails(currentOrder);
-        showToast('Pedido localizado!', 'success');
+        sessionStorage.setItem(`order_${id}`, JSON.stringify(currentOrder));
+        renderResult(currentOrder);
+        showToast("Dados recuperados!", "success");
       }
-    } catch (error) {
-      console.error("Busca falhou:", error);
-      showToast('Erro de conexão ao procurar.', 'error');
+    } catch (e) {
+      console.error(e);
+      showToast("Erro ao acessar Firestore", "error");
     } finally {
-      btn.disabled = false;
-      btn.innerHTML = originalBtn;
-      lucide.createIcons();
+      setBtnLoading(btn, false);
     }
   };
 
-  window.generatePDF = async function() {
-    if (!currentOrder) return;
-    const btn = document.getElementById('btnPdf');
-    const orig = btn.innerHTML;
-    
-    try {
-      btn.disabled = true;
-      btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A gerar PDF...';
-      lucide.createIcons();
-      
-      const doc = await buildInvoiceDoc(currentOrder);
-      doc.save(`Fatura_PayGo_${currentOrder.orderId}.pdf`);
-      showToast('Download concluído!', 'success');
-    } catch (e) {
-      console.error(e);
-      showToast('Erro ao criar o documento.', 'error');
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = orig;
-      lucide.createIcons();
-    }
-  };
+  function renderResult(order) {
+    const container = document.getElementById('resultContainer');
+    const isCompleted = order.status === 'completed';
+
+    container.innerHTML = `
+      <div class="glass-card p-8 animate-in">
+        <div class="flex flex-col sm:flex-row justify-between border-b border-slate-100 pb-8 mb-8 gap-4">
+          <div class="flex items-center gap-4">
+            <div class="w-14 h-14 bg-brand-50 text-brand-600 rounded-2xl flex items-center justify-center">
+              <i data-lucide="receipt-text" class="w-7 h-7"></i>
+            </div>
+            <div>
+              <p class="text-xs font-black text-slate-400 uppercase tracking-widest">Código do Pedido</p>
+              <h2 class="text-2xl font-display font-bold text-slate-900">${order.orderId}</h2>
+            </div>
+          </div>
+          <div class="flex flex-col items-end">
+             <span class="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${isCompleted ? 'bg-success-50 text-success-600' : 'bg-amber-50 text-amber-600'}">
+              ${isCompleted ? '✓ Concluído' : '• Pendente'}
+             </span>
+             <p class="text-[10px] text-slate-400 mt-2 font-mono">${new Date().toLocaleDateString()}</p>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-10 mb-10">
+          <div class="space-y-6">
+            <h3 class="text-xs font-black text-slate-400 uppercase tracking-tighter flex items-center gap-2">
+              <i data-lucide="user" class="w-4 h-4"></i> Titular da Conta
+            </h3>
+            <div class="bg-slate-50 rounded-2xl p-5 space-y-4 border border-slate-100">
+              <div class="flex justify-between items-center text-sm">
+                <span class="text-slate-500">Nome:</span>
+                <span class="font-bold text-slate-800">${order.name || '---'}</span>
+              </div>
+              <div class="flex justify-between items-center text-sm">
+                <span class="text-slate-500">Telefone:</span>
+                <span class="font-bold text-slate-800">${order.whatsapp || '---'}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-6">
+            <h3 class="text-xs font-black text-slate-400 uppercase tracking-tighter flex items-center gap-2">
+              <i data-lucide="wallet" class="w-4 h-4"></i> Resumo Financeiro
+            </h3>
+            <div class="bg-slate-900 rounded-2xl p-5 text-white space-y-4">
+              <div class="flex justify-between items-center text-sm opacity-80">
+                <span>Valor Base:</span>
+                <span>$${(order.usd || 0).toFixed(2)}</span>
+              </div>
+              <div class="flex justify-between items-center text-sm opacity-80">
+                <span>Taxas:</span>
+                <span>${formatCurrency(order.tax)}</span>
+              </div>
+              <div class="pt-3 border-t border-white/10 flex justify-between items-center">
+                <span class="text-xs font-bold text-brand-400">TOTAL PAGO</span>
+                <span class="text-2xl font-display font-black text-white">${formatCurrency(order.total)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid sm:grid-cols-2 gap-4">
+          <button onclick="generatePDF()" class="btn-action flex items-center justify-center gap-3 bg-slate-100 hover:bg-slate-200 text-slate-900 py-5 rounded-2xl font-bold transition-all">
+            <i data-lucide="download-cloud" class="w-5 h-5"></i> Baixar PDF
+          </button>
+          <button onclick="sendWhatsApp()" class="btn-action flex items-center justify-center gap-3 bg-[#25D366] hover:bg-[#1fb355] text-white py-5 rounded-2xl font-bold shadow-lg shadow-green-100 transition-all">
+            <i data-lucide="send" class="w-5 h-5"></i> Enviar WhatsApp
+          </button>
+        </div>
+      </div>
+    `;
+    lucide.createIcons();
+  }
 
   window.sendWhatsApp = async function() {
     if (!currentOrder) return;
-    const btn = document.getElementById('btnWa');
-    const orig = btn.innerHTML;
     
+    showToast("Preparando integração...", "info");
+    
+    const doc = await buildInvoiceDoc(currentOrder);
+    const pdfBase64 = doc.output('datauristring');
+    
+    // Formatação de número inteligente
+    let phone = currentOrder.whatsapp.replace(/\D/g, '');
+    if (phone.length === 9) phone = '258' + phone;
+
     try {
-      btn.disabled = true;
-      btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A conectar à API...';
-      lucide.createIcons();
-      
-      // 1. Gera o PDF em background (sem fazer download)
-      const doc = await buildInvoiceDoc(currentOrder);
-      const pdfBase64 = doc.output('datauristring');
-      
-      // 2. Tenta enviar via Evolution API (Vercel)
-      try {
-        const response = await fetch('/api/send-whatsapp-invoice', {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'x-admin-secret': ADMIN_SECRET 
-          },
-          body: JSON.stringify({
-            orderId: currentOrder.orderId,
-            clientName: currentOrder.name || 'Cliente',
-            phone: currentOrder.whatsapp,
-            pdfData: pdfBase64 
-          })
-        });
+      const response = await fetch('/api/send-whatsapp-invoice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: phone,
+          orderId: currentOrder.orderId,
+          pdfData: pdfBase64
+        })
+      });
 
-        const result = await response.json();
-        if (response.ok && result.success) {
-          showToast('Fatura enviada com sucesso no WhatsApp do cliente!', 'success');
-          return; // Termina aqui se a API funcionou
-        }
-        throw new Error("API falhou, usando fallback");
-      } catch (apiError) {
-        console.warn("Evolution API falhou, a usar WhatsApp Web Fallback:", apiError);
-        
-        // 3. FALLBACK: Se a API falhar, abre o WhatsApp Web
-        const msg = encodeURIComponent(`Olá ${currentOrder.name || 'Cliente'}! 👋\n\nA tua fatura da PayGo (Pedido: ${currentOrder.orderId}) foi gerada.\n\nTotal: ${formatMT(currentOrder.total)}\n\nO documento oficial em PDF segue em anexo a esta mensagem.`);
-        let cleanPhone = currentOrder.whatsapp.replace(/\D/g, '');
-        if (cleanPhone.length <= 9) cleanPhone = '258' + cleanPhone;
-        
-        window.open(`https://wa.me/${cleanPhone}?text=${msg}`, '_blank');
-        
-        // Dispara o download do PDF para o admin poder anexar manualmente no WhatsApp Web
-        doc.save(`Fatura_${currentOrder.orderId}.pdf`);
-        showToast('API indisponível. PDF baixado para envio manual.', 'warning');
+      if (response.ok) {
+        showToast("Fatura entregue via API!", "success");
+      } else {
+        throw new Error();
       }
-
-    } catch (e) {
-      console.error(e);
-      showToast('Erro crítico ao processar envio.', 'error');
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = orig;
-      lucide.createIcons();
+    } catch {
+      // Fallback para Web Link
+      const msg = encodeURIComponent(`Olá ${currentOrder.name}! Sua fatura PayGo do pedido ${currentOrder.orderId} está pronta. Verifique o PDF em anexo.`);
+      window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
+      doc.save(`Fatura_${currentOrder.orderId}.pdf`);
+      showToast("Redirecionando para envio manual", "warning");
     }
-  };
+  }
 
-  // ==========================================
-  // FUNÇÕES AUXILIARES
-  // ==========================================
+  // --- Utilitários ---
 
   async function buildInvoiceDoc(order) {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     
-    const brandColor = [59, 130, 246]; 
-    const darkColor = [15, 23, 42];    
-    const grayColor = [100, 116, 139]; 
-    const formatMoney = (val) => Number(val || 0).toLocaleString('pt-MZ', { minimumFractionDigits: 2 }) + ' MT';
-    const convertedValue = (order.usd * (order.exchangeRate || 88));
-
-    // Header Visual
-    doc.setFillColor(...darkColor);
-    doc.rect(0, 0, 210, 45, 'F');
+    // Estilo Hiper Profissional para 2026
+    doc.setFillColor(15, 23, 42);
+    doc.rect(0, 0, 210, 50, 'F');
+    
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(26);
-    doc.setFont("helvetica", "bold");
-    doc.text("PayGo", 14, 25);
+    doc.setFontSize(30);
+    doc.text("PayGo", 20, 32);
+    
     doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text("O Mundo no seu Bolso.", 50, 25);
-
-    // QR Code Anti-Fraude
-    try {
-      const qrUrl = await QRCode.toDataURL(`https://paygo.co.mz/validar?id=${order.orderId}`, { 
-        errorCorrectionLevel: 'H', margin: 0, color: { dark: '#ffffff', light: '#0f172a' } 
-      });
-      doc.addImage(qrUrl, 'PNG', 170, 10, 22, 22);
-      doc.setFontSize(7);
-      doc.setFont("helvetica", "bold");
-      doc.text("DOCUMENTO VÁLIDO", 181, 37, null, null, "center");
-    } catch(e) { console.warn("Erro no QR", e); }
-
-    // Dados da Empresa e Cliente
-    doc.setTextColor(...darkColor);
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
-    doc.text("PayGo Serviços Digitais", 14, 60);
-    doc.text("Faturado a:", 120, 60);
+    doc.text("SISTEMA DE PAGAMENTOS DIGITAIS", 20, 42);
     
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(...grayColor);
-    doc.text("Rua de Bárue, Centro Comercial MK", 14, 66);
-    doc.text("Loja nº 6 - Chimoio, Moçambique", 14, 72);
-    
-    doc.text(order.name || "Cliente Final", 120, 66);
-    doc.text(order.whatsapp || "N/A", 120, 72);
-    doc.text(`Email: ${order.email || "N/A"}`, 120, 78);
-    
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...darkColor);
-    doc.text(`Fatura Nº: ${order.orderId}`, 14, 90);
-    doc.text(`Data: ${order.createdAt?.toDate ? order.createdAt.toDate().toLocaleDateString('pt-MZ') : new Date().toLocaleDateString('pt-MZ')}`, 14, 96);
+    // QR Code de validação
+    const qr = await QRCode.toDataURL(`https://paygo.co.mz/v/${order.orderId}`);
+    doc.addImage(qr, 'PNG', 165, 10, 30, 30);
 
-    // Tabela
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(12);
+    doc.text(`FATURA # ${order.orderId}`, 20, 70);
+    doc.text(`CLIENTE: ${order.name}`, 20, 78);
+
     doc.autoTable({
-      startY: 105,
-      head: [['Descrição', 'Câmbio', 'Valor Base', 'Total (MT)']],
-      body: [
-        [
-          `Intermediação de Compra\nRef: ${(order.detail || "S/N").substring(0, 40)}...`,
-          `${(order.exchangeRate || 88).toFixed(2)} MT/$`,
-          `$${(order.usd || 0).toFixed(2)}`,
-          formatMoney(convertedValue)
-        ]
-      ],
-      theme: 'striped',
-      headStyles: { fillColor: brandColor, textColor: 255 },
-      styles: { font: 'helvetica', fontSize: 10, cellPadding: 6 },
-      columnStyles: { 3: { halign: 'right', fontStyle: 'bold' } }
+      startY: 90,
+      head: [['ITEM', 'REF', 'VALOR USD', 'TOTAL MT']],
+      body: [[
+        'SERVIÇO DE INTERMEDIAÇÃO',
+        order.orderId,
+        `$${order.usd.toFixed(2)}`,
+        formatCurrency(order.total)
+      ]],
+      headStyles: { fillColor: [37, 99, 235] }
     });
-
-    let finalY = doc.lastAutoTable.finalY + 15;
-    
-    doc.setTextColor(...grayColor);
-    doc.setFontSize(10);
-    doc.text("Subtotal:", 140, finalY);
-    doc.text("Taxa de Serviço:", 140, finalY + 8);
-    
-    doc.setTextColor(...darkColor);
-    doc.setFont("helvetica", "bold");
-    doc.text(formatMoney(convertedValue), 195, finalY, null, null, "right");
-    doc.text(order.tax === 0 ? "GRÁTIS" : formatMoney(order.tax), 195, finalY + 8, null, null, "right");
-
-    doc.setDrawColor(226, 232, 240);
-    doc.line(140, finalY + 12, 195, finalY + 12);
-
-    doc.setFontSize(14);
-    doc.setTextColor(...brandColor);
-    doc.text("TOTAL GERAL:", 140, finalY + 22);
-    doc.text(formatMoney(order.total), 195, finalY + 22, null, null, "right");
 
     return doc;
   }
 
-  function renderOrderDetails(order) {
-    document.getElementById('orderIdDisplay').textContent = order.orderId;
-    document.getElementById('clientName').textContent = order.name || '-';
-    document.getElementById('clientPhone').textContent = order.whatsapp || '-';
-    document.getElementById('clientEmail').textContent = order.email || '-';
-    document.getElementById('orderUSD').textContent = `$${(order.usd || 0).toFixed(2)}`;
-    document.getElementById('orderTax').textContent = formatMT(order.tax);
-    document.getElementById('orderTotal').textContent = formatMT(order.total);
-    
-    const statusEl = document.getElementById('orderStatus');
-    if(order.status === 'completed') {
-      statusEl.textContent = 'CONCLUÍDO';
-      statusEl.className = 'px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-green-100 text-green-700';
-    } else {
-      statusEl.textContent = 'PENDENTE';
-      statusEl.className = 'px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-yellow-100 text-yellow-700';
-    }
-    
-    document.getElementById('orderDetails').classList.remove('hidden');
+  function formatCurrency(val) {
+    return new Intl.NumberFormat('pt-MZ', { style: 'currency', currency: 'MZN' }).format(val || 0).replace('MZN', 'MT');
   }
 
-  function formatMT(value) {
-    return Number(value || 0).toLocaleString('pt-MZ', { minimumFractionDigits: 2 }) + ' MT';
-  }
-
-  function updateDbStatus(text, bgClass, dotClass) {
+  function updateStatusUI(text, dotColor, bgClass) {
     const el = document.getElementById('dbStatus');
-    el.className = `inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${bgClass}`;
-    el.innerHTML = `<span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${dotClass}"></span><span class="relative inline-flex rounded-full h-2 w-2 ${dotClass}"></span></span> ${text}`;
+    el.className = `flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-black uppercase tracking-widest ${bgClass}`;
+    el.innerHTML = `<span class="w-2 h-2 rounded-full ${dotColor}"></span> ${text}`;
   }
 
   function showToast(msg, type) {
     const container = document.getElementById('toastContainer');
     const toast = document.createElement('div');
-    const isError = type === 'error';
-    const isWarn = type === 'warning';
+    const colors = {
+      error: 'bg-red-600',
+      success: 'bg-slate-900',
+      warning: 'bg-amber-500',
+      info: 'bg-brand-600'
+    };
     
-    toast.className = `flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl text-white transform transition-all duration-300 translate-x-full ${isError ? 'bg-red-600' : isWarn ? 'bg-amber-500' : 'bg-slate-900'}`;
-    toast.style.pointerEvents = 'auto';
-    toast.innerHTML = `<i data-lucide="${isError ? 'x-circle' : isWarn ? 'alert-triangle' : 'check-circle-2'}" class="w-5 h-5"></i><span class="text-sm font-medium">${msg}</span>`;
+    toast.className = `px-6 py-4 rounded-2xl text-white font-bold shadow-2xl flex items-center gap-3 transform transition-all duration-300 translate-y-20 opacity-0 ${colors[type] || colors.success}`;
+    toast.innerHTML = `<i data-lucide="info" class="w-5 h-5"></i> ${msg}`;
     
     container.appendChild(toast);
-    lucide.createIcons({root: toast});
+    lucide.createIcons({ root: toast });
     
-    requestAnimationFrame(() => toast.classList.remove('translate-x-full'));
     setTimeout(() => {
-      toast.classList.add('translate-x-full', 'opacity-0');
-      setTimeout(() => toast.remove(), 300);
+      toast.classList.remove('translate-y-20', 'opacity-0');
+    }, 10);
+    
+    setTimeout(() => {
+      toast.classList.add('opacity-0', 'translate-x-10');
+      setTimeout(() => toast.remove(), 400);
     }, 4000);
   }
 
-  // Permite buscar pressionando Enter
-  document.getElementById('orderIdInput').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') searchOrder();
-  });
+  function setBtnLoading(btn, isLoading) {
+    btn.disabled = isLoading;
+    btn.style.opacity = isLoading ? '0.7' : '1';
+    btn.innerHTML = isLoading ? '<div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>' : '<span>Localizar</span><i data-lucide="arrow-right" class="w-5 h-5"></i>';
+    lucide.createIcons();
+  }
+
+  function renderNotFound() {
+    document.getElementById('resultContainer').innerHTML = `
+      <div class="glass-card p-12 text-center animate-in border-red-100">
+        <i data-lucide="alert-circle" class="w-16 h-16 text-red-400 mx-auto mb-4"></i>
+        <h3 class="text-xl font-bold text-slate-900">Pedido Inexistente</h3>
+        <p class="text-slate-500">Não encontramos nenhum registro para este código.</p>
+      </div>
+    `;
+    lucide.createIcons();
+  }
+
+  window.generatePDF = async function() {
+    if(!currentOrder) return;
+    const doc = await buildInvoiceDoc(currentOrder);
+    doc.save(`FATURA_${currentOrder.orderId}.pdf`);
+    showToast("PDF Gerado!", "success");
+  }
+
+  // Atalhos
+  document.addEventListener('keypress', e => { if(e.key === 'Enter') searchOrder(); });
+
+  initSystem();
 </script>
 </body>
 </html>
