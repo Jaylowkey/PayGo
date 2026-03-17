@@ -43,7 +43,6 @@
       }
     };
 
-    // Prevenir Flash Branco no Dark Mode
     if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
       document.documentElement.classList.add('dark');
     } else {
@@ -86,7 +85,6 @@
 
     #qrCodeContainer img { margin: auto; border-radius: 0.5rem; }
     
-    /* Input Toggles */
     .dark-toggle { position: relative; width: 44px; height: 24px; cursor: pointer; }
     .dark-toggle input { opacity: 0; width: 0; height: 0; }
     .dark-toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: 0.3s; border-radius: 34px; }
@@ -97,7 +95,7 @@
 </head>
 <body class="text-slate-800 dark:text-slate-200 antialiased selection:bg-brand-500 selection:text-white">
 
-  <div id="toast-container" class="fixed bottom-6 right-6 z-[9999] flex flex-col gap-3 pointer-events-none"></div>
+  <div id="toastContainer" class="fixed bottom-6 right-6 z-[9999] flex flex-col gap-3 pointer-events-none"></div>
 
   <div id="loader" class="fixed inset-0 z-[9999] bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center transition-opacity duration-500">
     <div class="relative w-20 h-20 mb-6">
@@ -106,7 +104,7 @@
       <i data-lucide="briefcase" class="absolute inset-0 m-auto w-8 h-8 text-brand-600"></i>
     </div>
     <h2 class="text-2xl font-display font-bold text-slate-900 dark:text-white tracking-tight">PayGo Partners</h2>
-    <p class="mt-2 text-sm font-medium text-slate-500 animate-pulse">A sincronizar o seu império...</p>
+    <p class="mt-2 text-sm font-medium text-slate-500 animate-pulse">A calcular os seus ganhos...</p>
   </div>
 
   <nav class="fixed top-0 left-0 right-0 z-40 glass-card !border-x-0 !border-t-0 !rounded-none">
@@ -190,7 +188,7 @@
             </div>
             <div class="flex items-start gap-2 p-3 bg-brand-50 dark:bg-brand-500/10 rounded-xl border border-brand-100 dark:border-brand-500/20">
               <i data-lucide="info" class="w-4 h-4 text-brand-600 flex-shrink-0 mt-0.5"></i>
-              <p class="text-xs text-brand-800 dark:text-brand-300 font-medium">Ganha uma comissão fixa por cada novo cliente que realizar e pagar o seu primeiro serviço através do teu link ou QR Code.</p>
+              <p class="text-xs text-brand-800 dark:text-brand-300 font-medium">Ganha <strong id="comissaoInfo">100 MT</strong> por cada novo cliente que realizar o seu primeiro pedido concluído através do teu link.</p>
             </div>
           </div>
 
@@ -225,24 +223,24 @@
             </div>
           </div>
           <div class="text-4xl font-display font-extrabold text-slate-900 dark:text-white skeleton" id="statTotalRefs">0</div>
-          <p class="mt-3 text-xs text-slate-500 dark:text-slate-400 font-medium">Registaram-se no site com o teu link.</p>
+          <p class="mt-3 text-xs text-slate-500 dark:text-slate-400 font-medium">Pedidos gerados com o teu link.</p>
         </div>
 
         <div class="stat-card glass-card rounded-[2rem] p-8 animate-slide-up" style="animation-delay: 400ms;">
           <div class="flex justify-between items-start mb-6">
-            <span class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Vendas Feitas</span>
+            <span class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Vendas Convertidas</span>
             <div class="w-12 h-12 bg-purple-100 dark:bg-purple-500/20 rounded-2xl flex items-center justify-center border border-purple-200 dark:border-purple-500/30">
               <i data-lucide="shopping-cart" class="text-purple-600 dark:text-purple-400 w-6 h-6"></i>
             </div>
           </div>
           <div class="text-4xl font-display font-extrabold text-slate-900 dark:text-white skeleton" id="statSales">0</div>
-          <p class="mt-3 text-xs text-slate-500 dark:text-slate-400 font-medium">Fizeram o primeiro pagamento com sucesso.</p>
+          <p class="mt-3 text-xs text-slate-500 dark:text-slate-400 font-medium">Pedidos pagos e finalizados.</p>
         </div>
       </div>
 
       <div class="glass-card rounded-[2rem] shadow-sm overflow-hidden animate-slide-up" style="animation-delay: 500ms;">
         <div class="px-8 py-6 border-b border-slate-100 dark:border-slate-800/80 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50/50 dark:bg-slate-900/50">
-          <h2 class="text-xl font-display font-bold flex items-center gap-2 dark:text-white"><i data-lucide="activity" class="w-5 h-5 text-brand-500"></i> Atividade Recente</h2>
+          <h2 class="text-xl font-display font-bold flex items-center gap-2 dark:text-white"><i data-lucide="activity" class="w-5 h-5 text-brand-500"></i> Atividade e Pedidos Recentes</h2>
           <button onclick="window.exportToCSV()" class="btn-action text-xs font-bold bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 hover:text-brand-700 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm">
             <i data-lucide="download" class="w-4 h-4"></i> Exportar CSV
           </button>
@@ -251,9 +249,9 @@
           <table class="w-full text-left border-collapse min-w-[600px]">
             <thead>
               <tr class="bg-slate-50 dark:bg-slate-900/80 text-slate-400 text-[10px] uppercase font-black tracking-widest border-b border-slate-200 dark:border-slate-800">
-                <th class="px-8 py-5">Data de Registo</th>
-                <th class="px-8 py-5">Cliente Alvo</th>
-                <th class="px-8 py-5">Estado da Conversão</th>
+                <th class="px-8 py-5">Data do Pedido</th>
+                <th class="px-8 py-5">Cliente</th>
+                <th class="px-8 py-5">Estado Financeiro</th>
                 <th class="px-8 py-5 text-right">Comissão</th>
               </tr>
             </thead>
@@ -334,6 +332,9 @@
       appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
     };
 
+    // VALOR DA COMISSÃO FIXA (Altera aqui o valor que pagas por indicação concluída)
+    const COMISSAO_FIXA = 100; 
+
     let app, auth, db;
     let currentUserData = null;
     let rawReferralsList = [];
@@ -343,8 +344,9 @@
     db = getFirestore(app, "paygodb");
 
     lucide.createIcons();
+    document.getElementById('comissaoInfo').textContent = `${COMISSAO_FIXA} MT`;
 
-    // Dark Mode Toggle Export
+    // Dark Mode Toggle
     window.toggleTheme = function(isChecked) {
       const html = document.documentElement;
       if (isChecked || !html.classList.contains('dark')) {
@@ -352,13 +354,13 @@
         localStorage.theme = 'dark';
         document.getElementById('darkModeToggleDesk').checked = true;
         document.getElementById('darkModeToggleMob').checked = true;
-        renderQR(currentUserData?.affiliateCode, 'dark');
+        renderQR(document.getElementById('affLink').value, 'dark');
       } else {
         html.classList.remove('dark');
         localStorage.theme = 'light';
         document.getElementById('darkModeToggleDesk').checked = false;
         document.getElementById('darkModeToggleMob').checked = false;
-        renderQR(currentUserData?.affiliateCode, 'light');
+        renderQR(document.getElementById('affLink').value, 'light');
       }
     };
     
@@ -385,8 +387,10 @@
             return;
           }
 
+          // Inicia motor de UI
           renderUIData();
-          await fetchReferrals();
+          // Inicia motor de cálculo matemático
+          await fetchReferralsAndCalculate();
 
         } else {
           window.showToast("Perfil não encontrado.", "error");
@@ -414,18 +418,6 @@
         const firstName = (currentUserData.name || 'Parceiro').split(' ')[0];
         document.getElementById('userGreeting').innerHTML = `Olá, <span class="text-brand-600 dark:text-brand-400">${firstName}</span>!`;
         
-        const earnings = currentUserData.affiliateEarnings || 0;
-        document.getElementById('statBalance').textContent = formatMZN(earnings);
-        document.getElementById('modalAvailableBalance').textContent = formatMZN(earnings);
-        
-        document.getElementById('statTotalRefs').textContent = currentUserData.totalReferrals || 0;
-        document.getElementById('statSales').textContent = currentUserData.approvedReferrals || 0;
-        
-        document.getElementById('statBalance').classList.remove('skeleton');
-        document.getElementById('statTotalRefs').classList.remove('skeleton');
-        document.getElementById('statSales').classList.remove('skeleton');
-
-        // 🔥 CORRIGIDO: Agora usa o 'affLink' 
         const linkStr = `https://paygo.co.mz/index.html?ref=${currentUserData.affiliateCode}`;
         const inputLink = document.getElementById('affLink');
         if (inputLink) inputLink.value = linkStr;
@@ -454,54 +446,104 @@
       });
     }
 
-    async function fetchReferrals() {
+    // 📊 MOTOR MATEMÁTICO AUTÔNOMO 
+    async function fetchReferralsAndCalculate() {
       const container = document.getElementById('referralsBody');
       const skeletonRow = `<tr><td class="px-8 py-5"><div class="skeleton h-4 w-24 rounded"></div></td><td class="px-8 py-5"><div class="skeleton h-4 w-32 rounded"></div></td><td class="px-8 py-5"><div class="skeleton h-6 w-20 rounded-full"></div></td><td class="px-8 py-5 text-right"><div class="skeleton h-4 w-16 ml-auto rounded"></div></td></tr>`;
       container.innerHTML = skeletonRow + skeletonRow;
 
       try {
-        const q = query(collection(db, "users"), where("referredBy", "==", currentUserData.affiliateCode));
-        const snap = await getDocs(q);
+        // 1. Vai buscar TODOS os PEDIDOS feitos com o código deste afiliado
+        const qOrders = query(collection(db, "orders"), where("referredBy", "==", currentUserData.affiliateCode));
+        const snapOrders = await getDocs(qOrders);
         
-        container.innerHTML = '';
+        // 2. Vai buscar todos os SAQUES (withdrawals) que o afiliado já pediu
+        const qWithdrawals = query(collection(db, "withdrawals"), where("userId", "==", currentUserData.uid));
+        const snapWithdrawals = await getDocs(qWithdrawals);
+
+        let totalLevantado = 0;
+        snapWithdrawals.forEach(doc => {
+            const w = doc.data();
+            // Subtrai tanto os aprovados como os pendentes para proteger o saldo
+            if (w.status === 'approved' || w.status === 'pending') {
+                totalLevantado += w.amount;
+            }
+        });
+
+        let totalIndicados = 0;
+        let vendasFeitas = 0;
         rawReferralsList = [];
 
-        if (snap.empty) {
-          container.innerHTML = `<tr><td colspan="4" class="px-8 py-10 text-center text-slate-500 italic font-medium"><i data-lucide="users" class="w-6 h-6 mx-auto mb-2 text-slate-300"></i> Nenhuma indicação até o momento.</td></tr>`;
+        snapOrders.forEach(d => {
+            const orderData = d.data();
+            rawReferralsList.push(orderData);
+            totalIndicados++;
+            
+            // Se a order for dada como paga/concluída, conta como conversão!
+            if (orderData.status === 'completed' || orderData.isPaid === true) {
+                vendasFeitas++;
+            }
+        });
+
+        // 3. CALCULAR O SALDO REAL E DISPONÍVEL AGORA
+        const totalGanho = vendasFeitas * COMISSAO_FIXA;
+        const saldoDisponivel = Math.max(0, totalGanho - totalLevantado);
+        
+        // Guarda na sessão atual para a Modal de Saque não bloquear incorretamente
+        currentUserData.affiliateEarnings = saldoDisponivel;
+
+        // 4. ATUALIZAR AS ESTATÍSTICAS NO HTML (Remove o esqueleto e mete os números reais)
+        document.getElementById('statTotalRefs').textContent = totalIndicados;
+        document.getElementById('statTotalRefs').classList.remove('skeleton');
+        
+        document.getElementById('statSales').textContent = vendasFeitas;
+        document.getElementById('statSales').classList.remove('skeleton');
+        
+        document.getElementById('statBalance').textContent = formatMZN(saldoDisponivel);
+        document.getElementById('statBalance').classList.remove('skeleton');
+        
+        document.getElementById('modalAvailableBalance').textContent = formatMZN(saldoDisponivel);
+
+        // 5. RENDERIZAR A TABELA
+        container.innerHTML = '';
+        if (rawReferralsList.length === 0) {
+          container.innerHTML = `<tr><td colspan="4" class="px-8 py-10 text-center text-slate-500 italic font-medium"><i data-lucide="shopping-bag" class="w-6 h-6 mx-auto mb-2 text-slate-300"></i> Nenhum pedido registado com o teu link.</td></tr>`;
           lucide.createIcons();
           return;
         }
 
-        snap.forEach(d => rawReferralsList.push(d.data()));
+        // Ordena para mostrar os mais recentes primeiro
         rawReferralsList.sort((a,b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
 
-        rawReferralsList.slice(0,10).forEach(ref => {
-          const isApproved = ref.firstPurchaseProcessed;
-          const statusBadge = isApproved 
-            ? `<span class="px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-wider text-success-600 bg-success-50 dark:bg-success-500/10 border border-success-200 dark:border-success-500/20">Convertida</span>`
-            : `<span class="px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-wider text-slate-500 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">Pendente</span>`;
+        // Pinta a tabela
+        rawReferralsList.slice(0,10).forEach(order => {
+          const isApproved = order.status === 'completed' || order.isPaid === true;
           
-          const dStr = ref.createdAt?.toDate ? ref.createdAt.toDate().toLocaleDateString('pt-MZ') : 'N/A';
+          const statusBadge = isApproved 
+            ? `<span class="px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-wider text-success-600 bg-success-50 dark:bg-success-500/10 border border-success-200 dark:border-success-500/20">Pago</span>`
+            : `<span class="px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-wider text-warning-600 bg-warning-50 dark:bg-warning-500/10 border border-warning-200 dark:border-warning-500/20">Pendente</span>`;
+          
+          const dStr = order.createdAt?.toDate ? order.createdAt.toDate().toLocaleDateString('pt-MZ') : 'N/A';
           
           const row = document.createElement('tr');
           row.className = "hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors";
           row.innerHTML = `
             <td class="px-8 py-5 text-sm font-medium text-slate-500 dark:text-slate-400">${dStr}</td>
-            <td class="px-8 py-5 text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2"><div class="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] text-slate-500 border border-slate-200 dark:border-slate-700"><i data-lucide="user" class="w-3 h-3"></i></div>${maskEmail(ref.email)}</td>
+            <td class="px-8 py-5 text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2"><div class="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] text-slate-500 border border-slate-200 dark:border-slate-700"><i data-lucide="shopping-bag" class="w-3 h-3"></i></div>${order.name || maskEmail(order.email)}</td>
             <td class="px-8 py-5">${statusBadge}</td>
-            <td class="px-8 py-5 text-right font-mono font-bold ${isApproved ? 'text-success-600 dark:text-success-400' : 'text-slate-400 dark:text-slate-600'}">${isApproved ? '+ Comissão' : '-'}</td>
+            <td class="px-8 py-5 text-right font-mono font-bold ${isApproved ? 'text-success-600 dark:text-success-400' : 'text-slate-400 dark:text-slate-600'}">${isApproved ? '+ ' + COMISSAO_FIXA + ' MT' : '-'}</td>
           `;
           container.appendChild(row);
         });
         lucide.createIcons();
       } catch (err) {
-        container.innerHTML = `<tr><td colspan="4" class="px-8 py-6 text-center text-red-500 font-bold">Erro ao carregar dados.</td></tr>`;
+        console.error(err);
+        container.innerHTML = `<tr><td colspan="4" class="px-8 py-6 text-center text-red-500 font-bold">Erro de ligação à rede.</td></tr>`;
       }
     }
 
-    // 4. Ações de Botão Exports Globais
+    // Ações de Botão Exports Globais
     window.copyLink = () => {
-      // 🔥 CORRIGIDO: Procura pelo id certo
       const input = document.getElementById('affLink');
       if(input) {
           input.select(); 
@@ -511,7 +553,6 @@
     };
 
     window.shareWhatsApp = () => {
-      // 🔥 CORRIGIDO: Procura pelo id certo
       const linkInput = document.getElementById('affLink');
       if (linkInput) {
           const link = linkInput.value;
@@ -522,22 +563,23 @@
 
     window.exportToCSV = () => {
       if(!rawReferralsList.length) return window.showToast("Sem dados para exportar.", "warning");
-      const headers = ['Data', 'Email_Mascarado', 'Estado'];
-      const rows = rawReferralsList.map(r => [
-        r.createdAt?.toDate ? r.createdAt.toDate().toLocaleDateString('pt-MZ') : '-',
-        maskEmail(r.email),
-        r.firstPurchaseProcessed ? 'Convertido' : 'Pendente'
+      const headers = ['Data', 'Cliente', 'Estado', 'Comissão'];
+      const rows = rawReferralsList.map(o => [
+        o.createdAt?.toDate ? o.createdAt.toDate().toLocaleDateString('pt-MZ') : '-',
+        o.name || maskEmail(o.email),
+        (o.status === 'completed' || o.isPaid) ? 'Pago' : 'Pendente',
+        (o.status === 'completed' || o.isPaid) ? COMISSAO_FIXA : '0'
       ]);
       const csv = [headers.join(','), ...rows.map(r => r.map(c => `"${c}"`).join(','))].join('\n');
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.download = `PayGo_Indicacoes_${currentUserData.affiliateCode}.csv`;
+      link.download = `PayGo_Relatorio_${currentUserData.affiliateCode}.csv`;
       link.click();
       window.showToast("Relatório CSV exportado.", "success");
     };
 
-    // 5. Controlo de Saque
+    // Controlo de Saque
     window.openWithdrawModal = () => {
       const balance = currentUserData?.affiliateEarnings || 0;
       if (balance < 600) return window.showToast("O valor mínimo para levantamento é 600 MT.", "warning");
@@ -548,7 +590,7 @@
         m.classList.remove('opacity-0');
         document.getElementById('withdrawModalContent').classList.remove('translate-y-full', 'sm:translate-y-10');
       }, 10);
-      document.getElementById('withdrawAmount').max = balance;
+      document.getElementById('wAmount').max = balance;
     };
 
     window.closeWithdrawModal = () => {
@@ -561,7 +603,7 @@
 
     document.getElementById('withdrawForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const btn = document.getElementById('withdrawBtnSubmit');
+      const btn = document.getElementById('btnSubmitWithdraw');
       const amount = parseFloat(document.getElementById('wAmount').value);
       const phone = document.getElementById('wPhone').value.trim();
       
@@ -583,7 +625,7 @@
           status: 'pending',
           requestedAt: serverTimestamp()
         });
-        window.showToast("Pedido submetido com sucesso!", "success");
+        window.showToast("Pedido de Saque submetido com sucesso!", "success");
         
         currentUserData.affiliateEarnings -= amount;
         document.getElementById('statBalance').textContent = formatMZN(currentUserData.affiliateEarnings);
@@ -597,7 +639,7 @@
     });
 
     window.logoutAdmin = async () => {
-      if (confirm('Deseja encerrar a sessão de afiliado?')) {
+      if (confirm('Deseja encerrar a sessão de parceiro?')) {
         await signOut(auth);
         window.location.href = 'login.html';
       }
@@ -611,10 +653,10 @@
       return `${n.substring(0,3)}***@${d}`;
     }
 
-    // TOAST GLOBAL EXPORT - 🔥 ID CORRIGIDO (toast-container)
+    // TOAST GLOBAL EXPORT
     window.showToast = function(msg, type = 'success') {
-      const container = document.getElementById('toast-container');
-      if (!container) return; // Proteção adicional contra Null
+      const container = document.getElementById('toastContainer');
+      if (!container) return; 
       
       const t = document.createElement('div');
       const isErr = type === 'error', isWarn = type === 'warning';
