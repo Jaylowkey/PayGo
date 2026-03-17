@@ -97,7 +97,7 @@
 </head>
 <body class="text-slate-800 dark:text-slate-200 antialiased selection:bg-brand-500 selection:text-white">
 
-  <div id="toastContainer" class="fixed bottom-6 right-6 z-[9999] flex flex-col gap-3 pointer-events-none"></div>
+  <div id="toast-container" class="fixed bottom-6 right-6 z-[9999] flex flex-col gap-3 pointer-events-none"></div>
 
   <div id="loader" class="fixed inset-0 z-[9999] bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center transition-opacity duration-500">
     <div class="relative w-20 h-20 mb-6">
@@ -120,13 +120,13 @@
       
       <div class="flex items-center gap-4">
         <label class="dark-toggle hidden sm:block" title="Alternar modo escuro">
-          <input type="checkbox" id="darkModeToggleDesk" onchange="window.toggleTheme(this.checked)">
+          <input type="checkbox" id="darkModeToggleDesk" onchange="toggleTheme(this.checked)">
           <span class="dark-toggle-slider"></span>
         </label>
         
         <div class="h-6 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block"></div>
 
-        <button onclick="window.logoutAdmin()" class="text-sm font-bold px-4 py-2 text-slate-600 hover:text-red-600 dark:text-slate-300 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all flex items-center gap-2">
+        <button onclick="logoutAdmin()" class="text-sm font-bold px-4 py-2 text-slate-600 hover:text-red-600 dark:text-slate-300 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all flex items-center gap-2">
           <i data-lucide="log-out" class="w-4 h-4"></i> <span class="hidden sm:inline">Terminar Sessão</span>
         </button>
       </div>
@@ -135,7 +135,7 @@
 
   <div class="md:hidden fixed bottom-6 left-6 z-50">
     <label class="dark-toggle shadow-lg" title="Alternar modo escuro">
-      <input type="checkbox" id="darkModeToggleMob" onchange="window.toggleTheme(this.checked)">
+      <input type="checkbox" id="darkModeToggleMob" onchange="toggleTheme(this.checked)">
       <span class="dark-toggle-slider shadow-xl border border-slate-200"></span>
     </label>
   </div>
@@ -248,9 +248,9 @@
           </button>
         </div>
         <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse">
+          <table class="w-full text-left border-collapse min-w-[600px]">
             <thead>
-              <tr class="bg-slate-50/80 dark:bg-slate-900/80 text-slate-400 text-[10px] uppercase font-black tracking-widest border-b border-slate-200 dark:border-slate-800">
+              <tr class="bg-slate-50 dark:bg-slate-900/80 text-slate-400 text-[10px] uppercase font-black tracking-widest border-b border-slate-200 dark:border-slate-800">
                 <th class="px-8 py-5">Data de Registo</th>
                 <th class="px-8 py-5">Cliente Alvo</th>
                 <th class="px-8 py-5">Estado da Conversão</th>
@@ -425,11 +425,14 @@
         document.getElementById('statTotalRefs').classList.remove('skeleton');
         document.getElementById('statSales').classList.remove('skeleton');
 
-        const affLink = `https://paygo.co.mz/index.html?ref=${currentUserData.affiliateCode}`;
-        document.getElementById('affiliateLinkInput').value = affLink;
+        // 🔥 CORRIGIDO: Agora usa o 'affLink' 
+        const linkStr = `https://paygo.co.mz/index.html?ref=${currentUserData.affiliateCode}`;
+        const inputLink = document.getElementById('affLink');
+        if (inputLink) inputLink.value = linkStr;
+
         if(currentUserData.phone) document.getElementById('wPhone').value = currentUserData.phone;
 
-        renderQR(affLink, document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+        renderQR(linkStr, document.documentElement.classList.contains('dark') ? 'dark' : 'light');
       } else {
         alert.classList.remove('hidden');
         content.classList.add('hidden');
@@ -498,15 +501,23 @@
 
     // 4. Ações de Botão Exports Globais
     window.copyLink = () => {
-      const input = document.getElementById('affiliateLinkInput');
-      input.select(); navigator.clipboard.writeText(input.value);
-      window.showToast("Link Exclusivo copiado!", "success");
+      // 🔥 CORRIGIDO: Procura pelo id certo
+      const input = document.getElementById('affLink');
+      if(input) {
+          input.select(); 
+          navigator.clipboard.writeText(input.value);
+          window.showToast("Link Exclusivo copiado!", "success");
+      }
     };
 
     window.shareWhatsApp = () => {
-      const link = document.getElementById('affiliateLinkInput').value;
-      const text = encodeURIComponent(`Olá! 🚀 Queres fazer compras internacionais e pagar com o teu M-Pesa/e-Mola de forma super fácil?\n\nCria a tua conta na PayGo usando o meu link especial e tem acesso ao mundo inteiro!\n\nClica aqui: ${link}`);
-      window.open(`https://wa.me/?text=${text}`, '_blank');
+      // 🔥 CORRIGIDO: Procura pelo id certo
+      const linkInput = document.getElementById('affLink');
+      if (linkInput) {
+          const link = linkInput.value;
+          const text = encodeURIComponent(`Olá! 🚀 Queres fazer compras internacionais e pagar com o teu M-Pesa/e-Mola de forma super fácil?\n\nCria a tua conta na PayGo usando o meu link especial e tem acesso ao mundo inteiro!\n\nClica aqui: ${link}`);
+          window.open(`https://wa.me/?text=${text}`, '_blank');
+      }
     };
 
     window.exportToCSV = () => {
@@ -600,9 +611,11 @@
       return `${n.substring(0,3)}***@${d}`;
     }
 
-    // TOAST GLOBAL EXPORT
+    // TOAST GLOBAL EXPORT - 🔥 ID CORRIGIDO (toast-container)
     window.showToast = function(msg, type = 'success') {
-      const container = document.getElementById('toastContainer');
+      const container = document.getElementById('toast-container');
+      if (!container) return; // Proteção adicional contra Null
+      
       const t = document.createElement('div');
       const isErr = type === 'error', isWarn = type === 'warning';
       const bg = isErr ? 'bg-danger-500/95 border-danger-400' : isWarn ? 'bg-warning-500/95 border-warning-400' : 'bg-slate-900/95 dark:bg-white/95 border-slate-700 dark:border-slate-200';
