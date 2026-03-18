@@ -3,16 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Entrar na Conta - PayGo Moçambique</title>
-    <meta name="description" content="Faça login na sua conta PayGo.">
+    <title>Acesso à Conta - PayGo Moçambique</title>
+    <meta name="description" content="Aceda à sua conta PayGo para gerir pagamentos, faturas e acompanhar as suas encomendas internacionais.">
     <meta name="theme-color" content="#0f172a">
+    
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://paygo.co.mz/login.html">
+    <meta property="og:title" content="Login - PayGo Moçambique">
     
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233b82f6' stroke='none'><polygon points='13 2 3 14 12 14 11 22 21 10 12 10 13 2'></polygon></svg>">
     
-    <!-- ✅ URLs CORRIGIDAS - SEM ESPAÇOS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -25,9 +28,24 @@
                     display: ['"Outfit"', 'sans-serif'],
                 },
                 colors: {
-                    brand: { 50: '#eff6ff', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 900: '#1e3a8a', 950: '#0f172a' },
+                    brand: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 900: '#1e3a8a', 950: '#0f172a' },
                     success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' },
-                    danger: { 400: '#f87171', 500: '#ef4444' }
+                    warning: { 400: '#fbbf24', 500: '#f59e0b', 600: '#d97706' },
+                    danger: { 400: '#f87171', 500: '#ef4444', 600: '#dc2626' }
+                },
+                animation: {
+                    'blob': 'blob 7s infinite',
+                    'fade-in': 'fadeIn 0.5s ease-out forwards',
+                    'slide-up': 'slideUp 0.6s ease-out forwards',
+                },
+                keyframes: {
+                    blob: {
+                        '0%, 100%': { transform: 'translate(0px, 0px) scale(1)' },
+                        '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                        '66%': { transform: 'translate(-20px, 20px) scale(0.9)' }
+                    },
+                    fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+                    slideUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } }
                 }
             }
         }
@@ -35,147 +53,227 @@
     </script>
     
     <style>
-        .bg-noise { background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.025'/%3E%3C/svg%3E"); pointer-events: none; position: fixed; inset: 0; z-index: 1; }
+        body { background-color: #0f172a; color: #f8fafc; overflow-x: hidden; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
         
-        .glass-card { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
+        .hero-gradient { background: radial-gradient(ellipse at top right, #1e293b 0%, #0f172a 40%, #020617 100%); }
         
-        /* Floating Labels Inputs */
-        .input-field { position: relative; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; transition: all 0.3s ease; }
-        .input-field:focus-within { border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); background: rgba(255,255,255,0.05); }
-        .input-field input { width: 100%; padding: 1.125rem 1rem 1.125rem 3rem; background: transparent; border: none; outline: none; color: #fff; font-size: 0.9375rem; }
-        .input-field input::placeholder { color: transparent; }
-        .input-label { position: absolute; left: 3rem; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.4); font-size: 0.9375rem; pointer-events: none; transition: all 0.2s ease; }
-        
-        /* Floating Logic */
-        .input-field input:focus ~ .input-label, .input-field input:not(:placeholder-shown) ~ .input-label {
-            top: 0; transform: translateY(-50%); left: 2.5rem; font-size: 0.75rem; font-weight: 600; color: #3b82f6; background: #0f172a; padding: 0 0.5rem; letter-spacing: 0.05em; border-radius: 4px;
+        .glass-card { 
+            background: rgba(15, 23, 42, 0.6); 
+            backdrop-filter: blur(20px); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
-        
-        /* Icons */
-        .input-icon { position: absolute; left: 1rem; top: 1.125rem; color: rgba(255,255,255,0.3); transition: color 0.3s ease; width: 1.25rem; height: 1.25rem; pointer-events: none; }
+
+        /* Floating Label Inputs */
+        .input-wrapper { position: relative; margin-bottom: 1.25rem; }
+        .input-field {
+            position: relative;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 0.75rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+        }
+        .input-field:focus-within {
+            border-color: #3b82f6;
+            background: rgba(255,255,255,0.05);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+        .input-icon { padding-left: 1rem; color: rgba(255,255,255,0.4); transition: color 0.3s ease; }
         .input-field:focus-within .input-icon { color: #3b82f6; }
+        
+        .input-field input {
+            width: 100%;
+            padding: 1.25rem 1rem 0.5rem 0.75rem;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #fff;
+            font-size: 0.95rem;
+        }
+        .input-label {
+            position: absolute;
+            left: 2.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255,255,255,0.4);
+            font-size: 0.95rem;
+            pointer-events: none;
+            transition: all 0.2s ease;
+        }
+        .input-field input:focus ~ .input-label,
+        .input-field input:not(:placeholder-shown) ~ .input-label {
+            top: 0.6rem;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #60a5fa;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
 
-        /* Buttons */
-        .btn-loading { pointer-events: none; opacity: 0.9; }
-        .btn-loading .btn-text { opacity: 0; }
-        .btn-loading .btn-spinner { opacity: 1; transform: scale(1); }
-        .btn-spinner { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0; transform: scale(0.8); transition: all 0.3s ease; }
+        .btn-premium { transition: all 0.2s ease; position: relative; overflow: hidden; }
+        .btn-premium:active:not(:disabled) { transform: scale(0.98); }
+        .btn-premium:disabled { opacity: 0.7; cursor: not-allowed; }
 
-        /* Toasts */
-        #toast-container { position: fixed; top: 24px; right: 24px; z-index: 1000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
-        .toast { pointer-events: auto; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); border-left: 4px solid #3b82f6; padding: 16px; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); display: flex; align-items: center; gap: 12px; max-width: 400px; transform: translateX(120%); transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); opacity: 0; }
-        .toast.show { transform: translateX(0); opacity: 1; }
-        .toast.success { border-left-color: #22c55e; }
-        .toast.error { border-left-color: #ef4444; }
+        /* Modal & Toasts */
+        .modal-overlay { background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(8px); cursor: pointer; }
+        .modal-content { background: #0f172a; border: 1px solid rgba(255,255,255,0.1); }
+        
+        #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+        .toast { pointer-events: auto; background: #1e293b; border: 1px solid rgba(255,255,255,0.1); padding: 16px 20px; border-radius: 12px; display: flex; align-items: center; gap: 12px; transform: translateX(120%); transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .toast.show { transform: translateX(0); }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-200 font-sans min-h-screen flex items-center justify-center relative overflow-hidden selection:bg-brand-500 selection:text-white">
+<body class="hero-gradient min-h-screen flex flex-col">
 
-    <div class="bg-noise"></div>
-    
-    <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-brand-600/20 rounded-full mix-blend-screen filter blur-[100px] pointer-events-none"></div>
-    <div class="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-accent-500/10 rounded-full mix-blend-screen filter blur-[100px] pointer-events-none"></div>
+    <div class="fixed inset-0 bg-grid opacity-20 pointer-events-none"></div>
+    <div class="fixed top-0 -left-4 w-96 h-96 bg-brand-600/20 rounded-full mix-blend-screen blur-[100px] animate-blob pointer-events-none"></div>
+    <div class="fixed top-40 -right-4 w-96 h-96 bg-purple-600/20 rounded-full mix-blend-screen blur-[100px] animate-blob pointer-events-none" style="animation-delay: 2s;"></div>
 
-    <div id="toast-container"></div>
+    <header class="w-full relative z-50 p-6">
+        <div class="container mx-auto flex justify-between items-center max-w-6xl">
+            <a href="index.html" class="flex items-center gap-2 group">
+                <div class="bg-gradient-to-tr from-brand-500 to-brand-400 p-2 rounded-xl text-white shadow-lg shadow-brand-500/20 group-hover:scale-105 transition">
+                    <i data-lucide="zap" class="w-5 h-5 fill-current"></i>
+                </div>
+                <span class="text-2xl font-display font-bold text-white tracking-tight">PayGo</span>
+            </a>
+            <a href="register.html" class="text-sm font-semibold text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 px-5 py-2.5 rounded-full transition border border-white/5">
+                Criar Conta Grátis
+            </a>
+        </div>
+    </header>
 
-    <a href="index.html" class="absolute top-6 left-6 z-20 flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm font-medium bg-slate-900/50 backdrop-blur px-4 py-2 rounded-full border border-slate-800">
-        <i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar à página inicial
-    </a>
-
-    <div class="container mx-auto px-6 relative z-10 py-12 flex justify-center">
-        <div class="w-full max-w-md">
+    <main class="flex-1 flex items-center justify-center p-4 relative z-10">
+        <div class="w-full max-w-5xl animate-slide-up">
             
-            <div class="text-center mb-8">
-                <a href="index.html" class="inline-flex items-center gap-2 group mb-2">
-                    <div class="bg-gradient-to-tr from-brand-500 to-cyan-500 p-2.5 rounded-xl text-white shadow-lg shadow-brand-500/30 group-hover:scale-105 transition-transform">
-                        <i data-lucide="zap" class="w-6 h-6 fill-current"></i>
-                    </div>
-                    <span class="text-3xl font-display font-bold text-white tracking-tight">PayGo</span>
-                </a>
-                <p class="text-slate-400 text-sm">Acesse sua conta para continuar</p>
-            </div>
-
-            <div class="glass-card rounded-3xl p-8 shadow-2xl">
+            <div class="glass-card rounded-[2rem] overflow-hidden flex flex-col md:flex-row shadow-2xl">
                 
-                <div id="affiliatePendingAlert" class="hidden mb-6 bg-success-500/10 border border-success-500/20 rounded-xl p-4 flex items-start gap-3">
-                    <i data-lucide="check-circle-2" class="w-5 h-5 text-success-400 mt-0.5 flex-shrink-0"></i>
+                <div class="hidden md:flex md:w-5/12 bg-slate-900/50 p-10 flex-col justify-between border-r border-white/5 relative overflow-hidden">
+                    <div class="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-brand-600/20 to-transparent pointer-events-none"></div>
+                    
                     <div>
-                        <h4 class="text-sm font-bold text-success-400 mb-1">Candidatura Recebida!</h4>
-                        <p class="text-xs text-slate-300">A sua candidatura a afiliado está em análise. Faça login abaixo para acompanhar o status.</p>
+                        <h2 class="text-3xl font-display font-extrabold text-white mb-4 leading-tight">Bem-vindo de<br>Volta à PayGo.</h2>
+                        <p class="text-slate-400 text-sm leading-relaxed mb-8">Aceda à sua conta para gerir pagamentos, solicitar faturas e acompanhar as suas encomendas internacionais.</p>
+                        
+                        <ul class="space-y-5">
+                            <li class="flex items-start gap-3">
+                                <div class="mt-1 bg-brand-500/20 p-1 rounded-full"><i data-lucide="clock" class="w-4 h-4 text-brand-400"></i></div>
+                                <div><p class="text-sm font-bold text-slate-200">Rastreio em Tempo Real</p><p class="text-xs text-slate-500">Acompanhe cada etapa do seu pedido.</p></div>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <div class="mt-1 bg-success-500/20 p-1 rounded-full"><i data-lucide="shield-check" class="w-4 h-4 text-success-400"></i></div>
+                                <div><p class="text-sm font-bold text-slate-200">Ecossistema Protegido</p><p class="text-xs text-slate-500">Os seus dados sempre encriptados.</p></div>
+                            </li>
+                        </ul>
                     </div>
                 </div>
 
-                <form id="loginForm" class="space-y-5">
-                    <div class="input-field">
-                        <i data-lucide="mail" class="input-icon"></i>
-                        <input type="email" id="email" required placeholder=" " autocomplete="email">
-                        <label for="email" class="input-label">Endereço de Email</label>
+                <div class="w-full md:w-7/12 p-8 md:p-12 relative bg-slate-900/80 flex flex-col justify-center">
+                    
+                    <div class="mb-8 md:hidden text-center">
+                        <div class="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-tr from-brand-500 to-brand-400 rounded-2xl text-white mb-4 shadow-lg shadow-brand-500/30">
+                            <i data-lucide="zap" class="w-6 h-6 fill-current"></i>
+                        </div>
+                        <h2 class="text-2xl font-display font-extrabold text-white">Acesso à Conta</h2>
+                        <p class="text-slate-400 text-sm mt-1">Aceda para continuar de onde parou.</p>
                     </div>
 
-                    <div>
-                        <div class="input-field">
-                            <i data-lucide="lock" class="input-icon"></i>
-                            <input type="password" id="password" required placeholder=" " autocomplete="current-password">
-                            <label for="password" class="input-label">Senha de Acesso</label>
-                            <button type="button" onclick="togglePassword()" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors">
-                                <i data-lucide="eye" class="w-5 h-5" id="toggleIcon"></i>
-                            </button>
+                    <form id="loginForm">
+                        <div class="input-wrapper">
+                            <div class="input-field">
+                                <i data-lucide="mail" class="input-icon w-5 h-5"></i>
+                                <input type="email" id="loginEmail" required placeholder=" " autocomplete="email">
+                                <label for="loginEmail" class="input-label">Endereço de Email</label>
+                            </div>
                         </div>
-                        <div class="flex justify-end mt-2">
-                            <button type="button" onclick="showResetModal()" class="text-xs font-medium text-brand-400 hover:text-brand-300 transition-colors">
+
+                        <div class="input-wrapper mb-4">
+                            <div class="input-field">
+                                <i data-lucide="lock" class="input-icon w-5 h-5"></i>
+                                <input type="password" id="loginPassword" required placeholder=" " autocomplete="current-password">
+                                <label for="loginPassword" class="input-label">Palavra-passe</label>
+                                <button type="button" onclick="togglePwd('loginPassword')" class="absolute right-4 p-1 text-slate-400 hover:text-white transition" tabindex="-1">
+                                    <i data-lucide="eye" id="icon-loginPassword" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between mb-8 px-1">
+                            <label class="flex items-center gap-2 cursor-pointer group">
+                                <div class="relative flex items-center justify-center">
+                                    <input type="checkbox" id="rememberMe" class="peer appearance-none w-4 h-4 border-2 border-slate-600 rounded bg-slate-800 checked:bg-brand-600 checked:border-brand-600 transition-colors">
+                                    <i data-lucide="check" class="absolute w-3 h-3 text-white opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity"></i>
+                                </div>
+                                <span class="text-sm font-medium text-slate-400 group-hover:text-slate-300 transition-colors">Lembrar-me</span>
+                            </label>
+                            <button type="button" onclick="openForgotModal()" class="text-sm font-bold text-brand-400 hover:text-brand-300 transition-colors">
                                 Esqueceu a senha?
                             </button>
                         </div>
+
+                        <button type="submit" id="btnSubmit" class="btn-premium w-full bg-brand-600 hover:bg-brand-500 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-brand-600/20">
+                            <span id="btnText">Iniciar Sessão</span>
+                            <i data-lucide="arrow-right" id="btnIcon" class="w-4 h-4"></i>
+                        </button>
+                    </form>
+                    
+                    <div class="mt-8 text-center">
+                        <p class="text-slate-400 text-sm">
+                            Ainda não tem acesso? <a href="register.html" class="text-brand-400 hover:text-brand-300 font-bold transition-colors">Registar agora</a>
+                        </p>
                     </div>
 
-                    <button type="submit" id="loginBtn" class="relative w-full bg-brand-600 hover:bg-brand-500 text-white py-4 rounded-xl font-bold text-lg transition-all shadow-lg shadow-brand-600/30 flex items-center justify-center overflow-hidden">
-                        <span class="btn-text">Entrar na Conta</span>
-                        <span class="btn-spinner"><i data-lucide="loader-2" class="w-6 h-6 animate-spin"></i></span>
-                    </button>
-                </form>
-
-                <div class="mt-8 pt-6 border-t border-slate-800 text-center">
-                    <p class="text-slate-400 text-sm">
-                        Ainda não tem conta? 
-                        <a href="register.html" class="text-brand-400 hover:text-brand-300 font-bold transition-colors ml-1">Criar conta grátis</a>
-                    </p>
                 </div>
-
             </div>
         </div>
-    </div>
+    </main>
 
-    <div id="resetModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-sm transform scale-95 transition-transform duration-300" id="resetModalCard">
-            <h3 class="text-xl font-bold text-white mb-2">Recuperar Senha</h3>
-            <p class="text-sm text-slate-400 mb-6">Digite o seu email para receber um link de redefinição.</p>
+    <div id="forgotModal" class="fixed inset-0 z-[1000] hidden items-center justify-center p-4 transition-opacity duration-300 opacity-0">
+        <div class="modal-overlay absolute inset-0" onclick="closeForgotModal()"></div>
+        <div class="modal-content relative w-full max-w-md rounded-3xl p-8 shadow-2xl transition-transform duration-300 transform scale-95" id="forgotModalContent">
             
-            <form id="resetForm" class="space-y-4">
-                <div class="input-field">
-                    <i data-lucide="mail" class="input-icon"></i>
-                    <input type="email" id="resetEmail" required placeholder=" ">
-                    <label for="resetEmail" class="input-label">Seu Email</label>
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="bg-brand-500/20 text-brand-400 p-2 rounded-lg border border-brand-500/30"><i data-lucide="key" class="w-5 h-5"></i></div>
+                    <h3 class="text-xl font-display font-bold text-white">Recuperar Senha</h3>
+                </div>
+                <button onclick="closeForgotModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <p class="text-slate-400 text-sm mb-6 leading-relaxed">Insira o seu endereço de email. Iremos enviar-lhe um link seguro para redefinir a sua palavra-passe.</p>
+            
+            <form id="forgotForm">
+                <div class="input-wrapper mb-6">
+                    <div class="input-field">
+                        <i data-lucide="mail" class="input-icon w-5 h-5"></i>
+                        <input type="email" id="forgotEmail" required placeholder=" " autocomplete="email">
+                        <label for="forgotEmail" class="input-label">Email da conta</label>
+                    </div>
                 </div>
                 
-                <div class="flex gap-3">
-                    <button type="button" onclick="closeResetModal()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white py-3 rounded-xl font-medium transition-colors text-sm">Cancelar</button>
-                    <button type="submit" id="resetBtn" class="flex-1 relative bg-brand-600 hover:bg-brand-500 text-white py-3 rounded-xl font-bold transition-all text-sm flex items-center justify-center">
-                        <span class="btn-text">Enviar Link</span>
-                        <span class="btn-spinner"><i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i></span>
-                    </button>
-                </div>
+                <button type="submit" id="btnForgot" class="btn-premium w-full bg-slate-100 hover:bg-white text-slate-900 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg transition-colors">
+                    <span id="btnForgotText">Enviar Link de Acesso</span>
+                    <i data-lucide="send" id="btnForgotIcon" class="w-4 h-4"></i>
+                </button>
             </form>
         </div>
     </div>
 
-    <!-- ✅ JAVASCRIPT CORRIGIDO - URLs SEM ESPAÇOS -->
-    <script type="module">
-        // ✅ IMPORTS COM URLs LIMPOS (SEM ESPAÇOS)
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    <div id="toastContainer"></div>
 
-        // Firebase Config
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
         const firebaseConfig = {
             apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
             authDomain: "paygo-14311.firebaseapp.com",
@@ -189,25 +287,12 @@
         const auth = getAuth(app);
         const db = getFirestore(app, "paygodb");
 
-        // Inicialização de UI
-        document.addEventListener('DOMContentLoaded', () => {
-            if (typeof lucide !== 'undefined') lucide.createIcons();
-            
-            // Verificar parâmetro affiliate_pending
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('affiliate_pending') === 'true') {
-                document.getElementById('affiliatePendingAlert').classList.remove('hidden');
-            }
-            if (urlParams.get('email')) {
-                document.getElementById('email').value = urlParams.get('email');
-                document.getElementById('password').focus();
-            }
-        });
+        // UI Setup
+        lucide.createIcons();
 
-        // Toggle Password
-        window.togglePassword = function() {
-            const input = document.getElementById('password');
-            const icon = document.getElementById('toggleIcon');
+        window.togglePwd = function(id) {
+            const input = document.getElementById(id);
+            const icon = document.getElementById(`icon-${id}`);
             if (input.type === 'password') {
                 input.type = 'text';
                 icon.setAttribute('data-lucide', 'eye-off');
@@ -215,120 +300,188 @@
                 input.type = 'password';
                 icon.setAttribute('data-lucide', 'eye');
             }
-            if (typeof lucide !== 'undefined') lucide.createIcons();
+            lucide.createIcons();
         };
 
-        // Modal Reset
-        const modal = document.getElementById('resetModal');
-        const modalCard = document.getElementById('resetModalCard');
-        
-        window.showResetModal = function() {
-            const emailValue = document.getElementById('email').value;
-            if(emailValue) document.getElementById('resetEmail').value = emailValue;
-            
-            modal.classList.remove('hidden');
+        window.openForgotModal = () => {
+            const m = document.getElementById('forgotModal');
+            const c = document.getElementById('forgotModalContent');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
             setTimeout(() => {
-                modal.classList.remove('opacity-0');
-                modalCard.classList.remove('scale-95');
+                m.classList.remove('opacity-0');
+                c.classList.remove('scale-95');
+                c.classList.add('scale-100');
             }, 10);
-        };
-
-        window.closeResetModal = function() {
-            modal.classList.add('opacity-0');
-            modalCard.classList.add('scale-95');
-            setTimeout(() => modal.classList.add('hidden'), 300);
-        };
-
-        // Toasts
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            const icon = type === 'success' ? 'check-circle' : 'alert-circle';
-            const color = type === 'success' ? 'text-success-400' : 'text-danger-400';
-            
-            toast.innerHTML = `<i data-lucide="${icon}" class="${color} w-5 h-5 flex-shrink-0"></i><span class="text-sm font-medium text-white">${message}</span>`;
-            container.appendChild(toast);
-            if (typeof lucide !== 'undefined') lucide.createIcons();
-            
-            requestAnimationFrame(() => toast.classList.add('show'));
-            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 5000);
         }
 
-        // 🚀 SUBMIT LOGIN
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const btn = document.getElementById('loginBtn');
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
+        window.closeForgotModal = () => {
+            const m = document.getElementById('forgotModal');
+            const c = document.getElementById('forgotModalContent');
+            m.classList.add('opacity-0');
+            c.classList.remove('scale-100');
+            c.classList.add('scale-95');
+            setTimeout(() => {
+                m.classList.add('hidden');
+                m.classList.remove('flex');
+                document.getElementById('forgotEmail').value = '';
+            }, 300);
+        }
 
-            btn.classList.add('btn-loading');
+        function showToast(msg, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const t = document.createElement('div');
+            const borderColor = type === 'error' ? 'border-red-500' : type === 'warning' ? 'border-warning-500' : 'border-brand-500';
+            const iconColor = type === 'error' ? 'text-red-400' : type === 'warning' ? 'text-warning-400' : 'text-brand-400';
+            const iconName = type === 'error' ? 'alert-circle' : type === 'warning' ? 'alert-triangle' : 'check-circle';
+            
+            t.className = `toast border-l-4 ${borderColor}`;
+            t.innerHTML = `<i data-lucide="${iconName}" class="w-5 h-5 ${iconColor} shrink-0"></i> <span class="text-sm font-semibold text-white">${msg}</span>`;
+            
+            container.appendChild(t);
+            lucide.createIcons({ root: t });
+            requestAnimationFrame(() => t.classList.add('show'));
+            setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 5000);
+        }
 
-            try {
-                // 1. Fazer Login no Firebase Auth
-                const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
+        // ==========================================
+        // ROUTING SYSTEM (Redirecionamento Inteligente)
+        // ==========================================
+        let isHandlingLogin = false; // Impede redirecionamentos múltiplos
+        
+        onAuthStateChanged(auth, async (user) => {
+            if (user && !isHandlingLogin) {
+                isHandlingLogin = true;
+                try {
+                    const userDoc = await getDoc(doc(db, "users", user.uid));
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data();
+                        
+                        if (userData.status === 'blocked' || userData.status === 'banned') {
+                            showToast('Acesso negado. Contacte o suporte.', 'error');
+                            await signOut(auth);
+                            isHandlingLogin = false;
+                            return;
+                        }
 
-                // 2. Buscar Dados do Usuário no Firestore
-                const userDoc = await getDoc(doc(db, "users", user.uid));
-                
-                // Padrão para Clientes Normais é a Página Inicial
-                let redirectUrl = 'index.html'; 
+                        // Atualiza atividade online em background
+                        updateDoc(doc(db, "users", user.uid), {
+                            lastLogin: serverTimestamp(),
+                            lastActivity: serverTimestamp()
+                        }).catch(e => console.warn(e));
 
-                if (userDoc.exists()) {
-                    const userData = userDoc.data();
-                    
-                    // 3. Redirecionamento Baseado no Role
-                    if (userData.role === 'admin') {
-                        redirectUrl = 'admin.html';
-                    } else if (userData.role === 'affiliate') {
-                        // ✅ URL CORRIGIDA: sem "admin/" prefix
-                        redirectUrl = 'dashboard-afiliado.html';
+                        const role = userData.role || 'user';
+                        
+                        // Verifica se existe um parâmetro redirect no URL
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const redirectParam = urlParams.get('redirect');
+
+                        // 🚦 MOTOR DE ROTAS CORRIGIDO AQUI 🚦
+                        if (role === 'admin' || role === 'superadmin') {
+                            window.location.href = redirectParam || 'admin/dashboard.html';
+                        } 
+                        else if (role === 'affiliate') {
+                            window.location.href = redirectParam || 'dashboard-afiliados.html'; // CORRIGIDO!
+                        } 
+                        else {
+                            window.location.href = redirectParam || 'index.html';
+                        }
+                    } else {
+                        // Perfil não existe no Firestore
+                        showToast('Perfil não encontrado. Fale com o suporte.', 'error');
+                        await signOut(auth);
+                        isHandlingLogin = false;
                     }
+                } catch (error) {
+                    console.error('Routing Error:', error);
+                    isHandlingLogin = false;
                 }
-
-                showToast('Login efetuado com sucesso! A redirecionar...', 'success');
-                
-                // Redireciona
-                setTimeout(() => {
-                    window.location.href = redirectUrl;
-                }, 1000);
-
-            } catch (error) {
-                console.error("Erro no login:", error);
-                let msg = 'Erro ao efetuar login.';
-                if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
-                    msg = 'Email ou senha incorretos.';
-                } else if (error.code === 'auth/too-many-requests') {
-                    msg = 'Muitas tentativas falhadas. Tente novamente mais tarde.';
-                }
-                showToast(msg, 'error');
-                btn.classList.remove('btn-loading');
             }
         });
 
-        // 🚀 RECUPERAR SENHA
-        document.getElementById('resetForm').addEventListener('submit', async function(e) {
+        // ==========================================
+        // FORMULÁRIO DE LOGIN
+        // ==========================================
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const btn = document.getElementById('resetBtn');
-            const email = document.getElementById('resetEmail').value.trim();
+            const btn = document.getElementById('btnSubmit');
+            const btnText = document.getElementById('btnText');
+            const btnIcon = document.getElementById('btnIcon');
+            
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
 
-            btn.classList.add('btn-loading');
+            btn.disabled = true;
+            btnText.textContent = 'A Autenticar...';
+            btnIcon.setAttribute('data-lucide', 'loader-2');
+            btnIcon.classList.add('animate-spin');
+            lucide.createIcons({root: btn});
 
             try {
-                await sendPasswordResetEmail(auth, email);
-                showToast('Link de recuperação enviado para o seu email!', 'success');
-                setTimeout(() => {
-                    closeResetModal();
-                    btn.classList.remove('btn-loading');
-                }, 2000);
+                // A função onAuthStateChanged acima fará o redirecionamento automático
+                await signInWithEmailAndPassword(auth, email, password);
+                showToast('Acesso validado! A redirecionar...', 'success');
             } catch (error) {
-                let msg = 'Erro ao enviar email de recuperação.';
-                if (error.code === 'auth/user-not-found') {
-                    msg = 'Não existe conta associada a este email.';
+                let msg = 'Erro na validação das credenciais.';
+                if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
+                    msg = 'Email ou palavra-passe incorretos.';
+                } else if (error.code === 'auth/too-many-requests') {
+                    msg = 'Demasiadas tentativas. Aguarde uns minutos.';
                 }
+                
                 showToast(msg, 'error');
-                btn.classList.remove('btn-loading');
+                btn.disabled = false;
+                btnText.textContent = 'Iniciar Sessão';
+                btnIcon.setAttribute('data-lucide', 'arrow-right');
+                btnIcon.classList.remove('animate-spin');
+                lucide.createIcons({root: btn});
+            }
+        });
+
+        // ==========================================
+        // PEDIDO DE RECUPERAÇÃO DE SENHA (VIA RESEND)
+        // ==========================================
+        document.getElementById('forgotForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('forgotEmail').value.trim();
+            const btn = document.getElementById('btnForgot');
+            const btnText = document.getElementById('btnForgotText');
+            const btnIcon = document.getElementById('btnForgotIcon');
+
+            if (!email) return showToast('Por favor introduza o seu email.', 'error');
+
+            btn.disabled = true;
+            btnText.textContent = 'A Enviar...';
+            btnIcon.setAttribute('data-lucide', 'loader-2');
+            btnIcon.classList.add('animate-spin');
+            lucide.createIcons({root: btn});
+
+            try {
+                // Ligação à API Vercel/Resend
+                const response = await fetch('/api/send-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        to: email,
+                        type: 'password_reset' // Instrui o backend a tratar como recuperação de senha
+                    })
+                });
+
+                if (response.ok) {
+                    showToast('Link de recuperação enviado para o seu email!', 'success');
+                    setTimeout(() => closeForgotModal(), 2000);
+                } else {
+                    throw new Error('Falha no servidor de emails.');
+                }
+            } catch (error) {
+                console.error(error);
+                showToast('Falha ao enviar o pedido. Tente novamente mais tarde.', 'error');
+            } finally {
+                btn.disabled = false;
+                btnText.textContent = 'Enviar Link de Acesso';
+                btnIcon.setAttribute('data-lucide', 'send');
+                btnIcon.classList.remove('animate-spin');
+                lucide.createIcons({root: btn});
             }
         });
     </script>
