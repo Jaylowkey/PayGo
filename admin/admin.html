@@ -40,9 +40,10 @@
     .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
     #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-    .toast { pointer-events: auto; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 12px; display: flex; gap: 12px; transform: translateX(120%); transition: transform 0.4s ease; opacity: 0; }
+    .toast { pointer-events: auto; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 12px; display: flex; gap: 12px; transform: translateX(120%); transition: transform 0.4s ease; opacity: 0; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
     .toast.show { transform: translateX(0); opacity: 1; }
     .toast.error { border-left-color: #ef4444; }
+    .toast.success { border-left-color: #22c55e; }
     
     .skeleton { background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 0.25rem; }
     @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
@@ -53,7 +54,7 @@
   <div id="sysLoader" class="fixed inset-0 bg-slate-950 z-[200] flex flex-col items-center justify-center transition-opacity duration-500">
     <div class="w-16 h-16 border-4 border-slate-800 border-t-danger-500 rounded-full animate-spin mb-4"></div>
     <h2 class="text-white text-xl font-bold font-display">Protocolo de Segurança</h2>
-    <p class="text-slate-400 text-sm">A verificar privilégios de Super Admin...</p>
+    <p class="text-slate-400 text-sm mt-1">A verificar privilégios de Super Admin...</p>
   </div>
 
   <div class="fixed inset-0 bg-grid opacity-20 pointer-events-none z-0"></div>
@@ -67,14 +68,14 @@
         <div class="bg-gradient-to-tr from-brand-500 to-brand-400 p-2.5 rounded-xl text-white shadow-lg"><i data-lucide="zap" class="w-5 h-5"></i></div>
         <div class="hidden sm:block">
             <span class="text-2xl font-display font-bold text-white">PayGo</span>
-            <span class="text-[10px] text-danger-400 ml-2 px-2 py-0.5 bg-danger-500/20 border border-danger-500/30 rounded-full font-black uppercase">Security Auth</span>
+            <span class="text-[10px] text-danger-400 ml-2 px-2 py-0.5 bg-danger-500/20 border border-danger-500/30 rounded-full font-black uppercase tracking-widest">Security Auth</span>
         </div>
       </div>
       <div class="flex items-center gap-4">
         <div class="text-right hidden sm:block">
             <p class="text-sm font-bold text-white" id="adminName">A carregar...</p>
         </div>
-        <button onclick="window.logout()" class="bg-slate-800 hover:bg-danger-500/20 text-slate-400 hover:text-danger-400 rounded-xl p-2.5 transition-colors"><i data-lucide="power" class="w-5 h-5"></i></button>
+        <button onclick="window.logout()" class="bg-slate-800 hover:bg-danger-500/20 text-slate-400 hover:text-danger-400 rounded-xl p-2.5 transition-colors" title="Terminar Sessão Segura"><i data-lucide="power" class="w-5 h-5"></i></button>
       </div>
     </div>
   </header>
@@ -93,7 +94,7 @@
 
         <nav class="space-y-2">
           <a href="dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
-            <i data-lucide="layout-dashboard" class="w-5 h-5"></i> <span class="text-sm font-medium">Visão Geral</span>
+            <i data-lucide="layout-dashboard" class="w-5 h-5"></i> <span class="text-sm font-medium">Visão Central</span>
           </a>
           <a href="pedidos.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
             <i data-lucide="shopping-bag" class="w-5 h-5"></i> <span class="text-sm font-medium">Pedidos</span>
@@ -127,16 +128,19 @@
           <h1 class="text-3xl font-display font-extrabold text-white tracking-tight">Equipa Administrativa</h1>
           <p class="text-slate-400 text-sm mt-1">Conceda ou revogue acessos ao painel de controlo do sistema.</p>
         </div>
+        <div class="bg-danger-500/10 border border-danger-500/20 px-4 py-2 rounded-xl">
+          <p class="text-xs font-bold text-danger-400 flex items-center gap-2"><i data-lucide="bell-ring" class="w-4 h-4"></i> Notificações Email Ativadas</p>
+        </div>
       </header>
 
       <div class="glass-card rounded-2xl p-6 border-t-2 border-t-brand-500 shadow-lg">
         <h3 class="text-lg font-bold text-white mb-2 flex items-center gap-2"><i data-lucide="user-plus" class="w-5 h-5 text-brand-400"></i> Promover Conta a Administrador</h3>
-        <p class="text-xs text-slate-400 mb-6">O utilizador já deve ter uma conta de cliente criada na plataforma. Introduza o email exato abaixo para lhe conceder permissões de gestão.</p>
+        <p class="text-xs text-slate-400 mb-6">O utilizador já deve ter uma conta de cliente criada na plataforma. Introduza o email exato abaixo para lhe conceder permissões de gestão (Notificaremos o utilizador via email).</p>
         
         <form id="promoteForm" class="flex flex-col sm:flex-row gap-4">
           <div class="relative flex-1">
             <i data-lucide="mail" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
-            <input type="email" id="promoteEmail" required placeholder="Ex: joao.silva@paygo.co.mz" class="w-full pl-12 pr-4 py-4 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-brand-500 transition-colors shadow-inner">
+            <input type="email" id="promoteEmail" required placeholder="Ex: staff@paygo.co.mz" class="w-full pl-12 pr-4 py-4 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-brand-500 transition-colors shadow-inner">
           </div>
           <button type="submit" id="btnPromote" class="bg-brand-600 hover:bg-brand-500 text-white px-8 py-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(37,99,235,0.3)] transition-colors whitespace-nowrap">
             <span id="btnPromoteText">Conceder Acesso</span>
@@ -148,7 +152,7 @@
       <div class="glass-card rounded-2xl p-6">
         <div class="flex justify-between items-center mb-6">
           <h3 class="text-xl font-display font-bold text-white flex items-center gap-2"><i data-lucide="shield" class="w-5 h-5 text-danger-400"></i> Administradores do Sistema</h3>
-          <span class="bg-slate-800 text-slate-300 text-xs font-bold px-3 py-1 rounded-lg" id="adminCount">0 Registos</span>
+          <span class="bg-slate-800 text-slate-300 text-xs font-bold px-3 py-1 rounded-lg" id="adminCount">A contar...</span>
         </div>
         
         <div class="overflow-x-auto border border-white/5 rounded-xl">
@@ -157,16 +161,17 @@
               <tr>
                 <th class="py-4 px-5">Membro da Equipa</th>
                 <th class="py-4 px-5">Email Corporativo</th>
+                <th class="py-4 px-5">Último Login</th>
                 <th class="py-4 px-5">Nível de Acesso</th>
                 <th class="py-4 px-5 text-right">Ações de Segurança</th>
               </tr>
             </thead>
             <tbody id="adminsTableBody" class="divide-y divide-white/5">
-              <tr><td colspan="4" class="text-center py-6 text-slate-500"><div class="skeleton h-4 w-full"></div></td></tr>
+              <tr><td colspan="5" class="text-center py-6 text-slate-500"><div class="skeleton h-4 w-full"></div></td></tr>
             </tbody>
           </table>
         </div>
-        <p class="text-[10px] text-slate-500 mt-4 text-center italic">* Nota: Não é possível revogar o seu próprio acesso. Peça a outro Super Admin caso necessite.</p>
+        <p class="text-[10px] text-slate-500 mt-4 text-center italic">* Nota: Por motivos de segurança, não é possível revogar o seu próprio acesso. Peça a outro Administrador caso necessite.</p>
       </div>
 
     </div>
@@ -186,6 +191,8 @@
       appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
     };
 
+    const ADMIN_EMAIL_LOGS = 'admin@paygo.co.mz'; // O email principal que recebe as cópias dos alertas de segurança
+
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app, "paygodb");
@@ -193,7 +200,6 @@
     lucide.createIcons();
     let currentAdminId = null;
 
-    // Proteção Loader
     const fallbackTimer = setTimeout(() => { document.getElementById('sysLoader').style.display = 'none'; }, 3000);
 
     onAuthStateChanged(auth, async (user) => {
@@ -218,6 +224,28 @@
       }
     });
 
+    // ==========================================
+    // ENGINE DE NOTIFICAÇÕES (RESEND API)
+    // ==========================================
+    async function sendSystemNotification(toEmail, subject, templateName, variables) {
+        try {
+            await fetch('/api/send-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    to: toEmail,
+                    subject: subject,
+                    template: templateName,
+                    type: 'transactional',
+                    variables: variables
+                })
+            });
+            console.log(`[Security Alert Sent] To: ${toEmail}`);
+        } catch (error) {
+            console.error(`[Security Alert Failed] To: ${toEmail}`, error);
+        }
+    }
+
     async function loadAdminTeam() {
       try {
         const usersRef = collection(db, "users");
@@ -227,11 +255,14 @@
         let admins = [];
         snap.forEach(doc => admins.push({ id: doc.id, ...doc.data() }));
         
-        document.getElementById('adminCount').textContent = `${admins.length} Registos`;
+        // Organiza do mais antigo para o mais novo
+        admins.sort((a,b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
+
+        document.getElementById('adminCount').textContent = `${admins.length} Staff Registado`;
         const tbody = document.getElementById('adminsTableBody');
         
         if(admins.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-500">Sem equipa registada.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-slate-500">Sem equipa registada.</td></tr>`;
             return;
         }
 
@@ -239,6 +270,7 @@
           const isMe = a.id === currentAdminId;
           const roleBadge = a.role === 'superadmin' ? 'superadmin' : 'admin';
           const roleText = a.role === 'superadmin' ? 'Super Admin' : 'Admin';
+          const lastLog = a.lastLogin?.toDate ? a.lastLogin.toDate().toLocaleString('pt-MZ', {dateStyle:'short', timeStyle:'short'}) : 'Nunca efetuou login';
           
           return `
           <tr class="hover:bg-slate-800/40 transition-colors">
@@ -253,9 +285,10 @@
                 </div>
             </td>
             <td class="py-4 px-5 text-sm text-slate-300 font-mono">${a.email}</td>
+            <td class="py-4 px-5 text-[10px] uppercase font-bold text-slate-400 tracking-wider">${lastLog}</td>
             <td class="py-4 px-5"><span class="status-badge ${roleBadge}">${roleText}</span></td>
             <td class="py-4 px-5 text-right">
-              <button onclick="window.revokeAdmin('${a.id}', '${a.name}')" ${isMe ? 'disabled' : ''} class="action-btn revoke" title="Revogar Privilégios">
+              <button onclick="window.revokeAdmin('${a.id}', '${a.name}', '${a.email}')" ${isMe ? 'disabled' : ''} class="action-btn revoke" title="Revogar Privilégios">
                   <i data-lucide="user-minus" class="w-4 h-4"></i> Revogar
               </button>
             </td>
@@ -268,7 +301,7 @@
       }
     }
 
-    // Formulário Promover Utilizador a Admin
+    // PROMOVER UTILIZADOR
     document.getElementById('promoteForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const emailToPromote = document.getElementById('promoteEmail').value.trim().toLowerCase();
@@ -277,7 +310,7 @@
         const btnIcon = document.getElementById('btnPromoteIcon');
 
         btn.disabled = true;
-        btnText.textContent = "A pesquisar...";
+        btnText.textContent = "A auditar base de dados...";
         btnIcon.setAttribute('data-lucide', 'loader-2');
         btnIcon.classList.add('animate-spin');
         lucide.createIcons({root: btn});
@@ -288,27 +321,33 @@
             const snap = await getDocs(q);
 
             if (snap.empty) {
-                showToast('Email não encontrado. O utilizador deve criar conta primeiro.', 'error');
+                showToast('Email não encontrado. O utilizador deve criar conta cliente primeiro.', 'error');
             } else {
                 const targetDoc = snap.docs[0];
                 const targetData = targetDoc.data();
 
                 if (targetData.role === 'admin' || targetData.role === 'superadmin') {
-                    showToast('Este utilizador já possui acesso administrativo.', 'warning');
+                    showToast('O utilizador já possui acesso administrativo.', 'warning');
                 } else {
-                    if(confirm(`Tem a certeza que deseja promover ${targetData.name || emailToPromote} a Administrador?`)) {
+                    if(confirm(`Tem a certeza que deseja promover ${targetData.name || emailToPromote} a Administrador do Sistema?`)) {
+                        
                         await updateDoc(doc(db, "users", targetDoc.id), {
                             role: 'admin',
                             updatedAt: serverTimestamp()
                         });
-                        showToast('Acesso concedido com sucesso!', 'success');
+
+                        // DISPARO DE EMAILS DE SEGURANÇA
+                        sendSystemNotification(emailToPromote, '🔐 Acesso Administrativo Concedido - PayGo', 'admin-promoted', { name: targetData.name });
+                        sendSystemNotification(ADMIN_EMAIL_LOGS, 'Log Segurança: Novo Admin Promovido', 'admin-log', { action: `A conta de ${targetData.name} (${emailToPromote}) foi elevada a Administrador pelo utilizador logado.` });
+
+                        showToast('Acesso concedido. O novo administrador foi notificado por email!', 'success');
                         document.getElementById('promoteEmail').value = '';
                         await loadAdminTeam();
                     }
                 }
             }
         } catch (error) {
-            showToast('Erro ao processar o pedido.', 'error');
+            showToast('Erro ao processar o pedido. Tente novamente.', 'error');
         } finally {
             btn.disabled = false;
             btnText.textContent = "Conceder Acesso";
@@ -318,20 +357,25 @@
         }
     });
 
-    // Revogar Admin
-    window.revokeAdmin = async function(userId, userName) {
-        if(userId === currentAdminId) return; // Segurança extra
-        if(!confirm(`ATENÇÃO: Retirar permissões de administrador a ${userName || 'este utilizador'}? Ele passará a ser um cliente normal.`)) return;
+    // REVOGAR ACESSO ADMIN
+    window.revokeAdmin = async function(userId, userName, userEmail) {
+        if(userId === currentAdminId) return; 
+        if(!confirm(`⚠️ PERIGO: Retirar todas as permissões de gestão a ${userName || userEmail}? A conta passará imediatamente a ser um cliente normal e o utilizador será notificado.`)) return;
 
         try {
             await updateDoc(doc(db, "users", userId), {
-                role: 'user', // Retorna a cliente
+                role: 'user', // O user perde o dashboard de admin
                 updatedAt: serverTimestamp()
             });
-            showToast('Privilégios revogados com sucesso.', 'success');
+
+            // DISPARO DE EMAILS DE SEGURANÇA
+            sendSystemNotification(userEmail, '⚠️ Acesso Administrativo Revogado', 'admin-revoked', { name: userName });
+            sendSystemNotification(ADMIN_EMAIL_LOGS, 'Log Segurança: Admin Despromovido', 'admin-log', { action: `O acesso administrativo da conta ${userEmail} foi revogado.` });
+
+            showToast('Privilégios revogados com sucesso. Email de segurança enviado.', 'success');
             await loadAdminTeam();
         } catch(error) {
-            showToast('Erro ao revogar acesso.', 'error');
+            showToast('Erro interno ao tentar revogar o acesso.', 'error');
         }
     };
 
@@ -344,7 +388,7 @@
       t.innerHTML = `<span class="text-sm font-bold text-white">${msg}</span>`;
       container.appendChild(t);
       requestAnimationFrame(() => t.classList.add('show'));
-      setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 4000);
+      setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 5000);
     }
 
     // Funcionalidades Móveis
