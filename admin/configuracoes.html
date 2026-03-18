@@ -1,443 +1,370 @@
 <!DOCTYPE html>
-<html lang="pt-MZ">
+<html lang="pt-MZ" class="scroll-smooth">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Configurações | PayGo Admin</title>
+  <title>Configurações de Sistema | PayGo Admin</title>
+  <meta name="theme-color" content="#0f172a">
   <meta name="robots" content="noindex, nofollow">
-  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  
   <script>
     tailwind.config = {
       theme: {
         extend: {
-          colors: {
-            brand: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 900: '#1e3a8a', 950: '#0f172a' },
-            accent: { 400: '#22d3ee', 500: '#06b6d4' },
-            success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' }
-          }
+          fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'], display: ['"Outfit"', 'sans-serif'], mono: ['"Fira Code"', 'monospace'] },
+          colors: { brand: { 50: '#eff6ff', 500: '#3b82f6', 600: '#2563eb', 950: '#0f172a' }, success: { 400: '#4ade80', 500: '#22c55e' }, danger: { 400: '#f87171', 500: '#ef4444' }, warning: { 500: '#f59e0b' } }
         }
       }
-    }
+    };
   </script>
+  
   <style>
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-    /* Sidebar Active Link */
-    .sidebar-link.active { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-right: 3px solid #3b82f6; }
+    body { background-color: #0f172a; color: #f8fafc; }
+    ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
+    .glass-nav { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .glass-card { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.3s ease; }
+    .glass-card:hover { border-color: rgba(59, 130, 246, 0.3); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5); }
+    .sidebar-link.active { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-left: 3px solid #60a5fa; font-weight: 700; }
     
     /* Toggle Switch Moderno */
     .toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; }
     .toggle-switch input { opacity: 0; width: 0; height: 0; }
-    .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .4s; border-radius: 34px; }
+    .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .4s; border-radius: 34px; }
     .toggle-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s cubic-bezier(0.4, 0.0, 0.2, 1); border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-    input:checked + .toggle-slider { background-color: #2563eb; }
+    input:checked + .toggle-slider { background-color: #3b82f6; }
     input:checked + .toggle-slider:before { transform: translateX(20px); }
     
     /* Input Effects */
-    .config-section { transition: all 0.3s ease; }
-    .config-section:hover { box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.01); border-color: #e2e8f0; }
-    .input-group:focus-within label { color: #2563eb; }
+    .input-group:focus-within label { color: #60a5fa; }
     
-    /* Loader Overlay */
-    #pageLoader { transition: opacity 0.5s ease, visibility 0.5s ease; }
-    .loader-spinner { border-top-color: #3b82f6; animation: spinner 1s linear infinite; }
-    @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-    /* Animations */
-    @keyframes pulse-success { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.8; transform: scale(1.05); } }
-    .saved-indicator { animation: pulse-success 2s ease-in-out; }
+    /* Toasts */
+    #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+    .toast { pointer-events: auto; background: rgba(15, 23, 42, 0.95); border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 12px; display: flex; gap: 12px; transform: translateX(120%); transition: transform 0.4s ease; opacity: 0; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+    .toast.show { transform: translateX(0); opacity: 1; }
+    .toast.error { border-left-color: #ef4444; }
+    .toast.success { border-left-color: #22c55e; }
+    .toast.warning { border-left-color: #f59e0b; }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans antialiased overflow-x-hidden">
+<body class="selection:bg-brand-500 selection:text-white">
 
-  <div id="pageLoader" class="fixed inset-0 bg-slate-900 z-[100] flex flex-col items-center justify-center">
-    <div class="w-12 h-12 border-4 border-slate-700 border-t-brand-500 rounded-full loader-spinner mb-4"></div>
-    <h2 class="text-white text-xl font-bold font-display tracking-wide">PayGo Admin</h2>
-    <p class="text-slate-400 text-sm mt-2">Carregando configurações...</p>
+  <div id="sysLoader" class="fixed inset-0 bg-slate-950 z-[200] flex flex-col items-center justify-center transition-opacity duration-500">
+    <div class="w-16 h-16 border-4 border-slate-800 border-t-brand-500 rounded-full animate-spin mb-4"></div>
+    <h2 class="text-white text-xl font-bold font-display">PayGo OS</h2>
+    <p class="text-slate-400 text-sm mt-1">A carregar núcleo do sistema...</p>
   </div>
 
-  <div class="md:hidden fixed top-0 left-0 w-full bg-slate-900 text-white p-4 flex items-center justify-between z-40 shadow-md">
-    <div class="flex items-center gap-2">
-      <div class="w-8 h-8 bg-gradient-to-tr from-brand-500 to-accent-500 rounded-lg flex items-center justify-center">
-        <i data-lucide="zap" class="w-4 h-4 text-white"></i>
-      </div>
-      <span class="font-bold text-lg">PayGo Admin</span>
-    </div>
-    <button id="mobileMenuBtn" class="p-2 text-slate-300 hover:text-white focus:outline-none">
-      <i data-lucide="menu" class="w-6 h-6"></i>
-    </button>
-  </div>
+  <div class="fixed inset-0 bg-grid opacity-20 pointer-events-none z-0"></div>
+  <div class="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[500px] bg-brand-600/10 rounded-full mix-blend-screen blur-[120px] pointer-events-none z-0"></div>
+  <div id="toastContainer"></div>
 
-  <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-40 hidden md:hidden transition-opacity opacity-0"></div>
-
-  <aside id="sidebar" class="fixed left-0 top-0 h-full w-64 bg-slate-900 text-white p-6 z-50 flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out shadow-2xl md:shadow-none">
-    <div class="flex items-center justify-between mb-8 pb-6 border-b border-white/10 mt-2 md:mt-0">
+  <header class="fixed w-full z-50 glass-nav">
+    <div class="container mx-auto px-6 h-20 flex justify-between items-center">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 bg-gradient-to-tr from-brand-500 to-accent-500 rounded-xl flex items-center justify-center shadow-lg shadow-brand-500/20">
-          <i data-lucide="zap" class="w-6 h-6 fill-current text-white"></i>
-        </div>
-        <span class="text-xl font-bold tracking-tight">PayGo</span>
-      </div>
-      <button id="closeSidebarBtn" class="md:hidden p-1 text-slate-400 hover:text-white">
-        <i data-lucide="x" class="w-5 h-5"></i>
-      </button>
-    </div>
-
-    <nav class="flex-1 space-y-2 overflow-y-auto pr-2">
-      <a href="dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all font-medium">
-        <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
-      </a>
-      <a href="relatorios.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all font-medium">
-        <i data-lucide="bar-chart-3" class="w-5 h-5"></i> Relatórios
-      </a>
-      <a href="clientes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all font-medium">
-        <i data-lucide="users" class="w-5 h-5"></i> Clientes
-      </a>
-      <a href="configuracoes.html" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-semibold">
-        <i data-lucide="settings" class="w-5 h-5"></i> Configurações
-      </a>
-    </nav>
-
-    <div class="pt-6 border-t border-white/10 mt-auto">
-      <div class="flex items-center gap-3 px-2 py-3 mb-3 bg-white/5 rounded-xl">
-        <div class="w-9 h-9 rounded-full bg-brand-600 flex items-center justify-center text-sm font-bold text-white shadow-inner" id="userInitial">A</div>
-        <div class="flex-1 min-w-0">
-          <p class="text-sm font-semibold text-white truncate" id="userEmail">admin@paygo.co.mz</p>
-          <p class="text-[10px] text-brand-300 uppercase tracking-widest font-bold">Administrador</p>
+        <button id="mobileMenuBtn" class="lg:hidden text-slate-400 hover:text-white p-2 -ml-2 transition-colors"><i data-lucide="menu" class="w-6 h-6"></i></button>
+        <div class="bg-gradient-to-tr from-brand-500 to-brand-400 p-2.5 rounded-xl text-white shadow-lg"><i data-lucide="zap" class="w-5 h-5"></i></div>
+        <div class="hidden sm:block">
+            <span class="text-2xl font-display font-bold text-white">PayGo</span>
+            <span class="text-[10px] text-brand-400 ml-2 px-2 py-0.5 bg-brand-500/20 border border-brand-500/30 rounded-full font-black uppercase">Settings</span>
         </div>
       </div>
-      <button id="logoutBtn" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-slate-800 hover:bg-red-500/10 text-slate-300 hover:text-red-400 border border-slate-700 hover:border-red-500/30 rounded-xl transition-all text-sm font-medium">
-        <i data-lucide="log-out" class="w-4 h-4"></i> Encerrar Sessão
-      </button>
+      <button onclick="window.logout()" class="bg-slate-800 hover:bg-danger-500/20 text-slate-400 hover:text-danger-400 rounded-xl p-2.5 transition-colors" title="Terminar Sessão"><i data-lucide="power" class="w-5 h-5"></i></button>
     </div>
-  </aside>
+  </header>
 
-  <main class="md:ml-64 p-4 md:p-8 pt-24 md:pt-8 min-h-screen">
-    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
-      <div>
-        <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
-          Configurações
-        </h1>
-        <p class="text-slate-500 mt-1 text-sm">Gerencie as regras de negócio e integrações da plataforma.</p>
-      </div>
-      <div id="saveStatus" class="hidden items-center gap-2 text-success-600 bg-success-50 px-4 py-2 rounded-lg border border-success-200 text-sm font-bold shadow-sm">
-        <i data-lucide="check-circle-2" class="w-5 h-5"></i> Tudo Atualizado
-      </div>
-    </div>
+  <div id="sidebarOverlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-40 hidden lg:hidden opacity-0 transition-opacity"></div>
+
+  <div class="pt-28 pb-32 relative z-10 container mx-auto px-6 grid lg:grid-cols-4 gap-6">
     
-    <form id="settingsForm" class="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8 pb-24">
+    <div id="sidebar" class="lg:col-span-1 fixed lg:static top-0 left-0 h-full lg:h-auto w-72 lg:w-auto bg-slate-900 lg:bg-transparent z-50 lg:z-auto p-6 lg:p-0 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 border-r border-slate-800 lg:border-none">
+      <div class="glass-card rounded-2xl p-0 lg:p-6 sticky top-28 border-none lg:border-solid bg-transparent lg:bg-[rgba(30,41,59,0.4)]">
+        
+        <div class="flex justify-between items-center mb-6 lg:hidden">
+            <span class="text-xl font-display font-bold text-white">PayGo Admin</span>
+            <button id="closeSidebarBtn" class="text-slate-400 hover:text-white p-2"><i data-lucide="x" class="w-6 h-6"></i></button>
+        </div>
+
+        <nav class="space-y-2">
+          <a href="dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
+            <i data-lucide="layout-dashboard" class="w-5 h-5"></i> <span class="text-sm font-medium">Visão Central</span>
+          </a>
+          <a href="pedidos.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
+            <i data-lucide="shopping-bag" class="w-5 h-5"></i> <span class="text-sm font-medium">Pedidos</span>
+          </a>
+          <a href="clientes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
+            <i data-lucide="users" class="w-5 h-5"></i> <span class="text-sm font-medium">Clientes</span>
+          </a>
+          <a href="afiliados.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
+            <i data-lucide="network" class="w-5 h-5"></i> <span class="text-sm font-medium">Afiliados</span>
+          </a>
+          <a href="gerar-fatura.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
+            <i data-lucide="file-check-2" class="w-5 h-5 text-brand-400"></i> <span class="text-sm font-medium">Gerar Faturas</span>
+          </a>
+          
+          <div class="pt-4 mt-4 border-t border-slate-700/50"></div>
+          
+          <a href="admin.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
+            <i data-lucide="shield" class="w-5 h-5"></i> <span class="text-sm font-medium">Gestão de Equipa</span>
+          </a>
+          <a href="configuracoes.html" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-xl text-white">
+            <i data-lucide="settings" class="w-5 h-5"></i> <span class="text-sm font-medium">Configurações</span>
+          </a>
+        </nav>
+      </div>
+    </div>
+
+    <div class="lg:col-span-3 space-y-6">
       
-      <div class="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 config-section shadow-sm">
-        <h2 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2 pb-4 border-b border-slate-100">
-          <div class="p-2 bg-brand-50 rounded-lg text-brand-600"><i data-lucide="globe" class="w-5 h-5"></i></div>
-          Configurações Globais
-        </h2>
-        <div class="space-y-6">
-          <div class="input-group">
-            <label class="block text-sm font-bold text-slate-700 mb-2 transition-colors">Taxa de Câmbio (USD → MT)</label>
-            <div class="relative flex items-center">
-              <span class="absolute left-4 text-slate-400 font-bold">$</span>
-              <input type="number" id="exchangeRate" value="88.00" step="0.01" min="1" max="1000" class="w-full pl-9 pr-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-brand-500/10 transition font-mono text-lg font-semibold text-slate-800 bg-slate-50 focus:bg-white">
-              <span class="absolute right-4 text-xs font-bold text-brand-600 bg-brand-50 px-2 py-1 rounded">OFICIAL</span>
-            </div>
-            <p class="text-xs text-slate-500 mt-2 flex items-center gap-1"><i data-lucide="info" class="w-3 h-3"></i> Cotação base para conversão na calculadora do cliente.</p>
-          </div>
-          
-          <div class="input-group">
-            <label class="block text-sm font-bold text-slate-700 mb-2 transition-colors">Emails Notificados (Admin)</label>
-            <textarea id="adminEmails" rows="2" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-brand-500/10 transition font-mono text-sm bg-slate-50 focus:bg-white" placeholder="admin@paygo.co.mz, gestao@paygo.co.mz">admin@paygo.co.mz</textarea>
-            <p class="text-xs text-slate-500 mt-2 flex items-center gap-1"><i data-lucide="info" class="w-3 h-3"></i> Separe múltiplos emails com vírgula.</p>
-          </div>
-          
-          <div class="input-group">
-            <label class="block text-sm font-bold text-slate-700 mb-2 transition-colors">WhatsApp de Suporte</label>
-            <div class="relative flex items-center">
-              <span class="absolute left-4 text-green-500"><i data-lucide="message-circle" class="w-5 h-5"></i></span>
-              <input type="tel" id="whatsappNumber" value="258877522255" pattern="^\d{10,15}$" class="w-full pl-11 pr-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-green-500/10 focus:border-green-500 transition font-mono bg-slate-50 focus:bg-white">
-            </div>
-            <p class="text-xs text-slate-500 mt-2">Formato internacional (Ex: 2588XXXXXXXX) sem símbolos ou espaços.</p>
-          </div>
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 class="text-3xl font-display font-extrabold text-white tracking-tight">Parametrização do Sistema</h1>
+          <p class="text-slate-400 text-sm mt-1">Altere o comportamento do site público, taxas de serviço e integrações (API).</p>
         </div>
       </div>
-
-      <div class="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 config-section shadow-sm">
-        <h2 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2 pb-4 border-b border-slate-100">
-          <div class="p-2 bg-amber-50 rounded-lg text-amber-600"><i data-lucide="calculator" class="w-5 h-5"></i></div>
-          Tabela de Taxas de Serviço
-        </h2>
-        <div class="space-y-4">
-          <div class="flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100/50 rounded-xl border border-slate-100 transition-colors group">
-            <div>
-              <p class="font-bold text-slate-800">Até $20 USD</p>
-              <p class="text-xs text-slate-500">Taxa fixa em MT</p>
-            </div>
-            <div class="relative">
-              <input type="number" id="tax1" value="150" min="0" max="10000" class="w-32 px-4 py-2 border border-slate-200 rounded-lg text-right focus:outline-none focus:ring-2 focus:ring-brand-500 transition font-mono font-bold text-slate-900 bg-white group-hover:border-brand-300">
-              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">MT</span>
-            </div>
-          </div>
-          <div class="flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100/50 rounded-xl border border-slate-100 transition-colors group">
-            <div>
-              <p class="font-bold text-slate-800">$21 - $50 USD</p>
-              <p class="text-xs text-slate-500">Taxa fixa em MT</p>
-            </div>
-            <div class="relative">
-              <input type="number" id="tax2" value="250" min="0" max="10000" class="w-32 px-4 py-2 border border-slate-200 rounded-lg text-right focus:outline-none focus:ring-2 focus:ring-brand-500 transition font-mono font-bold text-slate-900 bg-white group-hover:border-brand-300">
-              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">MT</span>
-            </div>
-          </div>
-          <div class="flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100/50 rounded-xl border border-slate-100 transition-colors group">
-            <div>
-              <p class="font-bold text-slate-800">$51 - $100 USD</p>
-              <p class="text-xs text-slate-500">Taxa fixa em MT</p>
-            </div>
-            <div class="relative">
-              <input type="number" id="tax3" value="600" min="0" max="10000" class="w-32 px-4 py-2 border border-slate-200 rounded-lg text-right focus:outline-none focus:ring-2 focus:ring-brand-500 transition font-mono font-bold text-slate-900 bg-white group-hover:border-brand-300">
-              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">MT</span>
-            </div>
-          </div>
-          <div class="flex items-center justify-between p-4 bg-slate-900 rounded-xl border border-slate-800 text-white shadow-lg">
-            <div>
-              <p class="font-bold text-brand-400">Acima de $100 USD</p>
-              <p class="text-xs text-slate-400">Taxa percentual sobre o total</p>
-            </div>
-            <div class="flex items-center gap-2">
-              <input type="number" id="taxPercent" value="7" min="0" max="50" step="0.1" class="w-24 px-3 py-2 border border-slate-700 bg-slate-800 rounded-lg text-right focus:outline-none focus:ring-2 focus:ring-brand-500 transition font-mono font-bold text-white">
-              <span class="text-slate-400 font-bold">%</span>
-            </div>
-          </div>
-          
-          <label class="flex items-center gap-4 p-5 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl cursor-pointer border border-green-200 hover:shadow-md transition-all mt-4">
-            <label class="toggle-switch flex-shrink-0">
-              <input type="checkbox" id="firstPurchaseFree" checked>
-              <span class="toggle-slider"></span>
-            </label>
-            <div>
-              <p class="font-bold text-slate-900 flex items-center gap-2">Primeira Compra Grátis <span class="bg-green-200 text-green-800 text-[9px] uppercase px-2 py-0.5 rounded-full">Bónus</span></p>
-              <p class="text-xs text-slate-600 mt-1">Isenta taxa de serviço para compras até $5 na 1ª vez do cliente.</p>
-            </div>
-          </label>
-        </div>
-      </div>
-
-      <div class="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 config-section xl:col-span-2 shadow-sm">
-        <h2 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2 pb-4 border-b border-slate-100">
-          <div class="p-2 bg-purple-50 rounded-lg text-purple-600"><i data-lucide="webhook" class="w-5 h-5"></i></div>
-          Integrações e Webhooks
-        </h2>
+      
+      <form id="settingsForm" class="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8">
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="glass-card rounded-2xl border border-white/5 p-6 md:p-8 shadow-lg">
+          <h2 class="text-lg font-bold text-white mb-6 flex items-center gap-3 pb-4 border-b border-white/10">
+            <div class="p-2 bg-brand-500/20 rounded-lg text-brand-400"><i data-lucide="globe" class="w-5 h-5"></i></div>
+            Configurações Globais
+          </h2>
           <div class="space-y-6">
-            <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2"><i data-lucide="mail" class="w-4 h-4"></i> Servidor de Email (Resend)</h3>
             <div class="input-group">
-              <label class="block text-sm font-bold text-slate-700 mb-2">API Key do Resend</label>
-              <div class="relative">
-                <i data-lucide="key" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
-                <input type="password" id="resendApiKey" placeholder="re_xxxxxxxxxxxxxxxxxxxxxxxx" class="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-brand-500/10 transition font-mono text-sm bg-slate-50 focus:bg-white">
+              <label class="block text-sm font-bold text-slate-300 mb-2 transition-colors">Taxa de Câmbio (1 USD → MT)</label>
+              <div class="relative flex items-center">
+                <span class="absolute left-4 text-slate-400 font-bold">$</span>
+                <input type="number" id="exchangeRate" value="88.00" step="0.01" min="1" class="w-full pl-9 pr-24 py-3 border border-slate-700 bg-slate-900 rounded-xl text-white focus:outline-none focus:border-brand-500 transition font-mono text-lg font-semibold">
+                <span class="absolute right-4 text-xs font-bold text-brand-400 bg-brand-900/30 border border-brand-500/30 px-2 py-1 rounded uppercase tracking-widest">Base de Conversão</span>
               </div>
             </div>
-            <div class="grid grid-cols-2 gap-4">
-              <div class="input-group">
-                <label class="block text-sm font-bold text-slate-700 mb-2">Email Remetente</label>
-                <input type="email" id="senderEmail" value="noreply@paygo.co.mz" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-brand-500/10 transition font-mono text-sm bg-slate-50">
-              </div>
-              <div class="input-group">
-                <label class="block text-sm font-bold text-slate-700 mb-2">Nome do Remetente</label>
-                <input type="text" id="senderName" value="PayGo Moçambique" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-brand-500/10 transition bg-slate-50">
-              </div>
-            </div>
-          </div>
-          
-          <div class="space-y-6">
-            <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2"><i data-lucide="bell-ring" class="w-4 h-4"></i> Notificações Admin (Lark)</h3>
+            
             <div class="input-group">
-              <label class="block text-sm font-bold text-slate-700 mb-2">URL do Webhook do Lark</label>
-              <div class="relative">
-                <i data-lucide="link" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
-                <input type="url" id="larkWebhook" placeholder="https://open.larksuite.com/open-apis/bot/v2/hook/..." class="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-brand-500/10 transition font-mono text-sm bg-slate-50 focus:bg-white">
-              </div>
-              <p class="text-xs text-slate-500 mt-2">Dispara alertas no grupo interno sempre que houver um novo pedido ou pagamento.</p>
+              <label class="block text-sm font-bold text-slate-300 mb-2 transition-colors">Emails Notificados (Equipa)</label>
+              <textarea id="adminEmails" rows="2" class="w-full px-4 py-3 border border-slate-700 bg-slate-900 text-white rounded-xl focus:outline-none focus:border-brand-500 transition font-mono text-sm" placeholder="admin@paygo.co.mz, gestao@paygo.co.mz"></textarea>
             </div>
-
-            <div class="p-4 bg-blue-50 border border-blue-200 rounded-xl flex items-start gap-3 mt-4">
-              <i data-lucide="shield-alert" class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5"></i>
-              <p class="text-xs text-blue-800 leading-relaxed">
-                <strong>Atenção Segurança:</strong> Em ambientes de produção severos, chaves de API devem residir apenas no servidor (Ex: Variáveis Vercel). Esta configuração no painel serve para inicialização dinâmica caso o backend suporte.
-              </p>
+            
+            <div class="input-group">
+              <label class="block text-sm font-bold text-slate-300 mb-2 transition-colors">WhatsApp de Suporte Técnico</label>
+              <div class="relative flex items-center">
+                <span class="absolute left-4 text-green-400"><i data-lucide="message-circle" class="w-5 h-5"></i></span>
+                <input type="tel" id="whatsappNumber" value="258877522255" class="w-full pl-12 pr-4 py-3 border border-slate-700 bg-slate-900 text-white rounded-xl focus:outline-none focus:border-green-500 transition font-mono">
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div class="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 config-section xl:col-span-2 shadow-sm">
-        <h2 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2 pb-4 border-b border-slate-100">
-          <div class="p-2 bg-pink-50 rounded-lg text-pink-600"><i data-lucide="users" class="w-5 h-5"></i></div>
-          Programa de Afiliados
-        </h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="input-group">
-            <label class="block text-sm font-bold text-slate-700 mb-2">Comissão Base (%)</label>
-            <div class="relative">
-              <i data-lucide="percent" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
-              <input type="number" id="affiliateCommission" value="3" min="0" max="50" step="0.1" class="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-brand-500/10 transition font-mono font-bold bg-slate-50">
+        <div class="glass-card rounded-2xl border border-white/5 p-6 md:p-8 shadow-lg">
+          <h2 class="text-lg font-bold text-white mb-6 flex items-center gap-3 pb-4 border-b border-white/10">
+            <div class="p-2 bg-amber-500/20 rounded-lg text-amber-400"><i data-lucide="calculator" class="w-5 h-5"></i></div>
+            Motor Financeiro (Taxas de Serviço)
+          </h2>
+          <div class="space-y-4">
+            <div class="flex items-center justify-between p-4 bg-slate-900/50 rounded-xl border border-slate-800">
+              <div><p class="font-bold text-white">Até $20 USD</p><p class="text-[10px] text-slate-500 uppercase tracking-widest">Taxa fixa</p></div>
+              <div class="relative">
+                <input type="number" id="tax1" value="150" class="w-28 px-4 py-2 border border-slate-700 rounded-lg text-right text-white focus:outline-none focus:border-brand-500 transition font-mono font-bold bg-slate-800">
+                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">MT</span>
+              </div>
             </div>
-            <p class="text-xs text-slate-500 mt-2">Percentagem de ganho sobre a 1ª compra do indicado.</p>
-          </div>
-          <div class="input-group">
-            <label class="block text-sm font-bold text-slate-700 mb-2">Prefixo do Código</label>
-            <input type="text" id="affiliatePrefix" value="AFF" maxlength="6" pattern="[A-Z]+" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-brand-500/10 transition font-mono font-bold uppercase tracking-widest bg-slate-50 text-center">
-            <p class="text-xs text-slate-500 mt-2">Ex: AFF-XXXX1234</p>
-          </div>
-          <div class="input-group">
-            <label class="block text-sm font-bold text-slate-700 mb-2">Dígitos Aleatórios</label>
-            <input type="number" id="affiliateCodeLength" value="4" min="3" max="8" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-brand-500/10 transition font-mono font-bold bg-slate-50 text-center">
-            <p class="text-xs text-slate-500 mt-2">Nº de caracteres após as letras do nome.</p>
-          </div>
-        </div>
-        
-        <div class="mt-8 border-t border-slate-100 pt-6">
-          <label class="flex items-center gap-4 cursor-pointer group">
-            <label class="toggle-switch flex-shrink-0">
-              <input type="checkbox" id="affiliateAutoApprove">
-              <span class="toggle-slider"></span>
+            <div class="flex items-center justify-between p-4 bg-slate-900/50 rounded-xl border border-slate-800">
+              <div><p class="font-bold text-white">$21 - $50 USD</p><p class="text-[10px] text-slate-500 uppercase tracking-widest">Taxa fixa</p></div>
+              <div class="relative">
+                <input type="number" id="tax2" value="250" class="w-28 px-4 py-2 border border-slate-700 rounded-lg text-right text-white focus:outline-none focus:border-brand-500 transition font-mono font-bold bg-slate-800">
+                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">MT</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between p-4 bg-slate-900/50 rounded-xl border border-slate-800">
+              <div><p class="font-bold text-white">$51 - $100 USD</p><p class="text-[10px] text-slate-500 uppercase tracking-widest">Taxa fixa</p></div>
+              <div class="relative">
+                <input type="number" id="tax3" value="600" class="w-28 px-4 py-2 border border-slate-700 rounded-lg text-right text-white focus:outline-none focus:border-brand-500 transition font-mono font-bold bg-slate-800">
+                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">MT</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between p-4 bg-brand-900/20 rounded-xl border border-brand-500/30">
+              <div><p class="font-bold text-brand-400">Acima de $100 USD</p><p class="text-[10px] text-slate-400 uppercase tracking-widest">Taxa percentual</p></div>
+              <div class="flex items-center gap-2">
+                <input type="number" id="taxPercent" value="7" step="0.1" class="w-20 px-3 py-2 border border-brand-700 bg-brand-900/50 rounded-lg text-right text-brand-300 focus:outline-none focus:border-brand-400 transition font-mono font-bold">
+                <span class="text-brand-400 font-bold">%</span>
+              </div>
+            </div>
+            
+            <label class="flex items-center gap-4 p-5 bg-success-900/10 rounded-xl cursor-pointer border border-success-500/20 mt-4 transition-colors hover:bg-success-900/20">
+              <label class="toggle-switch flex-shrink-0">
+                <input type="checkbox" id="firstPurchaseFree" checked>
+                <span class="toggle-slider"></span>
+              </label>
+              <div>
+                <p class="font-bold text-success-400 flex items-center gap-2">Bónus: Primeira Compra Grátis</p>
+                <p class="text-xs text-slate-400 mt-1">Isenta taxa de serviço (lucro) para compras até $5 na 1ª compra do cliente novo.</p>
+              </div>
             </label>
-            <div>
-              <p class="font-bold text-slate-900 group-hover:text-brand-600 transition-colors">Aprovação Automática</p>
-              <p class="text-xs text-slate-500 mt-1">Se ativo, novos afiliados não precisam passar por avaliação manual do admin.</p>
-            </div>
-          </label>
+          </div>
         </div>
-      </div>
 
-    </form>
-  </main>
+        <div class="glass-card rounded-2xl border border-white/5 p-6 md:p-8 xl:col-span-2 shadow-lg">
+          <h2 class="text-lg font-bold text-white mb-6 flex items-center gap-3 pb-4 border-b border-white/10">
+            <div class="p-2 bg-purple-500/20 rounded-lg text-purple-400"><i data-lucide="webhook" class="w-5 h-5"></i></div>
+            Integrações, APIs e Webhooks
+          </h2>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="space-y-6">
+              <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2"><i data-lucide="mail" class="w-4 h-4"></i> Servidor SMTP (Resend)</h3>
+              <div class="input-group">
+                <label class="block text-sm font-bold text-slate-300 mb-2">API Key do Resend</label>
+                <div class="relative">
+                  <i data-lucide="key" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
+                  <input type="password" id="resendApiKey" placeholder="re_xxxxxxxxxxxxxxxxxxxxxxxx" class="w-full pl-10 pr-12 py-3 border border-slate-700 bg-slate-900 text-white rounded-xl focus:outline-none focus:border-brand-500 transition font-mono text-sm">
+                  <button type="button" onclick="window.togglePwd('resendApiKey')" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"><i data-lucide="eye" id="icon-resendApiKey" class="w-4 h-4"></i></button>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div class="input-group">
+                  <label class="block text-sm font-bold text-slate-300 mb-2">Email Sistema</label>
+                  <input type="email" id="senderEmail" value="noreply@paygo.co.mz" class="w-full px-4 py-3 border border-slate-700 bg-slate-900 text-white rounded-xl focus:outline-none focus:border-brand-500 transition font-mono text-sm">
+                </div>
+                <div class="input-group">
+                  <label class="block text-sm font-bold text-slate-300 mb-2">Nome Remetente</label>
+                  <input type="text" id="senderName" value="PayGo Moçambique" class="w-full px-4 py-3 border border-slate-700 bg-slate-900 text-white rounded-xl focus:outline-none focus:border-brand-500 transition text-sm">
+                </div>
+              </div>
+            </div>
+            
+            <div class="space-y-6">
+              <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2"><i data-lucide="bell-ring" class="w-4 h-4"></i> Notificações Admin (Lark)</h3>
+              <div class="input-group">
+                <label class="block text-sm font-bold text-slate-300 mb-2">URL do Webhook do Lark</label>
+                <div class="relative">
+                  <i data-lucide="link" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
+                  <input type="url" id="larkWebhook" placeholder="https://open.larksuite.com/open-apis/..." class="w-full pl-10 pr-4 py-3 border border-slate-700 bg-slate-900 text-white rounded-xl focus:outline-none focus:border-brand-500 transition font-mono text-sm">
+                </div>
+                <p class="text-xs text-slate-500 mt-2">Dispara alertas no grupo interno sempre que houver um novo evento na plataforma.</p>
+              </div>
 
-  <div class="fixed bottom-0 right-0 w-full md:w-[calc(100%-16rem)] bg-white/80 backdrop-blur-xl border-t border-slate-200 p-4 z-30 flex flex-col sm:flex-row justify-end gap-3 shadow-[0_-10px_20px_rgba(0,0,0,0.02)] transition-all">
-    <button type="button" id="resetBtn" class="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition flex items-center justify-center gap-2 w-full sm:w-auto">
-      <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Restaurar Padrões
-    </button>
-    <button type="submit" form="settingsForm" id="saveConfigBtn" class="px-8 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-brand-500/30 active:scale-[0.98] w-full sm:w-auto">
-      <i data-lucide="save" class="w-5 h-5"></i> Salvar Configurações
-    </button>
+              <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 mt-6"><i data-lucide="network" class="w-4 h-4"></i> Programa de Afiliados</h3>
+              <div class="grid grid-cols-2 gap-4">
+                <div class="input-group">
+                  <label class="block text-sm font-bold text-slate-300 mb-2">Comissão Base (%)</label>
+                  <div class="relative">
+                    <input type="number" id="affiliateCommission" value="3" class="w-full pl-4 pr-10 py-3 border border-slate-700 bg-slate-900 text-white rounded-xl focus:outline-none focus:border-brand-500 transition font-mono font-bold text-center">
+                    <span class="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-slate-500">%</span>
+                  </div>
+                </div>
+                <div class="input-group">
+                  <label class="block text-sm font-bold text-slate-300 mb-2">Prefixo Link</label>
+                  <input type="text" id="affiliatePrefix" value="AFF" class="w-full px-4 py-3 border border-slate-700 bg-slate-900 text-white rounded-xl focus:outline-none focus:border-brand-500 transition font-mono font-bold text-center uppercase tracking-widest">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </form>
+    </div>
   </div>
 
-  <div id="toastContainer" class="fixed top-4 right-4 z-[110] space-y-2 pointer-events-none w-full max-w-sm px-4 md:px-0"></div>
+  <div class="fixed bottom-0 left-0 md:left-72 right-0 bg-slate-900/90 backdrop-blur-xl border-t border-slate-800 p-4 z-40 shadow-[0_-10px_30px_rgba(0,0,0,0.5)] flex justify-end gap-3 transition-transform">
+    <button type="button" id="resetBtn" class="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition flex items-center gap-2 text-sm border border-slate-700 w-full sm:w-auto justify-center">
+      <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Restaurar Servidor
+    </button>
+    <button type="submit" form="settingsForm" id="saveConfigBtn" class="px-8 py-3 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-bold transition flex items-center gap-2 shadow-lg shadow-brand-500/20 w-full sm:w-auto justify-center">
+      <i data-lucide="save" class="w-5 h-5"></i> Guardar Alterações
+    </button>
+  </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut, getIdTokenResult } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
       authDomain: "paygo-14311.firebaseapp.com",
       projectId: "paygo-14311",
       storageBucket: "paygo-14311.firebasestorage.app",
       messagingSenderId: "208360646277",
-      appId: "1:208360646277:web:aecc57cc0077ae48a52bec",
-      measurementId: "G-N9E391HCFL"
+      appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
     };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app, "paygodb");
     
-    const ADMIN_EMAILS = ['admin@paygo.co.mz', 'app@paygo.co.mz', 'gestao@paygo.co.mz', 'superadmin@paygo.co.mz'];
-    
+    // Defaults do Sistema se a DB estiver vazia
     const DEFAULT_SETTINGS = {
       exchangeRate: 88.00,
       adminEmails: 'admin@paygo.co.mz',
       whatsappNumber: '258877522255',
-      tax1: 150,
-      tax2: 250,
-      tax3: 600,
-      taxPercent: 7,
+      tax1: 150, tax2: 250, tax3: 600, taxPercent: 7,
       firstPurchaseFree: true,
-      resendApiKey: '',
-      senderEmail: 'noreply@paygo.co.mz',
-      senderName: 'PayGo Moçambique',
+      resendApiKey: '', senderEmail: 'noreply@paygo.co.mz', senderName: 'PayGo Moçambique',
       larkWebhook: '',
-      affiliateCommission: 3,
-      affiliatePrefix: 'AFF',
-      affiliateCodeLength: 4,
-      affiliateAutoApprove: false,
-      updatedAt: null,
-      updatedBy: null
+      affiliateCommission: 3, affiliatePrefix: 'AFF'
     };
 
-    // Mobile Sidebar Logic
+    lucide.createIcons();
+
+    // Utilitários UI
+    window.togglePwd = function(id) {
+        const input = document.getElementById(id);
+        const icon = document.getElementById(`icon-${id}`);
+        if (input.type === 'password') { input.type = 'text'; icon.setAttribute('data-lucide', 'eye-off'); } 
+        else { input.type = 'password'; icon.setAttribute('data-lucide', 'eye'); }
+        lucide.createIcons();
+    };
+
+    // Navegação Mobile
     const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-    const closeSidebarBtn = document.getElementById('closeSidebarBtn');
     const sidebar = document.getElementById('sidebar');
     const sidebarOverlay = document.getElementById('sidebarOverlay');
+    const closeSidebarBtn = document.getElementById('closeSidebarBtn');
 
     function toggleSidebar() {
-      const isClosed = sidebar.classList.contains('-translate-x-full');
-      if (isClosed) {
-        sidebar.classList.remove('-translate-x-full');
+      sidebar.classList.toggle('-translate-x-full');
+      if(sidebarOverlay.classList.contains('hidden')) {
         sidebarOverlay.classList.remove('hidden');
         setTimeout(() => sidebarOverlay.classList.remove('opacity-0'), 10);
       } else {
-        sidebar.classList.add('-translate-x-full');
         sidebarOverlay.classList.add('opacity-0');
         setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
       }
     }
-
     mobileMenuBtn?.addEventListener('click', toggleSidebar);
     closeSidebarBtn?.addEventListener('click', toggleSidebar);
     sidebarOverlay?.addEventListener('click', toggleSidebar);
 
-    async function verifyAdmin() {
-      return new Promise((resolve) => {
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
-          unsubscribe();
-          
-          if (!user) {
-            showToast('Sessão expirada. Faça login.', 'error');
-            setTimeout(() => { window.location.href = 'login.html'; }, 1500);
-            resolve(false); return;
-          }
-          
-          try {
-            const tokenResult = await getIdTokenResult(user);
-            const isAdmin = tokenResult.claims?.admin === true || ADMIN_EMAILS.includes(user.email?.toLowerCase());
-            
-            if (!isAdmin) {
-              showToast('Acesso negado.', 'error');
-              setTimeout(() => { window.location.href = 'index.html'; }, 2000);
-              resolve(false); return;
-            }
-            
-            document.getElementById('userEmail').textContent = user.email || 'admin@paygo.co.mz';
-            document.getElementById('userInitial').textContent = (user.email || 'A').charAt(0).toUpperCase();
-            
-            await loadSettings();
-            
-            // Ocultar Loading
-            const loader = document.getElementById('pageLoader');
-            loader.style.opacity = '0';
-            setTimeout(() => loader.style.display = 'none', 500);
+    // Sistema de Proteção Baseado em Sessão
+    const fallbackTimer = setTimeout(() => { document.getElementById('sysLoader').style.display = 'none'; }, 3000);
 
-            resolve(true);
-            
-          } catch (error) {
-            console.error('Erro na verificação:', error);
-            showToast('Erro de autenticação', 'error');
-            setTimeout(() => { window.location.href = 'login.html'; }, 1500);
-            resolve(false);
-          }
-        });
-      });
-    }
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { window.location.href = '../login.html'; return; }
+      try {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists() && (userDoc.data().role === 'admin' || userDoc.data().role === 'superadmin')) {
+          document.getElementById('adminName').textContent = userDoc.data().name || 'Admin';
+          await loadSettingsFromDB();
+        } else {
+          window.location.href = '../index.html';
+        }
+      } catch (error) {
+        showToast("Erro na ligação à BD.", "error");
+      } finally {
+        clearTimeout(fallbackTimer);
+        document.getElementById('sysLoader').style.opacity = '0';
+        setTimeout(() => document.getElementById('sysLoader').style.display = 'none', 500);
+      }
+    });
 
-    async function loadSettings() {
+    // ==========================================
+    // LÓGICA DE DADOS (CARREGAR E GRAVAR)
+    // ==========================================
+    async function loadSettingsFromDB() {
       try {
         const settingsRef = doc(db, "settings", "global");
         const settingsSnap = await getDoc(settingsRef);
@@ -445,16 +372,11 @@
         
         if (settingsSnap.exists()) {
           settings = { ...DEFAULT_SETTINGS, ...settingsSnap.data() };
-        } else {
-          const localSettings = localStorage.getItem('paygo_settings');
-          if (localSettings) settings = { ...DEFAULT_SETTINGS, ...JSON.parse(localSettings) };
         }
-        
         populateForm(settings);
       } catch (error) {
-        console.error('Erro ao carregar configurações:', error);
         populateForm(DEFAULT_SETTINGS);
-        showToast('Falha na rede, usando configurações padrão locais', 'warning');
+        showToast('Ligação instável. A mostrar valores padrão.', 'warning');
       }
     }
 
@@ -473,162 +395,74 @@
       document.getElementById('larkWebhook').value = settings.larkWebhook || '';
       document.getElementById('affiliateCommission').value = settings.affiliateCommission;
       document.getElementById('affiliatePrefix').value = settings.affiliatePrefix;
-      document.getElementById('affiliateCodeLength').value = settings.affiliateCodeLength;
-      document.getElementById('affiliateAutoApprove').checked = settings.affiliateAutoApprove;
     }
 
-    async function saveSettings(e) {
+    document.getElementById('settingsForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = document.getElementById('saveConfigBtn');
-      const originalContent = btn.innerHTML;
+      const originalHTML = btn.innerHTML;
       
       btn.disabled = true;
-      btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Salvando...`;
-      lucide.createIcons();
+      btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A injetar na BD...`;
+      lucide.createIcons({root: btn});
       
       try {
         const settings = {
           exchangeRate: parseFloat(document.getElementById('exchangeRate').value) || DEFAULT_SETTINGS.exchangeRate,
-          adminEmails: document.getElementById('adminEmails').value.trim() || DEFAULT_SETTINGS.adminEmails,
-          whatsappNumber: document.getElementById('whatsappNumber').value.trim() || DEFAULT_SETTINGS.whatsappNumber,
+          adminEmails: document.getElementById('adminEmails').value.trim(),
+          whatsappNumber: document.getElementById('whatsappNumber').value.trim(),
           tax1: parseInt(document.getElementById('tax1').value) || DEFAULT_SETTINGS.tax1,
           tax2: parseInt(document.getElementById('tax2').value) || DEFAULT_SETTINGS.tax2,
           tax3: parseInt(document.getElementById('tax3').value) || DEFAULT_SETTINGS.tax3,
           taxPercent: parseFloat(document.getElementById('taxPercent').value) || DEFAULT_SETTINGS.taxPercent,
           firstPurchaseFree: document.getElementById('firstPurchaseFree').checked,
           resendApiKey: document.getElementById('resendApiKey').value.trim(),
-          senderEmail: document.getElementById('senderEmail').value.trim() || DEFAULT_SETTINGS.senderEmail,
-          senderName: document.getElementById('senderName').value.trim() || DEFAULT_SETTINGS.senderName,
+          senderEmail: document.getElementById('senderEmail').value.trim(),
+          senderName: document.getElementById('senderName').value.trim(),
           larkWebhook: document.getElementById('larkWebhook').value.trim(),
           affiliateCommission: parseFloat(document.getElementById('affiliateCommission').value) || DEFAULT_SETTINGS.affiliateCommission,
-          affiliatePrefix: document.getElementById('affiliatePrefix').value.trim().toUpperCase() || DEFAULT_SETTINGS.affiliatePrefix,
-          affiliateCodeLength: parseInt(document.getElementById('affiliateCodeLength').value) || DEFAULT_SETTINGS.affiliateCodeLength,
-          affiliateAutoApprove: document.getElementById('affiliateAutoApprove').checked,
+          affiliatePrefix: document.getElementById('affiliatePrefix').value.trim().toUpperCase(),
           updatedAt: serverTimestamp(),
-          updatedBy: auth.currentUser?.uid || null
+          updatedBy: auth.currentUser?.uid
         };
         
-        if (settings.exchangeRate <= 0) throw new Error('Taxa de câmbio inválida');
-        if (!settings.whatsappNumber.match(/^\d{10,15}$/)) throw new Error('Número WhatsApp inválido');
+        await setDoc(doc(db, "settings", "global"), settings, { merge: true });
         
-        const settingsRef = doc(db, "settings", "global");
-        await setDoc(settingsRef, settings, { merge: true });
-        localStorage.setItem('paygo_settings', JSON.stringify(settings));
-        
-        if (typeof window !== 'undefined') {
-          window.PAYGO_SETTINGS = settings;
-          window.BINANCE_RATE = settings.exchangeRate;
-        }
-        
-        showSaveStatus();
-        showToast('Configurações aplicadas com sucesso!', 'success');
-        await loadSettings();
+        showToast('Sistema atualizado! Novas regras ativas globalmente.', 'success');
+        await loadSettingsFromDB(); // Confirma a gravação puxando os dados reais de novo
         
       } catch (error) {
-        console.error('Erro ao salvar:', error);
-        showToast(error.message || 'Falha ao salvar', 'error');
+        showToast('Falha na injeção de dados. Tente novamente.', 'error');
       } finally {
         btn.disabled = false;
-        btn.innerHTML = originalContent;
-        lucide.createIcons();
+        btn.innerHTML = originalHTML;
+        lucide.createIcons({root: btn});
       }
-    }
+    });
 
-    function showSaveStatus() {
-      const indicator = document.getElementById('saveStatus');
-      indicator.classList.remove('hidden');
-      indicator.classList.add('flex', 'saved-indicator');
-      setTimeout(() => {
-        indicator.classList.add('hidden');
-        indicator.classList.remove('flex', 'saved-indicator');
-      }, 3000);
-    }
-
-    function resetSettings() {
-      if (confirm('Tem certeza que deseja descartar as alterações e restaurar os valores originais do sistema?')) {
-        populateForm(DEFAULT_SETTINGS);
-        showToast('Configurações restauradas. Clique em Salvar para aplicar.', 'info');
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      if (confirm('Atenção: Deseja descartar todas as alterações não guardadas e repor os valores do servidor?')) {
+        loadSettingsFromDB();
+        showToast('Painel restaurado com os valores do servidor.', 'info');
       }
-    }
+    });
 
-    function showToast(message, type = 'success') {
-      const container = document.getElementById('toastContainer');
-      const toast = document.createElement('div');
-      
-      const styles = {
-        success: 'bg-green-600 text-white shadow-green-500/30',
-        error: 'bg-red-600 text-white shadow-red-500/30',
-        warning: 'bg-amber-500 text-white shadow-amber-500/30',
-        info: 'bg-blue-600 text-white shadow-blue-500/30'
-      };
-      
-      const icons = {
-        success: 'check-circle',
-        error: 'x-circle',
-        warning: 'alert-triangle',
-        info: 'info'
-      };
-      
-      toast.className = `pointer-events-auto flex items-center gap-3 px-5 py-4 rounded-2xl shadow-xl font-medium ${styles[type]} transform transition-all duration-300 translate-x-full border border-white/10`;
-      toast.innerHTML = `
-        <i data-lucide="${icons[type]}" class="w-5 h-5 flex-shrink-0"></i>
-        <span class="text-sm flex-1">${message}</span>
-        <button onclick="this.parentElement.remove()" class="p-1 hover:bg-white/20 rounded-md transition"><i data-lucide="x" class="w-4 h-4"></i></button>
-      `;
-      
-      container.appendChild(toast);
-      lucide.createIcons();
-      
-      requestAnimationFrame(() => toast.classList.remove('translate-x-full'));
-      
-      setTimeout(() => {
-        toast.classList.add('opacity-0', 'translate-x-full');
-        setTimeout(() => toast.remove(), 300);
-      }, type === 'error' ? 5000 : 3000);
-    }
-
-    async function handleLogout() {
-      if (confirm('Encerrar sessão?')) {
-        try {
-          await signOut(auth);
-          showToast('Sessão encerrada.', 'success');
-          setTimeout(() => { window.location.href = 'login.html'; }, 1000);
-        } catch (error) {
-          showToast('Erro ao sair.', 'error');
-        }
+    // Helpers
+    window.logout = async function() { 
+      if(confirm('Encerrar gestão do sistema?')) {
+        await signOut(auth); window.location.href = '../login.html'; 
       }
-    }
-
-    function setupRealtimeValidation() {
-      document.getElementById('whatsappNumber')?.addEventListener('input', function() {
-        this.value = this.value.replace(/\D/g, '').slice(0, 15);
-      });
-      document.getElementById('exchangeRate')?.addEventListener('input', function() {
-        const val = parseFloat(this.value);
-        this.classList.toggle('border-red-500', val < 1 || val > 1000);
-        this.classList.toggle('focus:ring-red-500/20', val < 1 || val > 1000);
-      });
-      document.getElementById('affiliatePrefix')?.addEventListener('input', function() {
-        this.value = this.value.toUpperCase().replace(/[^A-Z]/g, '');
-      });
-    }
-
-    async function initSettingsPage() {
-      if (typeof lucide !== 'undefined') lucide.createIcons();
-      setupRealtimeValidation();
-      
-      document.getElementById('settingsForm')?.addEventListener('submit', saveSettings);
-      document.getElementById('resetBtn')?.addEventListener('click', resetSettings);
-      document.getElementById('logoutBtn')?.addEventListener('click', handleLogout);
-      
-      document.getElementById('settingsForm')?.addEventListener('input', () => {
-        document.getElementById('saveStatus').classList.add('hidden');
-      });
-      
-      await verifyAdmin();
-    }
+    };
     
-    document.addEventListener('DOMContentLoaded', initSettingsPage);
+    function showToast(msg, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const t = document.createElement('div');
+      t.className = `toast border-l-4 ${type==='error'?'border-danger-500':(type==='warning'?'border-yellow-500':'border-brand-500')}`;
+      t.innerHTML = `<span class="text-sm font-bold text-white">${msg}</span>`;
+      container.appendChild(t);
+      requestAnimationFrame(() => t.classList.add('show'));
+      setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 5000);
+    }
   </script>
 </body>
 </html>
