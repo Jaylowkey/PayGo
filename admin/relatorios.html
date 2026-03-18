@@ -1,249 +1,433 @@
 <!DOCTYPE html>
-<html lang="pt-MZ">
+<html lang="pt-MZ" class="scroll-smooth">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PayGo Admin | Relatórios</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Análise e Relatórios | PayGo Admin</title>
+  <meta name="theme-color" content="#0f172a">
+  <meta name="robots" content="noindex, nofollow">
+  
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
   <script>
     tailwind.config = {
       theme: {
         extend: {
-          colors: {
-            brand: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 900: '#1e3a8a', 950: '#0f172a' },
-            accent: { 400: '#22d3ee', 500: '#06b6d4' }
-          }
+          fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'], display: ['"Outfit"', 'sans-serif'], mono: ['"Fira Code"', 'monospace'] },
+          colors: { brand: { 500: '#3b82f6', 600: '#2563eb', 950: '#0f172a' }, success: { 400: '#4ade80', 500: '#22c55e' }, warning: { 400: '#fbbf24', 500: '#f59e0b' }, danger: { 400: '#f87171', 500: '#ef4444' } }
         }
       }
-    }
+    };
   </script>
+  
   <style>
-    .sidebar-link.active { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border-right: 3px solid #3b82f6; }
+    body { background-color: #0f172a; color: #f8fafc; }
+    ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
+    .glass-nav { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .glass-card { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.3s ease; }
+    .glass-card:hover { border-color: rgba(59, 130, 246, 0.3); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5); }
+    .sidebar-link.active { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-left: 3px solid #60a5fa; font-weight: 700; }
+    
+    .btn-action { padding: 6px 14px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s ease; }
+    .btn-action:disabled { opacity: 0.5; cursor: not-allowed; }
+    
+    #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+    .toast { pointer-events: auto; background: rgba(15, 23, 42, 0.95); border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 12px; display: flex; gap: 12px; transform: translateX(120%); transition: transform 0.4s ease; opacity: 0; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+    .toast.show { transform: translateX(0); opacity: 1; }
+    .toast.error { border-left-color: #ef4444; }
+    .toast.success { border-left-color: #22c55e; }
+    .toast.warning { border-left-color: #f59e0b; }
+    
+    .skeleton { background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 0.25rem; color: transparent !important; }
+    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
   </style>
 </head>
-<body class="bg-slate-50">
-  
-  <!-- Sidebar (mesmo do dashboard) -->
-  <aside class="fixed left-0 top-0 h-full w-64 bg-slate-900 text-white p-6 z-50 flex flex-col">
-    <div class="flex items-center gap-3 mb-8 pb-6 border-b border-white/10">
-      <div class="w-10 h-10 bg-gradient-to-tr from-brand-500 to-accent-500 rounded-xl flex items-center justify-center">
-        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-      </div>
-      <span class="text-xl font-bold">PayGo Admin</span>
-    </div>
-    <nav class="flex-1 space-y-2">
-      <a href="dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-        Dashboard
-      </a>
-      <a href="relatorios.html" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-xl transition-all bg-brand-600/20 text-brand-400">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-        Relatórios
-      </a>
-      <a href="clientes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-        Clientes
-      </a>
-      <a href="configuracoes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-        Configurações
-      </a>
-    </nav>
-    <div class="pt-4 border-t border-white/10">
-      <div class="flex items-center gap-3 px-4 py-3 mb-2">
-        <div class="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-sm font-bold" id="userInitial">A</div>
-        <div class="flex-1 min-w-0"><p class="text-sm font-medium truncate" id="userEmail">admin@paygo.co.mz</p><p class="text-xs text-slate-400">Administrador</p></div>
-      </div>
-      <button id="logoutBtn" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white/5 hover:bg-red-500/20 text-slate-400 hover:text-red-400 rounded-xl transition-all text-sm">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-        Sair
-      </button>
-    </div>
-  </aside>
+<body class="selection:bg-brand-500 selection:text-white">
 
-  <!-- Main Content -->
-  <main class="ml-64 p-8">
-    <h1 class="text-3xl font-bold text-slate-900 mb-2">📊 Relatórios</h1>
-    <p class="text-slate-500 mb-8">Análise de dados e métricas da plataforma</p>
+  <div id="sysLoader" class="fixed inset-0 bg-slate-950 z-[200] flex flex-col items-center justify-center transition-opacity duration-500">
+    <div class="w-16 h-16 border-4 border-slate-800 border-t-brand-500 rounded-full animate-spin mb-4"></div>
+    <h2 class="text-white text-xl font-bold font-display">Motor de Análise</h2>
+    <p class="text-slate-400 text-sm mt-1">A processar o livro de registos financeiros...</p>
+  </div>
+
+  <div class="fixed inset-0 bg-grid opacity-20 pointer-events-none z-0"></div>
+  <div class="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[500px] bg-brand-600/10 rounded-full mix-blend-screen blur-[120px] pointer-events-none z-0"></div>
+  <div id="toastContainer"></div>
+
+  <header class="fixed w-full z-50 glass-nav">
+    <div class="container mx-auto px-6 h-20 flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <button id="mobileMenuBtn" class="lg:hidden text-slate-400 hover:text-white p-2 -ml-2 transition-colors"><i data-lucide="menu" class="w-6 h-6"></i></button>
+        <div class="bg-gradient-to-tr from-brand-500 to-brand-400 p-2.5 rounded-xl text-white shadow-lg"><i data-lucide="zap" class="w-5 h-5"></i></div>
+        <div class="hidden sm:block">
+            <span class="text-2xl font-display font-bold text-white">PayGo Admin</span>
+            <span class="text-[10px] text-brand-400 ml-2 px-2 py-0.5 bg-brand-500/20 border border-brand-500/30 rounded-full font-black uppercase tracking-widest">Analytics</span>
+        </div>
+      </div>
+      <button onclick="window.logout()" class="bg-slate-800 hover:bg-danger-500/20 text-slate-400 hover:text-danger-400 rounded-xl p-2.5 transition-colors" title="Sair em Segurança"><i data-lucide="power" class="w-5 h-5"></i></button>
+    </div>
+  </header>
+
+  <div id="sidebarOverlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-40 hidden lg:hidden opacity-0 transition-opacity duration-300"></div>
+
+  <div class="pt-28 pb-10 relative z-10 container mx-auto px-6 grid lg:grid-cols-5 gap-6">
     
-    <!-- Cards de Resumo -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-      <div class="bg-white p-6 rounded-2xl border border-slate-200">
-        <p class="text-sm text-slate-500">Pedidos Este Mês</p>
-        <p class="text-3xl font-bold text-slate-900 mt-2" id="reportOrders">0</p>
-      </div>
-      <div class="bg-white p-6 rounded-2xl border border-slate-200">
-        <p class="text-sm text-slate-500">Receita Total</p>
-        <p class="text-3xl font-bold text-green-600 mt-2" id="reportRevenue">0 MT</p>
-      </div>
-      <div class="bg-white p-6 rounded-2xl border border-slate-200">
-        <p class="text-sm text-slate-500">Taxa de Conclusão</p>
-        <p class="text-3xl font-bold text-blue-600 mt-2" id="reportRate">0%</p>
-      </div>
-      <div class="bg-white p-6 rounded-2xl border border-slate-200">
-        <p class="text-sm text-slate-500">Ticket Médio</p>
-        <p class="text-3xl font-bold text-purple-600 mt-2" id="reportAvg">0 MT</p>
+    <div id="sidebar" class="lg:col-span-1 fixed lg:static top-0 left-0 h-full lg:h-auto w-72 lg:w-auto bg-slate-900 lg:bg-transparent z-50 lg:z-auto p-6 lg:p-0 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 border-r border-slate-800 lg:border-none">
+      <div class="glass-card rounded-2xl p-0 lg:p-6 sticky top-28 border-none lg:border-solid bg-transparent lg:bg-[rgba(30,41,59,0.4)]">
+        <div class="flex justify-between items-center mb-6 lg:hidden">
+            <span class="text-xl font-display font-bold text-white">PayGo Admin</span>
+            <button id="closeSidebarBtn" class="text-slate-400 hover:text-white p-2"><i data-lucide="x" class="w-6 h-6"></i></button>
+        </div>
+
+        <nav class="space-y-2">
+          <a href="dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
+            <i data-lucide="layout-dashboard" class="w-5 h-5"></i> <span class="text-sm font-medium">Visão Geral</span>
+          </a>
+          <a href="pedidos.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
+            <i data-lucide="shopping-bag" class="w-5 h-5"></i> <span class="text-sm font-medium">Pedidos</span>
+          </a>
+          <a href="clientes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
+            <i data-lucide="users" class="w-5 h-5"></i> <span class="text-sm font-medium">Clientes</span>
+          </a>
+          <a href="afiliados.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
+            <i data-lucide="network" class="w-5 h-5"></i> <span class="text-sm font-medium">Afiliados</span>
+          </a>
+          <a href="gerar-fatura.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
+            <i data-lucide="file-check-2" class="w-5 h-5 text-brand-400"></i> <span class="text-sm font-medium">Gerar Faturas</span>
+          </a>
+          <a href="relatorios.html" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-xl text-white">
+            <i data-lucide="bar-chart-3" class="w-5 h-5"></i> <span class="text-sm font-medium">Relatórios</span>
+          </a>
+          <div class="pt-4 mt-4 border-t border-slate-700/50"></div>
+          <a href="admin.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
+            <i data-lucide="shield" class="w-5 h-5"></i> <span class="text-sm font-medium">Gestão de Equipa</span>
+          </a>
+          <a href="configuracoes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
+            <i data-lucide="settings" class="w-5 h-5"></i> <span class="text-sm font-medium">Configurações</span>
+          </a>
+        </nav>
       </div>
     </div>
 
-    <!-- Gráficos -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-      <div class="bg-white p-6 rounded-2xl border border-slate-200">
-        <h3 class="font-bold text-slate-900 mb-4">Pedidos por Categoria</h3>
-        <canvas id="categoryChart" height="200"></canvas>
-      </div>
-      <div class="bg-white p-6 rounded-2xl border border-slate-200">
-        <h3 class="font-bold text-slate-900 mb-4">Status dos Pedidos</h3>
-        <canvas id="statusChart" height="200"></canvas>
-      </div>
-    </div>
+    <div class="lg:col-span-4 space-y-6">
+      
+      <header class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
+        <div>
+          <h1 class="text-3xl font-display font-extrabold text-white tracking-tight">Análise de Dados</h1>
+          <p class="text-slate-400 text-sm mt-1">Indicadores Financeiros, Taxa de Conversão e Saúde da Plataforma.</p>
+        </div>
+        <button onclick="window.exportReport()" class="bg-brand-600 hover:bg-brand-500 text-white px-5 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(37,99,235,0.3)] transition-colors active:scale-95 text-sm">
+            <i data-lucide="download-cloud" class="w-4 h-4"></i> Exportar Dados
+        </button>
+      </header>
 
-    <!-- Tabela de Relatório -->
-    <div class="bg-white rounded-2xl border border-slate-200 p-6">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-lg font-bold">Resumo por Categoria</h2>
-        <button onclick="exportReport()" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-medium transition">📥 Exportar</button>
-      </div>
-      <table class="w-full">
-        <thead>
-          <tr class="text-left text-sm text-slate-500 border-b">
-            <th class="pb-3">Categoria</th>
-            <th class="pb-3">Pedidos</th>
-            <th class="pb-3">Valor Total (USD)</th>
-            <th class="pb-3">Valor Total (MT)</th>
-            <th class="pb-3">Taxas Arrecadadas</th>
-          </tr>
-        </thead>
-        <tbody id="reportTable" class="text-sm"></tbody>
-      </table>
-    </div>
-  </main>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        
+        <div class="glass-card p-6 rounded-2xl relative overflow-hidden group border-brand-500/30 bg-brand-900/10">
+          <div class="absolute -right-4 -top-4 w-24 h-24 bg-brand-500/10 rounded-full blur-xl group-hover:bg-brand-500/20 transition-all"></div>
+          <i data-lucide="bar-chart" class="w-6 h-6 text-brand-400 mb-3 relative z-10"></i>
+          <p class="text-2xl font-display font-bold text-white relative z-10" id="reportOrders"><span class="skeleton inline-block w-12 h-6"></span></p>
+          <p class="text-[10px] text-brand-300 mt-1 uppercase font-bold tracking-wider relative z-10">Transações Totais</p>
+        </div>
 
-  <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
+        <div class="glass-card p-6 rounded-2xl relative overflow-hidden group">
+          <div class="absolute -right-4 -top-4 w-24 h-24 bg-success-500/10 rounded-full blur-xl group-hover:bg-success-500/20 transition-all"></div>
+          <i data-lucide="wallet" class="w-6 h-6 text-success-400 mb-3 relative z-10"></i>
+          <p class="text-2xl font-display font-bold text-white relative z-10" id="reportRevenue"><span class="skeleton inline-block w-24 h-6"></span></p>
+          <p class="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-wider relative z-10">Lucro Líquido (Taxas)</p>
+        </div>
+
+        <div class="glass-card p-6 rounded-2xl relative overflow-hidden group">
+          <div class="absolute -right-4 -top-4 w-24 h-24 bg-purple-500/10 rounded-full blur-xl group-hover:bg-purple-500/20 transition-all"></div>
+          <i data-lucide="target" class="w-6 h-6 text-purple-400 mb-3 relative z-10"></i>
+          <p class="text-2xl font-display font-bold text-white relative z-10" id="reportRate"><span class="skeleton inline-block w-16 h-6"></span></p>
+          <p class="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-wider relative z-10">Taxa de Conversão</p>
+        </div>
+
+        <div class="glass-card p-6 rounded-2xl relative overflow-hidden group border-warning-500/20 bg-warning-900/10">
+          <div class="absolute -right-4 -top-4 w-24 h-24 bg-warning-500/10 rounded-full blur-xl group-hover:bg-warning-500/20 transition-all"></div>
+          <i data-lucide="receipt" class="w-6 h-6 text-warning-400 mb-3 relative z-10"></i>
+          <p class="text-2xl font-display font-bold text-white relative z-10" id="reportAvg"><span class="skeleton inline-block w-20 h-6"></span></p>
+          <p class="text-[10px] text-warning-300 mt-1 uppercase font-bold tracking-wider relative z-10">Ticket Médio Cliente</p>
+        </div>
+
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="glass-card p-6 rounded-2xl">
+          <h3 class="font-bold text-white mb-6 flex items-center gap-2 text-sm"><i data-lucide="pie-chart" class="w-4 h-4 text-brand-400"></i> Distribuição de Vendas por Categoria</h3>
+          <div class="h-[250px] w-full flex items-center justify-center">
+            <canvas id="categoryChart"></canvas>
+          </div>
+        </div>
+        <div class="glass-card p-6 rounded-2xl">
+          <h3 class="font-bold text-white mb-6 flex items-center gap-2 text-sm"><i data-lucide="activity" class="w-4 h-4 text-brand-400"></i> Funil de Status Operacional</h3>
+          <div class="h-[250px] w-full flex items-center justify-center">
+            <canvas id="statusChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-2xl overflow-hidden">
+        <div class="flex justify-between items-center p-6 border-b border-white/5 bg-slate-900/50">
+          <h2 class="text-sm font-bold text-white flex items-center gap-2"><i data-lucide="list" class="w-4 h-4 text-brand-400"></i> Análise de Categorias de Produto</h2>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-800/30 text-[10px] uppercase text-slate-400">
+              <tr>
+                <th class="py-4 px-6">Tipo / Categoria</th>
+                <th class="py-4 px-6 text-center">Volume Pedidos</th>
+                <th class="py-4 px-6 text-right">Valor Captado (USD)</th>
+                <th class="py-4 px-6 text-right">Valor Final Faturado</th>
+                <th class="py-4 px-6 text-right text-success-400">Lucro Retido (Taxas)</th>
+              </tr>
+            </thead>
+            <tbody id="reportTable" class="divide-y divide-white/5">
+                <tr><td colspan="5" class="py-8 text-center text-slate-500"><div class="skeleton h-4 w-full max-w-sm mx-auto"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut, getIdTokenResult } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    const firebaseConfig = { apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8", authDomain: "paygo-14311.firebaseapp.com", projectId: "paygo-14311", storageBucket: "paygo-14311.firebasestorage.app", messagingSenderId: "208360646277", appId: "1:208360646277:web:aecc57cc0077ae48a52bec" };
+    const firebaseConfig = {
+      apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
+      authDomain: "paygo-14311.firebaseapp.com",
+      projectId: "paygo-14311",
+      storageBucket: "paygo-14311.firebasestorage.app",
+      messagingSenderId: "208360646277",
+      appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
+    };
+
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app, "paygodb");
-    const ADMIN_EMAILS = ['admin@paygo.co.mz', 'app@paygo.co.mz', 'gestao@paygo.co.mz', 'superadmin@paygo.co.mz'];
 
-    async function verifyAdmin() {
-      return new Promise((resolve) => {
-        const unsub = onAuthStateChanged(auth, async (user) => {
-          unsub();
-          if (!user) { window.location.href = 'login.html'; resolve(false); return; }
-          try {
-            const token = await getIdTokenResult(user);
-            if (token.claims?.admin || ADMIN_EMAILS.includes(user.email?.toLowerCase())) {
-              document.getElementById('userEmail').textContent = user.email;
-              document.getElementById('userInitial').textContent = user.email?.[0]?.toUpperCase() || 'A';
-              resolve(true);
-            } else { await signOut(auth); window.location.href = 'login.html?error=unauthorized'; resolve(false); }
-          } catch { window.location.href = 'login.html'; resolve(false); }
+    lucide.createIcons();
+
+    // Chart instances
+    let chart1 = null;
+    let chart2 = null;
+    let rawOrders = [];
+
+    const fallbackTimer = setTimeout(() => { document.getElementById('sysLoader').style.display = 'none'; }, 3000);
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { window.location.href = '../login.html'; return; }
+      try {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists() && (userDoc.data().role === 'admin' || userDoc.data().role === 'superadmin')) {
+          await loadReportsEngine();
+        } else {
+          window.location.href = '../index.html';
+        }
+      } catch (error) {
+        showToast("Erro na ligação ao servidor.", "error");
+      } finally {
+        clearTimeout(fallbackTimer);
+        document.getElementById('sysLoader').style.opacity = '0';
+        setTimeout(() => document.getElementById('sysLoader').style.display = 'none', 500);
+      }
+    });
+
+    async function loadReportsEngine() {
+      try {
+        const snap = await getDocs(collection(db, "orders"));
+        const orders = [];
+        snap.forEach(d => orders.push(d.data()));
+        rawOrders = orders; // Para CSV Export
+        
+        const total = orders.length;
+        const completed = orders.filter(o => o.status === 'completed' || o.isPaid === true);
+        
+        // Matemáticas Financeiras
+        const totalRevenueBruto = completed.reduce((sum, o) => sum + (Number(o.total) || 0), 0); // Todo o dinheiro que entra
+        const totalLucroTaxas = completed.reduce((sum, o) => sum + (Number(o.tax) || 0), 0); // O dinheiro que fica pra ti
+        const rate = total > 0 ? Math.round((completed.length / total) * 100) : 0;
+        const avgTicket = completed.length > 0 ? (totalRevenueBruto / completed.length) : 0;
+        
+        // Remove Skeletons & Injecta Dados
+        document.querySelectorAll('.skeleton').forEach(el => el.classList.remove('skeleton', 'text-transparent'));
+        
+        document.getElementById('reportOrders').textContent = total;
+        document.getElementById('reportRevenue').textContent = new Intl.NumberFormat('pt-MZ').format(totalLucroTaxas) + ' MT';
+        document.getElementById('reportRate').textContent = rate + '%';
+        document.getElementById('reportAvg').textContent = new Intl.NumberFormat('pt-MZ').format(avgTicket) + ' MT';
+        
+        // Agrupar por Categorias (Aliexpress, Shein, Amazon, etc)
+        const byCat = {};
+        orders.forEach(o => {
+          const typeStr = o.type || o.detail?.split(' ')[0] || 'Geral';
+          // Limpa um bocado o nome para não haver 20 categorias difusas
+          const c = typeStr.length < 15 ? typeStr : 'Geral'; 
+          const cleanCat = c.toLowerCase();
+
+          if (!byCat[cleanCat]) byCat[cleanCat] = { count: 0, usd: 0, total: 0, tax: 0, nome: c };
+          byCat[cleanCat].count++;
+          if (o.status === 'completed' || o.isPaid) {
+              byCat[cleanCat].usd += Number(o.usd) || 0;
+              byCat[cleanCat].total += Number(o.total) || 0;
+              byCat[cleanCat].tax += Number(o.tax) || 0;
+          }
         });
+        
+        // Renderizar Tabela
+        const table = document.getElementById('reportTable');
+        const sortedCats = Object.values(byCat).sort((a,b) => b.count - a.count);
+        
+        table.innerHTML = sortedCats.map(d => `
+        <tr class="hover:bg-slate-800/40 transition-colors">
+          <td class="py-4 px-6 font-bold text-white uppercase tracking-wider text-[10px]"><span class="bg-slate-800 px-2 py-1 rounded border border-slate-700">${d.nome}</span></td>
+          <td class="py-4 px-6 text-center font-mono text-brand-400">${d.count}</td>
+          <td class="py-4 px-6 text-right text-slate-400 font-mono">$${d.usd.toFixed(2)}</td>
+          <td class="py-4 px-6 text-right font-bold text-slate-300 font-mono">${new Intl.NumberFormat('pt-MZ').format(d.total)} MT</td>
+          <td class="py-4 px-6 text-right font-black text-success-400 font-mono">+ ${new Intl.NumberFormat('pt-MZ').format(d.tax)} MT</td>
+        </tr>`).join('') || '<tr><td colspan="5" class="py-8 text-center text-slate-500"><i data-lucide="package-x" class="w-8 h-8 mx-auto mb-2 opacity-30"></i>Sem registos matemáticos</td></tr>';
+        
+        lucide.createIcons();
+
+        // Renderizar Gráficos (Chart.js)
+        renderCharts(sortedCats, orders);
+        
+      } catch (error) {
+        console.error('Erro Analítico:', error);
+        showToast('Falha ao processar relatório da base de dados', 'error');
+      }
+    }
+
+    function renderCharts(catData, orders) {
+        
+      Chart.defaults.color = '#94a3b8';
+      Chart.defaults.font.family = '"Plus Jakarta Sans", sans-serif';
+
+      // 1. Gráfico de Barras (Top Categorias)
+      const ctx1 = document.getElementById('categoryChart');
+      if (chart1) chart1.destroy();
+      
+      const topCats = catData.slice(0, 5); // Só os 5 melhores para ficar bonito
+      chart1 = new Chart(ctx1, {
+        type: 'bar',
+        data: {
+          labels: topCats.map(k => k.nome.toUpperCase()),
+          datasets: [{ 
+              label: 'Volume de Pedidos', 
+              data: topCats.map(d => d.count), 
+              backgroundColor: '#3b82f6',
+              borderRadius: 6,
+              borderSkipped: false
+          }]
+        },
+        options: { 
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { 
+                y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } },
+                x: { grid: { display: false } }
+            }
+        }
+      });
+
+      // 2. Gráfico de Funil (Status)
+      const status = { pending: 0, processing: 0, completed: 0, cancelled: 0 };
+      orders.forEach(o => { if (status[o.status] !== undefined) status[o.status]++; });
+      
+      const ctx2 = document.getElementById('statusChart');
+      if (chart2) chart2.destroy();
+
+      chart2 = new Chart(ctx2, {
+        type: 'doughnut',
+        data: {
+          labels: ['Falta Pagar', 'Processando', 'Finalizado', 'Recusado'],
+          datasets: [{ 
+              data: [status.pending, status.processing, status.completed, status.cancelled], 
+              backgroundColor: ['#f59e0b', '#3b82f6', '#22c55e', '#ef4444'],
+              borderWidth: 0,
+              hoverOffset: 4
+          }]
+        },
+        options: { 
+            responsive: true, maintainAspectRatio: false,
+            cutout: '75%',
+            plugins: { 
+                legend: { position: 'right', labels: { usePointStyle: true, padding: 20 } } 
+            } 
+        }
       });
     }
 
-    async function loadReports() {
-      try {
-        const snap = await getDocs(collection(db, "orders"));
-        const orders = snap.docs.map(d => d.data());
-        
-        // Métricas
-        const total = orders.length;
-        const completed = orders.filter(o => o.status === 'completed');
-        const revenue = completed.reduce((s, o) => s + (o.tax || 0), 0);
-        const rate = total > 0 ? Math.round((completed.length / total) * 100) : 0;
-        const avg = completed.length > 0 ? revenue / completed.length : 0;
-        
-        document.getElementById('reportOrders').textContent = total;
-        document.getElementById('reportRevenue').textContent = revenue.toLocaleString('pt-MZ') + ' MT';
-        document.getElementById('reportRate').textContent = rate + '%';
-        document.getElementById('reportAvg').textContent = avg.toLocaleString('pt-MZ', {maximumFractionDigits: 0}) + ' MT';
-        
-        // Agrupar por categoria
-        const byCat = {};
-        orders.forEach(o => {
-          const c = o.type || 'unknown';
-          if (!byCat[c]) byCat[c] = { count: 0, usd: 0, total: 0, tax: 0 };
-          byCat[c].count++;
-          byCat[c].usd += o.usd || 0;
-          byCat[c].total += o.total || 0;
-          byCat[c].tax += o.tax || 0;
-        });
-        
-        // Tabela
-        const table = document.getElementById('reportTable');
-        table.innerHTML = Object.entries(byCat).map(([cat, d]) => `<tr class="border-b last:border-0">
-          <td class="py-3 font-medium">${cat.toUpperCase()}</td>
-          <td class="py-3">${d.count}</td>
-          <td class="py-3">$${d.usd.toFixed(2)}</td>
-          <td class="py-3 font-bold">${d.total.toLocaleString('pt-MZ')} MT</td>
-          <td class="py-3 text-green-600 font-bold">${d.tax.toLocaleString('pt-MZ')} MT</td>
-        </tr>`).join('') || '<tr><td colspan="5" class="py-4 text-center">Sem dados</td></tr>';
-        
-        // Gráficos
-        renderCharts(byCat, orders);
-        
-      } catch (error) {
-        console.error('Erro:', error);
-        document.getElementById('reportTable').innerHTML = '<tr><td colspan="5" class="py-4 text-center text-red-500">Erro ao carregar</td></tr>';
-      }
-    }
-
-    function renderCharts(byCat, orders) {
-      // Category Chart
-      const ctx1 = document.getElementById('categoryChart');
-      if (ctx1) {
-        new Chart(ctx1, {
-          type: 'bar',
-          data: {
-            labels: Object.keys(byCat).map(k => k.toUpperCase()),
-            datasets: [{ label: 'Pedidos', data: Object.values(byCat).map(d => d.count), backgroundColor: '#3b82f6' }]
-          },
-          options: { responsive: true, plugins: { legend: { display: false } } }
-        });
-      }
-      // Status Chart
-      const status = { pending: 0, processing: 0, completed: 0, cancelled: 0 };
-      orders.forEach(o => { if (status[o.status] !== undefined) status[o.status]++; });
-      const ctx2 = document.getElementById('statusChart');
-      if (ctx2) {
-        new Chart(ctx2, {
-          type: 'doughnut',
-          data: {
-            labels: ['Pendente', 'Processando', 'Concluído', 'Cancelado'],
-            datasets: [{ data: [status.pending, status.processing, status.completed, status.cancelled], backgroundColor: ['#fbbf24', '#3b82f6', '#22c55e', '#ef4444'] }]
-          },
-          options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
-        });
-      }
-    }
-
+    // Exportação Inteligente de CSV
     window.exportReport = () => {
-      showToast('📥 Relatório exportado com sucesso!', 'success');
+      if(!rawOrders.length) { showToast('Não há dados analíticos para extrair.', 'warning'); return; }
+      
+      let csvContent = "Data,ID,Cliente,Produto,Valor Base (USD),Total Faturado (MT),Lucro Retido (MT),Estado Operacional\n";
+      
+      rawOrders.forEach(o => {
+        const dateStr = o.createdAt?.toDate ? o.createdAt.toDate().toLocaleDateString('pt-MZ') : '-';
+        const name = `"${(o.name || 'S/N').replace(/"/g, '""')}"`;
+        const detail = `"${(o.detail || 'S/N').replace(/"/g, '""')}"`;
+        const statusMap = { pending: 'Pendente', processing: 'Em Processamento', completed: 'Liquidado', cancelled: 'Anulado' };
+        
+        csvContent += `${dateStr},${o.orderId},${name},${detail},${o.usd || 0},${o.total || 0},${o.tax || 0},${statusMap[o.status] || o.status}\n`;
+      });
+      
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `PayGo_Relatorio_Financeiro_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link); link.click(); document.body.removeChild(link);
+      
+      showToast('Relatório de Contabilidade descarregado com sucesso!', 'success');
     };
 
-    window.showToast = (msg, type = 'success') => {
-      const c = document.getElementById('toastContainer');
+    window.logout = async function() { if(confirm('Fechar sessão administrativa?')) { await signOut(auth); window.location.href = '../login.html'; } };
+    
+    function showToast(msg, type = 'success') {
+      const container = document.getElementById('toastContainer');
       const t = document.createElement('div');
-      t.className = `flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-white ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} transform transition-all translate-x-full`;
-      t.innerHTML = `<span class="text-sm font-medium">${msg}</span><button onclick="this.parentElement.remove()" class="ml-2">✕</button>`;
-      c.appendChild(t);
+      const isErr = type === 'error', isWarn = type === 'warning';
+      const bg = isErr ? 'bg-danger-500/95 border-danger-400' : isWarn ? 'bg-warning-500/95 border-warning-400' : 'bg-slate-900/95 border-slate-700';
+      const icon = isErr ? 'alert-octagon text-danger-400' : isWarn ? 'alert-triangle text-warning-400' : 'check-check text-brand-400';
+      
+      t.className = `flex items-center gap-3 px-5 py-4 rounded-xl shadow-2xl backdrop-blur-xl transform transition-all duration-400 translate-x-full border ${bg}`;
+      t.innerHTML = `<i data-lucide="${icon.split(' ')[0]}" class="w-5 h-5 ${icon.split(' ')[1]}"></i> <span class="text-sm font-semibold text-white tracking-wide">${msg}</span>`;
+      
+      container.appendChild(t);
+      lucide.createIcons({ root: t });
       requestAnimationFrame(() => t.classList.remove('translate-x-full'));
-      setTimeout(() => { t.classList.add('opacity-0'); setTimeout(() => t.remove(), 300); }, 3000);
-    };
+      setTimeout(() => { t.classList.add('opacity-0', 'translate-x-8'); setTimeout(() => t.remove(), 400); }, 5000);
+    }
 
-    document.getElementById('logoutBtn')?.addEventListener('click', async () => { if (confirm('Sair?')) { await signOut(auth); window.location.href = 'login.html'; } });
+    // Controlo Mobile
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+    const closeSidebarBtn = document.getElementById('closeSidebarBtn');
 
-    (async () => { if (await verifyAdmin()) loadReports(); })();
+    function toggleMobileSidebar() {
+      sidebar.classList.toggle('-translate-x-full');
+      if(sidebarOverlay.classList.contains('hidden')) {
+        sidebarOverlay.classList.remove('hidden');
+        setTimeout(() => sidebarOverlay.classList.remove('opacity-0'), 10);
+      } else {
+        sidebarOverlay.classList.add('opacity-0');
+        setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
+      }
+    }
+    mobileMenuBtn?.addEventListener('click', toggleMobileSidebar);
+    closeSidebarBtn?.addEventListener('click', toggleMobileSidebar);
+    sidebarOverlay?.addEventListener('click', toggleMobileSidebar);
   </script>
 </body>
 </html>
