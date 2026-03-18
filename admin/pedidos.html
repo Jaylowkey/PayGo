@@ -1,713 +1,800 @@
 <!DOCTYPE html>
 <html lang="pt-MZ" class="scroll-smooth">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Todos os Pedidos | Gestão PayGo</title>
-  <meta name="theme-color" content="#0f172a">
-  <meta name="robots" content="noindex, nofollow">
-  
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
-  
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'], display: ['"Outfit"', 'sans-serif'], mono: ['"Fira Code"', 'monospace'] },
-          colors: { brand: { 50: '#eff6ff', 500: '#3b82f6', 600: '#2563eb', 950: '#0f172a' }, success: { 400: '#4ade80', 500: '#22c55e' }, warning: { 400: '#fbbf24', 500: '#f59e0b' }, danger: { 400: '#f87171', 500: '#ef4444' } }
-        }
-      }
-    };
-  </script>
-  
-  <style>
-    body { background-color: #0f172a; color: #f8fafc; }
-    ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-    .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
-    .glass-nav { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.08); }
-    .glass-card { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.3s ease; }
-    .sidebar-link.active { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-left: 3px solid #3b82f6; font-weight: 700; }
-    
-    .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 8px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; }
-    .status-badge.completed { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.2); }
-    .status-badge.processing { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); }
-    .status-badge.pending { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.2); }
-    .status-badge.cancelled { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
-    
-    .date-group-header { background: rgba(15, 23, 42, 0.9); border-y: 1px solid rgba(255,255,255,0.05); }
-
-    .action-btn { padding: 6px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; transition: all 0.2s ease; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
-    .action-btn.delete { background: rgba(239, 68, 68, 0.1); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.2); }
-    .action-btn.delete:hover { background: #ef4444; color: white; box-shadow: 0 0 15px rgba(239,68,68,0.4); }
-    .action-btn.activate { background: rgba(34, 197, 94, 0.1); color: #86efac; border: 1px solid rgba(34, 197, 94, 0.2); }
-    .action-btn.activate:hover { background: #22c55e; color: white; }
-
-    #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-    .toast { pointer-events: auto; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 12px; display: flex; gap: 12px; transform: translateX(120%); transition: transform 0.4s ease; opacity: 0; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-    .toast.show { transform: translateX(0); opacity: 1; }
-    .toast.error { border-left-color: #ef4444; }
-    .toast.success { border-left-color: #22c55e; }
-    .toast.warning { border-left-color: #f59e0b; }
-    
-    .modal { display: none; position: fixed; inset: 0; z-index: 1000; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; }
-    .modal.active { display: flex; opacity: 1; }
-    .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); cursor: pointer;}
-    .modal-content { position: relative; background: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 0; max-width: 700px; width: 95%; max-height: 90vh; overflow-y: auto; transform: scale(0.95) translateY(10px); transition: transform 0.3s ease; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8); }
-    .modal.active .modal-content { transform: scale(1) translateY(0); }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Todos os Pedidos | Gestão PayGo</title>
+<meta name="theme-color" content="#0f172a">
+<meta name="robots" content="noindex, nofollow">
+<!-- ✅ SEO Básico -->
+<meta name="description" content="Gestão completa de pedidos PayGo - Admin Panel">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- ✅ URLs 100% LIMPAS - SEM ESPAÇOS -->
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+theme: {
+extend: {
+fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'], display: ['"Outfit"', 'sans-serif'], mono: ['"Fira Code"', 'monospace'] },
+colors: { brand: { 50: '#eff6ff', 500: '#3b82f6', 600: '#2563eb', 950: '#0f172a' }, success: { 400: '#4ade80', 500: '#22c55e' }, warning: { 400: '#fbbf24', 500: '#f59e0b' }, danger: { 400: '#f87171', 500: '#ef4444' } }
+}
+}
+};
+</script>
+<style>
+body { background-color: #0f172a; color: #f8fafc; }
+::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+.bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
+.glass-nav { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.08); }
+.glass-card { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.3s ease; }
+.sidebar-link.active { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-left: 3px solid #3b82f6; font-weight: 700; }
+.status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 8px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; }
+.status-badge.completed { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.2); }
+.status-badge.processing { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); }
+.status-badge.pending { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.2); }
+.status-badge.cancelled { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
+.date-group-header { background: rgba(15, 23, 42, 0.9); border-y: 1px solid rgba(255,255,255,0.05); }
+.action-btn { padding: 6px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; transition: all 0.2s ease; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
+.action-btn.delete { background: rgba(239, 68, 68, 0.1); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.2); }
+.action-btn.delete:hover { background: #ef4444; color: white; box-shadow: 0 0 15px rgba(239,68,68,0.4); }
+.action-btn.activate { background: rgba(34, 197, 94, 0.1); color: #86efac; border: 1px solid rgba(34, 197, 94, 0.2); }
+.action-btn.activate:hover { background: #22c55e; color: white; }
+#toastContainer { position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+.toast { pointer-events: auto; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 12px; display: flex; gap: 12px; transform: translateX(120%); transition: transform 0.4s ease; opacity: 0; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+.toast.show { transform: translateX(0); opacity: 1; }
+.toast.error { border-left-color: #ef4444; }
+.toast.success { border-left-color: #22c55e; }
+.toast.warning { border-left-color: #f59e0b; }
+.modal { display: none; position: fixed; inset: 0; z-index: 1000; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; }
+.modal.active { display: flex; opacity: 1; }
+.modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); cursor: pointer;}
+.modal-content { position: relative; background: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 0; max-width: 700px; width: 95%; max-height: 90vh; overflow-y: auto; transform: scale(0.95) translateY(10px); transition: transform 0.3s ease; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8); }
+.modal.active .modal-content { transform: scale(1) translateY(0); }
+/* Accessibility */
+:focus-visible { outline: 2px solid #3b82f6; outline-offset: 2px; border-radius: 4px; }
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+*, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+@media (max-width: 768px) {
+.glass-card { border-radius: 1rem; }
+}
+</style>
 </head>
 <body class="selection:bg-brand-500 selection:text-white">
+<div id="sysLoader" class="fixed inset-0 bg-slate-950 z-[200] flex flex-col items-center justify-center transition-opacity duration-500">
+<div class="w-16 h-16 border-4 border-slate-800 border-t-brand-500 rounded-full animate-spin mb-4"></div>
+<h2 class="text-white text-xl font-bold font-display">PayGo OS</h2>
+<p class="text-slate-400 text-sm mt-1">A sincronizar livros de registos...</p>
+</div>
+<div class="fixed inset-0 bg-grid opacity-20 pointer-events-none z-0"></div>
+<div class="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[500px] bg-brand-600/10 rounded-full mix-blend-screen blur-[120px] pointer-events-none z-0"></div>
+<div id="toastContainer" role="region" aria-label="Notificações"></div>
+<header class="fixed w-full z-50 glass-nav" role="banner">
+<div class="container mx-auto px-6 h-20 flex justify-between items-center">
+<div class="flex items-center gap-3">
+<button id="mobileMenuBtn" class="lg:hidden text-slate-400 hover:text-white p-2 -ml-2 transition-colors" aria-label="Abrir menu" aria-expanded="false">
+<i data-lucide="menu" class="w-6 h-6" aria-hidden="true"></i>
+</button>
+<div class="bg-gradient-to-tr from-brand-500 to-brand-400 p-2.5 rounded-xl text-white shadow-lg" aria-hidden="true">
+<i data-lucide="zap" class="w-5 h-5"></i>
+</div>
+<div class="hidden sm:block">
+<span class="text-2xl font-display font-bold text-white">PayGo</span>
+<span class="text-[10px] text-brand-400 ml-2 px-2 py-0.5 bg-brand-500/20 border border-brand-500/30 rounded-full font-black uppercase tracking-widest">Database</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="text-right hidden sm:block">
+<p class="text-sm font-bold text-white" id="adminName">A carregar...</p>
+</div>
+<button onclick="window.logout()" class="bg-slate-800 hover:bg-danger-500/20 text-slate-400 hover:text-danger-400 rounded-xl p-2.5 transition-colors" title="Sair do sistema" aria-label="Sair">
+<i data-lucide="power" class="w-5 h-5" aria-hidden="true"></i>
+</button>
+</div>
+</div>
+</header>
+<div id="sidebarOverlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-40 hidden lg:hidden opacity-0 transition-opacity duration-300" role="button" aria-label="Fechar menu"></div>
+<div class="pt-28 pb-10 relative z-10 container mx-auto px-6 grid lg:grid-cols-4 gap-6">
+<div id="sidebar" class="lg:col-span-1 fixed lg:static top-0 left-0 h-full lg:h-auto w-72 lg:w-auto bg-slate-900 lg:bg-transparent z-50 lg:z-auto p-6 lg:p-0 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 border-r border-slate-800 lg:border-none" role="navigation" aria-label="Menu principal">
+<div class="glass-card rounded-2xl p-0 lg:p-6 sticky top-28 border-none lg:border-solid bg-transparent lg:bg-[rgba(30,41,59,0.4)]">
+<div class="flex justify-between items-center mb-6 lg:hidden">
+<span class="text-xl font-display font-bold text-white">PayGo Admin</span>
+<button id="closeSidebarBtn" class="text-slate-400 hover:text-white p-2" aria-label="Fechar menu">
+<i data-lucide="x" class="w-6 h-6" aria-hidden="true"></i>
+</button>
+</div>
+<nav class="space-y-2">
+<a href="dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
+<i data-lucide="layout-dashboard" class="w-5 h-5" aria-hidden="true"></i> <span class="text-sm font-medium">Visão Geral</span>
+</a>
+<a href="pedidos.html" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-xl text-white" aria-current="page">
+<i data-lucide="shopping-bag" class="w-5 h-5" aria-hidden="true"></i> <span class="text-sm font-medium">Pedidos</span>
+</a>
+<a href="clientes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
+<i data-lucide="users" class="w-5 h-5" aria-hidden="true"></i> <span class="text-sm font-medium">Clientes</span>
+</a>
+<a href="afiliados.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
+<i data-lucide="network" class="w-5 h-5" aria-hidden="true"></i> <span class="text-sm font-medium">Afiliados</span>
+</a>
+<a href="gerar-fatura.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
+<i data-lucide="file-check-2" class="w-5 h-5 text-brand-400" aria-hidden="true"></i> <span class="text-sm font-medium">Gerar Faturas</span>
+</a>
+<div class="pt-4 mt-4 border-t border-slate-700/50"></div>
+<a href="admin.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
+<i data-lucide="shield" class="w-5 h-5" aria-hidden="true"></i> <span class="text-sm font-medium">Gestão de Equipa</span>
+</a>
+<a href="configuracoes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
+<i data-lucide="settings" class="w-5 h-5" aria-hidden="true"></i> <span class="text-sm font-medium">Configurações</span>
+</a>
+</nav>
+</div>
+</div>
+<div class="lg:col-span-3 space-y-6">
+<header class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 mb-6">
+<div>
+<h1 class="text-3xl font-display font-extrabold text-white tracking-tight">Histórico de Transações</h1>
+<p class="text-slate-400 text-sm mt-1">Gira pagamentos, atualize o estado de envio e notifique os clientes.</p>
+</div>
+<div class="flex flex-wrap items-center gap-3 w-full xl:w-auto">
+<button onclick="window.clearHistory()" class="flex-1 xl:flex-none px-5 py-2.5 bg-danger-500/10 hover:bg-danger-500/20 text-danger-400 border border-danger-500/20 rounded-xl text-sm font-bold transition flex items-center justify-center gap-2">
+<i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i> Purgar Selecionados
+</button>
+<button onclick="window.exportToCSV()" class="flex-1 xl:flex-none px-5 py-2.5 bg-success-600 hover:bg-success-500 text-white rounded-xl text-sm font-bold transition flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(34,197,94,0.3)]">
+<i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i> Exportar CSV
+</button>
+</div>
+</header>
+<div class="glass-card rounded-2xl p-4 md:p-6 shadow-lg border-t-2 border-t-brand-500">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+<div class="relative md:col-span-2">
+<label for="searchInput" class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Pesquisa Livre</label>
+<i data-lucide="search" class="absolute left-4 top-10 w-4 h-4 text-slate-500" aria-hidden="true"></i>
+<input type="text" id="searchInput" placeholder="ID, Nome, Email..." class="pl-12 pr-4 py-3 w-full bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 text-sm text-white font-mono placeholder:font-sans transition-colors shadow-inner" oninput="window.renderOrders()" aria-label="Pesquisar pedidos">
+</div>
+<div>
+<label for="statusFilter" class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Filtro Logístico</label>
+<select id="statusFilter" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 text-sm text-slate-300 font-bold cursor-pointer" onchange="window.renderOrders()" aria-label="Filtrar por status">
+<option value="all">Todos os Status</option>
+<option value="pending">⏳ Pendentes</option>
+<option value="processing">🔄 Em Processamento</option>
+<option value="completed">✅ Concluídos</option>
+<option value="cancelled">❌ Cancelados</option>
+</select>
+</div>
+<div>
+<label for="paymentFilter" class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Controlo Financeiro</label>
+<select id="paymentFilter" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 text-sm text-slate-300 font-bold cursor-pointer" onchange="window.renderOrders()" aria-label="Filtrar por pagamento">
+<option value="all">Ver Todos</option>
+<option value="paid">🟢 Valor Pago</option>
+<option value="unpaid">🔴 Por Liquidar</option>
+</select>
+</div>
+</div>
+</div>
+<div class="glass-card rounded-2xl p-0 overflow-hidden shadow-lg border border-slate-800 flex flex-col">
+<div class="p-5 border-b border-white/5 flex justify-between items-center bg-slate-900/50">
+<h2 class="text-sm font-bold text-white flex items-center gap-2"><i data-lucide="list" class="w-4 h-4 text-brand-400" aria-hidden="true"></i> Resultados Criptografados</h2>
+<span class="text-[10px] font-black px-3 py-1 bg-brand-500/20 border border-brand-500/30 rounded-full text-brand-400 uppercase tracking-widest" id="ordersCount">0 Pedidos</span>
+</div>
+<div class="overflow-x-auto min-h-[400px]" role="region" aria-label="Lista de pedidos">
+<table class="w-full text-left border-collapse whitespace-nowrap">
+<thead class="bg-slate-800/80 text-[10px] uppercase text-slate-400 tracking-widest border-b border-white/10 sticky top-0 z-10">
+<tr>
+<th scope="col" class="px-6 py-4 font-bold">Data & ID Transação</th>
+<th scope="col" class="px-6 py-4 font-bold">Cliente e Contacto</th>
+<th scope="col" class="px-6 py-4 font-bold">Valor (USD)</th>
+<th scope="col" class="px-6 py-4 font-bold">Cobrado (MT)</th>
+<th scope="col" class="px-6 py-4 font-bold text-center">Status Global</th>
+<th scope="col" class="px-6 py-4 text-right font-bold">Acesso</th>
+</tr>
+</thead>
+<tbody id="ordersTable" class="divide-y divide-white/5">
+<tr><td colspan="6" class="text-center py-10 text-slate-500"><div class="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" aria-hidden="true"></div>A sincronizar...</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+<!-- Modal de Detalhes -->
+<div id="orderModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+<div class="modal-overlay" onclick="window.closeModal()" aria-hidden="true"></div>
+<div class="modal-content flex flex-col h-full md:h-auto border border-slate-700" id="modalDialog">
+<div class="flex justify-between items-center p-6 border-b border-white/10 bg-slate-900 sticky top-0 z-10 rounded-t-[24px]">
+<h2 id="modalTitle" class="text-xl font-display font-bold text-white flex items-center gap-2"><i data-lucide="file-text" class="w-5 h-5 text-brand-400" aria-hidden="true"></i> Dossier da Transação</h2>
+<button onclick="window.closeModal()" class="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 hover:bg-slate-700 hover:text-white flex items-center justify-center transition-colors text-slate-400" aria-label="Fechar">
+<i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>
+</button>
+</div>
+<div id="modalContent" class="p-6 overflow-y-auto space-y-6 bg-slate-950 flex-1" role="document">
+</div>
+<div class="p-6 border-t border-white/10 bg-slate-900 flex flex-col sm:flex-row gap-3 rounded-b-[24px]">
+<div class="relative flex-1">
+<i data-lucide="sliders" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" aria-hidden="true"></i>
+<select id="statusSelect" class="w-full pl-10 pr-4 py-3 border border-slate-700 bg-slate-800 text-white rounded-xl focus:outline-none focus:border-brand-500 font-bold text-sm cursor-pointer shadow-inner" aria-label="Selecionar status">
+<option value="pending">Fase Logística: Pendente</option>
+<option value="processing">Fase Logística: Em Processamento</option>
+<option value="completed">Fase Logística: Concluído (Gera Email)</option>
+<option value="cancelled">Fase Logística: Cancelado</option>
+</select>
+</div>
+<button id="updateStatusBtn" class="px-8 py-3 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-bold transition flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(37,99,235,0.4)] whitespace-nowrap active:scale-[0.98]">
+<i data-lucide="save" class="w-4 h-4" aria-hidden="true"></i> <span>Salvar Decisão</span>
+</button>
+</div>
+</div>
+</div>
+<!-- ✅ JavaScript Corrigido - PRODUÇÃO READY -->
+<script type="module">
+// ==========================================
+// 🔧 CONFIGURAÇÃO FIREBASE - URLs LIMPAS
+// ==========================================
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, doc, updateDoc, onSnapshot, query, orderBy, getDoc, serverTimestamp, writeBatch, increment, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-  <div id="sysLoader" class="fixed inset-0 bg-slate-950 z-[200] flex flex-col items-center justify-center transition-opacity duration-500">
-    <div class="w-16 h-16 border-4 border-slate-800 border-t-brand-500 rounded-full animate-spin mb-4"></div>
-    <h2 class="text-white text-xl font-bold font-display">PayGo OS</h2>
-    <p class="text-slate-400 text-sm mt-1">A sincronizar livros de registos...</p>
-  </div>
+const firebaseConfig = {
+apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
+authDomain: "paygo-14311.firebaseapp.com",
+projectId: "paygo-14311",
+storageBucket: "paygo-14311.firebasestorage.app",
+messagingSenderId: "208360646277",
+appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
+};
 
-  <div class="fixed inset-0 bg-grid opacity-20 pointer-events-none z-0"></div>
-  <div class="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[500px] bg-brand-600/10 rounded-full mix-blend-screen blur-[120px] pointer-events-none z-0"></div>
-  <div id="toastContainer"></div>
+// Inicializar Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+// ✅ CORREÇÃO: Remover segundo parâmetro se o banco for (default)
+const db = getFirestore(app); // Sem "paygodb" para usar banco padrão
 
-  <header class="fixed w-full z-50 glass-nav">
-    <div class="container mx-auto px-6 h-20 flex justify-between items-center">
-      <div class="flex items-center gap-3">
-        <button id="mobileMenuBtn" class="lg:hidden text-slate-400 hover:text-white p-2 -ml-2 transition-colors"><i data-lucide="menu" class="w-6 h-6"></i></button>
-        <div class="bg-gradient-to-tr from-brand-500 to-brand-400 p-2.5 rounded-xl text-white shadow-lg"><i data-lucide="zap" class="w-5 h-5"></i></div>
-        <div class="hidden sm:block">
-            <span class="text-2xl font-display font-bold text-white">PayGo</span>
-            <span class="text-[10px] text-brand-400 ml-2 px-2 py-0.5 bg-brand-500/20 border border-brand-500/30 rounded-full font-black uppercase tracking-widest">Database</span>
-        </div>
-      </div>
-      <div class="flex items-center gap-4">
-        <div class="text-right hidden sm:block">
-            <p class="text-sm font-bold text-white" id="adminName">A carregar...</p>
-        </div>
-        <button onclick="window.logout()" class="bg-slate-800 hover:bg-danger-500/20 text-slate-400 hover:text-danger-400 rounded-xl p-2.5 transition-colors" title="Sair do sistema"><i data-lucide="power" class="w-5 h-5"></i></button>
-      </div>
-    </div>
-  </header>
+let orders = [];
+let currentFilteredOrders = [];
+let currentOrderId = null;
+let ordersUnsubscribe = null;
 
-  <div id="sidebarOverlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-40 hidden lg:hidden opacity-0 transition-opacity duration-300"></div>
+// ==========================================
+// 🔔 TOAST NOTIFICATIONS - CORRIGIDO
+// ==========================================
+window.showToast = (message, type = 'success') => {
+const container = document.getElementById('toastContainer');
+if (!container) return;
 
-  <div class="pt-28 pb-10 relative z-10 container mx-auto px-6 grid lg:grid-cols-4 gap-6">
-    
-    <div id="sidebar" class="lg:col-span-1 fixed lg:static top-0 left-0 h-full lg:h-auto w-72 lg:w-auto bg-slate-900 lg:bg-transparent z-50 lg:z-auto p-6 lg:p-0 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 border-r border-slate-800 lg:border-none">
-      <div class="glass-card rounded-2xl p-0 lg:p-6 sticky top-28 border-none lg:border-solid bg-transparent lg:bg-[rgba(30,41,59,0.4)]">
-        
-        <div class="flex justify-between items-center mb-6 lg:hidden">
-            <span class="text-xl font-display font-bold text-white">PayGo Admin</span>
-            <button id="closeSidebarBtn" class="text-slate-400 hover:text-white p-2"><i data-lucide="x" class="w-6 h-6"></i></button>
-        </div>
+const toast = document.createElement('div');
+const borderColor = type === 'error' ? 'border-danger-500' : type === 'warning' ? 'border-warning-500' : 'border-brand-500';
+const icon = type === 'error' ? 'alert-octagon text-danger-400' : type === 'warning' ? 'alert-triangle text-warning-400' : 'check-check text-brand-400';
 
-        <nav class="space-y-2">
-          <a href="dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
-            <i data-lucide="layout-dashboard" class="w-5 h-5"></i> <span class="text-sm font-medium">Visão Geral</span>
-          </a>
-          <a href="pedidos.html" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-xl text-white">
-            <i data-lucide="shopping-bag" class="w-5 h-5"></i> <span class="text-sm font-medium">Pedidos</span>
-          </a>
-          <a href="clientes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
-            <i data-lucide="users" class="w-5 h-5"></i> <span class="text-sm font-medium">Clientes</span>
-          </a>
-          <a href="afiliados.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
-            <i data-lucide="network" class="w-5 h-5"></i> <span class="text-sm font-medium">Afiliados</span>
-          </a>
-          <a href="gerar-fatura.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
-            <i data-lucide="file-check-2" class="w-5 h-5 text-brand-400"></i> <span class="text-sm font-medium">Gerar Faturas</span>
-          </a>
-          
-          <div class="pt-4 mt-4 border-t border-slate-700/50"></div>
-          
-          <a href="admin.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
-            <i data-lucide="shield" class="w-5 h-5"></i> <span class="text-sm font-medium">Gestão de Equipa</span>
-          </a>
-          <a href="configuracoes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
-            <i data-lucide="settings" class="w-5 h-5"></i> <span class="text-sm font-medium">Configurações</span>
-          </a>
-        </nav>
-      </div>
-    </div>
+toast.className = `flex items-center gap-3 px-5 py-4 rounded-xl shadow-2xl backdrop-blur-xl transform transition-all duration-400 translate-x-full border-l-4 ${borderColor} bg-slate-900/95 border-y border-r border-white/5`;
+toast.setAttribute('role', 'alert');
+toast.setAttribute('aria-live', 'assertive');
+toast.innerHTML = `<i data-lucide="${icon.split(' ')[0]}" class="w-5 h-5 ${icon.split(' ')[1]}" aria-hidden="true"></i> <span class="text-sm font-bold text-white tracking-wide">${message}</span>`;
 
-    <div class="lg:col-span-3 space-y-6">
-      
-      <header class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 mb-6">
-        <div>
-          <h1 class="text-3xl font-display font-extrabold text-white tracking-tight">Histórico de Transações</h1>
-          <p class="text-slate-400 text-sm mt-1">Gira pagamentos, atualize o estado de envio e notifique os clientes.</p>
-        </div>
-        
-        <div class="flex flex-wrap items-center gap-3 w-full xl:w-auto">
-          <button onclick="window.clearHistory()" class="flex-1 xl:flex-none px-5 py-2.5 bg-danger-500/10 hover:bg-danger-500/20 text-danger-400 border border-danger-500/20 rounded-xl text-sm font-bold transition flex items-center justify-center gap-2">
-            <i data-lucide="trash-2" class="w-4 h-4"></i> Purgar Selecionados
-          </button>
-          <button onclick="window.exportToCSV()" class="flex-1 xl:flex-none px-5 py-2.5 bg-success-600 hover:bg-success-500 text-white rounded-xl text-sm font-bold transition flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(34,197,94,0.3)]">
-            <i data-lucide="download" class="w-4 h-4"></i> Exportar CSV
-          </button>
-        </div>
-      </header>
+container.appendChild(toast);
 
-      <div class="glass-card rounded-2xl p-4 md:p-6 shadow-lg border-t-2 border-t-brand-500">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div class="relative md:col-span-2">
-            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Pesquisa Livre</label>
-            <i data-lucide="search" class="absolute left-4 top-10 w-4 h-4 text-slate-500"></i>
-            <input type="text" id="searchInput" placeholder="ID, Nome, Email..." class="pl-12 pr-4 py-3 w-full bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 text-sm text-white font-mono placeholder:font-sans transition-colors shadow-inner" oninput="window.renderOrders()">
-          </div>
-          
-          <div>
-            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Filtro Logístico</label>
-            <select id="statusFilter" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 text-sm text-slate-300 font-bold cursor-pointer" onchange="window.renderOrders()">
-              <option value="all">Todos os Status</option>
-              <option value="pending">⏳ Pendentes</option>
-              <option value="processing">🔄 Em Processamento</option>
-              <option value="completed">✅ Concluídos</option>
-              <option value="cancelled">❌ Cancelados</option>
-            </select>
-          </div>
+// Re-inicializar ícones
+if (typeof lucide !== 'undefined') {
+try { lucide.createIcons({ root: toast }); } catch(e) {}
+}
 
-          <div>
-            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Controlo Financeiro</label>
-            <select id="paymentFilter" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 text-sm text-slate-300 font-bold cursor-pointer" onchange="window.renderOrders()">
-              <option value="all">Ver Todos</option>
-              <option value="paid">🟢 Valor Pago</option>
-              <option value="unpaid">🔴 Por Liquidar</option>
-            </select>
-          </div>
-        </div>
-      </div>
+requestAnimationFrame(() => toast.classList.remove('translate-x-full'));
+setTimeout(() => { 
+toast.classList.add('opacity-0', 'translate-x-8'); 
+setTimeout(() => toast.remove(), 400); 
+}, 5000);
+};
 
-      <div class="glass-card rounded-2xl p-0 overflow-hidden shadow-lg border border-slate-800 flex flex-col">
-        <div class="p-5 border-b border-white/5 flex justify-between items-center bg-slate-900/50">
-          <h2 class="text-sm font-bold text-white flex items-center gap-2"><i data-lucide="list" class="w-4 h-4 text-brand-400"></i> Resultados Criptografados</h2>
-          <span class="text-[10px] font-black px-3 py-1 bg-brand-500/20 border border-brand-500/30 rounded-full text-brand-400 uppercase tracking-widest" id="ordersCount">0 Pedidos</span>
-        </div>
+// ==========================================
+// 🛠️ FUNÇÕES DE UTILIDADE
+// ==========================================
+function formatValue(value, type = 'currency') {
+if (value === null || value === undefined) return type === 'currency' ? '0.00 MT' : '0';
+if (type === 'currency') return `${Number(value).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`;
+if (type === 'usd') return `$${Number(value).toFixed(2)}`;
+return String(value);
+}
 
-        <div class="overflow-x-auto min-h-[400px]">
-          <table class="w-full text-left border-collapse whitespace-nowrap">
-            <thead class="bg-slate-800/80 text-[10px] uppercase text-slate-400 tracking-widest border-b border-white/10 sticky top-0 z-10">
-              <tr>
-                <th class="px-6 py-4 font-bold">Data & ID Transação</th>
-                <th class="px-6 py-4 font-bold">Cliente e Contacto</th>
-                <th class="px-6 py-4 font-bold">Valor (USD)</th>
-                <th class="px-6 py-4 font-bold">Cobrado (MT)</th>
-                <th class="px-6 py-4 font-bold text-center">Status Global</th>
-                <th class="px-6 py-4 text-right font-bold">Acesso</th>
-              </tr>
-            </thead>
-            <tbody id="ordersTable" class="divide-y divide-white/5">
-              <tr><td colspan="6" class="text-center py-10 text-slate-500"><div class="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>A sincronizar...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
+function getRelativeDateLabel(date) {
+const today = new Date(); 
+const yesterday = new Date(today); 
+yesterday.setDate(yesterday.getDate() - 1);
+if (date.toDateString() === today.toDateString()) return 'Hoje';
+if (date.toDateString() === yesterday.toDateString()) return 'Ontem';
+return date.toLocaleDateString('pt-MZ');
+}
 
-  <div id="orderModal" class="modal">
-    <div class="modal-overlay" onclick="window.closeModal()"></div>
-    <div class="modal-content flex flex-col h-full md:h-auto border border-slate-700">
-      
-      <div class="flex justify-between items-center p-6 border-b border-white/10 bg-slate-900 sticky top-0 z-10 rounded-t-[24px]">
-        <h2 class="text-xl font-display font-bold text-white flex items-center gap-2"><i data-lucide="file-text" class="w-5 h-5 text-brand-400"></i> Dossier da Transação</h2>
-        <button onclick="window.closeModal()" class="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 hover:bg-slate-700 hover:text-white flex items-center justify-center transition-colors text-slate-400">
-          <i data-lucide="x" class="w-4 h-4"></i>
-        </button>
-      </div>
-      
-      <div id="modalContent" class="p-6 overflow-y-auto space-y-6 bg-slate-950 flex-1">
-        </div>
-      
-      <div class="p-6 border-t border-white/10 bg-slate-900 flex flex-col sm:flex-row gap-3 rounded-b-[24px]">
-        <div class="relative flex-1">
-            <i data-lucide="sliders" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
-            <select id="statusSelect" class="w-full pl-10 pr-4 py-3 border border-slate-700 bg-slate-800 text-white rounded-xl focus:outline-none focus:border-brand-500 font-bold text-sm cursor-pointer shadow-inner">
-                <option value="pending">Fase Logística: Pendente</option>
-                <option value="processing">Fase Logística: Em Processamento</option>
-                <option value="completed">Fase Logística: Concluído (Gera Email)</option>
-                <option value="cancelled">Fase Logística: Cancelado</option>
-            </select>
-        </div>
-        <button id="updateStatusBtn" class="px-8 py-3 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-bold transition flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(37,99,235,0.4)] whitespace-nowrap active:scale-[0.98]">
-            <i data-lucide="save" class="w-4 h-4"></i> <span>Salvar Decisão</span>
-        </button>
-      </div>
-    </div>
-  </div>
+// ==========================================
+// 📧 API RESEND (AUTOMATIZADA) - CORRIGIDO
+// ==========================================
+async function sendNotificationEmail(order, actionType) {
+try {
+let subject = "";
+if (actionType === 'paid') subject = `✅ Pagamento Confirmado - Pedido #${order.orderId}`;
+else if (actionType === 'completed') subject = `🎉 Pedido Concluído - #${order.orderId}`;
+else return;
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, doc, updateDoc, onSnapshot, query, orderBy, getDoc, serverTimestamp, writeBatch, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+// Em produção: usar endpoint real
+await fetch('/api/send-email', {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({
+to: order.email,
+subject: subject,
+template: actionType === 'paid' ? 'payment-confirmed' : 'order-completed',
+type: 'transactional',
+variables: {
+customer_name: order.name,
+order_id: order.orderId,
+amount: formatValue(order.total, 'currency')
+}
+})
+});
+showToast('Notificação enviada ao cliente.', 'info');
+} catch (error) {
+console.error('Erro de envio:', error);
+// Não bloquear fluxo se email falhar
+}
+}
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
-      authDomain: "paygo-14311.firebaseapp.com",
-      projectId: "paygo-14311",
-      storageBucket: "paygo-14311.firebasestorage.app",
-      messagingSenderId: "208360646277",
-      appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
-    };
+// ==========================================
+// 📦 BASE DE DADOS (REAL-TIME) - CORRIGIDO
+// ==========================================
+function loadOrdersRealTime() {
+const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app, "paygodb");
+ordersUnsubscribe = onSnapshot(q, 
+(snapshot) => {
+orders = snapshot.docs.map(doc => {
+const data = doc.data();
+return {
+id: doc.id,
+orderId: data.orderId || `ORD-${doc.id.slice(0, 8)}`,
+name: data.name || 'Sem Nome',
+email: data.email || 'N/A',
+whatsapp: data.whatsapp || 'N/A',
+type: data.type || 'unknown',
+usd: Number(data.usd) || 0,
+total: Number(data.total) || 0,
+tax: Number(data.tax) || 0,
+status: data.status || 'pending',
+isPaid: data.isPaid || false,
+paymentMethod: data.paymentMethod || 'mpesa',
+detail: data.detail || 'N/A',
+referredBy: data.referredBy || null,
+userId: data.userId || null,
+commissionProcessed: data.commissionProcessed || false,
+createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : new Date())
+};
+});
+window.renderOrders();
+}, 
+(error) => {
+console.error('Erro no real-time:', error);
+showToast('Falha na conexão em tempo real.', 'error');
+}
+);
+}
 
-    let orders = [];
-    let currentFilteredOrders = []; 
-    let currentOrderId = null;
+// ==========================================
+// 🎨 RENDERIZAR PEDIDOS - CORRIGIDO
+// ==========================================
+window.renderOrders = function() {
+const table = document.getElementById('ordersTable');
+if (!table) return;
 
-    // Loader e Auth
-    const fallbackTimer = setTimeout(() => { document.getElementById('sysLoader').style.display = 'none'; }, 3000);
+const search = document.getElementById('searchInput')?.value.toLowerCase() || '';
+const statusFilter = document.getElementById('statusFilter')?.value || 'all';
+const paymentFilter = document.getElementById('paymentFilter')?.value || 'all';
 
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) { window.location.href = '../login.html'; return; }
-      try {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists() && (userDoc.data().role === 'admin' || userDoc.data().role === 'superadmin')) {
-          document.getElementById('adminName').textContent = userDoc.data().name || 'Admin';
-          loadOrdersRealTime();
-        } else {
-          window.location.href = '../index.html';
-        }
-      } catch (error) {
-        showToast("Erro na ligação ao servidor.", "error");
-      } finally {
-        clearTimeout(fallbackTimer);
-        document.getElementById('sysLoader').style.opacity = '0';
-        setTimeout(() => document.getElementById('sysLoader').style.display = 'none', 500);
-      }
-    });
+currentFilteredOrders = orders.filter(order => {
+const matchSearch = order.name.toLowerCase().includes(search) ||
+order.orderId.toLowerCase().includes(search) ||
+order.email.toLowerCase().includes(search) ||
+order.whatsapp.includes(search);
+const matchStatus = statusFilter === 'all' || order.status === statusFilter;
+let matchPayment = true;
+if (paymentFilter === 'paid') matchPayment = order.isPaid === true;
+if (paymentFilter === 'unpaid') matchPayment = order.isPaid === false;
+return matchSearch && matchStatus && matchPayment;
+});
 
-    // Função Unificada para Carregar os Icons de Forma Segura
-    function renderIcons(container = document.body) {
-      if (typeof lucide !== 'undefined') {
-        lucide.createIcons({ root: container });
-      }
-    }
-    renderIcons();
+const countEl = document.getElementById('ordersCount');
+if (countEl) countEl.textContent = `${currentFilteredOrders.length} Pedidos Visíveis`;
 
-    // Motores UI
-    window.showToast = (message, type = 'success') => {
-      const container = document.getElementById('toastContainer');
-      const toast = document.createElement('div');
-      const borderColor = type === 'error' ? 'border-danger-500' : type === 'warning' ? 'border-warning-500' : 'border-brand-500';
-      const icon = type === 'error' ? 'alert-octagon text-danger-400' : type === 'warning' ? 'alert-triangle text-warning-400' : 'check-check text-brand-400';
-      
-      toast.className = `flex items-center gap-3 px-5 py-4 rounded-xl shadow-2xl backdrop-blur-xl transform transition-all duration-400 translate-x-full border-l-4 ${borderColor} bg-slate-900/95 border-y border-r border-white/5`;
-      toast.innerHTML = `<i data-lucide="${icon.split(' ')[0]}" class="w-5 h-5 ${icon.split(' ')[1]}"></i> <span class="text-sm font-bold text-white tracking-wide">${message}</span>`;
-      
-      container.appendChild(toast);
-      renderIcons(toast);
-      requestAnimationFrame(() => toast.classList.remove('translate-x-full'));
-      setTimeout(() => { toast.classList.add('opacity-0', 'translate-x-8'); setTimeout(() => toast.remove(), 400); }, 5000);
-    };
+if (currentFilteredOrders.length === 0) {
+table.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-slate-500"><i data-lucide="search-x" class="w-10 h-10 mx-auto mb-3 opacity-30 text-slate-400" aria-hidden="true"></i>Nenhum registo combina com o seu filtro avançado.</td></tr>`;
+renderIcons(table);
+return;
+}
 
-    function formatValue(value, type = 'currency') {
-      if (value === null || value === undefined) return type === 'currency' ? '0.00 MT' : '0';
-      if (type === 'currency') return `${Number(value).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`;
-      if (type === 'usd') return `$${Number(value).toFixed(2)}`;
-      return String(value);
-    }
+let htmlContent = '';
+let lastDateGroup = '';
 
-    function getRelativeDateLabel(date) {
-      const today = new Date(); const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
-      if (date.toDateString() === today.toDateString()) return 'Hoje';
-      if (date.toDateString() === yesterday.toDateString()) return 'Ontem';
-      return date.toLocaleDateString('pt-MZ');
-    }
+currentFilteredOrders.forEach(order => {
+const dateLabel = getRelativeDateLabel(order.createdAt);
+const timeStr = order.createdAt.toLocaleTimeString('pt-MZ', { hour: '2-digit', minute:'2-digit' });
 
-    // API RESEND (AUTOMATIZADA)
-    async function sendNotificationEmail(order, actionType) {
-      try {
-        let subject = "";
-        if (actionType === 'paid') subject = `✅ Pagamento Confirmado - Pedido #${order.orderId}`;
-        else if (actionType === 'completed') subject = `🎉 Pedido Concluído - #${order.orderId}`;
-        else return; 
+if (dateLabel !== lastDateGroup) {
+lastDateGroup = dateLabel;
+htmlContent += `
+<tr class="date-group-header">
+<td colspan="6" class="px-6 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest"><i data-lucide="calendar" class="w-3 h-3 inline pb-0.5 mr-1" aria-hidden="true"></i> ${dateLabel}</td>
+</tr>`;
+}
 
-        await fetch('/api/send-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            to: order.email,
-            subject: subject,
-            template: actionType === 'paid' ? 'payment-confirmed' : 'order-completed',
-            type: 'transactional',
-            variables: {
-              customer_name: order.name,
-              order_id: order.orderId,
-              amount: formatValue(order.total, 'currency')
-            }
-          })
-        });
-        showToast('Notificação enviada ao cliente.', 'info');
-      } catch (error) {
-        console.error('Erro de envio:', error);
-      }
-    }
+const payBadge = order.isPaid
+? `<span class="bg-success-500/20 text-success-400 px-2 py-0.5 rounded text-[10px] font-black border border-success-500/30 uppercase tracking-widest">✅ Liquidado</span>`
+: `<span class="bg-danger-500/20 text-danger-400 px-2 py-0.5 rounded text-[10px] font-black border border-danger-500/30 uppercase tracking-widest">❌ Falta Pagar</span>`;
 
-    // BASE DE DADOS (REAL-TIME)
-    function loadOrdersRealTime() {
-      const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
-      
-      onSnapshot(q, (snapshot) => {
-        orders = snapshot.docs.map(doc => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            orderId: data.orderId || `ORD-${doc.id.slice(0, 8)}`,
-            name: data.name || 'Sem Nome',
-            email: data.email || 'N/A',
-            whatsapp: data.whatsapp || 'N/A',
-            type: data.type || 'unknown',
-            usd: Number(data.usd) || 0,
-            total: Number(data.total) || 0,
-            tax: Number(data.tax) || 0,
-            status: data.status || 'pending',
-            isPaid: data.isPaid || false,
-            paymentMethod: data.paymentMethod || 'mpesa',
-            detail: data.detail || 'N/A',
-            referredBy: data.referredBy || null,
-            userId: data.userId || null,
-            commissionProcessed: data.commissionProcessed || false,
-            createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : new Date())
-          };
-        });
-        window.renderOrders();
-      }, (error) => {
-        showToast('Falha crítica de comunicação Real-time.', 'error');
-      });
-    }
+const logStatus = {
+'pending': '<span class="status-badge pending">⏳ Pendente</span>',
+'processing': '<span class="status-badge processing">🔄 Processando</span>',
+'completed': '<span class="status-badge completed">✅ Finalizado</span>',
+'cancelled': '<span class="status-badge cancelled">❌ Recusado</span>'
+}[order.status] || `<span class="status-badge bg-slate-800">${order.status}</span>`;
 
-    window.renderOrders = function() {
-      const table = document.getElementById('ordersTable');
-      const search = document.getElementById('searchInput').value.toLowerCase();
-      const statusFilter = document.getElementById('statusFilter').value;
-      const paymentFilter = document.getElementById('paymentFilter').value;
-      
-      currentFilteredOrders = orders.filter(order => {
-        const matchSearch = order.name.toLowerCase().includes(search) || 
-                            order.orderId.toLowerCase().includes(search) || 
-                            order.email.toLowerCase().includes(search) ||
-                            order.whatsapp.includes(search);
-        
-        const matchStatus = statusFilter === 'all' || order.status === statusFilter;
-        let matchPayment = true;
-        if (paymentFilter === 'paid') matchPayment = order.isPaid === true;
-        if (paymentFilter === 'unpaid') matchPayment = order.isPaid === false;
-        
-        return matchSearch && matchStatus && matchPayment;
-      });
-      
-      document.getElementById('ordersCount').textContent = `${currentFilteredOrders.length} Pedidos Visíveis`;
-      
-      if (currentFilteredOrders.length === 0) {
-        table.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-slate-500"><i data-lucide="search-x" class="w-10 h-10 mx-auto mb-3 opacity-30 text-slate-400"></i>Nenhum registo combina com o seu filtro avançado.</td></tr>`;
-        renderIcons(table);
-        return;
-      }
-      
-      let htmlContent = '';
-      let lastDateGroup = '';
-      
-      currentFilteredOrders.forEach(order => {
-        const dateLabel = getRelativeDateLabel(order.createdAt);
-        const timeStr = order.createdAt.toLocaleTimeString('pt-MZ', { hour: '2-digit', minute:'2-digit' });
-        
-        if (dateLabel !== lastDateGroup) {
-          lastDateGroup = dateLabel;
-          htmlContent += `
-            <tr class="date-group-header">
-              <td colspan="6" class="px-6 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest"><i data-lucide="calendar" class="w-3 h-3 inline pb-0.5 mr-1"></i> ${dateLabel}</td>
-            </tr>`;
-        }
-        
-        const payBadge = order.isPaid 
-          ? `<span class="bg-success-500/20 text-success-400 px-2 py-0.5 rounded text-[10px] font-black border border-success-500/30 uppercase tracking-widest">✅ Liquidado</span>`
-          : `<span class="bg-danger-500/20 text-danger-400 px-2 py-0.5 rounded text-[10px] font-black border border-danger-500/30 uppercase tracking-widest">❌ Falta Pagar</span>`;
-            
-        const logStatus = {
-            'pending': '<span class="status-badge pending">⏳ Pendente</span>',
-            'processing': '<span class="status-badge processing">🔄 Processando</span>',
-            'completed': '<span class="status-badge completed">✅ Finalizado</span>',
-            'cancelled': '<span class="status-badge cancelled">❌ Recusado</span>'
-        }[order.status] || `<span class="status-badge bg-slate-800">${order.status}</span>`;
+htmlContent += `
+<tr class="hover:bg-slate-800/40 transition-colors group border-b border-white/5 last:border-0 cursor-pointer" onclick="window.openModal('${order.id}')" role="button" tabindex="0" aria-label="Ver detalhes do pedido ${order.orderId}">
+<td class="px-6 py-4">
+<div class="text-sm font-mono font-bold text-brand-400">${order.orderId}</div>
+<div class="text-xs text-slate-500 mt-0.5"><i data-lucide="clock" class="w-3 h-3 inline" aria-hidden="true"></i> ${timeStr}</div>
+</td>
+<td class="px-6 py-4">
+<div class="text-sm font-bold text-white group-hover:text-brand-300 transition-colors">${order.name}</div>
+<div class="text-xs text-slate-500 font-mono">${order.whatsapp}</div>
+</td>
+<td class="px-6 py-4 text-sm font-bold text-slate-300">${formatValue(order.usd, 'usd')}</td>
+<td class="px-6 py-4 text-sm font-black text-white">${formatValue(order.total, 'currency')}</td>
+<td class="px-6 py-4 text-center">
+<div class="flex flex-col gap-2 items-center justify-center">
+${payBadge}
+${logStatus}
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="w-8 h-8 inline-flex items-center justify-center rounded-lg bg-slate-800 text-slate-400 group-hover:bg-brand-600 group-hover:text-white transition-all shadow-sm" aria-label="Ver detalhes">
+<i data-lucide="chevron-right" class="w-4 h-4" aria-hidden="true"></i>
+</button>
+</td>
+</tr>
+`;
+});
 
-        htmlContent += `
-          <tr class="hover:bg-slate-800/40 transition-colors group border-b border-white/5 last:border-0 cursor-pointer" onclick="window.openModal('${order.id}')">
-            <td class="px-6 py-4">
-              <div class="text-sm font-mono font-bold text-brand-400">${order.orderId}</div>
-              <div class="text-xs text-slate-500 mt-0.5"><i data-lucide="clock" class="w-3 h-3 inline"></i> ${timeStr}</div>
-            </td>
-            <td class="px-6 py-4">
-              <div class="text-sm font-bold text-white group-hover:text-brand-300 transition-colors">${order.name}</div>
-              <div class="text-xs text-slate-500 font-mono">${order.whatsapp}</div>
-            </td>
-            <td class="px-6 py-4 text-sm font-bold text-slate-300">${formatValue(order.usd, 'usd')}</td>
-            <td class="px-6 py-4 text-sm font-black text-white">${formatValue(order.total, 'currency')}</td>
-            <td class="px-6 py-4 text-center">
-              <div class="flex flex-col gap-2 items-center justify-center">
-                ${payBadge}
-                ${logStatus}
-              </div>
-            </td>
-            <td class="px-6 py-4 text-right">
-              <button class="w-8 h-8 inline-flex items-center justify-center rounded-lg bg-slate-800 text-slate-400 group-hover:bg-brand-600 group-hover:text-white transition-all shadow-sm">
-                  <i data-lucide="chevron-right" class="w-4 h-4"></i>
-              </button>
-            </td>
-          </tr>
-        `;
-      });
-      
-      table.innerHTML = htmlContent;
-      renderIcons(table);
-    };
+table.innerHTML = htmlContent;
+renderIcons(table);
+};
 
-    // MODAL DE DETALHES GLOBAIS
-    window.openModal = (orderId) => {
-      const order = orders.find(o => o.id === orderId);
-      if (!order) return;
-      currentOrderId = orderId;
-      
-      const methodColor = order.paymentMethod === 'mpesa' ? 'danger' : 'brand';
-      const methodName = order.paymentMethod === 'mpesa' ? 'M-Pesa Moçambique' : 'e-Mola';
-      
-      document.getElementById('modalContent').innerHTML = `
-        <div class="bg-slate-900 p-5 rounded-2xl flex justify-between items-center border border-slate-800 shadow-inner">
-          <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Dossier / Fatura Ref.</p><p class="font-mono font-black text-brand-400 text-xl tracking-tight">${order.orderId}</p></div>
-          <div class="text-right"><p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Emissão Segura</p><p class="font-bold text-slate-300 text-sm">${order.createdAt.toLocaleString('pt-MZ')}</p></div>
-        </div>
-        
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
-          <div class="space-y-4">
-            <h3 class="text-xs font-black text-brand-400 uppercase tracking-widest border-b border-white/10 pb-2 flex items-center gap-2"><i data-lucide="user" class="w-4 h-4"></i> Titular</h3>
-            <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nome Registado</p><p class="font-bold text-white">${order.name}</p></div>
-            <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Canal WhatsApp</p><a href="https://wa.me/${order.whatsapp.replace(/\D/g,'')}" target="_blank" class="font-bold text-success-400 hover:text-success-300 flex items-center gap-1">${order.whatsapp} <i data-lucide="external-link" class="w-3 h-3"></i></a></div>
-            <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Correio Eletrónico</p><p class="font-medium text-slate-300">${order.email}</p></div>
-          </div>
-          
-          <div class="space-y-4 bg-slate-900 p-5 rounded-2xl border border-brand-500/20 shadow-[0_0_20px_rgba(37,99,235,0.05)]">
-            <h3 class="text-xs font-black text-brand-400 uppercase tracking-widest border-b border-white/10 pb-2 flex items-center gap-2"><i data-lucide="calculator" class="w-4 h-4"></i> Extrato de Liquidação</h3>
-            <div class="flex justify-between"><p class="text-xs font-bold text-slate-400">Conversão Fixa (USD)</p><p class="font-mono font-bold text-slate-300">${formatValue(order.usd, 'usd')}</p></div>
-            <div class="flex justify-between"><p class="text-xs font-bold text-slate-400">Canal de Liquidação</p><p class="text-[10px] font-black text-${methodColor}-400 bg-${methodColor}-500/20 px-2 py-0.5 rounded border border-${methodColor}-500/30 uppercase tracking-widest">${methodName}</p></div>
-            <div class="flex justify-between pt-3 border-t border-white/10 mt-3"><p class="text-[10px] font-black text-white uppercase tracking-widest mt-1">LÍQUIDO A COBRAR</p><p class="font-black text-xl text-success-400">${formatValue(order.total, 'currency')}</p></div>
-          </div>
-        </div>
-        
-        <div class="bg-slate-900 rounded-xl p-4 mt-2 border border-slate-800">
-            <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-1"><i data-lucide="shopping-cart" class="w-3 h-3"></i> Resumo Técnico do Serviço Adquirido</p>
-            <p class="text-sm text-slate-300 break-words leading-relaxed">${order.detail}</p>
-        </div>
-        
-        <div class="mt-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900 p-5 rounded-2xl border border-slate-800">
-          <div>
-            <p class="text-[10px] font-black text-slate-500 uppercase mb-2">Auditoria de Recebimento</p>
-            <button onclick="window.togglePaymentStatus('${order.id}', ${order.isPaid})" class="px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-lg flex items-center gap-2 ${order.isPaid ? 'bg-success-600 hover:bg-success-500 text-white' : 'bg-transparent border border-danger-500 text-danger-400 hover:bg-danger-500/10'}">
-              <i data-lucide="${order.isPaid ? 'check-circle' : 'circle'}" class="w-4 h-4"></i>
-              ${order.isPaid ? '✅ DINHEIRO CONFIRMADO' : '❌ MARCAR COMO PAGO (Envia Email)'}
-            </button>
-          </div>
-          
-          <button onclick="window.deleteSingleOrder('${order.id}')" class="px-5 py-3 bg-danger-500/10 hover:bg-danger-500/20 text-danger-400 border border-danger-500/30 rounded-xl text-sm font-bold transition flex items-center gap-2">
-            <i data-lucide="trash-2" class="w-4 h-4"></i> Eliminar Registo
-          </button>
-        </div>
-      `;
-      
-      document.getElementById('statusSelect').value = order.status;
-      const modal = document.getElementById('orderModal');
-      const dialog = document.getElementById('modalDialog');
-      
-      // Garante que o overflow seja tratado com a abertura
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-      document.body.style.overflow = 'hidden';
-      
-      requestAnimationFrame(() => {
-        if(dialog) {
-          dialog.classList.remove('scale-95', 'opacity-0');
-          dialog.classList.add('scale-100', 'opacity-100');
-        }
-      });
-      renderIcons(modal);
-    };
+// ==========================================
+// 🎯 FUNÇÃO PARA RENDERIZAR ÍCONES
+// ==========================================
+function renderIcons(container = document.body) {
+if (typeof lucide !== 'undefined') {
+try { lucide.createIcons({ root: container }); } catch(e) {}
+}
+}
 
-    window.closeModal = () => {
-      const modal = document.getElementById('orderModal');
-      const dialog = document.getElementById('modalDialog');
-      if(dialog) {
-        dialog.classList.remove('scale-100', 'opacity-100');
-        dialog.classList.add('scale-95', 'opacity-0');
-      }
-      setTimeout(() => { 
-        modal.classList.remove('flex'); 
-        modal.classList.add('hidden'); 
-        document.body.style.overflow = ''; 
-        currentOrderId = null; 
-      }, 200);
-    };
+// ==========================================
+// 🔍 MODAL DE DETALHES GLOBAIS - CORRIGIDO
+// ==========================================
+window.openModal = (orderId) => {
+const order = orders.find(o => o.id === orderId);
+if (!order) return;
 
-    // AÇÕES DE DADOS GERAIS & COMISSÃO AFILIADOS
-    document.getElementById('updateStatusBtn').addEventListener('click', async () => {
-      if (!currentOrderId) return;
-      const newStatus = document.getElementById('statusSelect').value;
-      const order = orders.find(o => o.id === currentOrderId);
-      const oldStatus = order.status;
-      
-      const btn = document.getElementById('updateStatusBtn');
-      const originalText = btn.innerHTML;
-      btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A Sincronizar DB...`; renderIcons(btn);
-      
-      try {
-        await updateDoc(doc(db, "orders", currentOrderId), { status: newStatus, updatedAt: serverTimestamp() });
-        
-        // Verifica sistema de afiliados se foi concluído e tem referido, não pago ainda a comissão
-        if (newStatus === 'completed' && order.referredBy && !order.commissionProcessed) {
-            await processAffiliateCPA(order);
-            await updateDoc(doc(db, "orders", currentOrderId), { commissionProcessed: true });
-        }
-        
-        showToast('Nova etapa logística gravada na Cloud.', 'success');
-        
-        // Automação: Envia email caso tenha acabado de ser dado como Concluído
-        if (newStatus === 'completed' && oldStatus !== 'completed') {
-          await sendNotificationEmail(order, 'completed');
-        }
-        window.closeModal();
-      } catch (error) {
-        showToast('Erro interno de permissões.', 'error');
-      } finally {
-        btn.disabled = false; btn.innerHTML = originalText; renderIcons(btn);
-      }
-    });
+currentOrderId = orderId;
+const methodColor = order.paymentMethod === 'mpesa' ? 'danger' : 'brand';
+const methodName = order.paymentMethod === 'mpesa' ? 'M-Pesa Moçambique' : 'e-Mola';
 
-    async function processAffiliateCPA(order) {
-        try {
-            // Localiza afiliado
-            const q = query(collection(db, "users"), where("affiliateCode", "==", order.referredBy), where("role", "==", "affiliate"));
-            const snap = await getDocs(q);
-            if(snap.empty) return;
-            
-            const refDoc = snap.docs[0];
-            const refData = refDoc.data();
+document.getElementById('modalContent').innerHTML = `
+<div class="bg-slate-900 p-5 rounded-2xl flex justify-between items-center border border-slate-800 shadow-inner">
+<div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Dossier / Fatura Ref.</p><p class="font-mono font-black text-brand-400 text-xl tracking-tight">${order.orderId}</p></div>
+<div class="text-right"><p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Emissão Segura</p><p class="font-bold text-slate-300 text-sm">${order.createdAt.toLocaleString('pt-MZ')}</p></div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
+<div class="space-y-4">
+<h3 class="text-xs font-black text-brand-400 uppercase tracking-widest border-b border-white/10 pb-2 flex items-center gap-2"><i data-lucide="user" class="w-4 h-4" aria-hidden="true"></i> Titular</h3>
+<div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nome Registado</p><p class="font-bold text-white">${order.name}</p></div>
+<div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Canal WhatsApp</p><a href="https://wa.me/${order.whatsapp.replace(/\D/g,'')}" target="_blank" rel="noopener noreferrer" class="font-bold text-success-400 hover:text-success-300 flex items-center gap-1">${order.whatsapp} <i data-lucide="external-link" class="w-3 h-3" aria-hidden="true"></i></a></div>
+<div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Correio Eletrónico</p><p class="font-medium text-slate-300">${order.email}</p></div>
+</div>
+<div class="space-y-4 bg-slate-900 p-5 rounded-2xl border border-brand-500/20 shadow-[0_0_20px_rgba(37,99,235,0.05)]">
+<h3 class="text-xs font-black text-brand-400 uppercase tracking-widest border-b border-white/10 pb-2 flex items-center gap-2"><i data-lucide="calculator" class="w-4 h-4" aria-hidden="true"></i> Extrato de Liquidação</h3>
+<div class="flex justify-between"><p class="text-xs font-bold text-slate-400">Conversão Fixa (USD)</p><p class="font-mono font-bold text-slate-300">${formatValue(order.usd, 'usd')}</p></div>
+<div class="flex justify-between"><p class="text-xs font-bold text-slate-400">Canal de Liquidação</p><p class="text-[10px] font-black text-${methodColor}-400 bg-${methodColor}-500/20 px-2 py-0.5 rounded border border-${methodColor}-500/30 uppercase tracking-widest">${methodName}</p></div>
+<div class="flex justify-between pt-3 border-t border-white/10 mt-3"><p class="text-[10px] font-black text-white uppercase tracking-widest mt-1">LÍQUIDO A COBRAR</p><p class="font-black text-xl text-success-400">${formatValue(order.total, 'currency')}</p></div>
+</div>
+</div>
+<div class="bg-slate-900 rounded-xl p-4 mt-2 border border-slate-800">
+<p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-1"><i data-lucide="shopping-cart" class="w-3 h-3" aria-hidden="true"></i> Resumo Técnico do Serviço Adquirido</p>
+<p class="text-sm text-slate-300 break-words leading-relaxed">${order.detail}</p>
+</div>
+<div class="mt-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900 p-5 rounded-2xl border border-slate-800">
+<div>
+<p class="text-[10px] font-black text-slate-500 uppercase mb-2">Auditoria de Recebimento</p>
+<button onclick="window.togglePaymentStatus('${order.id}', ${order.isPaid})" class="px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-lg flex items-center gap-2 ${order.isPaid ? 'bg-success-600 hover:bg-success-500 text-white' : 'bg-transparent border border-danger-500 text-danger-400 hover:bg-danger-500/10'}">
+<i data-lucide="${order.isPaid ? 'check-circle' : 'circle'}" class="w-4 h-4" aria-hidden="true"></i>
+${order.isPaid ? '✅ DINHEIRO CONFIRMADO' : '❌ MARCAR COMO PAGO (Envia Email)'}
+</button>
+</div>
+<button onclick="window.deleteSingleOrder('${order.id}')" class="px-5 py-3 bg-danger-500/10 hover:bg-danger-500/20 text-danger-400 border border-danger-500/30 rounded-xl text-sm font-bold transition flex items-center gap-2">
+<i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i> Eliminar Registo
+</button>
+</div>
+`;
 
-            // Verifica se cliente já tem encomenda concluída
-            const qClient = query(collection(db, "orders"), where("email", "==", order.email), where("status", "==", "completed"));
-            const snapClient = await getDocs(qClient);
-            if(snapClient.size > 1) return; // Não é a 1a vez
+document.getElementById('statusSelect').value = order.status;
+const modal = document.getElementById('orderModal');
+const dialog = document.getElementById('modalDialog');
 
-            const commissionValue = order.tax * (refData.approvedReferrals >= 10 ? 0.05 : 0.03);
+// Garantir que o overflow seja tratado com a abertura
+modal.classList.remove('hidden');
+modal.classList.add('flex');
+document.body.style.overflow = 'hidden';
 
-            await updateDoc(doc(db, "users", refDoc.id), {
-                affiliateEarnings: increment(commissionValue),
-                approvedReferrals: increment(1)
-            });
-            console.log(`Comissão de ${commissionValue} creditada!`);
-        } catch(e) {
-            console.error("Falha ao distribuir comissões", e);
-        }
-    }
+requestAnimationFrame(() => {
+if(dialog) {
+dialog.classList.remove('scale-95', 'opacity-0');
+dialog.classList.add('scale-100', 'opacity-100');
+}
+});
 
-    window.togglePaymentStatus = async (orderId, isCurrentlyPaid) => {
-      const newStatus = !isCurrentlyPaid;
-      const order = orders.find(o => o.id === orderId);
-      
-      try {
-        await updateDoc(doc(db, "orders", orderId), { isPaid: newStatus });
-        showToast(newStatus ? 'Validado como PAGO!' : 'Cancelada Assinatura de Pagamento.', 'success');
-        
-        // Automação de Email de Pagamento Confirmado
-        if (newStatus === true) {
-          showToast('Servidor de Emails ativado (Envio Silencioso).', 'info');
-          await sendNotificationEmail(order, 'paid');
-        }
-        window.closeModal();
-      } catch (e) {
-        showToast('Falha técnica.', 'error');
-      }
-    };
+renderIcons(modal);
+};
 
-    window.deleteSingleOrder = async (orderId) => {
-      if (!confirm('⚠️ AVISO DE AUDITORIA: Tem a certeza que deseja destruir permanentemente este registo financeiro?')) return;
-      try {
-        await deleteDoc(doc(db, "orders", orderId));
-        showToast('Documento vaporizado com sucesso.', 'success');
-        window.closeModal();
-      } catch (e) {
-        showToast('Acesso Negado (Ação Restrita).', 'error');
-      }
-    };
+window.closeModal = () => {
+const modal = document.getElementById('orderModal');
+const dialog = document.getElementById('modalDialog');
 
-    window.clearHistory = async () => {
-      if (currentFilteredOrders.length === 0) return showToast('Aviso: O seu ecrã não possui pedidos visíveis para purgar.', 'warning');
-      
-      const qty = currentFilteredOrders.length;
-      if (!confirm(`⚠️ ALERTA VERMELHO ⚠️\n\nIsto irá varrer da base de dados TODOS os ${qty} pedidos que você filtrou no ecrã. Não há volta a dar.\n\nProceder com a purga tática?`)) return;
-      
-      showToast('A preparar injeção de eliminação em massa...', 'info');
-      try {
-        const batch = writeBatch(db);
-        currentFilteredOrders.forEach(order => {
-          batch.delete(doc(db, "orders", order.id));
-        });
-        await batch.commit();
-        showToast(`Operação Global: ${qty} Documentos Destruídos.`, 'success');
-      } catch (e) {
-        showToast('O servidor bloqueou a execução em massa (Limites).', 'error');
-      }
-    };
+if(dialog) {
+dialog.classList.remove('scale-100', 'opacity-100');
+dialog.classList.add('scale-95', 'opacity-0');
+}
 
-    window.exportToCSV = () => {
-      if (currentFilteredOrders.length === 0) { showToast('Dados insuficientes para gerar relatório Contabilístico.', 'warning'); return; }
-      
-      let csvContent = "ID de Transacao,Data Servidor,Hora Servidor,Entidade Cliente,Email Contacto,Canal Telemovel,Verificacao Dinheiro,Total Faturado (MT),Etapa Logistica,Resumo Tecnico (Produto)\n";
-      
-      currentFilteredOrders.forEach(order => {
-        const dateStr = order.createdAt.toLocaleDateString('pt-MZ');
-        const timeStr = order.createdAt.toLocaleTimeString('pt-MZ');
-        const name = `"${order.name.replace(/"/g, '""')}"`;
-        const detail = `"${order.detail.replace(/"/g, '""')}"`;
-        const payStatus = order.isPaid ? 'Dinheiro Confirmado' : 'Divida Pendente';
-        
-        csvContent += `${order.orderId},${dateStr},${timeStr},${name},${order.email},${order.whatsapp},${payStatus},${order.total},${order.status},${detail}\n`;
-      });
-      
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = `Auditoria_PayGo_Pedidos_${new Date().toISOString().split('T')[0]}.csv`;
-      document.body.appendChild(link); link.click(); document.body.removeChild(link);
-      showToast('O Livro de Registos (Excel) foi descarregado.', 'success');
-    };
+setTimeout(() => {
+modal.classList.remove('flex');
+modal.classList.add('hidden');
+document.body.style.overflow = '';
+currentOrderId = null;
+}, 200);
+};
 
-    // Controlos Móveis e Ações de Teclado
-    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-    const sidebar = document.getElementById('sidebar');
-    const sidebarOverlay = document.getElementById('sidebarOverlay');
-    const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+// ==========================================
+// 💾 AÇÕES DE DADOS - CORRIGIDO
+// ==========================================
+document.getElementById('updateStatusBtn')?.addEventListener('click', async () => {
+if (!currentOrderId) return;
 
-    function toggleMobileSidebar() {
-      sidebar.classList.toggle('-translate-x-full');
-      if(sidebarOverlay.classList.contains('hidden')) {
-        sidebarOverlay.classList.remove('hidden');
-        setTimeout(() => sidebarOverlay.classList.remove('opacity-0'), 10);
-      } else {
-        sidebarOverlay.classList.add('opacity-0');
-        setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
-      }
-    }
-    mobileMenuBtn?.addEventListener('click', toggleMobileSidebar);
-    closeSidebarBtn?.addEventListener('click', toggleMobileSidebar);
-    sidebarOverlay?.addEventListener('click', toggleMobileSidebar);
+const newStatus = document.getElementById('statusSelect').value;
+const order = orders.find(o => o.id === currentOrderId);
+const oldStatus = order?.status;
 
-    document.addEventListener('keydown', (e) => { 
-        if (e.key === 'Escape' && !document.getElementById('orderModal').classList.contains('hidden')) window.closeModal(); 
-    });
+const btn = document.getElementById('updateStatusBtn');
+const originalText = btn.innerHTML;
 
-    window.logout = async function() { if(confirm('Encerrar controlo mestre?')) { await signOut(auth); window.location.href = '../login.html'; } };
+btn.disabled = true; 
+btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin" aria-hidden="true"></i> A Sincronizar DB...`; 
+renderIcons(btn);
 
-  </script>
+try {
+await updateDoc(doc(db, "orders", currentOrderId), { 
+status: newStatus, 
+updatedAt: serverTimestamp() 
+});
+
+// Verifica sistema de afiliados se foi concluído e tem referido, não pago ainda a comissão
+if (newStatus === 'completed' && order?.referredBy && !order?.commissionProcessed) {
+await processAffiliateCPA(order);
+await updateDoc(doc(db, "orders", currentOrderId), { commissionProcessed: true });
+}
+
+showToast('Nova etapa logística gravada na Cloud.', 'success');
+
+// Automação: Envia email caso tenha acabado de ser dado como Concluído
+if (newStatus === 'completed' && oldStatus !== 'completed') {
+await sendNotificationEmail(order, 'completed');
+}
+
+window.closeModal();
+} catch (error) {
+console.error('Erro ao atualizar status:', error);
+showToast('Erro interno de permissões.', 'error');
+} finally {
+btn.disabled = false; 
+btn.innerHTML = originalText; 
+renderIcons(btn);
+}
+});
+
+async function processAffiliateCPA(order) {
+try {
+// Localiza afiliado
+const q = query(collection(db, "users"), where("affiliateCode", "==", order.referredBy), where("role", "==", "affiliate"));
+const snap = await getDocs(q);
+if(snap.empty) return;
+
+const refDoc = snap.docs[0];
+const refData = refDoc.data();
+
+// Verifica se cliente já tem encomenda concluída
+const qClient = query(collection(db, "orders"), where("email", "==", order.email), where("status", "==", "completed"));
+const snapClient = await getDocs(qClient);
+if(snapClient.size > 1) return; // Não é a 1a vez
+
+const commissionValue = order.tax * (refData.approvedReferrals >= 10 ? 0.05 : 0.03);
+
+await updateDoc(doc(db, "users", refDoc.id), {
+affiliateEarnings: increment(commissionValue),
+approvedReferrals: increment(1)
+});
+
+console.log(`Comissão de ${commissionValue} creditada!`);
+} catch(e) {
+console.error("Falha ao distribuir comissões", e);
+}
+}
+
+window.togglePaymentStatus = async (orderId, isCurrentlyPaid) => {
+const newStatus = !isCurrentlyPaid;
+const order = orders.find(o => o.id === orderId);
+
+try {
+await updateDoc(doc(db, "orders", orderId), { isPaid: newStatus });
+showToast(newStatus ? 'Validado como PAGO!' : 'Cancelada Assinatura de Pagamento.', 'success');
+
+// Automação de Email de Pagamento Confirmado
+if (newStatus === true) {
+showToast('Servidor de Emails ativado (Envio Silencioso).', 'info');
+await sendNotificationEmail(order, 'paid');
+}
+window.closeModal();
+} catch (e) {
+console.error('Erro ao atualizar pagamento:', e);
+showToast('Falha técnica.', 'error');
+}
+};
+
+window.deleteSingleOrder = async (orderId) => {
+if (!confirm('⚠️ AVISO DE AUDITORIA: Tem a certeza que deseja destruir permanentemente este registo financeiro?')) return;
+
+try {
+// ✅ CORREÇÃO: deleteDoc agora importado
+await deleteDoc(doc(db, "orders", orderId));
+showToast('Documento vaporizado com sucesso.', 'success');
+window.closeModal();
+} catch (e) {
+console.error('Erro ao eliminar:', e);
+showToast('Acesso Negado (Ação Restrita).', 'error');
+}
+};
+
+window.clearHistory = async () => {
+if (currentFilteredOrders.length === 0) return showToast('Aviso: O seu ecrã não possui pedidos visíveis para purgar.', 'warning');
+
+const qty = currentFilteredOrders.length;
+if (!confirm(`⚠️ ALERTA VERMELHO ⚠️
+Isto irá varrer da base de dados TODOS os ${qty} pedidos que você filtrou no ecrã. Não há volta a dar.
+Proceder com a purga tática?`)) return;
+
+showToast('A preparar injeção de eliminação em massa...', 'info');
+
+try {
+const batch = writeBatch(db);
+currentFilteredOrders.forEach(order => {
+batch.delete(doc(db, "orders", order.id));
+});
+await batch.commit();
+showToast(`Operação Global: ${qty} Documentos Destruídos.`, 'success');
+} catch (e) {
+console.error('Erro em batch delete:', e);
+showToast('O servidor bloqueou a execução em massa (Limites).', 'error');
+}
+};
+
+window.exportToCSV = () => {
+if (currentFilteredOrders.length === 0) { showToast('Dados insuficientes para gerar relatório Contabilístico.', 'warning'); return; }
+
+let csvContent = "ID de Transacao,Data Servidor,Hora Servidor,Entidade Cliente,Email Contacto,Canal Telemovel,Verificacao Dinheiro,Total Faturado (MT),Etapa Logistica,Resumo Tecnico (Produto)\n";
+
+currentFilteredOrders.forEach(order => {
+const dateStr = order.createdAt.toLocaleDateString('pt-MZ');
+const timeStr = order.createdAt.toLocaleTimeString('pt-MZ');
+const name = `"${order.name.replace(/"/g, '""')}"`;
+const detail = `"${order.detail.replace(/"/g, '""')}"`;
+const payStatus = order.isPaid ? 'Dinheiro Confirmado' : 'Divida Pendente';
+csvContent += `${order.orderId},${dateStr},${timeStr},${name},${order.email},${order.whatsapp},${payStatus},${order.total},${order.status},${detail}\n`;
+});
+
+const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+const link = document.createElement("a");
+link.href = URL.createObjectURL(blob);
+link.download = `Auditoria_PayGo_Pedidos_${new Date().toISOString().split('T')[0]}.csv`;
+document.body.appendChild(link); 
+link.click(); 
+document.body.removeChild(link);
+
+showToast('O Livro de Registos (Excel) foi descarregado.', 'success');
+};
+
+// ==========================================
+// 📱 CONTROLOS MÓVEIS E AÇÕES DE TECLADO
+// ==========================================
+const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+const sidebar = document.getElementById('sidebar');
+const sidebarOverlay = document.getElementById('sidebarOverlay');
+const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+
+function toggleMobileSidebar() {
+sidebar.classList.toggle('-translate-x-full');
+if(sidebarOverlay.classList.contains('hidden')) {
+sidebarOverlay.classList.remove('hidden');
+setTimeout(() => sidebarOverlay.classList.remove('opacity-0'), 10);
+} else {
+sidebarOverlay.classList.add('opacity-0');
+setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
+}
+}
+
+mobileMenuBtn?.addEventListener('click', toggleMobileSidebar);
+closeSidebarBtn?.addEventListener('click', toggleMobileSidebar);
+sidebarOverlay?.addEventListener('click', toggleMobileSidebar);
+
+document.addEventListener('keydown', (e) => {
+if (e.key === 'Escape' && !document.getElementById('orderModal').classList.contains('hidden')) window.closeModal();
+});
+
+window.logout = async function() { 
+if(confirm('Encerrar controlo mestre?')) { 
+await signOut(auth); 
+window.location.href = '../login.html'; 
+} 
+};
+
+// ==========================================
+// 🚀 INICIALIZAÇÃO - CORRIGIDO
+// ==========================================
+const fallbackTimer = setTimeout(() => { 
+document.getElementById('sysLoader').style.display = 'none'; 
+}, 3000);
+
+onAuthStateChanged(auth, async (user) => {
+if (!user) { 
+window.location.href = '../login.html'; 
+return; 
+}
+
+try {
+const userDoc = await getDoc(doc(db, "users", user.uid));
+if (userDoc.exists() && (userDoc.data().role === 'admin' || userDoc.data().role === 'superadmin')) {
+document.getElementById('adminName').textContent = userDoc.data().name || 'Admin';
+loadOrdersRealTime();
+} else {
+window.location.href = '../index.html';
+}
+} catch (error) {
+console.error('Erro na verificação:', error);
+showToast("Erro na ligação ao servidor.", "error");
+} finally {
+clearTimeout(fallbackTimer);
+const loader = document.getElementById('sysLoader');
+if(loader) {
+loader.style.opacity = '0';
+setTimeout(() => loader.style.display = 'none', 500);
+}
+}
+});
+
+// Inicializar ícones ao carregar
+document.addEventListener('DOMContentLoaded', () => {
+renderIcons();
+console.log('✅ Pedidos PayGo carregado');
+});
+
+// Cleanup ao sair da página
+window.addEventListener('beforeunload', () => {
+if (ordersUnsubscribe) ordersUnsubscribe();
+});
+</script>
 </body>
 </html>
