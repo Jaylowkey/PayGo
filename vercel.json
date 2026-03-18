@@ -9,19 +9,63 @@
         { "key": "X-Content-Type-Options", "value": "nosniff" },
         { "key": "X-Frame-Options", "value": "DENY" },
         { "key": "X-XSS-Protection", "value": "1; mode=block" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://unpkg.com https://www.gstatic.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://www.gstatic.com https://firestore.googleapis.com https://paygo.co.mz;" }
+      ]
+    },
+    {
+      "source": "/(.*\\.html)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=3600, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/(.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|webp))",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
       ]
     }
   ],
   "rewrites": [
     { "source": "/admin/:path*", "destination": "/admin.html" },
+    { "source": "/admin/dashboard/:path*", "destination": "/admin/dashboard.html" },
+    { "source": "/admin/pedidos/:path*", "destination": "/admin/pedidos.html" },
+    { "source": "/admin/clientes/:path*", "destination": "/admin/clientes.html" },
+    { "source": "/admin/afiliados/:path*", "destination": "/admin/afiliados.html" },
+    { "source": "/admin/gerar-fatura/:path*", "destination": "/admin/gerar-fatura.html" },
+    { "source": "/admin/configuracoes/:path*", "destination": "/admin/configuracoes.html" },
     { "source": "/dashboard/:path*", "destination": "/dashboard.html" },
+    { "source": "/afiliados/:path*", "destination": "/afiliados.html" },
+    { "source": "/carrinha/:path*", "destination": "/carrinha.html" },
+    { "source": "/blog/:path*", "destination": "/blog.html" },
     { "source": "/login", "destination": "/login.html" },
-    { "source": "/register", "destination": "/register.html" }
+    { "source": "/register", "destination": "/register.html" },
+    { "source": "/sobre-nos", "destination": "/sobre-nos.html" },
+    { "source": "/contacto", "destination": "/contacto.html" },
+    { "source": "/faq", "destination": "/faq.html" },
+    { "source": "/termos", "destination": "/termos.html" },
+    { "source": "/privacidade", "destination": "/privacidade.html" },
+    { "source": "/como-funciona", "destination": "/como-funciona.html" },
+    { "source": "/erro", "destination": "/erro.html" },
+    { "source": "/404", "destination": "/erro.html?error=404" },
+    { "source": "/500", "destination": "/erro.html?error=500" }
   ],
+  "redirects": [
+    { "source": "/admin-old/:path*", "destination": "/admin/:path*", "permanent": false },
+    { "source": "/painel/:path*", "destination": "/admin/:path*", "permanent": false }
+  ],
+  "errorPages": {
+    "404": "/erro.html?error=404",
+    "500": "/erro.html?error=500",
+    "503": "/erro.html?error=503"
+  },
   "functions": {
     "api/**/*.js": {
-      "maxDuration": 10
+      "maxDuration": 10,
+      "memory": 1024
     }
-  }
+  },
+  "outputDirectory": "public",
+  "installCommand": "npm install",
+  "buildCommand": "echo 'No build required for static site'"
 }
