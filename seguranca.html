@@ -4,25 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Segurança | PayGo Moçambique</title>
-    <meta name="description" content="Verificação de email e recuperação de senha segura para sua conta PayGo.">
+    <meta name="description" content="Centro de Segurança, Verificação e Recuperação da conta PayGo.">
     <meta name="theme-color" content="#0f172a">
     
-    <!-- Security Headers -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://unpkg.com https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://open.larksuite.com https://api.resend.com">
-    
-    <!-- Open Graph -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://paygo.co.mz/seguranca.html">
-    <meta property="og:title" content="Segurança | PayGo Moçambique">
-    <meta property="og:description" content="Verificação segura da sua conta PayGo.">
-    
-    <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233b82f6' stroke='none'><polygon points='13 2 3 14 12 14 11 22 21 10 12 10 13 2'></polygon></svg>">
     
-    <!-- Fonts & Icons - ✅ URLs corrigidas sem espaços -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -33,19 +22,23 @@
             extend: {
                 fontFamily: {
                     sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    display: ['"Outfit"', 'sans-serif'],
                 },
                 colors: {
-                    brand: {
-                        50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd',
-                        400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8',
-                        800: '#1e40af', 900: '#1e3a8a', 950: '#0f172a',
-                    },
+                    brand: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 900: '#1e3a8a', 950: '#0f172a' },
                     success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' },
                     warning: { 400: '#fbbf24', 500: '#f59e0b', 600: '#d97706' },
                     danger: { 400: '#f87171', 500: '#ef4444', 600: '#dc2626' }
                 },
                 animation: {
-                    'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    'fade-in': 'fadeIn 0.5s ease-out forwards',
+                    'slide-up': 'slideUp 0.5s ease-out forwards',
+                    'pulse-glow': 'pulseGlow 2s infinite',
+                },
+                keyframes: {
+                    fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+                    slideUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+                    pulseGlow: { '0%, 100%': { boxShadow: '0 0 0 0 rgba(34, 197, 94, 0.4)' }, '50%': { boxShadow: '0 0 0 20px rgba(34, 197, 94, 0)' } }
                 }
             }
         }
@@ -53,648 +46,384 @@
     </script>
     
     <style>
-        body { 
-            background-color: #f1f5f9; 
-            background-image: radial-gradient(#e2e8f0 1px, transparent 1px); 
-            background-size: 24px 24px; 
+        body { background-color: #0f172a; color: #f8fafc; overflow: hidden; }
+        
+        .bg-grid { 
+            background-size: 40px 40px; 
+            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); 
         }
+        
         .glass-card { 
-            background: rgba(255, 255, 255, 0.95); 
-            backdrop-filter: blur(10px); 
-            border: 1px solid rgba(255, 255, 255, 0.2); 
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+            background: rgba(30, 41, 59, 0.7); 
+            backdrop-filter: blur(20px); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
-        .loader { 
-            border-top-color: #3b82f6; 
-            animation: spinner 1s linear infinite; 
+
+        .scanner-line {
+            width: 100%; height: 2px;
+            background: #3b82f6;
+            position: absolute; top: 0; left: 0;
+            box-shadow: 0 0 10px #3b82f6, 0 0 20px #3b82f6;
+            animation: scan 2s linear infinite;
         }
-        @keyframes spinner { 
-            0% { transform: rotate(0deg); } 
-            100% { transform: rotate(360deg); } 
+
+        @keyframes scan {
+            0% { top: 0%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
         }
-        
-        .password-strength { height: 4px; border-radius: 2px; transition: all 0.4s ease; background: #e2e8f0; overflow: hidden; }
-        .password-strength-fill { height: 100%; width: 0%; transition: all 0.4s ease; border-radius: 2px; }
-        .password-strength-fill.weak { background: #ef4444; width: 25%; }
-        .password-strength-fill.fair { background: #f59e0b; width: 50%; }
-        .password-strength-fill.good { background: #3b82f6; width: 75%; }
-        .password-strength-fill.strong { background: #22c55e; width: 100%; }
-        
-        .input-field { position: relative; transition: all 0.3s ease; }
-        .input-field:focus-within { 
-            border-color: #3b82f6; 
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15); 
-            transform: translateY(-1px);
-        }
-        
-        .req-item { transition: all 0.3s ease; color: #64748b; }
-        .req-item.met { color: #16a34a; font-weight: 500; }
-        .req-item.met .icon-box { color: #22c55e; }
-        
-        #toast-container { 
-            position: fixed; top: 20px; right: 20px; z-index: 9999; 
-            display: flex; flex-direction: column; gap: 12px; pointer-events: none; 
-        }
-        .toast { 
-            pointer-events: auto;
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(16px);
+
+        /* Inputs e Força da Senha */
+        .input-field {
+            background: rgba(255,255,255,0.03);
             border: 1px solid rgba(255,255,255,0.1);
-            border-left: 4px solid #3b82f6;
-            padding: 16px 20px; border-radius: 12px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-            display: flex; align-items: center; gap: 12px;
-            max-width: 380px;
-            transform: translateX(120%);
-            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.3s ease;
-            opacity: 0;
+            transition: all 0.3s ease;
         }
-        .toast.show { transform: translateX(0); opacity: 1; }
-        .toast.success { border-left-color: #22c55e; }
+        .input-field:focus-within {
+            border-color: #3b82f6;
+            background: rgba(255,255,255,0.05);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        .strength-meter { height: 4px; border-radius: 2px; transition: all 0.3s ease; width: 0; }
+        .strength-weak { background: #ef4444; width: 33.33%; }
+        .strength-medium { background: #f59e0b; width: 66.66%; }
+        .strength-strong { background: #22c55e; width: 100%; }
+
+        .btn-premium { transition: all 0.2s ease; position: relative; overflow: hidden; }
+        .btn-premium:active:not(:disabled) { transform: scale(0.98); }
+        .btn-premium:disabled { opacity: 0.7; cursor: not-allowed; }
+
+        /* Toast */
+        #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+        .toast { pointer-events: auto; background: #1e293b; border: 1px solid rgba(255,255,255,0.1); border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 12px; display: flex; align-items: center; gap: 12px; transform: translateX(120%); transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .toast.show { transform: translateX(0); }
         .toast.error { border-left-color: #ef4444; }
-        .toast.warning { border-left-color: #f59e0b; }
-        
-        /* Animation for password requirements */
-        .req-item .icon-box { transition: all 0.3s ease; }
-        .req-item.met .icon-box { transform: scale(1.1); }
-        
-        /* Focus visible for accessibility */
-        button:focus-visible, input:focus-visible {
-            outline: 2px solid #3b82f6;
-            outline-offset: 2px;
-        }
-        
-        /* Mobile optimizations */
-        @media (max-width: 640px) {
-            .glass-card { padding: 1.5rem !important; }
-            .toast { max-width: calc(100vw - 40px); }
-        }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen p-4 antialiased">
+<body class="min-h-screen flex flex-col relative">
 
-    <!-- Toast Container -->
-    <div id="toast-container" role="region" aria-live="polite" aria-label="Notificações"></div>
+    <div id="toastContainer"></div>
 
-    <!-- Main Card -->
-    <div class="max-w-md w-full glass-card p-8 sm:p-10 rounded-3xl shadow-2xl transition-all duration-300">
-        
-        <!-- Header -->
-        <div class="text-center mb-8">
-            <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl mb-4 shadow-sm border border-blue-100">
-                <i data-lucide="shield-check" class="w-8 h-8"></i>
-            </div>
-            <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Segurança PayGo</h1>
-            <p class="text-slate-500 text-sm mt-1">Protegendo a sua conta</p>
-        </div>
+    <div class="fixed inset-0 bg-grid opacity-20 pointer-events-none"></div>
+    <div class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-brand-600/20 rounded-full mix-blend-screen blur-[120px] pointer-events-none"></div>
 
-        <!-- Status Container (Loading/Success/Error) -->
-        <div id="status-container" class="text-center" role="status" aria-live="polite">
-            <div id="loader" class="loader w-12 h-12 border-4 border-slate-200 rounded-full mx-auto mb-6" aria-label="Carregando"></div>
-            <div id="status-icon" class="mb-4 hidden flex justify-center" aria-hidden="true"></div>
-            <h2 id="status-title" class="text-xl font-bold text-slate-900 mb-2">A verificar ligação segura...</h2>
-            <p id="status-desc" class="text-slate-500 mb-8 text-sm leading-relaxed">Aguarde um momento enquanto validamos o seu token de segurança.</p>
+    <main class="flex-1 flex items-center justify-center p-6 relative z-10 w-full">
+        <div class="w-full max-w-md animate-slide-up">
             
-            <button id="main-btn" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3.5 rounded-xl transition-all hidden shadow-lg flex items-center justify-center gap-2 focus:ring-4 focus:ring-blue-200">
-                <span id="btn-text">Ir para o Login</span>
-                <i data-lucide="arrow-right" class="w-4 h-4"></i>
-            </button>
-        </div>
+            <div class="glass-card rounded-[2rem] p-8 md:p-10 relative overflow-hidden">
+                
+                <div id="loadingState" class="text-center">
+                    <div class="w-24 h-24 mx-auto bg-slate-800 border-2 border-slate-700 rounded-full flex items-center justify-center relative overflow-hidden mb-6">
+                        <i data-lucide="shield" class="w-10 h-10 text-brand-400 opacity-50"></i>
+                        <div class="scanner-line"></div>
+                    </div>
+                    <h1 class="text-2xl font-display font-extrabold text-white mb-2">A Verificar Ligação Segura</h1>
+                    <p class="text-slate-400 text-sm">A analisar a integridade e validade da credencial... Por favor, não feche a página.</p>
+                </div>
 
-        <!-- Reset Password Form -->
-        <div id="reset-container" class="hidden" role="form" aria-labelledby="reset-title">
-            <div class="text-center mb-6">
-                <h2 id="reset-title" class="text-xl font-bold text-slate-900">Nova Senha</h2>
-                <p class="text-slate-500 text-sm mt-1">Crie uma credencial forte para a sua conta.</p>
+                <div id="successVerifyState" class="hidden animate-fade-in text-center">
+                    <div class="w-24 h-24 mx-auto bg-success-500/20 border border-success-500/50 rounded-full flex items-center justify-center mb-6 animate-pulse-glow">
+                        <i data-lucide="shield-check" class="w-12 h-12 text-success-400"></i>
+                    </div>
+                    <h1 class="text-2xl font-display font-extrabold text-white mb-2">Email Validado!</h1>
+                    <p class="text-slate-400 text-sm mb-8">A sua conta PayGo foi verificada e está pronta a ser utilizada com toda a segurança.</p>
+                    
+                    <div class="bg-slate-900/50 rounded-xl p-4 border border-white/5 mb-6">
+                        <p class="text-xs font-bold text-slate-300 uppercase tracking-widest mb-2"><i data-lucide="loader-2" class="w-4 h-4 inline animate-spin mr-1"></i> A Redirecionar</p>
+                        <p class="text-xs text-slate-500">Será reencaminhado para o portal de acesso em <span id="countdownVerify" class="font-bold text-white">4</span> segundos...</p>
+                    </div>
+                    
+                    <a href="login.html" class="inline-block text-sm font-bold text-brand-400 hover:text-brand-300 transition-colors">
+                        Ir para o Login agora
+                    </a>
+                </div>
+
+                <div id="resetFormState" class="hidden animate-fade-in">
+                    <div class="text-center mb-8">
+                        <div class="w-16 h-16 mx-auto bg-brand-500/20 border border-brand-500/50 rounded-2xl flex items-center justify-center mb-4">
+                            <i data-lucide="key" class="w-8 h-8 text-brand-400"></i>
+                        </div>
+                        <h1 class="text-2xl font-display font-extrabold text-white mb-2">Criar Nova Senha</h1>
+                        <p class="text-slate-400 text-sm">Link validado para a conta <strong id="resetEmailDisplay" class="text-white">...</strong></p>
+                    </div>
+
+                    <form id="resetForm" class="space-y-5">
+                        <div class="relative">
+                            <div class="input-field rounded-xl flex items-center px-4 py-1">
+                                <i data-lucide="lock" class="w-5 h-5 text-slate-400 shrink-0"></i>
+                                <input type="password" id="newPassword" required minlength="6" placeholder="Nova Palavra-passe" class="w-full bg-transparent border-none text-white py-3 px-3 outline-none focus:ring-0 text-sm">
+                                <button type="button" onclick="togglePwd('newPassword')" class="text-slate-400 hover:text-white p-2">
+                                    <i data-lucide="eye" id="icon-newPassword" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                            <div class="w-full bg-slate-800 h-1 mt-2 rounded-full overflow-hidden">
+                                <div id="pwdStrength" class="strength-meter"></div>
+                            </div>
+                        </div>
+
+                        <div class="relative">
+                            <div class="input-field rounded-xl flex items-center px-4 py-1">
+                                <i data-lucide="shield" class="w-5 h-5 text-slate-400 shrink-0"></i>
+                                <input type="password" id="confirmPassword" required minlength="6" placeholder="Confirmar Palavra-passe" class="w-full bg-transparent border-none text-white py-3 px-3 outline-none focus:ring-0 text-sm">
+                                <button type="button" onclick="togglePwd('confirmPassword')" class="text-slate-400 hover:text-white p-2">
+                                    <i data-lucide="eye" id="icon-confirmPassword" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <button type="submit" id="btnSubmitReset" class="btn-premium w-full bg-brand-600 hover:bg-brand-500 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-brand-600/20 mt-6">
+                            <span id="btnTextReset">Gravar Nova Senha</span>
+                            <i data-lucide="arrow-right" id="btnIconReset" class="w-4 h-4"></i>
+                        </button>
+                    </form>
+                </div>
+
+                <div id="successResetState" class="hidden animate-fade-in text-center">
+                    <div class="w-24 h-24 mx-auto bg-success-500/20 border border-success-500/50 rounded-full flex items-center justify-center mb-6 animate-pulse-glow">
+                        <i data-lucide="check-square" class="w-12 h-12 text-success-400"></i>
+                    </div>
+                    <h1 class="text-2xl font-display font-extrabold text-white mb-2">Senha Atualizada!</h1>
+                    <p class="text-slate-400 text-sm mb-8">A sua conta está segura. Já pode aceder ao portal com a nova credencial.</p>
+                    
+                    <div class="bg-slate-900/50 rounded-xl p-4 border border-white/5 mb-6">
+                        <p class="text-xs font-bold text-slate-300 uppercase tracking-widest mb-2"><i data-lucide="loader-2" class="w-4 h-4 inline animate-spin mr-1"></i> A Redirecionar</p>
+                        <p class="text-xs text-slate-500">Será reencaminhado para o portal de acesso em <span id="countdownReset" class="font-bold text-white">4</span> segundos...</p>
+                    </div>
+                    
+                    <a href="login.html" class="inline-block text-sm font-bold text-brand-400 hover:text-brand-300 transition-colors">
+                        Fazer Login agora
+                    </a>
+                </div>
+
+                <div id="errorState" class="hidden animate-fade-in text-center">
+                    <div class="w-24 h-24 mx-auto bg-danger-500/20 border border-danger-500/50 rounded-full flex items-center justify-center mb-6">
+                        <i data-lucide="shield-alert" class="w-12 h-12 text-danger-400"></i>
+                    </div>
+                    <h1 class="text-2xl font-display font-extrabold text-white mb-2">Falha na Autenticação</h1>
+                    <p id="errorMsg" class="text-slate-400 text-sm mb-8">Este link de segurança expirou, é inválido ou já foi utilizado anteriormente.</p>
+                    
+                    <a href="login.html" class="block w-full bg-slate-800 hover:bg-slate-700 text-white py-4 border border-slate-700 rounded-xl font-bold transition-all shadow-lg">
+                        Voltar ao Menu Principal
+                    </a>
+                </div>
+
+            </div>
+
+            <div class="mt-8 text-center">
+                <div class="inline-flex items-center gap-2 opacity-50">
+                    <i data-lucide="lock" class="w-4 h-4 text-white"></i>
+                    <span class="text-xs font-bold text-white tracking-widest uppercase">PayGo Security Engine Layer</span>
+                </div>
             </div>
             
-            <form id="reset-form" class="space-y-5" novalidate>
-                <!-- New Password -->
-                <div>
-                    <label for="new-password" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Nova Senha</label>
-                    <div class="relative input-field rounded-xl border border-slate-200 bg-white">
-                        <input 
-                            type="password" 
-                            id="new-password" 
-                            name="new-password"
-                            required 
-                            minlength="8"
-                            pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$"
-                            placeholder="••••••••" 
-                            autocomplete="new-password"
-                            class="w-full px-4 py-3.5 pr-12 bg-transparent outline-none rounded-xl text-slate-900 placeholder-slate-400"
-                            oninput="window.validatePassword()"
-                            aria-describedby="password-requirements"
-                        >
-                        <button 
-                            type="button" 
-                            onclick="window.togglePassword('new-password')" 
-                            class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors" 
-                            id="btn-new-password"
-                            aria-label="Mostrar senha"
-                        >
-                            <i data-lucide="eye" class="w-5 h-5"></i>
-                        </button>
-                    </div>
-                    <div class="password-strength mt-3" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Força da senha">
-                        <div class="password-strength-fill" id="strength-bar"></div>
-                    </div>
-                </div>
-                
-                <!-- Confirm Password -->
-                <div>
-                    <label for="confirm-password" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Confirmar Senha</label>
-                    <div class="relative input-field rounded-xl border border-slate-200 bg-white">
-                        <input 
-                            type="password" 
-                            id="confirm-password" 
-                            name="confirm-password"
-                            required 
-                            placeholder="••••••••" 
-                            autocomplete="new-password"
-                            class="w-full px-4 py-3.5 pr-12 bg-transparent outline-none rounded-xl text-slate-900 placeholder-slate-400"
-                            oninput="window.validatePassword()"
-                            aria-describedby="password-match-error"
-                        >
-                        <button 
-                            type="button" 
-                            onclick="window.togglePassword('confirm-password')" 
-                            class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors" 
-                            id="btn-confirm-password"
-                            aria-label="Mostrar senha"
-                        >
-                            <i data-lucide="eye" class="w-5 h-5"></i>
-                        </button>
-                    </div>
-                    <p id="passwordError" class="text-xs text-danger-500 mt-2 font-medium hidden" role="alert">As senhas não coincidem.</p>
-                </div>
-
-                <!-- Password Requirements -->
-                <div class="bg-slate-50 rounded-xl p-4 border border-slate-100" id="password-requirements">
-                    <p class="text-xs font-bold text-slate-700 mb-3 uppercase tracking-wider">Requisitos Obrigatórios</p>
-                    <ul class="space-y-2 text-sm font-medium" role="list">
-                        <li id="req-length" class="req-item flex items-center gap-2">
-                            <div class="icon-box"><i data-lucide="circle" class="w-4 h-4"></i></div> 
-                            <span>Mínimo de 8 caracteres</span>
-                        </li>
-                        <li id="req-upper" class="req-item flex items-center gap-2">
-                            <div class="icon-box"><i data-lucide="circle" class="w-4 h-4"></i></div> 
-                            <span>1 Letra Maiúscula</span>
-                        </li>
-                        <li id="req-number" class="req-item flex items-center gap-2">
-                            <div class="icon-box"><i data-lucide="circle" class="w-4 h-4"></i></div> 
-                            <span>1 Número</span>
-                        </li>
-                        <li id="req-special" class="req-item flex items-center gap-2">
-                            <div class="icon-box"><i data-lucide="circle" class="w-4 h-4"></i></div> 
-                            <span>1 Caractere Especial (@$!%*?&)</span>
-                        </li>
-                    </ul>
-                </div>
-                
-                <!-- Submit Button -->
-                <button 
-                    type="submit" 
-                    id="reset-btn" 
-                    disabled 
-                    class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 focus:ring-4 focus:ring-blue-200"
-                    aria-busy="false"
-                >
-                    <span id="reset-btn-text">Guardar Nova Senha</span>
-                    <span id="reset-btn-spinner" class="hidden" aria-hidden="true">
-                        <i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>
-                    </span>
-                </button>
-            </form>
         </div>
+    </main>
 
-        <!-- Footer -->
-        <div class="mt-8 pt-6 border-t border-slate-200 text-center">
-            <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">PayGo Moçambique</p>
-            <a href="index.html" class="text-xs text-brand-500 hover:text-brand-600 mt-2 inline-block transition" aria-label="Voltar ao início">← Voltar ao início</a>
-        </div>
-    </div>
-
-    <!-- Scripts -->
     <script type="module">
-        // ✅ Import Firebase - URLs corrigidas sem espaços
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, applyActionCode, confirmPasswordReset, checkActionCode } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        // Importações da v10 compatíveis
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, applyActionCode, verifyPasswordResetCode, confirmPasswordReset } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-        // ✅ Firebase Config - SUBSTITUA PELAS SUAS CREDENCIAIS REAIS
+        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
             authDomain: "paygo-14311.firebaseapp.com",
             projectId: "paygo-14311",
             storageBucket: "paygo-14311.firebasestorage.app",
             messagingSenderId: "208360646277",
-            appId: "1:208360646277:web:aecc57cc0077ae48a52bec",
-            measurementId: "G-N9E391HCFL"
+            appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
         };
 
-        // ✅ Configurações do sistema
-        const CONFIG = {
-            LARK_WEBHOOK_URL: 'https://open.larksuite.com/open-apis/bot/v2/hook/6c0179aa-9b0a-4815-8a02-a201f7504ac2',
-            RESEND_API_URL: 'https://api.resend.com/emails', // Para envio de emails via backend
-            REDIRECT_DEFAULT: 'login.html',
-            PASSWORD_MIN_LENGTH: 8
-        };
-
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
 
-        // DOM Elements
-        const urlParams = new URLSearchParams(window.location.search);
-        const mode = urlParams.get('mode');
-        const oobCode = urlParams.get('oobCode');
-        const continueUrl = urlParams.get('continueUrl') || CONFIG.REDIRECT_DEFAULT;
+        lucide.createIcons();
 
-        const statusContainer = document.getElementById('status-container');
-        const resetContainer = document.getElementById('reset-container');
-        const btnSubmit = document.getElementById('reset-btn');
-        let isValidPassword = false;
-
-        // ✅ Initialize Lucide icons
-        if (typeof lucide !== 'undefined') lucide.createIcons();
-
-        // ✅ Toggle Password Visibility - Global function
-        window.togglePassword = function(inputId) {
-            const input = document.getElementById(inputId);
-            const btn = document.getElementById(`btn-${inputId}`);
-            if (!input || !btn) return;
-            
-            const isPassword = input.type === 'password';
-            input.type = isPassword ? 'text' : 'password';
-            
-            // Update icon with proper Lucide re-rendering
-            const iconName = isPassword ? 'eye-off' : 'eye';
-            btn.innerHTML = `<i data-lucide="${iconName}" class="w-5 h-5"></i>`;
-            btn.setAttribute('aria-label', isPassword ? 'Ocultar senha' : 'Mostrar senha');
-            
-            if (typeof lucide !== 'undefined') lucide.createIcons({ root: btn });
+        // Utilitários de UI
+        window.togglePwd = function(id) {
+            const input = document.getElementById(id);
+            const icon = document.getElementById(`icon-${id}`);
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                input.type = 'password';
+                icon.setAttribute('data-lucide', 'eye');
+            }
+            lucide.createIcons();
         };
 
-        // ✅ Password Validation - Global function
-        window.validatePassword = function() {
-            const pass = document.getElementById('new-password')?.value || '';
-            const confirm = document.getElementById('confirm-password')?.value || '';
+        // Força da Senha
+        document.getElementById('newPassword')?.addEventListener('input', function(e) {
+            const val = e.target.value;
+            const meter = document.getElementById('pwdStrength');
+            if (val.length === 0) { meter.className = 'strength-meter'; return; }
             
-            // Check requirements
-            const reqs = {
-                length: pass.length >= CONFIG.PASSWORD_MIN_LENGTH,
-                upper: /[A-Z]/.test(pass),
-                number: /[0-9]/.test(pass),
-                special: /[^A-Za-z0-9]/.test(pass)
-            };
-
-            // Update UI for requirements
-            updateReqUI('req-length', reqs.length);
-            updateReqUI('req-upper', reqs.upper);
-            updateReqUI('req-number', reqs.number);
-            updateReqUI('req-special', reqs.special);
-
-            // Update strength bar
-            const strength = Object.values(reqs).filter(Boolean).length;
-            const bar = document.getElementById('strength-bar');
-            const strengthBar = document.querySelector('.password-strength');
+            let strength = 0;
+            if (val.length >= 6) strength++;
+            if (val.length >= 10) strength++;
+            if (/[A-Z]/.test(val) && /[0-9]/.test(val)) strength++;
             
-            if (bar && strengthBar) {
-                bar.className = 'password-strength-fill ' + 
-                    (strength === 1 ? 'weak' : strength === 2 ? 'fair' : strength === 3 ? 'good' : strength === 4 ? 'strong' : '');
-                strengthBar.setAttribute('aria-valuenow', strength * 25);
-            }
-
-            // Check password match
-            const errorText = document.getElementById('passwordError');
-            const match = confirm.length > 0 && pass === confirm;
-            
-            if (errorText) {
-                errorText.classList.toggle('hidden', match || confirm.length === 0);
-                errorText.setAttribute('aria-hidden', match || confirm.length === 0);
-            }
-
-            // Enable submit button only if all requirements met AND passwords match
-            isValidPassword = reqs.length && reqs.upper && reqs.number && reqs.special && match && pass.length > 0;
-            
-            if (btnSubmit) {
-                btnSubmit.disabled = !isValidPassword;
-                btnSubmit.setAttribute('aria-busy', 'false');
-            }
-        };
-
-        // ✅ Update Requirements UI
-        function updateReqUI(id, isMet) {
-            const el = document.getElementById(id);
-            if (!el) return;
-            
-            el.classList.toggle('met', isMet);
-            const box = el.querySelector('.icon-box');
-            if (box) {
-                const iconName = isMet ? 'check-circle-2' : 'circle';
-                const iconColor = isMet ? 'text-success-500' : 'text-slate-400';
-                box.innerHTML = `<i data-lucide="${iconName}" class="w-4 h-4 ${iconColor}"></i>`;
-                if (typeof lucide !== 'undefined') lucide.createIcons({ root: box });
-            }
-        }
-
-        // ✅ Toast Notification System
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toast-container');
-            if (!container) return;
-            
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            toast.setAttribute('role', 'alert');
-            
-            const icon = type === 'success' ? 'check-circle' : type === 'error' ? 'alert-circle' : 'info';
-            const iconColor = type === 'success' ? 'text-success-400' : type === 'error' ? 'text-danger-400' : 'text-brand-400';
-            
-            toast.innerHTML = `
-                <i data-lucide="${icon}" class="${iconColor} w-5 h-5 flex-shrink-0"></i>
-                <span class="text-sm font-medium text-white">${message}</span>
-            `;
-            container.appendChild(toast);
-            
-            if (typeof lucide !== 'undefined') lucide.createIcons();
-            
-            // Animate in
-            requestAnimationFrame(() => toast.classList.add('show'));
-            
-            // Auto-remove
-            setTimeout(() => { 
-                toast.classList.remove('show'); 
-                setTimeout(() => toast.remove(), 300); 
-            }, type === 'error' ? 6000 : 4000);
-        }
-
-        // ✅ Show Success State
-        function showSuccess(title, description) {
-            const loader = document.getElementById('loader');
-            const icon = document.getElementById('status-icon');
-            const titleEl = document.getElementById('status-title');
-            const descEl = document.getElementById('status-desc');
-            const mainBtn = document.getElementById('main-btn');
-            const btnText = document.getElementById('btn-text');
-            
-            if (loader) loader.classList.add('hidden');
-            
-            if (icon) {
-                icon.innerHTML = '<i data-lucide="check-circle" class="w-16 h-16 text-success-500"></i>';
-                icon.classList.remove('hidden');
-                if (typeof lucide !== 'undefined') lucide.createIcons({ root: icon });
-            }
-            
-            if (titleEl) titleEl.innerText = title;
-            if (descEl) descEl.innerText = description;
-            
-            if (mainBtn) {
-                mainBtn.classList.remove('hidden');
-                if (btnText) btnText.innerText = 'Ir para o Login';
-                mainBtn.onclick = () => {
-                    window.location.href = continueUrl;
-                };
-            }
-        }
-
-        // ✅ Show Error State
-        function showError(title, description) {
-            const loader = document.getElementById('loader');
-            const icon = document.getElementById('status-icon');
-            const titleEl = document.getElementById('status-title');
-            const descEl = document.getElementById('status-desc');
-            const mainBtn = document.getElementById('main-btn');
-            const btnText = document.getElementById('btn-text');
-            
-            if (loader) loader.classList.add('hidden');
-            
-            if (icon) {
-                icon.innerHTML = '<i data-lucide="x-circle" class="w-16 h-16 text-danger-500"></i>';
-                icon.classList.remove('hidden');
-                if (typeof lucide !== 'undefined') lucide.createIcons({ root: icon });
-            }
-            
-            if (titleEl) titleEl.innerText = title;
-            if (descEl) descEl.innerText = description;
-            
-            if (mainBtn) {
-                mainBtn.classList.remove('hidden');
-                if (btnText) btnText.innerText = 'Tentar Novamente';
-                mainBtn.onclick = () => {
-                    window.location.href = 'login.html';
-                };
-            }
-        }
-
-        // ✅ Send Security Event to Lark (for monitoring)
-        async function sendSecurityNotification(eventType, details) {
-            if (!CONFIG.LARK_WEBHOOK_URL) return;
-            
-            try {
-                const payload = {
-                    msg_type: "text",
-                    content: {
-                        text: `🔐 **Evento de Segurança PayGo**\n• Tipo: ${eventType}\n• Email: ${details.email || 'N/A'}\n• Hora: ${new Date().toLocaleString('pt-MZ')}\n• IP: (capturar via backend)`
-                    }
-                };
-                
-                await fetch(CONFIG.LARK_WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-            } catch (error) {
-                console.error('Failed to send Lark notification:', error);
-                // Não falha o fluxo principal se notificação falhar
-            }
-        }
-
-        // ✅ Handle Password Reset Form Submit
-        document.getElementById('reset-form')?.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            // Final validation
-            window.validatePassword();
-            
-            if (!isValidPassword) {
-                showToast("Verifique todos os requisitos da senha.", "error");
-                return;
-            }
-
-            const btn = document.getElementById('reset-btn');
-            const btnText = document.getElementById('reset-btn-text');
-            const btnSpinner = document.getElementById('reset-btn-spinner');
-            const newPassword = document.getElementById('new-password')?.value;
-            const email = urlParams.get('email') || 'usuário'; // Email pode vir da URL ou do Firebase
-
-            // Show loading state
-            if (btn) {
-                btn.disabled = true;
-                btn.setAttribute('aria-busy', 'true');
-            }
-            if (btnText) btnText.classList.add('hidden');
-            if (btnSpinner) btnSpinner.classList.remove('hidden');
-
-            try {
-                // Reset password via Firebase
-                await confirmPasswordReset(auth, oobCode, newPassword);
-                
-                // ✅ Send security notification to Lark
-                await sendSecurityNotification('password_reset_success', { email });
-                
-                // Show success
-                resetContainer.classList.add('hidden');
-                statusContainer.classList.remove('hidden');
-                showSuccess("Senha Guardada!", "A sua nova senha foi configurada com sucesso. Já pode aceder à sua conta PayGo.");
-                showToast("✅ Senha alterada com sucesso!", "success");
-                
-            } catch (error) {
-                console.error('Password reset error:', error.code, error.message);
-                
-                // ✅ Send error notification to Lark
-                await sendSecurityNotification('password_reset_error', { 
-                    email, 
-                    error: error.code 
-                });
-                
-                // Show error to user
-                let message = "Erro ao alterar senha. O link de segurança pode ter expirado.";
-                
-                if (error.code === 'auth/expired-action-code') {
-                    message = "Este link expirou. Solicite um novo email de recuperação.";
-                } else if (error.code === 'auth/invalid-action-code') {
-                    message = "Link inválido. Por favor, solicite um novo email de recuperação.";
-                } else if (error.code === 'auth/weak-password') {
-                    message = "Senha muito fraca. Use pelo menos 8 caracteres com letras, números e símbolos.";
-                }
-                
-                showToast(message, "error");
-                
-                // Restore button state
-                if (btn) {
-                    btn.disabled = false;
-                    btn.setAttribute('aria-busy', 'false');
-                }
-                if (btnText) btnText.classList.remove('hidden');
-                if (btnSpinner) btnSpinner.classList.add('hidden');
-            }
+            meter.className = 'strength-meter';
+            if (strength === 1) meter.classList.add('strength-weak');
+            else if (strength === 2) meter.classList.add('strength-medium');
+            else if (strength === 3) meter.classList.add('strength-strong');
         });
 
-        // ✅ Initialize the security flow based on URL parameters
-        async function init() {
-            // Validate required parameters
-            if (!oobCode) {
-                showError("Link Inválido", "O link de segurança está incompleto ou mal formado. Por favor, solicite um novo.");
-                showToast("❌ Link de segurança inválido", "error");
+        // Toast de Notificação
+        function showToast(msg, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const t = document.createElement('div');
+            const borderColor = type === 'error' ? 'border-red-500' : 'border-brand-500';
+            const iconColor = type === 'error' ? 'text-red-400' : 'text-brand-400';
+            const iconName = type === 'error' ? 'alert-circle' : 'check-circle';
+            
+            t.className = `toast ${borderColor}`;
+            t.innerHTML = `<i data-lucide="${iconName}" class="w-5 h-5 ${iconColor} shrink-0"></i> <span class="text-sm font-semibold">${msg}</span>`;
+            
+            container.appendChild(t);
+            lucide.createIcons({ root: t });
+            requestAnimationFrame(() => t.classList.add('show'));
+            setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 5000);
+        }
+
+        // Função de Contagem Decrescente Centralizada
+        function startCountdown(elementId, redirectUrl) {
+            let count = 4;
+            const countDisplay = document.getElementById(elementId);
+            const interval = setInterval(() => {
+                count--;
+                if(countDisplay) countDisplay.textContent = count;
+                if (count <= 0) {
+                    clearInterval(interval);
+                    window.location.href = redirectUrl;
+                }
+            }, 1000);
+        }
+
+        // === MÁQUINA DE ESTADOS PRINCIPAL ===
+        document.addEventListener('DOMContentLoaded', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const mode = urlParams.get('mode'); // 'verifyEmail' ou 'resetPassword'
+            const actionCode = urlParams.get('oobCode');
+
+            // Mapeamento das caixas
+            const stateLoad = document.getElementById('loadingState');
+            const stateSuccessVerify = document.getElementById('successVerifyState');
+            const stateFormReset = document.getElementById('resetFormState');
+            const stateSuccessReset = document.getElementById('successResetState');
+            const stateError = document.getElementById('errorState');
+            const errorMsg = document.getElementById('errorMsg');
+
+            // UX: Delay natural para simular análise
+            await new Promise(r => setTimeout(r, 1200)); 
+
+            // Se o URL estiver incompleto (alguém acedeu diretamente a seguranca.html)
+            if (!actionCode || !mode) {
+                stateLoad.classList.add('hidden');
+                errorMsg.textContent = "O link acedido está incompleto ou o formato não é reconhecido pelos nossos servidores.";
+                stateError.classList.remove('hidden');
                 return;
             }
 
-            // Handle different action modes
-            switch (mode) {
-                case 'verifyEmail':
-                    statusContainer.querySelector('#status-title').innerText = "Verificar E-mail";
-                    statusContainer.querySelector('#status-desc').innerText = "Confirmando o seu endereço de email...";
-                    
-                    try {
-                        await applyActionCode(auth, oobCode);
-                        
-                        // ✅ Send notification to Lark
-                        await sendSecurityNotification('email_verified', { 
-                            email: auth.currentUser?.email || 'unknown' 
-                        });
-                        
-                        showSuccess("E-mail Verificado!", "A sua conta PayGo foi ativada com sucesso. Obrigado!");
-                        showToast("✅ Email verificado com sucesso!", "success");
-                    } catch (error) {
-                        console.error('Verify email error:', error.code, error.message);
-                        
-                        await sendSecurityNotification('email_verify_error', { 
-                            error: error.code 
-                        });
-                        
-                        let message = "Este link de confirmação já expirou ou já foi utilizado.";
-                        if (error.code === 'auth/expired-action-code') {
-                            message = "Este link expirou. Solicite um novo email de verificação.";
-                        } else if (error.code === 'auth/invalid-action-code') {
-                            message = "Link inválido. Por favor, solicite um novo email de verificação.";
-                        }
-                        
-                        showError("Link Expirado", message);
-                        showToast("❌ " + message, "error");
+            // FLUXO 1: VERIFICAÇÃO DE EMAIL
+            if (mode === 'verifyEmail') {
+                try {
+                    await applyActionCode(auth, actionCode);
+                    stateLoad.classList.add('hidden');
+                    stateSuccessVerify.classList.remove('hidden');
+                    startCountdown('countdownVerify', 'login.html');
+                } catch (error) {
+                    console.error(error);
+                    stateLoad.classList.add('hidden');
+                    if (error.code === 'auth/expired-action-code') {
+                        errorMsg.textContent = "O prazo deste link de verificação expirou. Peça um novo durante o login.";
+                    } else if (error.code === 'auth/invalid-action-code') {
+                        errorMsg.textContent = "Link inválido ou já utilizado. O seu email pode já se encontrar verificado.";
                     }
-                    break;
-                    
-                case 'resetPassword':
-                    statusContainer.querySelector('#status-title').innerText = "Recuperar Senha";
-                    statusContainer.querySelector('#status-desc').innerText = "Preparando a recuperação da sua senha...";
-                    
-                    try {
-                        // Verify the action code is still valid
-                        await checkActionCode(auth, oobCode);
-                        
-                        // Show password reset form
-                        document.getElementById('loader')?.classList.add('hidden');
-                        statusContainer.classList.add('hidden');
-                        resetContainer.classList.remove('hidden');
-                        
-                        // Re-initialize icons for the form
-                        if (typeof lucide !== 'undefined') lucide.createIcons();
-                        
-                    } catch (error) {
-                        console.error('Check action code error:', error.code, error.message);
-                        
-                        await sendSecurityNotification('reset_code_invalid', { 
-                            error: error.code 
-                        });
-                        
-                        let message = "O pedido de recuperação de senha expirou. Por favor, solicite um novo.";
-                        if (error.code === 'auth/expired-action-code') {
-                            message = "Este link expirou. Solicite um novo email de recuperação.";
-                        } else if (error.code === 'auth/invalid-action-code') {
-                            message = "Link inválido. Por favor, solicite um novo email de recuperação.";
-                        }
-                        
-                        showError("Link Inválido", message);
-                        showToast("❌ " + message, "error");
-                    }
-                    break;
-                    
-                case 'recoverEmail':
-                    showError("Recuperação de Email", "Esta funcionalidade não está disponível no momento. Contacte o suporte.", 'login.html');
-                    break;
-                    
-                default:
-                    showError("Ação Inválida", "O modo de autenticação não foi reconhecido. Por favor, solicite um novo link.", 'login.html');
-            }
-        }
-
-        // ✅ Event Listeners
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize icons
-            if (typeof lucide !== 'undefined') lucide.createIcons();
+                    stateError.classList.remove('hidden');
+                }
+            } 
             
-            // Keyboard support: Close modal on Escape
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') {
-                    window.location.href = continueUrl;
+            // FLUXO 2: RECUPERAÇÃO DE SENHA
+            else if (mode === 'resetPassword') {
+                try {
+                    // 1. Verifica no servidor se o link de alteração de senha ainda é válido (antes de mostrar o form)
+                    const email = await verifyPasswordResetCode(auth, actionCode);
+                    
+                    // 2. É válido! Mostra o formulário
+                    document.getElementById('resetEmailDisplay').textContent = email;
+                    stateLoad.classList.add('hidden');
+                    stateFormReset.classList.remove('hidden');
+
+                } catch (error) {
+                    console.error(error);
+                    stateLoad.classList.add('hidden');
+                    if (error.code === 'auth/expired-action-code') {
+                        errorMsg.textContent = "O prazo deste link de recuperação expirou. Por favor, peça uma nova recuperação de senha na página de login.";
+                    } else if (error.code === 'auth/invalid-action-code') {
+                        errorMsg.textContent = "Este link é inválido. A senha pode já ter sido alterada através dele.";
+                    }
+                    stateError.classList.remove('hidden');
+                }
+            } 
+            // Modo não suportado
+            else {
+                stateLoad.classList.add('hidden');
+                errorMsg.textContent = "Operação de segurança não suportada no momento.";
+                stateError.classList.remove('hidden');
+            }
+            
+            // Lógica de Submissão do Formulário de Redefinição
+            document.getElementById('resetForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const pwd = document.getElementById('newPassword').value;
+                const confirmPwd = document.getElementById('confirmPassword').value;
+                
+                if(pwd !== confirmPwd) {
+                    showToast('As senhas introduzidas não coincidem.', 'error');
+                    return;
+                }
+                
+                if(pwd.length < 6) {
+                    showToast('A senha precisa ter pelo menos 6 caracteres.', 'error');
+                    return;
+                }
+
+                const btn = document.getElementById('btnSubmitReset');
+                const btnText = document.getElementById('btnTextReset');
+                const btnIcon = document.getElementById('btnIconReset');
+                
+                btn.disabled = true;
+                btnText.textContent = "A cifrar nova senha...";
+                btnIcon.setAttribute('data-lucide', 'loader-2');
+                btnIcon.classList.add('animate-spin');
+                lucide.createIcons({root: btn});
+
+                try {
+                    // Gravar a nova senha
+                    await confirmPasswordReset(auth, actionCode, pwd);
+                    
+                    // Mostrar painel de Sucesso Reset
+                    stateFormReset.classList.add('hidden');
+                    stateSuccessReset.classList.remove('hidden');
+                    startCountdown('countdownReset', 'login.html');
+
+                } catch(error) {
+                    console.error(error);
+                    showToast('Ocorreu um erro ao gravar a senha. O link pode ter expirado.', 'error');
+                    btn.disabled = false;
+                    btnText.textContent = "Tentar Novamente";
+                    btnIcon.setAttribute('data-lucide', 'arrow-right');
+                    btnIcon.classList.remove('animate-spin');
+                    lucide.createIcons({root: btn});
                 }
             });
-            
-            // Initialize the security flow
-            init();
         });
-
-        // ✅ Cleanup on page unload
-        window.addEventListener('beforeunload', function() {
-            // Clear any pending operations
-        });
-
-        // ✅ Expose functions for testing (optional, remove in production)
-        window.__test = {
-            validatePassword: window.validatePassword,
-            showToast: showToast,
-            CONFIG: CONFIG
-        };
     </script>
 </body>
 </html>
