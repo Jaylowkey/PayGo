@@ -28,7 +28,6 @@
     .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
     .glass-nav { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.08); }
     .glass-card { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.3s ease; }
-    .glass-card:hover { border-color: rgba(59, 130, 246, 0.3); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5); }
     .sidebar-link.active { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-left: 3px solid #3b82f6; font-weight: 700; }
     
     .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 8px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; }
@@ -240,7 +239,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, doc, updateDoc, onSnapshot, query, orderBy, getDoc, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, doc, updateDoc, onSnapshot, query, orderBy, getDoc, serverTimestamp, writeBatch, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
@@ -281,7 +280,7 @@
       }
     });
 
-    // Função Unificada para Carregar os Icons
+    // Função Unificada para Carregar os Icons de Forma Segura
     function renderIcons(container = document.body) {
       if (typeof lucide !== 'undefined') {
         lucide.createIcons({ root: container });
@@ -323,7 +322,6 @@
     async function sendNotificationEmail(order, actionType) {
       try {
         let subject = "";
-        
         if (actionType === 'paid') subject = `✅ Pagamento Confirmado - Pedido #${order.orderId}`;
         else if (actionType === 'completed') subject = `🎉 Pedido Concluído - #${order.orderId}`;
         else return; 
@@ -370,6 +368,9 @@
             isPaid: data.isPaid || false,
             paymentMethod: data.paymentMethod || 'mpesa',
             detail: data.detail || 'N/A',
+            referredBy: data.referredBy || null,
+            userId: data.userId || null,
+            commissionProcessed: data.commissionProcessed || false,
             createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : new Date())
           };
         });
@@ -434,7 +435,7 @@
         }[order.status] || `<span class="status-badge bg-slate-800">${order.status}</span>`;
 
         htmlContent += `
-          <tr class="hover:bg-slate-800/40 transition-colors group border-b border-white/5 last:border-0">
+          <tr class="hover:bg-slate-800/40 transition-colors group border-b border-white/5 last:border-0 cursor-pointer" onclick="window.openModal('${order.id}')">
             <td class="px-6 py-4">
               <div class="text-sm font-mono font-bold text-brand-400">${order.orderId}</div>
               <div class="text-xs text-slate-500 mt-0.5"><i data-lucide="clock" class="w-3 h-3 inline"></i> ${timeStr}</div>
@@ -452,8 +453,8 @@
               </div>
             </td>
             <td class="px-6 py-4 text-right">
-              <button onclick="window.openModal('${order.id}')" class="action-btn activate !bg-brand-500/10 !text-brand-400 !border-brand-500/30 hover:!bg-brand-600 hover:!text-white shadow-lg">
-                Gerir Ficha
+              <button class="w-8 h-8 inline-flex items-center justify-center rounded-lg bg-slate-800 text-slate-400 group-hover:bg-brand-600 group-hover:text-white transition-all shadow-sm">
+                  <i data-lucide="chevron-right" class="w-4 h-4"></i>
               </button>
             </td>
           </tr>
@@ -517,12 +518,14 @@
       
       document.getElementById('statusSelect').value = order.status;
       const modal = document.getElementById('orderModal');
+      const dialog = document.getElementById('modalDialog');
+      
+      // Garante que o overflow seja tratado com a abertura
       modal.classList.remove('hidden');
       modal.classList.add('flex');
       document.body.style.overflow = 'hidden';
       
       requestAnimationFrame(() => {
-        const dialog = document.getElementById('modalDialog');
         if(dialog) {
           dialog.classList.remove('scale-95', 'opacity-0');
           dialog.classList.add('scale-100', 'opacity-100');
@@ -546,7 +549,7 @@
       }, 200);
     };
 
-    // AÇÕES DE DADOS GERAIS
+    // AÇÕES DE DADOS GERAIS & COMISSÃO AFILIADOS
     document.getElementById('updateStatusBtn').addEventListener('click', async () => {
       if (!currentOrderId) return;
       const newStatus = document.getElementById('statusSelect').value;
@@ -559,8 +562,16 @@
       
       try {
         await updateDoc(doc(db, "orders", currentOrderId), { status: newStatus, updatedAt: serverTimestamp() });
+        
+        // Verifica sistema de afiliados se foi concluído e tem referido, não pago ainda a comissão
+        if (newStatus === 'completed' && order.referredBy && !order.commissionProcessed) {
+            await processAffiliateCPA(order);
+            await updateDoc(doc(db, "orders", currentOrderId), { commissionProcessed: true });
+        }
+        
         showToast('Nova etapa logística gravada na Cloud.', 'success');
         
+        // Automação: Envia email caso tenha acabado de ser dado como Concluído
         if (newStatus === 'completed' && oldStatus !== 'completed') {
           await sendNotificationEmail(order, 'completed');
         }
@@ -572,6 +583,33 @@
       }
     });
 
+    async function processAffiliateCPA(order) {
+        try {
+            // Localiza afiliado
+            const q = query(collection(db, "users"), where("affiliateCode", "==", order.referredBy), where("role", "==", "affiliate"));
+            const snap = await getDocs(q);
+            if(snap.empty) return;
+            
+            const refDoc = snap.docs[0];
+            const refData = refDoc.data();
+
+            // Verifica se cliente já tem encomenda concluída
+            const qClient = query(collection(db, "orders"), where("email", "==", order.email), where("status", "==", "completed"));
+            const snapClient = await getDocs(qClient);
+            if(snapClient.size > 1) return; // Não é a 1a vez
+
+            const commissionValue = order.tax * (refData.approvedReferrals >= 10 ? 0.05 : 0.03);
+
+            await updateDoc(doc(db, "users", refDoc.id), {
+                affiliateEarnings: increment(commissionValue),
+                approvedReferrals: increment(1)
+            });
+            console.log(`Comissão de ${commissionValue} creditada!`);
+        } catch(e) {
+            console.error("Falha ao distribuir comissões", e);
+        }
+    }
+
     window.togglePaymentStatus = async (orderId, isCurrentlyPaid) => {
       const newStatus = !isCurrentlyPaid;
       const order = orders.find(o => o.id === orderId);
@@ -580,6 +618,7 @@
         await updateDoc(doc(db, "orders", orderId), { isPaid: newStatus });
         showToast(newStatus ? 'Validado como PAGO!' : 'Cancelada Assinatura de Pagamento.', 'success');
         
+        // Automação de Email de Pagamento Confirmado
         if (newStatus === true) {
           showToast('Servidor de Emails ativado (Envio Silencioso).', 'info');
           await sendNotificationEmail(order, 'paid');
