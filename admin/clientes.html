@@ -1,692 +1,614 @@
 <!DOCTYPE html>
-<html lang="pt-MZ">
+<html lang="pt-MZ" class="scroll-smooth">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Clientes | PayGo Admin</title>
+  <title>Gestão de Clientes | PayGo Admin</title>
+  <meta name="theme-color" content="#0f172a">
   <meta name="robots" content="noindex, nofollow">
-  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  
   <script>
     tailwind.config = {
       theme: {
         extend: {
-          colors: {
-            brand: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 900: '#1e3a8a', 950: '#0f172a' },
-            accent: { 400: '#22d3ee', 500: '#06b6d4' },
-            success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' }
-          }
+          fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'], display: ['"Outfit"', 'sans-serif'], mono: ['"Fira Code"', 'monospace'] },
+          colors: { brand: { 50: '#eff6ff', 500: '#3b82f6', 600: '#2563eb', 950: '#0f172a' }, success: { 400: '#4ade80', 500: '#22c55e' }, warning: { 400: '#fbbf24', 500: '#f59e0b' }, danger: { 400: '#f87171', 500: '#ef4444' } }
         }
       }
-    }
+    };
   </script>
+  
   <style>
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-    /* Sidebar Active Link */
-    .sidebar-link.active { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-right: 3px solid #3b82f6; }
+    body { background-color: #0f172a; color: #f8fafc; }
+    ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
+    .glass-nav { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .glass-card { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.3s ease; }
+    .sidebar-link.active { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-left: 3px solid #3b82f6; font-weight: 700; }
     
-    /* Loader Overlay */
-    #pageLoader { transition: opacity 0.5s ease, visibility 0.5s ease; }
-    .loader-spinner { border-top-color: #3b82f6; animation: spinner 1s linear infinite; }
-    @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 8px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; }
+    .status-badge.active { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.2); }
+    .status-badge.pending { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.2); }
+    .status-badge.blocked { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); }
+    .status-badge.banned { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
+    
+    .action-btn { padding: 6px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; transition: all 0.2s ease; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
+    .action-btn.delete { background: rgba(239, 68, 68, 0.1); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.2); }
+    .action-btn.delete:hover { background: #ef4444; color: white; box-shadow: 0 0 15px rgba(239,68,68,0.4); }
+    .action-btn.block { background: rgba(245, 158, 11, 0.1); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.2); }
+    .action-btn.block:hover { background: #f59e0b; color: white; }
+    .action-btn.activate { background: rgba(34, 197, 94, 0.1); color: #86efac; border: 1px solid rgba(34, 197, 94, 0.2); }
+    .action-btn.activate:hover { background: #22c55e; color: white; }
 
-    /* Skeleton Loading */
-    .skeleton { background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: skeleton-loading 1.5s infinite; color: transparent !important; border-radius: 4px; }
-    @keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    .online-ping { position: relative; display: flex; width: 10px; height: 10px; }
+    .online-ping .ping-bg { position: absolute; width: 100%; height: 100%; border-radius: 50%; background-color: #22c55e; opacity: 0.75; animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite; }
+    .online-ping .ping-core { position: relative; width: 8px; height: 8px; border-radius: 50%; background-color: #22c55e; margin: auto; }
+
+    #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+    .toast { pointer-events: auto; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 12px; display: flex; gap: 12px; transform: translateX(120%); transition: transform 0.4s ease; opacity: 0; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .toast.show { transform: translateX(0); opacity: 1; }
+    .toast.error { border-left-color: #ef4444; }
+    .toast.success { border-left-color: #22c55e; }
+    
+    .skeleton { background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 0.25rem; }
+    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 
     /* Modal Animation */
     .modal { display: none; position: fixed; inset: 0; z-index: 1000; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; }
     .modal.active { display: flex; opacity: 1; }
-    .modal-overlay { position: absolute; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); }
-    .modal-content { position: relative; background: white; border-radius: 24px; padding: 0; max-width: 700px; width: 95%; max-height: 90vh; overflow-y: auto; transform: scale(0.95); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
+    .modal-overlay { position: absolute; inset: 0; background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(4px); }
+    .modal-content { position: relative; background: #0f172a; border-radius: 24px; padding: 0; max-width: 800px; width: 95%; max-height: 90vh; overflow-y: auto; transform: scale(0.95); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); border: 1px solid rgba(255,255,255,0.1); }
     .modal.active .modal-content { transform: scale(1); }
-
-    /* Table Hover */
-    .client-row:hover { background-color: #f8fafc; }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans antialiased overflow-x-hidden">
+<body class="selection:bg-brand-500 selection:text-white">
 
-  <div id="pageLoader" class="fixed inset-0 bg-slate-900 z-[100] flex flex-col items-center justify-center">
-    <div class="w-12 h-12 border-4 border-slate-700 border-t-brand-500 rounded-full loader-spinner mb-4"></div>
-    <h2 class="text-white text-xl font-bold tracking-wide">PayGo Admin</h2>
-    <p class="text-slate-400 text-sm mt-2">Carregando base de clientes...</p>
+  <div id="sysLoader" class="fixed inset-0 bg-slate-950 z-[200] flex flex-col items-center justify-center transition-opacity duration-500">
+    <div class="w-16 h-16 border-4 border-slate-800 border-t-brand-500 rounded-full animate-spin mb-4"></div>
+    <h2 class="text-white text-xl font-bold font-display">Sincronizando Base de Dados</h2>
   </div>
 
-  <div class="md:hidden fixed top-0 left-0 w-full bg-slate-900 text-white p-4 flex items-center justify-between z-40 shadow-md">
-    <div class="flex items-center gap-2">
-      <div class="w-8 h-8 bg-gradient-to-tr from-brand-500 to-accent-500 rounded-lg flex items-center justify-center">
-        <i data-lucide="zap" class="w-4 h-4 text-white"></i>
-      </div>
-      <span class="font-bold text-lg">PayGo Admin</span>
-    </div>
-    <button id="mobileMenuBtn" class="p-2 text-slate-300 hover:text-white focus:outline-none">
-      <i data-lucide="menu" class="w-6 h-6"></i>
-    </button>
-  </div>
+  <div class="fixed inset-0 bg-grid opacity-20 pointer-events-none z-0"></div>
+  <div class="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[500px] bg-brand-600/10 rounded-full mix-blend-screen blur-[120px] pointer-events-none z-0"></div>
+  <div id="toastContainer"></div>
 
-  <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-40 hidden md:hidden transition-opacity opacity-0"></div>
-
-  <aside id="sidebar" class="fixed left-0 top-0 h-full w-64 bg-slate-900 text-white p-6 z-50 flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out shadow-2xl md:shadow-none">
-    <div class="flex items-center justify-between mb-8 pb-6 border-b border-white/10 mt-2 md:mt-0">
+  <header class="fixed w-full z-50 glass-nav">
+    <div class="container mx-auto px-6 h-20 flex justify-between items-center">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 bg-gradient-to-tr from-brand-500 to-accent-500 rounded-xl flex items-center justify-center shadow-lg shadow-brand-500/20">
-          <i data-lucide="zap" class="w-6 h-6 fill-current text-white"></i>
-        </div>
-        <span class="text-xl font-bold tracking-tight">PayGo</span>
-      </div>
-      <button id="closeSidebarBtn" class="md:hidden p-1 text-slate-400 hover:text-white">
-        <i data-lucide="x" class="w-5 h-5"></i>
-      </button>
-    </div>
-
-    <nav class="flex-1 space-y-2 overflow-y-auto pr-2">
-      <a href="dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all font-medium">
-        <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
-      </a>
-      <a href="relatorios.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all font-medium">
-        <i data-lucide="bar-chart-3" class="w-5 h-5"></i> Relatórios
-      </a>
-      <a href="clientes.html" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-semibold">
-        <i data-lucide="users" class="w-5 h-5"></i> Clientes
-      </a>
-      <a href="configuracoes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all font-medium">
-        <i data-lucide="settings" class="w-5 h-5"></i> Configurações
-      </a>
-    </nav>
-
-    <div class="pt-6 border-t border-white/10 mt-auto">
-      <div class="flex items-center gap-3 px-2 py-3 mb-3 bg-white/5 rounded-xl">
-        <div class="w-9 h-9 rounded-full bg-brand-600 flex items-center justify-center text-sm font-bold text-white shadow-inner" id="userInitial">A</div>
-        <div class="flex-1 min-w-0">
-          <p class="text-sm font-semibold text-white truncate" id="userEmail">admin@paygo.co.mz</p>
-          <p class="text-[10px] text-brand-300 uppercase tracking-widest font-bold">Administrador</p>
+        <button id="mobileMenuBtn" class="lg:hidden text-slate-400 hover:text-white p-2 -ml-2"><i data-lucide="menu" class="w-6 h-6"></i></button>
+        <div class="bg-gradient-to-tr from-brand-500 to-brand-400 p-2.5 rounded-xl text-white shadow-lg"><i data-lucide="zap" class="w-5 h-5"></i></div>
+        <div class="hidden sm:block">
+            <span class="text-2xl font-display font-bold text-white">PayGo</span>
+            <span class="text-[10px] text-brand-400 ml-2 px-2 py-0.5 bg-brand-500/20 border border-brand-500/30 rounded-full font-black uppercase tracking-widest">Database</span>
         </div>
       </div>
-      <button id="logoutBtn" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-slate-800 hover:bg-red-500/10 text-slate-300 hover:text-red-400 border border-slate-700 hover:border-red-500/30 rounded-xl transition-all text-sm font-medium">
-        <i data-lucide="log-out" class="w-4 h-4"></i> Encerrar Sessão
-      </button>
+      <div class="flex items-center gap-4">
+        <div class="text-right hidden sm:block">
+            <p class="text-sm font-bold text-white" id="adminName">A carregar...</p>
+        </div>
+        <button onclick="window.logout()" class="bg-slate-800 hover:bg-danger-500/20 text-slate-400 hover:text-danger-400 rounded-xl p-2.5 transition-colors"><i data-lucide="power" class="w-5 h-5"></i></button>
+      </div>
     </div>
-  </aside>
+  </header>
 
-  <main class="md:ml-64 p-4 md:p-8 pt-24 md:pt-8 min-h-screen">
+  <div id="sidebarOverlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-40 hidden lg:hidden opacity-0 transition-opacity"></div>
+
+  <div class="pt-28 pb-10 relative z-10 container mx-auto px-6 grid lg:grid-cols-4 gap-6">
     
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-      <div>
-        <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
-          Lista de Clientes
-        </h1>
-        <p class="text-slate-500 mt-1 text-sm">Gestão de perfil, contactos e histórico de transações.</p>
-      </div>
-      
-      <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-        <div class="relative w-full sm:w-64">
-          <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
-          <input type="text" id="clientSearch" placeholder="Buscar por nome, email ou nº..." class="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 transition text-sm">
+    <div id="sidebar" class="lg:col-span-1 fixed lg:static top-0 left-0 h-full lg:h-auto w-72 lg:w-auto bg-slate-900 lg:bg-transparent z-50 lg:z-auto p-6 lg:p-0 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 border-r border-slate-800 lg:border-none">
+      <div class="glass-card rounded-2xl p-0 lg:p-6 sticky top-28 border-none lg:border-solid bg-transparent lg:bg-[rgba(30,41,59,0.4)]">
+        <div class="flex justify-between items-center mb-6 lg:hidden">
+            <span class="text-xl font-display font-bold text-white">PayGo Admin</span>
+            <button id="closeSidebarBtn" class="text-slate-400 hover:text-white p-2"><i data-lucide="x" class="w-6 h-6"></i></button>
         </div>
-        <button onclick="refreshClients()" class="flex-1 sm:flex-none px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-bold transition flex items-center justify-center gap-2 shadow-md shadow-brand-500/20 active:scale-95">
-          <i data-lucide="refresh-cw" class="w-4 h-4"></i> Atualizar
+
+        <nav class="space-y-2">
+          <a href="dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
+            <i data-lucide="layout-dashboard" class="w-5 h-5"></i> <span class="text-sm font-medium">Visão Geral</span>
+          </a>
+          <a href="pedidos.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
+            <i data-lucide="shopping-bag" class="w-5 h-5"></i> <span class="text-sm font-medium">Pedidos</span>
+          </a>
+          <a href="clientes.html" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-xl text-white">
+            <i data-lucide="users" class="w-5 h-5"></i> <span class="text-sm font-medium">Base de Clientes</span>
+          </a>
+          <a href="afiliados.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
+            <i data-lucide="network" class="w-5 h-5"></i> <span class="text-sm font-medium">Afiliados</span>
+          </a>
+          <a href="gerar-fatura.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
+            <i data-lucide="file-check-2" class="w-5 h-5 text-brand-400"></i> <span class="text-sm font-medium">Gerar Faturas</span>
+          </a>
+          <div class="pt-4 mt-4 border-t border-slate-700/50"></div>
+          <a href="admin.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
+            <i data-lucide="shield" class="w-5 h-5"></i> <span class="text-sm font-medium">Gestão de Equipa</span>
+          </a>
+          <a href="configuracoes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
+            <i data-lucide="settings" class="w-5 h-5"></i> <span class="text-sm font-medium">Configurações</span>
+          </a>
+        </nav>
+      </div>
+    </div>
+
+    <div class="lg:col-span-3 space-y-6">
+      
+      <header class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
+        <div>
+          <h1 class="text-3xl font-display font-extrabold text-white tracking-tight">Gestão de Clientes</h1>
+          <p class="text-slate-400 text-sm mt-1">Monitorize quem está online, o histórico financeiro e gira os acessos.</p>
+        </div>
+      </header>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 animate-slide-up">
+        <div class="glass-card p-6 rounded-2xl relative overflow-hidden group">
+          <i data-lucide="users" class="w-6 h-6 text-brand-400 mb-3"></i>
+          <p class="text-2xl font-display font-bold text-white" id="kpiTotal"><span class="skeleton block w-12 h-8"></span></p>
+          <p class="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-wider">Total Registos</p>
+        </div>
+        <div class="glass-card p-6 rounded-2xl relative overflow-hidden group border-success-500/30 bg-success-900/10">
+          <div class="flex items-center gap-2 mb-3">
+            <i data-lucide="wifi" class="w-6 h-6 text-success-400"></i>
+            <div class="online-ping"><span class="ping-bg"></span><span class="ping-core"></span></div>
+          </div>
+          <p class="text-2xl font-display font-bold text-success-400" id="kpiOnline"><span class="skeleton block w-12 h-8"></span></p>
+          <p class="text-[10px] text-success-300 mt-1 uppercase font-bold tracking-wider">Online Agora</p>
+        </div>
+        <div class="glass-card p-6 rounded-2xl relative overflow-hidden group">
+          <i data-lucide="user-check" class="w-6 h-6 text-slate-400 mb-3"></i>
+          <p class="text-2xl font-display font-bold text-white" id="kpiActive"><span class="skeleton block w-12 h-8"></span></p>
+          <p class="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-wider">Contas Ativas</p>
+        </div>
+        <div class="glass-card p-6 rounded-2xl relative overflow-hidden group border-danger-500/20 bg-danger-900/10">
+          <i data-lucide="user-minus" class="w-6 h-6 text-danger-400 mb-3"></i>
+          <p class="text-2xl font-display font-bold text-white" id="kpiBanned"><span class="skeleton block w-12 h-8"></span></p>
+          <p class="text-[10px] text-danger-300 mt-1 uppercase font-bold tracking-wider">Banidos/Bloq.</p>
+        </div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row gap-3 w-full animate-slide-up" style="animation-delay: 100ms;">
+        <div class="relative flex-1">
+          <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
+          <input type="text" id="searchInput" placeholder="Pesquisar por nome, email ou telemóvel..." class="w-full pl-12 pr-4 py-3.5 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-brand-500 transition-colors shadow-inner" oninput="window.filterTable()">
+        </div>
+        <select id="statusFilter" class="w-full sm:w-48 bg-slate-900 border border-slate-700 rounded-xl px-4 py-3.5 text-sm font-bold text-slate-300 focus:outline-none focus:border-brand-500 cursor-pointer" onchange="window.filterTable()">
+          <option value="all">Todos os Status</option>
+          <option value="online">🟢 Apenas Online</option>
+          <option value="active">Ativos</option>
+          <option value="banned">Banidos/Bloqueados</option>
+        </select>
+        <button onclick="window.loadUsersDatabase()" class="px-5 py-3.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-sm font-bold transition flex items-center justify-center gap-2 border border-slate-700 shadow-sm active:scale-95">
+          <i data-lucide="refresh-cw" class="w-4 h-4"></i>
         </button>
       </div>
-    </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-        <div class="flex items-center justify-between mb-4">
-          <span class="text-sm font-bold text-slate-500 uppercase tracking-wider">Total de Clientes</span>
-          <div class="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center">
-            <i data-lucide="users" class="w-5 h-5 text-brand-600"></i>
-          </div>
-        </div>
-        <p class="text-3xl font-extrabold text-slate-900 skeleton inline-block min-w-[50px]" id="totalClients">0</p>
-        <p class="text-sm text-slate-500 mt-2">Cadastros únicos efetuados</p>
-      </div>
-
-      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-        <div class="flex items-center justify-between mb-4">
-          <span class="text-sm font-bold text-slate-500 uppercase tracking-wider">Cliente Mais Ativo</span>
-          <div class="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
-            <i data-lucide="award" class="w-5 h-5 text-amber-600"></i>
-          </div>
-        </div>
-        <p class="text-lg font-bold text-brand-600 mt-2 truncate skeleton min-w-[100px]" id="topClient">-</p>
-        <p class="text-sm text-slate-500 mt-2">Com maior volume de pedidos</p>
-      </div>
-
-      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-        <div class="flex items-center justify-between mb-4">
-          <span class="text-sm font-bold text-slate-500 uppercase tracking-wider">Maior Gasto</span>
-          <div class="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center">
-            <i data-lucide="banknote" class="w-5 h-5 text-green-600"></i>
-          </div>
-        </div>
-        <p class="text-2xl font-extrabold text-green-600 mt-2 skeleton min-w-[120px]" id="topSpend">0 MT</p>
-        <p class="text-sm text-slate-500 mt-2">Valor acumulado por um cliente</p>
-      </div>
-    </div>
-
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-      <div class="p-5 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
-        <h2 class="text-lg font-bold text-slate-900">Diretório de Clientes</h2>
-        <span class="text-sm font-medium text-brand-600 bg-brand-50 px-3 py-1 rounded-full" id="clientsCount">0 clientes</span>
-      </div>
-      
-      <div id="loadingClients" class="p-16 text-center text-slate-500">
-        <i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto mb-4 text-brand-600"></i>
-        <p class="font-medium">Sincronizando clientes...</p>
-      </div>
-      
-      <div id="emptyClients" class="p-16 text-center text-slate-500 hidden">
-        <i data-lucide="user-x" class="w-12 h-12 mx-auto mb-4 text-slate-300"></i>
-        <p class="font-bold text-lg text-slate-700">Nenhum cliente encontrado</p>
-        <p class="text-sm mt-1">Quando efetuarem compras, os clientes aparecerão aqui.</p>
-      </div>
-      
-      <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-          <thead>
-            <tr class="bg-white border-b border-slate-200">
-              <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Cliente / Contacto</th>
-              <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Email</th>
-              <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-center">Nº Pedidos</th>
-              <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Total Gasto</th>
-              <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Último Acesso</th>
-              <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Ação</th>
-            </tr>
-          </thead>
-          <tbody id="clientsTable" class="divide-y divide-slate-100">
+      <div class="glass-card rounded-2xl p-0 overflow-hidden shadow-lg border border-slate-800 animate-slide-up" style="animation-delay: 200ms;">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-left">
+            <thead class="bg-slate-900/80 text-[10px] uppercase text-slate-400 border-b border-white/5">
+              <tr>
+                <th class="py-4 px-6 font-bold">Cliente / Conta</th>
+                <th class="py-4 px-6 font-bold">Contato (Email/Tel)</th>
+                <th class="py-4 px-6 font-bold">Status</th>
+                <th class="py-4 px-6 font-bold">Visto por Último</th>
+                <th class="py-4 px-6 text-right font-bold">Ações Soberanas</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody" class="divide-y divide-slate-800/50">
+              <tr><td colspan="5" class="text-center py-8 text-slate-500"><div class="skeleton h-4 w-full"></div></td></tr>
             </tbody>
-        </table>
+          </table>
+        </div>
       </div>
+
     </div>
-  </main>
+  </div>
 
   <div id="clientModal" class="modal">
-    <div class="modal-overlay" onclick="closeClientModal()"></div>
-    <div class="modal-content flex flex-col h-full md:h-auto">
-      <div class="flex justify-between items-center p-6 border-b border-slate-100 bg-white sticky top-0 z-10 rounded-t-2xl">
+    <div class="modal-overlay" onclick="window.closeClientModal()"></div>
+    <div class="modal-content flex flex-col h-full md:h-auto border border-slate-700">
+      <div class="flex justify-between items-center p-6 border-b border-white/10 bg-slate-900 sticky top-0 z-10 rounded-t-[24px]">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 bg-brand-100 text-brand-700 rounded-full flex items-center justify-center font-bold text-lg" id="modalClientInitials">C</div>
+          <div class="w-10 h-10 bg-brand-500/20 text-brand-400 rounded-full flex items-center justify-center font-bold text-lg border border-brand-500/30" id="modalClientInitials">C</div>
           <div>
-            <h2 class="text-xl font-bold text-slate-900" id="modalClientName">Nome do Cliente</h2>
-            <p class="text-xs text-slate-500 font-medium">Histórico Completo</p>
+            <h2 class="text-xl font-display font-bold text-white" id="modalClientName">A Carregar...</h2>
+            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest" id="modalClientEmail">...</p>
           </div>
         </div>
-        <button onclick="closeClientModal()" class="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors text-slate-500">
+        <button onclick="window.closeClientModal()" class="w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center transition-colors text-slate-400 hover:text-white">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
       
-      <div id="clientModalContent" class="p-6 overflow-y-auto bg-slate-50 flex-1">
+      <div class="p-6 overflow-y-auto bg-slate-950 flex-1">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-sm">
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-1"><i data-lucide="phone" class="w-3 h-3"></i> Telefone</p>
+            <p class="font-bold text-white text-sm font-mono" id="modalClientPhone">...</p>
+          </div>
+          <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-sm">
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> Registo</p>
+            <p class="font-bold text-slate-300 text-sm font-mono" id="modalClientDate">...</p>
+          </div>
+          <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-sm">
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-1"><i data-lucide="shopping-bag" class="w-3 h-3"></i> Frequência</p>
+            <p class="font-bold text-white text-sm" id="modalClientOrdersCount">0 pedidos</p>
+          </div>
+          <div class="bg-success-900/20 p-4 rounded-xl border border-success-500/30 shadow-sm">
+            <p class="text-[10px] font-bold text-success-400 uppercase tracking-widest mb-1">Total Gasto (LTV)</p>
+            <p class="font-extrabold text-success-400 text-lg" id="modalClientLTV">0 MT</p>
+          </div>
         </div>
+        
+        <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+          <i data-lucide="list" class="w-4 h-4"></i> Linha do Tempo de Pedidos
+        </h3>
+        
+        <div id="modalOrderTimeline" class="space-y-3">
+          <div class="text-center py-8 text-slate-600"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto"></i></div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div id="toastContainer" class="fixed top-4 right-4 z-[110] space-y-2 pointer-events-none w-full max-w-sm px-4 md:px-0"></div>
-
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut, getIdTokenResult } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
       authDomain: "paygo-14311.firebaseapp.com",
       projectId: "paygo-14311",
       storageBucket: "paygo-14311.firebasestorage.app",
       messagingSenderId: "208360646277",
-      appId: "1:208360646277:web:aecc57cc0077ae48a52bec",
-      measurementId: "G-N9E391HCFL"
+      appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
     };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app, "paygodb");
-    
-    const ADMIN_EMAILS = ['admin@paygo.co.mz', 'app@paygo.co.mz', 'gestao@paygo.co.mz', 'superadmin@paygo.co.mz'];
-    
-    let allClients = [];
-    let currentClient = null;
 
-    // Mobile Sidebar Logic
+    lucide.createIcons();
+    let allUsers = [];
+
+    // Proteção Loader
+    const fallbackTimer = setTimeout(() => { document.getElementById('sysLoader').style.display = 'none'; }, 3000);
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { window.location.href = '../login.html'; return; }
+      
+      try {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists() && (userDoc.data().role === 'admin' || userDoc.data().role === 'superadmin')) {
+          document.getElementById('adminName').textContent = userDoc.data().name || 'Admin';
+          await window.loadUsersDatabase();
+          
+          // Refresh online status a cada 30 segundos silenciosamente
+          setInterval(() => window.renderTable(allUsers), 30000); 
+        } else {
+          window.location.href = '../index.html';
+        }
+      } catch (error) {
+        showToast("Erro na ligação ao servidor.", "error");
+      } finally {
+        clearTimeout(fallbackTimer);
+        const ldr = document.getElementById('sysLoader');
+        ldr.style.opacity = '0';
+        setTimeout(() => ldr.style.display = 'none', 500);
+      }
+    });
+
+    // Função de Carregamento Principal (Apenas da tabela USERS)
+    window.loadUsersDatabase = async function() {
+      try {
+        const usersRef = collection(db, "users");
+        const snap = await getDocs(usersRef);
+        
+        allUsers = [];
+        let active = 0; let banned = 0;
+        
+        snap.forEach(doc => {
+            const data = doc.data();
+            // Ignorar as contas de administradores e superadmins nesta view
+            if(data.role !== 'admin' && data.role !== 'superadmin') {
+                allUsers.push({ id: doc.id, ...data });
+                if(data.status === 'active') active++;
+                if(data.status === 'banned' || data.status === 'blocked') banned++;
+            }
+        });
+        
+        // Ordenar pelo acesso mais recente
+        allUsers.sort((a,b) => {
+            const tA = a.lastActivity?.toDate ? a.lastActivity.toDate().getTime() : 0;
+            const tB = b.lastActivity?.toDate ? b.lastActivity.toDate().getTime() : 0;
+            return tB - tA;
+        });
+
+        document.getElementById('kpiTotal').textContent = allUsers.length;
+        document.getElementById('kpiActive').textContent = active;
+        document.getElementById('kpiBanned').textContent = banned;
+        
+        window.filterTable(); // Usa o filtro atual para renderizar
+      } catch (error) {
+        showToast('Erro ao carregar a base de dados de clientes.', 'error');
+        console.error(error);
+      }
+    };
+
+    // Calculadora Inteligente de Tempo (Last Seen)
+    function timeAgo(date) {
+        const seconds = Math.floor((new Date() - date) / 1000);
+        if (seconds < 300) return '🟢 Online Agora'; 
+        
+        let interval = seconds / 31536000;
+        if (interval > 1) return Math.floor(interval) + " anos atrás";
+        interval = seconds / 2592000;
+        if (interval > 1) return Math.floor(interval) + " meses atrás";
+        interval = seconds / 86400;
+        if (interval >= 1 && interval < 2) return "Ontem";
+        if (interval > 1) return Math.floor(interval) + " dias atrás";
+        interval = seconds / 3600;
+        if (interval > 1) return "Há " + Math.floor(interval) + " horas";
+        interval = seconds / 60;
+        if (interval > 1) return "Há " + Math.floor(interval) + " minutos";
+        return "Há instantes";
+    }
+
+    window.renderTable = function(usersToRender) {
+        const tbody = document.getElementById('usersTableBody');
+        let onlineCount = 0;
+        
+        if(usersToRender.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center py-10 text-slate-500"><i data-lucide="user-x" class="w-8 h-8 mx-auto mb-3 opacity-30"></i>Nenhum cliente encontrado com os filtros atuais.</td></tr>`;
+            lucide.createIcons();
+            return;
+        }
+
+        tbody.innerHTML = usersToRender.map(u => {
+            const lastAct = u.lastActivity?.toDate ? u.lastActivity.toDate() : null;
+            const isOnline = lastAct && (Date.now() - lastAct.getTime() < 300000); // 5 mins
+            if(isOnline && u.status === 'active') onlineCount++;
+
+            const seenText = lastAct ? timeAgo(lastAct) : 'Nunca acedeu';
+            const statusBadge = u.status === 'active' ? 'active' : (u.status === 'banned' ? 'banned' : 'blocked');
+            const statusText = u.status === 'active' ? 'Ativo' : (u.status === 'banned' ? 'Banido' : 'Bloqueado');
+
+            let actionBtns = '';
+            
+            // Botão Abrir (Modal)
+            actionBtns += `<button onclick="window.viewClientModal('${u.id}', '${u.name || 'Cliente'}', '${u.email}', '${u.phone || ''}', '${u.createdAt?.toDate ? u.createdAt.toDate().toISOString() : ''}')" class="action-btn bg-slate-800 text-slate-300 hover:bg-slate-700 mr-2" title="Ver Histórico"><i data-lucide="eye" class="w-4 h-4"></i> Abrir</button>`;
+
+            // Bloquear / Desbloquear
+            if(u.status === 'active') {
+                actionBtns += `<button onclick="window.changeStatus('${u.id}', 'blocked')" class="action-btn block" title="Suspender Conta"><i data-lucide="lock" class="w-4 h-4"></i></button>`;
+            } else {
+                actionBtns += `<button onclick="window.changeStatus('${u.id}', 'active')" class="action-btn activate" title="Restaurar Conta"><i data-lucide="unlock" class="w-4 h-4"></i></button>`;
+            }
+            
+            // Botão Eliminar Suprema
+            actionBtns += `<button onclick="window.deleteUserRecord('${u.id}', '${u.name || u.email}')" class="action-btn delete ml-2 !border-danger-500 !text-danger-500" title="Apagar Permanentemente DB"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
+
+            return `
+            <tr class="hover:bg-slate-800/40 transition-colors">
+                <td class="py-4 px-6">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center text-brand-400 font-bold border border-slate-700 relative shadow-inner">
+                            ${(u.name || 'U').charAt(0).toUpperCase()}
+                            ${isOnline && u.status === 'active' ? '<div class="absolute -bottom-1 -right-1 online-ping"><span class="ping-bg"></span><span class="ping-core"></span></div>' : ''}
+                        </div>
+                        <div>
+                            <span class="font-bold text-white block text-sm">${u.name || 'Cliente Oculto'}</span>
+                            <span class="text-[10px] text-slate-500 font-mono">ID: ${u.id.substring(0,8)}...</span>
+                        </div>
+                    </div>
+                </td>
+                <td class="py-4 px-6">
+                    <div class="text-sm text-slate-300 font-mono mb-1"><i data-lucide="mail" class="w-3 h-3 inline text-slate-500 mr-1"></i> ${u.email}</div>
+                    <div class="text-xs text-slate-400 font-mono"><i data-lucide="phone" class="w-3 h-3 inline text-slate-500 mr-1"></i> ${u.phone || 'S/ Telemóvel'}</div>
+                </td>
+                <td class="py-4 px-6"><span class="status-badge ${statusBadge}">${statusText}</span></td>
+                <td class="py-4 px-6">
+                    <span class="text-xs font-bold ${isOnline && u.status==='active' ? 'text-success-400' : 'text-slate-400'}">${seenText}</span>
+                </td>
+                <td class="py-4 px-6 text-right whitespace-nowrap">
+                    ${actionBtns}
+                </td>
+            </tr>`;
+        }).join('');
+        
+        document.getElementById('kpiOnline').textContent = onlineCount;
+        lucide.createIcons();
+    };
+
+    window.filterTable = function() {
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const status = document.getElementById('statusFilter').value;
+        
+        let filtered = allUsers;
+        
+        if (search) {
+            filtered = filtered.filter(u => 
+                (u.name && u.name.toLowerCase().includes(search)) || 
+                (u.email && u.email.toLowerCase().includes(search)) ||
+                (u.phone && u.phone.includes(search))
+            );
+        }
+        
+        if (status !== 'all') {
+            if (status === 'online') {
+                const fiveMinsAgo = Date.now() - 300000;
+                filtered = filtered.filter(u => u.lastActivity && (u.lastActivity.toDate ? u.lastActivity.toDate().getTime() : new Date(u.lastActivity).getTime()) > fiveMinsAgo && u.status === 'active');
+            } else if (status === 'banned') {
+                filtered = filtered.filter(u => u.status === 'banned' || u.status === 'blocked');
+            } else {
+                filtered = filtered.filter(u => u.status === status);
+            }
+        }
+        
+        window.renderTable(filtered);
+    };
+
+    // ==========================================
+    // AÇÕES DE BASE DE DADOS (DANGEROUS)
+    // ==========================================
+    window.changeStatus = async function(userId, newStatus) {
+        if(!confirm(`Deseja alterar o estado deste cliente para [${newStatus.toUpperCase()}]?`)) return;
+        try {
+            await updateDoc(doc(db, "users", userId), { status: newStatus, updatedAt: serverTimestamp() });
+            showToast('Estado da conta atualizado com sucesso.', 'success');
+            await window.loadUsersDatabase(); 
+        } catch(error) {
+            showToast('Erro ao tentar atualizar a base de dados.', 'error');
+        }
+    };
+
+    window.deleteUserRecord = async function(userId, userName) {
+        const confirm1 = confirm(`⚠️ PERIGO EXTREMO ⚠️\n\nTem a certeza absoluta que deseja APAGAR PERMANENTEMENTE a conta de ${userName}?`);
+        if(!confirm1) return;
+        
+        const confirm2 = prompt(`ÚLTIMO AVISO:\nEsta ação irá destruir o registo do utilizador na Base de Dados e ele perderá o acesso e o histórico.\n\nEscreva a palavra APAGAR para confirmar:`);
+        if(confirm2 !== 'APAGAR') {
+            showToast('Ação cancelada pelo administrador.', 'info');
+            return;
+        }
+
+        try {
+            await deleteDoc(doc(db, "users", userId));
+            showToast(`A conta de ${userName} foi eliminada e vaporizada do sistema.`, 'success');
+            await window.loadUsersDatabase();
+        } catch(error) {
+            console.error(error);
+            showToast('Falha técnica ao tentar eliminar o documento da Base de Dados.', 'error');
+        }
+    };
+
+    // ==========================================
+    // MODAL DE CLIENTE (COM FETCH DE PEDIDOS)
+    // ==========================================
+    window.viewClientModal = async function(userId, name, email, phone, createdIso) {
+        document.getElementById('modalClientName').textContent = name;
+        document.getElementById('modalClientInitials').textContent = name.charAt(0).toUpperCase();
+        document.getElementById('modalClientEmail').textContent = email;
+        document.getElementById('modalClientPhone').textContent = phone || 'N/A';
+        
+        const dateStr = createdIso ? new Date(createdIso).toLocaleDateString('pt-MZ') : 'Desconhecido';
+        document.getElementById('modalClientDate').textContent = dateStr;
+
+        const modal = document.getElementById('clientModal');
+        const timeline = document.getElementById('modalOrderTimeline');
+        
+        modal.style.display = 'flex';
+        setTimeout(() => modal.classList.add('active'), 10);
+        
+        timeline.innerHTML = `<div class="text-center py-8 text-slate-500"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto mb-2 text-brand-500"></i><p>A procurar registos financeiros...</p></div>`;
+        lucide.createIcons();
+
+        try {
+            // Vai buscar as ordens apenas deste utilizador
+            const q = query(collection(db, "orders"), where("email", "==", email));
+            const snap = await getDocs(q);
+            
+            let totalGasto = 0;
+            let totalPedidos = 0;
+            let ordersHtml = '';
+            let ordersData = [];
+
+            snap.forEach(d => {
+                ordersData.push(d.data());
+                totalPedidos++;
+                if(d.data().status === 'completed' || d.data().isPaid) {
+                    totalGasto += (d.data().total || 0);
+                }
+            });
+
+            document.getElementById('modalClientOrdersCount').textContent = `${totalPedidos} Faturas`;
+            document.getElementById('modalClientLTV').textContent = `${new Intl.NumberFormat('pt-MZ').format(totalGasto)} MT`;
+
+            if(ordersData.length === 0) {
+                timeline.innerHTML = `<div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl text-center"><i data-lucide="package-x" class="w-8 h-8 text-slate-600 mx-auto mb-2"></i><p class="text-slate-400">O cliente ainda não realizou nenhum pedido.</p></div>`;
+                lucide.createIcons();
+                return;
+            }
+
+            // Ordena histórico do mais novo ao mais velho
+            ordersData.sort((a,b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
+
+            ordersData.forEach(o => {
+                const isPaid = o.status === 'completed' || o.isPaid;
+                const statusColor = isPaid ? 'success-400' : (o.status === 'cancelled' ? 'danger-400' : 'warning-400');
+                const statusBg = isPaid ? 'success-500/10' : (o.status === 'cancelled' ? 'danger-500/10' : 'warning-500/10');
+                const statusIcon = isPaid ? 'check-circle' : (o.status === 'cancelled' ? 'x-circle' : 'clock');
+                
+                const dataFormat = o.createdAt?.toDate ? o.createdAt.toDate().toLocaleDateString('pt-MZ') : '-';
+
+                ordersHtml += `
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex items-center justify-between hover:border-slate-600 transition-colors">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-lg bg-${statusBg} flex items-center justify-center border border-${statusColor}/20">
+                            <i data-lucide="${statusIcon}" class="w-5 h-5 text-${statusColor}"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-white font-mono text-sm">${o.orderId || 'S/N'}</p>
+                            <p class="text-xs text-slate-500">${dataFormat}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-black text-${isPaid ? 'success-400' : 'white'}">${new Intl.NumberFormat('pt-MZ').format(o.total || 0)} MT</p>
+                        <p class="text-[10px] uppercase font-bold text-slate-500 tracking-widest">${o.paymentMethod || 'M-Pesa'}</p>
+                    </div>
+                </div>`;
+            });
+
+            timeline.innerHTML = ordersHtml;
+            lucide.createIcons();
+
+        } catch(error) {
+            console.error(error);
+            timeline.innerHTML = `<p class="text-danger-400 text-center py-4">Erro ao carregar faturas.</p>`;
+        }
+    };
+
+    window.closeClientModal = function() {
+        const m = document.getElementById('clientModal');
+        m.classList.remove('active');
+        setTimeout(() => m.style.display = 'none', 300);
+    };
+
+
+    window.logout = async function() { await signOut(auth); window.location.href = '../login.html'; };
+    
+    function showToast(msg, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const t = document.createElement('div');
+      t.className = `toast border-l-4 ${type==='error'?'border-danger-500':(type==='warning'?'border-yellow-500':'border-brand-500')}`;
+      t.innerHTML = `<span class="text-sm font-bold text-white">${msg}</span>`;
+      container.appendChild(t);
+      requestAnimationFrame(() => t.classList.add('show'));
+      setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 5000);
+    }
+
+    // Funcionalidades Móveis
     const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-    const closeSidebarBtn = document.getElementById('closeSidebarBtn');
     const sidebar = document.getElementById('sidebar');
     const sidebarOverlay = document.getElementById('sidebarOverlay');
+    const closeSidebarBtn = document.getElementById('closeSidebarBtn');
 
-    function toggleSidebar() {
-      const isClosed = sidebar.classList.contains('-translate-x-full');
-      if (isClosed) {
-        sidebar.classList.remove('-translate-x-full');
+    function toggleMobileSidebar() {
+      sidebar.classList.toggle('-translate-x-full');
+      if(sidebarOverlay.classList.contains('hidden')) {
         sidebarOverlay.classList.remove('hidden');
         setTimeout(() => sidebarOverlay.classList.remove('opacity-0'), 10);
       } else {
-        sidebar.classList.add('-translate-x-full');
         sidebarOverlay.classList.add('opacity-0');
         setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
       }
     }
-
-    mobileMenuBtn?.addEventListener('click', toggleSidebar);
-    closeSidebarBtn?.addEventListener('click', toggleSidebar);
-    sidebarOverlay?.addEventListener('click', toggleSidebar);
-
-    // Formatters
-    function formatCurrency(value) {
-      if (!value && value !== 0) return '0.00 MT';
-      return `${Number(value).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`;
-    }
-
-    function formatDate(date) {
-      if (!date) return 'N/A';
-      const d = date?.toDate ? date.toDate() : new Date(date);
-      return d.toLocaleDateString('pt-MZ', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    }
-
-    function formatDateTime(date) {
-      if (!date) return 'N/A';
-      const d = date?.toDate ? date.toDate() : new Date(date);
-      return d.toLocaleString('pt-MZ', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute:'2-digit' });
-    }
-
-    // Auth verification
-    async function verifyAdmin() {
-      return new Promise((resolve) => {
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
-          unsubscribe();
-          
-          if (!user) {
-            showToast('Sessão expirada. Faça login.', 'error');
-            setTimeout(() => { window.location.href = 'login.html'; }, 1500);
-            resolve(false); return;
-          }
-          
-          try {
-            const tokenResult = await getIdTokenResult(user);
-            const isAdmin = tokenResult.claims?.admin === true || ADMIN_EMAILS.includes(user.email?.toLowerCase());
-            
-            if (!isAdmin) {
-              showToast('Acesso negado.', 'error');
-              setTimeout(() => { window.location.href = 'index.html'; }, 2000);
-              resolve(false); return;
-            }
-            
-            document.getElementById('userEmail').textContent = user.email || 'admin@paygo.co.mz';
-            document.getElementById('userInitial').textContent = (user.email || 'A').charAt(0).toUpperCase();
-            
-            resolve(true);
-            
-          } catch (error) {
-            console.error('Erro na verificação:', error);
-            showToast('Erro de autenticação', 'error');
-            setTimeout(() => { window.location.href = 'login.html'; }, 1500);
-            resolve(false);
-          }
-        });
-      });
-    }
-
-    // Load Data
-    async function loadClients() {
-      const loadingEl = document.getElementById('loadingClients');
-      const emptyEl = document.getElementById('emptyClients');
-      const tableEl = document.getElementById('clientsTable');
-      
-      loadingEl.classList.remove('hidden');
-      emptyEl.classList.add('hidden');
-      tableEl.innerHTML = '';
-      
-      try {
-        const ordersRef = collection(db, "orders");
-        const q = query(ordersRef, orderBy("createdAt", "desc"));
-        const snapshot = await getDocs(q);
-        
-        const clientsMap = {};
-        
-        snapshot.forEach(doc => {
-          const order = doc.data();
-          const email = order.email?.toLowerCase();
-          
-          if (!email || !order.name) return;
-          
-          if (!clientsMap[email]) {
-            clientsMap[email] = {
-              email: order.email,
-              name: order.name,
-              phone: order.whatsapp || order.phone || 'Sem contacto',
-              orders: 0,
-              total: 0,
-              lastOrder: null,
-              orderList: []
-            };
-          }
-          
-          const client = clientsMap[email];
-          client.orders++;
-          client.total += Number(order.total) || 0;
-          client.orderList.push({
-            id: doc.id,
-            orderId: order.orderId || `ORD-${doc.id.slice(0, 8)}`,
-            type: order.type || 'compra',
-            paymentMethod: order.paymentMethod || 'mpesa',
-            total: order.total || 0,
-            status: order.status || 'pending',
-            createdAt: order.createdAt,
-            detail: order.detail || 'N/A'
-          });
-          
-          const orderDate = order.createdAt?.toDate ? order.createdAt.toDate() : new Date(order.createdAt || 0);
-          if (!client.lastOrder || orderDate > client.lastOrder) {
-            client.lastOrder = orderDate;
-          }
-        });
-        
-        allClients = Object.values(clientsMap).sort((a, b) => b.total - a.total);
-        
-        updateStats();
-        renderClients(allClients);
-        
-        loadingEl.classList.add('hidden');
-        if (allClients.length === 0) {
-          emptyEl.classList.remove('hidden');
-        }
-        
-        // Esconder o overlay de entrada geral da página
-        const pageLoader = document.getElementById('pageLoader');
-        if(pageLoader.style.opacity !== '0'){
-            pageLoader.style.opacity = '0';
-            setTimeout(() => pageLoader.style.display = 'none', 500);
-        }
-        
-      } catch (error) {
-        console.error('Erro ao carregar clientes:', error);
-        loadingEl.classList.add('hidden');
-        emptyEl.classList.remove('hidden');
-        tableEl.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-red-500 font-medium"><i data-lucide="alert-triangle" class="w-8 h-8 mx-auto mb-2"></i>Erro ao carregar clientes. Verifique a conexão.</td></tr>';
-        showToast('Erro ao sincronizar dados.', 'error');
-        lucide.createIcons();
-      }
-    }
-
-    function updateStats() {
-      document.getElementById('totalClients').classList.remove('skeleton');
-      document.getElementById('topClient').classList.remove('skeleton');
-      document.getElementById('topSpend').classList.remove('skeleton');
-      
-      document.getElementById('totalClients').textContent = allClients.length;
-      
-      if (allClients.length > 0) {
-        const topClient = [...allClients].sort((a, b) => b.orders - a.orders)[0];
-        document.getElementById('topClient').textContent = topClient.name || '-';
-        document.getElementById('topSpend').textContent = formatCurrency(topClient.total);
-      } else {
-        document.getElementById('topClient').textContent = '-';
-        document.getElementById('topSpend').textContent = '0 MT';
-      }
-    }
-
-    function updateClientsCount(clients) {
-      const count = document.getElementById('clientsCount');
-      count.textContent = `${clients.length} cliente${clients.length !== 1 ? 's' : ''}`;
-    }
-
-    function renderClients(clients) {
-      const table = document.getElementById('clientsTable');
-      const search = document.getElementById('clientSearch')?.value.toLowerCase() || '';
-      
-      const filtered = clients.filter(c => 
-        c.name?.toLowerCase().includes(search) || 
-        c.email?.toLowerCase().includes(search) ||
-        c.phone?.includes(search)
-      );
-      
-      if (filtered.length === 0) {
-        table.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-slate-500 font-medium">Nenhum cliente correspondente aos filtros.</td></tr>';
-        updateClientsCount([]);
-        return;
-      }
-      
-      table.innerHTML = filtered.map(client => {
-        const lastOrderDate = client.lastOrder ? formatDate(client.lastOrder) : 'N/A';
-        const initial = (client.name || 'C').charAt(0).toUpperCase();
-        
-        return `
-          <tr class="client-row transition-colors group">
-            <td class="px-6 py-4">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-slate-100 text-slate-700 rounded-full flex items-center justify-center text-sm font-bold group-hover:bg-brand-100 group-hover:text-brand-700 transition-colors">
-                  ${initial}
-                </div>
-                <div>
-                  <p class="font-bold text-slate-900">${client.name}</p>
-                  <p class="text-xs text-slate-500 font-mono mt-0.5">${client.phone}</p>
-                </div>
-              </div>
-            </td>
-            <td class="px-6 py-4">
-              <span class="text-sm text-slate-600 bg-slate-50 px-2 py-1 rounded-md border border-slate-100">${client.email}</span>
-            </td>
-            <td class="px-6 py-4 text-center">
-              <span class="px-3 py-1 bg-brand-50 text-brand-700 rounded-full text-xs font-bold border border-brand-100">${client.orders}</span>
-            </td>
-            <td class="px-6 py-4 font-extrabold text-slate-900">${formatCurrency(client.total)}</td>
-            <td class="px-6 py-4 text-slate-500 text-sm font-medium flex items-center gap-2">
-              <i data-lucide="calendar" class="w-4 h-4 text-slate-400"></i> ${lastOrderDate}
-            </td>
-            <td class="px-6 py-4 text-right">
-              <button onclick="viewClient('${encodeURIComponent(client.email)}')" class="px-3 py-1.5 bg-white border border-slate-200 hover:border-brand-300 hover:bg-brand-50 text-brand-600 font-bold text-sm rounded-lg transition-all shadow-sm flex items-center gap-2 ml-auto">
-                Abrir <i data-lucide="arrow-right" class="w-4 h-4"></i>
-              </button>
-            </td>
-          </tr>
-        `;
-      }).join('');
-      
-      updateClientsCount(filtered);
-      lucide.createIcons();
-    }
-
-    // Modal view
-    window.viewClient = (encodedEmail) => {
-      const email = decodeURIComponent(encodedEmail);
-      const client = allClients.find(c => c.email?.toLowerCase() === email.toLowerCase());
-      
-      if (!client) {
-        showToast('Cliente não encontrado na memória.', 'error');
-        return;
-      }
-      
-      currentClient = client;
-      
-      // Update Modal Header
-      document.getElementById('modalClientName').textContent = client.name;
-      document.getElementById('modalClientInitials').textContent = (client.name || 'C').charAt(0).toUpperCase();
-
-      const sortedOrders = [...client.orderList].sort((a, b) => {
-        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
-        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
-        return dateB - dateA;
-      });
-      
-      const content = document.getElementById('clientModalContent');
-      
-      content.innerHTML = `
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1"><i data-lucide="mail" class="w-3 h-3"></i> Email</p>
-            <p class="font-bold text-brand-600 text-sm truncate" title="${client.email}">${client.email}</p>
-          </div>
-          <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1"><i data-lucide="phone" class="w-3 h-3"></i> Telefone</p>
-            <p class="font-bold text-slate-900 text-sm font-mono">${client.phone}</p>
-          </div>
-          <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1"><i data-lucide="shopping-bag" class="w-3 h-3"></i> Frequência</p>
-            <p class="font-bold text-slate-900 text-sm">${client.orders} pedidos</p>
-          </div>
-          <div class="bg-white p-4 rounded-xl border border-green-100 bg-green-50 shadow-sm">
-            <p class="text-[10px] font-bold text-green-600 uppercase tracking-widest mb-1">Total LTV</p>
-            <p class="font-extrabold text-green-700 text-sm">${formatCurrency(client.total)}</p>
-          </div>
-        </div>
-        
-        <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-          <i data-lucide="list" class="w-4 h-4"></i> Linha do Tempo de Compras
-        </h3>
-        
-        <div class="space-y-3 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
-          ${sortedOrders.map(order => {
-            const statusConfig = {
-              pending: { color: 'amber', icon: 'clock', text: 'Pendente' },
-              processing: { color: 'blue', icon: 'loader', text: 'Em Processo' },
-              completed: { color: 'green', icon: 'check-circle-2', text: 'Concluído' },
-              cancelled: { color: 'red', icon: 'x-circle', text: 'Cancelado' },
-              paid: { color: 'emerald', icon: 'check', text: 'Pago' }
-            }[order.status] || { color: 'slate', icon: 'help-circle', text: order.status };
-            
-            const methodColor = order.paymentMethod === 'mpesa' ? 'red' : 'blue';
-            const methodName = order.paymentMethod === 'mpesa' ? 'M-Pesa' : 'e-Mola';
-            
-            return `
-              <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active cursor-pointer" onclick="viewOrderDetails('${order.id}')">
-                <div class="flex items-center justify-center w-10 h-10 rounded-full border-4 border-slate-50 bg-${statusConfig.color}-100 text-${statusConfig.color}-600 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 transition-transform group-hover:scale-110">
-                  <i data-lucide="${statusConfig.icon}" class="w-4 h-4"></i>
-                </div>
-                <div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow group-hover:border-brand-200">
-                  <div class="flex items-start justify-between mb-2">
-                    <div>
-                      <p class="font-bold font-mono text-brand-600 text-sm">${order.orderId}</p>
-                      <span class="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-md bg-${statusConfig.color}-50 text-${statusConfig.color}-700 text-[10px] font-bold uppercase tracking-wider border border-${statusConfig.color}-100">
-                        ${statusConfig.text}
-                      </span>
-                    </div>
-                    <div class="text-right">
-                      <p class="font-extrabold text-slate-900">${formatCurrency(order.total)}</p>
-                      <p class="text-[10px] text-slate-400 font-medium">${formatDateTime(order.createdAt)}</p>
-                    </div>
-                  </div>
-                  <div class="bg-slate-50 rounded-lg p-2.5 mt-3 border border-slate-100">
-                    <p class="text-xs text-slate-600 line-clamp-2" title="${order.detail}">${order.detail}</p>
-                  </div>
-                  <div class="flex items-center justify-between mt-3">
-                    <span class="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded uppercase">${order.type}</span>
-                    <span class="text-[10px] font-bold text-${methodColor}-600 bg-${methodColor}-50 border border-${methodColor}-100 px-2 py-1 rounded-full flex items-center gap-1">
-                      <div class="w-1.5 h-1.5 rounded-full bg-${methodColor}-500"></div> ${methodName}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            `;
-          }).join('')}
-        </div>
-        ${sortedOrders.length === 0 ? '<div class="text-center py-10 bg-white rounded-2xl border border-dashed border-slate-300"><i data-lucide="package-x" class="w-10 h-10 mx-auto text-slate-300 mb-2"></i><p class="text-slate-500 font-medium">Nenhum pedido efetuado ainda.</p></div>' : ''}
-      `;
-      
-      document.getElementById('clientModal').classList.add('active');
-      document.body.style.overflow = 'hidden';
-      lucide.createIcons();
-    };
-
-    window.viewOrderDetails = (orderId) => {
-      if (!currentClient) return;
-      const order = currentClient.orderList.find(o => o.id === orderId);
-      if (order) {
-        showToast(`Copiado: ${order.orderId}`, 'info');
-        navigator.clipboard.writeText(order.orderId).catch(()=>{});
-      }
-    };
-
-    window.closeClientModal = () => {
-      document.getElementById('clientModal').classList.remove('active');
-      document.body.style.overflow = '';
-      setTimeout(() => { currentClient = null; }, 300);
-    };
-
-    document.addEventListener('keydown', (e) => {
-      if(e.key === 'Escape' && document.getElementById('clientModal').classList.contains('active')) {
-        closeClientModal();
-      }
-    });
-
-    window.refreshClients = () => {
-      const btn = document.querySelector('button[onclick="refreshClients()"] i');
-      btn?.classList.add('animate-spin');
-      showToast('Sincronizando banco de dados...', 'info');
-      loadClients().finally(() => btn?.classList.remove('animate-spin'));
-    };
-
-    // Debounce Search
-    let searchTimeout;
-    document.getElementById('clientSearch')?.addEventListener('input', (e) => {
-      clearTimeout(searchTimeout);
-      searchTimeout = setTimeout(() => { renderClients(allClients); }, 300);
-    });
-
-    window.handleLogout = async () => {
-      if (confirm('Encerrar a sessão de Administrador?')) {
-        try {
-          await signOut(auth);
-          showToast('Sessão encerrada com sucesso.', 'success');
-          setTimeout(() => { window.location.href = 'login.html'; }, 1000);
-        } catch (error) {
-          showToast('Erro ao sair do sistema.', 'error');
-        }
-      }
-    };
-    document.getElementById('logoutBtn')?.addEventListener('click', handleLogout);
-
-    // Modern Toasts
-    function showToast(message, type = 'success') {
-      const container = document.getElementById('toastContainer');
-      const toast = document.createElement('div');
-      
-      const styles = {
-        success: 'bg-green-600 text-white shadow-green-500/30',
-        error: 'bg-red-600 text-white shadow-red-500/30',
-        warning: 'bg-amber-500 text-white shadow-amber-500/30',
-        info: 'bg-blue-600 text-white shadow-blue-500/30'
-      };
-      
-      const icons = {
-        success: 'check-circle',
-        error: 'x-circle',
-        warning: 'alert-triangle',
-        info: 'info'
-      };
-      
-      toast.className = `pointer-events-auto flex items-center gap-3 px-5 py-4 rounded-2xl shadow-xl font-medium ${styles[type]} transform transition-all duration-300 translate-x-full border border-white/10`;
-      toast.innerHTML = `
-        <i data-lucide="${icons[type]}" class="w-5 h-5 flex-shrink-0"></i>
-        <span class="text-sm flex-1">${message}</span>
-        <button onclick="this.parentElement.remove()" class="p-1 hover:bg-white/20 rounded-md transition"><i data-lucide="x" class="w-4 h-4"></i></button>
-      `;
-      
-      container.appendChild(toast);
-      lucide.createIcons();
-      
-      requestAnimationFrame(() => toast.classList.remove('translate-x-full'));
-      
-      setTimeout(() => {
-        toast.classList.add('opacity-0', 'translate-x-full');
-        setTimeout(() => toast.remove(), 300);
-      }, type === 'error' ? 5000 : 3000);
-    }
-
-    // Inicialização
-    async function initClientsPage() {
-      if (typeof lucide !== 'undefined') lucide.createIcons();
-      const isAdmin = await verifyAdmin();
-      if (!isAdmin) return;
-      await loadClients();
-    }
-    
-    document.addEventListener('DOMContentLoaded', initClientsPage);
+    mobileMenuBtn.addEventListener('click', toggleMobileSidebar);
+    closeSidebarBtn.addEventListener('click', toggleMobileSidebar);
+    sidebarOverlay.addEventListener('click', toggleMobileSidebar);
   </script>
 </body>
 </html>
