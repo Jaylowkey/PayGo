@@ -39,6 +39,10 @@
     .btn-action.warning { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
     .btn-action.warning:hover:not(:disabled) { background: #f59e0b; color: white; }
     
+    .status-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; }
+    .status-badge.active { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.2); }
+    .status-badge.blocked { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); }
+
     #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
     .toast { pointer-events: auto; background: rgba(15, 23, 42, 0.95); border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 12px; display: flex; gap: 12px; transform: translateX(120%); transition: transform 0.4s ease; opacity: 0; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
     .toast.show { transform: translateX(0); opacity: 1; }
@@ -82,9 +86,28 @@
         </div>
 
         <nav class="space-y-2">
-          <a href="dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white"><i data-lucide="activity" class="w-5 h-5"></i> <span class="text-sm font-medium">Visão Central</span></a>
-          <a href="afiliados.html" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-xl text-white"><i data-lucide="network" class="w-5 h-5"></i> <span class="text-sm font-medium">Gestão de Parceiros</span></a>
-          <a href="gerar-fatura.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white"><i data-lucide="file-check-2" class="w-5 h-5 text-brand-400"></i> <span class="text-sm font-medium">Faturas</span></a>
+          <a href="dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
+            <i data-lucide="layout-dashboard" class="w-5 h-5"></i> <span class="text-sm font-medium">Visão Geral</span>
+          </a>
+          <a href="pedidos.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
+            <i data-lucide="shopping-bag" class="w-5 h-5"></i> <span class="text-sm font-medium">Pedidos</span>
+          </a>
+          <a href="clientes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
+            <i data-lucide="users" class="w-5 h-5"></i> <span class="text-sm font-medium">Clientes</span>
+          </a>
+          <a href="afiliados.html" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-xl text-white">
+            <i data-lucide="network" class="w-5 h-5"></i> <span class="text-sm font-medium">Afiliados</span>
+          </a>
+          <a href="gerar-fatura.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
+            <i data-lucide="file-check-2" class="w-5 h-5 text-brand-400"></i> <span class="text-sm font-medium">Gerar Faturas</span>
+          </a>
+          <div class="pt-4 mt-4 border-t border-slate-700/50"></div>
+          <a href="admin.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
+            <i data-lucide="shield" class="w-5 h-5"></i> <span class="text-sm font-medium">Gestão de Equipa</span>
+          </a>
+          <a href="configuracoes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
+            <i data-lucide="settings" class="w-5 h-5"></i> <span class="text-sm font-medium">Configurações</span>
+          </a>
         </nav>
       </div>
     </div>
@@ -93,17 +116,17 @@
       
       <div>
         <h2 class="text-3xl font-display font-extrabold text-white">Central de Parceiros</h2>
-        <p class="text-slate-400 text-sm mt-1">Aprove candidaturas, faça pagamentos e suspenda afiliados irregulares.</p>
-        <p class="text-xs text-brand-400 font-bold uppercase mt-2"><i data-lucide="bell-ring" class="w-3 h-3 inline"></i> Notificações Email (Resend) Ativadas</p>
+        <p class="text-slate-400 text-sm mt-1">Aprove candidaturas, processe pagamentos e bloqueie parceiros fraudulentos.</p>
+        <p class="text-xs text-brand-400 font-bold uppercase mt-2"><i data-lucide="bell-ring" class="w-3 h-3 inline"></i> Notificações Automáticas e Logs Ativos</p>
       </div>
 
       <div class="glass-card rounded-2xl p-6 border-t-2 border-t-success-500 shadow-lg">
-        <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><i data-lucide="banknote" class="w-5 h-5 text-success-400"></i> Solicitações de Pagamento</h3>
-        <p class="text-xs text-slate-400 mb-4">Ao clicar em "Marcar Pago", o afiliado receberá imediatamente um email com o recibo de pagamento.</p>
+        <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><i data-lucide="banknote" class="w-5 h-5 text-success-400"></i> Solicitações de Pagamento (Saques)</h3>
+        <p class="text-xs text-slate-400 mb-4">Ao processar ou rejeitar um pedido, o afiliado será notificado instantaneamente por email.</p>
         <div class="overflow-x-auto border border-white/5 rounded-xl">
           <table class="w-full text-sm text-left">
             <thead class="bg-slate-800/50 text-[10px] uppercase text-slate-400">
-              <tr><th class="py-3 px-4">Código Afiliado</th><th class="py-3 px-4">Canal (M-Pesa/eMola)</th><th class="py-3 px-4">Valor</th><th class="py-3 px-4 text-right">Ação</th></tr>
+              <tr><th class="py-3 px-4">Código Afiliado</th><th class="py-3 px-4">Canal (M-Pesa/eMola)</th><th class="py-3 px-4">Valor</th><th class="py-3 px-4 text-right">Ação Dupla</th></tr>
             </thead>
             <tbody id="withdrawalsTableBody" class="divide-y divide-white/5">
               <tr><td colspan="4" class="text-center py-6 text-slate-500">A carregar...</td></tr>
@@ -114,7 +137,7 @@
 
       <div class="glass-card rounded-2xl p-6 border-t-2 border-t-warning-500 shadow-lg">
         <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><i data-lucide="user-plus" class="w-5 h-5 text-warning-400"></i> Candidaturas Pendentes</h3>
-        <p class="text-xs text-slate-400 mb-4">O utilizador será notificado por email assim que tomar uma decisão.</p>
+        <p class="text-xs text-slate-400 mb-4">Os utilizadores serão notificados do veredicto sobre o seu pedido de parceria.</p>
         <div class="overflow-x-auto border border-white/5 rounded-xl">
           <table class="w-full text-sm text-left">
             <thead class="bg-slate-800/50 text-[10px] uppercase text-slate-400">
@@ -128,12 +151,17 @@
       </div>
 
       <div class="glass-card rounded-2xl p-6 border-t-2 border-t-brand-500 shadow-lg">
-        <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><i data-lucide="network" class="w-5 h-5 text-brand-400"></i> Rede de Afiliados Ativos</h3>
-        <p class="text-xs text-slate-400 mb-4">Monitorize ganhos. Cancele privilégios em caso de violação de termos.</p>
+        <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><i data-lucide="network" class="w-5 h-5 text-brand-400"></i> Rede de Afiliados Global</h3>
+        <p class="text-xs text-slate-400 mb-4">Monitorize ganhos. Bloqueie temporariamente ou expulse afiliados definitivamente.</p>
         <div class="overflow-x-auto border border-white/5 rounded-xl">
           <table class="w-full text-sm text-left">
             <thead class="bg-slate-800/50 text-[10px] uppercase text-slate-400">
-              <tr><th class="py-3 px-4">Nome / Email</th><th class="py-3 px-4">Código Promo</th><th class="py-3 px-4 text-center">Indicações / Ganhos</th><th class="py-3 px-4 text-right">Controlo Administrativo</th></tr>
+              <tr>
+                <th class="py-3 px-4">Nome / Email</th>
+                <th class="py-3 px-4 text-center">Status / Código</th>
+                <th class="py-3 px-4 text-center">Indicações / Ganhos</th>
+                <th class="py-3 px-4 text-right">Controlo de Conta</th>
+              </tr>
             </thead>
             <tbody id="activeTableBody" class="divide-y divide-white/5">
               <tr><td colspan="4" class="text-center py-6 text-slate-500">A carregar...</td></tr>
@@ -148,7 +176,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, serverTimestamp, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
@@ -167,7 +195,7 @@
 
     lucide.createIcons();
 
-    // Lógica Mobile
+    // Menu Mobile
     const mobileMenuBtn = document.getElementById('mobileMenuBtn');
     const sidebar = document.getElementById('sidebar');
     const sidebarOverlay = document.getElementById('sidebarOverlay');
@@ -187,7 +215,7 @@
     closeSidebarBtn.addEventListener('click', toggleMobileSidebar);
     sidebarOverlay.addEventListener('click', toggleMobileSidebar);
 
-    // Proteção
+    // Verificação Auth Admin
     onAuthStateChanged(auth, async (user) => {
       if (!user) { window.location.href = '../login.html'; return; }
       
@@ -196,7 +224,7 @@
         if (userDoc.exists() && (userDoc.data().role === 'admin' || userDoc.data().role === 'superadmin')) {
           await loadWithdrawals();
           await loadPendingAffiliates();
-          await loadActiveAffiliates();
+          await loadAllAffiliates();
         } else {
           window.location.href = '../index.html';
         }
@@ -219,19 +247,18 @@
                 body: JSON.stringify({
                     to: toEmail,
                     subject: subject,
-                    template: templateName, // O teu backend na Vercel deve estar preparado para receber e mapear isto
+                    template: templateName,
                     type: 'transactional',
                     variables: variables
                 })
             });
-            console.log(`[Email Sent] To: ${toEmail} | Template: ${templateName}`);
         } catch (error) {
             console.error(`[Email Failed] To: ${toEmail}`, error);
         }
     }
 
     // ==========================================
-    // 1. GESTÃO DE SAQUES
+    // 1. GESTÃO DE SAQUES (APROVAR / REJEITAR)
     // ==========================================
     async function loadWithdrawals() {
       try {
@@ -240,7 +267,7 @@
         const tb = document.getElementById('withdrawalsTableBody');
         
         if(snap.empty) {
-          tb.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-500"><i data-lucide="check-circle" class="w-6 h-6 mx-auto mb-2 text-success-500 opacity-50"></i>Nenhum pedido de pagamento pendente.</td></tr>`;
+          tb.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-500"><i data-lucide="check-circle" class="w-6 h-6 mx-auto mb-2 text-success-500 opacity-50"></i>Sem pedidos de pagamento.</td></tr>`;
           lucide.createIcons();
           return;
         }
@@ -253,8 +280,9 @@
             <td class="py-4 px-4"><span class="font-bold text-white block">${w.affiliateCode || 'N/A'}</span></td>
             <td class="py-4 px-4 font-mono text-brand-300 text-xs">${w.method?.toUpperCase()} - ${w.phone}</td>
             <td class="py-4 px-4 font-black text-success-400">${w.amount} MT</td>
-            <td class="py-4 px-4 text-right">
-              <button id="btn-pay-${doc.id}" onclick="window.markWithdrawalPaid('${doc.id}', '${w.userId}', ${w.amount})" class="action-btn approve"><i data-lucide="check-circle" class="w-4 h-4"></i> Marcar Pago</button>
+            <td class="py-4 px-4 text-right whitespace-nowrap">
+              <button id="btn-pay-${doc.id}" onclick="window.processWithdrawal('${doc.id}', '${w.userId}', ${w.amount}, true)" class="action-btn approve mr-1" title="Confirmar Transferência"><i data-lucide="check" class="w-4 h-4"></i> Pago</button>
+              <button id="btn-rej-wd-${doc.id}" onclick="window.processWithdrawal('${doc.id}', '${w.userId}', ${w.amount}, false)" class="action-btn reject" title="Rejeitar e Devolver Fundos"><i data-lucide="x" class="w-4 h-4"></i> Rejeitar</button>
             </td>
           </tr>`;
         });
@@ -265,36 +293,47 @@
       }
     }
 
-    window.markWithdrawalPaid = async function(id, userId, amount) {
-      if(!confirm(`Confirma que já transferiu ${amount} MT para o telemóvel do parceiro? Esta ação não pode ser desfeita.`)) return;
+    window.processWithdrawal = async function(id, userId, amount, isApproved) {
+      const actionMsg = isApproved 
+        ? `Confirma que já transferiu ${amount} MT para o parceiro?` 
+        : `Deseja REJEITAR este saque de ${amount} MT? O valor será devolvido à conta do parceiro.`;
+        
+      if(!confirm(actionMsg)) return;
       
-      const btn = document.getElementById(`btn-pay-${id}`);
+      const btn = document.getElementById(isApproved ? `btn-pay-${id}` : `btn-rej-wd-${id}`);
       btn.disabled = true;
-      btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Processando...`;
-      lucide.createIcons({root: btn});
+      btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> ...`;
+      lucide.createIcons({root: btn.parentElement});
 
       try {
-        // 1. Pega dados do user para enviar o email
         const userDoc = await getDoc(doc(db, "users", userId));
         const userEmail = userDoc.exists() ? userDoc.data().email : null;
         const userName = userDoc.exists() ? userDoc.data().name : 'Parceiro';
 
-        // 2. Atualiza a DB
-        await updateDoc(doc(db, "withdrawals", id), { status: 'approved', processedAt: serverTimestamp() });
-        
-        // 3. Notificações!
-        if (userEmail) {
-            sendSystemNotification(userEmail, '💸 Pagamento Processado - PayGo', 'payout-processed', { name: userName, amount: amount + ' MT' });
-            sendSystemNotification(ADMIN_EMAIL_NOTIFICATIONS, 'Logs: Saque Pago', 'admin-log', { action: `Pagamento de ${amount}MT concluído para o afiliado ${userEmail}`});
+        if (isApproved) {
+            await updateDoc(doc(db, "withdrawals", id), { status: 'approved', processedAt: serverTimestamp() });
+            
+            if (userEmail) {
+                sendSystemNotification(userEmail, '💸 O seu pagamento chegou - PayGo', 'payout-processed', { name: userName, amount: amount + ' MT' });
+                sendSystemNotification(ADMIN_EMAIL_NOTIFICATIONS, 'Logs: Saque Pago', 'admin-log', { action: `Pagamento de ${amount}MT concluído para ${userEmail}`});
+            }
+            showToast('Saque marcado como Pago. Email enviado.', 'success');
+        } else {
+            // Rejeitar: Devolve o saldo ao afiliado
+            await updateDoc(doc(db, "withdrawals", id), { status: 'rejected', processedAt: serverTimestamp() });
+            await updateDoc(doc(db, "users", userId), { affiliateEarnings: increment(amount) });
+            
+            if (userEmail) {
+                sendSystemNotification(userEmail, '⚠️ Pedido de Saque Rejeitado', 'payout-rejected', { name: userName, amount: amount + ' MT' });
+                sendSystemNotification(ADMIN_EMAIL_NOTIFICATIONS, 'Logs: Saque Rejeitado', 'admin-log', { action: `Saque de ${amount}MT devolvido para a conta de ${userEmail}`});
+            }
+            showToast('Saque rejeitado e fundos devolvidos.', 'warning');
         }
-
-        showToast('Saque marcado como Pago. Notificações enviadas.', 'success');
+        
         loadWithdrawals();
       } catch(e) {
-        showToast('Erro ao validar pagamento na base de dados.', 'error');
-        btn.disabled = false;
-        btn.innerHTML = `<i data-lucide="check-circle" class="w-4 h-4"></i> Marcar Pago`;
-        lucide.createIcons({root: btn});
+        showToast('Erro ao validar ação na base de dados.', 'error');
+        loadWithdrawals();
       }
     };
 
@@ -308,10 +347,10 @@
         const tb = document.getElementById('pendingTableBody');
         
         const pendentes = [];
-        snap.forEach(d => { if(d.data().status === 'pending') pendentes.push({id: d.id, ...d.data()}); });
+        snap.forEach(d => { if(d.data().role === 'affiliate' || d.data().affiliateCode) pendentes.push({id: d.id, ...d.data()}); });
 
         if(pendentes.length === 0) {
-          tb.innerHTML = `<tr><td colspan="3" class="text-center py-6 text-slate-500"><i data-lucide="user-check" class="w-6 h-6 mx-auto mb-2 opacity-30 text-warning-500"></i>Sem novas candidaturas para análise.</td></tr>`;
+          tb.innerHTML = `<tr><td colspan="3" class="text-center py-6 text-slate-500"><i data-lucide="user-check" class="w-6 h-6 mx-auto mb-2 opacity-30 text-warning-500"></i>Sem candidaturas para análise.</td></tr>`;
           lucide.createIcons();
           return;
         }
@@ -332,95 +371,136 @@
     }
 
     window.decideAffiliate = async function(id, email, name, isApproved) {
-      if(!confirm(isApproved ? `Tem a certeza que deseja APROVAR ${name} como afiliado da PayGo?` : `Rejeitar a candidatura de ${name}? A conta passará a ser um cliente normal.`)) return;
+      if(!confirm(isApproved ? `Aprovar e enviar email de boas-vindas a ${name}?` : `Rejeitar a candidatura de ${name}?`)) return;
       
       const btnA = document.getElementById(`btn-apr-${id}`);
       const btnR = document.getElementById(`btn-rej-${id}`);
-      if(btnA) btnA.disabled = true;
-      if(btnR) btnR.disabled = true;
+      if(btnA) btnA.disabled = true; if(btnR) btnR.disabled = true;
 
       try {
         await updateDoc(doc(db, "users", id), {
-          status: 'active', // Fica sempre ativo no sistema para poder comprar coisas
+          status: 'active',
           role: isApproved ? 'affiliate' : 'user',
           affiliateCodeActive: isApproved,
           updatedAt: serverTimestamp()
         });
 
-        // Notificações Email Automáticas
         if (isApproved) {
-            sendSystemNotification(email, '🎉 Parabéns! Conta de Parceiro PayGo Aprovada', 'affiliate-approved', { name: name });
-            sendSystemNotification(ADMIN_EMAIL_NOTIFICATIONS, 'Logs: Afiliado Aprovado', 'admin-log', { action: `Aprovada a parceria para o utilizador ${email}`});
-            showToast('Parceiro aprovado. Email de boas-vindas enviado.', 'success');
+            sendSystemNotification(email, '🎉 Conta de Parceiro Aprovada!', 'affiliate-approved', { name: name });
+            sendSystemNotification(ADMIN_EMAIL_NOTIFICATIONS, 'Logs: Afiliado Aprovado', 'admin-log', { action: `Afiliado ${email} Aprovado.`});
+            showToast('Parceiro aprovado. Email enviado.', 'success');
         } else {
-            sendSystemNotification(email, 'Atualização sobre a sua candidatura PayGo', 'affiliate-rejected', { name: name });
-            sendSystemNotification(ADMIN_EMAIL_NOTIFICATIONS, 'Logs: Afiliado Rejeitado', 'admin-log', { action: `Rejeitada a parceria para o utilizador ${email}`});
-            showToast('Candidatura rejeitada. Notificação enviada.', 'success');
+            sendSystemNotification(email, 'Atualização da Candidatura PayGo', 'affiliate-rejected', { name: name });
+            showToast('Candidatura rejeitada.', 'success');
         }
 
         loadPendingAffiliates();
-        loadActiveAffiliates(); // Refresh the active list below
+        loadAllAffiliates(); 
       } catch(e) {
-        showToast('Erro ao processar a decisão de candidatura.', 'error');
+        showToast('Erro ao processar decisão.', 'error');
       }
     };
 
     // ==========================================
-    // 3. GESTÃO DE AFILIADOS ATIVOS (NOVO)
+    // 3. GESTÃO DE AFILIADOS (ATIVOS E BLOQUEADOS)
     // ==========================================
-    async function loadActiveAffiliates() {
+    async function loadAllAffiliates() {
         try {
-            const q = query(collection(db, "users"), where("role", "==", "affiliate"), where("status", "==", "active"));
+            const q = query(collection(db, "users"), where("role", "==", "affiliate"));
             const snap = await getDocs(q);
             const tb = document.getElementById('activeTableBody');
             
-            const ativos = [];
-            snap.forEach(d => ativos.push({id: d.id, ...d.data()}));
+            const afiliados = [];
+            snap.forEach(d => {
+                if(d.data().status !== 'pending') afiliados.push({id: d.id, ...d.data()});
+            });
 
-            if(ativos.length === 0) {
-                tb.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-500"><i data-lucide="network" class="w-6 h-6 mx-auto mb-2 opacity-30 text-brand-500"></i>Sem parceiros a operar no sistema.</td></tr>`;
+            if(afiliados.length === 0) {
+                tb.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-500"><i data-lucide="network" class="w-6 h-6 mx-auto mb-2 opacity-30 text-brand-500"></i>Nenhum parceiro registado.</td></tr>`;
                 lucide.createIcons();
                 return;
             }
 
-            tb.innerHTML = ativos.map(u => `
-            <tr class="hover:bg-slate-800/40">
-                <td class="py-4 px-4"><div class="font-bold text-white text-sm">${u.name || 'Desconhecido'}</div><div class="text-xs text-slate-400 font-mono mt-0.5">${u.email}</div></td>
-                <td class="py-4 px-4 font-mono font-bold text-brand-400 bg-brand-500/10 px-2 py-1 rounded inline-block mt-2">${u.affiliateCode || 'S/N'}</td>
-                <td class="py-4 px-4 text-center">
-                    <div class="text-xs text-slate-300 font-bold mb-1"><i data-lucide="users" class="w-3 h-3 inline"></i> ${u.totalReferrals || 0} Registos</div>
-                    <div class="text-xs text-success-400 font-bold"><i data-lucide="shopping-cart" class="w-3 h-3 inline"></i> ${(u.affiliateEarnings || 0).toLocaleString('pt-MZ')} MT Ganhos</div>
-                </td>
-                <td class="py-4 px-4 text-right">
-                    <button id="btn-rev-${u.id}" onclick="window.revokeAffiliate('${u.id}', '${u.email}', '${u.name}')" class="action-btn warning"><i data-lucide="slash" class="w-4 h-4"></i> Suspender Parceria</button>
-                </td>
-            </tr>`).join('');
+            tb.innerHTML = afiliados.map(u => {
+                const isBlocked = u.status === 'blocked';
+                const statusBadge = isBlocked ? '<span class="status-badge blocked mb-1">Bloqueado</span>' : '<span class="status-badge active mb-1">Ativo</span>';
+                
+                let controlBtns = '';
+                if(isBlocked) {
+                    controlBtns += `<button id="btn-unblk-${u.id}" onclick="window.toggleAffiliateStatus('${u.id}', '${u.email}', '${u.name}', 'blocked')" class="action-btn approve mr-1"><i data-lucide="unlock" class="w-3 h-3"></i> Restaurar</button>`;
+                } else {
+                    controlBtns += `<button id="btn-blk-${u.id}" onclick="window.toggleAffiliateStatus('${u.id}', '${u.email}', '${u.name}', 'active')" class="action-btn warning mr-1"><i data-lucide="lock" class="w-3 h-3"></i> Suspender</button>`;
+                }
+                controlBtns += `<button id="btn-rev-${u.id}" onclick="window.revokeAffiliate('${u.id}', '${u.email}', '${u.name}')" class="action-btn reject"><i data-lucide="user-minus" class="w-3 h-3"></i> Revogar</button>`;
+
+                return `
+                <tr class="hover:bg-slate-800/40">
+                    <td class="py-4 px-4"><div class="font-bold text-white text-sm">${u.name || 'N/A'}</div><div class="text-xs text-slate-400 font-mono mt-0.5">${u.email}</div></td>
+                    <td class="py-4 px-4 text-center">
+                        ${statusBadge}<br>
+                        <span class="font-mono font-bold text-brand-400 bg-brand-500/10 px-2 py-0.5 rounded text-xs">${u.affiliateCode || 'S/N'}</span>
+                    </td>
+                    <td class="py-4 px-4 text-center">
+                        <div class="text-xs text-slate-300 font-bold mb-1"><i data-lucide="users" class="w-3 h-3 inline"></i> ${u.totalReferrals || 0} Registos</div>
+                        <div class="text-xs text-success-400 font-bold"><i data-lucide="shopping-cart" class="w-3 h-3 inline"></i> ${(u.affiliateEarnings || 0).toLocaleString('pt-MZ')} MT</div>
+                    </td>
+                    <td class="py-4 px-4 text-right whitespace-nowrap">${controlBtns}</td>
+                </tr>`;
+            }).join('');
             lucide.createIcons();
         } catch(e) {
-            console.error(e);
-            showToast('Erro ao ler a tabela de afiliados ativos.', 'error');
+            showToast('Erro ao ler a tabela de afiliados.', 'error');
         }
     }
 
+    // Bloquear ou Desbloquear Temporariamente
+    window.toggleAffiliateStatus = async function(id, email, name, currentStatus) {
+        const isCurrentlyActive = currentStatus === 'active';
+        const actionStr = isCurrentlyActive ? 'SUSPENDER o link deste' : 'RESTAURAR o acesso deste';
+        const newStatus = isCurrentlyActive ? 'blocked' : 'active';
+        
+        if(!confirm(`Deseja ${actionStr} parceiro?`)) return;
+        
+        try {
+            await updateDoc(doc(db, "users", id), {
+                status: newStatus,
+                affiliateCodeActive: !isCurrentlyActive,
+                updatedAt: serverTimestamp()
+            });
+
+            const emailSubject = isCurrentlyActive ? '⚠️ Parceria PayGo Suspensa' : '✅ Parceria PayGo Restaurada';
+            const emailTemplate = isCurrentlyActive ? 'affiliate-suspended' : 'affiliate-restored';
+
+            sendSystemNotification(email, emailSubject, emailTemplate, { name: name });
+            sendSystemNotification(ADMIN_EMAIL_NOTIFICATIONS, 'Logs: Afiliado Status', 'admin-log', { action: `O status do afiliado ${email} mudou para ${newStatus}`});
+
+            showToast('Ação concluída com sucesso.', 'success');
+            loadAllAffiliates();
+        } catch(e) {
+            showToast('Falha técnica.', 'error');
+        }
+    }
+
+    // Revogar Permanentemente (Volta a cliente normal)
     window.revokeAffiliate = async function(id, email, name) {
-        if(!confirm(`PERIGO: Deseja remover o acesso de afiliado a ${name}? O utilizador deixará de ganhar comissões.`)) return;
+        if(!confirm(`PERIGO: Deseja remover todas as permissões de afiliado a ${name}? Esta ação irá eliminá-lo do programa.`)) return;
         
         const btn = document.getElementById(`btn-rev-${id}`);
-        if(btn) { btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A remover...`; lucide.createIcons({root: btn}); }
+        if(btn) { btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> ...`; lucide.createIcons({root: btn}); }
 
         try {
             await updateDoc(doc(db, "users", id), {
-                role: 'user', // Desce para cliente normal
+                role: 'user',
+                status: 'active', // Volta a ser cliente ativo normal
                 affiliateCodeActive: false,
                 updatedAt: serverTimestamp()
             });
 
-            // Notificações
-            sendSystemNotification(email, '⚠️ Acesso ao Programa de Parceiros Suspenso', 'affiliate-revoked', { name: name });
-            sendSystemNotification(ADMIN_EMAIL_NOTIFICATIONS, 'Logs de Segurança: Afiliado Suspenso', 'admin-log', { action: `O admin removeu as permissões de afiliado ao utilizador ${email}`});
+            sendSystemNotification(email, '⚠️ Remoção do Programa de Parceiros', 'affiliate-revoked', { name: name });
+            sendSystemNotification(ADMIN_EMAIL_NOTIFICATIONS, 'Logs: Afiliado Revogado', 'admin-log', { action: `Afiliado ${email} foi removido do programa.`});
 
-            showToast('Privilégios de parceiro revogados. Email enviado.', 'success');
-            loadActiveAffiliates();
+            showToast('Privilégios revogados. Utilizador voltou a cliente normal.', 'success');
+            loadAllAffiliates();
         } catch(e) {
             showToast('Falha técnica ao tentar revogar acessos.', 'error');
         }
