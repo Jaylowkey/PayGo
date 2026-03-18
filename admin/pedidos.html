@@ -6,7 +6,6 @@
 <title>Todos os Pedidos | Gestão PayGo</title>
 <meta name="theme-color" content="#0f172a">
 <meta name="robots" content="noindex, nofollow">
-<!-- ✅ SEO Básico -->
 <meta name="description" content="Gestão completa de pedidos PayGo - Admin Panel">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -48,11 +47,47 @@ body { background-color: #0f172a; color: #f8fafc; }
 .toast.error { border-left-color: #ef4444; }
 .toast.success { border-left-color: #22c55e; }
 .toast.warning { border-left-color: #f59e0b; }
-.modal { display: none; position: fixed; inset: 0; z-index: 1000; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; }
-.modal.active { display: flex; opacity: 1; }
-.modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); cursor: pointer;}
-.modal-content { position: relative; background: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 0; max-width: 700px; width: 95%; max-height: 90vh; overflow-y: auto; transform: scale(0.95) translateY(10px); transition: transform 0.3s ease; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8); }
-.modal.active .modal-content { transform: scale(1) translateY(0); }
+/* ✅ MODAL CSS CORRIGIDO */
+.modal { 
+  display: none; 
+  position: fixed; 
+  inset: 0; 
+  z-index: 1000; 
+  align-items: center; 
+  justify-content: center; 
+  opacity: 0; 
+  transition: opacity 0.3s ease; 
+  pointer-events: none;
+}
+.modal.active { 
+  display: flex; 
+  opacity: 1; 
+  pointer-events: auto;
+}
+.modal-overlay { 
+  position: absolute; 
+  inset: 0; 
+  background: rgba(0,0,0,0.7); 
+  backdrop-filter: blur(5px); 
+  cursor: pointer;
+}
+.modal-content { 
+  position: relative; 
+  background: #0f172a; 
+  border: 1px solid rgba(255,255,255,0.1); 
+  border-radius: 24px; 
+  padding: 0; 
+  max-width: 700px; 
+  width: 95%; 
+  max-height: 90vh; 
+  overflow-y: auto; 
+  transform: scale(0.95) translateY(10px); 
+  transition: transform 0.3s ease; 
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8); 
+}
+.modal.active .modal-content { 
+  transform: scale(1) translateY(0); 
+}
 /* Accessibility */
 :focus-visible { outline: 2px solid #3b82f6; outline-offset: 2px; border-radius: 4px; }
 /* Reduced Motion */
@@ -200,7 +235,7 @@ body { background-color: #0f172a; color: #f8fafc; }
 </div>
 </div>
 </div>
-<!-- Modal de Detalhes -->
+<!-- ✅ MODAL CORRIGIDO -->
 <div id="orderModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
 <div class="modal-overlay" onclick="window.closeModal()" aria-hidden="true"></div>
 <div class="modal-content flex flex-col h-full md:h-auto border border-slate-700" id="modalDialog">
@@ -235,7 +270,7 @@ body { background-color: #0f172a; color: #f8fafc; }
 // ==========================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, collection, doc, updateDoc, onSnapshot, query, orderBy, getDoc, serverTimestamp, writeBatch, increment, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, doc, updateDoc, onSnapshot, query, orderBy, getDoc, serverTimestamp, writeBatch, increment, deleteDoc, getDocs, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
 apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
@@ -248,7 +283,7 @@ appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
 
 // Inicializar Firebase
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app, "paygodb");
+const db = getFirestore(app "paygodb"); // ✅ CORREÇÃO: Remover "paygodb" se usar banco padrão
 const auth = getAuth(app);
 
 let orders = [];
@@ -280,9 +315,9 @@ try { lucide.createIcons({ root: toast }); } catch(e) {}
 }
 
 requestAnimationFrame(() => toast.classList.remove('translate-x-full'));
-setTimeout(() => { 
-toast.classList.add('opacity-0', 'translate-x-8'); 
-setTimeout(() => toast.remove(), 400); 
+setTimeout(() => {
+toast.classList.add('opacity-0', 'translate-x-8');
+setTimeout(() => toast.remove(), 400);
 }, 5000);
 };
 
@@ -297,8 +332,8 @@ return String(value);
 }
 
 function getRelativeDateLabel(date) {
-const today = new Date(); 
-const yesterday = new Date(today); 
+const today = new Date();
+const yesterday = new Date(today);
 yesterday.setDate(yesterday.getDate() - 1);
 if (date.toDateString() === today.toDateString()) return 'Hoje';
 if (date.toDateString() === yesterday.toDateString()) return 'Ontem';
@@ -306,7 +341,7 @@ return date.toLocaleDateString('pt-MZ');
 }
 
 // ==========================================
-// 📧 API RESEND (AUTOMATIZADA) - CORRIGIDO
+// 📧 API RESEND (AUTOMATIZADA)
 // ==========================================
 async function sendNotificationEmail(order, actionType) {
 try {
@@ -315,7 +350,6 @@ if (actionType === 'paid') subject = `✅ Pagamento Confirmado - Pedido #${order
 else if (actionType === 'completed') subject = `🎉 Pedido Concluído - #${order.orderId}`;
 else return;
 
-// Em produção: usar endpoint real
 await fetch('/api/send-email', {
 method: 'POST',
 headers: { 'Content-Type': 'application/json' },
@@ -334,17 +368,16 @@ amount: formatValue(order.total, 'currency')
 showToast('Notificação enviada ao cliente.', 'info');
 } catch (error) {
 console.error('Erro de envio:', error);
-// Não bloquear fluxo se email falhar
 }
 }
 
 // ==========================================
-// 📦 BASE DE DADOS (REAL-TIME) - CORRIGIDO
+// 📦 BASE DE DADOS (REAL-TIME)
 // ==========================================
 function loadOrdersRealTime() {
 const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
 
-ordersUnsubscribe = onSnapshot(q, 
+ordersUnsubscribe = onSnapshot(q,
 (snapshot) => {
 orders = snapshot.docs.map(doc => {
 const data = doc.data();
@@ -369,7 +402,7 @@ createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? 
 };
 });
 window.renderOrders();
-}, 
+},
 (error) => {
 console.error('Erro no real-time:', error);
 showToast('Falha na conexão em tempo real.', 'error');
@@ -435,6 +468,7 @@ const logStatus = {
 'cancelled': '<span class="status-badge cancelled">❌ Recusado</span>'
 }[order.status] || `<span class="status-badge bg-slate-800">${order.status}</span>`;
 
+// ✅ CORREÇÃO: Adicionar onclick para abrir modal
 htmlContent += `
 <tr class="hover:bg-slate-800/40 transition-colors group border-b border-white/5 last:border-0 cursor-pointer" onclick="window.openModal('${order.id}')" role="button" tabindex="0" aria-label="Ver detalhes do pedido ${order.orderId}">
 <td class="px-6 py-4">
@@ -454,7 +488,7 @@ ${logStatus}
 </div>
 </td>
 <td class="px-6 py-4 text-right">
-<button class="w-8 h-8 inline-flex items-center justify-center rounded-lg bg-slate-800 text-slate-400 group-hover:bg-brand-600 group-hover:text-white transition-all shadow-sm" aria-label="Ver detalhes">
+<button class="w-8 h-8 inline-flex items-center justify-center rounded-lg bg-slate-800 text-slate-400 group-hover:bg-brand-600 group-hover:text-white transition-all shadow-sm" aria-label="Ver detalhes" onclick="event.stopPropagation(); window.openModal('${order.id}')">
 <i data-lucide="chevron-right" class="w-4 h-4" aria-hidden="true"></i>
 </button>
 </td>
@@ -476,11 +510,16 @@ try { lucide.createIcons({ root: container }); } catch(e) {}
 }
 
 // ==========================================
-// 🔍 MODAL DE DETALHES GLOBAIS - CORRIGIDO
+// 🔍 MODAL DE DETALHES GLOBAIS - ✅ CORRIGIDO
 // ==========================================
 window.openModal = (orderId) => {
+console.log('🔍 Abrindo modal para:', orderId);
 const order = orders.find(o => o.id === orderId);
-if (!order) return;
+if (!order) {
+console.error('❌ Pedido não encontrado:', orderId);
+showToast('Pedido não encontrado', 'error');
+return;
+}
 
 currentOrderId = orderId;
 const methodColor = order.paymentMethod === 'mpesa' ? 'danger' : 'brand';
@@ -524,12 +563,13 @@ ${order.isPaid ? '✅ DINHEIRO CONFIRMADO' : '❌ MARCAR COMO PAGO (Envia Email)
 `;
 
 document.getElementById('statusSelect').value = order.status;
+
+// ✅ CORREÇÃO: Abrir modal corretamente
 const modal = document.getElementById('orderModal');
 const dialog = document.getElementById('modalDialog');
 
-// Garantir que o overflow seja tratado com a abertura
 modal.classList.remove('hidden');
-modal.classList.add('flex');
+modal.classList.add('active');
 document.body.style.overflow = 'hidden';
 
 requestAnimationFrame(() => {
@@ -540,6 +580,7 @@ dialog.classList.add('scale-100', 'opacity-100');
 });
 
 renderIcons(modal);
+console.log('✅ Modal aberto com sucesso');
 };
 
 window.closeModal = () => {
@@ -552,7 +593,7 @@ dialog.classList.add('scale-95', 'opacity-0');
 }
 
 setTimeout(() => {
-modal.classList.remove('flex');
+modal.classList.remove('active');
 modal.classList.add('hidden');
 document.body.style.overflow = '';
 currentOrderId = null;
@@ -572,17 +613,17 @@ const oldStatus = order?.status;
 const btn = document.getElementById('updateStatusBtn');
 const originalText = btn.innerHTML;
 
-btn.disabled = true; 
-btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin" aria-hidden="true"></i> A Sincronizar DB...`; 
+btn.disabled = true;
+btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin" aria-hidden="true"></i> A Sincronizar DB...`;
 renderIcons(btn);
 
 try {
-await updateDoc(doc(db, "orders", currentOrderId), { 
-status: newStatus, 
-updatedAt: serverTimestamp() 
+await updateDoc(doc(db, "orders", currentOrderId), {
+status: newStatus,
+updatedAt: serverTimestamp()
 });
 
-// Verifica sistema de afiliados se foi concluído e tem referido, não pago ainda a comissão
+// Verifica sistema de afiliados
 if (newStatus === 'completed' && order?.referredBy && !order?.commissionProcessed) {
 await processAffiliateCPA(order);
 await updateDoc(doc(db, "orders", currentOrderId), { commissionProcessed: true });
@@ -590,7 +631,7 @@ await updateDoc(doc(db, "orders", currentOrderId), { commissionProcessed: true }
 
 showToast('Nova etapa logística gravada na Cloud.', 'success');
 
-// Automação: Envia email caso tenha acabado de ser dado como Concluído
+// Automação: Envia email
 if (newStatus === 'completed' && oldStatus !== 'completed') {
 await sendNotificationEmail(order, 'completed');
 }
@@ -600,15 +641,14 @@ window.closeModal();
 console.error('Erro ao atualizar status:', error);
 showToast('Erro interno de permissões.', 'error');
 } finally {
-btn.disabled = false; 
-btn.innerHTML = originalText; 
+btn.disabled = false;
+btn.innerHTML = originalText;
 renderIcons(btn);
 }
 });
 
 async function processAffiliateCPA(order) {
 try {
-// Localiza afiliado
 const q = query(collection(db, "users"), where("affiliateCode", "==", order.referredBy), where("role", "==", "affiliate"));
 const snap = await getDocs(q);
 if(snap.empty) return;
@@ -616,10 +656,9 @@ if(snap.empty) return;
 const refDoc = snap.docs[0];
 const refData = refDoc.data();
 
-// Verifica se cliente já tem encomenda concluída
 const qClient = query(collection(db, "orders"), where("email", "==", order.email), where("status", "==", "completed"));
 const snapClient = await getDocs(qClient);
-if(snapClient.size > 1) return; // Não é a 1a vez
+if(snapClient.size > 1) return;
 
 const commissionValue = order.tax * (refData.approvedReferrals >= 10 ? 0.05 : 0.03);
 
@@ -642,7 +681,6 @@ try {
 await updateDoc(doc(db, "orders", orderId), { isPaid: newStatus });
 showToast(newStatus ? 'Validado como PAGO!' : 'Cancelada Assinatura de Pagamento.', 'success');
 
-// Automação de Email de Pagamento Confirmado
 if (newStatus === true) {
 showToast('Servidor de Emails ativado (Envio Silencioso).', 'info');
 await sendNotificationEmail(order, 'paid');
@@ -658,7 +696,6 @@ window.deleteSingleOrder = async (orderId) => {
 if (!confirm('⚠️ AVISO DE AUDITORIA: Tem a certeza que deseja destruir permanentemente este registo financeiro?')) return;
 
 try {
-// ✅ CORREÇÃO: deleteDoc agora importado
 await deleteDoc(doc(db, "orders", orderId));
 showToast('Documento vaporizado com sucesso.', 'success');
 window.closeModal();
@@ -709,8 +746,8 @@ const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
 const link = document.createElement("a");
 link.href = URL.createObjectURL(blob);
 link.download = `Auditoria_PayGo_Pedidos_${new Date().toISOString().split('T')[0]}.csv`;
-document.body.appendChild(link); 
-link.click(); 
+document.body.appendChild(link);
+link.click();
 document.body.removeChild(link);
 
 showToast('O Livro de Registos (Excel) foi descarregado.', 'success');
@@ -740,27 +777,32 @@ closeSidebarBtn?.addEventListener('click', toggleMobileSidebar);
 sidebarOverlay?.addEventListener('click', toggleMobileSidebar);
 
 document.addEventListener('keydown', (e) => {
-if (e.key === 'Escape' && !document.getElementById('orderModal').classList.contains('hidden')) window.closeModal();
+if (e.key === 'Escape') {
+const modal = document.getElementById('orderModal');
+if (modal && modal.classList.contains('active')) {
+window.closeModal();
+}
+}
 });
 
-window.logout = async function() { 
-if(confirm('Encerrar controlo mestre?')) { 
-await signOut(auth); 
-window.location.href = '../login.html'; 
-} 
+window.logout = async function() {
+if(confirm('Encerrar controlo mestre?')) {
+await signOut(auth);
+window.location.href = '../login.html';
+}
 };
 
 // ==========================================
 // 🚀 INICIALIZAÇÃO - CORRIGIDO
 // ==========================================
-const fallbackTimer = setTimeout(() => { 
-document.getElementById('sysLoader').style.display = 'none'; 
+const fallbackTimer = setTimeout(() => {
+document.getElementById('sysLoader').style.display = 'none';
 }, 3000);
 
 onAuthStateChanged(auth, async (user) => {
-if (!user) { 
-window.location.href = '../login.html'; 
-return; 
+if (!user) {
+window.location.href = '../login.html';
+return;
 }
 
 try {
