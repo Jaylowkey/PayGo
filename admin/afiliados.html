@@ -30,43 +30,57 @@
     .glass-card { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
     .sidebar-link.active { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-left: 3px solid #60a5fa; font-weight: 700; }
     
-    .btn-action { padding: 6px 14px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s ease; }
+    .btn-action { padding: 6px 14px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s ease; }
+    .btn-action:disabled { opacity: 0.5; cursor: not-allowed; }
     .btn-action.approve { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
-    .btn-action.approve:hover { background: #22c55e; color: white; }
+    .btn-action.approve:hover:not(:disabled) { background: #22c55e; color: white; }
     .btn-action.reject { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
-    .btn-action.reject:hover { background: #ef4444; color: white; }
+    .btn-action.reject:hover:not(:disabled) { background: #ef4444; color: white; }
+    .btn-action.warning { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .btn-action.warning:hover:not(:disabled) { background: #f59e0b; color: white; }
     
     #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-    .toast { pointer-events: auto; background: rgba(15, 23, 42, 0.95); border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 12px; display: flex; gap: 12px; transform: translateX(120%); transition: transform 0.4s ease; opacity: 0; }
+    .toast { pointer-events: auto; background: rgba(15, 23, 42, 0.95); border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 12px; display: flex; gap: 12px; transform: translateX(120%); transition: transform 0.4s ease; opacity: 0; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
     .toast.show { transform: translateX(0); opacity: 1; }
     .toast.error { border-left-color: #ef4444; }
+    .toast.success { border-left-color: #22c55e; }
   </style>
 </head>
 <body class="selection:bg-brand-500 selection:text-white">
 
   <div id="sysLoader" class="fixed inset-0 bg-slate-950 z-[200] flex flex-col items-center justify-center transition-opacity duration-500">
-    <div class="w-16 h-16 border-4 border-slate-800 border-t-purple-500 rounded-full animate-spin mb-4"></div>
-    <h2 class="text-white text-xl font-bold">Módulo Financeiro</h2>
+    <div class="w-16 h-16 border-4 border-slate-800 border-t-brand-500 rounded-full animate-spin mb-4"></div>
+    <h2 class="text-white text-xl font-bold font-display">Módulo de Parceiros</h2>
+    <p class="text-slate-400 text-sm mt-1">A sincronizar dados e comissões...</p>
   </div>
 
   <div class="fixed inset-0 bg-grid opacity-20 pointer-events-none z-0"></div>
-  <div class="fixed top-0 right-0 w-[500px] h-[500px] bg-purple-600/10 rounded-full mix-blend-screen blur-[120px] pointer-events-none z-0"></div>
+  <div class="fixed top-0 right-0 w-[500px] h-[500px] bg-brand-600/10 rounded-full mix-blend-screen blur-[120px] pointer-events-none z-0"></div>
   <div id="toastContainer"></div>
 
   <header class="fixed w-full z-50 glass-nav">
     <div class="container mx-auto px-6 h-20 flex justify-between items-center">
       <div class="flex items-center gap-3">
+        <button id="mobileMenuBtn" class="lg:hidden text-slate-400 hover:text-white p-2 -ml-2"><i data-lucide="menu" class="w-6 h-6"></i></button>
         <div class="bg-gradient-to-tr from-brand-500 to-brand-400 p-2.5 rounded-xl text-white"><i data-lucide="zap" class="w-5 h-5"></i></div>
-        <span class="text-2xl font-display font-bold text-white">PayGo Admin</span>
+        <span class="text-2xl font-display font-bold text-white hidden sm:block">PayGo Admin</span>
       </div>
-      <button onclick="window.logout()" class="bg-slate-800 hover:bg-danger-500/20 text-slate-400 hover:text-danger-400 rounded-xl p-2.5 transition-colors"><i data-lucide="power" class="w-5 h-5"></i></button>
+      <button onclick="window.logout()" class="bg-slate-800 hover:bg-danger-500/20 text-slate-400 hover:text-danger-400 rounded-xl p-2.5 transition-colors" title="Sair do Sistema"><i data-lucide="power" class="w-5 h-5"></i></button>
     </div>
   </header>
 
+  <div id="sidebarOverlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-40 hidden lg:hidden opacity-0 transition-opacity duration-300"></div>
+
   <div class="pt-28 pb-10 relative z-10 container mx-auto px-6 grid lg:grid-cols-4 gap-6">
     
-    <div class="lg:col-span-1">
-      <div class="glass-card rounded-2xl p-6 sticky top-28">
+    <div id="sidebar" class="lg:col-span-1 fixed lg:static top-0 left-0 h-full lg:h-auto w-72 lg:w-auto bg-slate-900 lg:bg-transparent z-50 lg:z-auto p-6 lg:p-0 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 border-r border-slate-800 lg:border-none">
+      <div class="glass-card rounded-2xl p-0 lg:p-6 sticky top-28 border-none lg:border-solid bg-transparent lg:bg-[rgba(30,41,59,0.4)]">
+        
+        <div class="flex justify-between items-center mb-6 lg:hidden">
+            <span class="text-xl font-display font-bold text-white">PayGo Admin</span>
+            <button id="closeSidebarBtn" class="text-slate-400 hover:text-white p-2"><i data-lucide="x" class="w-6 h-6"></i></button>
+        </div>
+
         <nav class="space-y-2">
           <a href="dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white"><i data-lucide="activity" class="w-5 h-5"></i> <span class="text-sm font-medium">Visão Central</span></a>
           <a href="afiliados.html" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-xl text-white"><i data-lucide="network" class="w-5 h-5"></i> <span class="text-sm font-medium">Gestão de Parceiros</span></a>
@@ -78,16 +92,18 @@
     <div class="lg:col-span-3 space-y-8">
       
       <div>
-        <h2 class="text-3xl font-display font-extrabold text-white">Central de Afiliados</h2>
-        <p class="text-slate-400 text-sm mt-1">Aprove parceiros e pague as comissões solicitadas.</p>
+        <h2 class="text-3xl font-display font-extrabold text-white">Central de Parceiros</h2>
+        <p class="text-slate-400 text-sm mt-1">Aprove candidaturas, faça pagamentos e suspenda afiliados irregulares.</p>
+        <p class="text-xs text-brand-400 font-bold uppercase mt-2"><i data-lucide="bell-ring" class="w-3 h-3 inline"></i> Notificações Email (Resend) Ativadas</p>
       </div>
 
-      <div class="glass-card rounded-2xl p-6 border-t-2 border-t-success-500">
-        <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><i data-lucide="banknote" class="w-5 h-5 text-success-400"></i> Pedidos de Pagamento (Saques)</h3>
+      <div class="glass-card rounded-2xl p-6 border-t-2 border-t-success-500 shadow-lg">
+        <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><i data-lucide="banknote" class="w-5 h-5 text-success-400"></i> Solicitações de Pagamento</h3>
+        <p class="text-xs text-slate-400 mb-4">Ao clicar em "Marcar Pago", o afiliado receberá imediatamente um email com o recibo de pagamento.</p>
         <div class="overflow-x-auto border border-white/5 rounded-xl">
           <table class="w-full text-sm text-left">
             <thead class="bg-slate-800/50 text-[10px] uppercase text-slate-400">
-              <tr><th class="py-3 px-4">Afiliado</th><th class="py-3 px-4">Telefone (M-Pesa/eMola)</th><th class="py-3 px-4">Valor</th><th class="py-3 px-4 text-right">Ação</th></tr>
+              <tr><th class="py-3 px-4">Código Afiliado</th><th class="py-3 px-4">Canal (M-Pesa/eMola)</th><th class="py-3 px-4">Valor</th><th class="py-3 px-4 text-right">Ação</th></tr>
             </thead>
             <tbody id="withdrawalsTableBody" class="divide-y divide-white/5">
               <tr><td colspan="4" class="text-center py-6 text-slate-500">A carregar...</td></tr>
@@ -96,8 +112,9 @@
         </div>
       </div>
 
-      <div class="glass-card rounded-2xl p-6 border-t-2 border-t-warning-500">
+      <div class="glass-card rounded-2xl p-6 border-t-2 border-t-warning-500 shadow-lg">
         <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><i data-lucide="user-plus" class="w-5 h-5 text-warning-400"></i> Candidaturas Pendentes</h3>
+        <p class="text-xs text-slate-400 mb-4">O utilizador será notificado por email assim que tomar uma decisão.</p>
         <div class="overflow-x-auto border border-white/5 rounded-xl">
           <table class="w-full text-sm text-left">
             <thead class="bg-slate-800/50 text-[10px] uppercase text-slate-400">
@@ -105,6 +122,21 @@
             </thead>
             <tbody id="pendingTableBody" class="divide-y divide-white/5">
               <tr><td colspan="3" class="text-center py-6 text-slate-500">A carregar...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-2xl p-6 border-t-2 border-t-brand-500 shadow-lg">
+        <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><i data-lucide="network" class="w-5 h-5 text-brand-400"></i> Rede de Afiliados Ativos</h3>
+        <p class="text-xs text-slate-400 mb-4">Monitorize ganhos. Cancele privilégios em caso de violação de termos.</p>
+        <div class="overflow-x-auto border border-white/5 rounded-xl">
+          <table class="w-full text-sm text-left">
+            <thead class="bg-slate-800/50 text-[10px] uppercase text-slate-400">
+              <tr><th class="py-3 px-4">Nome / Email</th><th class="py-3 px-4">Código Promo</th><th class="py-3 px-4 text-center">Indicações / Ganhos</th><th class="py-3 px-4 text-right">Controlo Administrativo</th></tr>
+            </thead>
+            <tbody id="activeTableBody" class="divide-y divide-white/5">
+              <tr><td colspan="4" class="text-center py-6 text-slate-500">A carregar...</td></tr>
             </tbody>
           </table>
         </div>
@@ -131,10 +163,31 @@
     const auth = getAuth(app);
     const db = getFirestore(app, "paygodb");
 
+    const ADMIN_EMAIL_NOTIFICATIONS = 'admin@paygo.co.mz'; // O email do dono da plataforma para receber logs
+
     lucide.createIcons();
 
-    const fallbackTimer = setTimeout(() => { document.getElementById('sysLoader').style.display = 'none'; }, 3000);
+    // Lógica Mobile
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+    const closeSidebarBtn = document.getElementById('closeSidebarBtn');
 
+    function toggleMobileSidebar() {
+      sidebar.classList.toggle('-translate-x-full');
+      if(sidebarOverlay.classList.contains('hidden')) {
+        sidebarOverlay.classList.remove('hidden');
+        setTimeout(() => sidebarOverlay.classList.remove('opacity-0'), 10);
+      } else {
+        sidebarOverlay.classList.add('opacity-0');
+        setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
+      }
+    }
+    mobileMenuBtn.addEventListener('click', toggleMobileSidebar);
+    closeSidebarBtn.addEventListener('click', toggleMobileSidebar);
+    sidebarOverlay.addEventListener('click', toggleMobileSidebar);
+
+    // Proteção
     onAuthStateChanged(auth, async (user) => {
       if (!user) { window.location.href = '../login.html'; return; }
       
@@ -143,18 +196,43 @@
         if (userDoc.exists() && (userDoc.data().role === 'admin' || userDoc.data().role === 'superadmin')) {
           await loadWithdrawals();
           await loadPendingAffiliates();
+          await loadActiveAffiliates();
         } else {
           window.location.href = '../index.html';
         }
       } catch (error) {
         showToast("Erro na ligação ao servidor.", "error");
       } finally {
-        clearTimeout(fallbackTimer);
-        document.getElementById('sysLoader').style.display = 'none';
+        document.getElementById('sysLoader').style.opacity = '0';
+        setTimeout(() => document.getElementById('sysLoader').style.display = 'none', 500);
       }
     });
 
+    // ==========================================
+    // NOTIFICAÇÕES ENGINE (RESEND API)
+    // ==========================================
+    async function sendSystemNotification(toEmail, subject, templateName, variables) {
+        try {
+            await fetch('/api/send-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    to: toEmail,
+                    subject: subject,
+                    template: templateName, // O teu backend na Vercel deve estar preparado para receber e mapear isto
+                    type: 'transactional',
+                    variables: variables
+                })
+            });
+            console.log(`[Email Sent] To: ${toEmail} | Template: ${templateName}`);
+        } catch (error) {
+            console.error(`[Email Failed] To: ${toEmail}`, error);
+        }
+    }
+
+    // ==========================================
     // 1. GESTÃO DE SAQUES
+    // ==========================================
     async function loadWithdrawals() {
       try {
         const q = query(collection(db, "withdrawals"), where("status", "==", "pending"));
@@ -162,7 +240,7 @@
         const tb = document.getElementById('withdrawalsTableBody');
         
         if(snap.empty) {
-          tb.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-500"><i data-lucide="check-circle" class="w-6 h-6 mx-auto mb-2 text-success-500"></i>Nenhum pagamento pendente.</td></tr>`;
+          tb.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-500"><i data-lucide="check-circle" class="w-6 h-6 mx-auto mb-2 text-success-500 opacity-50"></i>Nenhum pedido de pagamento pendente.</td></tr>`;
           lucide.createIcons();
           return;
         }
@@ -172,33 +250,57 @@
           const w = doc.data();
           html += `
           <tr class="hover:bg-slate-800/40">
-            <td class="py-4 px-4"><span class="font-bold text-white block">${w.affiliateCode || 'Afiliado'}</span></td>
-            <td class="py-4 px-4 font-mono text-brand-300">${w.method?.toUpperCase()} - ${w.phone}</td>
+            <td class="py-4 px-4"><span class="font-bold text-white block">${w.affiliateCode || 'N/A'}</span></td>
+            <td class="py-4 px-4 font-mono text-brand-300 text-xs">${w.method?.toUpperCase()} - ${w.phone}</td>
             <td class="py-4 px-4 font-black text-success-400">${w.amount} MT</td>
             <td class="py-4 px-4 text-right">
-              <button onclick="window.markWithdrawalPaid('${doc.id}')" class="action-btn approve">Marcar Pago</button>
+              <button id="btn-pay-${doc.id}" onclick="window.markWithdrawalPaid('${doc.id}', '${w.userId}', ${w.amount})" class="action-btn approve"><i data-lucide="check-circle" class="w-4 h-4"></i> Marcar Pago</button>
             </td>
           </tr>`;
         });
         tb.innerHTML = html;
         lucide.createIcons();
       } catch(e) {
-        showToast('Erro ao ler saques', 'error');
+        showToast('Erro ao ler base de dados de saques.', 'error');
       }
     }
 
-    window.markWithdrawalPaid = async function(id) {
-      if(!confirm('Confirma que já transferiu o dinheiro para o parceiro?')) return;
+    window.markWithdrawalPaid = async function(id, userId, amount) {
+      if(!confirm(`Confirma que já transferiu ${amount} MT para o telemóvel do parceiro? Esta ação não pode ser desfeita.`)) return;
+      
+      const btn = document.getElementById(`btn-pay-${id}`);
+      btn.disabled = true;
+      btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Processando...`;
+      lucide.createIcons({root: btn});
+
       try {
+        // 1. Pega dados do user para enviar o email
+        const userDoc = await getDoc(doc(db, "users", userId));
+        const userEmail = userDoc.exists() ? userDoc.data().email : null;
+        const userName = userDoc.exists() ? userDoc.data().name : 'Parceiro';
+
+        // 2. Atualiza a DB
         await updateDoc(doc(db, "withdrawals", id), { status: 'approved', processedAt: serverTimestamp() });
-        showToast('Pagamento validado!', 'success');
+        
+        // 3. Notificações!
+        if (userEmail) {
+            sendSystemNotification(userEmail, '💸 Pagamento Processado - PayGo', 'payout-processed', { name: userName, amount: amount + ' MT' });
+            sendSystemNotification(ADMIN_EMAIL_NOTIFICATIONS, 'Logs: Saque Pago', 'admin-log', { action: `Pagamento de ${amount}MT concluído para o afiliado ${userEmail}`});
+        }
+
+        showToast('Saque marcado como Pago. Notificações enviadas.', 'success');
         loadWithdrawals();
       } catch(e) {
-        showToast('Erro ao validar pagamento.', 'error');
+        showToast('Erro ao validar pagamento na base de dados.', 'error');
+        btn.disabled = false;
+        btn.innerHTML = `<i data-lucide="check-circle" class="w-4 h-4"></i> Marcar Pago`;
+        lucide.createIcons({root: btn});
       }
     };
 
-    // 2. GESTÃO DE CANDIDATURAS
+    // ==========================================
+    // 2. GESTÃO DE CANDIDATURAS PENDENTES
+    // ==========================================
     async function loadPendingAffiliates() {
       try {
         const q = query(collection(db, "users"), where("status", "==", "pending"));
@@ -206,47 +308,122 @@
         const tb = document.getElementById('pendingTableBody');
         
         const pendentes = [];
-        snap.forEach(d => {
-          // Verifica se a conta pediu acesso de afiliado (status pendente e tem referredBy ou quis ser afiliado)
-          if(d.data().status === 'pending') pendentes.push({id: d.id, ...d.data()});
-        });
+        snap.forEach(d => { if(d.data().status === 'pending') pendentes.push({id: d.id, ...d.data()}); });
 
         if(pendentes.length === 0) {
-          tb.innerHTML = `<tr><td colspan="3" class="text-center py-6 text-slate-500">Sem candidaturas pendentes.</td></tr>`;
+          tb.innerHTML = `<tr><td colspan="3" class="text-center py-6 text-slate-500"><i data-lucide="user-check" class="w-6 h-6 mx-auto mb-2 opacity-30 text-warning-500"></i>Sem novas candidaturas para análise.</td></tr>`;
+          lucide.createIcons();
           return;
         }
 
         tb.innerHTML = pendentes.map(u => `
         <tr class="hover:bg-slate-800/40">
-          <td class="py-4 px-4"><div class="font-bold text-white">${u.name || 'N/A'}</div><div class="text-xs text-slate-400">${u.email}</div></td>
-          <td class="py-4 px-4 text-xs text-slate-400">${u.createdAt?.toDate ? u.createdAt.toDate().toLocaleDateString('pt-MZ') : '-'}</td>
-          <td class="py-4 px-4 text-right">
-            <button onclick="window.decideAffiliate('${u.id}', true)" class="action-btn approve mr-1"><i data-lucide="check" class="w-3 h-3"></i></button>
-            <button onclick="window.decideAffiliate('${u.id}', false)" class="action-btn reject"><i data-lucide="x" class="w-3 h-3"></i></button>
+          <td class="py-4 px-4"><div class="font-bold text-white text-sm">${u.name || 'Desconhecido'}</div><div class="text-xs text-slate-400 font-mono mt-0.5">${u.email}</div></td>
+          <td class="py-4 px-4 text-xs font-bold text-slate-400 uppercase tracking-widest">${u.createdAt?.toDate ? u.createdAt.toDate().toLocaleDateString('pt-MZ') : '-'}</td>
+          <td class="py-4 px-4 text-right whitespace-nowrap">
+            <button id="btn-apr-${u.id}" onclick="window.decideAffiliate('${u.id}', '${u.email}', '${u.name}', true)" class="action-btn approve"><i data-lucide="check" class="w-4 h-4"></i> Aprovar</button>
+            <button id="btn-rej-${u.id}" onclick="window.decideAffiliate('${u.id}', '${u.email}', '${u.name}', false)" class="action-btn reject"><i data-lucide="x" class="w-4 h-4"></i> Rejeitar</button>
           </td>
         </tr>`).join('');
         lucide.createIcons();
       } catch(e) {
-        showToast('Erro ao ler candidaturas', 'error');
+        showToast('Erro ao ler candidaturas pendentes.', 'error');
       }
     }
 
-    window.decideAffiliate = async function(id, isApproved) {
-      const msg = isApproved ? 'Aprovar parceiro?' : 'Rejeitar parceiro?';
-      if(!confirm(msg)) return;
+    window.decideAffiliate = async function(id, email, name, isApproved) {
+      if(!confirm(isApproved ? `Tem a certeza que deseja APROVAR ${name} como afiliado da PayGo?` : `Rejeitar a candidatura de ${name}? A conta passará a ser um cliente normal.`)) return;
       
+      const btnA = document.getElementById(`btn-apr-${id}`);
+      const btnR = document.getElementById(`btn-rej-${id}`);
+      if(btnA) btnA.disabled = true;
+      if(btnR) btnR.disabled = true;
+
       try {
         await updateDoc(doc(db, "users", id), {
-          status: 'active',
+          status: 'active', // Fica sempre ativo no sistema para poder comprar coisas
           role: isApproved ? 'affiliate' : 'user',
           affiliateCodeActive: isApproved,
           updatedAt: serverTimestamp()
         });
-        showToast('Decisão gravada.', 'success');
+
+        // Notificações Email Automáticas
+        if (isApproved) {
+            sendSystemNotification(email, '🎉 Parabéns! Conta de Parceiro PayGo Aprovada', 'affiliate-approved', { name: name });
+            sendSystemNotification(ADMIN_EMAIL_NOTIFICATIONS, 'Logs: Afiliado Aprovado', 'admin-log', { action: `Aprovada a parceria para o utilizador ${email}`});
+            showToast('Parceiro aprovado. Email de boas-vindas enviado.', 'success');
+        } else {
+            sendSystemNotification(email, 'Atualização sobre a sua candidatura PayGo', 'affiliate-rejected', { name: name });
+            sendSystemNotification(ADMIN_EMAIL_NOTIFICATIONS, 'Logs: Afiliado Rejeitado', 'admin-log', { action: `Rejeitada a parceria para o utilizador ${email}`});
+            showToast('Candidatura rejeitada. Notificação enviada.', 'success');
+        }
+
         loadPendingAffiliates();
+        loadActiveAffiliates(); // Refresh the active list below
       } catch(e) {
-        showToast('Erro na decisão.', 'error');
+        showToast('Erro ao processar a decisão de candidatura.', 'error');
       }
+    };
+
+    // ==========================================
+    // 3. GESTÃO DE AFILIADOS ATIVOS (NOVO)
+    // ==========================================
+    async function loadActiveAffiliates() {
+        try {
+            const q = query(collection(db, "users"), where("role", "==", "affiliate"), where("status", "==", "active"));
+            const snap = await getDocs(q);
+            const tb = document.getElementById('activeTableBody');
+            
+            const ativos = [];
+            snap.forEach(d => ativos.push({id: d.id, ...d.data()}));
+
+            if(ativos.length === 0) {
+                tb.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-500"><i data-lucide="network" class="w-6 h-6 mx-auto mb-2 opacity-30 text-brand-500"></i>Sem parceiros a operar no sistema.</td></tr>`;
+                lucide.createIcons();
+                return;
+            }
+
+            tb.innerHTML = ativos.map(u => `
+            <tr class="hover:bg-slate-800/40">
+                <td class="py-4 px-4"><div class="font-bold text-white text-sm">${u.name || 'Desconhecido'}</div><div class="text-xs text-slate-400 font-mono mt-0.5">${u.email}</div></td>
+                <td class="py-4 px-4 font-mono font-bold text-brand-400 bg-brand-500/10 px-2 py-1 rounded inline-block mt-2">${u.affiliateCode || 'S/N'}</td>
+                <td class="py-4 px-4 text-center">
+                    <div class="text-xs text-slate-300 font-bold mb-1"><i data-lucide="users" class="w-3 h-3 inline"></i> ${u.totalReferrals || 0} Registos</div>
+                    <div class="text-xs text-success-400 font-bold"><i data-lucide="shopping-cart" class="w-3 h-3 inline"></i> ${(u.affiliateEarnings || 0).toLocaleString('pt-MZ')} MT Ganhos</div>
+                </td>
+                <td class="py-4 px-4 text-right">
+                    <button id="btn-rev-${u.id}" onclick="window.revokeAffiliate('${u.id}', '${u.email}', '${u.name}')" class="action-btn warning"><i data-lucide="slash" class="w-4 h-4"></i> Suspender Parceria</button>
+                </td>
+            </tr>`).join('');
+            lucide.createIcons();
+        } catch(e) {
+            console.error(e);
+            showToast('Erro ao ler a tabela de afiliados ativos.', 'error');
+        }
+    }
+
+    window.revokeAffiliate = async function(id, email, name) {
+        if(!confirm(`PERIGO: Deseja remover o acesso de afiliado a ${name}? O utilizador deixará de ganhar comissões.`)) return;
+        
+        const btn = document.getElementById(`btn-rev-${id}`);
+        if(btn) { btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A remover...`; lucide.createIcons({root: btn}); }
+
+        try {
+            await updateDoc(doc(db, "users", id), {
+                role: 'user', // Desce para cliente normal
+                affiliateCodeActive: false,
+                updatedAt: serverTimestamp()
+            });
+
+            // Notificações
+            sendSystemNotification(email, '⚠️ Acesso ao Programa de Parceiros Suspenso', 'affiliate-revoked', { name: name });
+            sendSystemNotification(ADMIN_EMAIL_NOTIFICATIONS, 'Logs de Segurança: Afiliado Suspenso', 'admin-log', { action: `O admin removeu as permissões de afiliado ao utilizador ${email}`});
+
+            showToast('Privilégios de parceiro revogados. Email enviado.', 'success');
+            loadActiveAffiliates();
+        } catch(e) {
+            showToast('Falha técnica ao tentar revogar acessos.', 'error');
+        }
     };
 
     window.logout = async function() { await signOut(auth); window.location.href = '../login.html'; };
@@ -258,7 +435,7 @@
       t.innerHTML = `<span class="text-sm font-bold text-white">${msg}</span>`;
       container.appendChild(t);
       requestAnimationFrame(() => t.classList.add('show'));
-      setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 4000);
+      setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 5000);
     }
   </script>
 </body>
