@@ -37,18 +37,15 @@ export default async function handler(req, res) {
   }
 
   try {
-    // ✅ Log do payload recebido (sem dados sensíveis)
     const payload = req.body;
     console.log('🔔 [paysuite-webhook] Evento recebido:', {
       event: payload?.event,
-      paymentId: payload?.data?.payment_id,
       transactionId: payload?.data?.transaction_id,
-      status: payload?.data?.status,
-      timestamp: new Date().toISOString()
+      status: payload?.data?.status
     });
 
-    // ✅ Processar apenas eventos relevantes
-    if (!['payment.completed', 'payment.failed', 'payment.pending'].includes(payload?.event)) {
+    // ✅ Só avança se o evento for "Pagamento Concluído"
+    if (payload?.event !== 'payment.completed') {
       console.log('⏭️ [paysuite-webhook] Evento ignorado:', payload?.event);
       return res.status(200).json({ received: true, ignored: true });
     }
@@ -62,7 +59,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing transaction_id' });
     }
 
-    // ✅ Buscar pedido no Firestore
+    // ✅ Procurar a Encomenda na Base de Dados
     const ordersRef = collection(db, 'orders');
     const q = query(ordersRef, where('orderId', '==', transactionId));
     const snapshot = await getDocs(q);
@@ -75,147 +72,57 @@ export default async function handler(req, res) {
     const orderDoc = snapshot.docs[0];
     const orderData = orderDoc.data();
 
-    // ✅ Preparar dados de atualização
-    const updateData = {
-      paymentStatus: payload.event === 'payment.completed' ? 'paid' : 
-                    payload.event === 'payment.failed' ? 'failed' : 'pending',
-      paysuitePaymentId: paymentData.payment_id || null,
-      paysuiteStatus: paymentData.status || null,
-      updatedAt: new Date().toISOString(),
-      paymentDetails: {
-        method: paymentData.payment_method || null,
-        phone: paymentData.customer?.phone || null,
-        transactionRef: paymentData.transaction_ref || null,
-        completedAt: paymentData.completed_at || null,
-        providerResponse: paymentData // Armazena resposta completa para auditoria
-      }
-    };
-
-    // ✅ Se pagamento concluído, atualizar status geral
-    if (payload.event === 'payment.completed') {
-      updateData.status = 'processing';
-      updateData.paidAt = new Date().toISOString();
-      updateData.paidAmount = paymentData.amount;
-      updateData.paidCurrency = paymentData.currency;
+    // Proteção contra duplicação de processamento
+    if (orderData.isPaid) {
+        console.log(`✅ [paysuite-webhook] Pedido ${transactionId} já processado. Ignorando.`);
+        return res.status(200).json({ received: true, processed: false, reason: 'Already paid' });
     }
 
-    // ✅ Atualizar documento no Firestore
-    await updateDoc(doc(db, 'orders', orderDoc.id), updateData);
-
-    console.log('✅ [paysuite-webhook] Pedido atualizado:', {
-      orderId: transactionId,
-      newStatus: updateData.status,
-      paymentStatus: updateData.paymentStatus
+    // ✅ 1. Atualizar o Firestore (Dinheiro entrou!)
+    await updateDoc(doc(db, 'orders', orderDoc.id), {
+      status: 'processing', // Move de 'pending' para 'processing'
+      isPaid: true,         // Marca como pago
+      paysuitePaymentId: paymentData.payment_id || null,
+      updatedAt: new Date().toISOString()
     });
 
-    // ✅ ENVIAR NOTIFICAÇÕES (apenas para pagamento concluído)
-    if (payload.event === 'payment.completed') {
-      await sendPaymentNotifications(orderData, updateData, paymentData);
+    console.log(`✅ [paysuite-webhook] Pedido ${transactionId} atualizado para PAGO. Chamando notify-order...`);
+
+    // ✅ 2. Disparar a TUA API de Notificações (notify-order)
+    const siteUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://paygo.co.mz';
+    
+    // Mesclar os dados da base de dados com a referência de pagamento para o Lark exibir
+    const fullOrderData = {
+        ...orderData,
+        paysuitePaymentId: paymentData.payment_id
+    };
+
+    const notifyResponse = await fetch(`${siteUrl}/api/notify-order`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        orderData: fullOrderData,
+        action: 'payment_confirmed', // A tag que a tua API procura para mandar o e-mail de "Dinheiro Recebido"
+        sendEmail: true,
+        sendLark: true
+      })
+    });
+
+    if (!notifyResponse.ok) {
+        console.warn(`⚠️ [paysuite-webhook] A API notify-order retornou um erro: ${notifyResponse.status}`);
+    } else {
+        console.log(`🚀 [paysuite-webhook] Notificações disparadas com sucesso!`);
     }
 
-    // ✅ Responder para PaySuite (confirma recebimento)
+    // ✅ 3. Responder à PaySuite
     return res.status(200).json({ 
       received: true, 
       processed: true,
-      orderId: transactionId,
-      event: payload.event
+      orderId: transactionId
     });
 
   } catch (err) {
-    console.error('❌ [paysuite-webhook] Erro crítico:', {
-      message: err.message,
-      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
-    });
-    
-    // ✅ Retornar 200 para evitar retries infinitos da PaySuite
-    // O erro é logado para investigação posterior
-    return res.status(200).json({ 
-      received: true, 
-      error: true,
-      message: 'Internal processing error'
-    });
-  }
-}
-
-// ============================================================================
-// 📧 FUNÇÃO CENTRALIZADA DE NOTIFICAÇÕES
-// ============================================================================
-async function sendPaymentNotifications(orderData, updateData, paymentData) {
-  try {
-    console.log('🔔 [paysuite-webhook] Iniciando notificações para:', orderData?.email);
-
-    // ✅ URL CORRIGIDA - SEM ESPAÇOS
-    const siteUrl = (process.env.SITE_URL || 'https://paygo.co.mz').trim();
-    const notifyEndpoint = `${siteUrl}/api/notify-order`;
-
-    // ✅ Combinar dados do pedido com informações de pagamento
-    const mergedOrderData = {
-      ...orderData,
-      ...updateData,
-      paymentDetails: {
-        ...orderData.paymentDetails,
-        ...updateData.paymentDetails,
-        ...paymentData
-      },
-      // Garantir campos essenciais para os templates
-      orderId: orderData.orderId,
-      name: orderData.name,
-      email: orderData.email,
-      whatsapp: orderData.whatsapp,
-      total: orderData.total,
-      paymentMethod: orderData.paymentMethod,
-      type: orderData.type,
-      detail: orderData.detail
-    };
-
-    // ✅ Payload para o endpoint de notificação
-    const notifyPayload = {
-      orderData: mergedOrderData,
-      action: 'payment_confirmed',  // ✅ Ação específica para pagamento confirmado
-      sendEmail: true,              // ✅ Enviar email ao cliente
-      sendLark: true,               // ✅ Notificar admin via Lark
-      metadata: {
-        source: 'paysuite-webhook',
-        paymentId: paymentData.payment_id,
-        transactionRef: paymentData.transaction_ref,
-        timestamp: new Date().toISOString()
-      }
-    };
-
-    console.log('📤 [paysuite-webhook] Enviando notificação para:', notifyEndpoint);
-
-    // ✅ Enviar notificação com timeout e retry simples
-    const response = await fetch(notifyEndpoint, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'User-Agent': 'PayGo-PaySuite-Webhook/1.0'
-      },
-      body: JSON.stringify(notifyPayload),
-      signal: AbortSignal.timeout(15000) // 15 segundos timeout
-    });
-
-    const result = await response.json().catch(() => ({ raw: 'Invalid JSON' }));
-
-    console.log('📥 [paysuite-webhook] Resposta da notificação:', {
-      status: response.status,
-      ok: response.ok,
-      result: result
-    });
-
-    if (!response.ok) {
-      console.warn('⚠️ [paysuite-webhook] Notificação retornou erro HTTP:', response.status);
-    }
-
-    return { success: true, result };
-
-  } catch (notifyErr) {
-    console.error('❌ [paysuite-webhook] Erro ao enviar notificações:', {
-      message: notifyErr.message,
-      code: notifyErr.code,
-      name: notifyErr.name
-    });
-    // ✅ Não lançar erro - notificações são secundárias ao processamento do pagamento
-    return { success: false, error: notifyErr.message };
+    console.error('❌ [paysuite-webhook] Erro crítico:', err);
+    return res.status(200).json({ received: true, error: true }); // Responde 200 para a PaySuite não ficar a repetir
   }
 }
