@@ -1,18 +1,8 @@
-import { initializeApp, getApps } from 'firebase-admin/app';
+import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-
-// Inicializar Firebase Admin (Singleton para evitar crashes de memória na Vercel)
-if (!getApps().length) {
-  initializeApp({
-    credential: process.env.FIREBASE_SERVICE_ACCOUNT 
-      ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
-      : undefined,
-    projectId: process.env.FIREBASE_PROJECT_ID
-  });
-}
 
 export default async function handler(req, res) {
   // CORS Security Headers
@@ -24,12 +14,32 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
+    // 🔥 INICIALIZAÇÃO BLINDADA DO FIREBASE ADMIN
+    if (!getApps().length) {
+        if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
+            console.error("❌ ERRO CRÍTICO: FIREBASE_SERVICE_ACCOUNT não encontrada nas variáveis de ambiente da Vercel.");
+            return res.status(500).json({ error: "Erro de configuração no servidor. Contacte o suporte." });
+        }
+
+        let serviceAccount;
+        try {
+            serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+        } catch (parseError) {
+            console.error("❌ ERRO CRÍTICO: O formato do FIREBASE_SERVICE_ACCOUNT é inválido (Não é JSON puro).");
+            return res.status(500).json({ error: "Chave do servidor corrompida. Contacte o suporte." });
+        }
+
+        initializeApp({
+            credential: cert(serviceAccount)
+        });
+    }
+
     const { email } = req.body;
     if (!email) return res.status(400).json({ error: 'Email missing' });
 
     const auth = getAuth();
     
-    // Determinar o URL Base (Vercel em produção ou localhost)
+    // Determinar o URL Base
     const baseUrl = process.env.VERCEL_URL 
         ? `https://${process.env.VERCEL_URL}` 
         : (process.env.NEXT_PUBLIC_SITE_URL || 'https://paygo.co.mz');
@@ -42,11 +52,10 @@ export default async function handler(req, res) {
     
     const firebaseLink = await auth.generatePasswordResetLink(email, actionCodeSettings);
 
-    // 2. MAGIA WHITE-LABEL: Extrair o Token do Firebase e injetar no teu HTML
+    // 2. Extrair o Token do Firebase e injetar no HTML da PayGo
     const urlObj = new URL(firebaseLink);
     const oobCode = urlObj.searchParams.get('oobCode');
     
-    // O link final, 100% PayGo, direcionado para o ficheiro que criaste
     const customResetLink = `${baseUrl}/seguranca.html?mode=resetPassword&oobCode=${oobCode}`;
 
     // 3. Criar o HTML Premium
@@ -101,7 +110,7 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error('❌ Erro na recuperação de senha:', error);
     
-    // Proteção Anti-Hacker (Impede que adivinhem se um e-mail está registado)
+    // Proteção Anti-Hacker
     if (error.code === 'auth/user-not-found') {
         return res.status(200).json({ success: true }); 
     }
