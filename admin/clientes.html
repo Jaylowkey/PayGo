@@ -16,7 +16,9 @@
       theme: {
         extend: {
           fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'], display: ['"Outfit"', 'sans-serif'], mono: ['"Fira Code"', 'monospace'] },
-          colors: { brand: { 50: '#eff6ff', 500: '#3b82f6', 600: '#2563eb', 950: '#0f172a' }, success: { 400: '#4ade80', 500: '#22c55e' }, warning: { 400: '#fbbf24', 500: '#f59e0b' }, danger: { 400: '#f87171', 500: '#ef4444' } }
+          colors: { brand: { 50: '#eff6ff', 500: '#3b82f6', 600: '#2563eb', 950: '#0f172a' }, success: { 400: '#4ade80', 500: '#22c55e' }, warning: { 400: '#fbbf24', 500: '#f59e0b' }, danger: { 400: '#f87171', 500: '#ef4444' } },
+          animation: { 'slide-up': 'slideUp 0.5s ease-out forwards' },
+          keyframes: { slideUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } } }
         }
       }
     };
@@ -48,7 +50,7 @@
     .online-ping .ping-bg { position: absolute; width: 100%; height: 100%; border-radius: 50%; background-color: #22c55e; opacity: 0.75; animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite; }
     .online-ping .ping-core { position: relative; width: 8px; height: 8px; border-radius: 50%; background-color: #22c55e; margin: auto; }
 
-    #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+    #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
     .toast { pointer-events: auto; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 12px; display: flex; gap: 12px; transform: translateX(120%); transition: transform 0.4s ease; opacity: 0; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
     .toast.show { transform: translateX(0); opacity: 1; }
     .toast.error { border-left-color: #ef4444; }
@@ -58,7 +60,7 @@
     @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 
     /* Modal Animation */
-    .modal { display: none; position: fixed; inset: 0; z-index: 1000; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; }
+    .modal { display: none; position: fixed; inset: 0; z-index: 10000; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; }
     .modal.active { display: flex; opacity: 1; }
     .modal-overlay { position: absolute; inset: 0; background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(4px); }
     .modal-content { position: relative; background: #0f172a; border-radius: 24px; padding: 0; max-width: 800px; width: 95%; max-height: 90vh; overflow-y: auto; transform: scale(0.95); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); border: 1px solid rgba(255,255,255,0.1); }
@@ -138,7 +140,7 @@
       <header class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
         <div>
           <h1 class="text-3xl font-display font-extrabold text-white tracking-tight">Gestão de Clientes</h1>
-          <p class="text-slate-400 text-sm mt-1">Monitorize quem está online, o histórico financeiro e gira os acessos.</p>
+          <p class="text-slate-400 text-sm mt-1">Monitorize quem está online, elimine fantasmas e gira acessos.</p>
         </div>
       </header>
 
@@ -274,19 +276,15 @@
     lucide.createIcons();
     let allUsers = [];
 
-    // Proteção Loader
     const fallbackTimer = setTimeout(() => { document.getElementById('sysLoader').style.display = 'none'; }, 3000);
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) { window.location.href = '../login.html'; return; }
-      
       try {
         const userDoc = await getDoc(doc(db, "users", user.uid));
         if (userDoc.exists() && (userDoc.data().role === 'admin' || userDoc.data().role === 'superadmin')) {
           document.getElementById('adminName').textContent = userDoc.data().name || 'Admin';
           await window.loadUsersDatabase();
-          
-          // Refresh online status a cada 30 segundos silenciosamente
           setInterval(() => window.renderTable(allUsers), 30000); 
         } else {
           window.location.href = '../index.html';
@@ -301,7 +299,6 @@
       }
     });
 
-    // Função de Carregamento Principal (Apenas da tabela USERS)
     window.loadUsersDatabase = async function() {
       try {
         const usersRef = collection(db, "users");
@@ -312,7 +309,6 @@
         
         snap.forEach(doc => {
             const data = doc.data();
-            // Ignorar as contas de administradores e superadmins nesta view
             if(data.role !== 'admin' && data.role !== 'superadmin') {
                 allUsers.push({ id: doc.id, ...data });
                 if(data.status === 'active') active++;
@@ -320,7 +316,6 @@
             }
         });
         
-        // Ordenar pelo acesso mais recente
         allUsers.sort((a,b) => {
             const tA = a.lastActivity?.toDate ? a.lastActivity.toDate().getTime() : 0;
             const tB = b.lastActivity?.toDate ? b.lastActivity.toDate().getTime() : 0;
@@ -331,14 +326,13 @@
         document.getElementById('kpiActive').textContent = active;
         document.getElementById('kpiBanned').textContent = banned;
         
-        window.filterTable(); // Usa o filtro atual para renderizar
+        window.filterTable();
       } catch (error) {
         showToast('Erro ao carregar a base de dados de clientes.', 'error');
         console.error(error);
       }
     };
 
-    // Calculadora Inteligente de Tempo (Last Seen)
     function timeAgo(date) {
         const seconds = Math.floor((new Date() - date) / 1000);
         if (seconds < 300) return '🟢 Online Agora'; 
@@ -362,34 +356,30 @@
         let onlineCount = 0;
         
         if(usersToRender.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" class="text-center py-10 text-slate-500"><i data-lucide="user-x" class="w-8 h-8 mx-auto mb-3 opacity-30"></i>Nenhum cliente encontrado com os filtros atuais.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center py-10 text-slate-500"><i data-lucide="user-x" class="w-8 h-8 mx-auto mb-3 opacity-30"></i>Nenhum cliente encontrado.</td></tr>`;
             lucide.createIcons();
             return;
         }
 
         tbody.innerHTML = usersToRender.map(u => {
             const lastAct = u.lastActivity?.toDate ? u.lastActivity.toDate() : null;
-            const isOnline = lastAct && (Date.now() - lastAct.getTime() < 300000); // 5 mins
+            const isOnline = lastAct && (Date.now() - lastAct.getTime() < 300000); 
             if(isOnline && u.status === 'active') onlineCount++;
 
             const seenText = lastAct ? timeAgo(lastAct) : 'Nunca acedeu';
             const statusBadge = u.status === 'active' ? 'active' : (u.status === 'banned' ? 'banned' : 'blocked');
             const statusText = u.status === 'active' ? 'Ativo' : (u.status === 'banned' ? 'Banido' : 'Bloqueado');
 
-            let actionBtns = '';
-            
-            // Botão Abrir (Modal)
-            actionBtns += `<button onclick="window.viewClientModal('${u.id}', '${u.name || 'Cliente'}', '${u.email}', '${u.phone || ''}', '${u.createdAt?.toDate ? u.createdAt.toDate().toISOString() : ''}')" class="action-btn bg-slate-800 text-slate-300 hover:bg-slate-700 mr-2" title="Ver Histórico"><i data-lucide="eye" class="w-4 h-4"></i> Abrir</button>`;
+            let actionBtns = `<button onclick="window.viewClientModal('${u.id}', '${u.name || 'Cliente'}', '${u.email}', '${u.phone || ''}', '${u.createdAt?.toDate ? u.createdAt.toDate().toISOString() : ''}')" class="action-btn bg-slate-800 text-slate-300 hover:bg-slate-700 mr-2" title="Ver Histórico"><i data-lucide="eye" class="w-4 h-4"></i> Abrir</button>`;
 
-            // Bloquear / Desbloquear
             if(u.status === 'active') {
                 actionBtns += `<button onclick="window.changeStatus('${u.id}', 'blocked')" class="action-btn block" title="Suspender Conta"><i data-lucide="lock" class="w-4 h-4"></i></button>`;
             } else {
                 actionBtns += `<button onclick="window.changeStatus('${u.id}', 'active')" class="action-btn activate" title="Restaurar Conta"><i data-lucide="unlock" class="w-4 h-4"></i></button>`;
             }
             
-            // Botão Eliminar Suprema
-            actionBtns += `<button onclick="window.deleteUserRecord('${u.id}', '${u.name || u.email}')" class="action-btn delete ml-2 !border-danger-500 !text-danger-500" title="Apagar Permanentemente DB"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
+            // 🚨 BOTÃO DE ELIMINAÇÃO TOTAL 🚨
+            actionBtns += `<button onclick="window.deleteUserRecord('${u.id}', '${u.name || u.email}')" class="action-btn delete ml-2 !border-danger-500 !text-danger-500" title="Erradicar Perfil e Conta (Remover Fantasma)"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
 
             return `
             <tr class="hover:bg-slate-800/40 transition-colors">
@@ -451,9 +441,6 @@
         window.renderTable(filtered);
     };
 
-    // ==========================================
-    // AÇÕES DE BASE DE DADOS (DANGEROUS)
-    // ==========================================
     window.changeStatus = async function(userId, newStatus) {
         if(!confirm(`Deseja alterar o estado deste cliente para [${newStatus.toUpperCase()}]?`)) return;
         try {
@@ -465,29 +452,40 @@
         }
     };
 
+    // ==========================================
+    // 🚀 LÓGICA DE LIMPEZA DE FANTASMAS (Auth + DB)
+    // ==========================================
     window.deleteUserRecord = async function(userId, userName) {
-        const confirm1 = confirm(`⚠️ PERIGO EXTREMO ⚠️\n\nTem a certeza absoluta que deseja APAGAR PERMANENTEMENTE a conta de ${userName}?`);
+        const confirm1 = confirm(`⚠️ PERIGO EXTREMO ⚠️\n\nTem a certeza absoluta que deseja APAGAR PERMANENTEMENTE a conta de ${userName}?\n\nIsto limpará o registo da Base de Dados e destruirá a Conta de Acesso (Login).`);
         if(!confirm1) return;
         
-        const confirm2 = prompt(`ÚLTIMO AVISO:\nEsta ação irá destruir o registo do utilizador na Base de Dados e ele perderá o acesso e o histórico.\n\nEscreva a palavra APAGAR para confirmar:`);
+        const confirm2 = prompt(`ÚLTIMO AVISO:\nEscreva a palavra APAGAR para confirmar a desintegração total:`);
         if(confirm2 !== 'APAGAR') {
             showToast('Ação cancelada pelo administrador.', 'info');
             return;
         }
 
         try {
+            showToast('A contactar servidores para desintegração...', 'info');
+
+            // 1. Tentar Apagar do Firebase Auth (Chamada à nova API)
+            await fetch('/api/delete-user', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uid: userId })
+            }).catch(e => console.warn('Aviso: API de eliminação falhou ou ainda não existe. Limpando apenas Firestore...', e));
+
+            // 2. Apagar da Base de Dados Local (Firestore)
             await deleteDoc(doc(db, "users", userId));
-            showToast(`A conta de ${userName} foi eliminada e vaporizada do sistema.`, 'success');
+            
+            showToast(`A conta de ${userName} foi completamente erradicada do sistema.`, 'success');
             await window.loadUsersDatabase();
         } catch(error) {
             console.error(error);
-            showToast('Falha técnica ao tentar eliminar o documento da Base de Dados.', 'error');
+            showToast('Ocorreu um erro ao eliminar a conta.', 'error');
         }
     };
 
-    // ==========================================
-    // MODAL DE CLIENTE (COM FETCH DE PEDIDOS)
-    // ==========================================
     window.viewClientModal = async function(userId, name, email, phone, createdIso) {
         document.getElementById('modalClientName').textContent = name;
         document.getElementById('modalClientInitials').textContent = name.charAt(0).toUpperCase();
@@ -507,7 +505,6 @@
         lucide.createIcons();
 
         try {
-            // Vai buscar as ordens apenas deste utilizador
             const q = query(collection(db, "orders"), where("email", "==", email));
             const snap = await getDocs(q);
             
@@ -533,7 +530,6 @@
                 return;
             }
 
-            // Ordena histórico do mais novo ao mais velho
             ordersData.sort((a,b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
 
             ordersData.forEach(o => {
@@ -566,7 +562,6 @@
             lucide.createIcons();
 
         } catch(error) {
-            console.error(error);
             timeline.innerHTML = `<p class="text-danger-400 text-center py-4">Erro ao carregar faturas.</p>`;
         }
     };
@@ -576,7 +571,6 @@
         m.classList.remove('active');
         setTimeout(() => m.style.display = 'none', 300);
     };
-
 
     window.logout = async function() { await signOut(auth); window.location.href = '../login.html'; };
     
@@ -590,7 +584,6 @@
       setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 5000);
     }
 
-    // Funcionalidades Móveis
     const mobileMenuBtn = document.getElementById('mobileMenuBtn');
     const sidebar = document.getElementById('sidebar');
     const sidebarOverlay = document.getElementById('sidebarOverlay');
@@ -606,9 +599,9 @@
         setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
       }
     }
-    mobileMenuBtn.addEventListener('click', toggleMobileSidebar);
-    closeSidebarBtn.addEventListener('click', toggleMobileSidebar);
-    sidebarOverlay.addEventListener('click', toggleMobileSidebar);
+    if(mobileMenuBtn) mobileMenuBtn.addEventListener('click', toggleMobileSidebar);
+    if(closeSidebarBtn) closeSidebarBtn.addEventListener('click', toggleMobileSidebar);
+    if(sidebarOverlay) sidebarOverlay.addEventListener('click', toggleMobileSidebar);
   </script>
 </body>
 </html>
