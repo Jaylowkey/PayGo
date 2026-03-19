@@ -442,10 +442,8 @@
   let affiliateSettings = { autoApprove: false, prefix: 'AFF', length: 4 };
 
   // ==========================================
-  // MOTOR DE LEITURA DE LINKS DE CONVITE (ROUTING INTELIGENTE)
+  // MOTOR DE LEITURA DE LINKS DE CONVITE
   // ==========================================
-  // Se o URL tiver "?ref=CODIGO", o sistema intercepta, guarda na cache, mostra o Loader e atira o utilizador
-  // IMEDIATAMENTE para o ecrã de Registo Normal de Clientes (que é onde o dinheiro entra).
   document.addEventListener('DOMContentLoaded', () => {
       lucide.createIcons();
       if (typeof AOS !== 'undefined') AOS.init({ duration: 600, once: true });
@@ -454,17 +452,14 @@
       const refCode = urlParams.get('ref');
       
       if (refCode) {
-          // Bloqueia a interface e redireciona. O Afiliado não quer que o cliente se torne afiliado, 
-          // ele quer que o cliente compre!
           document.getElementById('redirectLoader').classList.remove('hidden');
           localStorage.setItem('paygo_affiliate_ref', refCode);
           
           setTimeout(() => {
               window.location.href = `register.html?ref=${refCode}`;
-          }, 1500); // 1.5s para a pessoa perceber que o convite foi aceite
+          }, 1500); 
       }
       
-      // Carregar configurações globais do sistema de afiliados
       getDoc(doc(db, "settings", "global")).then(snap => {
           if(snap.exists()) {
               const data = snap.data();
@@ -505,7 +500,6 @@
 
   function generateAffiliateCode(name) {
       const cleanName = name.replace(/[^a-zA-Z]/g, '').toUpperCase().substring(0, 4);
-      // Gera números baseado no tamanho definido no painel de configurações admin
       const min = Math.pow(10, affiliateSettings.length - 1);
       const max = Math.pow(10, affiliateSettings.length) - 1;
       const randomNum = Math.floor(min + Math.random() * (max - min));
@@ -563,7 +557,6 @@
           let userId;
           const affiliateCode = generateAffiliateCode(name);
           
-          // Se Admin ativou Auto-Aprovação, o status fica 'active' logo à partida
           const initialStatus = affiliateSettings.autoApprove ? 'active' : 'pending';
           const isActiveCode = affiliateSettings.autoApprove ? true : false;
           const finalRole = affiliateSettings.autoApprove ? 'affiliate' : 'user';
@@ -626,22 +619,30 @@
               });
           }
 
-          // 1. Notificação Cliente (Via API Vercel)
+          // 🚀 1. Notificação Cliente (Formatada para Resend Default Template)
           try {
+              const emailSubject = affiliateSettings.autoApprove ? '🎉 Conta de Parceiro Ativada - PayGo' : 'Candidatura Recebida - PayGo';
+              
+              const msgTexto = affiliateSettings.autoApprove 
+                  ? `A sua conta de afiliado foi <strong>aprovada automaticamente!</strong><br><br>O seu código promocional é: <strong style="color:#2563eb; font-size:18px;">${affiliateCode}</strong><br><br>Já pode aceder ao seu painel e começar a partilhar.`
+                  : `Recebemos a sua candidatura para o programa de parceiros da PayGo com o código <strong>${affiliateCode}</strong>.<br><br>A nossa equipa vai rever o seu perfil nas próximas 48 horas. Fique atento a este email para saber o resultado!`;
+
               await fetch('/api/send-email', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
                       to: email,
-                      subject: affiliateSettings.autoApprove ? '🎉 Conta de Parceiro Ativada - PayGo' : 'Candidatura Recebida - PayGo',
-                      template: affiliateSettings.autoApprove ? 'affiliate-approved' : 'affiliate-registration',
+                      subject: emailSubject,
+                      template: 'default',
                       type: 'transactional',
-                      variables: { customer_name: name, email: email }
+                      variables: { customer_name: name, message: msgTexto }
                   })
               });
-          } catch(e) {}
+          } catch(e) {
+              console.warn("Falha no email:", e);
+          }
 
-          // 2. Webhook / Notificação Slack/Lark para Admins
+          // 2. Webhook Lark para Admins (Opcional, se o ficheiro existir)
           try {
               fetch('/api/webhook-lark', {
                   method: 'POST',
@@ -655,7 +656,7 @@
 
           if (affiliateSettings.autoApprove) {
               showToast('Conta Aprovada Automaticamente! A redirecionar para o painel.', 'success');
-              setTimeout(() => { window.location.href = 'dashboard-afiliados.html'; }, 2000);
+              setTimeout(() => { window.location.href = 'dashboard-afiliado.html'; }, 2000);
           } else {
               showToast('Candidatura enviada! A redirecionar...', 'success');
               setTimeout(() => { window.location.href = `login.html?affiliate_pending=true&email=${encodeURIComponent(email)}`; }, 3000);
