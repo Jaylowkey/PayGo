@@ -69,7 +69,6 @@
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
-        /* Floating Label Inputs */
         .input-wrapper { position: relative; margin-bottom: 1.25rem; }
         .input-field {
             position: relative;
@@ -117,19 +116,17 @@
             letter-spacing: 0.05em;
         }
 
-        /* Password Strength */
         .strength-meter { height: 4px; border-radius: 2px; transition: all 0.3s ease; width: 0; }
         .strength-weak { background: #ef4444; width: 33.33%; }
         .strength-medium { background: #f59e0b; width: 66.66%; }
         .strength-strong { background: #22c55e; width: 100%; }
 
-        /* Buttons & Toasts */
         .btn-premium { transition: all 0.2s ease; position: relative; overflow: hidden; }
         .btn-premium:active:not(:disabled) { transform: scale(0.98); }
         .btn-premium:disabled { opacity: 0.7; cursor: not-allowed; }
         
         #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-        .toast { pointer-events: auto; background: #1e293b; border: 1px solid rgba(255,255,255,0.1); padding: 16px 20px; border-radius: 12px; display: flex; items-center; gap: 12px; transform: translateX(120%); transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .toast { pointer-events: auto; background: #1e293b; border: 1px solid rgba(255,255,255,0.1); padding: 16px 20px; border-radius: 12px; display: flex; align-items: center; gap: 12px; transform: translateX(120%); transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .toast.show { transform: translateX(0); }
     </style>
 </head>
@@ -230,7 +227,7 @@
                                         <i data-lucide="lock" class="input-icon w-5 h-5"></i>
                                         <input type="password" id="regPassword" required placeholder=" " minlength="6" autocomplete="new-password">
                                         <label for="regPassword" class="input-label">Palavra-passe</label>
-                                        <button type="button" onclick="togglePwd('regPassword')" class="absolute right-4 p-1 text-slate-400 hover:text-white" tabindex="-1">
+                                        <button type="button" onclick="window.togglePwd('regPassword')" class="absolute right-4 p-1 text-slate-400 hover:text-white" tabindex="-1">
                                             <i data-lucide="eye" id="icon-regPassword" class="w-4 h-4"></i>
                                         </button>
                                     </div>
@@ -291,7 +288,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        // ✅ CORREÇÃO: sendEmailVerification adicionado nativamente
+        import { getAuth, createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -305,9 +303,7 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        const db = getFirestore(app, "paygodb"); // Base de dados oficial
-
-        const RESEND_API_ENDPOINT = '/api/send-email';
+        const db = getFirestore(app, "paygodb");
 
         lucide.createIcons();
 
@@ -342,7 +338,6 @@
             else if (strength === 3) meter.classList.add('strength-strong');
         });
 
-        // TOAST NOTIFICATIONS
         function showToast(msg, type = 'success') {
             const container = document.getElementById('toastContainer');
             const t = document.createElement('div');
@@ -359,45 +354,7 @@
             setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 5000);
         }
 
-        // API Resend Sender
-        async function sendVerificationEmails(userData) {
-            try {
-                // Email 1: Verificação de Segurança (Prioridade)
-                await fetch(RESEND_API_ENDPOINT, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        to: userData.email,
-                        subject: '🔐 Verifique o seu Email - PayGo',
-                        template: 'email-verification',
-                        type: 'verification',
-                        variables: { customer_name: userData.name, email: userData.email }
-                    })
-                });
-
-                // Email 2: Boas-vindas (Em segundo plano)
-                fetch(RESEND_API_ENDPOINT, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        to: userData.email,
-                        subject: '🎉 Bem-vindo ao Mundo Global PayGo!',
-                        template: 'welcome',
-                        type: 'transactional',
-                        variables: {
-                            customer_name: userData.name,
-                            dashboard_link: 'https://paygo.co.mz/index.html',
-                            support_whatsapp: '258837522255'
-                        }
-                    })
-                }).catch(e => console.warn('Welcome email silent fail:', e));
-
-            } catch (error) {
-                console.error('Email API Error:', error);
-            }
-        }
-
-        // SUBMISSÃO DO FORMULÁRIO DE REGISTO (SEM AFILIADO, APENAS USER NORMAL)
+        // SUBMISSÃO DO FORMULÁRIO DE REGISTO
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -410,7 +367,6 @@
             const phone = document.getElementById('regPhone').value.trim();
             const password = document.getElementById('regPassword').value;
 
-            // Bloquear botão UI
             btn.disabled = true;
             btnText.textContent = 'A criar infraestrutura...';
             btnIcon.setAttribute('data-lucide', 'loader-2');
@@ -423,26 +379,38 @@
                 const user = userCredential.user;
                 await updateProfile(user, { displayName: name });
 
-                // 2. Gravar Perfil na Base de Dados (Apenas "User" Normal. Dashboard Bloqueado)
+                // 2. Gravar Perfil na Base de Dados
                 const userData = {
                     uid: user.uid,
                     name: name,
                     email: email,
                     phone: phone,
-                    role: 'user', // Perfil estrito de comprador
+                    role: 'user', 
                     status: 'active',
                     firstPurchaseProcessed: false,
                     totalPurchases: 0,
                     createdAt: new Date().toISOString(),
-                    emailVerified: false // Flag para controlo interno futuro
+                    emailVerified: false 
                 };
-
                 await setDoc(doc(db, "users", user.uid), userData);
 
-                // 3. Disparar APIs de Email via Resend
-                await sendVerificationEmails(userData);
+                // 🚀 3. ENVIAR EMAIL DE VERIFICAÇÃO NATIVO (Segurança Firebase)
+                await sendEmailVerification(user);
 
-                // 4. Sucesso: Mudar UI para Ecrã de "Verifique o Email"
+                // 🚀 4. ENVIAR EMAIL DE BOAS VINDAS (Marketing Resend)
+                fetch('/api/send-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        to: email,
+                        subject: '🎉 Bem-vindo ao Mundo Global PayGo!',
+                        template: 'welcome',
+                        type: 'transactional',
+                        variables: { customer_name: name }
+                    })
+                }).catch(e => console.warn('Welcome email falhou:', e));
+
+                // 5. Sucesso: Mudar UI para Ecrã de "Verifique o Email"
                 document.getElementById('userEmailDisplay').textContent = email;
                 document.getElementById('formState').style.opacity = '0';
                 
