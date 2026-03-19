@@ -483,6 +483,7 @@
     });
 
     // ✅ Motor Resend (Esqueci a Senha)
+// ✅ Motor de Recuperação de Senha (API Dedicada)
     document.getElementById('forgotForm')?.addEventListener('submit', async function(e) {
         e.preventDefault();
         const email = document.getElementById('forgotEmail')?.value.trim();
@@ -499,33 +500,19 @@
         }
 
         try {
-            // Chamada direta à tua API Resend Customizada
-            const response = await fetch('/api/send-email', {
+            // Chamada à API exclusiva de recuperação
+            const response = await fetch('/api/recover-password', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    to: email,
-                    subject: '🔐 Recuperação de Senha - PayGo',
-                    template: 'password-reset',
-                    variables: {
-                        customer_name: email.split('@')[0],
-                        reset_link: `https://paygo.co.mz/seguranca.html?mode=resetPassword`
-                    }
-                })
+                body: JSON.stringify({ email: email })
             });
 
-            // Se a Vercel devolver a resposta limpa e for JSON, processa.
-            const contentType = response.headers.get('content-type');
-            if (response.ok && contentType && contentType.includes('application/json')) {
-                const result = await response.json();
-                if (result.success) {
-                    window.showToast('✅ Link enviado! Verifique a sua caixa de entrada e Spam.', 'success');
-                    window.closeForgotModal();
-                } else {
-                    throw new Error(result.error || 'Falha ao processar o email.');
-                }
+            if (response.ok) {
+                window.showToast('✅ Link enviado! Verifique a sua caixa de entrada e Spam.', 'success');
+                window.closeForgotModal();
             } else {
-                throw new Error('Servidor indisponível. Tente mais tarde.');
+                const result = await response.json();
+                throw new Error(result.error || 'Servidor indisponível. Tente mais tarde.');
             }
         } catch (error) {
             console.error('Password reset error:', error);
