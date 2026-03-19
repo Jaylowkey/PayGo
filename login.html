@@ -3,20 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Acesso à Conta - PayGo Moçambique</title>
-    <meta name="description" content="Aceda à sua conta PayGo para gerir pagamentos, faturas e acompanhar as suas encomendas internacionais.">
+    <title>Login - PayGo Moçambique</title>
+    <meta name="description" content="Acesse sua conta PayGo para gerenciar seus pedidos e pagamentos.">
     <meta name="theme-color" content="#0f172a">
     
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://paygo.co.mz/login.html">
     <meta property="og:title" content="Login - PayGo Moçambique">
+    <meta property="og:description" content="Acesse sua conta PayGo.">
     
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233b82f6' stroke='none'><polygon points='13 2 3 14 12 14 11 22 21 10 12 10 13 2'></polygon></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     
     <script>
@@ -28,24 +31,40 @@
                     display: ['"Outfit"', 'sans-serif'],
                 },
                 colors: {
-                    brand: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 900: '#1e3a8a', 950: '#0f172a' },
+                    brand: {
+                        50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd',
+                        400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8',
+                        800: '#1e40af', 900: '#1e3a8a', 950: '#0f172a',
+                    },
+                    accent: { 400: '#22d3ee', 500: '#06b6d4', 600: '#0891b2' },
                     success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' },
                     warning: { 400: '#fbbf24', 500: '#f59e0b', 600: '#d97706' },
                     danger: { 400: '#f87171', 500: '#ef4444', 600: '#dc2626' }
                 },
                 animation: {
                     'blob': 'blob 7s infinite',
-                    'fade-in': 'fadeIn 0.5s ease-out forwards',
-                    'slide-up': 'slideUp 0.6s ease-out forwards',
+                    'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
+                    'float': 'float 6s ease-in-out infinite',
                 },
                 keyframes: {
                     blob: {
-                        '0%, 100%': { transform: 'translate(0px, 0px) scale(1)' },
+                        '0%': { transform: 'translate(0px, 0px) scale(1)' },
                         '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
-                        '66%': { transform: 'translate(-20px, 20px) scale(0.9)' }
+                        '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                        '100%': { transform: 'translate(0px, 0px) scale(1)' },
                     },
-                    fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
-                    slideUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } }
+                    fadeInUp: {
+                        '0%': { opacity: '0', transform: 'translateY(30px)' },
+                        '100%': { opacity: '1', transform: 'translateY(0)' }
+                    },
+                    float: {
+                        '0%, 100%': { transform: 'translateY(0px)' },
+                        '50%': { transform: 'translateY(-10px)' }
+                    }
+                },
+                boxShadow: {
+                    'glow': '0 0 20px rgba(59, 130, 246, 0.5)',
+                    'glow-lg': '0 0 40px rgba(59, 130, 246, 0.6)',
                 }
             }
         }
@@ -53,437 +72,477 @@
     </script>
     
     <style>
-        body { background-color: #0f172a; color: #f8fafc; overflow-x: hidden; }
-        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #0f172a; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-        
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        html { scroll-padding-top: 100px; }
         .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
-        .hero-gradient { background: radial-gradient(ellipse at top right, #1e293b 0%, #0f172a 40%, #020617 100%); }
-        
-        .glass-card { 
-            background: rgba(15, 23, 42, 0.6); 
-            backdrop-filter: blur(20px); 
-            border: 1px solid rgba(255, 255, 255, 0.1); 
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        }
-
-        /* Floating Label Inputs */
-        .input-wrapper { position: relative; margin-bottom: 1.25rem; }
+        .bg-noise { background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.025'/%3E%3C/svg%3E"); pointer-events: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        .glass-nav { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px) saturate(180%); border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .hero-gradient { background: radial-gradient(ellipse at top right, #1e293b 0%, #0f172a 35%, #020617 100%); }
+        .gradient-text { background: linear-gradient(135deg, #60a5fa, #22d3ee, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); transition: all 0.3s ease; }
+        .glass-card:hover { border-color: rgba(59, 130, 246, 0.4); transform: translateY(-2px); }
+        .input-wrapper { position: relative; }
         .input-field {
             position: relative;
             background: rgba(255,255,255,0.03);
             border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 0.75rem;
+            border-radius: 12px;
             transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
         }
         .input-field:focus-within {
             border-color: #3b82f6;
-            background: rgba(255,255,255,0.05);
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+            background: rgba(255,255,255,0.06);
         }
-        .input-icon { padding-left: 1rem; color: rgba(255,255,255,0.4); transition: color 0.3s ease; }
-        .input-field:focus-within .input-icon { color: #3b82f6; }
-        
         .input-field input {
             width: 100%;
-            padding: 1.25rem 1rem 0.5rem 0.75rem;
+            padding: 1rem 1rem 1rem 2.75rem;
             background: transparent;
             border: none;
             outline: none;
             color: #fff;
-            font-size: 0.95rem;
+            font-size: 0.9375rem;
+            font-family: inherit;
         }
+        .input-field input::placeholder { color: transparent; }
         .input-label {
             position: absolute;
             left: 2.75rem;
             top: 50%;
             transform: translateY(-50%);
-            color: rgba(255,255,255,0.4);
-            font-size: 0.95rem;
+            color: rgba(255,255,255,0.5);
+            font-size: 0.875rem;
+            font-weight: 500;
             pointer-events: none;
-            transition: all 0.2s ease;
+            transition: all 0.25s ease;
+            background: transparent;
+            padding: 0 0.25rem;
         }
         .input-field input:focus ~ .input-label,
         .input-field input:not(:placeholder-shown) ~ .input-label {
-            top: 0.6rem;
-            font-size: 0.7rem;
+            top: 0.375rem;
+            left: 2.5rem;
+            font-size: 0.6875rem;
             font-weight: 600;
             color: #60a5fa;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.03em;
+            background: rgba(15, 23, 42, 0.9);
+            border-radius: 4px;
+            transform: none;
+            padding: 0 0.375rem;
         }
-
-        .btn-premium { transition: all 0.2s ease; position: relative; overflow: hidden; }
-        .btn-premium:active:not(:disabled) { transform: scale(0.98); }
-        .btn-premium:disabled { opacity: 0.7; cursor: not-allowed; }
-
-        /* Modal & Toasts */
-        .modal-overlay { background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(8px); cursor: pointer; }
-        .modal-content { background: #0f172a; border: 1px solid rgba(255,255,255,0.1); }
+        .input-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255,255,255,0.4);
+            transition: color 0.3s ease;
+            pointer-events: none;
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+        .input-field:focus-within .input-icon { color: #60a5fa; }
+        .btn-premium {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .btn-premium::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        .btn-premium:hover::after { left: 100%; }
+        .btn-premium:active { transform: scale(0.98); }
+        .btn-loading { pointer-events: none; opacity: 0.8; }
+        .btn-loading .btn-text { opacity: 0; }
+        .btn-loading .btn-spinner { opacity: 1; transform: scale(1); }
+        .btn-spinner {
+            position: absolute; inset: 0;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; transform: scale(0.8);
+            transition: all 0.3s ease;
+        }
+        #toast-container {
+            position: fixed; top: 20px; right: 20px; z-index: 10000;
+            display: flex; flex-direction: column; gap: 12px; pointer-events: none;
+        }
+        .toast {
+            pointer-events: auto;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-left: 4px solid #3b82f6;
+            padding: 16px 20px; border-radius: 14px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            display: flex; align-items: center; gap: 12px;
+            max-width: 380px;
+            transform: translateX(120%);
+            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.3s ease;
+            opacity: 0;
+        }
+        .toast.show { transform: translateX(0); opacity: 1; }
+        .toast.success { border-left-color: #22c55e; }
+        .toast.error { border-left-color: #ef4444; }
+        .toast.warning { border-left-color: #f59e0b; }
         
-        #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-        .toast { pointer-events: auto; background: #1e293b; border: 1px solid rgba(255,255,255,0.1); padding: 16px 20px; border-radius: 12px; display: flex; align-items: center; gap: 12px; transform: translateX(120%); transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .toast.show { transform: translateX(0); }
+        /* ✅ Modal Styles */
+        .modal { display: none; position: fixed; inset: 0; z-index: 10000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); }
+        .modal-content { position: relative; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 32px; max-width: 450px; width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
+        
+        @media (max-width: 768px) { .toast { max-width: calc(100vw - 40px); } }
     </style>
 </head>
-<body class="hero-gradient min-h-screen flex flex-col">
+<body class="bg-slate-950 text-slate-200 font-sans overflow-x-hidden selection:bg-brand-500 selection:text-white antialiased">
 
-    <div class="fixed inset-0 bg-grid opacity-20 pointer-events-none"></div>
-    <div class="fixed top-0 -left-4 w-96 h-96 bg-brand-600/20 rounded-full mix-blend-screen blur-[100px] animate-blob pointer-events-none"></div>
-    <div class="fixed top-40 -right-4 w-96 h-96 bg-purple-600/20 rounded-full mix-blend-screen blur-[100px] animate-blob pointer-events-none" style="animation-delay: 2s;"></div>
+    <div class="bg-noise"></div>
+    <div id="toast-container"></div>
 
-    <header class="w-full relative z-50 p-6">
-        <div class="container mx-auto flex justify-between items-center max-w-6xl">
-            <a href="index.html" class="flex items-center gap-2 group">
-                <div class="bg-gradient-to-tr from-brand-500 to-brand-400 p-2 rounded-xl text-white shadow-lg shadow-brand-500/20 group-hover:scale-105 transition">
+    <header class="fixed w-full z-50 transition-all duration-300" id="navbar">
+        <div class="container mx-auto px-6 h-20 flex justify-between items-center">
+            <a href="index.html" class="flex items-center gap-2.5 group">
+                <div class="bg-gradient-to-tr from-brand-500 to-accent-500 p-2.5 rounded-xl text-white shadow-lg shadow-brand-500/30 group-hover:scale-105 transition">
                     <i data-lucide="zap" class="w-5 h-5 fill-current"></i>
                 </div>
-                <span class="text-2xl font-display font-bold text-white tracking-tight">PayGo</span>
+                <span class="text-2xl font-display font-bold text-white">PayGo</span>
             </a>
-            <a href="register.html" class="text-sm font-semibold text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 px-5 py-2.5 rounded-full transition border border-white/5">
-                Criar Conta Grátis
-            </a>
+            <div class="flex items-center gap-3">
+                <a href="register.html" class="text-slate-300 hover:text-white transition font-medium hidden md:block">
+                    Criar Conta
+                </a>
+                <a href="index.html" class="text-slate-300 hover:text-white transition p-2">
+                    <i data-lucide="home" class="w-5 h-5"></i>
+                </a>
+            </div>
         </div>
     </header>
 
-    <main class="flex-1 flex items-center justify-center p-4 relative z-10">
-        <div class="w-full max-w-5xl animate-slide-up">
+    <main>
+        <section class="relative min-h-screen flex items-center justify-center hero-gradient overflow-hidden">
+            <div class="absolute top-0 -left-4 w-96 h-96 bg-purple-600/20 rounded-full mix-blend-screen filter blur-[100px] opacity-30 animate-blob"></div>
+            <div class="absolute top-0 -right-4 w-96 h-96 bg-brand-600/20 rounded-full mix-blend-screen filter blur-[100px] opacity-30 animate-blob animation-delay-2000"></div>
+            <div class="absolute inset-0 bg-grid opacity-20 pointer-events-none"></div>
             
-            <div class="glass-card rounded-[2rem] overflow-hidden flex flex-col md:flex-row shadow-2xl">
-                
-                <div class="hidden md:flex md:w-5/12 bg-slate-900/50 p-10 flex-col justify-between border-r border-white/5 relative overflow-hidden">
-                    <div class="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-brand-600/20 to-transparent pointer-events-none"></div>
+            <div class="container mx-auto px-6 relative z-10 py-32">
+                <div class="max-w-md mx-auto">
                     
-                    <div>
-                        <h2 class="text-3xl font-display font-extrabold text-white mb-4 leading-tight">Bem-vindo de<br>Volta à PayGo.</h2>
-                        <p class="text-slate-400 text-sm leading-relaxed mb-8">Aceda à sua conta para gerir pagamentos, solicitar faturas e acompanhar as suas encomendas internacionais.</p>
-                        
-                        <ul class="space-y-5">
-                            <li class="flex items-start gap-3">
-                                <div class="mt-1 bg-brand-500/20 p-1 rounded-full"><i data-lucide="clock" class="w-4 h-4 text-brand-400"></i></div>
-                                <div><p class="text-sm font-bold text-slate-200">Rastreio em Tempo Real</p><p class="text-xs text-slate-500">Acompanhe cada etapa do seu pedido.</p></div>
-                            </li>
-                            <li class="flex items-start gap-3">
-                                <div class="mt-1 bg-success-500/20 p-1 rounded-full"><i data-lucide="shield-check" class="w-4 h-4 text-success-400"></i></div>
-                                <div><p class="text-sm font-bold text-slate-200">Ecossistema Protegido</p><p class="text-xs text-slate-500">Os seus dados sempre encriptados.</p></div>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="w-full md:w-7/12 p-8 md:p-12 relative bg-slate-900/80 flex flex-col justify-center">
-                    
-                    <div class="mb-8 md:hidden text-center">
-                        <div class="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-tr from-brand-500 to-brand-400 rounded-2xl text-white mb-4 shadow-lg shadow-brand-500/30">
-                            <i data-lucide="zap" class="w-6 h-6 fill-current"></i>
-                        </div>
-                        <h2 class="text-2xl font-display font-extrabold text-white">Acesso à Conta</h2>
-                        <p class="text-slate-400 text-sm mt-1">Aceda para continuar de onde parou.</p>
-                    </div>
-
-                    <form id="loginForm">
-                        <div class="input-wrapper">
-                            <div class="input-field">
-                                <i data-lucide="mail" class="input-icon w-5 h-5"></i>
-                                <input type="email" id="loginEmail" required placeholder=" " autocomplete="email">
-                                <label for="loginEmail" class="input-label">Endereço de Email</label>
+                    <div class="glass-card rounded-3xl p-8 md:p-10" data-aos="fade-up" data-aos-delay="200">
+                        <div class="text-center mb-8">
+                            <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-tr from-brand-500 to-accent-500 rounded-2xl text-white mb-4 shadow-lg shadow-brand-500/30">
+                                <i data-lucide="zap" class="w-8 h-8 fill-current"></i>
                             </div>
+                            <h1 class="text-2xl font-display font-bold text-white mb-2">Bem-vindo de Volta</h1>
+                            <p class="text-slate-400 text-sm">Acesse sua conta para gerenciar seus pedidos</p>
                         </div>
-
-                        <div class="input-wrapper mb-4">
-                            <div class="input-field">
-                                <i data-lucide="lock" class="input-icon w-5 h-5"></i>
-                                <input type="password" id="loginPassword" required placeholder=" " autocomplete="current-password">
-                                <label for="loginPassword" class="input-label">Palavra-passe</label>
-                                <button type="button" onclick="togglePwd('loginPassword')" class="absolute right-4 p-1 text-slate-400 hover:text-white transition" tabindex="-1">
-                                    <i data-lucide="eye" id="icon-loginPassword" class="w-4 h-4"></i>
+                        
+                        <form id="loginForm" class="space-y-5">
+                            <div class="input-wrapper">
+                                <div class="input-field">
+                                    <i data-lucide="mail" class="input-icon"></i>
+                                    <input type="email" id="loginEmail" required placeholder=" " autocomplete="email">
+                                    <label for="loginEmail" class="input-label">Email</label>
+                                </div>
+                            </div>
+                            
+                            <div class="input-wrapper">
+                                <div class="input-field">
+                                    <i data-lucide="lock" class="input-icon"></i>
+                                    <input type="password" id="loginPassword" required placeholder=" " autocomplete="current-password">
+                                    <label for="loginPassword" class="input-label">Senha</label>
+                                    <button type="button" onclick="window.togglePassword('loginPassword')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition" aria-label="Mostrar senha">
+                                        <i data-lucide="eye" class="w-5 h-5" id="toggleIcon-loginPassword"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="rememberMe" class="w-4 h-4 rounded border-slate-600 bg-slate-700 text-brand-600 focus:ring-brand-500">
+                                    <span class="text-slate-400">Lembrar-me</span>
+                                </label>
+                                <button type="button" onclick="window.openForgotModal()" class="text-brand-400 hover:text-brand-300 transition font-medium">
+                                    Esqueceu a senha?
                                 </button>
                             </div>
-                        </div>
-
-                        <div class="flex items-center justify-between mb-8 px-1">
-                            <label class="flex items-center gap-2 cursor-pointer group">
-                                <div class="relative flex items-center justify-center">
-                                    <input type="checkbox" id="rememberMe" class="peer appearance-none w-4 h-4 border-2 border-slate-600 rounded bg-slate-800 checked:bg-brand-600 checked:border-brand-600 transition-colors">
-                                    <i data-lucide="check" class="absolute w-3 h-3 text-white opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity"></i>
-                                </div>
-                                <span class="text-sm font-medium text-slate-400 group-hover:text-slate-300 transition-colors">Lembrar-me</span>
-                            </label>
-                            <button type="button" onclick="openForgotModal()" class="text-sm font-bold text-brand-400 hover:text-brand-300 transition-colors">
-                                Esqueceu a senha?
+                            
+                            <button type="submit" id="loginBtn" class="btn-premium w-full bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-500 hover:to-brand-600 text-white py-4 rounded-xl font-semibold transition-all shadow-lg shadow-brand-900/30 hover:shadow-brand-500/40 flex items-center justify-center gap-2">
+                                <span class="btn-text">Entrar</span>
+                                <i data-lucide="arrow-right" class="btn-text w-4 h-4"></i>
+                                <span class="btn-spinner hidden"><i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i></span>
                             </button>
+                        </form>
+                        
+                        <div class="mt-8 text-center">
+                            <p class="text-slate-400 text-sm">
+                                Não tem uma conta? 
+                                <a href="register.html" class="text-brand-400 hover:text-brand-300 transition font-semibold">Criar conta grátis</a>
+                            </p>
                         </div>
-
-                        <button type="submit" id="btnSubmit" class="btn-premium w-full bg-brand-600 hover:bg-brand-500 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-brand-600/20">
-                            <span id="btnText">Iniciar Sessão</span>
-                            <i data-lucide="arrow-right" id="btnIcon" class="w-4 h-4"></i>
-                        </button>
-                    </form>
-                    
-                    <div class="mt-8 text-center">
-                        <p class="text-slate-400 text-sm">
-                            Ainda não tem acesso? <a href="register.html" class="text-brand-400 hover:text-brand-300 font-bold transition-colors">Registar agora</a>
-                        </p>
+                        
+                        <div class="mt-8 pt-8 border-t border-slate-700">
+                            <h4 class="text-sm font-semibold text-white mb-4 text-center">Benefícios da Conta</h4>
+                            <div class="grid grid-cols-2 gap-3 text-xs">
+                                <div class="flex items-center gap-2 text-slate-400">
+                                    <i data-lucide="check-circle" class="w-4 h-4 text-success-400"></i>
+                                    <span>Histórico de Pedidos</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-slate-400">
+                                    <i data-lucide="check-circle" class="w-4 h-4 text-success-400"></i>
+                                    <span>Pagamento Rápido</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-slate-400">
+                                    <i data-lucide="check-circle" class="w-4 h-4 text-success-400"></i>
+                                    <span>Comprovativo PDF</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-slate-400">
+                                    <i data-lucide="check-circle" class="w-4 h-4 text-success-400"></i>
+                                    <span>Suporte Prioritário</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-
+                    
                 </div>
             </div>
-        </div>
+        </section>
     </main>
 
-    <div id="forgotModal" class="fixed inset-0 z-[1000] hidden items-center justify-center p-4 transition-opacity duration-300 opacity-0">
-        <div class="modal-overlay absolute inset-0" onclick="closeForgotModal()"></div>
-        <div class="modal-content relative w-full max-w-md rounded-3xl p-8 shadow-2xl transition-transform duration-300 transform scale-95" id="forgotModalContent">
-            
+    <div id="forgotModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="forgotModalTitle">
+        <div class="modal-overlay" onclick="window.closeForgotModal()"></div>
+        <div class="modal-content">
             <div class="flex items-center justify-between mb-6">
-                <div class="flex items-center gap-3">
-                    <div class="bg-brand-500/20 text-brand-400 p-2 rounded-lg border border-brand-500/30"><i data-lucide="key" class="w-5 h-5"></i></div>
-                    <h3 class="text-xl font-display font-bold text-white">Recuperar Senha</h3>
-                </div>
-                <button onclick="closeForgotModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-colors">
-                    <i data-lucide="x" class="w-5 h-5"></i>
+                <h3 id="forgotModalTitle" class="text-xl font-bold text-white flex items-center gap-2">
+                    <i data-lucide="key" class="w-5 h-5 text-brand-400"></i> Recuperar Senha
+                </h3>
+                <button onclick="window.closeForgotModal()" class="text-slate-400 hover:text-white transition" aria-label="Fechar">
+                    <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
+            <p class="text-slate-400 mb-6 text-sm">Digite o seu endereço de email registado. Vamos enviar-lhe um link seguro com a chancela da PayGo para redefinir a sua palavra-passe.</p>
             
-            <p class="text-slate-400 text-sm mb-6 leading-relaxed">Insira o seu endereço de email. Iremos enviar-lhe um link seguro para redefinir a sua palavra-passe.</p>
-            
-            <form id="forgotForm">
-                <div class="input-wrapper mb-6">
+            <form id="forgotForm" class="space-y-4">
+                <div class="input-wrapper">
                     <div class="input-field">
-                        <i data-lucide="mail" class="input-icon w-5 h-5"></i>
+                        <i data-lucide="mail" class="input-icon"></i>
                         <input type="email" id="forgotEmail" required placeholder=" " autocomplete="email">
-                        <label for="forgotEmail" class="input-label">Email da conta</label>
+                        <label for="forgotEmail" class="input-label">Email de recuperação</label>
                     </div>
                 </div>
                 
-                <button type="submit" id="btnForgot" class="btn-premium w-full bg-slate-100 hover:bg-white text-slate-900 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg transition-colors">
-                    <span id="btnForgotText">Enviar Link de Acesso</span>
-                    <i data-lucide="send" id="btnForgotIcon" class="w-4 h-4"></i>
-                </button>
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="window.closeForgotModal()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white py-3.5 rounded-xl font-bold transition border border-slate-700">Cancelar</button>
+                    <button type="submit" id="btnForgot" class="flex-1 bg-brand-600 hover:bg-brand-500 text-white py-3.5 rounded-xl font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-brand-500/20">
+                        <span class="btn-text">Enviar Link</span>
+                        <i data-lucide="send" class="btn-text w-4 h-4"></i>
+                        <span class="btn-spinner hidden"><i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i></span>
+                    </button>
+                </div>
             </form>
         </div>
     </div>
 
-    <div id="toastContainer"></div>
+    <footer class="bg-slate-950 text-slate-400 py-12 border-t border-slate-900">
+        <div class="container mx-auto px-6">
+            <div class="text-center text-xs opacity-40">
+                <p>&copy; 2026 PayGo Serviços Digitais. Todos direitos reservados.</p>
+            </div>
+        </div>
+    </footer>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
-            authDomain: "paygo-14311.firebaseapp.com",
-            projectId: "paygo-14311",
-            storageBucket: "paygo-14311.firebasestorage.app",
-            messagingSenderId: "208360646277",
-            appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
-        };
+    // Firebase Config
+    const firebaseConfig = {
+        apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
+        authDomain: "paygo-14311.firebaseapp.com",
+        projectId: "paygo-14311",
+        storageBucket: "paygo-14311.firebasestorage.app",
+        messagingSenderId: "208360646277",
+        appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
+    };
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app, "paygodb");
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app, "paygodb");
 
-        // UI Setup
-        lucide.createIcons();
+    // UI Globals
+    window.showToast = function(message, type = 'default') {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        let icon = type === 'success' ? 'check-circle' : (type === 'error' ? 'alert-circle' : 'info');
+        let color = type === 'success' ? 'text-success-400' : (type === 'error' ? 'text-danger-400' : 'text-brand-400');
+        toast.innerHTML = `<i data-lucide="${icon}" class="${color} w-5 h-5 flex-shrink-0"></i><span class="text-sm font-medium text-slate-200">${message}</span>`;
+        container.appendChild(toast);
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        requestAnimationFrame(() => toast.classList.add('show'));
+        setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 5000);
+    }
 
-        window.togglePwd = function(id) {
-            const input = document.getElementById(id);
-            const icon = document.getElementById(`icon-${id}`);
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.setAttribute('data-lucide', 'eye-off');
-            } else {
-                input.type = 'password';
-                icon.setAttribute('data-lucide', 'eye');
-            }
-            lucide.createIcons();
-        };
-
-        window.openForgotModal = () => {
-            const m = document.getElementById('forgotModal');
-            const c = document.getElementById('forgotModalContent');
-            m.classList.remove('hidden');
-            m.classList.add('flex');
-            setTimeout(() => {
-                m.classList.remove('opacity-0');
-                c.classList.remove('scale-95');
-                c.classList.add('scale-100');
-            }, 10);
+    window.togglePassword = function(inputId) {
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(`toggleIcon-${inputId}`);
+        if (!input || !icon) return;
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.setAttribute('data-lucide', 'eye-off');
+        } else {
+            input.type = 'password';
+            icon.setAttribute('data-lucide', 'eye');
         }
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    };
 
-        window.closeForgotModal = () => {
-            const m = document.getElementById('forgotModal');
-            const c = document.getElementById('forgotModalContent');
-            m.classList.add('opacity-0');
-            c.classList.remove('scale-100');
-            c.classList.add('scale-95');
-            setTimeout(() => {
-                m.classList.add('hidden');
-                m.classList.remove('flex');
-                document.getElementById('forgotEmail').value = '';
-            }, 300);
-        }
+    window.openForgotModal = function() {
+        const modal = document.getElementById('forgotModal');
+        if (modal) modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    };
 
-        function showToast(msg, type = 'success') {
-            const container = document.getElementById('toastContainer');
-            const t = document.createElement('div');
-            const borderColor = type === 'error' ? 'border-red-500' : type === 'warning' ? 'border-warning-500' : 'border-brand-500';
-            const iconColor = type === 'error' ? 'text-red-400' : type === 'warning' ? 'text-warning-400' : 'text-brand-400';
-            const iconName = type === 'error' ? 'alert-circle' : type === 'warning' ? 'alert-triangle' : 'check-circle';
-            
-            t.className = `toast border-l-4 ${borderColor}`;
-            t.innerHTML = `<i data-lucide="${iconName}" class="w-5 h-5 ${iconColor} shrink-0"></i> <span class="text-sm font-semibold text-white">${msg}</span>`;
-            
-            container.appendChild(t);
-            lucide.createIcons({ root: t });
-            requestAnimationFrame(() => t.classList.add('show'));
-            setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 5000);
-        }
+    window.closeForgotModal = function() {
+        const modal = document.getElementById('forgotModal');
+        if (modal) modal.classList.remove('active');
+        document.body.style.overflow = '';
+        const emailInput = document.getElementById('forgotEmail');
+        if (emailInput) emailInput.value = '';
+    };
 
-        // ==========================================
-        // ROUTING SYSTEM (Redirecionamento Inteligente)
-        // ==========================================
-        let isHandlingLogin = false; // Impede redirecionamentos múltiplos
-        
-        onAuthStateChanged(auth, async (user) => {
-            if (user && !isHandlingLogin) {
-                isHandlingLogin = true;
-                try {
-                    const userDoc = await getDoc(doc(db, "users", user.uid));
-                    if (userDoc.exists()) {
-                        const userData = userDoc.data();
-                        
-                        if (userData.status === 'blocked' || userData.status === 'banned') {
-                            showToast('Acesso negado. Contacte o suporte.', 'error');
-                            await signOut(auth);
-                            isHandlingLogin = false;
-                            return;
-                        }
-
-                        // Atualiza atividade online em background
-                        updateDoc(doc(db, "users", user.uid), {
-                            lastLogin: serverTimestamp(),
-                            lastActivity: serverTimestamp()
-                        }).catch(e => console.warn(e));
-
-                        const role = userData.role || 'user';
-                        
-                        // Verifica se existe um parâmetro redirect no URL
-                        const urlParams = new URLSearchParams(window.location.search);
-                        const redirectParam = urlParams.get('redirect');
-
-                        // 🚦 MOTOR DE ROTAS CORRIGIDO AQUI 🚦
-                        if (role === 'admin' || role === 'superadmin') {
-                            window.location.href = redirectParam || 'admin/dashboard.html';
-                        } 
-                        else if (role === 'affiliate') {
-                            window.location.href = redirectParam || 'dashboard-afiliado.html'; // CORRIGIDO!
-                        } 
-                        else {
-                            window.location.href = redirectParam || 'index.html';
-                        }
-                    } else {
-                        // Perfil não existe no Firestore
-                        showToast('Perfil não encontrado. Fale com o suporte.', 'error');
-                        await signOut(auth);
-                        isHandlingLogin = false;
+    // Login State Listener
+    let isHandlingLogin = false;
+    onAuthStateChanged(auth, async (user) => {
+        if (user && !isHandlingLogin) {
+            isHandlingLogin = true;
+            try {
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    if (userData.status === 'blocked' || userData.status === 'banned') {
+                        window.showToast('Acesso negado. A sua conta foi bloqueada.', 'error');
+                        return;
                     }
-                } catch (error) {
-                    console.error('Routing Error:', error);
-                    isHandlingLogin = false;
-                }
-            }
-        });
-
-        // ==========================================
-        // FORMULÁRIO DE LOGIN
-        // ==========================================
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('btnSubmit');
-            const btnText = document.getElementById('btnText');
-            const btnIcon = document.getElementById('btnIcon');
-            
-            const email = document.getElementById('loginEmail').value.trim();
-            const password = document.getElementById('loginPassword').value;
-
-            btn.disabled = true;
-            btnText.textContent = 'A Autenticar...';
-            btnIcon.setAttribute('data-lucide', 'loader-2');
-            btnIcon.classList.add('animate-spin');
-            lucide.createIcons({root: btn});
-
-            try {
-                // A função onAuthStateChanged acima fará o redirecionamento automático
-                await signInWithEmailAndPassword(auth, email, password);
-                showToast('Acesso validado! A redirecionar...', 'success');
-            } catch (error) {
-                let msg = 'Erro na validação das credenciais.';
-                if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
-                    msg = 'Email ou palavra-passe incorretos.';
-                } else if (error.code === 'auth/too-many-requests') {
-                    msg = 'Demasiadas tentativas. Aguarde uns minutos.';
-                }
-                
-                showToast(msg, 'error');
-                btn.disabled = false;
-                btnText.textContent = 'Iniciar Sessão';
-                btnIcon.setAttribute('data-lucide', 'arrow-right');
-                btnIcon.classList.remove('animate-spin');
-                lucide.createIcons({root: btn});
-            }
-        });
-
-        // ==========================================
-        // PEDIDO DE RECUPERAÇÃO DE SENHA (VIA RESEND)
-        // ==========================================
-        document.getElementById('forgotForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('forgotEmail').value.trim();
-            const btn = document.getElementById('btnForgot');
-            const btnText = document.getElementById('btnForgotText');
-            const btnIcon = document.getElementById('btnForgotIcon');
-
-            if (!email) return showToast('Por favor introduza o seu email.', 'error');
-
-            btn.disabled = true;
-            btnText.textContent = 'A Enviar...';
-            btnIcon.setAttribute('data-lucide', 'loader-2');
-            btnIcon.classList.add('animate-spin');
-            lucide.createIcons({root: btn});
-
-            try {
-                // Ligação à API Vercel/Resend
-                const response = await fetch('/api/send-email', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        to: email,
-                        type: 'password_reset' // Instrui o backend a tratar como recuperação de senha
-                    })
-                });
-
-                if (response.ok) {
-                    showToast('Link de recuperação enviado para o seu email!', 'success');
-                    setTimeout(() => closeForgotModal(), 2000);
-                } else {
-                    throw new Error('Falha no servidor de emails.');
+                    await updateDoc(doc(db, "users", user.uid), {
+                        lastLogin: serverTimestamp(),
+                        lastActivity: serverTimestamp()
+                    });
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const redirectParam = urlParams.get('redirect');
+                    window.location.href = redirectParam || 'index.html';
                 }
             } catch (error) {
-                console.error(error);
-                showToast('Falha ao enviar o pedido. Tente novamente mais tarde.', 'error');
+                console.error('Error:', error);
             } finally {
-                btn.disabled = false;
-                btnText.textContent = 'Enviar Link de Acesso';
-                btnIcon.setAttribute('data-lucide', 'send');
-                btnIcon.classList.remove('animate-spin');
-                lucide.createIcons({root: btn});
+                isHandlingLogin = false;
             }
-        });
+        }
+    });
+
+    // Login Submit Event
+    document.getElementById('loginForm')?.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('loginBtn');
+        const btnTexts = btn?.querySelectorAll('.btn-text');
+        const btnSpinner = btn?.querySelector('.btn-spinner');
+        const email = document.getElementById('loginEmail')?.value.trim();
+        const password = document.getElementById('loginPassword')?.value;
+
+        if (btn) {
+            btn.disabled = true;
+            btnTexts.forEach(el => el.classList.add('hidden'));
+            btnSpinner?.classList.remove('hidden');
+        }
+
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+            window.showToast('Acesso validado! A redirecionar...', 'success');
+        } catch (error) {
+            console.error('Login error:', error);
+            let message = 'Erro ao fazer login. Verifique as credenciais.';
+            if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') message = 'Email ou senha incorretos.';
+            if (error.code === 'auth/too-many-requests') message = 'Muitas tentativas falhadas. Aguarde um pouco.';
+            window.showToast(message, 'error');
+            if (btn) {
+                btn.disabled = false;
+                btnTexts.forEach(el => el.classList.remove('hidden'));
+                btnSpinner?.classList.add('hidden');
+            }
+        }
+    });
+
+    // ✅ Motor Resend (Esqueci a Senha)
+    document.getElementById('forgotForm')?.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const email = document.getElementById('forgotEmail')?.value.trim();
+        const btn = document.getElementById('btnForgot');
+        const btnTexts = btn?.querySelectorAll('.btn-text');
+        const btnSpinner = btn?.querySelector('.btn-spinner');
+
+        if (!email) return window.showToast('Por favor, digite seu email.', 'error');
+
+        if (btn) {
+            btn.disabled = true;
+            btnTexts.forEach(el => el.classList.add('hidden'));
+            btnSpinner?.classList.remove('hidden');
+        }
+
+        try {
+            // Chamada direta à tua API Resend Customizada
+            const response = await fetch('/api/send-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    to: email,
+                    subject: '🔐 Recuperação de Senha - PayGo',
+                    template: 'password-reset',
+                    variables: {
+                        customer_name: email.split('@')[0],
+                        reset_link: `https://paygo.co.mz/seguranca.html?mode=resetPassword`
+                    }
+                })
+            });
+
+            // Se a Vercel devolver a resposta limpa e for JSON, processa.
+            const contentType = response.headers.get('content-type');
+            if (response.ok && contentType && contentType.includes('application/json')) {
+                const result = await response.json();
+                if (result.success) {
+                    window.showToast('✅ Link enviado! Verifique a sua caixa de entrada e Spam.', 'success');
+                    window.closeForgotModal();
+                } else {
+                    throw new Error(result.error || 'Falha ao processar o email.');
+                }
+            } else {
+                throw new Error('Servidor indisponível. Tente mais tarde.');
+            }
+        } catch (error) {
+            console.error('Password reset error:', error);
+            window.showToast('❌ Erro no serviço de recuperação. Tente novamente mais tarde.', 'error');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btnTexts.forEach(el => el.classList.remove('hidden'));
+                btnSpinner?.classList.add('hidden');
+            }
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        if (typeof AOS !== 'undefined') AOS.init({ duration: 800, once: true });
+    });
     </script>
 </body>
 </html>
