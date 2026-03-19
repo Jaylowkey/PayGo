@@ -1224,8 +1224,13 @@ window.processDirectPayment = async function() {
     }
 };
 
+// ========================================================================
+// 🚀 ENVIAR PEDIDO VIA WHATSAPP (COM DADOS COMPLETOS)
+// ========================================================================
 document.getElementById('paygoForm').addEventListener('submit', async function(e) {
     e.preventDefault();
+    
+    // 1. Verificação de Segurança (Login)
     if (!currentUserData) {
         showToast('A redirecionar para o login...', 'info');
         setTimeout(() => window.location.href = 'login.html', 800);
@@ -1234,8 +1239,11 @@ document.getElementById('paygoForm').addEventListener('submit', async function(e
     
     const btn = document.getElementById('submitBtn');
     const originalContent = btn.innerHTML;
-    btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Processando...`; lucide.createIcons({root: btn});
+    btn.disabled = true; 
+    btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Processando...`; 
+    if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
 
+    // 2. Recolher todos os dados do Formulário e do Perfil
     const formData = {
         name: document.getElementById('userName').value.trim(),
         whatsapp: document.getElementById('userWhatsApp').value.trim(),
@@ -1247,36 +1255,79 @@ document.getElementById('paygoForm').addEventListener('submit', async function(e
         paymentMethod: document.querySelector('input[name="paymentMethod"]:checked')?.value || 'mpesa'
     };
 
+    // 3. Validação
     if (!formData.detail || formData.usd <= 0) {
-        btn.disabled = false; btn.innerHTML = originalContent; lucide.createIcons({root: btn});
+        btn.disabled = false; btn.innerHTML = originalContent; 
+        if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
         return showToast('Preencha os dados da encomenda primeiro.', 'error');
     }
 
+    // 4. Cálculos Financeiros
     const converted = formData.usd * BINANCE_RATE;
     const tax = (formData.usd <= 5 && formData.isFirst) ? 0 : (formData.usd <= 20 ? 150 : (formData.usd <= 50 ? 250 : (formData.usd <= 100 ? 600 : converted * 0.07)));
     const total = converted + tax;
-    const orderId = 'PG-' + Date.now().toString().slice(-6);
+    const orderId = 'PG-' + Date.now().toString().slice(-6).toUpperCase();
     const affiliateRef = localStorage.getItem('paygo_affiliate_ref') || null;
 
     const orderData = {
-        orderId, ...formData, tax, total, exchangeRate: BINANCE_RATE, status: 'pending', isPaid: false, referredBy: affiliateRef, createdAt: window.PayGoDB.serverTimestamp()
+        orderId, 
+        ...formData, 
+        tax, 
+        total, 
+        exchangeRate: BINANCE_RATE, 
+        status: 'pending', 
+        isPaid: false, 
+        referredBy: affiliateRef, 
+        createdAt: window.PayGoDB.serverTimestamp()
     };
 
     try {
+        // 5. Guardar Pedido na Base de Dados
         await window.PayGoDB.addDoc(window.PayGoDB.collection(window.PayGoDB.db, "orders"), orderData);
         showToast(`✅ Pedido Registado! Vai ser redirecionado para o WhatsApp.`, 'success', 4000);
         
-        const msg = `*NOVO PEDIDO PAYGO*\nID: ${orderId}\nTotal a Pagar: ${total} MT`;
+        // 🔥 6. CONSTRUIR MENSAGEM WHATSAPP COMPLETA E PROFISSIONAL 🔥
+        const tipoServico = formData.type === 'compra' ? 'Produto Internacional' : 'Jogo / Recarga';
+        const metodoPgto = formData.paymentMethod.toUpperCase();
+        const bonusTxt = (formData.isFirst && tax === 0) ? ' (1ª Compra Grátis 🎁)' : '';
+
+        const msg = `*NOVO PEDIDO PAYGO* 🛒
+--------------------------------------
+*🆔 Ref:* #${orderId}
+*👤 Cliente:* ${formData.name}
+*📱 Contacto:* ${formData.whatsapp}
+*📧 Email:* ${formData.email}
+
+*🛍️ DADOS DO SERVIÇO*
+*Categoria:* ${tipoServico}
+*Detalhe/Link:* ${formData.detail}
+*Valor em Dólar:* $${formData.usd.toFixed(2)} USD
+
+*💰 RESUMO FINANCEIRO*
+*Câmbio Base:* ${BINANCE_RATE.toFixed(2)} MT
+*Taxa PayGo:* ${tax.toFixed(2)} MT${bonusTxt}
+*TOTAL A PAGAR:* ${total.toFixed(2)} MT
+
+*💳 MÉTODO DE PAGAMENTO*
+${metodoPgto}
+
+_Aguardando instruções da equipa para proceder com o pagamento..._`;
+
+        // 7. Redirecionar para o WhatsApp
         setTimeout(() => {
             window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
+            // Limpar formulário após envio
             document.getElementById('userLink').value = '';
             document.getElementById('userUSD').value = '';
             window.calculate();
         }, 1500);
+
     } catch (error) {
+        console.error("Erro a gravar pedido:", error);
         showToast('Erro ao processar o seu pedido localmente.', 'error');
     } finally {
-        btn.disabled = false; btn.innerHTML = originalContent; lucide.createIcons({root: btn});
+        btn.disabled = false; btn.innerHTML = originalContent; 
+        if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
     }
 });
 
