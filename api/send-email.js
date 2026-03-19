@@ -240,59 +240,27 @@ function generateEmailHTML(template, vars) {
 
   switch (template) {
     
-    // 💸 PAGAMENTO CONFIRMADO (Novo Template)
-    case 'payment-confirmed': {
+    // 🔐 RECUPERAÇÃO DE SENHA
+    case 'password-reset': {
       return `${htmlStart}
-        <h2>💸 Pagamento Recebido!</h2>
+        <h2>Recuperação de Senha 🔐</h2>
         <p>Olá, <strong>${escape(vars.customer_name || 'Cliente')}</strong>.</p>
-        <p>Confirmamos a receção do seu pagamento. O seu pedido está agora a ser processado pela nossa equipa.</p>
-        
-        <div class="data-card">
-          <h3>Detalhes da Transação</h3>
-          <table>
-            <tr><td class="label">Pedido N.º</td><td class="value">#${escape(vars.order_id || 'N/A')}</td></tr>
-            <tr><td class="label">Valor Recebido</td><td class="value total-value">${escape(vars.amount || '0.00 MT')}</td></tr>
-            <tr><td class="label">Status</td><td class="value" style="color:#d97706;">Em Processamento 🔄</td></tr>
-          </table>
-        </div>
-        
-        <div class="notice">
-          <p><strong>Próximos Passos:</strong> A nossa equipa já está a tratar da sua compra/serviço. Receberá uma nova notificação assim que tudo estiver finalizado.</p>
-        </div>
-        <a href="${baseUrl}" class="btn">Acompanhar no Site</a>
+        <p>Recebemos um pedido para redefinir a palavra-passe da sua conta PayGo. Clique no botão abaixo para criar uma nova senha de forma segura.</p>
+        <a href="${escape(vars.reset_link)}" class="btn">Redefinir Palavra-passe</a>
+        <p style="font-size: 13px; color: #94a3b8; margin-top: 24px; text-align: center;">Se não solicitou esta alteração, por favor ignore este e-mail. A sua conta permanecerá segura.</p>
       ${htmlEnd}`;
     }
 
-    // 🎉 PEDIDO CONCLUÍDO (Novo Template)
-    case 'order-completed': {
-      return `${htmlStart}
-        <h2>🎉 Pedido Concluído!</h2>
-        <p>Olá, <strong>${escape(vars.customer_name || 'Cliente')}</strong>.</p>
-        <p>Temos boas notícias! O seu pedido foi processado e finalizado com sucesso.</p>
-        
-        <div class="data-card" style="border-color: #bbf7d0; background: #f0fdf4;">
-          <h3 style="color: #166534;">Resumo do Pedido #${escape(vars.order_id || 'N/A')}</h3>
-          <table>
-            <tr><td class="label" style="color: #166534;">Serviço</td><td class="value" style="color: #14532d;">Entregue / Finalizado ✅</td></tr>
-            <tr><td class="label" style="color: #166534;">Data</td><td class="value" style="color: #14532d;">${new Date().toLocaleDateString('pt-MZ')}</td></tr>
-          </table>
-        </div>
-        
-        <p style="text-align: center; margin-top: 32px;">Obrigado pela confiança na PayGo.<br>Estamos sempre aqui para ajudar nas suas compras globais!</p>
-        <a href="${baseUrl}" class="btn btn-success">Fazer Novo Pedido</a>
-      ${htmlEnd}`;
-    }
-
-    // ✅ CONFIRMAÇÃO DE PEDIDO (Nova Encomenda Inicial)
+    // 🆕 CONFIRMAÇÃO DE PEDIDO INICIAL
     case 'order-confirmation': {
       return `${htmlStart}
-        <h2>O seu pedido foi recebido. 🛒</h2>
-        <p>Olá, <strong>${escape(vars.customer_name || 'Cliente')}</strong>. O seu pedido <strong>#${escape(vars.order_id || 'N/A')}</strong> deu entrada no nosso sistema.</p>
+        <h2>O seu pedido foi registado. 🛒</h2>
+        <p>Olá, <strong>${escape(vars.customer_name || 'Cliente')}</strong>. O seu pedido <strong>#${escape(vars.order_id || 'N/A')}</strong> deu entrada no nosso sistema de forma segura.</p>
         
         <div class="data-card">
           <h3>Resumo Financeiro</h3>
           <table>
-            <tr><td class="label">Valor Original</td><td class="value">$${escape(vars.usd_amount || '0.00')}</td></tr>
+            <tr><td class="label">Valor em USD</td><td class="value">$${escape(vars.usd_amount || '0.00')}</td></tr>
             <tr><td class="label">Taxa PayGo</td><td class="value">${escape(vars.tax_amount || '0.00 MT')}</td></tr>
             <tr class="total-row">
               <td class="label">TOTAL A PAGAR</td>
@@ -303,63 +271,141 @@ function generateEmailHTML(template, vars) {
 
         <div style="background: #eef2ff; border-radius: 12px; padding: 24px; margin-top: 24px;">
           <h4 style="margin: 0 0 12px 0; color: #1e3a8a; font-size: 14px; text-transform: uppercase; text-align: center;">📥 Como Finalizar</h4>
-          <p style="font-size: 14px; color: #1e40af; text-align: center;">Para iniciarmos a compra, envie o valor total para uma das nossas contas e partilhe o comprovativo:</p>
+          <p style="font-size: 14px; color: #1e40af; text-align: center;">Para iniciarmos a compra, aceda ao link abaixo para realizar o pagamento através da PaySuite ou envie o valor para as nossas contas oficiais:</p>
           <div style="background: #ffffff; padding: 16px; border-radius: 8px; margin: 16px 0; text-align: center;">
             <p style="margin: 0; font-size: 16px; font-weight: 700; color: #0f172a;">e-Mola: 87 100 2255</p>
             <p style="margin: 8px 0 0 0; font-size: 16px; font-weight: 700; color: #0f172a;">M-Pesa: 84 100 2255</p>
           </div>
-          <a href="https://wa.me/258871002255" class="btn" style="margin: 0; background: #25d366;">Enviar Comprovativo no WhatsApp</a>
+          <a href="${baseUrl}/login.html" class="btn" style="margin: 0; background: #2563eb;">Aceder à Minha Conta</a>
         </div>
       ${htmlEnd}`;
     }
 
-    // 🔐 VERIFICAÇÃO DE EMAIL
-    case 'email-verification': {
-      const verifyLink = `${baseUrl}/verify-email.html?token=${vars.verificationToken || 'DEMO_TOKEN'}&email=${encodeURIComponent(vars.email || '')}`;
+    // 💸 PAGAMENTO CONFIRMADO
+    case 'payment-confirmed': {
       return `${htmlStart}
-        <h2>Confirme o seu e-mail</h2>
+        <h2>Pagamento Recebido! 💸</h2>
         <p>Olá, <strong>${escape(vars.customer_name || 'Cliente')}</strong>.</p>
-        <p>Para garantir a segurança da sua conta e poder efetuar pagamentos, precisamos que valide este endereço.</p>
-        <a href="${verifyLink}" class="btn">Validar o Meu E-mail</a>
-        <p style="font-size: 12px; text-align: center; color: #94a3b8;">Este link expira em 24 horas.</p>
+        <p>Confirmamos a receção do seu pagamento. O seu pedido encontra-se agora na nossa fila prioritária de processamento.</p>
+        
+        <div class="data-card">
+          <h3>Detalhes da Transação</h3>
+          <table>
+            <tr><td class="label">Pedido N.º</td><td class="value">#${escape(vars.order_id || 'N/A')}</td></tr>
+            <tr><td class="label">Valor Validado</td><td class="value total-value">${escape(vars.amount || '0.00 MT')}</td></tr>
+            <tr><td class="label">Status</td><td class="value" style="color:#2563eb;">Na Fila ⏳</td></tr>
+          </table>
+        </div>
+        
+        <div class="notice">
+          <p><strong>O que se segue?</strong> A nossa equipa administrativa já está a efetuar a compra internacional. Receberá atualizações assim que houver novidades.</p>
+        </div>
+        <a href="${baseUrl}/login.html" class="btn">Acompanhar Pedido</a>
       ${htmlEnd}`;
     }
 
-    // 🎉 BEM-VINDO (Após verificação)
+    // 🔄 PEDIDO EM PROCESSAMENTO
+    case 'order-processing': {
+      return `${htmlStart}
+        <h2>Pedido em Processamento 🔄</h2>
+        <p>Olá, <strong>${escape(vars.customer_name || 'Cliente')}</strong>.</p>
+        <p>A sua compra (Pedido <strong>#${escape(vars.order_id || 'N/A')}</strong>) está neste momento a ser efetuada pelos nossos agentes na plataforma de destino (AliExpress, Amazon, etc).</p>
+        
+        <div class="data-card" style="border-color: #bfdbfe; background: #eff6ff;">
+          <h3 style="color: #1e40af;">Status Atualizado</h3>
+          <table>
+            <tr><td class="label" style="color: #1e40af;">Fase Atual</td><td class="value" style="color: #1e3a8a;">Processamento Internacional</td></tr>
+          </table>
+        </div>
+        <p style="text-align: center; margin-top: 24px;">Se houver um código de rastreio (tracking code), este será disponibilizado na sua conta em breve.</p>
+        <a href="${baseUrl}/login.html" class="btn">Ver Detalhes da Conta</a>
+      ${htmlEnd}`;
+    }
+
+    // 🎉 PEDIDO CONCLUÍDO
+    case 'order-completed': {
+      return `${htmlStart}
+        <h2>Pedido Concluído! 🎉</h2>
+        <p>Olá, <strong>${escape(vars.customer_name || 'Cliente')}</strong>.</p>
+        <p>Boas notícias! O seu pedido <strong>#${escape(vars.order_id || 'N/A')}</strong> foi processado e finalizado com sucesso pela nossa equipa.</p>
+        
+        <div class="data-card" style="border-color: #bbf7d0; background: #f0fdf4;">
+          <h3 style="color: #166534;">Resumo Final</h3>
+          <table>
+            <tr><td class="label" style="color: #166534;">Status</td><td class="value" style="color: #14532d;">Finalizado / Despachado ✅</td></tr>
+            <tr><td class="label" style="color: #166534;">Data</td><td class="value" style="color: #14532d;">${new Date().toLocaleDateString('pt-MZ')}</td></tr>
+          </table>
+        </div>
+        
+        <p style="text-align: center; margin-top: 32px;">Se a sua compra incluiu produtos físicos, verifique o código de rastreio na sua conta PayGo. Obrigado pela confiança!</p>
+        <a href="${baseUrl}" class="btn btn-success">Fazer Nova Compra</a>
+      ${htmlEnd}`;
+    }
+
+    // ❌ PEDIDO CANCELADO
+    case 'order-cancelled': {
+      return `${htmlStart}
+        <h2>Pedido Cancelado ❌</h2>
+        <p>Olá, <strong>${escape(vars.customer_name || 'Cliente')}</strong>.</p>
+        <p>Informamos que o seu pedido <strong>#${escape(vars.order_id || 'N/A')}</strong> foi cancelado pelo nosso sistema administrativo.</p>
+        
+        <div class="data-card" style="border-color: #fecaca; background: #fef2f2;">
+          <h3 style="color: #991b1b;">Informação Logística</h3>
+          <table>
+            <tr><td class="label" style="color: #991b1b;">Status</td><td class="value" style="color: #7f1d1d;">Cancelado</td></tr>
+          </table>
+        </div>
+        <p style="text-align: center; margin-top: 24px;">Isto pode ocorrer devido a produtos esgotados, links inválidos ou falhas no pagamento. Por favor, contacte o nosso suporte para mais detalhes ou reembolso.</p>
+        <a href="https://wa.me/258871002255" class="btn" style="background: #dc2626;">Falar com o Suporte</a>
+      ${htmlEnd}`;
+    }
+
+    // 🛡 VERIFICAÇÃO DE EMAIL
+    case 'email-verification': {
+      const verifyLink = `${baseUrl}/verify-email.html?token=${vars.verificationToken || 'DEMO_TOKEN'}&email=${encodeURIComponent(vars.email || '')}`;
+      return `${htmlStart}
+        <h2>Confirme o seu e-mail 🛡️</h2>
+        <p>Olá, <strong>${escape(vars.customer_name || 'Cliente')}</strong>.</p>
+        <p>Para garantir a segurança máxima da sua conta PayGo e ativar os seus pagamentos, precisamos que valide este endereço de e-mail.</p>
+        <a href="${verifyLink}" class="btn">Validar a Minha Conta</a>
+        <p style="font-size: 12px; text-align: center; color: #94a3b8; margin-top: 20px;">Este link de segurança expira em 24 horas.</p>
+      ${htmlEnd}`;
+    }
+
+    // 🚀 BEM-VINDO
     case 'welcome': {
       const hasAffiliateCode = vars.affiliate_code && vars.affiliate_code.trim() !== '' && vars.affiliate_code !== 'null';
       return `${htmlStart}
         <h2>Bem-vindo à PayGo! 🚀</h2>
-        <p>Olá, <strong>${escape(vars.customer_name || 'Cliente')}</strong>. A sua conta foi ativada com sucesso.</p>
-        <p>Já pode fazer compras internacionais no AliExpress, Shein ou Amazon, pagando em Meticais com o seu M-Pesa ou e-Mola.</p>
-        <a href="${baseUrl}" class="btn">Ir para a Plataforma</a>
+        <p>Olá, <strong>${escape(vars.customer_name || 'Cliente')}</strong>. A sua conta foi ativada com sucesso e já faz parte da nossa plataforma.</p>
+        <p>A partir de agora, o comércio global não tem fronteiras. Compre no AliExpress, Amazon, Shein, pague serviços ou subscreva plataformas diretamente com o seu M-Pesa ou e-Mola.</p>
+        <a href="${baseUrl}/login.html" class="btn">Aceder à Plataforma</a>
         
         ${hasAffiliateCode ? `
         <div style="text-align: center; margin-top: 40px; border-top: 1px solid #e2e8f0; padding-top: 32px;">
           <p style="font-size: 12px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em;">🎁 O seu Código Promocional</p>
           <div class="code-highlight">${escape(vars.affiliate_code)}</div>
-          <p style="font-size: 14px; color: #475569;">Indique amigos e ganhe <strong>3%</strong> na primeira compra deles!</p>
+          <p style="font-size: 14px; color: #475569;">Indique amigos usando o seu código e ganhe comissões na primeira compra deles!</p>
         </div>
         ` : ''}
       ${htmlEnd}`;
     }
 
-    // 📧 DEFAULT (Fallback para mensagens dinâmicas)
+    // 📧 DEFAULT (Fallback Customizado do Admin Dashboard)
     default:
-      // O default original causava problemas com mensagens do dashboard, 
-      // Por isso, aqui inserimos a mensagem sem usar o escape() para permitir formatação HTML vinda do dashboard
+      // Aqui inserimos a mensagem sem usar o escape() para permitir a formatação HTML vinda do painel de administração
       return `${htmlStart}
-        <h2>Notificação PayGo</h2>
+        <h2>Notificação Oficial PayGo</h2>
         <div style="background: #f8fafc; padding: 24px; border-radius: 12px; color: #1e293b; line-height: 1.6; border: 1px solid #e2e8f0;">
-          ${vars.message || 'Recebeu uma nova notificação do nosso sistema.'}
+          ${vars.message || 'Recebeu uma nova notificação administrativa do nosso sistema.'}
         </div>
-        <a href="${baseUrl}" class="btn" style="margin-bottom:0;">Aceder à PayGo</a>
+        <a href="${baseUrl}/login.html" class="btn" style="margin-bottom:0;">Aceder à Minha Conta</a>
       ${htmlEnd}`;
   }
 }
 
 // ==========================================
-// 📝 GERADOR DE TEXTO PLAIN (Fallback para clientes antigos)
+// 📝 GERADOR DE TEXTO PLAIN (Fallback)
 // ==========================================
 function generateEmailText(template, vars) {
   const escape = (str) => {
@@ -371,25 +417,33 @@ function generateEmailText(template, vars) {
   const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://paygo.co.mz';
 
   switch (template) {
+    case 'password-reset':
+      return `RECUPERAÇÃO DE SENHA\n\nOlá ${escape(vars.customer_name)},\nRecebemos um pedido para redefinir a sua senha. Acesse o link abaixo para criar uma nova:\n${escape(vars.reset_link)}${footer}`;
+
+    case 'order-confirmation':
+      return `PEDIDO #${escape(vars.order_id)} REGISTADO ✅\n\nOlá ${escape(vars.customer_name)},\nValor do Produto: $${escape(vars.usd_amount)}\nTotal a Pagar: ${escape(vars.total_amount)}\n\nAceda à sua conta para proceder ao pagamento.${footer}`;
+
     case 'payment-confirmed':
-      return `PAGAMENTO RECEBIDO ✅\n\nOlá ${escape(vars.customer_name)},\nConfirmamos a receção do pagamento de ${escape(vars.amount)} referente ao pedido #${escape(vars.order_id)}.\nO seu pedido está agora em processamento.\n${footer}`;
+      return `PAGAMENTO RECEBIDO 💸\n\nOlá ${escape(vars.customer_name)},\nConfirmamos a receção de ${escape(vars.amount)} referente ao pedido #${escape(vars.order_id)}.\nO seu pedido encontra-se agora na nossa fila de processamento.${footer}`;
     
+    case 'order-processing':
+      return `PEDIDO EM PROCESSAMENTO 🔄\n\nOlá ${escape(vars.customer_name)},\nO seu pedido #${escape(vars.order_id)} está neste momento a ser efetuado pelos nossos agentes na plataforma de destino.${footer}`;
+
     case 'order-completed':
-      return `PEDIDO CONCLUÍDO 🎉\n\nOlá ${escape(vars.customer_name)},\nO seu pedido #${escape(vars.order_id)} foi finalizado e entregue com sucesso.\nObrigado por usar a PayGo!${footer}`;
+      return `PEDIDO CONCLUÍDO 🎉\n\nOlá ${escape(vars.customer_name)},\nO seu pedido #${escape(vars.order_id)} foi finalizado com sucesso.\nObrigado por escolher a PayGo!${footer}`;
+
+    case 'order-cancelled':
+      return `PEDIDO CANCELADO ❌\n\nOlá ${escape(vars.customer_name)},\nO seu pedido #${escape(vars.order_id)} foi cancelado pelo nosso sistema. Contacte o suporte para mais informações.${footer}`;
 
     case 'email-verification': 
-      return `CONFIRME O SEU E-MAIL - PAYGO\n\nOlá ${escape(vars.customer_name)},\nPara ativar a conta, aceda a: ${baseUrl}/verify-email.html?token=${vars.verificationToken}&email=${encodeURIComponent(vars.email)}${footer}`;
+      return `CONFIRME O SEU E-MAIL 🛡️\n\nOlá ${escape(vars.customer_name)},\nPara ativar a conta, aceda a: ${baseUrl}/verify-email.html?token=${vars.verificationToken}&email=${encodeURIComponent(vars.email)}${footer}`;
     
     case 'welcome': 
       let msg = `BEM-VINDO À PAYGO! 🚀\n\nA sua conta está ativada. Pode aceder em: ${baseUrl}`;
-      if (vars.affiliate_code) msg += `\n\n🎁 Seu código de afiliado: ${escape(vars.affiliate_code)}`;
+      if (vars.affiliate_code) msg += `\n\n🎁 Seu código promocional: ${escape(vars.affiliate_code)}`;
       return msg + footer;
-    
-    case 'order-confirmation':
-      return `PEDIDO #${escape(vars.order_id)} REGISTADO ✅\n\nTotal a Pagar: ${escape(vars.total_amount)}\n\nEnvie o valor para e-Mola (871002255) ou M-Pesa (841002255) e mande o comprovativo no WhatsApp.${footer}`;
       
     default:
-      // Remove tags HTML na versão de texto puro
       const cleanText = (vars.message || '').replace(/<[^>]*>?/gm, '');
       return `${cleanText}${footer}`;
   }
