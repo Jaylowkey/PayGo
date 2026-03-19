@@ -73,7 +73,14 @@
             <span class="text-[10px] text-brand-400 ml-2 px-2 py-0.5 bg-brand-500/20 border border-brand-500/30 rounded-full font-black uppercase">Settings</span>
         </div>
       </div>
-      <button onclick="window.logout()" class="bg-slate-800 hover:bg-danger-500/20 text-slate-400 hover:text-danger-400 rounded-xl p-2.5 transition-colors" title="Terminar Sessão"><i data-lucide="power" class="w-5 h-5"></i></button>
+      
+      <div class="flex items-center gap-4">
+        <div class="hidden md:flex flex-col text-right">
+          <span id="adminName" class="text-sm font-bold text-white">Admin</span>
+          <span class="text-[10px] text-slate-400 uppercase tracking-widest">Painel de Controlo</span>
+        </div>
+        <button onclick="window.logout()" class="bg-slate-800 hover:bg-danger-500/20 text-slate-400 hover:text-danger-400 rounded-xl p-2.5 transition-colors" title="Terminar Sessão"><i data-lucide="power" class="w-5 h-5"></i></button>
+      </div>
     </div>
   </header>
 
@@ -296,7 +303,7 @@
     const auth = getAuth(app);
     const db = getFirestore(app, "paygodb");
     
-    // Defaults do Sistema se a DB estiver vazia
+    // Defaults do Sistema se a BD estiver vazia
     const DEFAULT_SETTINGS = {
       exchangeRate: 88.00,
       adminEmails: 'admin@paygo.co.mz',
@@ -340,24 +347,37 @@
     sidebarOverlay?.addEventListener('click', toggleSidebar);
 
     // Sistema de Proteção Baseado em Sessão
-    const fallbackTimer = setTimeout(() => { document.getElementById('sysLoader').style.display = 'none'; }, 3000);
+    const fallbackTimer = setTimeout(() => { 
+        const sysL = document.getElementById('sysLoader');
+        if(sysL) sysL.style.display = 'none'; 
+    }, 3000);
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) { window.location.href = '../login.html'; return; }
       try {
         const userDoc = await getDoc(doc(db, "users", user.uid));
         if (userDoc.exists() && (userDoc.data().role === 'admin' || userDoc.data().role === 'superadmin')) {
-          document.getElementById('adminName').textContent = userDoc.data().name || 'Admin';
+          
+          // Prevenir Crash UI se o ID não existir
+          const adminNameEl = document.getElementById('adminName');
+          if (adminNameEl) {
+              adminNameEl.textContent = userDoc.data().name || 'Admin';
+          }
+          
           await loadSettingsFromDB();
         } else {
           window.location.href = '../index.html';
         }
       } catch (error) {
-        showToast("Erro na ligação à BD.", "error");
+        console.error("🔥 Erro de Base de Dados / Autenticação:", error);
+        showToast("Erro na ligação à BD. Verifique a consola.", "error");
       } finally {
         clearTimeout(fallbackTimer);
-        document.getElementById('sysLoader').style.opacity = '0';
-        setTimeout(() => document.getElementById('sysLoader').style.display = 'none', 500);
+        const sysLoader = document.getElementById('sysLoader');
+        if (sysLoader) {
+            sysLoader.style.opacity = '0';
+            setTimeout(() => sysLoader.style.display = 'none', 500);
+        }
       }
     });
 
@@ -375,26 +395,28 @@
         }
         populateForm(settings);
       } catch (error) {
+        console.error("Erro a carregar configurações:", error);
         populateForm(DEFAULT_SETTINGS);
         showToast('Ligação instável. A mostrar valores padrão.', 'warning');
       }
     }
 
+    // Injeção de dados segura (Não falha se um input for alterado no HTML)
     function populateForm(settings) {
-      document.getElementById('exchangeRate').value = settings.exchangeRate;
-      document.getElementById('adminEmails').value = settings.adminEmails;
-      document.getElementById('whatsappNumber').value = settings.whatsappNumber;
-      document.getElementById('tax1').value = settings.tax1;
-      document.getElementById('tax2').value = settings.tax2;
-      document.getElementById('tax3').value = settings.tax3;
-      document.getElementById('taxPercent').value = settings.taxPercent;
-      document.getElementById('firstPurchaseFree').checked = settings.firstPurchaseFree;
-      document.getElementById('resendApiKey').value = settings.resendApiKey || '';
-      document.getElementById('senderEmail').value = settings.senderEmail;
-      document.getElementById('senderName').value = settings.senderName;
-      document.getElementById('larkWebhook').value = settings.larkWebhook || '';
-      document.getElementById('affiliateCommission').value = settings.affiliateCommission;
-      document.getElementById('affiliatePrefix').value = settings.affiliatePrefix;
+      if(document.getElementById('exchangeRate')) document.getElementById('exchangeRate').value = settings.exchangeRate;
+      if(document.getElementById('adminEmails')) document.getElementById('adminEmails').value = settings.adminEmails;
+      if(document.getElementById('whatsappNumber')) document.getElementById('whatsappNumber').value = settings.whatsappNumber;
+      if(document.getElementById('tax1')) document.getElementById('tax1').value = settings.tax1;
+      if(document.getElementById('tax2')) document.getElementById('tax2').value = settings.tax2;
+      if(document.getElementById('tax3')) document.getElementById('tax3').value = settings.tax3;
+      if(document.getElementById('taxPercent')) document.getElementById('taxPercent').value = settings.taxPercent;
+      if(document.getElementById('firstPurchaseFree')) document.getElementById('firstPurchaseFree').checked = settings.firstPurchaseFree;
+      if(document.getElementById('resendApiKey')) document.getElementById('resendApiKey').value = settings.resendApiKey || '';
+      if(document.getElementById('senderEmail')) document.getElementById('senderEmail').value = settings.senderEmail;
+      if(document.getElementById('senderName')) document.getElementById('senderName').value = settings.senderName;
+      if(document.getElementById('larkWebhook')) document.getElementById('larkWebhook').value = settings.larkWebhook || '';
+      if(document.getElementById('affiliateCommission')) document.getElementById('affiliateCommission').value = settings.affiliateCommission;
+      if(document.getElementById('affiliatePrefix')) document.getElementById('affiliatePrefix').value = settings.affiliatePrefix;
     }
 
     document.getElementById('settingsForm').addEventListener('submit', async (e) => {
@@ -429,9 +451,10 @@
         await setDoc(doc(db, "settings", "global"), settings, { merge: true });
         
         showToast('Sistema atualizado! Novas regras ativas globalmente.', 'success');
-        await loadSettingsFromDB(); // Confirma a gravação puxando os dados reais de novo
+        await loadSettingsFromDB(); 
         
       } catch (error) {
+        console.error("Erro a guardar configurações:", error);
         showToast('Falha na injeção de dados. Tente novamente.', 'error');
       } finally {
         btn.disabled = false;
