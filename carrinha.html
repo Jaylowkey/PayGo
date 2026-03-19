@@ -168,7 +168,7 @@ html { scroll-behavior: smooth; }
                         <div>
                             <span class="text-slate-300 block">Taxa de Serviço</span>
                             <label class="flex items-center gap-2 mt-2 cursor-pointer group">
-                                <input type="checkbox" id="chkFirstPurchase" onchange="window.renderCart()" class="w-4 h-4 rounded border-slate-500 text-green-500 focus:ring-green-500 bg-slate-800">
+                                <input type="checkbox" id="chkFirstPurchase" onchange="window.updateTotals()" class="w-4 h-4 rounded border-slate-500 text-green-500 focus:ring-green-500 bg-slate-800">
                                 <span class="text-[10px] text-slate-400 group-hover:text-white transition-colors">É a 1ª Compra? (Desconto)</span>
                             </label>
                         </div>
@@ -225,7 +225,7 @@ messagingSenderId: "208360646277",
 appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
 };
 
-const BINANCE_RATE = 88.00;
+let BINANCE_RATE = 88.00;
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -238,249 +238,285 @@ const auth = getAuth(app);
 let currentUserData = null;
 
 // ==========================================
+// 💰 BUSCAR CÂMBIO REAL DO SERVIDOR
+// ==========================================
+async function fetchExchangeRate() {
+    try {
+        const snap = await getDoc(doc(db, "settings", "global"));
+        if (snap.exists() && snap.data().exchangeRate) {
+            BINANCE_RATE = parseFloat(snap.data().exchangeRate);
+            window.updateTotals(); // Recalcula se o câmbio mudar
+        }
+    } catch (e) {
+        console.warn("A usar taxa de câmbio local (88.00 MT)", e);
+    }
+}
+
+// ==========================================
 // 🔐 PROTEÇÃO DE ROTA (Auth Wall)
 // ==========================================
 onAuthStateChanged(auth, async (user) => {
-    const loader = document.getElementById('authLoader');
-    if (user) {
-        try {
-            const userDoc = await getDoc(doc(db, "users", user.uid));
-            if (userDoc.exists()) {
-                currentUserData = userDoc.data();
-                document.getElementById('headerUserName').textContent = currentUserData.name || 'Cliente';
-                document.getElementById('headerUserAvatar').textContent = (currentUserData.name || 'C').charAt(0).toUpperCase();
-                
-                // Oculta loader e renderiza carrinha
-                loader.style.opacity = '0';
-                setTimeout(() => loader.classList.add('hidden'), 500);
-                window.renderCart();
-            }
-        } catch (e) { console.error('Erro Firebase Auth:', e); }
-    } else {
-        // Se não houver sessão, atira logo para o login
-        window.location.href = 'login.html';
-    }
+  const loader = document.getElementById('authLoader');
+  if (user) {
+      try {
+          const userDoc = await getDoc(doc(db, "users", user.uid));
+          if (userDoc.exists()) {
+              currentUserData = userDoc.data();
+              document.getElementById('headerUserName').textContent = currentUserData.name || 'Cliente';
+              document.getElementById('headerUserAvatar').textContent = (currentUserData.name || 'C').charAt(0).toUpperCase();
+              
+              // Oculta loader e renderiza carrinha
+              loader.style.opacity = '0';
+              setTimeout(() => loader.classList.add('hidden'), 500);
+              
+              fetchExchangeRate();
+              window.renderCart();
+          }
+      } catch (e) { console.error('Erro Firebase Auth:', e); }
+  } else {
+      window.location.href = 'login.html';
+  }
 });
 
 // ==========================================
-// 🛒 MOTOR DA CARRINHA (Lógica e Render)
+// 🛒 MOTOR DA CARRINHA (Rende HTML de Itens)
 // ==========================================
 window.renderCart = function() {
-    const cart = JSON.parse(localStorage.getItem('paygo_cart') || '[]');
-    const container = document.getElementById('cartItemsContainer');
-    const emptyState = document.getElementById('emptyCartState');
-    const btnCheckout = document.getElementById('btnCheckout');
-    
-    document.getElementById('itemCountLabel').textContent = `${cart.length} Iten${cart.length !== 1 ? 's' : ''}`;
+  const cart = JSON.parse(localStorage.getItem('paygo_cart') || '[]');
+  const container = document.getElementById('cartItemsContainer');
+  const emptyState = document.getElementById('emptyCartState');
+  const btnCheckout = document.getElementById('btnCheckout');
+  
+  document.getElementById('itemCountLabel').textContent = `${cart.length} Iten${cart.length !== 1 ? 's' : ''}`;
 
-    if (cart.length === 0) {
-        container.innerHTML = '';
-        emptyState.classList.remove('hidden');
-        btnCheckout.disabled = true;
-        btnCheckout.classList.add('opacity-50', 'cursor-not-allowed');
-        updateTotals(0);
-        return;
-    }
+  if (cart.length === 0) {
+      container.innerHTML = '';
+      emptyState.classList.remove('hidden');
+      btnCheckout.disabled = true;
+      btnCheckout.classList.add('opacity-50', 'cursor-not-allowed');
+      window.updateTotals();
+      return;
+  }
 
-    emptyState.classList.add('hidden');
-    btnCheckout.disabled = false;
-    btnCheckout.classList.remove('opacity-50', 'cursor-not-allowed');
+  emptyState.classList.add('hidden');
+  btnCheckout.disabled = false;
+  btnCheckout.classList.remove('opacity-50', 'cursor-not-allowed');
 
-    let html = '';
-    let totalUSD = 0;
+  let html = '';
 
-    cart.forEach((item, index) => {
-        totalUSD += parseFloat(item.usd);
-        const mtValue = (item.usd * BINANCE_RATE).toLocaleString('pt-MZ', { minimumFractionDigits: 2 });
-        const icon = item.type === 'compra' ? 'shopping-bag' : 'gamepad-2';
-        const typeLabel = item.type === 'compra' ? 'Produto Internacional' : 'Recarga / Jogo';
-        
-        html += `
-        <div class="cart-item bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-4 items-center relative overflow-hidden group hover:border-brand-300 transition-colors" style="animation-delay: ${index * 0.1}s">
-            <div class="w-16 h-16 bg-brand-50 rounded-xl flex items-center justify-center shrink-0">
-                <i data-lucide="${icon}" class="w-8 h-8 text-brand-500"></i>
-            </div>
-            <div class="flex-1 w-full text-center sm:text-left min-w-0">
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">${typeLabel}</p>
-                <p class="font-bold text-slate-800 text-sm truncate bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100" title="${item.detail}">${item.detail}</p>
-            </div>
-            <div class="flex items-center gap-6 mt-3 sm:mt-0 w-full sm:w-auto justify-between sm:justify-end">
-                <div class="text-left sm:text-right">
-                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Preço</p>
-                    <p class="font-mono font-bold text-slate-900 text-lg">${mtValue} MT</p>
-                    <p class="text-xs text-brand-600 font-bold">$${item.usd.toFixed(2)} USD</p>
-                </div>
-                <button onclick="window.removeFromCart('${item.id}')" class="item-remove w-10 h-10 rounded-full flex items-center justify-center text-slate-300 hover:text-danger-500 bg-white hover:bg-danger-50 border border-slate-200 hover:border-danger-200 focus:outline-none shrink-0" title="Remover Item">
-                    <i data-lucide="trash-2" class="w-5 h-5"></i>
-                </button>
-            </div>
-        </div>
-        `;
-    });
+  cart.forEach((item, index) => {
+      const mtValue = (item.usd * BINANCE_RATE).toLocaleString('pt-MZ', { minimumFractionDigits: 2 });
+      const safeType = item.type || 'compra';
+      const icon = safeType === 'compra' ? 'shopping-bag' : 'gamepad-2';
+      const typeLabel = safeType === 'compra' ? 'Produto Internacional' : 'Recarga / Jogo';
+      
+      html += `
+      <div class="cart-item bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-4 items-center relative overflow-hidden group hover:border-brand-300 transition-colors" style="animation-delay: ${index * 0.1}s">
+          <div class="w-16 h-16 bg-brand-50 rounded-xl flex items-center justify-center shrink-0">
+              <i data-lucide="${icon}" class="w-8 h-8 text-brand-500"></i>
+          </div>
+          <div class="flex-1 w-full text-center sm:text-left min-w-0">
+              <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">${typeLabel}</p>
+              <p class="font-bold text-slate-800 text-sm truncate bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100" title="${item.detail}">${item.detail}</p>
+          </div>
+          <div class="flex items-center gap-6 mt-3 sm:mt-0 w-full sm:w-auto justify-between sm:justify-end">
+              <div class="text-left sm:text-right">
+                  <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Preço</p>
+                  <p class="font-mono font-bold text-slate-900 text-lg">${mtValue} MT</p>
+                  <p class="text-xs text-brand-600 font-bold">$${parseFloat(item.usd || 0).toFixed(2)} USD</p>
+              </div>
+              <button onclick="window.removeFromCart('${item.id}')" class="item-remove w-10 h-10 rounded-full flex items-center justify-center text-slate-300 hover:text-danger-500 bg-white hover:bg-danger-50 border border-slate-200 hover:border-danger-200 focus:outline-none shrink-0" title="Remover Item">
+                  <i data-lucide="trash-2" class="w-5 h-5"></i>
+              </button>
+          </div>
+      </div>
+      `;
+  });
 
-    container.innerHTML = html;
-    lucide.createIcons();
-    updateTotals(totalUSD);
+  container.innerHTML = html;
+  lucide.createIcons();
+  
+  // Chama os cálculos matemáticos separadamente
+  window.updateTotals();
 };
 
 window.removeFromCart = function(id) {
-    let cart = JSON.parse(localStorage.getItem('paygo_cart') || '[]');
-    cart = cart.filter(item => item.id !== id);
-    localStorage.setItem('paygo_cart', JSON.stringify(cart));
-    showToast('Produto removido da carrinha.', 'info');
-    window.renderCart();
+  let cart = JSON.parse(localStorage.getItem('paygo_cart') || '[]');
+  cart = cart.filter(item => item.id !== id);
+  localStorage.setItem('paygo_cart', JSON.stringify(cart));
+  showToast('Produto removido da carrinha.', 'info');
+  window.renderCart();
 };
 
-function updateTotals(totalUSD) {
-    const isFirst = document.getElementById('chkFirstPurchase').checked;
-    const badge = document.getElementById('freeTaxBadge');
-    
-    const convertedMT = totalUSD * BINANCE_RATE;
-    let taxMT = 0;
+// ==========================================
+// 🧮 CÁLCULOS MATEMÁTICOS DE CHECKOUT
+// ==========================================
+window.updateTotals = function() {
+  const cart = JSON.parse(localStorage.getItem('paygo_cart') || '[]');
+  let totalUSD = 0;
+  cart.forEach(item => {
+      totalUSD += parseFloat(item.usd || 0);
+  });
 
-    if (totalUSD > 0) {
-        if (totalUSD <= 5 && isFirst) {
-            taxMT = 0;
-            badge.classList.remove('hidden');
-        } else {
-            badge.classList.add('hidden');
-            if (totalUSD <= 20) taxMT = 150;
-            else if (totalUSD <= 50) taxMT = 250;
-            else if (totalUSD <= 100) taxMT = 600;
-            else taxMT = convertedMT * 0.07;
-        }
-    } else {
-        badge.classList.add('hidden');
-    }
+  const isFirst = document.getElementById('chkFirstPurchase').checked;
+  const badge = document.getElementById('freeTaxBadge');
+  
+  const convertedMT = totalUSD * BINANCE_RATE;
+  let taxMT = 0;
 
-    const totalFinal = convertedMT + taxMT;
+  if (totalUSD > 0) {
+      if (totalUSD <= 5 && isFirst) {
+          taxMT = 0;
+          badge.classList.remove('hidden');
+      } else {
+          badge.classList.add('hidden');
+          if (totalUSD <= 20) taxMT = 150;
+          else if (totalUSD <= 50) taxMT = 250;
+          else if (totalUSD <= 100) taxMT = 600;
+          else taxMT = convertedMT * 0.07;
+      }
+  } else {
+      badge.classList.add('hidden');
+  }
 
-    document.getElementById('summaryUsd').textContent = `$${totalUSD.toFixed(2)}`;
-    document.getElementById('summaryConverted').textContent = `${convertedMT.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`;
-    document.getElementById('summaryTax').textContent = `${taxMT.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`;
-    
-    const totalRounded = Math.round(totalFinal);
-    const cents = Math.round((totalFinal % 1) * 100).toString().padStart(2, '0');
-    document.getElementById('summaryTotal').innerHTML = `${totalRounded.toLocaleString('pt-MZ')} <span class="text-lg text-brand-300 font-normal mb-1">.${cents} MT</span>`;
-}
+  const totalFinal = convertedMT + taxMT;
+
+  document.getElementById('summaryUsd').textContent = `$${totalUSD.toFixed(2)}`;
+  document.getElementById('summaryConverted').textContent = `${convertedMT.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`;
+  document.getElementById('summaryTax').textContent = `${taxMT.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`;
+  
+  const totalRounded = Math.round(totalFinal);
+  const cents = Math.round((totalFinal % 1) * 100).toString().padStart(2, '0');
+  document.getElementById('summaryTotal').innerHTML = `${totalRounded.toLocaleString('pt-MZ')} <span class="text-lg text-brand-300 font-normal mb-1">.${cents} MT</span>`;
+};
 
 // Estilo UI dos Métodos de Pagamento
 window.updatePaymentMethod = function() {
-    document.querySelectorAll('.payment-method').forEach(el => {
-        const radio = el.querySelector('input[type="radio"]');
-        if (radio.checked) {
-            el.classList.add('selected', 'border-brand-500');
-            el.classList.remove('border-slate-700');
-        } else {
-            el.classList.remove('selected', 'border-brand-500');
-            el.classList.add('border-slate-700');
-        }
-    });
+  document.querySelectorAll('.payment-method').forEach(el => {
+      const radio = el.querySelector('input[type="radio"]');
+      if (radio.checked) {
+          el.classList.add('selected', 'border-brand-500');
+          el.classList.remove('border-slate-700');
+      } else {
+          el.classList.remove('selected', 'border-brand-500');
+          el.classList.add('border-slate-700');
+      }
+  });
 };
 
 // ==========================================
-// 🚀 CHECKOUT PROCESS (A Magia Final)
+// 🚀 CHECKOUT PROCESS (BLINDADO ANTI-CRASH)
 // ==========================================
 window.processCheckout = async function() {
-    if (!currentUserData) return showToast('Erro de Sessão.', 'error');
-    
-    const cart = JSON.parse(localStorage.getItem('paygo_cart') || '[]');
-    if (cart.length === 0) return showToast('A carrinha está vazia!', 'warning');
+  if (!currentUserData) return showToast('Erro de Sessão.', 'error');
+  
+  const cart = JSON.parse(localStorage.getItem('paygo_cart') || '[]');
+  if (cart.length === 0) return showToast('A carrinha está vazia!', 'warning');
 
-    const btn = document.getElementById('btnCheckout');
-    const originalHTML = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A criar fatura...`;
-    lucide.createIcons({root: btn});
+  const btn = document.getElementById('btnCheckout');
+  const originalHTML = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A criar fatura...`;
+  lucide.createIcons({root: btn});
 
-    // 1. Agrupar dados da Carrinha num único Pedido
-    let totalUSD = 0;
-    let linksArr = [];
-    cart.forEach((item, index) => {
-        totalUSD += parseFloat(item.usd);
-        linksArr.push(`[Item ${index+1}] ${item.type.toUpperCase()}: ${item.detail}`);
-    });
+  try {
+      // 1. Agrupar dados da Carrinha num único Pedido
+      let totalUSD = 0;
+      let linksArr = [];
+      cart.forEach((item, index) => {
+          totalUSD += parseFloat(item.usd || 0);
+          
+          // Fallback Seguro: Se o item for muito antigo e não tiver type, não faz o código explodir
+          const safeType = item.type || 'compra';
+          linksArr.push(`[Item ${index+1}] ${safeType.toUpperCase()}: ${item.detail}`);
+      });
 
-    const detailString = linksArr.join(" | ");
-    const isFirst = document.getElementById('chkFirstPurchase').checked;
-    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'mpesa';
-    
-    const converted = totalUSD * BINANCE_RATE;
-    const tax = (totalUSD <= 5 && isFirst) ? 0 : (totalUSD <= 20 ? 150 : (totalUSD <= 50 ? 250 : (totalUSD <= 100 ? 600 : converted * 0.07)));
-    const totalFinal = converted + tax;
-    const orderId = 'PG-' + Date.now().toString().slice(-6).toUpperCase();
-    const affiliateRef = localStorage.getItem('paygo_affiliate_ref') || null;
+      const detailString = linksArr.join(" | ");
+      const isFirst = document.getElementById('chkFirstPurchase').checked;
+      const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'mpesa';
+      
+      const converted = totalUSD * BINANCE_RATE;
+      const tax = (totalUSD <= 5 && isFirst) ? 0 : (totalUSD <= 20 ? 150 : (totalUSD <= 50 ? 250 : (totalUSD <= 100 ? 600 : converted * 0.07)));
+      const totalFinal = converted + tax;
+      const orderId = 'PG-' + Date.now().toString().slice(-6).toUpperCase();
+      const affiliateRef = localStorage.getItem('paygo_affiliate_ref') || null;
+      
+      // Proteção contra utilizadores sem Telemóvel (usa o fallback)
+      const userPhone = currentUserData.phone || currentUserData.whatsapp || '258000000000';
 
-    const orderData = {
-        orderId: orderId,
-        name: currentUserData.name,
-        email: currentUserData.email,
-        whatsapp: currentUserData.phone || '258000000000',
-        usd: totalUSD,
-        detail: detailString, // O Admin verá os links agrupados aqui
-        tax: tax,
-        total: totalFinal,
-        exchangeRate: BINANCE_RATE,
-        status: 'pending',
-        isPaid: false,
-        paymentMethod: paymentMethod,
-        type: cart.length > 1 ? 'múltiplo' : cart[0].type,
-        isFirstPurchase: isFirst,
-        referredBy: affiliateRef,
-        createdAt: serverTimestamp(),
-        source: 'carrinha'
-    };
+      const orderData = {
+          orderId: orderId,
+          name: currentUserData.name || 'Cliente',
+          email: currentUserData.email || 'anon@paygo.co.mz',
+          whatsapp: userPhone,
+          usd: totalUSD,
+          detail: detailString,
+          tax: tax,
+          total: totalFinal,
+          exchangeRate: BINANCE_RATE,
+          status: 'pending',
+          isPaid: false,
+          paymentMethod: paymentMethod,
+          
+          // Importante: Fixado para passar nas Regras de Segurança do Firebase
+          type: cart[0].type || 'compra',
+          
+          isFirstPurchase: isFirst,
+          referredBy: affiliateRef,
+          createdAt: serverTimestamp(),
+          source: 'carrinha'
+      };
 
-    try {
-        // 2. Gravar no Firebase
-        await addDoc(collection(db, "orders"), orderData);
-        
-        showToast('Fatura gerada! A contactar PaySuite...', 'success');
+      // 2. Gravar no Firebase (com proteções das Rules)
+      await addDoc(collection(db, "orders"), orderData);
+      
+      showToast('Fatura gerada! A contactar PaySuite...', 'success');
 
-        // 3. Chamar API de Pagamento da PaySuite
-        const cleanPhone = currentUserData.phone ? currentUserData.phone.replace(/\D/g, '') : '258840000000';
-        
-        const response = await fetch('/api/paysuite-payment', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                orderId: orderId,
-                amount: totalFinal,
-                currency: 'MZN',
-                phone: cleanPhone,
-                method: paymentMethod,
-                email: currentUserData.email,
-                name: currentUserData.name,
-                description: `Carrinha PayGo: ${cart.length} itens (Ref: #${orderId})`
-            })
-        });
+      // 3. Chamar API de Pagamento da PaySuite
+      const cleanPhone = userPhone.replace(/\D/g, '');
+      
+      const response = await fetch('/api/paysuite-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+              orderId: orderId,
+              amount: totalFinal,
+              currency: 'MZN',
+              phone: cleanPhone,
+              method: paymentMethod,
+              email: currentUserData.email || 'anon@paygo.co.mz',
+              name: currentUserData.name || 'Cliente',
+              description: `Carrinha PayGo: ${cart.length} itens (Ref: #${orderId})`
+          })
+      });
 
-        const result = await response.json();
-        
-        if (response.ok && result.success && result.data.checkoutUrl) {
-            // Esvaziar carrinha porque a encomenda já foi fechada e gravada
-            localStorage.removeItem('paygo_cart');
-            
-            setTimeout(() => {
-                window.location.href = result.data.checkoutUrl;
-            }, 800);
-        } else {
-            throw new Error(result.error || 'A PaySuite rejeitou o início da transação.');
-        }
+      const result = await response.json();
+      
+      if (response.ok && result.success && result.data.checkoutUrl) {
+          // Esvaziar carrinha porque a encomenda já foi fechada e gravada
+          localStorage.removeItem('paygo_cart');
+          
+          setTimeout(() => {
+              window.location.href = result.data.checkoutUrl;
+          }, 800);
+      } else {
+          throw new Error(result.error || result.message || 'A PaySuite rejeitou o início da transação.');
+      }
 
-    } catch (err) {
-        showToast(err.message || 'Falha ao iniciar pagamento. Verifique a ligação.', 'error', 6000);
-        btn.disabled = false;
-        btn.innerHTML = originalHTML;
-        lucide.createIcons({root: btn});
-    }
+  } catch (err) {
+      console.error("Erro Checkout: ", err);
+      showToast(err.message || 'Falha ao iniciar pagamento. Verifique a ligação.', 'error', 6000);
+      btn.disabled = false;
+      btn.innerHTML = originalHTML;
+      lucide.createIcons({root: btn});
+  }
 };
 
 window.logoutFromHeader = async function() {
-    if (confirm('Sair da conta? A sua carrinha será guardada.')) {
-        await signOut(auth);
-        window.location.href = 'login.html';
-    }
+  if (confirm('Sair da conta? A sua carrinha será guardada.')) {
+      await signOut(auth);
+      window.location.href = 'login.html';
+  }
 };
 
 // Tooling UI
@@ -499,7 +535,7 @@ function showToast(message, type = 'success', duration = 4000) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    lucide.createIcons();
+  lucide.createIcons();
 });
 </script>
 </body>
