@@ -97,7 +97,7 @@ html { scroll-behavior: smooth; }
           <p class="text-sm font-semibold text-white" id="headerUserName">A carregar...</p>
         </div>
         <div class="w-10 h-10 bg-gradient-to-br from-brand-500 to-accent-500 rounded-full flex items-center justify-center text-white font-bold" id="headerUserAvatar" aria-hidden="true">U</div>
-        <button onclick="window.logoutFromHeader()" class="text-slate-400 hover:text-red-400 transition p-2" title="Sair da conta">
+        <button id="btnHeaderLogout" class="text-slate-400 hover:text-red-400 transition p-2" title="Sair da conta">
           <i data-lucide="log-out" class="w-5 h-5" aria-hidden="true"></i>
         </button>
       </div>
@@ -162,7 +162,7 @@ html { scroll-behavior: smooth; }
                         <span class="font-mono text-brand-300 text-lg" id="summaryUsd">$0.00</span>
                     </div>
                     <div class="flex justify-between items-center pb-4 border-b border-white/10">
-                        <span class="text-slate-300">Conversão (Câmbio 88 MT)</span>
+                        <span class="text-slate-300">Conversão (Câmbio <span id="cambioDisplay">88.00</span> MT)</span>
                         <span class="font-mono text-white" id="summaryConverted">0.00 MT</span>
                     </div>
                     <div class="flex flex-col pb-4 border-b border-white/10">
@@ -176,7 +176,7 @@ html { scroll-behavior: smooth; }
                         
                         <label class="flex items-start gap-3 cursor-pointer group p-3 border border-slate-700/50 rounded-xl hover:bg-slate-800/50 hover:border-brand-500/50 transition-all mt-3">
                             <div class="relative mt-0.5">
-                                <input type="checkbox" id="chkFirstPurchase" onchange="window.updateTotals()" class="peer sr-only">
+                                <input type="checkbox" id="chkFirstPurchase" class="peer sr-only">
                                 <div class="w-5 h-5 border-2 border-slate-500 rounded peer-checked:bg-green-500 peer-checked:border-green-500 transition flex items-center justify-center bg-slate-800 shadow-sm">
                                     <svg class="w-3.5 h-3.5 text-white hidden peer-checked:block pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
                                 </div>
@@ -200,20 +200,20 @@ html { scroll-behavior: smooth; }
                     <label class="block text-[10px] font-black text-brand-200 uppercase tracking-widest mb-3">Escolha como Pagar</label>
                     <div class="grid grid-cols-2 gap-3 mb-6">
                         <label class="payment-method bg-slate-800/50 cursor-pointer rounded-xl p-3 flex flex-col items-center justify-center text-center group selected">
-                            <input type="radio" name="paymentMethod" value="mpesa" class="sr-only" checked onchange="window.updatePaymentMethod()">
+                            <input type="radio" name="paymentMethod" value="mpesa" class="sr-only" checked>
                             <div class="check-indicator absolute"><i data-lucide="check" class="w-3 h-3 text-white"></i></div>
                             <div class="w-8 h-6 bg-[#e60000] rounded flex items-center justify-center shadow-sm mb-2"><span class="text-[8px] font-bold text-white">M-Pesa</span></div>
                             <p class="text-xs font-bold text-white">M-Pesa</p>
                         </label>
                         <label class="payment-method bg-slate-800/50 cursor-pointer rounded-xl p-3 flex flex-col items-center justify-center text-center group">
-                            <input type="radio" name="paymentMethod" value="emola" class="sr-only" onchange="window.updatePaymentMethod()">
+                            <input type="radio" name="paymentMethod" value="emola" class="sr-only">
                             <div class="check-indicator absolute"><i data-lucide="check" class="w-3 h-3 text-white"></i></div>
                             <div class="w-8 h-6 bg-[#ffcc00] rounded flex items-center justify-center shadow-sm mb-2"><span class="text-[8px] font-bold text-slate-900">e-Mola</span></div>
                             <p class="text-xs font-bold text-white">e-Mola</p>
                         </label>
                     </div>
                     
-                    <button id="btnCheckout" onclick="window.processCheckout()" class="w-full bg-gradient-to-r from-success-500 to-emerald-600 hover:from-success-400 hover:to-emerald-500 text-white py-4 rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-success-500/25 active:scale-[0.98]">
+                    <button id="btnCheckout" class="w-full bg-gradient-to-r from-success-500 to-emerald-600 hover:from-success-400 hover:to-emerald-500 text-white py-4 rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-success-500/25 active:scale-[0.98]">
                         <i data-lucide="lock" class="w-5 h-5"></i> Pagar e Concluir
                     </button>
                     <p class="text-center text-[10px] text-slate-400 mt-4 flex items-center justify-center gap-1.5 opacity-80">
@@ -226,45 +226,60 @@ html { scroll-behavior: smooth; }
 </main>
 
 <script type="module">
-const FIREBASE_CONFIG = {
-apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
-authDomain: "paygo-14311.firebaseapp.com",
-projectId: "paygo-14311",
-storageBucket: "paygo-14311.firebasestorage.app",
-messagingSenderId: "208360646277",
-appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
-};
-
-let BINANCE_RATE = 88.00;
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
+  authDomain: "paygo-14311.firebaseapp.com",
+  projectId: "paygo-14311",
+  storageBucket: "paygo-14311.firebasestorage.app",
+  messagingSenderId: "208360646277",
+  appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
+};
 
 const app = initializeApp(FIREBASE_CONFIG);
 const db = getFirestore(app, "paygodb");
 const auth = getAuth(app);
 
 let currentUserData = null;
+window.BINANCE_RATE = 88.00;
 
 // ==========================================
-// 💰 BUSCAR CÂMBIO REAL DO SERVIDOR
+// 🔔 TOOLING: UI E TOASTS
+// ==========================================
+window.showToast = function(message, type = 'success', duration = 4000) {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  const icon = type === 'success' ? 'check-circle' : (type === 'error' ? 'alert-circle' : 'info');
+  const color = type === 'success' ? 'text-green-500' : (type === 'error' ? 'text-red-500' : 'text-brand-400');
+  toast.innerHTML = `<i data-lucide="${icon}" class="${color} w-5 h-5 flex-shrink-0"></i><span class="text-sm font-medium text-slate-700">${message}</span>`;
+  container.appendChild(toast);
+  if(typeof lucide !== 'undefined') lucide.createIcons();
+  requestAnimationFrame(() => toast.classList.add('show'));
+  setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, duration);
+};
+
+// ==========================================
+// 💰 FETCH CÂMBIO GLOBAL E CARREGAMENTO
 // ==========================================
 async function fetchExchangeRate() {
     try {
         const snap = await getDoc(doc(db, "settings", "global"));
         if (snap.exists() && snap.data().exchangeRate) {
-            BINANCE_RATE = parseFloat(snap.data().exchangeRate);
-            window.updateTotals(); // Recalcula se o câmbio mudar
+            window.BINANCE_RATE = parseFloat(snap.data().exchangeRate);
+            const cambioDisplay = document.getElementById('cambioDisplay');
+            if (cambioDisplay) cambioDisplay.textContent = window.BINANCE_RATE.toFixed(2);
+            window.updateTotals();
         }
     } catch (e) {
-        console.warn("A usar taxa de câmbio local (88.00 MT)", e);
+        console.warn("A usar taxa de câmbio default", e);
     }
 }
 
-// ==========================================
-// 🔐 PROTEÇÃO DE ROTA (Auth Wall)
-// ==========================================
 onAuthStateChanged(auth, async (user) => {
   const loader = document.getElementById('authLoader');
   if (user) {
@@ -275,11 +290,10 @@ onAuthStateChanged(auth, async (user) => {
               document.getElementById('headerUserName').textContent = currentUserData.name || 'Cliente';
               document.getElementById('headerUserAvatar').textContent = String(currentUserData.name || 'C').charAt(0).toUpperCase();
               
-              // Oculta loader e renderiza carrinha
               loader.style.opacity = '0';
               setTimeout(() => loader.classList.add('hidden'), 500);
               
-              fetchExchangeRate();
+              await fetchExchangeRate();
               window.renderCart();
           }
       } catch (e) { console.error('Erro Firebase Auth:', e); }
@@ -289,7 +303,7 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 // ==========================================
-// 🛒 MOTOR DA CARRINHA (Rende HTML de Itens)
+// 🛒 MOTOR DA CARRINHA (LÓGICA BLINDADA)
 // ==========================================
 window.renderCart = function() {
   const cart = JSON.parse(localStorage.getItem('paygo_cart') || '[]');
@@ -316,7 +330,7 @@ window.renderCart = function() {
 
   cart.forEach((item, index) => {
       const usdSafe = parseFloat(item.usd || 0);
-      const mtValue = (usdSafe * BINANCE_RATE).toLocaleString('pt-MZ', { minimumFractionDigits: 2 });
+      const mtValue = (usdSafe * window.BINANCE_RATE).toLocaleString('pt-MZ', { minimumFractionDigits: 2 });
       const safeType = String(item.type || 'compra');
       const icon = safeType === 'compra' ? 'shopping-bag' : 'gamepad-2';
       const typeLabel = safeType === 'compra' ? 'Produto Internacional' : 'Recarga / Jogo';
@@ -354,13 +368,10 @@ window.removeFromCart = function(id) {
   let cart = JSON.parse(localStorage.getItem('paygo_cart') || '[]');
   cart = cart.filter(item => item.id !== id);
   localStorage.setItem('paygo_cart', JSON.stringify(cart));
-  showToast('Produto removido da carrinha.', 'info');
+  window.showToast('Produto removido da carrinha.', 'info');
   window.renderCart();
 };
 
-// ==========================================
-// 🧮 CÁLCULOS MATEMÁTICOS DE CHECKOUT
-// ==========================================
 window.updateTotals = function() {
   const cart = JSON.parse(localStorage.getItem('paygo_cart') || '[]');
   let totalUSD = 0;
@@ -372,7 +383,7 @@ window.updateTotals = function() {
   const isFirst = chkEl ? chkEl.checked : false;
   const badge = document.getElementById('freeTaxBadge');
   
-  const convertedMT = totalUSD * BINANCE_RATE;
+  const convertedMT = totalUSD * window.BINANCE_RATE;
   let taxMT = 0;
 
   if (totalUSD > 0) {
@@ -401,163 +412,157 @@ window.updateTotals = function() {
   document.getElementById('summaryTotal').innerHTML = `${totalRounded.toLocaleString('pt-MZ')} <span class="text-lg text-brand-300 font-normal mb-1">.${cents} MT</span>`;
 };
 
-// Estilo UI dos Métodos de Pagamento
-window.updatePaymentMethod = function() {
-  document.querySelectorAll('.payment-method').forEach(el => {
-      const radio = el.querySelector('input[type="radio"]');
-      if (radio && radio.checked) {
-          el.classList.add('selected', 'border-brand-500');
-          el.classList.remove('border-slate-700');
-      } else {
-          el.classList.remove('selected', 'border-brand-500');
-          el.classList.add('border-slate-700');
-      }
-  });
-};
-
 // ==========================================
-// 🚀 CHECKOUT PROCESS (BLINDADO ANTI-CRASH)
+// 🚀 EVENT LISTENERS DIRETOS (RESOLVE O BLOQUEIO)
 // ==========================================
-window.processCheckout = async function() {
-  if (!currentUserData) {
-      showToast('Sessão inválida. Por favor, faça login.', 'error');
-      setTimeout(() => window.location.href = 'login.html', 1000);
-      return;
-  }
-  
-  const cart = JSON.parse(localStorage.getItem('paygo_cart') || '[]');
-  if (cart.length === 0) return showToast('A carrinha está vazia!', 'warning');
-
-  const btn = document.getElementById('btnCheckout');
-  const originalHTML = btn.innerHTML;
-  btn.disabled = true;
-  btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Validando...`;
-  if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
-
-  try {
-      let totalUSD = 0;
-      let linksArr = [];
-      
-      cart.forEach((item, index) => {
-          totalUSD += parseFloat(item.usd || 0);
-          const safeType = String(item.type || 'compra');
-          linksArr.push(`[Item ${index+1}] ${safeType.toUpperCase()}: ${String(item.detail || '')}`);
-      });
-
-      const detailString = linksArr.join(" | ");
-      const isFirst = document.getElementById('chkFirstPurchase')?.checked || false;
-      const paymentMethodNode = document.querySelector('input[name="paymentMethod"]:checked');
-      const paymentMethod = paymentMethodNode ? paymentMethodNode.value : 'mpesa';
-      
-      const converted = totalUSD * BINANCE_RATE;
-      const tax = (totalUSD <= 5 && isFirst) ? 0 : (totalUSD <= 20 ? 150 : (totalUSD <= 50 ? 250 : (totalUSD <= 100 ? 600 : converted * 0.07)));
-      const totalFinal = converted + tax;
-      const orderId = 'PG-' + Date.now().toString().slice(-6).toUpperCase();
-      const affiliateRef = localStorage.getItem('paygo_affiliate_ref') || null;
-      
-      // ✅ PROTEÇÃO CRÍTICA: Forçar que o telefone seja sempre uma String limpa
-      const rawPhone = currentUserData.phone || currentUserData.whatsapp || '258000000000';
-      const userPhone = String(rawPhone);
-
-      const orderData = {
-          orderId: orderId,
-          name: String(currentUserData.name || 'Cliente'),
-          email: String(currentUserData.email || 'anon@paygo.co.mz'),
-          whatsapp: userPhone,
-          usd: totalUSD,
-          detail: detailString,
-          tax: tax,
-          total: totalFinal,
-          exchangeRate: BINANCE_RATE,
-          status: 'pending',
-          isPaid: false,
-          paymentMethod: String(paymentMethod),
-          type: String(cart[0].type || 'compra'),
-          isFirstPurchase: isFirst,
-          referredBy: affiliateRef,
-          createdAt: serverTimestamp(),
-          source: 'carrinha'
-      };
-
-      // 1. Gravar no Firebase
-      await addDoc(collection(db, "orders"), orderData);
-      
-      showToast('Fatura segura gerada! A ligar à PaySuite...', 'success');
-
-      // 2. Chamar API de Pagamento da PaySuite
-      const cleanPhone = userPhone.replace(/\D/g, '');
-      
-      const response = await fetch('/api/paysuite-payment', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-              orderId: orderId,
-              amount: totalFinal,
-              currency: 'MZN',
-              phone: cleanPhone,
-              method: paymentMethod,
-              email: orderData.email,
-              name: orderData.name,
-              description: `Carrinha PayGo: ${cart.length} itens (Ref: #${orderId})`
-          })
-      });
-
-      let result;
-      try {
-          result = await response.json();
-      } catch (jsonErr) {
-          throw new Error('O sistema de pagamentos está em manutenção. Use o botão WhatsApp na página inicial.');
-      }
-      
-      if (response.ok && result.success && result.data?.checkoutUrl) {
-          localStorage.removeItem('paygo_cart');
-          setTimeout(() => {
-              window.location.href = result.data.checkoutUrl;
-          }, 800);
-      } else {
-          throw new Error(result.error || result.message || 'A PaySuite rejeitou o início da transação.');
-      }
-
-  } catch (err) {
-      console.error("Erro Checkout: ", err);
-      let erroVisivel = err.message || 'Falha ao iniciar pagamento. Verifique a ligação.';
-      
-      // Se for bloqueio do Firebase, mostra um erro claro ao cliente
-      if(erroVisivel.includes("Missing or insufficient permissions")) {
-          erroVisivel = "Erro de Segurança: O seu Perfil está incompleto (Falta Número/Email).";
-      }
-      
-      showToast(erroVisivel, 'error', 6000);
-      btn.disabled = false;
-      btn.innerHTML = originalHTML;
-      if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
-  }
-};
-
-window.logoutFromHeader = async function() {
-  if (confirm('Sair da conta? A sua carrinha será guardada.')) {
-      await signOut(auth);
-      window.location.href = 'login.html';
-  }
-};
-
-// Tooling UI
-function showToast(message, type = 'success', duration = 4000) {
-  const container = document.getElementById('toast-container');
-  if (!container) return;
-  const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
-  const icon = type === 'success' ? 'check-circle' : (type === 'error' ? 'alert-circle' : 'info');
-  const color = type === 'success' ? 'text-green-500' : (type === 'error' ? 'text-red-500' : 'text-brand-400');
-  toast.innerHTML = `<i data-lucide="${icon}" class="${color} w-5 h-5 flex-shrink-0"></i><span class="text-sm font-medium text-slate-700">${message}</span>`;
-  container.appendChild(toast);
-  if(typeof lucide !== 'undefined') lucide.createIcons();
-  requestAnimationFrame(() => toast.classList.add('show'));
-  setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, duration);
-}
-
 document.addEventListener('DOMContentLoaded', () => {
-  if(typeof lucide !== 'undefined') lucide.createIcons();
+    if(typeof lucide !== 'undefined') lucide.createIcons();
+
+    // Ligar evento de Checkbox da 1ª Compra
+    const chkFirstPurchase = document.getElementById('chkFirstPurchase');
+    if(chkFirstPurchase) {
+        chkFirstPurchase.addEventListener('change', () => window.updateTotals());
+    }
+
+    // Ligar eventos de Seleção do Método de Pagamento
+    const paymentMethods = document.querySelectorAll('input[name="paymentMethod"]');
+    paymentMethods.forEach(radio => {
+        radio.addEventListener('change', () => {
+            document.querySelectorAll('.payment-method').forEach(el => {
+                const innerRadio = el.querySelector('input[type="radio"]');
+                if (innerRadio && innerRadio.checked) {
+                    el.classList.add('selected', 'border-brand-500');
+                    el.classList.remove('border-slate-700');
+                } else {
+                    el.classList.remove('selected', 'border-brand-500');
+                    el.classList.add('border-slate-700');
+                }
+            });
+        });
+    });
+
+    // Logout Helper
+    const btnLogout = document.getElementById('btnHeaderLogout');
+    if(btnLogout) {
+        btnLogout.addEventListener('click', async () => {
+            if (confirm('Sair da conta? A sua carrinha será guardada.')) {
+                await signOut(auth);
+                window.location.href = 'login.html';
+            }
+        });
+    }
+
+    // O Checkout Completo
+    const btnCheckout = document.getElementById('btnCheckout');
+    if(btnCheckout) {
+        btnCheckout.addEventListener('click', async () => {
+            if (!currentUserData) {
+                window.showToast('Sessão inválida. Por favor, faça login.', 'error');
+                setTimeout(() => window.location.href = 'login.html', 1000);
+                return;
+            }
+            
+            const cart = JSON.parse(localStorage.getItem('paygo_cart') || '[]');
+            if (cart.length === 0) return window.showToast('A carrinha está vazia!', 'warning');
+
+            const originalHTML = btnCheckout.innerHTML;
+            btnCheckout.disabled = true;
+            btnCheckout.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Validando...`;
+            if(typeof lucide !== 'undefined') lucide.createIcons({root: btnCheckout});
+
+            try {
+                let totalUSD = 0;
+                let linksArr = [];
+                
+                cart.forEach((item, index) => {
+                    totalUSD += parseFloat(item.usd || 0);
+                    const safeType = String(item.type || 'compra');
+                    linksArr.push(`[Item ${index+1}] ${safeType.toUpperCase()}: ${String(item.detail || '')}`);
+                });
+
+                const detailString = linksArr.join(" | ");
+                const isFirst = document.getElementById('chkFirstPurchase')?.checked || false;
+                const paymentMethodNode = document.querySelector('input[name="paymentMethod"]:checked');
+                const paymentMethod = paymentMethodNode ? paymentMethodNode.value : 'mpesa';
+                
+                const converted = totalUSD * window.BINANCE_RATE;
+                const tax = (totalUSD <= 5 && isFirst) ? 0 : (totalUSD <= 20 ? 150 : (totalUSD <= 50 ? 250 : (totalUSD <= 100 ? 600 : converted * 0.07)));
+                const totalFinal = converted + tax;
+                const orderId = 'PG-' + Date.now().toString().slice(-6).toUpperCase();
+                const affiliateRef = localStorage.getItem('paygo_affiliate_ref') || null;
+                
+                const rawPhone = currentUserData.phone || currentUserData.whatsapp || '258000000000';
+                const userPhone = String(rawPhone);
+
+                const orderData = {
+                    orderId: orderId,
+                    name: String(currentUserData.name || 'Cliente'),
+                    email: String(currentUserData.email || 'anon@paygo.co.mz'),
+                    whatsapp: userPhone,
+                    usd: totalUSD,
+                    detail: detailString,
+                    tax: tax,
+                    total: totalFinal,
+                    exchangeRate: window.BINANCE_RATE,
+                    status: 'pending',
+                    isPaid: false,
+                    paymentMethod: String(paymentMethod),
+                    type: String(cart[0].type || 'compra'),
+                    isFirstPurchase: isFirst,
+                    referredBy: affiliateRef,
+                    createdAt: serverTimestamp(),
+                    source: 'carrinha'
+                };
+
+                // Gravar Firebase
+                await addDoc(collection(db, "orders"), orderData);
+                window.showToast('Fatura segura gerada! A ligar à PaySuite...', 'success');
+
+                // Contactar API
+                const cleanPhone = userPhone.replace(/\D/g, '');
+                const response = await fetch('/api/paysuite-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        orderId: orderId,
+                        amount: totalFinal,
+                        currency: 'MZN',
+                        phone: cleanPhone,
+                        method: paymentMethod,
+                        email: orderData.email,
+                        name: orderData.name,
+                        description: `Carrinha PayGo: ${cart.length} itens (Ref: #${orderId})`
+                    })
+                });
+
+                let result;
+                try {
+                    result = await response.json();
+                } catch (jsonErr) {
+                    throw new Error('O sistema de pagamentos está em manutenção. Use o botão WhatsApp na página inicial.');
+                }
+                
+                if (response.ok && result.success && result.data?.checkoutUrl) {
+                    localStorage.removeItem('paygo_cart');
+                    setTimeout(() => {
+                        window.location.href = result.data.checkoutUrl;
+                    }, 800);
+                } else {
+                    throw new Error(result.error || result.message || 'A PaySuite rejeitou a transação.');
+                }
+
+            } catch (err) {
+                console.error("Erro Checkout: ", err);
+                let erroVisivel = err.message || 'Falha ao iniciar pagamento. Verifique a ligação.';
+                if(erroVisivel.includes("Missing or insufficient permissions")) erroVisivel = "Erro de Segurança: O seu Perfil está incompleto (Falta Número/Email).";
+                
+                window.showToast(erroVisivel, 'error', 6000);
+                btnCheckout.disabled = false;
+                btnCheckout.innerHTML = originalHTML;
+                if(typeof lucide !== 'undefined') lucide.createIcons({root: btnCheckout});
+            }
+        });
+    }
 });
 </script>
 </body>
