@@ -10,7 +10,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<!-- ✅ URLs 100% LIMPAS - SEM ESPAÇOS -->
 <script src="https://unpkg.com/lucide@latest"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
@@ -24,7 +23,7 @@ colors: { brand: { 50: '#eff6ff', 500: '#3b82f6', 600: '#2563eb', 950: '#0f172a'
 };
 </script>
 <style>
-body { background-color: #0f172a; color: #f8fafc; }
+body { background-color: #0f172a; color: #f8fafc; overflow-x: hidden; }
 ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
 .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
 .glass-nav { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.08); }
@@ -36,25 +35,25 @@ body { background-color: #0f172a; color: #f8fafc; }
 .status-badge.pending { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.2); }
 .status-badge.cancelled { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
 .date-group-header { background: rgba(15, 23, 42, 0.9); border-y: 1px solid rgba(255,255,255,0.05); }
-.action-btn { padding: 6px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; transition: all 0.2s ease; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
-.action-btn.delete { background: rgba(239, 68, 68, 0.1); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.2); }
-.action-btn.delete:hover { background: #ef4444; color: white; box-shadow: 0 0 15px rgba(239,68,68,0.4); }
-.action-btn.activate { background: rgba(34, 197, 94, 0.1); color: #86efac; border: 1px solid rgba(34, 197, 94, 0.2); }
-.action-btn.activate:hover { background: #22c55e; color: white; }
+
+/* Toasts */
 #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
 .toast { pointer-events: auto; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 12px; display: flex; gap: 12px; transform: translateX(120%); transition: transform 0.4s ease; opacity: 0; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
 .toast.show { transform: translateX(0); opacity: 1; }
 .toast.error { border-left-color: #ef4444; }
 .toast.success { border-left-color: #22c55e; }
 .toast.warning { border-left-color: #f59e0b; }
-.modal { display: none; position: fixed; inset: 0; z-index: 1000; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; }
-.modal.active { display: flex; opacity: 1; pointer-events: auto; }
-.modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); cursor: pointer;}
-.modal-content { position: relative; background: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 0; max-width: 700px; width: 95%; max-height: 90vh; overflow-y: auto; transform: scale(0.95) translateY(10px); transition: transform 0.3s ease; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8); }
-.modal.active .modal-content { transform: scale(1) translateY(0); }
+
+/* Modal Corrigido */
+.modal-wrapper { display: none; position: fixed; inset: 0; z-index: 1000; align-items: center; justify-content: center; }
+.modal-wrapper.active { display: flex; }
+.modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); opacity: 0; transition: opacity 0.3s ease; }
+.modal-wrapper.active .modal-backdrop { opacity: 1; }
+.modal-panel { position: relative; background: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; width: 95%; max-width: 700px; max-height: 90vh; display: flex; flex-col; opacity: 0; transform: scale(0.95) translateY(10px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8); z-index: 10; overflow: hidden; flex-direction: column;}
+.modal-wrapper.active .modal-panel { opacity: 1; transform: scale(1) translateY(0); }
+
 /* Accessibility */
 :focus-visible { outline: 2px solid #3b82f6; outline-offset: 2px; border-radius: 4px; }
-/* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
 *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
@@ -199,35 +198,39 @@ body { background-color: #0f172a; color: #f8fafc; }
 </div>
 </div>
 </div>
-<!-- Modal de Detalhes -->
-<div id="orderModal" class="modal">
-<div class="modal-overlay" onclick="window.closeModal()"></div>
-<div class="modal-content flex flex-col h-full md:h-auto border border-slate-700" id="modalDialog">
-<div class="flex justify-between items-center p-6 border-b border-white/10 bg-slate-900 sticky top-0 z-10 rounded-t-[24px]">
-<h2 class="text-xl font-display font-bold text-white flex items-center gap-2"><i data-lucide="file-text" class="w-5 h-5 text-brand-400"></i> Dossier da Transação</h2>
-<button onclick="window.closeModal()" class="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 hover:bg-slate-700 hover:text-white flex items-center justify-center transition-colors text-slate-400">
-<i data-lucide="x" class="w-4 h-4"></i>
-</button>
+
+<div id="orderModal" class="modal-wrapper">
+    <div class="modal-backdrop" onclick="window.closeModal()"></div>
+    <div class="modal-panel flex flex-col h-auto max-h-[90vh]">
+        <div class="flex justify-between items-center p-6 border-b border-white/10 bg-slate-900 shrink-0">
+            <h2 class="text-xl font-display font-bold text-white flex items-center gap-2">
+                <i data-lucide="file-text" class="w-5 h-5 text-brand-400"></i> Dossier da Transação
+            </h2>
+            <button onclick="window.closeModal()" class="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 hover:bg-slate-700 hover:text-white flex items-center justify-center transition-colors text-slate-400">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+        
+        <div id="modalContent" class="p-6 overflow-y-auto space-y-6 bg-slate-950 flex-1">
+            </div>
+
+        <div class="p-6 border-t border-white/10 bg-slate-900 flex flex-col sm:flex-row gap-3 shrink-0">
+            <div class="relative flex-1">
+                <i data-lucide="sliders" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                <select id="statusSelect" class="w-full pl-10 pr-4 py-3 border border-slate-700 bg-slate-800 text-white rounded-xl focus:outline-none focus:border-brand-500 font-bold text-sm cursor-pointer shadow-inner">
+                    <option value="pending">Fase Logística: Pendente</option>
+                    <option value="processing">Fase Logística: Em Processamento</option>
+                    <option value="completed">Fase Logística: Concluído (Gera Email)</option>
+                    <option value="cancelled">Fase Logística: Cancelado</option>
+                </select>
+            </div>
+            <button id="updateStatusBtn" onclick="window.saveOrderStatus()" class="px-8 py-3 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-bold transition flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(37,99,235,0.4)] whitespace-nowrap active:scale-[0.98]">
+                <i data-lucide="save" class="w-4 h-4"></i> <span>Salvar Decisão</span>
+            </button>
+        </div>
+    </div>
 </div>
-<div id="modalContent" class="p-6 overflow-y-auto space-y-6 bg-slate-950 flex-1">
-</div>
-<div class="p-6 border-t border-white/10 bg-slate-900 flex flex-col sm:flex-row gap-3 rounded-b-[24px]">
-<div class="relative flex-1">
-<i data-lucide="sliders" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
-<select id="statusSelect" class="w-full pl-10 pr-4 py-3 border border-slate-700 bg-slate-800 text-white rounded-xl focus:outline-none focus:border-brand-500 font-bold text-sm cursor-pointer shadow-inner">
-<option value="pending">Fase Logística: Pendente</option>
-<option value="processing">Fase Logística: Em Processamento</option>
-<option value="completed">Fase Logística: Concluído (Gera Email)</option>
-<option value="cancelled">Fase Logística: Cancelado</option>
-</select>
-</div>
-<button id="updateStatusBtn" class="px-8 py-3 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-bold transition flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(37,99,235,0.4)] whitespace-nowrap active:scale-[0.98]">
-<i data-lucide="save" class="w-4 h-4"></i> <span>Salvar Decisão</span>
-</button>
-</div>
-</div>
-</div>
-<!-- ✅ JavaScript Corrigido - PRODUÇÃO READY -->
+
 <script type="module">
 // ==========================================
 // 🔧 CONFIGURAÇÃO FIREBASE - URLs LIMPAS
@@ -247,7 +250,6 @@ appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
 
 // Inicializar Firebase
 const app = initializeApp(firebaseConfig);
-// ✅ CORREÇÃO: Database "paygodb" conforme especificado
 const db = getFirestore(app, "paygodb");
 const auth = getAuth(app);
 
@@ -274,7 +276,6 @@ toast.innerHTML = `<i data-lucide="${icon.split(' ')[0]}" class="w-5 h-5 ${icon.
 
 container.appendChild(toast);
 
-// Re-inicializar ícones
 if (typeof lucide !== 'undefined') {
 try { lucide.createIcons({ root: toast }); } catch(e) {}
 }
@@ -375,7 +376,7 @@ showToast('Falha na conexão em tempo real.', 'error');
 }
 
 // ==========================================
-// 🎨 RENDERIZAR PEDIDOS - CORRIGIDO
+// 🎨 RENDERIZAR PEDIDOS E ÍCONES
 // ==========================================
 window.renderOrders = function() {
 const table = document.getElementById('ordersTable');
@@ -463,9 +464,6 @@ table.innerHTML = htmlContent;
 renderIcons(table);
 };
 
-// ==========================================
-// 🎯 FUNÇÃO PARA RENDERIZAR ÍCONES
-// ==========================================
 function renderIcons(container = document.body) {
 if (typeof lucide !== 'undefined') {
 try { lucide.createIcons({ root: container }); } catch(e) {}
@@ -473,135 +471,115 @@ try { lucide.createIcons({ root: container }); } catch(e) {}
 }
 
 // ==========================================
-// 🔍 MODAL DE DETALHES GLOBAIS - CORRIGIDO
+// 🔍 MOTOR DO MODAL (REESCRITO)
 // ==========================================
 window.openModal = (orderId) => {
-const order = orders.find(o => o.id === orderId);
-if (!order) return;
+    const order = orders.find(o => o.id === orderId);
+    if (!order) return;
 
-currentOrderId = orderId;
-const methodColor = order.paymentMethod === 'mpesa' ? 'danger' : 'brand';
-const methodName = order.paymentMethod === 'mpesa' ? 'M-Pesa Moçambique' : 'e-Mola';
+    currentOrderId = orderId;
+    const methodColor = order.paymentMethod === 'mpesa' ? 'danger' : 'brand';
+    const methodName = order.paymentMethod === 'mpesa' ? 'M-Pesa Moçambique' : 'e-Mola';
 
-document.getElementById('modalContent').innerHTML = `
-<div class="bg-slate-900 p-5 rounded-2xl flex justify-between items-center border border-slate-800 shadow-inner">
-<div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Dossier / Fatura Ref.</p><p class="font-mono font-black text-brand-400 text-xl tracking-tight">${order.orderId}</p></div>
-<div class="text-right"><p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Emissão Segura</p><p class="font-bold text-slate-300 text-sm">${order.createdAt.toLocaleString('pt-MZ')}</p></div>
-</div>
-<div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
-<div class="space-y-4">
-<h3 class="text-xs font-black text-brand-400 uppercase tracking-widest border-b border-white/10 pb-2 flex items-center gap-2"><i data-lucide="user" class="w-4 h-4"></i> Titular</h3>
-<div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nome Registado</p><p class="font-bold text-white">${order.name}</p></div>
-<div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Canal WhatsApp</p><a href="https://wa.me/${order.whatsapp.replace(/\D/g,'')}" target="_blank" class="font-bold text-success-400 hover:text-success-300 flex items-center gap-1">${order.whatsapp} <i data-lucide="external-link" class="w-3 h-3"></i></a></div>
-<div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Correio Eletrónico</p><p class="font-medium text-slate-300">${order.email}</p></div>
-</div>
-<div class="space-y-4 bg-slate-900 p-5 rounded-2xl border border-brand-500/20 shadow-[0_0_20px_rgba(37,99,235,0.05)]">
-<h3 class="text-xs font-black text-brand-400 uppercase tracking-widest border-b border-white/10 pb-2 flex items-center gap-2"><i data-lucide="calculator" class="w-4 h-4"></i> Extrato de Liquidação</h3>
-<div class="flex justify-between"><p class="text-xs font-bold text-slate-400">Conversão Fixa (USD)</p><p class="font-mono font-bold text-slate-300">${formatValue(order.usd, 'usd')}</p></div>
-<div class="flex justify-between"><p class="text-xs font-bold text-slate-400">Canal de Liquidação</p><p class="text-[10px] font-black text-${methodColor}-400 bg-${methodColor}-500/20 px-2 py-0.5 rounded border border-${methodColor}-500/30 uppercase tracking-widest">${methodName}</p></div>
-<div class="flex justify-between pt-3 border-t border-white/10 mt-3"><p class="text-[10px] font-black text-white uppercase tracking-widest mt-1">LÍQUIDO A COBRAR</p><p class="font-black text-xl text-success-400">${formatValue(order.total, 'currency')}</p></div>
-</div>
-</div>
-<div class="bg-slate-900 rounded-xl p-4 mt-2 border border-slate-800">
-<p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-1"><i data-lucide="shopping-cart" class="w-3 h-3"></i> Resumo Técnico do Serviço Adquirido</p>
-<p class="text-sm text-slate-300 break-words leading-relaxed">${order.detail}</p>
-</div>
-<div class="mt-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900 p-5 rounded-2xl border border-slate-800">
-<div>
-<p class="text-[10px] font-black text-slate-500 uppercase mb-2">Auditoria de Recebimento</p>
-<button onclick="window.togglePaymentStatus('${order.id}', ${order.isPaid})" class="px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-lg flex items-center gap-2 ${order.isPaid ? 'bg-success-600 hover:bg-success-500 text-white' : 'bg-transparent border border-danger-500 text-danger-400 hover:bg-danger-500/10'}">
-<i data-lucide="${order.isPaid ? 'check-circle' : 'circle'}" class="w-4 h-4"></i>
-${order.isPaid ? '✅ DINHEIRO CONFIRMADO' : '❌ MARCAR COMO PAGO (Envia Email)'}
-</button>
-</div>
-<button onclick="window.deleteSingleOrder('${order.id}')" class="px-5 py-3 bg-danger-500/10 hover:bg-danger-500/20 text-danger-400 border border-danger-500/30 rounded-xl text-sm font-bold transition flex items-center gap-2">
-<i data-lucide="trash-2" class="w-4 h-4"></i> Eliminar Registo
-</button>
-</div>
-`;
+    document.getElementById('modalContent').innerHTML = `
+    <div class="bg-slate-900 p-5 rounded-2xl flex justify-between items-center border border-slate-800 shadow-inner">
+        <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Dossier / Fatura Ref.</p><p class="font-mono font-black text-brand-400 text-xl tracking-tight">${order.orderId}</p></div>
+        <div class="text-right"><p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Emissão Segura</p><p class="font-bold text-slate-300 text-sm">${order.createdAt.toLocaleString('pt-MZ')}</p></div>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
+        <div class="space-y-4">
+            <h3 class="text-xs font-black text-brand-400 uppercase tracking-widest border-b border-white/10 pb-2 flex items-center gap-2"><i data-lucide="user" class="w-4 h-4"></i> Titular</h3>
+            <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nome Registado</p><p class="font-bold text-white">${order.name}</p></div>
+            <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Canal WhatsApp</p><a href="https://wa.me/${order.whatsapp.replace(/\D/g,'')}" target="_blank" class="font-bold text-success-400 hover:text-success-300 flex items-center gap-1">${order.whatsapp} <i data-lucide="external-link" class="w-3 h-3"></i></a></div>
+            <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Correio Eletrónico</p><p class="font-medium text-slate-300">${order.email}</p></div>
+        </div>
+        <div class="space-y-4 bg-slate-900 p-5 rounded-2xl border border-brand-500/20 shadow-[0_0_20px_rgba(37,99,235,0.05)]">
+            <h3 class="text-xs font-black text-brand-400 uppercase tracking-widest border-b border-white/10 pb-2 flex items-center gap-2"><i data-lucide="calculator" class="w-4 h-4"></i> Extrato de Liquidação</h3>
+            <div class="flex justify-between"><p class="text-xs font-bold text-slate-400">Conversão Fixa (USD)</p><p class="font-mono font-bold text-slate-300">${formatValue(order.usd, 'usd')}</p></div>
+            <div class="flex justify-between"><p class="text-xs font-bold text-slate-400">Canal de Liquidação</p><p class="text-[10px] font-black text-${methodColor}-400 bg-${methodColor}-500/20 px-2 py-0.5 rounded border border-${methodColor}-500/30 uppercase tracking-widest">${methodName}</p></div>
+            <div class="flex justify-between pt-3 border-t border-white/10 mt-3"><p class="text-[10px] font-black text-white uppercase tracking-widest mt-1">LÍQUIDO A COBRAR</p><p class="font-black text-xl text-success-400">${formatValue(order.total, 'currency')}</p></div>
+        </div>
+    </div>
+    <div class="bg-slate-900 rounded-xl p-4 mt-2 border border-slate-800">
+        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-1"><i data-lucide="shopping-cart" class="w-3 h-3"></i> Resumo Técnico do Serviço Adquirido</p>
+        <p class="text-sm text-slate-300 break-words leading-relaxed">${order.detail}</p>
+    </div>
+    <div class="mt-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900 p-5 rounded-2xl border border-slate-800">
+        <div>
+            <p class="text-[10px] font-black text-slate-500 uppercase mb-2">Auditoria de Recebimento</p>
+            <button onclick="window.togglePaymentStatus('${order.id}', ${order.isPaid})" class="px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-lg flex items-center gap-2 ${order.isPaid ? 'bg-success-600 hover:bg-success-500 text-white' : 'bg-transparent border border-danger-500 text-danger-400 hover:bg-danger-500/10'}">
+                <i data-lucide="${order.isPaid ? 'check-circle' : 'circle'}" class="w-4 h-4"></i>
+                ${order.isPaid ? '✅ DINHEIRO CONFIRMADO' : '❌ MARCAR COMO PAGO (Envia Email)'}
+            </button>
+        </div>
+        <button onclick="window.deleteSingleOrder('${order.id}')" class="px-5 py-3 bg-danger-500/10 hover:bg-danger-500/20 text-danger-400 border border-danger-500/30 rounded-xl text-sm font-bold transition flex items-center gap-2">
+            <i data-lucide="trash-2" class="w-4 h-4"></i> Eliminar Registo
+        </button>
+    </div>
+    `;
 
-document.getElementById('statusSelect').value = order.status;
+    document.getElementById('statusSelect').value = order.status;
 
-const modal = document.getElementById('orderModal');
-const dialog = document.getElementById('modalDialog');
-
-modal.classList.remove('hidden');
-modal.classList.add('flex');
-document.body.style.overflow = 'hidden';
-
-requestAnimationFrame(() => {
-if(dialog) {
-dialog.classList.remove('scale-95', 'opacity-0');
-dialog.classList.add('scale-100', 'opacity-100');
-}
-});
-
-renderIcons(modal);
+    // Lógica Segura de Abertura
+    const modal = document.getElementById('orderModal');
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    
+    renderIcons(modal);
 };
 
 window.closeModal = () => {
-const modal = document.getElementById('orderModal');
-const dialog = document.getElementById('modalDialog');
-
-if(dialog) {
-dialog.classList.remove('scale-100', 'opacity-100');
-dialog.classList.add('scale-95', 'opacity-0');
-}
-
-setTimeout(() => {
-modal.classList.remove('flex');
-modal.classList.add('hidden');
-document.body.style.overflow = '';
-currentOrderId = null;
-}, 200);
+    const modal = document.getElementById('orderModal');
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+    currentOrderId = null;
 };
 
 // ==========================================
-// 💾 AÇÕES DE DADOS - CORRIGIDO
+// 💾 AÇÕES DE DADOS NO MODAL
 // ==========================================
-document.getElementById('updateStatusBtn')?.addEventListener('click', async () => {
-if (!currentOrderId) return;
+window.saveOrderStatus = async () => {
+    if (!currentOrderId) return;
 
-const newStatus = document.getElementById('statusSelect').value;
-const order = orders.find(o => o.id === currentOrderId);
-const oldStatus = order?.status;
+    const newStatus = document.getElementById('statusSelect').value;
+    const order = orders.find(o => o.id === currentOrderId);
+    const oldStatus = order?.status;
 
-const btn = document.getElementById('updateStatusBtn');
-const originalText = btn.innerHTML;
+    const btn = document.getElementById('updateStatusBtn');
+    const originalText = btn.innerHTML;
 
-btn.disabled = true;
-btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A Sincronizar DB...`;
-renderIcons(btn);
+    btn.disabled = true;
+    btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A Sincronizar DB...`;
+    renderIcons(btn);
 
-try {
-await updateDoc(doc(db, "orders", currentOrderId), {
-status: newStatus,
-updatedAt: serverTimestamp()
-});
+    try {
+        await updateDoc(doc(db, "orders", currentOrderId), {
+            status: newStatus,
+            updatedAt: serverTimestamp()
+        });
 
-// Verifica sistema de afiliados
-if (newStatus === 'completed' && order?.referredBy && !order?.commissionProcessed) {
-await processAffiliateCPA(order);
-await updateDoc(doc(db, "orders", currentOrderId), { commissionProcessed: true });
-}
+        // Afiliados Logic
+        if (newStatus === 'completed' && order?.referredBy && !order?.commissionProcessed) {
+            await processAffiliateCPA(order);
+            await updateDoc(doc(db, "orders", currentOrderId), { commissionProcessed: true });
+        }
 
-showToast('Nova etapa logística gravada na Cloud.', 'success');
+        showToast('Nova etapa logística gravada na Cloud.', 'success');
 
-// Automação: Envia email
-if (newStatus === 'completed' && oldStatus !== 'completed') {
-await sendNotificationEmail(order, 'completed');
-}
+        if (newStatus === 'completed' && oldStatus !== 'completed') {
+            await sendNotificationEmail(order, 'completed');
+        }
 
-window.closeModal();
-} catch (error) {
-console.error('Erro ao atualizar status:', error);
-showToast('Erro interno de permissões.', 'error');
-} finally {
-btn.disabled = false;
-btn.innerHTML = originalText;
-renderIcons(btn);
-}
-});
+        window.closeModal();
+    } catch (error) {
+        console.error('Erro ao atualizar status:', error);
+        showToast('Erro interno de permissões.', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        renderIcons(btn);
+    }
+};
 
 async function processAffiliateCPA(order) {
 try {
@@ -733,10 +711,7 @@ sidebarOverlay?.addEventListener('click', toggleMobileSidebar);
 
 document.addEventListener('keydown', (e) => {
 if (e.key === 'Escape') {
-const modal = document.getElementById('orderModal');
-if (modal && modal.classList.contains('active')) {
 window.closeModal();
-}
 }
 });
 
@@ -748,7 +723,7 @@ window.location.href = '../login.html';
 };
 
 // ==========================================
-// 🚀 INICIALIZAÇÃO - CORRIGIDO
+// 🚀 INICIALIZAÇÃO E SESSÃO
 // ==========================================
 const fallbackTimer = setTimeout(() => {
 document.getElementById('sysLoader').style.display = 'none';
@@ -784,8 +759,6 @@ setTimeout(() => loader.style.display = 'none', 500);
 // Inicializar ícones ao carregar
 document.addEventListener('DOMContentLoaded', () => {
 renderIcons();
-console.log('✅ Pedidos PayGo carregado');
-console.log('📦 Database:', 'paygodb');
 });
 
 // Cleanup ao sair da página
