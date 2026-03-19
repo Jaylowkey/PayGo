@@ -3,18 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Segurança | PayGo Moçambique</title>
-    <meta name="description" content="Centro de Segurança, Verificação e Recuperação da conta PayGo.">
+    <title>Segurança PayGo | Redefinir Senha</title>
+    <meta name="robots" content="noindex, nofollow">
     <meta name="theme-color" content="#0f172a">
     
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233b82f6' stroke='none'><polygon points='13 2 3 14 12 14 11 22 21 10 12 10 13 2'></polygon></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
     
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
-    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     
     <script>
     tailwind.config = {
@@ -24,406 +21,211 @@
                     sans: ['"Plus Jakarta Sans"', 'sans-serif'],
                     display: ['"Outfit"', 'sans-serif'],
                 },
-                colors: {
-                    brand: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 900: '#1e3a8a', 950: '#0f172a' },
-                    success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' },
-                    warning: { 400: '#fbbf24', 500: '#f59e0b', 600: '#d97706' },
-                    danger: { 400: '#f87171', 500: '#ef4444', 600: '#dc2626' }
-                },
-                animation: {
-                    'fade-in': 'fadeIn 0.5s ease-out forwards',
-                    'slide-up': 'slideUp 0.5s ease-out forwards',
-                    'pulse-glow': 'pulseGlow 2s infinite',
-                },
-                keyframes: {
-                    fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
-                    slideUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
-                    pulseGlow: { '0%, 100%': { boxShadow: '0 0 0 0 rgba(34, 197, 94, 0.4)' }, '50%': { boxShadow: '0 0 0 20px rgba(34, 197, 94, 0)' } }
-                }
+                colors: { brand: { 500: '#3b82f6', 600: '#2563eb', 900: '#1e3a8a', 950: '#0f172a' }, success: { 400: '#4ade80', 500: '#22c55e' }, danger: { 400: '#f87171', 500: '#ef4444' } }
             }
         }
     }
     </script>
-    
     <style>
-        body { background-color: #0f172a; color: #f8fafc; overflow: hidden; }
-        
-        .bg-grid { 
-            background-size: 40px 40px; 
-            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); 
-        }
-        
-        .glass-card { 
-            background: rgba(30, 41, 59, 0.7); 
-            backdrop-filter: blur(20px); 
-            border: 1px solid rgba(255, 255, 255, 0.1); 
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        }
-
-        .scanner-line {
-            width: 100%; height: 2px;
-            background: #3b82f6;
-            position: absolute; top: 0; left: 0;
-            box-shadow: 0 0 10px #3b82f6, 0 0 20px #3b82f6;
-            animation: scan 2s linear infinite;
-        }
-
-        @keyframes scan {
-            0% { top: 0%; opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { top: 100%; opacity: 0; }
-        }
-
-        /* Inputs e Força da Senha */
-        .input-field {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.1);
-            transition: all 0.3s ease;
-        }
-        .input-field:focus-within {
-            border-color: #3b82f6;
-            background: rgba(255,255,255,0.05);
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
-        }
-
-        .strength-meter { height: 4px; border-radius: 2px; transition: all 0.3s ease; width: 0; }
-        .strength-weak { background: #ef4444; width: 33.33%; }
-        .strength-medium { background: #f59e0b; width: 66.66%; }
-        .strength-strong { background: #22c55e; width: 100%; }
-
-        .btn-premium { transition: all 0.2s ease; position: relative; overflow: hidden; }
-        .btn-premium:active:not(:disabled) { transform: scale(0.98); }
-        .btn-premium:disabled { opacity: 0.7; cursor: not-allowed; }
-
-        /* Toast */
-        #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-        .toast { pointer-events: auto; background: #1e293b; border: 1px solid rgba(255,255,255,0.1); border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 12px; display: flex; align-items: center; gap: 12px; transform: translateX(120%); transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .toast.show { transform: translateX(0); }
-        .toast.error { border-left-color: #ef4444; }
+        body { background-color: #0f172a; color: #f8fafc; overflow-x: hidden; }
+        .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
+        .hero-gradient { background: radial-gradient(ellipse at top right, #1e293b 0%, #0f172a 40%, #020617 100%); }
+        .glass-card { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+        .input-field { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; transition: all 0.3s ease; position: relative; }
+        .input-field:focus-within { border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15); background: rgba(255,255,255,0.06); }
+        .input-field input { width: 100%; padding: 1rem 1rem 1rem 3rem; background: transparent; border: none; outline: none; color: #fff; font-size: 1rem; }
+        .input-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.4); pointer-events: none; }
+        .input-field:focus-within .input-icon { color: #60a5fa; }
+        #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+        .toast { pointer-events: auto; background: #1e293b; border: 1px solid rgba(255,255,255,0.1); padding: 16px 20px; border-radius: 12px; display: flex; align-items: center; gap: 12px; transform: translateX(120%); transition: transform 0.4s ease; border-left: 4px solid #3b82f6; opacity: 0; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .toast.show { transform: translateX(0); opacity: 1; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col relative">
+<body class="hero-gradient min-h-screen flex flex-col items-center justify-center relative">
+
+    <div class="fixed inset-0 bg-grid opacity-20 pointer-events-none"></div>
+    <div class="absolute top-0 -left-4 w-96 h-96 bg-brand-600/20 rounded-full mix-blend-screen blur-[100px] pointer-events-none"></div>
 
     <div id="toastContainer"></div>
 
-    <div class="fixed inset-0 bg-grid opacity-20 pointer-events-none"></div>
-    <div class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-brand-600/20 rounded-full mix-blend-screen blur-[120px] pointer-events-none"></div>
+    <div class="w-full max-w-md px-6 relative z-10">
+        <div class="text-center mb-8">
+            <a href="index.html" class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-tr from-brand-500 to-accent-500 rounded-2xl text-white mb-4 shadow-lg shadow-brand-500/30 transition transform hover:scale-105">
+                <i data-lucide="zap" class="w-8 h-8 fill-current"></i>
+            </a>
+            <h1 class="text-3xl font-display font-extrabold text-white">Central de Segurança</h1>
+        </div>
 
-    <main class="flex-1 flex items-center justify-center p-6 relative z-10 w-full">
-        <div class="w-full max-w-md animate-slide-up">
-            
-            <div class="glass-card rounded-[2rem] p-8 md:p-10 relative overflow-hidden">
-                
-                <div id="loadingState" class="text-center">
-                    <div class="w-24 h-24 mx-auto bg-slate-800 border-2 border-slate-700 rounded-full flex items-center justify-center relative overflow-hidden mb-6">
-                        <i data-lucide="shield" class="w-10 h-10 text-brand-400 opacity-50"></i>
-                        <div class="scanner-line"></div>
-                    </div>
-                    <h1 class="text-2xl font-display font-extrabold text-white mb-2">A Verificar Ligação Segura</h1>
-                    <p class="text-slate-400 text-sm">A analisar a integridade e validade da credencial... Por favor, não feche a página.</p>
-                </div>
-
-                <div id="successVerifyState" class="hidden animate-fade-in text-center">
-                    <div class="w-24 h-24 mx-auto bg-success-500/20 border border-success-500/50 rounded-full flex items-center justify-center mb-6 animate-pulse-glow">
-                        <i data-lucide="shield-check" class="w-12 h-12 text-success-400"></i>
-                    </div>
-                    <h1 class="text-2xl font-display font-extrabold text-white mb-2">Email Validado!</h1>
-                    <p class="text-slate-400 text-sm mb-8">A sua conta PayGo foi verificada e está pronta a ser utilizada com toda a segurança.</p>
-                    
-                    <div class="bg-slate-900/50 rounded-xl p-4 border border-white/5 mb-6">
-                        <p class="text-xs font-bold text-slate-300 uppercase tracking-widest mb-2"><i data-lucide="loader-2" class="w-4 h-4 inline animate-spin mr-1"></i> A Redirecionar</p>
-                        <p class="text-xs text-slate-500">Será reencaminhado para o portal de acesso em <span id="countdownVerify" class="font-bold text-white">4</span> segundos...</p>
-                    </div>
-                    
-                    <a href="login.html" class="inline-block text-sm font-bold text-brand-400 hover:text-brand-300 transition-colors">
-                        Ir para o Login agora
-                    </a>
-                </div>
-
-                <div id="resetFormState" class="hidden animate-fade-in">
-                    <div class="text-center mb-8">
-                        <div class="w-16 h-16 mx-auto bg-brand-500/20 border border-brand-500/50 rounded-2xl flex items-center justify-center mb-4">
-                            <i data-lucide="key" class="w-8 h-8 text-brand-400"></i>
-                        </div>
-                        <h1 class="text-2xl font-display font-extrabold text-white mb-2">Criar Nova Senha</h1>
-                        <p class="text-slate-400 text-sm">Link validado para a conta <strong id="resetEmailDisplay" class="text-white">...</strong></p>
-                    </div>
-
-                    <form id="resetForm" class="space-y-5">
-                        <div class="relative">
-                            <div class="input-field rounded-xl flex items-center px-4 py-1">
-                                <i data-lucide="lock" class="w-5 h-5 text-slate-400 shrink-0"></i>
-                                <input type="password" id="newPassword" required minlength="6" placeholder="Nova Palavra-passe" class="w-full bg-transparent border-none text-white py-3 px-3 outline-none focus:ring-0 text-sm">
-                                <button type="button" onclick="togglePwd('newPassword')" class="text-slate-400 hover:text-white p-2">
-                                    <i data-lucide="eye" id="icon-newPassword" class="w-4 h-4"></i>
-                                </button>
-                            </div>
-                            <div class="w-full bg-slate-800 h-1 mt-2 rounded-full overflow-hidden">
-                                <div id="pwdStrength" class="strength-meter"></div>
-                            </div>
-                        </div>
-
-                        <div class="relative">
-                            <div class="input-field rounded-xl flex items-center px-4 py-1">
-                                <i data-lucide="shield" class="w-5 h-5 text-slate-400 shrink-0"></i>
-                                <input type="password" id="confirmPassword" required minlength="6" placeholder="Confirmar Palavra-passe" class="w-full bg-transparent border-none text-white py-3 px-3 outline-none focus:ring-0 text-sm">
-                                <button type="button" onclick="togglePwd('confirmPassword')" class="text-slate-400 hover:text-white p-2">
-                                    <i data-lucide="eye" id="icon-confirmPassword" class="w-4 h-4"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <button type="submit" id="btnSubmitReset" class="btn-premium w-full bg-brand-600 hover:bg-brand-500 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-brand-600/20 mt-6">
-                            <span id="btnTextReset">Gravar Nova Senha</span>
-                            <i data-lucide="arrow-right" id="btnIconReset" class="w-4 h-4"></i>
-                        </button>
-                    </form>
-                </div>
-
-                <div id="successResetState" class="hidden animate-fade-in text-center">
-                    <div class="w-24 h-24 mx-auto bg-success-500/20 border border-success-500/50 rounded-full flex items-center justify-center mb-6 animate-pulse-glow">
-                        <i data-lucide="check-square" class="w-12 h-12 text-success-400"></i>
-                    </div>
-                    <h1 class="text-2xl font-display font-extrabold text-white mb-2">Senha Atualizada!</h1>
-                    <p class="text-slate-400 text-sm mb-8">A sua conta está segura. Já pode aceder ao portal com a nova credencial.</p>
-                    
-                    <div class="bg-slate-900/50 rounded-xl p-4 border border-white/5 mb-6">
-                        <p class="text-xs font-bold text-slate-300 uppercase tracking-widest mb-2"><i data-lucide="loader-2" class="w-4 h-4 inline animate-spin mr-1"></i> A Redirecionar</p>
-                        <p class="text-xs text-slate-500">Será reencaminhado para o portal de acesso em <span id="countdownReset" class="font-bold text-white">4</span> segundos...</p>
-                    </div>
-                    
-                    <a href="login.html" class="inline-block text-sm font-bold text-brand-400 hover:text-brand-300 transition-colors">
-                        Fazer Login agora
-                    </a>
-                </div>
-
-                <div id="errorState" class="hidden animate-fade-in text-center">
-                    <div class="w-24 h-24 mx-auto bg-danger-500/20 border border-danger-500/50 rounded-full flex items-center justify-center mb-6">
-                        <i data-lucide="shield-alert" class="w-12 h-12 text-danger-400"></i>
-                    </div>
-                    <h1 class="text-2xl font-display font-extrabold text-white mb-2">Falha na Autenticação</h1>
-                    <p id="errorMsg" class="text-slate-400 text-sm mb-8">Este link de segurança expirou, é inválido ou já foi utilizado anteriormente.</p>
-                    
-                    <a href="login.html" class="block w-full bg-slate-800 hover:bg-slate-700 text-white py-4 border border-slate-700 rounded-xl font-bold transition-all shadow-lg">
-                        Voltar ao Menu Principal
-                    </a>
-                </div>
-
+        <div class="glass-card rounded-3xl p-8" id="mainContainer">
+            <div id="loadingState" class="text-center py-8">
+                <i data-lucide="loader-2" class="w-10 h-10 text-brand-500 animate-spin mx-auto mb-4"></i>
+                <p class="text-slate-400 font-medium">A validar o token de segurança...</p>
             </div>
 
-            <div class="mt-8 text-center">
-                <div class="inline-flex items-center gap-2 opacity-50">
-                    <i data-lucide="lock" class="w-4 h-4 text-white"></i>
-                    <span class="text-xs font-bold text-white tracking-widest uppercase">PayGo Security Engine Layer</span>
+            <div id="errorState" class="text-center hidden py-4">
+                <div class="w-16 h-16 bg-danger-500/20 text-danger-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="shield-alert" class="w-8 h-8"></i>
                 </div>
+                <h2 class="text-xl font-bold text-white mb-2">Link Inválido ou Expirado</h2>
+                <p class="text-slate-400 text-sm mb-6">Este link de recuperação já foi utilizado ou perdeu a validade. Por favor, solicite um novo na página de Login.</p>
+                <a href="login.html" class="w-full bg-slate-800 hover:bg-slate-700 text-white py-3.5 rounded-xl font-bold block transition">Voltar ao Login</a>
+            </div>
+
+            <div id="formState" class="hidden">
+                <div class="bg-success-500/10 border border-success-500/20 rounded-xl p-4 mb-6 flex items-start gap-3">
+                    <i data-lucide="shield-check" class="w-5 h-5 text-success-400 shrink-0 mt-0.5"></i>
+                    <div>
+                        <p class="text-sm font-bold text-success-400">Ambiente Seguro</p>
+                        <p class="text-xs text-slate-400 mt-1">A redefinir palavra-passe para: <strong id="userEmailDisplay" class="text-slate-300">...</strong></p>
+                    </div>
+                </div>
+
+                <form id="resetPasswordForm" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Nova Palavra-passe</label>
+                        <div class="input-field">
+                            <i data-lucide="lock" class="input-icon"></i>
+                            <input type="password" id="newPassword" required placeholder="Mínimo 6 caracteres">
+                            <button type="button" onclick="window.togglePwd('newPassword')" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition">
+                                <i data-lucide="eye" id="icon-newPassword" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" id="btnSave" class="w-full bg-brand-600 hover:bg-brand-500 text-white py-4 rounded-xl font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-brand-500/20 mt-2">
+                        <span class="btn-text">Guardar Nova Senha</span>
+                        <span class="btn-spinner hidden"><i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i></span>
+                    </button>
+                </form>
+            </div>
+            
+            <div id="successState" class="text-center hidden py-4">
+                <div class="w-16 h-16 bg-success-500/20 text-success-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="check-circle" class="w-8 h-8"></i>
+                </div>
+                <h2 class="text-xl font-bold text-white mb-2">Senha Alterada!</h2>
+                <p class="text-slate-400 text-sm mb-6">A sua palavra-passe foi atualizada com sucesso. Já pode aceder à sua conta PayGo.</p>
+                <a href="login.html" class="w-full bg-brand-600 hover:bg-brand-500 text-white py-3.5 rounded-xl font-bold block transition shadow-lg shadow-brand-500/20">Iniciar Sessão Agora</a>
             </div>
             
         </div>
-    </main>
+        
+        <p class="text-center text-xs text-slate-500 mt-8">&copy; 2026 PayGo Moçambique. Infraestrutura Segura.</p>
+    </div>
 
     <script type="module">
-        // Importações da v10 compatíveis
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, applyActionCode, verifyPasswordResetCode, confirmPasswordReset } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, verifyPasswordResetCode, confirmPasswordReset } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-        // Firebase Config
-        const firebaseConfig = {
-            apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
-            authDomain: "paygo-14311.firebaseapp.com",
-            projectId: "paygo-14311",
-            storageBucket: "paygo-14311.firebasestorage.app",
-            messagingSenderId: "208360646277",
-            appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
-        };
+    const firebaseConfig = {
+        apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
+        authDomain: "paygo-14311.firebaseapp.com",
+        projectId: "paygo-14311",
+        storageBucket: "paygo-14311.firebasestorage.app",
+        messagingSenderId: "208360646277",
+        appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
+    };
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
 
+    // UI Tools
+    lucide.createIcons();
+
+    window.togglePwd = function(id) {
+        const input = document.getElementById(id);
+        const icon = document.getElementById(`icon-${id}`);
+        if (input.type === 'password') { input.type = 'text'; icon.setAttribute('data-lucide', 'eye-off'); } 
+        else { input.type = 'password'; icon.setAttribute('data-lucide', 'eye'); }
         lucide.createIcons();
+    };
 
-        // Utilitários de UI
-        window.togglePwd = function(id) {
-            const input = document.getElementById(id);
-            const icon = document.getElementById(`icon-${id}`);
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.setAttribute('data-lucide', 'eye-off');
-            } else {
-                input.type = 'password';
-                icon.setAttribute('data-lucide', 'eye');
-            }
-            lucide.createIcons();
-        };
+    function showToast(msg, type = 'success') {
+        const container = document.getElementById('toastContainer');
+        const t = document.createElement('div');
+        const borderColor = type === 'error' ? 'border-red-500' : 'border-brand-500';
+        const iconColor = type === 'error' ? 'text-red-400' : 'text-brand-400';
+        const iconName = type === 'error' ? 'alert-circle' : 'check-circle';
+        
+        t.className = `toast border-l-4 ${borderColor}`;
+        t.innerHTML = `<i data-lucide="${iconName}" class="w-5 h-5 ${iconColor} shrink-0"></i> <span class="text-sm font-semibold text-white">${msg}</span>`;
+        container.appendChild(t);
+        lucide.createIcons({ root: t });
+        requestAnimationFrame(() => t.classList.add('show'));
+        setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 5000);
+    }
 
-        // Força da Senha
-        document.getElementById('newPassword')?.addEventListener('input', function(e) {
-            const val = e.target.value;
-            const meter = document.getElementById('pwdStrength');
-            if (val.length === 0) { meter.className = 'strength-meter'; return; }
-            
-            let strength = 0;
-            if (val.length >= 6) strength++;
-            if (val.length >= 10) strength++;
-            if (/[A-Z]/.test(val) && /[0-9]/.test(val)) strength++;
-            
-            meter.className = 'strength-meter';
-            if (strength === 1) meter.classList.add('strength-weak');
-            else if (strength === 2) meter.classList.add('strength-medium');
-            else if (strength === 3) meter.classList.add('strength-strong');
-        });
+    // ==========================================
+    // 🔐 LÓGICA CORE DE RECUPERAÇÃO
+    // ==========================================
+    let actionCode = null;
 
-        // Toast de Notificação
-        function showToast(msg, type = 'success') {
-            const container = document.getElementById('toastContainer');
-            const t = document.createElement('div');
-            const borderColor = type === 'error' ? 'border-red-500' : 'border-brand-500';
-            const iconColor = type === 'error' ? 'text-red-400' : 'text-brand-400';
-            const iconName = type === 'error' ? 'alert-circle' : 'check-circle';
-            
-            t.className = `toast ${borderColor}`;
-            t.innerHTML = `<i data-lucide="${iconName}" class="w-5 h-5 ${iconColor} shrink-0"></i> <span class="text-sm font-semibold">${msg}</span>`;
-            
-            container.appendChild(t);
-            lucide.createIcons({ root: t });
-            requestAnimationFrame(() => t.classList.add('show'));
-            setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 5000);
+    document.addEventListener('DOMContentLoaded', async () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const mode = urlParams.get('mode');
+        actionCode = urlParams.get('oobCode');
+
+        const loadingState = document.getElementById('loadingState');
+        const errorState = document.getElementById('errorState');
+        const formState = document.getElementById('formState');
+
+        // Se os parâmetros do Firebase não existirem no URL
+        if (mode !== 'resetPassword' || !actionCode) {
+            loadingState.classList.add('hidden');
+            errorState.classList.remove('hidden');
+            return;
         }
 
-        // Função de Contagem Decrescente Centralizada
-        function startCountdown(elementId, redirectUrl) {
-            let count = 4;
-            const countDisplay = document.getElementById(elementId);
-            const interval = setInterval(() => {
-                count--;
-                if(countDisplay) countDisplay.textContent = count;
-                if (count <= 0) {
-                    clearInterval(interval);
-                    window.location.href = redirectUrl;
-                }
-            }, 1000);
+        try {
+            // Verificar o Token com os servidores da Google
+            const email = await verifyPasswordResetCode(auth, actionCode);
+            
+            // Se o token for válido, mostra o formulário e o email do cliente
+            document.getElementById('userEmailDisplay').textContent = email;
+            loadingState.classList.add('hidden');
+            formState.classList.remove('hidden');
+            
+        } catch (error) {
+            console.error("Token Inválido:", error);
+            loadingState.classList.add('hidden');
+            errorState.classList.remove('hidden');
+        }
+    });
+
+    // Guardar a Nova Senha
+    document.getElementById('resetPasswordForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const newPassword = document.getElementById('newPassword').value;
+        const btn = document.getElementById('btnSave');
+        const btnText = btn.querySelector('.btn-text');
+        const btnSpinner = btn.querySelector('.btn-spinner');
+
+        if (newPassword.length < 6) {
+            return showToast('A palavra-passe deve ter pelo menos 6 caracteres.', 'error');
         }
 
-        // === MÁQUINA DE ESTADOS PRINCIPAL ===
-        document.addEventListener('DOMContentLoaded', async () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const mode = urlParams.get('mode'); // 'verifyEmail' ou 'resetPassword'
-            const actionCode = urlParams.get('oobCode');
+        btn.disabled = true;
+        btnText.classList.add('hidden');
+        btnSpinner.classList.remove('hidden');
 
-            // Mapeamento das caixas
-            const stateLoad = document.getElementById('loadingState');
-            const stateSuccessVerify = document.getElementById('successVerifyState');
-            const stateFormReset = document.getElementById('resetFormState');
-            const stateSuccessReset = document.getElementById('successResetState');
-            const stateError = document.getElementById('errorState');
-            const errorMsg = document.getElementById('errorMsg');
-
-            // UX: Delay natural para simular análise
-            await new Promise(r => setTimeout(r, 1200)); 
-
-            // Se o URL estiver incompleto (alguém acedeu diretamente a seguranca.html)
-            if (!actionCode || !mode) {
-                stateLoad.classList.add('hidden');
-                errorMsg.textContent = "O link acedido está incompleto ou o formato não é reconhecido pelos nossos servidores.";
-                stateError.classList.remove('hidden');
-                return;
-            }
-
-            // FLUXO 1: VERIFICAÇÃO DE EMAIL
-            if (mode === 'verifyEmail') {
-                try {
-                    await applyActionCode(auth, actionCode);
-                    stateLoad.classList.add('hidden');
-                    stateSuccessVerify.classList.remove('hidden');
-                    startCountdown('countdownVerify', 'login.html');
-                } catch (error) {
-                    console.error(error);
-                    stateLoad.classList.add('hidden');
-                    if (error.code === 'auth/expired-action-code') {
-                        errorMsg.textContent = "O prazo deste link de verificação expirou. Peça um novo durante o login.";
-                    } else if (error.code === 'auth/invalid-action-code') {
-                        errorMsg.textContent = "Link inválido ou já utilizado. O seu email pode já se encontrar verificado.";
-                    }
-                    stateError.classList.remove('hidden');
-                }
-            } 
+        try {
+            // Confirma a troca de senha no Firebase
+            await confirmPasswordReset(auth, actionCode, newPassword);
             
-            // FLUXO 2: RECUPERAÇÃO DE SENHA
-            else if (mode === 'resetPassword') {
-                try {
-                    // 1. Verifica no servidor se o link de alteração de senha ainda é válido (antes de mostrar o form)
-                    const email = await verifyPasswordResetCode(auth, actionCode);
-                    
-                    // 2. É válido! Mostra o formulário
-                    document.getElementById('resetEmailDisplay').textContent = email;
-                    stateLoad.classList.add('hidden');
-                    stateFormReset.classList.remove('hidden');
-
-                } catch (error) {
-                    console.error(error);
-                    stateLoad.classList.add('hidden');
-                    if (error.code === 'auth/expired-action-code') {
-                        errorMsg.textContent = "O prazo deste link de recuperação expirou. Por favor, peça uma nova recuperação de senha na página de login.";
-                    } else if (error.code === 'auth/invalid-action-code') {
-                        errorMsg.textContent = "Este link é inválido. A senha pode já ter sido alterada através dele.";
-                    }
-                    stateError.classList.remove('hidden');
-                }
-            } 
-            // Modo não suportado
-            else {
-                stateLoad.classList.add('hidden');
-                errorMsg.textContent = "Operação de segurança não suportada no momento.";
-                stateError.classList.remove('hidden');
-            }
+            // Esconde o form e mostra o ecrã de Sucesso
+            document.getElementById('formState').classList.add('hidden');
+            document.getElementById('successState').classList.remove('hidden');
             
-            // Lógica de Submissão do Formulário de Redefinição
-            document.getElementById('resetForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                
-                const pwd = document.getElementById('newPassword').value;
-                const confirmPwd = document.getElementById('confirmPassword').value;
-                
-                if(pwd !== confirmPwd) {
-                    showToast('As senhas introduzidas não coincidem.', 'error');
-                    return;
-                }
-                
-                if(pwd.length < 6) {
-                    showToast('A senha precisa ter pelo menos 6 caracteres.', 'error');
-                    return;
-                }
-
-                const btn = document.getElementById('btnSubmitReset');
-                const btnText = document.getElementById('btnTextReset');
-                const btnIcon = document.getElementById('btnIconReset');
-                
-                btn.disabled = true;
-                btnText.textContent = "A cifrar nova senha...";
-                btnIcon.setAttribute('data-lucide', 'loader-2');
-                btnIcon.classList.add('animate-spin');
-                lucide.createIcons({root: btn});
-
-                try {
-                    // Gravar a nova senha
-                    await confirmPasswordReset(auth, actionCode, pwd);
-                    
-                    // Mostrar painel de Sucesso Reset
-                    stateFormReset.classList.add('hidden');
-                    stateSuccessReset.classList.remove('hidden');
-                    startCountdown('countdownReset', 'login.html');
-
-                } catch(error) {
-                    console.error(error);
-                    showToast('Ocorreu um erro ao gravar a senha. O link pode ter expirado.', 'error');
-                    btn.disabled = false;
-                    btnText.textContent = "Tentar Novamente";
-                    btnIcon.setAttribute('data-lucide', 'arrow-right');
-                    btnIcon.classList.remove('animate-spin');
-                    lucide.createIcons({root: btn});
-                }
-            });
-        });
+        } catch (error) {
+            console.error("Erro ao guardar:", error);
+            showToast('Ocorreu um erro. É possível que o link tenha expirado.', 'error');
+            
+            btn.disabled = false;
+            btnText.classList.remove('hidden');
+            btnSpinner.classList.add('hidden');
+        }
+    });
     </script>
 </body>
 </html>
