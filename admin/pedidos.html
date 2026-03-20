@@ -7,248 +7,306 @@
 <meta name="theme-color" content="#0f172a">
 <meta name="robots" content="noindex, nofollow">
 <meta name="description" content="Gestão completa de pedidos PayGo - Admin Panel">
+
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233b82f6'><polygon points='13 2 3 14 12 14 11 22 21 10 12 10 13 2'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 <script src="https://unpkg.com/lucide@latest"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
 tailwind.config = {
-theme: {
-extend: {
-fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'], display: ['"Outfit"', 'sans-serif'], mono: ['"Fira Code"', 'monospace'] },
-colors: { brand: { 50: '#eff6ff', 500: '#3b82f6', 600: '#2563eb', 950: '#0f172a' }, success: { 400: '#4ade80', 500: '#22c55e' }, warning: { 400: '#fbbf24', 500: '#f59e0b' }, danger: { 400: '#f87171', 500: '#ef4444' } }
-}
-}
+    theme: {
+        extend: {
+            fontFamily: { 
+                sans: ['"Plus Jakarta Sans"', 'sans-serif'], 
+                display: ['"Outfit"', 'sans-serif'], 
+                mono: ['"Fira Code"', 'monospace'] 
+            },
+            colors: { 
+                brand: { 50: '#eff6ff', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 900: '#1e3a8a', 950: '#0f172a' }, 
+                success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' }, 
+                warning: { 400: '#fbbf24', 500: '#f59e0b', 600: '#d97706' }, 
+                danger: { 400: '#f87171', 500: '#ef4444', 600: '#dc2626' },
+                refund: { 400: '#c084fc', 500: '#a855f7', 900: '#581c87' }
+            },
+            animation: {
+                'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            }
+        }
+    }
 };
 </script>
 <style>
-body { background-color: #0f172a; color: #f8fafc; overflow-x: hidden; }
-::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-.bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
-.glass-nav { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.08); }
-.glass-card { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.3s ease; }
-.sidebar-link.active { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-left: 3px solid #3b82f6; font-weight: 700; }
-.status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 8px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; }
-.status-badge.completed { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.2); }
-.status-badge.processing { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); }
-.status-badge.pending { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.2); }
-.status-badge.cancelled { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
-.date-group-header { background: rgba(15, 23, 42, 0.9); border-y: 1px solid rgba(255,255,255,0.05); }
+body { background-color: #0f172a; color: #f8fafc; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+::-webkit-scrollbar { width: 6px; height: 6px; } 
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #475569; }
 
-/* Toasts */
-#toastContainer { position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-.toast { pointer-events: auto; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 12px; display: flex; gap: 12px; transform: translateX(120%); transition: transform 0.4s ease; opacity: 0; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+/* Grid e Efeitos de Fundo */
+.bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
+.glass-nav { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.08); z-index: 50; }
+.glass-card { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.3s ease; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+
+/* Sidebar Premium */
+.sidebar-link { position: relative; overflow: hidden; }
+.sidebar-link::before { content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 3px; background: #3b82f6; transform: scaleY(0); transition: transform 0.2s ease; transform-origin: left; }
+.sidebar-link:hover::before { transform: scaleY(1); }
+.sidebar-link.active { background: rgba(59, 130, 246, 0.1); color: #60a5fa; font-weight: 700; border-right: 3px solid #3b82f6; }
+
+/* Badges de Status (Neon Effect) */
+.status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 8px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; }
+.status-badge.completed { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); box-shadow: 0 0 10px rgba(34,197,94,0.1); }
+.status-badge.processing { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); box-shadow: 0 0 10px rgba(59,130,246,0.1); }
+.status-badge.pending { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+.status-badge.cancelled { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+.status-badge.refunded { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
+
+/* Separador de Datas na Tabela */
+.date-group-header { background: rgba(2, 6, 23, 0.95); border-y: 1px solid rgba(255,255,255,0.05); }
+
+/* Toasts Premium */
+#toastContainer { position: fixed; top: 24px; right: 24px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+.toast { pointer-events: auto; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 12px; display: flex; gap: 12px; transform: translateX(120%); transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); opacity: 0; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
 .toast.show { transform: translateX(0); opacity: 1; }
 .toast.error { border-left-color: #ef4444; }
 .toast.success { border-left-color: #22c55e; }
 .toast.warning { border-left-color: #f59e0b; }
 
-/* Modal Corrigido */
-.modal-wrapper { display: none; position: fixed; inset: 0; z-index: 1000; align-items: center; justify-content: center; }
+/* Modal Premium (Glassmorphism) */
+.modal-wrapper { display: none; position: fixed; inset: 0; z-index: 10000; align-items: center; justify-content: center; }
 .modal-wrapper.active { display: flex; }
-.modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); opacity: 0; transition: opacity 0.3s ease; }
+.modal-backdrop { position: absolute; inset: 0; background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(8px); opacity: 0; transition: opacity 0.3s ease; }
 .modal-wrapper.active .modal-backdrop { opacity: 1; }
-.modal-panel { position: relative; background: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; width: 95%; max-width: 700px; max-height: 90vh; display: flex; flex-col; opacity: 0; transform: scale(0.95) translateY(10px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8); z-index: 10; overflow: hidden; flex-direction: column;}
+.modal-panel { position: relative; background: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; width: 95%; max-width: 800px; max-height: 90vh; display: flex; flex-direction: column; opacity: 0; transform: scale(0.95) translateY(10px); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8); z-index: 10; overflow: hidden; }
 .modal-wrapper.active .modal-panel { opacity: 1; transform: scale(1) translateY(0); }
 
-/* Accessibility */
-:focus-visible { outline: 2px solid #3b82f6; outline-offset: 2px; border-radius: 4px; }
-@media (prefers-reduced-motion: reduce) {
-*, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
-}
+/* Utilities */
+.btn-action { transition: all 0.2s ease; position: relative; overflow: hidden; }
+.btn-action:active:not(:disabled) { transform: scale(0.95); }
+select { -webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1rem; }
+
 @media (max-width: 768px) {
-.glass-card { border-radius: 1rem; }
+  .glass-card { border-radius: 1.5rem; }
 }
 </style>
 </head>
 <body class="selection:bg-brand-500 selection:text-white">
+
 <div id="sysLoader" class="fixed inset-0 bg-slate-950 z-[200] flex flex-col items-center justify-center transition-opacity duration-500">
-<div class="w-16 h-16 border-4 border-slate-800 border-t-brand-500 rounded-full animate-spin mb-4"></div>
-<h2 class="text-white text-xl font-bold font-display">PayGo OS</h2>
-<p class="text-slate-400 text-sm mt-1">A sincronizar livros de registos...</p>
+  <div class="w-16 h-16 border-4 border-slate-800 border-t-brand-500 rounded-full animate-spin mb-4 shadow-[0_0_20px_rgba(59,130,246,0.5)]"></div>
+  <h2 class="text-white text-2xl font-bold font-display tracking-tight">PayGo OS</h2>
+  <p class="text-slate-400 text-sm mt-1 font-medium">A sincronizar livros de registos logísticos...</p>
 </div>
+
 <div class="fixed inset-0 bg-grid opacity-20 pointer-events-none z-0"></div>
-<div class="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[500px] bg-brand-600/10 rounded-full mix-blend-screen blur-[120px] pointer-events-none z-0"></div>
+<div class="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-brand-600/10 rounded-full mix-blend-screen blur-[120px] pointer-events-none z-0"></div>
+
 <div id="toastContainer"></div>
-<header class="fixed w-full z-50 glass-nav">
-<div class="container mx-auto px-6 h-20 flex justify-between items-center">
-<div class="flex items-center gap-3">
-<button id="mobileMenuBtn" class="lg:hidden text-slate-400 hover:text-white p-2 -ml-2 transition-colors" aria-label="Abrir menu">
-<i data-lucide="menu" class="w-6 h-6"></i>
-</button>
-<div class="bg-gradient-to-tr from-brand-500 to-brand-400 p-2.5 rounded-xl text-white shadow-lg">
-<i data-lucide="zap" class="w-5 h-5"></i>
-</div>
-<div class="hidden sm:block">
-<span class="text-2xl font-display font-bold text-white">PayGo</span>
-<span class="text-[10px] text-brand-400 ml-2 px-2 py-0.5 bg-brand-500/20 border border-brand-500/30 rounded-full font-black uppercase tracking-widest">Database</span>
-</div>
-</div>
-<div class="flex items-center gap-4">
-<div class="text-right hidden sm:block">
-<p class="text-sm font-bold text-white" id="adminName">A carregar...</p>
-</div>
-<button onclick="window.logout()" class="bg-slate-800 hover:bg-danger-500/20 text-slate-400 hover:text-danger-400 rounded-xl p-2.5 transition-colors" title="Sair do sistema">
-<i data-lucide="power" class="w-5 h-5"></i>
-</button>
-</div>
-</div>
+
+<header class="fixed w-full z-50 glass-nav shadow-lg">
+  <div class="container mx-auto px-6 h-20 flex justify-between items-center">
+    <div class="flex items-center gap-3">
+      <button id="mobileMenuBtn" class="lg:hidden text-slate-400 hover:text-white p-2 -ml-2 transition-colors rounded-lg hover:bg-white/5" aria-label="Abrir menu">
+        <i data-lucide="menu" class="w-6 h-6"></i>
+      </button>
+      <div class="bg-gradient-to-tr from-brand-500 to-accent-500 p-2.5 rounded-xl text-white shadow-lg shadow-brand-500/20">
+        <i data-lucide="zap" class="w-5 h-5 fill-current"></i>
+      </div>
+      <div class="hidden sm:block">
+        <span class="text-2xl font-display font-bold text-white tracking-wide">PayGo</span>
+        <span class="text-[10px] text-brand-400 ml-2 px-2 py-0.5 bg-brand-500/10 border border-brand-500/20 rounded-full font-black uppercase tracking-widest shadow-inner">Database</span>
+      </div>
+    </div>
+    <div class="flex items-center gap-4">
+      <div class="text-right hidden sm:block">
+        <p class="text-sm font-bold text-white" id="adminName">A carregar...</p>
+      </div>
+      <button onclick="window.logout()" class="bg-slate-800 hover:bg-danger-500 hover:text-white text-slate-400 rounded-xl p-2.5 transition-all shadow-md border border-slate-700" title="Sair do sistema">
+        <i data-lucide="power" class="w-5 h-5"></i>
+      </button>
+    </div>
+  </div>
 </header>
+
 <div id="sidebarOverlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-40 hidden lg:hidden opacity-0 transition-opacity duration-300"></div>
-<div class="pt-28 pb-10 relative z-10 container mx-auto px-6 grid lg:grid-cols-4 gap-6">
-<div id="sidebar" class="lg:col-span-1 fixed lg:static top-0 left-0 h-full lg:h-auto w-72 lg:w-auto bg-slate-900 lg:bg-transparent z-50 lg:z-auto p-6 lg:p-0 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 border-r border-slate-800 lg:border-none">
-<div class="glass-card rounded-2xl p-0 lg:p-6 sticky top-28 border-none lg:border-solid bg-transparent lg:bg-[rgba(30,41,59,0.4)]">
-<div class="flex justify-between items-center mb-6 lg:hidden">
-<span class="text-xl font-display font-bold text-white">PayGo Admin</span>
-<button id="closeSidebarBtn" class="text-slate-400 hover:text-white p-2">
-<i data-lucide="x" class="w-6 h-6"></i>
-</button>
-</div>
-<nav class="space-y-2">
-<a href="dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
-<i data-lucide="layout-dashboard" class="w-5 h-5"></i> <span class="text-sm font-medium">Visão Geral</span>
-</a>
-<a href="pedidos.html" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-xl text-white">
-<i data-lucide="shopping-bag" class="w-5 h-5"></i> <span class="text-sm font-medium">Pedidos</span>
-</a>
-<a href="clientes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
-<i data-lucide="users" class="w-5 h-5"></i> <span class="text-sm font-medium">Clientes</span>
-</a>
-<a href="afiliados.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
-<i data-lucide="network" class="w-5 h-5"></i> <span class="text-sm font-medium">Afiliados</span>
-</a>
-<a href="gerar-fatura.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
-<i data-lucide="file-check-2" class="w-5 h-5 text-brand-400"></i> <span class="text-sm font-medium">Gerar Faturas</span>
-</a>
-<div class="pt-4 mt-4 border-t border-slate-700/50"></div>
-<a href="admin.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
-<i data-lucide="shield" class="w-5 h-5"></i> <span class="text-sm font-medium">Gestão de Equipa</span>
-</a>
-<a href="configuracoes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
-<i data-lucide="settings" class="w-5 h-5"></i> <span class="text-sm font-medium">Configurações</span>
-</a>
-</nav>
-</div>
-</div>
-<div class="lg:col-span-3 space-y-6">
-<header class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 mb-6">
-<div>
-<h1 class="text-3xl font-display font-extrabold text-white tracking-tight">Histórico de Transações</h1>
-<p class="text-slate-400 text-sm mt-1">Gira pagamentos, atualize o estado de envio e notifique os clientes.</p>
-</div>
-<div class="flex flex-wrap items-center gap-3 w-full xl:w-auto">
-<button onclick="window.clearHistory()" class="flex-1 xl:flex-none px-5 py-2.5 bg-danger-500/10 hover:bg-danger-500/20 text-danger-400 border border-danger-500/20 rounded-xl text-sm font-bold transition flex items-center justify-center gap-2">
-<i data-lucide="trash-2" class="w-4 h-4"></i> Purgar Selecionados
-</button>
-<button onclick="window.exportToCSV()" class="flex-1 xl:flex-none px-5 py-2.5 bg-success-600 hover:bg-success-500 text-white rounded-xl text-sm font-bold transition flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(34,197,94,0.3)]">
-<i data-lucide="download" class="w-4 h-4"></i> Exportar CSV
-</button>
-</div>
-</header>
-<div class="glass-card rounded-2xl p-4 md:p-6 shadow-lg border-t-2 border-t-brand-500">
-<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-<div class="relative md:col-span-2">
-<label for="searchInput" class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Pesquisa Livre</label>
-<i data-lucide="search" class="absolute left-4 top-10 w-4 h-4 text-slate-500"></i>
-<input type="text" id="searchInput" placeholder="ID, Nome, Email..." class="pl-12 pr-4 py-3 w-full bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 text-sm text-white font-mono placeholder:font-sans transition-colors shadow-inner" oninput="window.renderOrders()">
-</div>
-<div>
-<label for="statusFilter" class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Filtro Logístico</label>
-<select id="statusFilter" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 text-sm text-slate-300 font-bold cursor-pointer" onchange="window.renderOrders()">
-<option value="all">Todos os Status</option>
-<option value="pending">⏳ Pendentes</option>
-<option value="processing">🔄 Em Processamento</option>
-<option value="completed">✅ Concluídos</option>
-<option value="cancelled">❌ Cancelados</option>
-</select>
-</div>
-<div>
-<label for="paymentFilter" class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Controlo Financeiro</label>
-<select id="paymentFilter" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 text-sm text-slate-300 font-bold cursor-pointer" onchange="window.renderOrders()">
-<option value="all">Ver Todos</option>
-<option value="paid">🟢 Valor Pago</option>
-<option value="unpaid">🔴 Por Liquidar</option>
-</select>
-</div>
-</div>
-</div>
-<div class="glass-card rounded-2xl p-0 overflow-hidden shadow-lg border border-slate-800 flex flex-col">
-<div class="p-5 border-b border-white/5 flex justify-between items-center bg-slate-900/50">
-<h2 class="text-sm font-bold text-white flex items-center gap-2"><i data-lucide="list" class="w-4 h-4 text-brand-400"></i> Resultados Criptografados</h2>
-<span class="text-[10px] font-black px-3 py-1 bg-brand-500/20 border border-brand-500/30 rounded-full text-brand-400 uppercase tracking-widest" id="ordersCount">0 Pedidos</span>
-</div>
-<div class="overflow-x-auto min-h-[400px]">
-<table class="w-full text-left border-collapse whitespace-nowrap">
-<thead class="bg-slate-800/80 text-[10px] uppercase text-slate-400 tracking-widest border-b border-white/10 sticky top-0 z-10">
-<tr>
-<th class="px-6 py-4 font-bold">Data & ID Transação</th>
-<th class="px-6 py-4 font-bold">Cliente e Contacto</th>
-<th class="px-6 py-4 font-bold">Valor (USD)</th>
-<th class="px-6 py-4 font-bold">Cobrado (MT)</th>
-<th class="px-6 py-4 font-bold text-center">Status Global</th>
-<th class="px-6 py-4 text-right font-bold">Acesso</th>
-</tr>
-</thead>
-<tbody id="ordersTable" class="divide-y divide-white/5">
-<tr><td colspan="6" class="text-center py-10 text-slate-500"><div class="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>A sincronizar...</td></tr>
-</tbody>
-</table>
-</div>
-</div>
-</div>
+
+<div class="pt-28 pb-10 relative z-10 container mx-auto px-4 md:px-6 grid lg:grid-cols-4 xl:grid-cols-5 gap-6 xl:gap-8">
+  
+  <div id="sidebar" class="lg:col-span-1 fixed lg:static top-0 left-0 h-full lg:h-auto w-72 lg:w-auto bg-slate-900 lg:bg-transparent z-50 lg:z-auto p-6 lg:p-0 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 border-r border-slate-800 lg:border-none shadow-2xl lg:shadow-none">
+    <div class="glass-card rounded-3xl p-0 lg:p-6 sticky top-28 border-none lg:border-solid bg-transparent lg:bg-[rgba(15,23,42,0.6)]">
+      <div class="flex justify-between items-center mb-8 lg:hidden pb-4 border-b border-white/10">
+        <span class="text-xl font-display font-bold text-white tracking-wide">PayGo Admin</span>
+        <button id="closeSidebarBtn" class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-white/5 transition-colors">
+          <i data-lucide="x" class="w-6 h-6"></i>
+        </button>
+      </div>
+
+      <nav class="space-y-2">
+        <a href="dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-3.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all font-medium">
+          <i data-lucide="layout-dashboard" class="w-5 h-5"></i> <span>Visão Geral</span>
+        </a>
+        <a href="pedidos.html" class="sidebar-link active flex items-center gap-3 px-4 py-3.5 rounded-xl text-white shadow-md">
+          <i data-lucide="shopping-bag" class="w-5 h-5"></i> <span>Gestão de Pedidos</span>
+        </a>
+        <a href="clientes.html" class="sidebar-link flex items-center gap-3 px-4 py-3.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all font-medium">
+          <i data-lucide="users" class="w-5 h-5"></i> <span>Base de Clientes</span>
+        </a>
+        <a href="afiliados.html" class="sidebar-link flex items-center gap-3 px-4 py-3.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all font-medium">
+          <i data-lucide="network" class="w-5 h-5"></i> <span>Rede de Afiliados</span>
+        </a>
+        <a href="gerar-fatura.html" class="sidebar-link flex items-center gap-3 px-4 py-3.5 rounded-xl text-slate-400 hover:text-brand-400 hover:bg-white/5 transition-all font-medium mt-2">
+          <i data-lucide="file-check-2" class="w-5 h-5"></i> <span>Emissão de Faturas</span>
+        </a>
+        
+        <div class="pt-4 mt-4 border-t border-slate-700/50"></div>
+        
+        <a href="logs.html" class="sidebar-link flex items-center gap-3 px-4 py-3.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all font-medium">
+          <i data-lucide="activity" class="w-5 h-5 text-warning-400"></i> <span>Logs / Auditoria</span>
+        </a>
+        <a href="admin.html" class="sidebar-link flex items-center gap-3 px-4 py-3.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all font-medium">
+          <i data-lucide="shield" class="w-5 h-5"></i> <span>Acessos & Equipa</span>
+        </a>
+        <a href="configuracoes.html" class="sidebar-link flex items-center gap-3 px-4 py-3.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all font-medium mb-4">
+          <i data-lucide="settings" class="w-5 h-5"></i> <span>Definições Globais</span>
+        </a>
+      </nav>
+    </div>
+  </div>
+
+  <div class="lg:col-span-3 xl:col-span-4 space-y-6">
+    
+    <header class="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-6 mb-8">
+      <div>
+        <h1 class="text-3xl md:text-4xl font-display font-extrabold text-white tracking-tight">Histórico de Transações</h1>
+        <p class="text-slate-400 text-sm mt-2 font-medium">Gira pagamentos, atualize o estado logístico e audite reembolsos e estornos.</p>
+      </div>
+      <div class="flex flex-col sm:flex-row items-center gap-3 w-full xl:w-auto">
+        <button onclick="window.clearHistory()" class="btn-action w-full sm:w-auto px-6 py-3.5 bg-danger-500/10 hover:bg-danger-500/20 text-danger-400 border border-danger-500/20 rounded-xl text-sm font-bold transition-all shadow-sm flex items-center justify-center gap-2">
+          <i data-lucide="trash-2" class="w-4 h-4"></i> Purgar Visíveis
+        </button>
+        <button onclick="window.exportToCSV()" class="btn-action w-full sm:w-auto px-6 py-3.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-sm font-bold transition-all shadow-[0_0_20px_rgba(37,99,235,0.4)] flex items-center justify-center gap-2 border border-brand-500">
+          <i data-lucide="download" class="w-4 h-4"></i> Relatório Excel (CSV)
+        </button>
+      </div>
+    </header>
+
+    <div class="glass-card rounded-[2rem] p-5 md:p-6 shadow-2xl border-t-2 border-t-brand-500">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-5 items-end">
+        <div class="relative md:col-span-2">
+          <label for="searchInput" class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2.5 ml-1">Pesquisa Inteligente</label>
+          <i data-lucide="search" class="absolute left-4 top-10 w-5 h-5 text-slate-500"></i>
+          <input type="text" id="searchInput" placeholder="ID da Fatura, Nome, Email ou WhatsApp..." class="pl-12 pr-4 py-3.5 w-full bg-slate-900/80 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50 text-sm text-white placeholder-slate-500 transition-all shadow-inner" oninput="window.renderOrders()">
+        </div>
+        
+        <div>
+          <label for="statusFilter" class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2.5 ml-1">Filtro Logístico</label>
+          <select id="statusFilter" class="w-full px-4 py-3.5 bg-slate-900/80 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50 text-sm text-slate-200 font-bold cursor-pointer transition-all shadow-inner" onchange="window.renderOrders()">
+            <option value="all">Todas as Fases</option>
+            <option value="pending">⏳ Aguardando Ação (Pendente)</option>
+            <option value="processing">🔄 Em Processamento / Compra</option>
+            <option value="completed">✅ Concluídos (Fechados)</option>
+            <option value="cancelled">❌ Cancelados / Recusados</option>
+            <option value="refunded">🟣 Reembolsados ao Cliente</option>
+          </select>
+        </div>
+        
+        <div>
+          <label for="paymentFilter" class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2.5 ml-1">Controlo Financeiro</label>
+          <select id="paymentFilter" class="w-full px-4 py-3.5 bg-slate-900/80 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50 text-sm text-slate-200 font-bold cursor-pointer transition-all shadow-inner" onchange="window.renderOrders()">
+            <option value="all">Todo o Histórico</option>
+            <option value="paid">🟢 Liquidados (Dinheiro Recebido)</option>
+            <option value="unpaid">🔴 Por Liquidar (Em Dívida)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="glass-card rounded-[2rem] p-0 overflow-hidden shadow-2xl border border-slate-800 flex flex-col">
+      <div class="p-5 border-b border-white/5 flex justify-between items-center bg-slate-900/60 backdrop-blur-sm">
+        <h2 class="text-sm font-bold text-white flex items-center gap-2"><i data-lucide="database" class="w-4 h-4 text-brand-400"></i> Base de Dados Criptografada</h2>
+        <span class="text-[10px] font-black px-3 py-1.5 bg-brand-500/20 border border-brand-500/30 rounded-full text-brand-400 uppercase tracking-widest shadow-inner" id="ordersCount">0 Pedidos Encontrados</span>
+      </div>
+      
+      <div class="overflow-x-auto min-h-[500px]">
+        <table class="w-full text-left border-collapse whitespace-nowrap">
+          <thead class="bg-slate-950/80 text-[10px] uppercase text-slate-400 tracking-widest border-b border-white/10 sticky top-0 z-10 backdrop-blur-md">
+            <tr>
+              <th class="px-6 py-5 font-bold">Data & ID Transação</th>
+              <th class="px-6 py-5 font-bold">Cliente e Contactos</th>
+              <th class="px-6 py-5 font-bold">Valor Base (USD)</th>
+              <th class="px-6 py-5 font-bold">Cobrado Líquido (MT)</th>
+              <th class="px-6 py-5 font-bold text-center">Status Operacional</th>
+              <th class="px-6 py-5 text-right font-bold">Ação</th>
+            </tr>
+          </thead>
+          <tbody id="ordersTable" class="divide-y divide-white/5 bg-slate-900/20">
+            <tr><td colspan="6" class="text-center py-16 text-slate-500"><div class="w-10 h-10 border-4 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div><p class="font-medium text-sm">A sincronizar com a central...</p></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
 </div>
 
 <div id="orderModal" class="modal-wrapper">
     <div class="modal-backdrop" onclick="window.closeModal()"></div>
     <div class="modal-panel flex flex-col h-auto max-h-[90vh]">
-        <div class="flex justify-between items-center p-6 border-b border-white/10 bg-slate-900 shrink-0">
-            <h2 class="text-xl font-display font-bold text-white flex items-center gap-2">
-                <i data-lucide="file-text" class="w-5 h-5 text-brand-400"></i> Dossier da Transação
+        
+        <div class="flex justify-between items-center p-6 border-b border-white/10 bg-slate-950 shrink-0">
+            <h2 class="text-2xl font-display font-extrabold text-white flex items-center gap-3">
+                <div class="p-2 bg-brand-500/20 rounded-xl border border-brand-500/30"><i data-lucide="file-text" class="w-5 h-5 text-brand-400"></i></div> 
+                Dossier Logístico
             </h2>
-            <button onclick="window.closeModal()" class="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 hover:bg-slate-700 hover:text-white flex items-center justify-center transition-colors text-slate-400">
-                <i data-lucide="x" class="w-4 h-4"></i>
+            <button onclick="window.closeModal()" class="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-700 hover:text-white flex items-center justify-center transition-colors text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
         
-        <div id="modalContent" class="p-6 overflow-y-auto space-y-6 bg-slate-950 flex-1">
+        <div id="modalContent" class="p-6 md:p-8 overflow-y-auto space-y-6 bg-slate-900 flex-1 relative">
             </div>
 
-        <div class="p-6 border-t border-white/10 bg-slate-900 flex flex-col sm:flex-row gap-3 shrink-0">
+        <div class="p-6 border-t border-white/10 bg-slate-950 flex flex-col sm:flex-row gap-4 shrink-0 shadow-[0_-10px_20px_rgba(0,0,0,0.3)] relative z-20">
             <div class="relative flex-1">
-                <i data-lucide="sliders" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
-                <select id="statusSelect" class="w-full pl-10 pr-4 py-3 border border-slate-700 bg-slate-800 text-white rounded-xl focus:outline-none focus:border-brand-500 font-bold text-sm cursor-pointer shadow-inner">
-                    <option value="pending">Fase Logística: Pendente</option>
-                    <option value="processing">Fase Logística: Em Processamento</option>
-                    <option value="completed">Fase Logística: Concluído (Gera Email)</option>
-                    <option value="cancelled">Fase Logística: Cancelado</option>
-                </select>
+                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Forçar Atualização de Fase Logística</label>
+                <div class="relative">
+                    <i data-lucide="git-commit" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
+                    <select id="statusSelect" class="w-full pl-12 pr-4 py-4 border border-slate-700 bg-slate-800 text-white rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50 font-bold text-sm cursor-pointer shadow-inner appearance-none transition-all">
+                        <option value="pending">⏳ Ação Necessária (Pendente)</option>
+                        <option value="processing">🔄 Em Compra Internacional (Processando)</option>
+                        <option value="completed">✅ Finalizado com Sucesso (Envia Email Automático)</option>
+                        <option value="cancelled">❌ Cancelar / Recusar Encomenda</option>
+                        <option value="refunded">🟣 Marcar como Reembolsado ao Cliente</option>
+                    </select>
+                </div>
             </div>
-            <button id="updateStatusBtn" onclick="window.saveOrderStatus()" class="px-8 py-3 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-bold transition flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(37,99,235,0.4)] whitespace-nowrap active:scale-[0.98]">
-                <i data-lucide="save" class="w-4 h-4"></i> <span>Salvar Decisão</span>
-            </button>
+            <div class="flex items-end">
+                <button id="updateStatusBtn" onclick="window.saveOrderStatus()" class="btn-action w-full sm:w-auto px-8 py-4 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(37,99,235,0.4)] whitespace-nowrap h-[54px] border border-brand-500">
+                    <i data-lucide="save" class="w-4 h-4"></i> <span>Salvar Decisão</span>
+                </button>
+            </div>
         </div>
     </div>
 </div>
 
 <script type="module">
-// ==========================================
-// 🔧 CONFIGURAÇÃO FIREBASE - URLs LIMPAS
-// ==========================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, collection, doc, updateDoc, onSnapshot, query, orderBy, getDoc, serverTimestamp, writeBatch, increment, deleteDoc, getDocs, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
-apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
-authDomain: "paygo-14311.firebaseapp.com",
-projectId: "paygo-14311",
-storageBucket: "paygo-14311.firebasestorage.app",
-messagingSenderId: "208360646277",
-appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
+    apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
+    authDomain: "paygo-14311.firebaseapp.com",
+    projectId: "paygo-14311",
+    storageBucket: "paygo-14311.firebasestorage.app",
+    messagingSenderId: "208360646277",
+    appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
 };
 
-// Inicializar Firebase
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app, "paygodb");
 const auth = getAuth(app);
@@ -259,219 +317,196 @@ let currentOrderId = null;
 let ordersUnsubscribe = null;
 
 // ==========================================
-// 🔔 TOAST NOTIFICATIONS - CORRIGIDO
+// 🔔 TOAST NOTIFICATIONS PREMIUM
 // ==========================================
 window.showToast = (message, type = 'success') => {
-const container = document.getElementById('toastContainer');
-if (!container) return;
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
 
-const toast = document.createElement('div');
-const borderColor = type === 'error' ? 'border-danger-500' : type === 'warning' ? 'border-warning-500' : 'border-brand-500';
-const icon = type === 'error' ? 'alert-octagon text-danger-400' : type === 'warning' ? 'alert-triangle text-warning-400' : 'check-check text-brand-400';
+    const toast = document.createElement('div');
+    const borderColor = type === 'error' ? 'border-danger-500' : type === 'warning' ? 'border-warning-500' : 'border-brand-500';
+    const icon = type === 'error' ? 'alert-octagon text-danger-400' : type === 'warning' ? 'alert-triangle text-warning-400' : 'check-check text-brand-400';
 
-toast.className = `flex items-center gap-3 px-5 py-4 rounded-xl shadow-2xl backdrop-blur-xl transform transition-all duration-400 translate-x-full border-l-4 ${borderColor} bg-slate-900/95 border-y border-r border-white/5`;
-toast.setAttribute('role', 'alert');
-toast.setAttribute('aria-live', 'assertive');
-toast.innerHTML = `<i data-lucide="${icon.split(' ')[0]}" class="w-5 h-5 ${icon.split(' ')[1]}"></i> <span class="text-sm font-bold text-white tracking-wide">${message}</span>`;
+    toast.className = `flex items-center gap-3 px-5 py-4 rounded-xl shadow-2xl backdrop-blur-xl transform transition-all duration-400 translate-x-full border-l-4 ${borderColor} bg-slate-900/95 border-y border-r border-white/5`;
+    toast.setAttribute('role', 'alert');
+    toast.innerHTML = `<i data-lucide="${icon.split(' ')[0]}" class="w-5 h-5 ${icon.split(' ')[1]}"></i> <span class="text-sm font-bold text-white tracking-wide">${message}</span>`;
 
-container.appendChild(toast);
+    container.appendChild(toast);
+    if (typeof lucide !== 'undefined') { try { lucide.createIcons({ root: toast }); } catch(e) {} }
 
-if (typeof lucide !== 'undefined') {
-try { lucide.createIcons({ root: toast }); } catch(e) {}
-}
-
-requestAnimationFrame(() => toast.classList.remove('translate-x-full'));
-setTimeout(() => {
-toast.classList.add('opacity-0', 'translate-x-8');
-setTimeout(() => toast.remove(), 400);
-}, 5000);
+    requestAnimationFrame(() => toast.classList.remove('translate-x-full'));
+    setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-x-8');
+        setTimeout(() => toast.remove(), 400);
+    }, 5000);
 };
 
 // ==========================================
-// 🛠️ FUNÇÕES DE UTILIDADE
+// 🛠️ FUNÇÕES DE FORMATAÇÃO E CÁLCULO
 // ==========================================
 function formatValue(value, type = 'currency') {
-if (value === null || value === undefined) return type === 'currency' ? '0.00 MT' : '0';
-if (type === 'currency') return `${Number(value).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`;
-if (type === 'usd') return `$${Number(value).toFixed(2)}`;
-return String(value);
+    if (value === null || value === undefined) return type === 'currency' ? '0.00 MT' : '0';
+    if (type === 'currency') return `${Number(value).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`;
+    if (type === 'usd') return `$${Number(value).toFixed(2)}`;
+    return String(value);
 }
 
 function getRelativeDateLabel(date) {
-const today = new Date();
-const yesterday = new Date(today);
-yesterday.setDate(yesterday.getDate() - 1);
-if (date.toDateString() === today.toDateString()) return 'Hoje';
-if (date.toDateString() === yesterday.toDateString()) return 'Ontem';
-return date.toLocaleDateString('pt-MZ');
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    if (date.toDateString() === today.toDateString()) return 'Hoje';
+    if (date.toDateString() === yesterday.toDateString()) return 'Ontem';
+    return date.toLocaleDateString('pt-MZ');
 }
 
 // ==========================================
-// 📧 API RESEND (AUTOMATIZADA)
+// 📧 API RESEND & LARK (NOTIFICAÇÕES AUTO)
 // ==========================================
 async function sendNotificationEmail(order, actionType) {
-try {
-let subject = "";
-if (actionType === 'paid') subject = `✅ Pagamento Confirmado - Pedido #${order.orderId}`;
-else if (actionType === 'completed') subject = `🎉 Pedido Concluído - #${order.orderId}`;
-else return;
+    try {
+        let payloadAction = "";
+        if (actionType === 'paid') payloadAction = "payment_confirmed";
+        else if (actionType === 'completed') payloadAction = "order_completed";
+        else return;
 
-await fetch('/api/send-email', {
-method: 'POST',
-headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify({
-to: order.email,
-subject: subject,
-template: actionType === 'paid' ? 'payment-confirmed' : 'order-completed',
-type: 'transactional',
-variables: {
-customer_name: order.name,
-order_id: order.orderId,
-amount: formatValue(order.total, 'currency')
-}
-})
-});
-showToast('Notificação enviada ao cliente.', 'info');
-} catch (error) {
-console.error('Erro de envio:', error);
-}
+        await fetch('/api/notify-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderData: order, action: payloadAction, sendEmail: true, sendLark: false })
+        });
+        showToast('Notificação oficial disparada para o cliente.', 'info');
+    } catch (error) {
+        console.error('Erro de envio:', error);
+    }
 }
 
 // ==========================================
-// 📦 BASE DE DADOS (REAL-TIME)
+// 📦 BASE DE DADOS (SYNC REAL-TIME)
 // ==========================================
 function loadOrdersRealTime() {
-const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
-ordersUnsubscribe = onSnapshot(q,
-(snapshot) => {
-orders = snapshot.docs.map(doc => {
-const data = doc.data();
-return {
-id: doc.id,
-orderId: data.orderId || `ORD-${doc.id.slice(0, 8)}`,
-name: data.name || 'Sem Nome',
-email: data.email || 'N/A',
-whatsapp: data.whatsapp || 'N/A',
-type: data.type || 'unknown',
-usd: Number(data.usd) || 0,
-total: Number(data.total) || 0,
-tax: Number(data.tax) || 0,
-status: data.status || 'pending',
-isPaid: data.isPaid || false,
-paymentMethod: data.paymentMethod || 'mpesa',
-detail: data.detail || 'N/A',
-referredBy: data.referredBy || null,
-userId: data.userId || null,
-commissionProcessed: data.commissionProcessed || false,
-createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : new Date())
-};
-});
-window.renderOrders();
-},
-(error) => {
-console.error('Erro no real-time:', error);
-showToast('Falha na conexão em tempo real.', 'error');
-}
-);
+    const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
+    ordersUnsubscribe = onSnapshot(q, (snapshot) => {
+        orders = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                orderId: data.orderId || `ORD-${doc.id.slice(0, 8)}`,
+                name: data.name || 'Sem Nome',
+                email: data.email || 'N/A',
+                whatsapp: data.whatsapp || 'N/A',
+                type: data.type || 'unknown',
+                usd: Number(data.usd) || 0,
+                total: Number(data.total) || 0,
+                tax: Number(data.tax) || 0,
+                status: data.status || 'pending',
+                isPaid: data.isPaid || false,
+                paymentMethod: data.paymentMethod || 'mpesa',
+                detail: data.detail || 'N/A',
+                referredBy: data.referredBy || null,
+                userId: data.userId || null,
+                commissionProcessed: data.commissionProcessed || false,
+                createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : new Date()),
+                paysuitePaymentId: data.paysuitePaymentId || null
+            };
+        });
+        window.renderOrders();
+    }, (error) => {
+        console.error('Erro de permissão/real-time:', error);
+        showToast('Acesso Restrito ao Servidor de Dados.', 'error');
+    });
 }
 
 // ==========================================
-// 🎨 RENDERIZAR PEDIDOS E ÍCONES
+// 🎨 RENDERIZAÇÃO DA TABELA (COM REEMBOLSO)
 // ==========================================
 window.renderOrders = function() {
-const table = document.getElementById('ordersTable');
-if (!table) return;
+    const table = document.getElementById('ordersTable');
+    if (!table) return;
 
-const search = document.getElementById('searchInput')?.value.toLowerCase() || '';
-const statusFilter = document.getElementById('statusFilter')?.value || 'all';
-const paymentFilter = document.getElementById('paymentFilter')?.value || 'all';
+    const search = document.getElementById('searchInput')?.value.toLowerCase() || '';
+    const statusFilter = document.getElementById('statusFilter')?.value || 'all';
+    const paymentFilter = document.getElementById('paymentFilter')?.value || 'all';
 
-currentFilteredOrders = orders.filter(order => {
-const matchSearch = order.name.toLowerCase().includes(search) ||
-order.orderId.toLowerCase().includes(search) ||
-order.email.toLowerCase().includes(search) ||
-order.whatsapp.includes(search);
-const matchStatus = statusFilter === 'all' || order.status === statusFilter;
-let matchPayment = true;
-if (paymentFilter === 'paid') matchPayment = order.isPaid === true;
-if (paymentFilter === 'unpaid') matchPayment = order.isPaid === false;
-return matchSearch && matchStatus && matchPayment;
-});
+    currentFilteredOrders = orders.filter(order => {
+        const matchSearch = order.name.toLowerCase().includes(search) || order.orderId.toLowerCase().includes(search) || order.email.toLowerCase().includes(search) || order.whatsapp.includes(search);
+        const matchStatus = statusFilter === 'all' || order.status === statusFilter;
+        let matchPayment = true;
+        if (paymentFilter === 'paid') matchPayment = order.isPaid === true;
+        if (paymentFilter === 'unpaid') matchPayment = order.isPaid === false;
+        return matchSearch && matchStatus && matchPayment;
+    });
 
-const countEl = document.getElementById('ordersCount');
-if (countEl) countEl.textContent = `${currentFilteredOrders.length} Pedidos Visíveis`;
+    const countEl = document.getElementById('ordersCount');
+    if (countEl) countEl.textContent = `${currentFilteredOrders.length} Resultados da Auditoria`;
 
-if (currentFilteredOrders.length === 0) {
-table.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-slate-500"><i data-lucide="search-x" class="w-10 h-10 mx-auto mb-3 opacity-30 text-slate-400"></i>Nenhum registo combina com o seu filtro avançado.</td></tr>`;
-renderIcons(table);
-return;
-}
+    if (currentFilteredOrders.length === 0) {
+        table.innerHTML = `<tr><td colspan="6" class="text-center py-16 text-slate-500"><i data-lucide="search-x" class="w-12 h-12 mx-auto mb-4 opacity-30 text-slate-400"></i><p class="font-bold text-lg">Sem Registos</p><p class="text-sm mt-1">Altere o filtro de segurança para encontrar a transação.</p></td></tr>`;
+        renderIcons(table);
+        return;
+    }
 
-let htmlContent = '';
-let lastDateGroup = '';
+    let htmlContent = '';
+    let lastDateGroup = '';
 
-currentFilteredOrders.forEach(order => {
-const dateLabel = getRelativeDateLabel(order.createdAt);
-const timeStr = order.createdAt.toLocaleTimeString('pt-MZ', { hour: '2-digit', minute:'2-digit' });
+    currentFilteredOrders.forEach(order => {
+        const dateLabel = getRelativeDateLabel(order.createdAt);
+        const timeStr = order.createdAt.toLocaleTimeString('pt-MZ', { hour: '2-digit', minute:'2-digit' });
 
-if (dateLabel !== lastDateGroup) {
-lastDateGroup = dateLabel;
-htmlContent += `
-<tr class="date-group-header">
-<td colspan="6" class="px-6 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest"><i data-lucide="calendar" class="w-3 h-3 inline pb-0.5 mr-1"></i> ${dateLabel}</td>
-</tr>`;
-}
+        if (dateLabel !== lastDateGroup) {
+            lastDateGroup = dateLabel;
+            htmlContent += `<tr class="date-group-header"><td colspan="6" class="px-6 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-950/80"><i data-lucide="calendar" class="w-3 h-3 inline pb-0.5 mr-1"></i> ${dateLabel}</td></tr>`;
+        }
 
-const payBadge = order.isPaid
-? `<span class="bg-success-500/20 text-success-400 px-2 py-0.5 rounded text-[10px] font-black border border-success-500/30 uppercase tracking-widest">✅ Liquidado</span>`
-: `<span class="bg-danger-500/20 text-danger-400 px-2 py-0.5 rounded text-[10px] font-black border border-danger-500/30 uppercase tracking-widest">❌ Falta Pagar</span>`;
+        const payBadge = order.isPaid
+            ? `<span class="bg-success-500/20 text-success-400 px-2.5 py-1 rounded text-[9px] font-black border border-success-500/30 uppercase tracking-widest shadow-sm">✅ Liquidado</span>`
+            : `<span class="bg-danger-500/20 text-danger-400 px-2.5 py-1 rounded text-[9px] font-black border border-danger-500/30 uppercase tracking-widest shadow-sm">❌ Por Pagar</span>`;
 
-const logStatus = {
-'pending': '<span class="status-badge pending">⏳ Pendente</span>',
-'processing': '<span class="status-badge processing">🔄 Processando</span>',
-'completed': '<span class="status-badge completed">✅ Finalizado</span>',
-'cancelled': '<span class="status-badge cancelled">❌ Recusado</span>'
-}[order.status] || `<span class="status-badge bg-slate-800">${order.status}</span>`;
+        const logStatus = {
+            'pending': '<span class="status-badge pending shadow-sm">⏳ Pendente</span>',
+            'processing': '<span class="status-badge processing shadow-sm">🔄 Em Compra</span>',
+            'completed': '<span class="status-badge completed shadow-sm">✅ Fechado</span>',
+            'cancelled': '<span class="status-badge cancelled shadow-sm">❌ Cancelado</span>',
+            'refunded': '<span class="status-badge refunded shadow-sm">🟣 Reembolsado</span>'
+        }[order.status] || `<span class="status-badge bg-slate-800 border border-slate-700">${order.status}</span>`;
 
-htmlContent += `
-<tr class="hover:bg-slate-800/40 transition-colors group border-b border-white/5 last:border-0 cursor-pointer" onclick="window.openModal('${order.id}')" role="button" tabindex="0">
-<td class="px-6 py-4">
-<div class="text-sm font-mono font-bold text-brand-400">${order.orderId}</div>
-<div class="text-xs text-slate-500 mt-0.5"><i data-lucide="clock" class="w-3 h-3 inline"></i> ${timeStr}</div>
-</td>
-<td class="px-6 py-4">
-<div class="text-sm font-bold text-white group-hover:text-brand-300 transition-colors">${order.name}</div>
-<div class="text-xs text-slate-500 font-mono">${order.whatsapp}</div>
-</td>
-<td class="px-6 py-4 text-sm font-bold text-slate-300">${formatValue(order.usd, 'usd')}</td>
-<td class="px-6 py-4 text-sm font-black text-white">${formatValue(order.total, 'currency')}</td>
-<td class="px-6 py-4 text-center">
-<div class="flex flex-col gap-2 items-center justify-center">
-${payBadge}
-${logStatus}
-</div>
-</td>
-<td class="px-6 py-4 text-right">
-<button class="w-8 h-8 inline-flex items-center justify-center rounded-lg bg-slate-800 text-slate-400 group-hover:bg-brand-600 group-hover:text-white transition-all shadow-sm" onclick="event.stopPropagation(); window.openModal('${order.id}')">
-<i data-lucide="chevron-right" class="w-4 h-4"></i>
-</button>
-</td>
-</tr>
-`;
-});
+        htmlContent += `
+        <tr class="hover:bg-slate-800/60 transition-colors group border-b border-white/5 last:border-0 cursor-pointer h-[72px]" onclick="window.openModal('${order.id}')" role="button" tabindex="0">
+            <td class="px-6 py-4">
+                <div class="text-sm font-mono font-bold text-brand-400 bg-brand-900/20 inline-block px-2 py-0.5 rounded border border-brand-500/20">${order.orderId}</div>
+                <div class="text-[11px] font-bold text-slate-500 mt-1 uppercase tracking-widest"><i data-lucide="clock" class="w-3 h-3 inline pb-0.5"></i> ${timeStr}</div>
+            </td>
+            <td class="px-6 py-4">
+                <div class="text-sm font-bold text-white group-hover:text-brand-300 transition-colors truncate max-w-[200px]">${order.name}</div>
+                <div class="text-xs text-slate-500 font-mono mt-0.5 truncate max-w-[200px]">${order.email}</div>
+            </td>
+            <td class="px-6 py-4 text-sm font-black text-slate-300 font-mono">${formatValue(order.usd, 'usd')}</td>
+            <td class="px-6 py-4 text-sm font-black text-white font-mono tracking-tight">${formatValue(order.total, 'currency')}</td>
+            <td class="px-6 py-4 text-center">
+                <div class="flex flex-col gap-2 items-center justify-center">
+                    ${payBadge}
+                    ${logStatus}
+                </div>
+            </td>
+            <td class="px-6 py-4 text-right">
+                <button class="w-10 h-10 inline-flex items-center justify-center rounded-xl bg-slate-800 text-slate-400 group-hover:bg-brand-600 group-hover:text-white transition-all shadow-md border border-slate-700 group-hover:border-brand-500" onclick="event.stopPropagation(); window.openModal('${order.id}')" title="Inspecionar">
+                    <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                </button>
+            </td>
+        </tr>
+        `;
+    });
 
-table.innerHTML = htmlContent;
-renderIcons(table);
+    table.innerHTML = htmlContent;
+    renderIcons(table);
 };
 
 function renderIcons(container = document.body) {
-if (typeof lucide !== 'undefined') {
-try { lucide.createIcons({ root: container }); } catch(e) {}
-}
+    if (typeof lucide !== 'undefined') { try { lucide.createIcons({ root: container }); } catch(e) {} }
 }
 
 // ==========================================
-// 🔍 MOTOR DO MODAL (REESCRITO)
+// 🔍 ECRÃ DE DOSSIER (MODAL UPGRADE)
 // ==========================================
 window.openModal = (orderId) => {
     const order = orders.find(o => o.id === orderId);
@@ -479,48 +514,67 @@ window.openModal = (orderId) => {
 
     currentOrderId = orderId;
     const methodColor = order.paymentMethod === 'mpesa' ? 'danger' : 'brand';
-    const methodName = order.paymentMethod === 'mpesa' ? 'M-Pesa Moçambique' : 'e-Mola';
+    const methodName = order.paymentMethod === 'mpesa' ? 'M-Pesa (Vodacom)' : 'e-Mola (Movitel)';
+    
+    let trackHtml = order.paysuitePaymentId ? 
+        `<div class="flex justify-between items-center mt-3 pt-3 border-t border-white/5"><p class="text-[10px] font-bold text-slate-500 uppercase">Referência PaySuite</p><p class="font-mono text-xs text-brand-300 bg-brand-500/10 px-2 py-1 rounded border border-brand-500/20">${order.paysuitePaymentId}</p></div>` : '';
 
     document.getElementById('modalContent').innerHTML = `
-    <div class="bg-slate-900 p-5 rounded-2xl flex justify-between items-center border border-slate-800 shadow-inner">
-        <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Dossier / Fatura Ref.</p><p class="font-mono font-black text-brand-400 text-xl tracking-tight">${order.orderId}</p></div>
-        <div class="text-right"><p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Emissão Segura</p><p class="font-bold text-slate-300 text-sm">${order.createdAt.toLocaleString('pt-MZ')}</p></div>
-    </div>
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
-        <div class="space-y-4">
-            <h3 class="text-xs font-black text-brand-400 uppercase tracking-widest border-b border-white/10 pb-2 flex items-center gap-2"><i data-lucide="user" class="w-4 h-4"></i> Titular</h3>
-            <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nome Registado</p><p class="font-bold text-white">${order.name}</p></div>
-            <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Canal WhatsApp</p><a href="https://wa.me/${order.whatsapp.replace(/\D/g,'')}" target="_blank" class="font-bold text-success-400 hover:text-success-300 flex items-center gap-1">${order.whatsapp} <i data-lucide="external-link" class="w-3 h-3"></i></a></div>
-            <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Correio Eletrónico</p><p class="font-medium text-slate-300">${order.email}</p></div>
+        <div class="bg-slate-950 p-6 rounded-2xl flex justify-between items-center border border-slate-800 shadow-[inset_0_2px_15px_rgba(0,0,0,0.5)]">
+            <div>
+                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 flex items-center gap-1"><i data-lucide="fingerprint" class="w-3 h-3"></i> Fatura Oficial (ID)</p>
+                <p class="font-mono font-black text-brand-400 text-2xl tracking-tight">${order.orderId}</p>
+            </div>
+            <div class="text-right">
+                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 flex items-center justify-end gap-1"><i data-lucide="calendar-clock" class="w-3 h-3"></i> Registo de Servidor</p>
+                <p class="font-bold text-white text-sm bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">${order.createdAt.toLocaleString('pt-MZ')}</p>
+            </div>
         </div>
-        <div class="space-y-4 bg-slate-900 p-5 rounded-2xl border border-brand-500/20 shadow-[0_0_20px_rgba(37,99,235,0.05)]">
-            <h3 class="text-xs font-black text-brand-400 uppercase tracking-widest border-b border-white/10 pb-2 flex items-center gap-2"><i data-lucide="calculator" class="w-4 h-4"></i> Extrato de Liquidação</h3>
-            <div class="flex justify-between"><p class="text-xs font-bold text-slate-400">Conversão Fixa (USD)</p><p class="font-mono font-bold text-slate-300">${formatValue(order.usd, 'usd')}</p></div>
-            <div class="flex justify-between"><p class="text-xs font-bold text-slate-400">Canal de Liquidação</p><p class="text-[10px] font-black text-${methodColor}-400 bg-${methodColor}-500/20 px-2 py-0.5 rounded border border-${methodColor}-500/30 uppercase tracking-widest">${methodName}</p></div>
-            <div class="flex justify-between pt-3 border-t border-white/10 mt-3"><p class="text-[10px] font-black text-white uppercase tracking-widest mt-1">LÍQUIDO A COBRAR</p><p class="font-black text-xl text-success-400">${formatValue(order.total, 'currency')}</p></div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
+            <div class="bg-slate-900/50 p-6 rounded-2xl border border-white/5 flex flex-col gap-4">
+                <h3 class="text-xs font-black text-brand-400 uppercase tracking-widest border-b border-white/10 pb-3 flex items-center gap-2"><i data-lucide="user-circle" class="w-4 h-4"></i> Identidade do Comprador</h3>
+                <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Nome Registado</p><p class="font-bold text-white text-base">${order.name}</p></div>
+                <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Canal de Contacto Seguro</p><a href="https://wa.me/${order.whatsapp.replace(/\D/g,'')}" target="_blank" class="font-bold text-success-400 hover:text-success-300 flex items-center gap-1.5 w-max bg-success-500/10 px-3 py-1.5 rounded-lg border border-success-500/20 transition-all"><i data-lucide="message-square" class="w-4 h-4"></i> ${order.whatsapp}</a></div>
+                <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Correio Eletrónico</p><p class="font-medium text-slate-300 font-mono text-sm">${order.email}</p></div>
+            </div>
+
+            <div class="bg-slate-900 p-6 rounded-2xl border border-brand-500/20 shadow-[0_10px_30px_rgba(37,99,235,0.05)] relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-brand-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
+                <h3 class="text-xs font-black text-brand-400 uppercase tracking-widest border-b border-white/10 pb-3 flex items-center gap-2 relative z-10"><i data-lucide="calculator" class="w-4 h-4"></i> Extrato de Liquidação</h3>
+                <div class="space-y-3 relative z-10 mt-4">
+                    <div class="flex justify-between items-center"><p class="text-xs font-bold text-slate-400">Conversão de Divisa (USD)</p><p class="font-mono font-bold text-slate-200 bg-slate-800 px-2 py-1 rounded">${formatValue(order.usd, 'usd')}</p></div>
+                    <div class="flex justify-between items-center"><p class="text-xs font-bold text-slate-400">Taxa do Serviço PayGo</p><p class="font-mono font-bold text-slate-300">${formatValue(order.tax, 'currency')}</p></div>
+                    <div class="flex justify-between items-center"><p class="text-xs font-bold text-slate-400">Canal Recetor</p><p class="text-[10px] font-black text-${methodColor}-400 bg-${methodColor}-500/20 px-2.5 py-1 rounded border border-${methodColor}-500/30 uppercase tracking-widest shadow-sm">${methodName}</p></div>
+                    ${trackHtml}
+                    <div class="flex justify-between pt-4 border-t border-white/10 mt-2 items-end"><p class="text-xs font-black text-white uppercase tracking-widest mb-1">LÍQUIDO A RECEBER</p><p class="font-black text-3xl text-success-400 tracking-tight">${formatValue(order.total, 'currency')}</p></div>
+                </div>
+            </div>
         </div>
-    </div>
-    <div class="bg-slate-900 rounded-xl p-4 mt-2 border border-slate-800">
-        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-1"><i data-lucide="shopping-cart" class="w-3 h-3"></i> Resumo Técnico do Serviço Adquirido</p>
-        <p class="text-sm text-slate-300 break-words leading-relaxed">${order.detail}</p>
-    </div>
-    <div class="mt-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900 p-5 rounded-2xl border border-slate-800">
-        <div>
-            <p class="text-[10px] font-black text-slate-500 uppercase mb-2">Auditoria de Recebimento</p>
-            <button onclick="window.togglePaymentStatus('${order.id}', ${order.isPaid})" class="px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-lg flex items-center gap-2 ${order.isPaid ? 'bg-success-600 hover:bg-success-500 text-white' : 'bg-transparent border border-danger-500 text-danger-400 hover:bg-danger-500/10'}">
-                <i data-lucide="${order.isPaid ? 'check-circle' : 'circle'}" class="w-4 h-4"></i>
-                ${order.isPaid ? '✅ DINHEIRO CONFIRMADO' : '❌ MARCAR COMO PAGO (Envia Email)'}
-            </button>
+
+        <div class="bg-slate-800/80 rounded-2xl p-6 border border-slate-700 shadow-inner">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5"><i data-lucide="shopping-cart" class="w-3 h-3"></i> O que o cliente quer comprar</p>
+            <div class="bg-slate-950 p-4 rounded-xl font-mono text-sm text-brand-200 break-words leading-relaxed border border-white/5 whitespace-pre-wrap">${order.detail}</div>
         </div>
-        <button onclick="window.deleteSingleOrder('${order.id}')" class="px-5 py-3 bg-danger-500/10 hover:bg-danger-500/20 text-danger-400 border border-danger-500/30 rounded-xl text-sm font-bold transition flex items-center gap-2">
-            <i data-lucide="trash-2" class="w-4 h-4"></i> Eliminar Registo
-        </button>
-    </div>
+
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-sm">
+            <div class="flex-1">
+                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-1"><i data-lucide="shield-check" class="w-3 h-3"></i> Ferramenta de Auditoria de Recebimento</p>
+                <button onclick="window.togglePaymentStatus('${order.id}', ${order.isPaid})" class="w-full sm:w-auto px-6 py-3.5 rounded-xl font-bold text-sm transition-all shadow-lg flex items-center justify-center gap-2 ${order.isPaid ? 'bg-success-600 hover:bg-success-500 text-white shadow-success-500/20' : 'bg-slate-950 border border-danger-500 text-danger-400 hover:bg-danger-500 hover:text-white'}">
+                    <i data-lucide="${order.isPaid ? 'check-circle' : 'alert-octagon'}" class="w-4 h-4"></i>
+                    ${order.isPaid ? '✅ DINHEIRO CONFIRMADO NA CONTA' : '⚠️ MARCAR PAGAMENTO MANUALMENTE'}
+                </button>
+            </div>
+            <div class="w-full sm:w-auto border-t border-slate-700 sm:border-0 pt-4 sm:pt-0">
+                 <button onclick="window.deleteSingleOrder('${order.id}')" class="w-full sm:w-auto px-5 py-3.5 bg-danger-500/10 hover:bg-danger-500 hover:text-white text-danger-400 border border-danger-500/30 rounded-xl text-sm font-bold transition flex items-center justify-center gap-2">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i> Destruir Encomenda
+                </button>
+            </div>
+        </div>
     `;
 
     document.getElementById('statusSelect').value = order.status;
 
-    // Lógica Segura de Abertura
     const modal = document.getElementById('orderModal');
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
@@ -536,7 +590,7 @@ window.closeModal = () => {
 };
 
 // ==========================================
-// 💾 AÇÕES DE DADOS NO MODAL
+// 💾 AÇÕES DE GESTÃO DO MODAL
 // ==========================================
 window.saveOrderStatus = async () => {
     if (!currentOrderId) return;
@@ -549,7 +603,7 @@ window.saveOrderStatus = async () => {
     const originalText = btn.innerHTML;
 
     btn.disabled = true;
-    btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A Sincronizar DB...`;
+    btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A Sincronizar...`;
     renderIcons(btn);
 
     try {
@@ -558,22 +612,20 @@ window.saveOrderStatus = async () => {
             updatedAt: serverTimestamp()
         });
 
-        // Afiliados Logic
-        if (newStatus === 'completed' && order?.referredBy && !order?.commissionProcessed) {
-            await processAffiliateCPA(order);
-            await updateDoc(doc(db, "orders", currentOrderId), { commissionProcessed: true });
-        }
-
-        showToast('Nova etapa logística gravada na Cloud.', 'success');
-
+        // 🟢 Se fechou com sucesso, processa os afiliados (CPA) e avisa cliente
         if (newStatus === 'completed' && oldStatus !== 'completed') {
+            if (order?.referredBy && !order?.commissionProcessed) {
+                await processAffiliateCPA(order);
+                await updateDoc(doc(db, "orders", currentOrderId), { commissionProcessed: true });
+            }
             await sendNotificationEmail(order, 'completed');
         }
 
+        showToast('Nova fase logística cravada na Cloud.', 'success');
         window.closeModal();
     } catch (error) {
-        console.error('Erro ao atualizar status:', error);
-        showToast('Erro interno de permissões.', 'error');
+        console.error('Erro de atualização:', error);
+        showToast('Permissão Negada ou Falha de Ligação.', 'error');
     } finally {
         btn.disabled = false;
         btn.innerHTML = originalText;
@@ -581,113 +633,126 @@ window.saveOrderStatus = async () => {
     }
 };
 
+// 💎 Lógica Distributiva CPA (Afiliados)
 async function processAffiliateCPA(order) {
-try {
-const q = query(collection(db, "users"), where("affiliateCode", "==", order.referredBy), where("role", "==", "affiliate"));
-const snap = await getDocs(q);
-if(snap.empty) return;
+    try {
+        const q = query(collection(db, "users"), where("affiliateCode", "==", order.referredBy), where("role", "==", "affiliate"));
+        const snap = await getDocs(q);
+        if(snap.empty) return;
 
-const refDoc = snap.docs[0];
-const refData = refDoc.data();
+        const refDoc = snap.docs[0];
+        const refData = refDoc.data();
 
-const qClient = query(collection(db, "orders"), where("email", "==", order.email), where("status", "==", "completed"));
-const snapClient = await getDocs(qClient);
-if(snapClient.size > 1) return;
+        // Garante que é a PRIMEIRA compra finalizada do cliente
+        const qClient = query(collection(db, "orders"), where("email", "==", order.email), where("status", "==", "completed"));
+        const snapClient = await getDocs(qClient);
+        if(snapClient.size > 1) return; // Se for mais que 1, já não é a primeira.
 
-const commissionValue = order.tax * (refData.approvedReferrals >= 10 ? 0.05 : 0.03);
+        const commissionValue = order.tax * (refData.approvedReferrals >= 10 ? 0.05 : 0.03);
 
-await updateDoc(doc(db, "users", refDoc.id), {
-affiliateEarnings: increment(commissionValue),
-approvedReferrals: increment(1)
-});
+        await updateDoc(doc(db, "users", refDoc.id), {
+            affiliateEarnings: increment(commissionValue),
+            approvedReferrals: increment(1)
+        });
 
-console.log(`Comissão de ${commissionValue} creditada!`);
-} catch(e) {
-console.error("Falha ao distribuir comissões", e);
-}
+        console.log(`Comissão de ${commissionValue} creditada no afiliado!`);
+    } catch(e) {
+        console.error("Falha ao distribuir comissão", e);
+    }
 }
 
 window.togglePaymentStatus = async (orderId, isCurrentlyPaid) => {
-const newStatus = !isCurrentlyPaid;
-const order = orders.find(o => o.id === orderId);
-try {
-await updateDoc(doc(db, "orders", orderId), { isPaid: newStatus });
-showToast(newStatus ? 'Validado como PAGO!' : 'Cancelada Assinatura de Pagamento.', 'success');
+    const newStatus = !isCurrentlyPaid;
+    const order = orders.find(o => o.id === orderId);
+    
+    // Dupla verificação para segurança
+    if(newStatus && !confirm('ATENÇÃO: Confirma que o dinheiro ENTROU FISICAMENTE na conta PayGo e quer assumir este pagamento?')) return;
 
-if (newStatus === true) {
-showToast('Servidor de Emails ativado (Envio Silencioso).', 'info');
-await sendNotificationEmail(order, 'paid');
-}
-window.closeModal();
-} catch (e) {
-console.error('Erro ao atualizar pagamento:', e);
-showToast('Falha técnica.', 'error');
-}
-};
+    try {
+        await updateDoc(doc(db, "orders", orderId), { 
+            isPaid: newStatus,
+            updatedAt: serverTimestamp() 
+        });
+        
+        showToast(newStatus ? 'Recibo Auditado: PAGO!' : 'Assinatura Financeira Removida.', 'success');
 
-window.deleteSingleOrder = async (orderId) => {
-if (!confirm('⚠️ AVISO DE AUDITORIA: Tem a certeza que deseja destruir permanentemente este registo financeiro?')) return;
-
-try {
-await deleteDoc(doc(db, "orders", orderId));
-showToast('Documento vaporizado com sucesso.', 'success');
-window.closeModal();
-} catch (e) {
-console.error('Erro ao eliminar:', e);
-showToast('Acesso Negado (Ação Restrita).', 'error');
-}
-};
-
-window.clearHistory = async () => {
-if (currentFilteredOrders.length === 0) return showToast('Aviso: O seu ecrã não possui pedidos visíveis para purgar.', 'warning');
-
-const qty = currentFilteredOrders.length;
-if (!confirm(`⚠️ ALERTA VERMELHO ⚠️
-Isto irá varrer da base de dados TODOS os ${qty} pedidos que você filtrou no ecrã. Não há volta a dar.
-Proceder com a purga tática?`)) return;
-
-showToast('A preparar injeção de eliminação em massa...', 'info');
-
-try {
-const batch = writeBatch(db);
-currentFilteredOrders.forEach(order => {
-batch.delete(doc(db, "orders", order.id));
-});
-await batch.commit();
-showToast(`Operação Global: ${qty} Documentos Destruídos.`, 'success');
-} catch (e) {
-console.error('Erro em batch delete:', e);
-showToast('O servidor bloqueou a execução em massa (Limites).', 'error');
-}
-};
-
-window.exportToCSV = () => {
-if (currentFilteredOrders.length === 0) { showToast('Dados insuficientes para gerar relatório Contabilístico.', 'warning'); return; }
-
-let csvContent = "ID de Transacao,Data Servidor,Hora Servidor,Entidade Cliente,Email Contacto,Canal Telemovel,Verificacao Dinheiro,Total Faturado (MT),Etapa Logistica,Resumo Tecnico (Produto)\n";
-
-currentFilteredOrders.forEach(order => {
-const dateStr = order.createdAt.toLocaleDateString('pt-MZ');
-const timeStr = order.createdAt.toLocaleTimeString('pt-MZ');
-const name = `"${order.name.replace(/"/g, '""')}"`;
-const detail = `"${order.detail.replace(/"/g, '""')}"`;
-const payStatus = order.isPaid ? 'Dinheiro Confirmado' : 'Divida Pendente';
-csvContent += `${order.orderId},${dateStr},${timeStr},${name},${order.email},${order.whatsapp},${payStatus},${order.total},${order.status},${detail}\n`;
-});
-
-const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-const link = document.createElement("a");
-link.href = URL.createObjectURL(blob);
-link.download = `Auditoria_PayGo_Pedidos_${new Date().toISOString().split('T')[0]}.csv`;
-document.body.appendChild(link);
-link.click();
-document.body.removeChild(link);
-
-showToast('O Livro de Registos (Excel) foi descarregado.', 'success');
+        if (newStatus === true) {
+            await sendNotificationEmail(order, 'paid');
+        }
+        window.closeModal();
+    } catch (e) {
+        console.error('Erro de DB:', e);
+        showToast('Falha técnica.', 'error');
+    }
 };
 
 // ==========================================
-// 📱 CONTROLOS MÓVEIS E AÇÕES DE TECLADO
+// 💣 FUNCIONALIDADES PERIGOSAS (DANGER ZONE)
+// ==========================================
+window.deleteSingleOrder = async (orderId) => {
+    if (!confirm('⚠️ AVISO DE AUDITORIA: Destruir permanentemente este registo financeiro fará perder o rasto desta cobrança. Continuar?')) return;
+
+    try {
+        await deleteDoc(doc(db, "orders", orderId));
+        showToast('O Documento foi vaporizado dos Servidores Globais.', 'success');
+        window.closeModal();
+    } catch (e) {
+        console.error('Erro:', e);
+        showToast('Acesso Restrito (Ação Negada).', 'error');
+    }
+};
+
+window.clearHistory = async () => {
+    if (currentFilteredOrders.length === 0) return showToast('Aviso: O seu ecrã não possui pedidos visíveis para purgar.', 'warning');
+
+    const qty = currentFilteredOrders.length;
+    if (!confirm(`⚠️ ALERTA VERMELHO ⚠️\n\nIsto irá varrer da base de dados TODOS os ${qty} pedidos que você filtrou no ecrã.\nNão há backup nem volta a dar. Proceder com a purga tática?`)) return;
+
+    showToast('A preparar injeção de eliminação em massa (Batch Delete)...', 'info');
+
+    try {
+        const batch = writeBatch(db);
+        currentFilteredOrders.forEach(order => {
+            batch.delete(doc(db, "orders", order.id));
+        });
+        await batch.commit();
+        showToast(`Operação Limpeza: ${qty} Documentos Destruídos.`, 'success');
+    } catch (e) {
+        console.error('Erro batch:', e);
+        showToast('Ação bloqueada. Limites de segurança da Base de Dados.', 'error');
+    }
+};
+
+// ==========================================
+// 📊 EXPORTAÇÃO EXCEL (CSV)
+// ==========================================
+window.exportToCSV = () => {
+    if (currentFilteredOrders.length === 0) { showToast('Sem dados para gerar o Relatório Excel.', 'warning'); return; }
+
+    let csvContent = "ID de Transacao,Data,Hora,Cliente,Email,Telemovel,Status Pagamento,Valor Total (MT),Estado Logistico,Metodo,Produto Detalhe\n";
+
+    currentFilteredOrders.forEach(order => {
+        const dateStr = order.createdAt.toLocaleDateString('pt-MZ');
+        const timeStr = order.createdAt.toLocaleTimeString('pt-MZ');
+        const name = `"${order.name.replace(/"/g, '""')}"`;
+        const detail = `"${order.detail.replace(/"/g, '""')}"`;
+        const payStatus = order.isPaid ? 'Valor Liquidado' : 'Por Pagar';
+        csvContent += `${order.orderId},${dateStr},${timeStr},${name},${order.email},${order.whatsapp},${payStatus},${order.total},${order.status},${order.paymentMethod},${detail}\n`;
+    });
+
+    const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' }); // \ufeff força utf-8 para ler acentos
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `Auditoria_Financeira_PayGo_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showToast('O Livro de Excel foi gerado e descarregado.', 'success');
+};
+
+// ==========================================
+// 📱 CONTROLOS MÓVEIS E SISTEMA CORE
 // ==========================================
 const mobileMenuBtn = document.getElementById('mobileMenuBtn');
 const sidebar = document.getElementById('sidebar');
@@ -695,14 +760,14 @@ const sidebarOverlay = document.getElementById('sidebarOverlay');
 const closeSidebarBtn = document.getElementById('closeSidebarBtn');
 
 function toggleMobileSidebar() {
-sidebar.classList.toggle('-translate-x-full');
-if(sidebarOverlay.classList.contains('hidden')) {
-sidebarOverlay.classList.remove('hidden');
-setTimeout(() => sidebarOverlay.classList.remove('opacity-0'), 10);
-} else {
-sidebarOverlay.classList.add('opacity-0');
-setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
-}
+    sidebar.classList.toggle('-translate-x-full');
+    if(sidebarOverlay.classList.contains('hidden')) {
+        sidebarOverlay.classList.remove('hidden');
+        setTimeout(() => sidebarOverlay.classList.remove('opacity-0'), 10);
+    } else {
+        sidebarOverlay.classList.add('opacity-0');
+        setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
+    }
 }
 
 mobileMenuBtn?.addEventListener('click', toggleMobileSidebar);
@@ -710,60 +775,48 @@ closeSidebarBtn?.addEventListener('click', toggleMobileSidebar);
 sidebarOverlay?.addEventListener('click', toggleMobileSidebar);
 
 document.addEventListener('keydown', (e) => {
-if (e.key === 'Escape') {
-window.closeModal();
-}
+    if (e.key === 'Escape') window.closeModal();
 });
 
 window.logout = async function() {
-if(confirm('Encerrar controlo mestre?')) {
-await signOut(auth);
-window.location.href = '../login.html';
-}
+    if(confirm('Tem a certeza que deseja encerrar o controlo mestre?')) {
+        await signOut(auth);
+        window.location.href = '../login.html';
+    }
 };
 
-// ==========================================
-// 🚀 INICIALIZAÇÃO E SESSÃO
-// ==========================================
-const fallbackTimer = setTimeout(() => {
-document.getElementById('sysLoader').style.display = 'none';
-}, 3000);
+const fallbackTimer = setTimeout(() => { document.getElementById('sysLoader').style.display = 'none'; }, 3000);
 
 onAuthStateChanged(auth, async (user) => {
-if (!user) {
-window.location.href = '../login.html';
-return;
-}
+    if (!user) { window.location.href = '../login.html'; return; }
 
-try {
-const userDoc = await getDoc(doc(db, "users", user.uid));
-if (userDoc.exists() && (userDoc.data().role === 'admin' || userDoc.data().role === 'superadmin')) {
-document.getElementById('adminName').textContent = userDoc.data().name || 'Admin';
-loadOrdersRealTime();
-} else {
-window.location.href = '../index.html';
-}
-} catch (error) {
-console.error('Erro na verificação:', error);
-showToast("Erro na ligação ao servidor.", "error");
-} finally {
-clearTimeout(fallbackTimer);
-const loader = document.getElementById('sysLoader');
-if(loader) {
-loader.style.opacity = '0';
-setTimeout(() => loader.style.display = 'none', 500);
-}
-}
+    try {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists() && (userDoc.data().role === 'admin' || userDoc.data().role === 'superadmin')) {
+            document.getElementById('adminName').textContent = userDoc.data().name || 'Controlador';
+            loadOrdersRealTime();
+        } else {
+            window.location.href = '../index.html';
+        }
+    } catch (error) {
+        console.error(error);
+        showToast("Erro na ligação ao servidor central.", "error");
+    } finally {
+        clearTimeout(fallbackTimer);
+        const loader = document.getElementById('sysLoader');
+        if(loader) {
+            loader.style.opacity = '0';
+            setTimeout(() => loader.style.display = 'none', 500);
+        }
+    }
 });
 
-// Inicializar ícones ao carregar
 document.addEventListener('DOMContentLoaded', () => {
-renderIcons();
+    renderIcons();
 });
 
-// Cleanup ao sair da página
 window.addEventListener('beforeunload', () => {
-if (ordersUnsubscribe) ordersUnsubscribe();
+    if (ordersUnsubscribe) ordersUnsubscribe();
 });
 </script>
 </body>
