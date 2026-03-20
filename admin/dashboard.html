@@ -10,7 +10,7 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     
     <script>
         tailwind.config = {
@@ -19,343 +19,416 @@
                     fontFamily: {
                         sans: ['"Plus Jakarta Sans"', 'sans-serif'],
                         display: ['"Outfit"', 'sans-serif'],
+                        mono: ['"Fira Code"', 'monospace']
                     },
                     colors: {
-                        brand: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 900: '#1e3a8a', 950: '#0f172a' },
+                        brand: { 50: '#eff6ff', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 900: '#1e3a8a', 950: '#0f172a' },
                         accent: { 400: '#22d3ee', 500: '#06b6d4' },
-                        success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' }
+                        success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' },
+                        danger: { 400: '#f87171', 500: '#ef4444' },
+                        warning: { 400: '#fbbf24', 500: '#f59e0b' }
+                    },
+                    animation: {
+                        'spin-slow': 'spin 4s linear infinite',
+                        'blob': 'blob 10s infinite',
+                        'shimmer': 'shimmer 2s infinite linear',
+                    },
+                    keyframes: {
+                        blob: {
+                            '0%, 100%': { transform: 'translate(0px, 0px) scale(1)' },
+                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                        },
+                        shimmer: {
+                            '0%': { backgroundPosition: '-200% 0' },
+                            '100%': { backgroundPosition: '200% 0' }
+                        }
                     }
                 }
             }
         }
     </script>
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-font-smoothing: antialiased; }
+        body { background-color: #020617; color: #f8fafc; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
         
-        .sidebar-link.active { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-right: 3px solid #3b82f6; }
-        .sidebar-link.affiliate-active { background: rgba(34, 197, 94, 0.15); color: #4ade80; border-right: 3px solid #22c55e; }
+        /* Premium Background Elements */
+        .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
+        .glass-nav { background: rgba(2, 6, 23, 0.85); backdrop-filter: blur(20px) saturate(180%); border-bottom: 1px solid rgba(255,255,255,0.05); }
         
-        .status-badge { padding: 4px 12px; border-radius: 9999px; font-size: 11px; font-weight: 800; display: inline-flex; align-items: center; gap: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
-        .status-pending { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
-        .status-processing { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
-        .status-completed { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-        .status-cancelled { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        /* Cards & Surfaces */
+        .glass-card { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3); transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .glass-card:hover { border-color: rgba(255,255,255,0.1); transform: translateY(-4px); box-shadow: 0 30px 60px -12px rgba(59, 130, 246, 0.15); }
         
-        .skeleton { background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: skeleton-loading 1.5s infinite; color: transparent !important; border-radius: 8px; }
-        @keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-        
-        .earnings-card { background: linear-gradient(135deg, #22c55e, #16a34a); }
-        .affiliate-badge { background: rgba(34, 197, 94, 0.15); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3); }
+        /* Sidebar Styling */
+        .sidebar-link { position: relative; transition: all 0.3s ease; }
+        .sidebar-link::before { content: ''; position: absolute; left: 0; top: 10%; height: 80%; width: 3px; background: transparent; border-radius: 0 4px 4px 0; transition: all 0.3s ease; }
+        .sidebar-link:hover { background: rgba(255,255,255,0.03); color: #fff; }
+        .sidebar-link.active { background: linear-gradient(90deg, rgba(59,130,246,0.1) 0%, transparent 100%); color: #60a5fa; font-weight: 700; }
+        .sidebar-link.active::before { background: #3b82f6; box-shadow: 0 0 10px #3b82f6; }
+        .sidebar-link.affiliate-active { background: linear-gradient(90deg, rgba(34,197,94,0.1) 0%, transparent 100%); color: #4ade80; font-weight: 700; }
+        .sidebar-link.affiliate-active::before { background: #22c55e; box-shadow: 0 0 10px #22c55e; }
 
+        /* Badges & Status */
+        .status-badge { padding: 6px 12px; border-radius: 8px; font-size: 10px; font-weight: 800; display: inline-flex; align-items: center; gap: 4px; text-transform: uppercase; letter-spacing: 0.05em; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1); }
+        .status-pending { background: rgba(245, 158, 11, 0.1); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.2); }
+        .status-processing { background: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); }
+        .status-completed { background: rgba(34, 197, 94, 0.1); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.2); }
+        .status-cancelled { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
+        
+        .skeleton { background: linear-gradient(90deg, rgba(30,41,59,0.5) 25%, rgba(51,65,85,0.5) 50%, rgba(30,41,59,0.5) 75%); background-size: 200% 100%; animation: shimmer 2s infinite; color: transparent !important; border-radius: 8px; }
+        
+        /* Affiliate Premium Card */
+        .earnings-card { background: linear-gradient(135deg, #064e3b 0%, #022c22 100%); position: relative; border: 1px solid rgba(52, 211, 153, 0.2); }
+        .earnings-card::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at top right, rgba(52, 211, 153, 0.15), transparent 70%); pointer-events: none; }
+        .affiliate-badge { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); text-shadow: 0 0 10px rgba(74, 222, 128, 0.5); }
+
+        /* Scrollbars */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
         
-        .glass-card { background: white; border: 1px solid #e2e8f0; border-radius: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); transition: transform 0.3s ease, box-shadow 0.3s ease; }
-        .glass-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02); }
+        /* Modal Animations */
+        .modal { display: none; position: fixed; inset: 0; z-index: 10000; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; }
+        .modal.active { display: flex; opacity: 1; }
+        .modal-overlay { position: absolute; inset: 0; background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(8px); }
+        .modal-content { position: relative; background: #0f172a; border-radius: 24px; padding: 0; max-width: 800px; width: 95%; max-height: 90vh; overflow-y: auto; transform: scale(0.95); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 30px 60px -10px rgba(0,0,0,0.8); display: flex; flex-direction: column; }
+        .modal.active .modal-content { transform: scale(1); }
 
-        /* Toast UI */
+        /* Toasts */
         #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-        .toast-item { pointer-events: auto; display: flex; items: center; gap: 12px; padding: 16px 20px; border-radius: 14px; color: white; font-weight: 600; font-size: 14px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); transform: translateX(120%); transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); border-bottom: 4px solid rgba(0,0,0,0.2); }
+        .toast-item { pointer-events: auto; display: flex; items: center; gap: 12px; padding: 16px 20px; border-radius: 14px; color: white; font-weight: 600; font-size: 14px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); transform: translateX(120%); transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); border-left: 4px solid; background: rgba(15,23,42,0.95); backdrop-filter: blur(12px); border-top: 1px solid rgba(255,255,255,0.05); border-right: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05); }
         .toast-item.show { transform: translateX(0); }
+        
+        .btn-action { transition: all 0.2s ease; position: relative; overflow: hidden; }
+        .btn-action:active:not(:disabled) { transform: scale(0.96); }
+        
+        select, input { background-color: rgba(15, 23, 42, 0.5) !important; color: white !important; color-scheme: dark; }
     </style>
 </head>
-<body class="bg-slate-50 overflow-x-hidden">
+<body class="selection:bg-brand-500 selection:text-white antialiased">
 
-    <div class="md:hidden bg-slate-900 text-white p-4 flex justify-between items-center fixed w-full z-40 top-0 shadow-lg border-b border-white/10">
+    <div id="sysLoader" class="fixed inset-0 bg-[#020617] z-[200] flex flex-col items-center justify-center transition-opacity duration-500">
+        <div class="w-20 h-20 border-4 border-slate-800 border-t-brand-500 rounded-full animate-spin mb-6 shadow-[0_0_30px_rgba(59,130,246,0.3)]"></div>
+        <h2 class="text-white text-3xl font-display font-extrabold tracking-tight">PayGo OS</h2>
+        <p class="text-slate-400 text-sm mt-2 font-medium">A sincronizar o seu ecossistema financeiro...</p>
+    </div>
+
+    <div class="fixed inset-0 bg-grid opacity-20 pointer-events-none z-0"></div>
+    <div class="fixed top-0 left-1/4 w-[800px] h-[600px] bg-brand-600/10 rounded-full mix-blend-screen blur-[120px] pointer-events-none z-0 animate-blob"></div>
+    <div class="fixed bottom-0 right-1/4 w-[600px] h-[600px] bg-purple-600/10 rounded-full mix-blend-screen blur-[120px] pointer-events-none z-0 animate-blob" style="animation-delay: 2s;"></div>
+
+    <div id="toastContainer"></div>
+
+    <div class="md:hidden bg-slate-900/80 backdrop-blur-md text-white p-4 flex justify-between items-center fixed w-full z-40 top-0 border-b border-white/5">
         <div class="flex items-center gap-3">
-            <div class="w-9 h-9 bg-gradient-to-tr from-brand-500 to-accent-500 rounded-lg flex items-center justify-center shadow-inner">
+            <div class="w-9 h-9 bg-gradient-to-tr from-brand-500 to-accent-500 rounded-lg flex items-center justify-center shadow-lg shadow-brand-500/20">
                 <i data-lucide="zap" class="w-5 h-5 text-white"></i>
             </div>
             <span class="font-display font-extrabold text-xl tracking-wide">PayGo</span>
         </div>
-        <button onclick="window.toggleSidebar()" class="text-white p-2 focus:outline-none bg-white/5 rounded-lg transition-colors hover:bg-white/10 border border-white/10">
+        <button onclick="toggleSidebar()" class="text-white p-2 focus:outline-none bg-white/5 rounded-lg transition-colors hover:bg-white/10 border border-white/5">
             <i data-lucide="menu" class="w-6 h-6"></i>
         </button>
     </div>
 
-    <div id="mobileOverlay" onclick="window.toggleSidebar()" class="fixed inset-0 bg-slate-950/80 z-40 hidden md:hidden backdrop-blur-sm transition-opacity"></div>
+    <div id="mobileOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-950/80 z-40 hidden md:hidden backdrop-blur-sm transition-opacity duration-300"></div>
 
-    <aside class="fixed left-0 top-0 h-full w-64 bg-slate-900 text-white p-6 z-50 flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-300 shadow-[20px_0_50px_rgba(0,0,0,0.5)] md:shadow-none" id="sidebar">
-        <div class="flex items-center justify-between mb-8 pb-6 border-b border-white/10 mt-16 md:mt-0">
+    <aside class="fixed left-0 top-0 h-full w-64 bg-slate-900/80 backdrop-blur-2xl text-white p-6 z-50 flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-300 border-r border-white/5" id="sidebar">
+        <div class="flex items-center justify-between mb-8 pb-6 border-b border-white/5 mt-12 md:mt-0">
             <div class="flex items-center gap-3">
-                <div class="w-11 h-11 bg-gradient-to-tr from-brand-500 to-accent-500 rounded-xl flex items-center justify-center shadow-lg shadow-brand-500/20">
+                <div class="w-11 h-11 bg-gradient-to-tr from-brand-500 to-accent-500 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(59,130,246,0.3)]">
                     <i data-lucide="zap" class="w-6 h-6 text-white fill-current"></i>
                 </div>
                 <div>
-                    <span class="text-2xl font-display font-bold tracking-wide">PayGo</span>
-                    <span class="block text-[10px] text-brand-400 font-bold uppercase tracking-widest mt-0.5" id="roleBadge">...</span>
+                    <span class="text-2xl font-display font-bold tracking-wide text-white">PayGo</span>
+                    <span class="block text-[9px] text-brand-400 font-black uppercase tracking-widest mt-0.5" id="roleBadge">...</span>
                 </div>
             </div>
-            <button onclick="window.toggleSidebar()" class="md:hidden text-slate-400 hover:text-white transition-colors bg-white/5 p-2 rounded-lg"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-white transition-colors bg-white/5 p-2 rounded-lg"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
-        <nav class="flex-1 space-y-2 hidden" id="adminNav">
-            <a href="#dashboard" class="sidebar-link active flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all bg-brand-600/20 text-brand-400 font-bold">
-                <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard Central
+        <nav class="flex-1 space-y-1.5 hidden" id="adminNav">
+            <a href="#dashboard" class="sidebar-link active flex items-center gap-3 px-4 py-3.5 rounded-xl">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i> <span class="text-sm">Dashboard Central</span>
             </a>
             
-            <a href="admin.html" class="flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all bg-gradient-to-r from-slate-800 to-slate-800/50 text-white font-bold border border-slate-700 shadow-lg group hover:border-brand-500/50 mt-4 mb-4">
-                <i data-lucide="shield" class="w-5 h-5 text-brand-400 group-hover:scale-110 transition-transform"></i> Control Admin
+            <a href="admin.html" class="flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all bg-gradient-to-r from-slate-800 to-slate-800/50 text-white font-bold border border-slate-700 shadow-lg group hover:border-brand-500/50 mt-4 mb-6">
+                <i data-lucide="shield-alert" class="w-5 h-5 text-brand-400 group-hover:scale-110 transition-transform"></i> <span class="text-sm">Painel Supremo</span>
             </a>
 
-            <div class="pt-2 pb-1"><p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold px-4">Gestão Operacional</p></div>
+            <div class="pt-2 pb-2"><p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold px-4">Operações</p></div>
 
-            <a href="pedidos.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all font-medium">
-                <i data-lucide="shopping-bag" class="w-5 h-5"></i> Histórico de Pedidos
+            <a href="pedidos.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 rounded-xl font-medium">
+                <i data-lucide="shopping-bag" class="w-5 h-5"></i> <span class="text-sm">Gestão de Pedidos</span>
             </a>
-            <a href="clientes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all font-medium">
-                <i data-lucide="users" class="w-5 h-5"></i> Base de Clientes
+            <a href="clientes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 rounded-xl font-medium">
+                <i data-lucide="users" class="w-5 h-5"></i> <span class="text-sm">Base de Clientes</span>
             </a>
-            <a href="afiliados.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all font-medium">
-                <i data-lucide="gift" class="w-5 h-5"></i> Rede de Afiliados
+            <a href="afiliados.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 rounded-xl font-medium">
+                <i data-lucide="network" class="w-5 h-5"></i> <span class="text-sm">Rede de Afiliados</span>
             </a>
-            <a href="configuracoes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all font-medium mt-auto">
-                <i data-lucide="settings" class="w-5 h-5"></i> Configurações do Sistema
+            <a href="logs.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 rounded-xl font-medium mt-auto">
+                <i data-lucide="activity" class="w-5 h-5 text-warning-400"></i> <span class="text-sm">Auditoria (Logs)</span>
+            </a>
+            <a href="configuracoes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 rounded-xl font-medium">
+                <i data-lucide="settings" class="w-5 h-5"></i> <span class="text-sm">Configurações</span>
             </a>
         </nav>
 
-        <nav class="flex-1 space-y-2 hidden" id="affiliateNav">
-            <a href="#affiliate-dashboard" class="sidebar-link affiliate-active flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all bg-success-600/20 text-success-400 font-bold">
-                <i data-lucide="wallet" class="w-5 h-5"></i> Painel de Ganhos
+        <nav class="flex-1 space-y-1.5 hidden" id="affiliateNav">
+            <a href="#affiliate-dashboard" class="sidebar-link affiliate-active flex items-center gap-3 px-4 py-3.5 rounded-xl">
+                <i data-lucide="wallet" class="w-5 h-5"></i> <span class="text-sm">Painel de Ganhos</span>
             </a>
-            <a href="#my-referrals" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all font-medium">
-                <i data-lucide="users" class="w-5 h-5"></i> As Minhas Indicações
+            <a href="#my-referrals" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white rounded-xl font-medium">
+                <i data-lucide="users" class="w-5 h-5"></i> <span class="text-sm">Minhas Indicações</span>
             </a>
         </nav>
 
-        <div class="pt-4 border-t border-white/10 mt-auto">
-            <div class="flex items-center gap-3 px-4 py-3 mb-3 bg-slate-950/50 rounded-xl border border-white/5">
-                <div class="w-10 h-10 rounded-full bg-brand-600 flex items-center justify-center text-sm font-bold border-2 border-brand-400" id="userInitial"></div>
+        <div class="pt-4 border-t border-white/5 mt-auto">
+            <div class="flex items-center gap-3 px-4 py-3.5 mb-3 bg-slate-950/50 rounded-xl border border-white/5 shadow-inner">
+                <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-sm font-bold border border-slate-600 text-brand-400" id="userInitial"></div>
                 <div class="flex-1 min-w-0">
                     <p class="text-sm font-bold truncate text-white" id="userName">A carregar...</p>
-                    <p class="text-[10px] text-slate-400 truncate" id="userEmail">...</p>
+                    <p class="text-[10px] text-slate-400 truncate font-mono" id="userEmail">...</p>
                 </div>
             </div>
-            <button id="logoutBtn" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-danger-500/10 border border-danger-500/20 hover:bg-danger-500 hover:text-white text-danger-400 rounded-xl transition-all text-sm font-bold">
-                <i data-lucide="log-out" class="w-4 h-4"></i> Sair do Sistema
+            <button id="logoutBtn" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-danger-500/10 border border-danger-500/20 hover:bg-danger-500 hover:text-white text-danger-400 rounded-xl transition-all text-sm font-bold btn-action">
+                <i data-lucide="log-out" class="w-4 h-4"></i> Sair com Segurança
             </button>
         </div>
     </aside>
 
-    <main class="md:ml-64 p-4 md:p-8 pt-24 md:pt-8 min-h-screen transition-all">
+    <main class="md:ml-64 p-4 md:p-8 pt-24 md:pt-8 min-h-screen transition-all relative z-10">
 
         <div id="adminView" class="hidden">
-            <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 mb-8 bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+            <header class="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-6 mb-8">
                 <div>
-                    <h1 class="text-3xl font-display font-extrabold text-slate-900 tracking-tight">Dashboard Central</h1>
-                    <p class="text-slate-500 mt-1 text-sm font-medium">Visão global das operações financeiras e pedidos.</p>
+                    <h1 class="text-3xl md:text-4xl font-display font-extrabold text-white tracking-tight">Dashboard Administrativo</h1>
+                    <p class="text-slate-400 mt-2 text-sm font-medium">Controlo global das operações financeiras e fluxo logístico.</p>
                 </div>
                 <div class="flex flex-col sm:flex-row flex-wrap items-center gap-3 w-full xl:w-auto">
                     <div class="relative w-full sm:w-auto">
-                        <input type="text" id="searchInput" placeholder="Pesquisar pedido..." class="pl-10 pr-4 py-3.5 w-full sm:w-64 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/50 text-sm bg-slate-50 font-medium">
-                        <i data-lucide="search" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                        <input type="text" id="searchInput" placeholder="Pesquisar fatura..." class="pl-12 pr-4 py-3.5 w-full sm:w-64 border border-slate-700 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand-500/50 focus:border-brand-500 text-sm bg-slate-900/50 text-white font-mono placeholder:font-sans transition-all shadow-inner">
+                        <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
                     </div>
-                    <select id="statusFilter" class="w-full sm:w-auto px-4 py-3.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/50 text-sm bg-slate-50 font-bold text-slate-700 cursor-pointer">
+                    <select id="statusFilter" class="w-full sm:w-auto px-4 py-3.5 border border-slate-700 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand-500/50 text-sm bg-slate-900/50 font-bold text-slate-300 cursor-pointer shadow-inner">
                         <option value="all">Todos os Status</option>
-                        <option value="pending">Apenas Pendentes</option>
-                        <option value="processing">Em Processamento</option>
-                        <option value="completed">Concluídos</option>
+                        <option value="pending">⏳ Apenas Pendentes</option>
+                        <option value="processing">🔄 Em Processamento</option>
+                        <option value="completed">✅ Concluídos</option>
                     </select>
-                    <button onclick="window.refreshOrders()" class="w-full sm:w-auto px-6 py-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-bold transition flex items-center justify-center gap-2 shadow-lg active:scale-95">
-                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Atualizar
+                    <button onclick="window.refreshOrders()" class="btn-action w-full sm:w-auto px-6 py-3.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(37,99,235,0.4)] border border-brand-500">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Atualizar Dados
                     </button>
                 </div>
-            </div>
+            </header>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
-                <div class="glass-card p-6 border-t-4 border-t-slate-800">
+                <div class="glass-card p-6 rounded-[2rem] border-t-4 border-t-slate-600">
                     <div class="flex items-center justify-between mb-4">
                         <span class="text-xs font-black text-slate-400 uppercase tracking-widest">Total Pedidos</span>
-                        <div class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center"><i data-lucide="shopping-bag" class="w-5 h-5 text-slate-700"></i></div>
+                        <div class="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center border border-slate-700"><i data-lucide="shopping-bag" class="w-5 h-5 text-slate-300"></i></div>
                     </div>
-                    <p class="text-4xl font-display font-extrabold text-slate-900 skeleton" id="statTotal">0</p>
+                    <p class="text-4xl font-display font-extrabold text-white skeleton" id="statTotal">0</p>
                 </div>
                 
-                <div class="glass-card p-6 border-t-4 border-t-amber-500">
+                <div class="glass-card p-6 rounded-[2rem] border-t-4 border-t-warning-500 bg-warning-900/5">
                     <div class="flex items-center justify-between mb-4">
-                        <span class="text-xs font-black text-slate-400 uppercase tracking-widest">Pendentes</span>
-                        <div class="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center"><i data-lucide="clock" class="w-5 h-5 text-amber-500"></i></div>
+                        <span class="text-xs font-black text-warning-400 uppercase tracking-widest">Pendentes</span>
+                        <div class="w-10 h-10 bg-warning-500/20 rounded-xl flex items-center justify-center border border-warning-500/30"><i data-lucide="clock" class="w-5 h-5 text-warning-400"></i></div>
                     </div>
-                    <p class="text-4xl font-display font-extrabold text-slate-900 skeleton" id="statPending">0</p>
+                    <p class="text-4xl font-display font-extrabold text-white skeleton" id="statPending">0</p>
                 </div>
                 
-                <div class="glass-card p-6 border-t-4 border-t-green-500">
+                <div class="glass-card p-6 rounded-[2rem] border-t-4 border-t-success-500 bg-success-900/5">
                     <div class="flex items-center justify-between mb-4">
-                        <span class="text-xs font-black text-slate-400 uppercase tracking-widest">Concluídos</span>
-                        <div class="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center"><i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i></div>
+                        <span class="text-xs font-black text-success-400 uppercase tracking-widest">Concluídos</span>
+                        <div class="w-10 h-10 bg-success-500/20 rounded-xl flex items-center justify-center border border-success-500/30"><i data-lucide="check-circle" class="w-5 h-5 text-success-400"></i></div>
                     </div>
-                    <p class="text-4xl font-display font-extrabold text-slate-900 skeleton" id="statCompleted">0</p>
+                    <p class="text-4xl font-display font-extrabold text-white skeleton" id="statCompleted">0</p>
                 </div>
                 
-                <div class="glass-card p-6 border-t-4 border-t-brand-500 bg-brand-50/50">
-                    <div class="flex items-center justify-between mb-4">
-                        <span class="text-xs font-black text-brand-600 uppercase tracking-widest">Lucro Est. (MT)</span>
-                        <div class="w-10 h-10 bg-brand-100 rounded-xl flex items-center justify-center"><i data-lucide="banknote" class="w-5 h-5 text-brand-600"></i></div>
+                <div class="glass-card p-6 rounded-[2rem] border-t-4 border-t-brand-500 bg-brand-900/10 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-brand-500/20 blur-xl rounded-full"></div>
+                    <div class="flex items-center justify-between mb-4 relative z-10">
+                        <span class="text-xs font-black text-brand-400 uppercase tracking-widest">Lucro Operacional</span>
+                        <div class="w-10 h-10 bg-brand-500/20 rounded-xl flex items-center justify-center border border-brand-500/30"><i data-lucide="banknote" class="w-5 h-5 text-brand-400"></i></div>
                     </div>
-                    <p class="text-3xl font-display font-extrabold text-brand-900 skeleton truncate" id="statRevenue">0 MT</p>
+                    <p class="text-3xl font-display font-extrabold text-white skeleton truncate relative z-10" id="statRevenue">0 MT</p>
                 </div>
             </div>
 
-            <div class="glass-card overflow-hidden">
-                <div class="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50/80">
-                    <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2"><i data-lucide="list" class="w-5 h-5 text-slate-400"></i> Fila de Pedidos</h2>
-                    <span class="text-xs font-bold px-3 py-1 bg-white border border-slate-200 rounded-full text-slate-500 shadow-sm" id="ordersCount">0 encontrados</span>
+            <div class="glass-card rounded-[2rem] p-0 overflow-hidden border border-slate-800 flex flex-col">
+                <div class="p-6 border-b border-white/5 flex justify-between items-center bg-slate-900/80 backdrop-blur-sm">
+                    <h2 class="text-sm font-bold text-white flex items-center gap-2"><i data-lucide="list" class="w-4 h-4 text-brand-400"></i> Fila de Operações</h2>
+                    <span class="text-[10px] font-black px-3 py-1.5 bg-brand-500/20 border border-brand-500/30 rounded-full text-brand-400 shadow-sm uppercase tracking-widest" id="ordersCount">0 encontrados</span>
                 </div>
 
-                <div id="loadingState" class="p-20 text-center text-slate-500">
-                    <i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto mb-4 text-brand-500"></i>
-                    <p class="font-bold text-slate-700">A sincronizar Base de Dados...</p>
+                <div id="loadingState" class="p-20 text-center text-slate-500 flex flex-col items-center justify-center">
+                    <div class="w-12 h-12 border-4 border-slate-800 border-t-brand-500 rounded-full animate-spin mb-4"></div>
+                    <p class="font-bold text-slate-300">A sincronizar Base de Dados Criptografada...</p>
                 </div>
 
-                <div id="emptyState" class="p-20 text-center text-slate-500 hidden">
-                    <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i data-lucide="inbox" class="w-10 h-10 text-slate-400"></i>
+                <div id="emptyState" class="p-20 text-center text-slate-500 hidden flex flex-col items-center justify-center">
+                    <div class="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-700 shadow-inner">
+                        <i data-lucide="inbox" class="w-8 h-8 text-slate-400"></i>
                     </div>
-                    <p class="font-bold text-slate-700 text-xl">Nenhum pedido encontrado.</p>
+                    <p class="font-bold text-white text-xl">Nenhum registo encontrado.</p>
+                    <p class="text-sm mt-1 text-slate-400">Ajuste os filtros de pesquisa acima.</p>
                 </div>
 
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse min-w-[800px]">
-                        <thead class="bg-white border-b border-slate-200">
+                <div class="overflow-x-auto min-h-[400px]">
+                    <table class="w-full text-left border-collapse whitespace-nowrap">
+                        <thead class="bg-slate-950/80 text-[10px] uppercase text-slate-400 tracking-widest border-b border-white/10 sticky top-0 z-10 backdrop-blur-md">
                             <tr>
-                                <th class="px-6 py-5 text-xs font-black text-slate-400 uppercase tracking-widest">ID</th>
-                                <th class="px-6 py-5 text-xs font-black text-slate-400 uppercase tracking-widest">Cliente</th>
-                                <th class="px-6 py-5 text-xs font-black text-slate-400 uppercase tracking-widest">Categoria</th>
-                                <th class="px-6 py-5 text-xs font-black text-slate-400 uppercase tracking-widest">Total (MT)</th>
-                                <th class="px-6 py-5 text-xs font-black text-slate-400 uppercase tracking-widest">Status</th>
-                                <th class="px-6 py-5 text-xs font-black text-slate-400 uppercase tracking-widest">Data</th>
-                                <th class="px-6 py-5 text-right text-xs font-black text-slate-400 uppercase tracking-widest">Abrir</th>
+                                <th class="px-6 py-5 font-bold">Referência ID</th>
+                                <th class="px-6 py-5 font-bold">Cliente / Entidade</th>
+                                <th class="px-6 py-5 font-bold">Categoria</th>
+                                <th class="px-6 py-5 font-bold">Valor (MT)</th>
+                                <th class="px-6 py-5 font-bold">Status Atual</th>
+                                <th class="px-6 py-5 font-bold">Data</th>
+                                <th class="px-6 py-5 text-right font-bold">Inspecionar</th>
                             </tr>
                         </thead>
-                        <tbody id="ordersTable" class="divide-y divide-slate-100 bg-white"></tbody>
+                        <tbody id="ordersTable" class="divide-y divide-white/5 bg-slate-900/30"></tbody>
                     </table>
                 </div>
             </div>
         </div>
 
         <div id="affiliateView" class="hidden">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+            <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
                 <div>
-                    <h1 class="text-3xl font-display font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
-                        <span class="affiliate-badge px-3 py-1 rounded-full text-[10px] uppercase tracking-widest">Parceiro VIP</span>
+                    <h1 class="text-3xl md:text-4xl font-display font-extrabold text-white tracking-tight flex items-center gap-3">
+                        <span class="affiliate-badge px-3 py-1 rounded-full text-[10px] uppercase tracking-widest shadow-sm">Parceiro Oficial</span>
                         Painel de Ganhos
                     </h1>
-                    <p class="text-slate-500 mt-1 text-sm font-medium">Monitorize a sua rede e as suas comissões em tempo real.</p>
+                    <p class="text-slate-400 mt-2 text-sm font-medium">Acompanhe a sua rede de conversões e comissões creditadas em tempo real.</p>
                 </div>
-            </div>
+            </header>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
-                <div class="earnings-card p-6 rounded-3xl text-white shadow-xl shadow-green-500/20 relative overflow-hidden">
-                    <div class="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
+                <div class="earnings-card p-6 md:p-8 rounded-[2rem] text-white shadow-[0_15px_30px_rgba(16,185,129,0.2)] overflow-hidden">
                     <div class="flex items-center justify-between mb-4 relative z-10">
-                        <span class="text-xs font-black uppercase tracking-widest opacity-90">Saldo Disponível</span>
-                        <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm"><i data-lucide="wallet" class="w-5 h-5"></i></div>
+                        <span class="text-xs font-black uppercase tracking-widest opacity-80">Saldo Disponível</span>
+                        <div class="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-md border border-white/20"><i data-lucide="wallet" class="w-5 h-5"></i></div>
                     </div>
-                    <p class="text-4xl font-display font-extrabold skeleton relative z-10" id="affiliateEarnings">0 MT</p>
+                    <p class="text-4xl md:text-5xl font-display font-extrabold skeleton relative z-10 tracking-tight" id="affiliateEarnings">0 MT</p>
                 </div>
                 
-                <div class="glass-card p-6">
+                <div class="glass-card p-6 rounded-[2rem] border-t-4 border-t-brand-500">
                     <div class="flex items-center justify-between mb-4">
-                        <span class="text-xs font-black text-slate-400 uppercase tracking-widest">Indicações (Leads)</span>
-                        <div class="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center"><i data-lucide="users" class="w-5 h-5 text-brand-600"></i></div>
+                        <span class="text-xs font-black text-slate-400 uppercase tracking-widest">Leads (Cliques)</span>
+                        <div class="w-10 h-10 bg-brand-500/20 rounded-xl flex items-center justify-center border border-brand-500/30"><i data-lucide="users" class="w-5 h-5 text-brand-400"></i></div>
                     </div>
-                    <p class="text-4xl font-display font-extrabold text-slate-900 skeleton" id="affiliateReferrals">0</p>
+                    <p class="text-4xl font-display font-extrabold text-white skeleton" id="affiliateReferrals">0</p>
                 </div>
                 
-                <div class="glass-card p-6">
+                <div class="glass-card p-6 rounded-[2rem] border-t-4 border-t-success-500">
                     <div class="flex items-center justify-between mb-4">
                         <span class="text-xs font-black text-slate-400 uppercase tracking-widest">Converteram</span>
-                        <div class="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center"><i data-lucide="shopping-cart" class="w-5 h-5 text-green-600"></i></div>
+                        <div class="w-10 h-10 bg-success-500/20 rounded-xl flex items-center justify-center border border-success-500/30"><i data-lucide="shopping-cart" class="w-5 h-5 text-success-400"></i></div>
                     </div>
-                    <p class="text-4xl font-display font-extrabold text-slate-900 skeleton" id="affiliateApproved">0</p>
+                    <p class="text-4xl font-display font-extrabold text-white skeleton" id="affiliateApproved">0</p>
                 </div>
                 
-                <div class="glass-card p-6 bg-slate-900 border-none text-white relative overflow-hidden">
-                    <div class="absolute top-0 right-0 w-32 h-32 bg-brand-500/20 rounded-full blur-xl"></div>
-                    <div class="flex items-center justify-between mb-4 relative z-10">
+                <div class="glass-card p-6 rounded-[2rem] bg-slate-900 border border-slate-700 relative overflow-hidden flex flex-col justify-between">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-accent-500/10 rounded-full blur-xl pointer-events-none"></div>
+                    <div class="flex items-center justify-between mb-2 relative z-10">
                         <span class="text-xs font-black text-slate-400 uppercase tracking-widest">O Seu Código</span>
-                        <div class="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center"><i data-lucide="tag" class="w-5 h-5 text-brand-400"></i></div>
+                        <div class="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center border border-slate-700"><i data-lucide="tag" class="w-5 h-5 text-accent-400"></i></div>
                     </div>
-                    <p class="text-2xl font-mono font-bold text-white truncate relative z-10" id="affiliateCode">...</p>
-                    <button onclick="window.copyAffiliateCode()" class="text-xs text-brand-400 hover:text-brand-300 mt-3 font-bold uppercase tracking-wider flex items-center gap-1 transition-colors relative z-10"><i data-lucide="copy" class="w-3 h-3"></i> Copiar Código</button>
+                    <div class="relative z-10">
+                        <p class="text-2xl font-mono font-bold text-white truncate" id="affiliateCode">...</p>
+                        <button onclick="window.copyAffiliateCode()" class="text-[10px] text-accent-400 hover:text-accent-300 mt-2 font-bold uppercase tracking-widest flex items-center gap-1.5 transition-colors bg-accent-500/10 px-2.5 py-1.5 rounded-lg border border-accent-500/20 w-max btn-action">
+                            <i data-lucide="copy" class="w-3 h-3"></i> Copiar Chave
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <div class="mb-8 bg-slate-900 rounded-3xl p-8 text-white relative overflow-hidden shadow-2xl shadow-slate-900/20">
-                <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-brand-500/20 rounded-full blur-[80px] translate-x-1/3 -translate-y-1/3 pointer-events-none"></div>
+            <div class="mb-8 bg-slate-900 rounded-[2rem] p-8 md:p-10 text-white relative overflow-hidden shadow-[0_20px_40px_rgba(0,0,0,0.4)] border border-slate-800">
+                <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-brand-600/10 rounded-full blur-[80px] translate-x-1/3 -translate-y-1/3 pointer-events-none"></div>
                 <div class="relative z-10">
-                    <h3 class="text-2xl font-display font-extrabold mb-2 flex items-center gap-3"><div class="p-2 bg-brand-500/20 rounded-lg text-brand-400"><i data-lucide="share-2" class="w-6 h-6"></i></div> Multiplique os seus ganhos</h3>
-                    <p class="text-slate-400 text-sm mb-8 max-w-2xl font-medium leading-relaxed">Partilhe este link no seu WhatsApp, Instagram ou TikTok. Se a pessoa clicar e fizer a sua primeira compra internacional na PayGo, a comissão entra diretamente neste painel.</p>
+                    <h3 class="text-2xl font-display font-extrabold mb-3 flex items-center gap-3"><div class="p-2 bg-brand-500/20 rounded-xl border border-brand-500/30 text-brand-400"><i data-lucide="share-2" class="w-5 h-5"></i></div> Multiplique os seus ganhos agora</h3>
+                    <p class="text-slate-400 text-sm mb-8 max-w-2xl font-medium leading-relaxed">Partilhe este link no seu WhatsApp, Instagram ou TikTok. Se a pessoa criar conta e fizer a primeira compra na PayGo, a comissão entra diretamente neste cofre.</p>
                     <div class="flex flex-col sm:flex-row gap-3 max-w-3xl">
-                        <input type="text" id="affiliateLink" readonly class="flex-1 px-5 py-4 rounded-xl bg-white/5 border border-white/10 text-white font-mono text-sm focus:outline-none focus:border-brand-500 transition-colors shadow-inner" value="...">
-                        <button onclick="window.copyAffiliateLink()" class="px-8 py-4 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-brand-500/20 whitespace-nowrap active:scale-95">
+                        <input type="text" id="affiliateLink" readonly class="flex-1 px-5 py-4 rounded-xl bg-slate-950 border border-slate-700 text-white font-mono text-sm focus:outline-none shadow-inner" value="A gerar link seguro...">
+                        <button onclick="window.copyAffiliateLink()" class="btn-action px-8 py-4 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(37,99,235,0.4)] border border-brand-500 whitespace-nowrap">
                             <i data-lucide="copy" class="w-5 h-5"></i> Copiar Link Oficial
                         </button>
                     </div>
                 </div>
             </div>
 
-            <div class="glass-card overflow-hidden">
-                <div class="p-6 border-b border-slate-200 bg-slate-50/80">
-                    <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2"><i data-lucide="users" class="w-5 h-5 text-slate-400"></i> Histórico de Indicações</h2>
+            <div class="glass-card rounded-[2rem] p-0 overflow-hidden border border-slate-800 flex flex-col">
+                <div class="p-6 border-b border-white/5 flex justify-between items-center bg-slate-900/80 backdrop-blur-sm">
+                    <h2 class="text-sm font-bold text-white flex items-center gap-2"><i data-lucide="users" class="w-4 h-4 text-success-400"></i> O seu funil de conversão</h2>
                 </div>
                 
-                <div id="referralsLoading" class="p-20 text-center text-slate-500">
-                    <i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto mb-4 text-brand-500"></i>
-                    <p class="font-bold">A carregar a sua rede...</p>
+                <div id="referralsLoading" class="p-20 text-center text-slate-500 flex flex-col items-center justify-center">
+                    <div class="w-12 h-12 border-4 border-slate-800 border-t-success-500 rounded-full animate-spin mb-4"></div>
+                    <p class="font-bold text-slate-300">A carregar a sua rede...</p>
                 </div>
                 
-                <div id="referralsEmpty" class="p-20 text-center text-slate-500 hidden">
-                    <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i data-lucide="users" class="w-10 h-10 text-slate-300"></i>
+                <div id="referralsEmpty" class="p-20 text-center text-slate-500 hidden flex flex-col items-center justify-center">
+                    <div class="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-700 shadow-inner">
+                        <i data-lucide="network" class="w-8 h-8 text-slate-400"></i>
                     </div>
-                    <p class="font-bold text-slate-700 text-xl">Ainda não tem indicações</p>
-                    <p class="text-sm mt-1">Partilhe o seu link acima para começar a faturar.</p>
+                    <p class="font-bold text-white text-xl">Ainda não tem indicações</p>
+                    <p class="text-sm mt-1 text-slate-400">Copie e partilhe o seu link acima para começar a faturar.</p>
                 </div>
                 
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse min-w-[600px]">
-                        <thead class="bg-white border-b border-slate-200">
+                <div class="overflow-x-auto min-h-[300px]">
+                    <table class="w-full text-left border-collapse whitespace-nowrap">
+                        <thead class="bg-slate-950/80 text-[10px] uppercase text-slate-400 tracking-widest border-b border-white/10 sticky top-0 z-10 backdrop-blur-md">
                             <tr>
-                                <th class="px-6 py-5 text-xs font-black text-slate-400 uppercase tracking-widest">Nome do Cliente</th>
-                                <th class="px-6 py-5 text-xs font-black text-slate-400 uppercase tracking-widest">Data de Registo</th>
-                                <th class="px-6 py-5 text-xs font-black text-slate-400 uppercase tracking-widest">Conversão (Compra)</th>
-                                <th class="px-6 py-5 text-xs font-black text-slate-400 uppercase tracking-widest">Comissão Recebida</th>
+                                <th class="px-6 py-5 font-bold">Identidade do Cliente</th>
+                                <th class="px-6 py-5 font-bold">Data de Adesão</th>
+                                <th class="px-6 py-5 font-bold">Conversão Efetiva</th>
+                                <th class="px-6 py-5 font-bold">Lucro Gerado (Comissão)</th>
                             </tr>
                         </thead>
-                        <tbody id="referralsTable" class="divide-y divide-slate-100 bg-white"></tbody>
+                        <tbody id="referralsTable" class="divide-y divide-white/5 bg-slate-900/30"></tbody>
                     </table>
                 </div>
             </div>
         </div>
     </main>
 
-    <div id="orderModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 transition-opacity">
-        <div class="bg-white rounded-3xl p-0 max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl transform transition-transform scale-95" id="modalDialog">
-            <div class="flex justify-between items-center p-6 border-b border-slate-100 bg-slate-50/50">
-                <h2 class="text-xl font-display font-extrabold text-slate-900 flex items-center gap-2"><div class="p-1.5 bg-brand-100 text-brand-600 rounded-lg"><i data-lucide="file-text" class="w-5 h-5"></i></div> Ficha do Pedido</h2>
-                <button onclick="window.closeModal()" class="w-8 h-8 rounded-full bg-white border border-slate-200 hover:bg-slate-100 hover:text-red-500 flex items-center justify-center transition focus:outline-none"><i data-lucide="x" class="w-4 h-4"></i></button>
+    <div id="orderModal" class="modal-wrapper">
+        <div class="modal-backdrop" onclick="window.closeModal()"></div>
+        <div class="modal-panel flex flex-col h-auto max-h-[90vh]">
+            <div class="flex justify-between items-center p-6 border-b border-white/10 bg-slate-950 shrink-0">
+                <h2 class="text-xl font-display font-extrabold text-white flex items-center gap-3">
+                    <div class="p-2 bg-brand-500/20 text-brand-400 rounded-xl border border-brand-500/30"><i data-lucide="file-text" class="w-5 h-5"></i></div> 
+                    Dossier Logístico
+                </h2>
+                <button onclick="window.closeModal()" class="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-700 hover:text-white flex items-center justify-center transition-colors text-slate-400 focus:outline-none">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
             </div>
             
-            <div id="modalContent" class="p-6 overflow-y-auto space-y-6 flex-1"></div>
+            <div id="modalContent" class="p-6 md:p-8 overflow-y-auto space-y-6 bg-slate-900 flex-1 relative">
+                </div>
             
-            <div class="p-6 border-t border-slate-100 bg-slate-50/80 flex flex-col sm:flex-row gap-3">
-                <select id="statusSelect" class="flex-1 px-4 py-4 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/50 font-bold text-slate-700 bg-white cursor-pointer shadow-sm text-sm">
-                    <option value="pending">⏳ Mudar para: PENDENTE</option>
-                    <option value="processing">🔄 Mudar para: EM PROCESSAMENTO</option>
-                    <option value="completed">✅ Mudar para: CONCLUÍDO</option>
-                    <option value="cancelled">❌ Mudar para: CANCELADO</option>
-                </select>
-                <button id="updateStatusBtn" class="px-8 py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold transition flex items-center justify-center gap-2 shadow-lg active:scale-95 text-sm">
-                    <i data-lucide="save" class="w-4 h-4"></i> Atualizar Estado
+            <div class="p-6 border-t border-white/10 bg-slate-950 flex flex-col sm:flex-row gap-4 shrink-0 shadow-[0_-10px_20px_rgba(0,0,0,0.3)] relative z-20">
+                <div class="relative flex-1">
+                    <i data-lucide="git-commit" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
+                    <select id="statusSelect" class="w-full pl-12 pr-4 py-4 border border-slate-700 bg-slate-800 text-white rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50 font-bold text-sm cursor-pointer shadow-inner appearance-none transition-all">
+                        <option value="pending">⏳ Ação Necessária: PENDENTE</option>
+                        <option value="processing">🔄 Em Compra: EM PROCESSAMENTO</option>
+                        <option value="completed">✅ Finalizado: CONCLUÍDO (Envia Email)</option>
+                        <option value="cancelled">❌ Abortar: CANCELADO</option>
+                    </select>
+                </div>
+                <button id="updateStatusBtn" onclick="window.saveOrderStatus()" class="btn-action w-full sm:w-auto px-8 py-4 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(37,99,235,0.4)] whitespace-nowrap border border-brand-500 h-[54px]">
+                    <i data-lucide="save" class="w-4 h-4"></i> <span>Auditar Estado</span>
                 </button>
             </div>
         </div>
     </div>
-
-    <div id="toastContainer"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -384,7 +457,7 @@
 
         lucide.createIcons();
 
-        // Menu Mobile
+        // Menu Mobile Moderno
         window.toggleSidebar = () => {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('mobileOverlay');
@@ -393,32 +466,26 @@
             document.body.style.overflow = sidebar.classList.contains('-translate-x-full') ? '' : 'hidden';
         };
 
-        // Sistema de Toasts Premium
+        // Toasts Premium
         window.showToast = (message, type = 'success') => {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
             
             const config = { 
-                success: { bg: 'bg-green-600', icon: 'check-circle' }, 
-                error: { bg: 'bg-red-600', icon: 'alert-circle' }, 
-                warning: { bg: 'bg-amber-500', icon: 'alert-triangle' }, 
-                info: { bg: 'bg-brand-600', icon: 'info' } 
+                success: { border: 'border-green-500', icon: 'check-circle text-green-400' }, 
+                error: { border: 'border-red-500', icon: 'alert-octagon text-red-400' }, 
+                warning: { border: 'border-amber-500', icon: 'alert-triangle text-amber-400' }, 
+                info: { border: 'border-brand-500', icon: 'info text-brand-400' } 
             };
             
-            toast.className = `toast-item ${config[type].bg}`;
-            toast.innerHTML = `
-                <i data-lucide="${config[type].icon}" class="w-5 h-5 flex-shrink-0"></i>
-                <span class="flex-1">${message}</span>
-            `;
+            toast.className = `toast-item ${config[type].border}`;
+            toast.innerHTML = `<i data-lucide="${config[type].icon.split(' ')[0]}" class="w-6 h-6 flex-shrink-0 ${config[type].icon.split(' ')[1]}"></i><span class="flex-1">${message}</span>`;
             
             container.appendChild(toast);
             lucide.createIcons({root: toast});
             
             requestAnimationFrame(() => toast.classList.add('show'));
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 400);
-            }, 4000);
+            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 4000);
         };
 
         function formatValue(value, type = 'currency') {
@@ -430,22 +497,21 @@
 
         function getStatusBadge(status) {
             const badges = {
-                pending: '<span class="status-badge status-pending"><i data-lucide="clock" class="w-3 h-3"></i> Pendente</span>',
-                processing: '<span class="status-badge status-processing"><i data-lucide="refresh-cw" class="w-3 h-3 animate-spin"></i> Em Processo</span>',
-                completed: '<span class="status-badge status-completed"><i data-lucide="check" class="w-3 h-3"></i> Concluído</span>',
-                cancelled: '<span class="status-badge status-cancelled"><i data-lucide="x" class="w-3 h-3"></i> Cancelado</span>'
+                pending: '<span class="status-badge status-pending shadow-sm">⏳ Pendente</span>',
+                processing: '<span class="status-badge status-processing shadow-sm">🔄 Compra Int.</span>',
+                completed: '<span class="status-badge status-completed shadow-sm">✅ Fechado</span>',
+                cancelled: '<span class="status-badge status-cancelled shadow-sm">❌ Cancelado</span>'
             };
-            return badges[status] || `<span class="status-badge bg-slate-200 text-slate-700">${status}</span>`;
+            return badges[status] || `<span class="status-badge bg-slate-800 text-slate-300 border border-slate-700">${status}</span>`;
         }
 
         // ==========================================
         // 🔐 AUTENTICAÇÃO E ROTEAMENTO
         // ==========================================
+        const fallbackTimer = setTimeout(() => { document.getElementById('sysLoader').style.display = 'none'; }, 3000);
+
         onAuthStateChanged(auth, async (user) => {
-            if (!user) {
-                window.location.href = 'login.html?redirect=dashboard.html';
-                return;
-            }
+            if (!user) { window.location.href = 'login.html?redirect=dashboard.html'; return; }
             currentUser = user;
             try {
                 const userRef = doc(db, "users", user.uid);
@@ -460,7 +526,7 @@
                 const userData = userSnap.data();
                 userRole = userData.role || 'user';
                 
-                document.getElementById('userName').textContent = userData.name || 'Usuário';
+                document.getElementById('userName').textContent = userData.name || 'Usuário Anónimo';
                 document.getElementById('userEmail').textContent = userData.email || '';
                 document.getElementById('userInitial').textContent = (userData.name || 'U').charAt(0).toUpperCase();
 
@@ -470,17 +536,20 @@
                     affiliateData = userData;
                     setupAffiliateView();
                 } else {
-                    // Utilizador normal não tem acesso ao dashboard
-                    window.showToast('Área restrita. A redirecionar para a página inicial.', 'error');
+                    window.showToast('Protocolo de Segurança: Acesso Não Autorizado.', 'error');
                     setTimeout(() => { window.location.href = 'index.html'; }, 2000);
                 }
             } catch (error) {
                 console.error('Erro de Auth:', error);
+            } finally {
+                clearTimeout(fallbackTimer);
+                const ldr = document.getElementById('sysLoader');
+                if(ldr) { ldr.style.opacity = '0'; setTimeout(() => ldr.style.display = 'none', 500); }
             }
         });
 
         function setupAdminView() {
-            document.getElementById('roleBadge').textContent = 'Admin. Principal';
+            document.getElementById('roleBadge').textContent = 'Admin Supremo';
             document.getElementById('adminNav').classList.remove('hidden');
             document.getElementById('adminView').classList.remove('hidden');
             loadOrders();
@@ -494,7 +563,7 @@
         }
 
         // ==========================================
-        // 💼 LÓGICA: AFILIADO
+        // 🤝 LÓGICA: AFILIADO
         // ==========================================
         async function loadAffiliateDashboard() {
             if (!affiliateData || !currentUser) return;
@@ -558,20 +627,18 @@
             table.innerHTML = referrals.map(ref => {
                 const hasCommission = ref.firstPurchaseProcessed;
                 const commission = hasCommission ? (ref.totalSpent * 0.03) : 0;
-                const dateStr = ref.createdAt ? new Date(ref.createdAt).toLocaleDateString('pt-MZ') : 'N/A';
+                const dateStr = ref.createdAt ? new Date(ref.createdAt.toDate ? ref.createdAt.toDate() : ref.createdAt).toLocaleDateString('pt-MZ') : 'N/A';
                 
                 return `
-                    <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="px-6 py-5">
-                            <div class="font-bold text-slate-800 text-sm">${ref.name}</div>
-                        </td>
-                        <td class="px-6 py-5 text-sm font-medium text-slate-500">${dateStr}</td>
-                        <td class="px-6 py-5">
+                    <tr class="hover:bg-slate-800/40 transition-colors border-b border-white/5 last:border-0 h-[64px]">
+                        <td class="px-6 py-4"><div class="font-bold text-white text-sm">${ref.name}</div></td>
+                        <td class="px-6 py-4 text-sm font-medium text-slate-400">${dateStr}</td>
+                        <td class="px-6 py-4 text-center">
                             ${hasCommission 
-                                ? `<span class="inline-flex items-center gap-1.5 text-success-700 font-bold bg-success-100 px-3 py-1 rounded-full border border-success-200 text-xs"><i data-lucide="check" class="w-3 h-3"></i> Confirmada</span>` 
-                                : `<span class="inline-flex items-center gap-1.5 text-slate-600 font-bold bg-slate-100 border border-slate-200 px-3 py-1 rounded-full text-xs"><i data-lucide="clock" class="w-3 h-3"></i> Pendente</span>`}
+                                ? `<span class="inline-flex items-center gap-1.5 text-success-400 font-bold bg-success-500/10 border border-success-500/20 px-3 py-1 rounded-lg text-[10px] uppercase tracking-widest"><i data-lucide="check" class="w-3 h-3"></i> Validada</span>` 
+                                : `<span class="inline-flex items-center gap-1.5 text-slate-400 font-bold bg-slate-800 border border-slate-700 px-3 py-1 rounded-lg text-[10px] uppercase tracking-widest"><i data-lucide="clock" class="w-3 h-3"></i> Sem Compra</span>`}
                         </td>
-                        <td class="px-6 py-5 font-black ${hasCommission ? 'text-success-600' : 'text-slate-400'}">
+                        <td class="px-6 py-4 font-black text-right ${hasCommission ? 'text-success-400 font-mono text-base' : 'text-slate-500'}">
                             ${hasCommission ? formatValue(commission, 'currency') : '0.00 MT'}
                         </td>
                     </tr>
@@ -580,15 +647,14 @@
             lucide.createIcons({root: table});
         }
 
-        // Ações de Cópia
         window.copyAffiliateCode = async () => {
             if (!affiliateData?.affiliateCode) return;
-            try { await navigator.clipboard.writeText(affiliateData.affiliateCode); window.showToast('Código copiado!', 'success'); } catch (err) {}
+            try { await navigator.clipboard.writeText(affiliateData.affiliateCode); window.showToast('Chave encriptada copiada!', 'success'); } catch (err) {}
         };
 
         window.copyAffiliateLink = async () => {
             const link = document.getElementById('affiliateLink').value;
-            try { await navigator.clipboard.writeText(link); window.showToast('Link copiado. Partilhe e ganhe!', 'success'); } catch (err) {}
+            try { await navigator.clipboard.writeText(link); window.showToast('Link de parceria copiado com sucesso!', 'success'); } catch (err) {}
         };
 
         // ==========================================
@@ -627,9 +693,8 @@
                 renderOrders();
                 updateStats();
             }, (error) => {
-                console.error(error);
                 document.getElementById('loadingState').classList.add('hidden');
-                window.showToast('Erro de permissão na base de dados.', 'error');
+                window.showToast('Firewall: Acesso negado à Base de Dados.', 'error');
             });
         }
 
@@ -647,7 +712,7 @@
                 return matchSearch && matchStatus;
             });
             
-            document.getElementById('ordersCount').textContent = `${filtered.length} pedidos`;
+            document.getElementById('ordersCount').textContent = `${filtered.length} Registos Oficiais`;
             
             if (filtered.length === 0) {
                 emptyState.classList.remove('hidden');
@@ -660,22 +725,24 @@
                 const dateStr = order.createdAt.toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short', hour: '2-digit', minute:'2-digit' });
                 
                 return `
-                    <tr class="hover:bg-brand-50/50 transition-colors group cursor-pointer border-b border-slate-100" onclick="window.openModal('${order.id}')">
-                        <td class="px-6 py-4"><span class="text-xs font-mono font-bold text-slate-500 bg-slate-100 border border-slate-200 px-2 py-1 rounded-lg">${order.orderId}</span></td>
+                    <tr class="hover:bg-slate-800/40 transition-colors group cursor-pointer border-b border-white/5 last:border-0 h-[72px]" onclick="window.openModal('${order.id}')">
                         <td class="px-6 py-4">
-                            <div class="text-sm font-bold text-slate-900 group-hover:text-brand-600 transition-colors">${order.name}</div>
-                            <div class="text-xs text-slate-500 font-mono">${order.whatsapp}</div>
+                            <span class="text-xs font-mono font-bold text-brand-400 bg-brand-900/20 border border-brand-500/20 px-2 py-1 rounded shadow-sm">${order.orderId}</span>
                         </td>
                         <td class="px-6 py-4">
-                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg border ${order.type === 'compra' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-purple-50 text-purple-700 border-purple-200'}">
+                            <div class="text-sm font-bold text-white group-hover:text-brand-300 transition-colors truncate max-w-[150px]">${order.name}</div>
+                            <div class="text-[10px] text-slate-500 font-mono tracking-widest mt-0.5 uppercase">${order.whatsapp}</div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[9px] font-black uppercase tracking-widest rounded border ${order.type === 'compra' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 'bg-purple-500/10 text-purple-400 border-purple-500/20'}">
                                 <i data-lucide="${order.type === 'compra' ? 'shopping-bag' : 'gamepad-2'}" class="w-3 h-3"></i> ${order.type}
                             </span>
                         </td>
-                        <td class="px-6 py-4 text-sm font-black text-slate-900">${formatValue(order.total, 'currency')}</td>
-                        <td class="px-6 py-4">${getStatusBadge(order.status)}</td>
-                        <td class="px-6 py-4 text-xs font-medium text-slate-500">${dateStr}</td>
+                        <td class="px-6 py-4 text-sm font-black text-white font-mono tracking-tight">${formatValue(order.total, 'currency')}</td>
+                        <td class="px-6 py-4 text-center">${getStatusBadge(order.status)}</td>
+                        <td class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">${dateStr}</td>
                         <td class="px-6 py-4 text-right">
-                            <button class="w-8 h-8 inline-flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-400 group-hover:bg-slate-900 group-hover:border-slate-900 group-hover:text-white transition-all shadow-sm">
+                            <button class="w-9 h-9 inline-flex items-center justify-center rounded-xl bg-slate-800 border border-slate-700 text-slate-400 group-hover:bg-brand-600 group-hover:border-brand-500 group-hover:text-white transition-all shadow-md">
                                 <i data-lucide="chevron-right" class="w-4 h-4"></i>
                             </button>
                         </td>
@@ -700,7 +767,7 @@
             document.getElementById('statRevenue').textContent = formatValue(revenue, 'currency');
         }
 
-        // Filtros (Admin)
+        // Filtros Automáticos (Admin)
         let searchTimeout;
         document.getElementById('searchInput')?.addEventListener('input', () => {
             clearTimeout(searchTimeout);
@@ -709,7 +776,7 @@
         document.getElementById('statusFilter')?.addEventListener('change', renderOrders);
 
         // ==========================================
-        // 🪟 MODAL DE DETALHES DO PEDIDO
+        // 🪟 DOSSIER DA ENCOMENDA (MODAL GLASS)
         // ==========================================
         window.openModal = (orderId) => {
             const order = orders.find(o => o.id === orderId);
@@ -718,61 +785,53 @@
             currentOrderId = orderId;
             const isMpesa = order.paymentMethod === 'mpesa';
             
-            let productHtml = `<p class="font-medium break-words bg-white border border-slate-200 p-4 rounded-xl text-sm mt-1 shadow-inner">${order.detail}</p>`;
+            let productHtml = `<div class="font-mono text-sm text-brand-200 break-words leading-relaxed whitespace-pre-wrap">${order.detail}</div>`;
             
             if (order.detail.includes('http')) {
                 productHtml = `
-                    <div class="mt-1 flex flex-col gap-2">
-                        <textarea readonly class="w-full text-xs p-4 rounded-xl bg-white border border-slate-200 outline-none font-mono text-slate-500 shadow-inner resize-none" rows="3">${order.detail}</textarea>
-                        <a href="${order.detail}" target="_blank" class="inline-flex items-center justify-center gap-2 bg-slate-900 text-white px-5 py-3.5 rounded-xl text-sm font-bold hover:bg-slate-800 transition shadow-lg mt-1 active:scale-95">
-                            <i data-lucide="external-link" class="w-4 h-4"></i> Abrir Link do Produto
+                    <div class="flex flex-col gap-3">
+                        <textarea readonly class="w-full text-xs p-4 rounded-xl bg-slate-950 border border-white/5 outline-none font-mono text-slate-400 shadow-inner resize-none focus:border-brand-500 transition-colors" rows="3">${order.detail}</textarea>
+                        <a href="${order.detail}" target="_blank" class="inline-flex items-center justify-center gap-2 bg-brand-600/20 text-brand-400 border border-brand-500/30 px-5 py-3 rounded-xl text-xs font-bold hover:bg-brand-600 hover:text-white transition-all shadow-lg w-max active:scale-95 uppercase tracking-widest">
+                            <i data-lucide="external-link" class="w-4 h-4"></i> Inspecionar Link Externo
                         </a>
                     </div>
                 `;
             }
 
             document.getElementById('modalContent').innerHTML = `
-                <div class="bg-slate-100/50 p-5 rounded-2xl flex justify-between items-center border border-slate-200">
+                <div class="bg-slate-950 p-6 rounded-2xl flex justify-between items-center border border-slate-800 shadow-inner">
                     <div>
-                        <p class="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">ID do Pedido</p>
-                        <p class="font-mono font-black text-brand-600 text-xl tracking-tight">${order.orderId}</p>
+                        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">ID Criptográfico</p>
+                        <p class="font-mono font-black text-brand-400 text-2xl tracking-tight">${order.orderId}</p>
                     </div>
                     <div class="text-right">
-                        <p class="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Data Registo</p>
-                        <p class="font-bold text-slate-800 text-sm">${order.createdAt.toLocaleString('pt-MZ')}</p>
+                        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Registo do Servidor</p>
+                        <p class="font-bold text-white text-sm bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">${order.createdAt.toLocaleString('pt-MZ')}</p>
                     </div>
                 </div>
                 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
-                    <div class="space-y-5">
-                        <div>
-                            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest border-b border-slate-200 pb-2 mb-3 flex items-center gap-2"><i data-lucide="user" class="w-4 h-4"></i> Dados do Cliente</h3>
-                            <div class="space-y-3">
-                                <div><p class="text-[10px] font-bold text-slate-400 uppercase">Nome</p><p class="font-bold text-slate-900 text-sm">${order.name}</p></div>
-                                <div><p class="text-[10px] font-bold text-slate-400 uppercase">Telemóvel</p><a href="https://wa.me/${order.whatsapp.replace(/\D/g,'')}" target="_blank" class="font-bold text-success-600 hover:text-success-700 flex items-center gap-1 text-sm bg-success-50 inline-flex px-2 py-1 rounded-lg border border-success-200">${order.whatsapp} <i data-lucide="message-circle" class="w-3 h-3"></i></a></div>
-                                <div><p class="text-[10px] font-bold text-slate-400 uppercase">Email</p><p class="font-medium text-slate-600 text-sm">${order.email}</p></div>
-                            </div>
-                        </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                    <div class="bg-slate-900/50 p-6 rounded-2xl border border-white/5 flex flex-col gap-4">
+                        <h3 class="text-xs font-black text-brand-400 uppercase tracking-widest border-b border-white/10 pb-3 flex items-center gap-2"><i data-lucide="user-circle" class="w-4 h-4"></i> Identidade do Comprador</h3>
+                        <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nome Registado</p><p class="font-bold text-white text-base">${order.name}</p></div>
+                        <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Canal Seguro</p><a href="https://wa.me/${order.whatsapp.replace(/\D/g,'')}" target="_blank" class="font-bold text-success-400 hover:text-success-300 flex items-center gap-1.5 w-max bg-success-500/10 px-3 py-1.5 rounded-lg border border-success-500/20 transition-all"><i data-lucide="message-square" class="w-4 h-4"></i> ${order.whatsapp}</a></div>
+                        <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Correio Eletrónico</p><p class="font-medium text-slate-300 font-mono text-sm">${order.email}</p></div>
                     </div>
                     
-                    <div class="bg-white shadow-sm p-6 rounded-2xl border border-slate-200">
-                        <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest border-b border-slate-200 pb-2 mb-4 flex items-center gap-2"><i data-lucide="banknote" class="w-4 h-4"></i> Finanças</h3>
-                        <div class="space-y-3">
-                            <div class="flex justify-between items-center"><p class="text-xs font-bold text-slate-500">Valor USD</p><p class="font-bold text-slate-900 font-mono text-sm">${formatValue(order.usd, 'usd')}</p></div>
-                            <div class="flex justify-between items-center"><p class="text-xs font-bold text-slate-500">Taxa Serviço</p><p class="font-bold text-brand-600 font-mono text-sm">${formatValue(order.tax, 'currency')}</p></div>
-                            <div class="flex justify-between pt-4 border-t border-slate-100 items-end"><p class="text-xs font-black text-slate-400 uppercase">Total Pago</p><p class="font-black text-2xl text-slate-900 tracking-tight">${formatValue(order.total, 'currency')}</p></div>
-                            
-                            <div class="mt-4 pt-4 border-t border-slate-100">
-                                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border font-black text-[10px] tracking-widest ${isMpesa ? 'bg-red-50 text-red-700 border-red-200' : 'bg-yellow-50 text-yellow-800 border-yellow-300'}">
-                                    <div class="w-2 h-2 rounded-full ${isMpesa ? 'bg-red-600' : 'bg-yellow-500'} animate-pulse"></div> VIA ${isMpesa ? 'M-PESA' : 'E-MOLA'}
-                                </div>
-                            </div>
+                    <div class="bg-slate-900 p-6 rounded-2xl border border-brand-500/20 shadow-[0_10px_30px_rgba(37,99,235,0.05)] relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-brand-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
+                        <h3 class="text-xs font-black text-brand-400 uppercase tracking-widest border-b border-white/10 pb-3 flex items-center gap-2 relative z-10"><i data-lucide="calculator" class="w-4 h-4"></i> Extrato Financeiro</h3>
+                        <div class="space-y-3 relative z-10 mt-4">
+                            <div class="flex justify-between items-center"><p class="text-xs font-bold text-slate-400">Conversão Pura (USD)</p><p class="font-mono font-bold text-slate-200 bg-slate-800 px-2 py-1 rounded">${formatValue(order.usd, 'usd')}</p></div>
+                            <div class="flex justify-between items-center"><p class="text-xs font-bold text-slate-400">Taxa Logística</p><p class="font-mono font-bold text-brand-400">${formatValue(order.tax, 'currency')}</p></div>
+                            <div class="flex justify-between items-center"><p class="text-xs font-bold text-slate-400">Via de Pagamento</p><p class="text-[9px] font-black text-${isMpesa ? 'danger' : 'warning'}-400 bg-${isMpesa ? 'danger' : 'warning'}-500/20 px-2 py-1 rounded border border-${isMpesa ? 'danger' : 'warning'}-500/30 uppercase tracking-widest">${isMpesa ? 'M-PESA' : 'E-MOLA'}</p></div>
+                            <div class="flex justify-between pt-4 border-t border-white/10 mt-2 items-end"><p class="text-xs font-black text-white uppercase tracking-widest mb-1">TOTAL LÍQUIDO</p><p class="font-black text-3xl text-success-400 tracking-tight">${formatValue(order.total, 'currency')}</p></div>
                         </div>
                     </div>
                 </div>
                 
-                <div class="mt-2 bg-slate-50 p-6 rounded-2xl border border-slate-200">
-                    <p class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2"><i data-lucide="shopping-cart" class="w-4 h-4"></i> Pedido do Cliente</p>
+                <div class="mt-6 bg-slate-800/80 p-6 rounded-2xl border border-slate-700 shadow-inner">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5"><i data-lucide="shopping-cart" class="w-3 h-3"></i> O que o cliente quer adquirir</p>
                     ${productHtml}
                 </div>
             `;
@@ -781,41 +840,32 @@
             
             const modal = document.getElementById('orderModal');
             const dialog = document.getElementById('modalDialog');
-            modal.classList.remove('hidden');
+            modal.classList.add('active');
             document.body.style.overflow = 'hidden'; 
-            
-            requestAnimationFrame(() => {
-                dialog.classList.remove('scale-95', 'opacity-0');
-                dialog.classList.add('scale-100', 'opacity-100');
-            });
             
             lucide.createIcons({root: modal});
         };
 
         window.closeModal = () => {
             const modal = document.getElementById('orderModal');
-            const dialog = document.getElementById('modalDialog');
-            
-            dialog.classList.remove('scale-100', 'opacity-100');
-            dialog.classList.add('scale-95', 'opacity-0');
-            
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                document.body.style.overflow = '';
-                currentOrderId = null;
-            }, 150);
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+            currentOrderId = null;
         };
 
-        // Gravar Novo Status
+        // Gravar Novo Status com Inteligência Logística
         document.getElementById('updateStatusBtn')?.addEventListener('click', async () => {
             if (!currentOrderId || (userRole !== 'admin' && userRole !== 'superadmin')) return;
             
             const newStatus = document.getElementById('statusSelect').value;
+            const order = orders.find(o => o.id === currentOrderId);
+            const oldStatus = order?.status;
+
             const btn = document.getElementById('updateStatusBtn');
             const originalText = btn.innerHTML;
             
             btn.disabled = true;
-            btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A gravar...`;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A Gravar Protocolo...`;
             lucide.createIcons({root: btn});
             
             try {
@@ -823,11 +873,37 @@
                     status: newStatus,
                     updatedAt: serverTimestamp()
                 });
-                window.showToast('Status do pedido atualizado!', 'success');
+
+                // Automação: Se fechou com sucesso, processa CPA e avisa cliente via Email
+                if (newStatus === 'completed' && oldStatus !== 'completed') {
+                    if (order?.referredBy && !order?.commissionProcessed) {
+                        try {
+                            const qRef = query(collection(db, "users"), where("affiliateCode", "==", order.referredBy));
+                            const snapRef = await getDocs(qRef);
+                            if(!snapRef.empty) {
+                                const refDoc = snapRef.docs[0];
+                                const commissionValue = order.tax * 0.03; // Base de 3%
+                                await updateDoc(doc(db, "users", refDoc.id), {
+                                    affiliateEarnings: increment(commissionValue),
+                                    approvedReferrals: increment(1)
+                                });
+                                await updateDoc(doc(db, "orders", currentOrderId), { commissionProcessed: true });
+                            }
+                        } catch(e) { console.warn("Erro a creditar CPA:", e); }
+                    }
+                    
+                    fetch('/api/notify-order', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ orderData: order, action: 'order_completed', sendEmail: true })
+                    }).catch(e=>{});
+                }
+
+                window.showToast('Nova etapa logística gravada na Cloud.', 'success');
                 window.closeModal();
             } catch (error) {
                 console.error(error);
-                window.showToast('Erro ao atualizar a base de dados.', 'error');
+                window.showToast('Permissão Negada. Firewall ativada.', 'error');
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalText;
@@ -835,9 +911,9 @@
             }
         });
 
-        // Listeners Fechar Modal
+        // Listeners Extra
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && !document.getElementById('orderModal').classList.contains('hidden')) {
+            if (e.key === 'Escape' && document.getElementById('orderModal').classList.contains('active')) {
                 window.closeModal();
             }
         });
@@ -846,7 +922,7 @@
         });
 
         document.getElementById('logoutBtn')?.addEventListener('click', async () => {
-            if (confirm('Tem a certeza que deseja terminar a sessão?')) {
+            if (confirm('Encerrar sessão de forma segura?')) {
                 await signOut(auth);
                 window.location.href = 'login.html';
             }
