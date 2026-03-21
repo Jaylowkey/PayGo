@@ -28,10 +28,16 @@
     .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
     .glass-nav { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.08); }
     .glass-card { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
-    .sidebar-link.active { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-left: 3px solid #3b82f6; font-weight: 700; }
     
     .status-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; }
     
+    /* Tabs */
+    .tab-btn { position: relative; transition: all 0.3s ease; }
+    .tab-btn.active { color: #60a5fa; background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.3); font-weight: 700; }
+    .tab-content { display: none; animation: fadeIn 0.3s ease; }
+    .tab-content.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
     /* Modal Animation */
     .modal { display: none; position: fixed; inset: 0; z-index: 10000; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; }
     .modal.active { display: flex; opacity: 1; }
@@ -58,7 +64,7 @@
         <div class="bg-gradient-to-tr from-brand-500 to-brand-400 p-2.5 rounded-xl text-white"><i data-lucide="shield-alert" class="w-5 h-5"></i></div>
         <div>
             <span class="text-xl font-display font-bold text-white">Auditoria</span>
-            <span class="text-[10px] text-danger-400 ml-2 px-2 py-0.5 bg-danger-500/10 border border-danger-500/20 rounded-full font-black uppercase tracking-widest">Logs</span>
+            <span class="text-[10px] text-danger-400 ml-2 px-2 py-0.5 bg-danger-500/10 border border-danger-500/20 rounded-full font-black uppercase tracking-widest">Caixa Negra</span>
         </div>
       </div>
       <a href="dashboard.html" class="hidden lg:flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-white transition-colors bg-slate-800 px-4 py-2 rounded-lg border border-slate-700">
@@ -71,8 +77,8 @@
     
     <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
       <div>
-        <h1 class="text-3xl font-display font-extrabold text-white tracking-tight">Registo de Webhooks</h1>
-        <p class="text-slate-400 text-sm mt-1">Monitorize todas as comunicações da PaySuite em tempo real.</p>
+        <h1 class="text-3xl font-display font-extrabold text-white tracking-tight">Centro de Monitorização</h1>
+        <p class="text-slate-400 text-sm mt-1">Acompanhe as ações da Equipa e os disparos técnicos (Webhooks).</p>
       </div>
       <div class="flex items-center gap-2 bg-slate-900/50 px-4 py-2 rounded-xl border border-slate-800">
         <span class="relative flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span></span>
@@ -80,7 +86,35 @@
       </div>
     </div>
 
-    <div class="glass-card rounded-2xl p-0 overflow-hidden shadow-lg border border-slate-800">
+    <div class="flex gap-2 mb-6 border-b border-slate-800 pb-px">
+        <button onclick="window.switchTab('audit')" id="tab-audit" class="tab-btn active px-6 py-3 rounded-t-xl text-sm font-medium text-slate-400 border border-transparent border-b-0 hover:text-slate-200">
+            <i data-lucide="users" class="w-4 h-4 inline-block mr-2 mb-0.5"></i> Ações da Equipa
+        </button>
+        <button onclick="window.switchTab('webhook')" id="tab-webhook" class="tab-btn px-6 py-3 rounded-t-xl text-sm font-medium text-slate-400 border border-transparent border-b-0 hover:text-slate-200">
+            <i data-lucide="webhook" class="w-4 h-4 inline-block mr-2 mb-0.5"></i> Webhooks Brutos
+        </button>
+    </div>
+
+    <div id="content-audit" class="tab-content active glass-card rounded-2xl p-0 overflow-hidden shadow-lg border border-slate-800">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left whitespace-nowrap">
+          <thead class="bg-slate-900/80 text-[10px] uppercase text-slate-400 border-b border-white/5">
+            <tr>
+              <th class="py-4 px-6 font-bold">Data / Hora</th>
+              <th class="py-4 px-6 font-bold">Operador (Admin)</th>
+              <th class="py-4 px-6 font-bold">Ação Executada</th>
+              <th class="py-4 px-6 font-bold">Alvo (ID)</th>
+              <th class="py-4 px-6 text-right font-bold">Carga de Dados</th>
+            </tr>
+          </thead>
+          <tbody id="auditTableBody" class="divide-y divide-slate-800/50">
+            <tr><td colspan="5" class="text-center py-12 text-slate-500"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto mb-2"></i>A escutar os servidores...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="content-webhook" class="tab-content glass-card rounded-2xl p-0 overflow-hidden shadow-lg border border-slate-800">
       <div class="overflow-x-auto">
         <table class="w-full text-sm text-left whitespace-nowrap">
           <thead class="bg-slate-900/80 text-[10px] uppercase text-slate-400 border-b border-white/5">
@@ -92,8 +126,8 @@
               <th class="py-4 px-6 text-right font-bold">Carga de Dados</th>
             </tr>
           </thead>
-          <tbody id="logsTableBody" class="divide-y divide-slate-800/50">
-            <tr><td colspan="5" class="text-center py-12 text-slate-500"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto mb-2"></i>A escutar os servidores...</td></tr>
+          <tbody id="webhookTableBody" class="divide-y divide-slate-800/50">
+            <tr><td colspan="5" class="text-center py-12 text-slate-500"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto mb-2"></i>A escutar Webhooks...</td></tr>
           </tbody>
         </table>
       </div>
@@ -105,15 +139,12 @@
     <div class="modal-overlay" onclick="window.closeModal()"></div>
     <div class="modal-content flex flex-col h-full md:h-auto border border-slate-700">
       <div class="flex justify-between items-center p-5 border-b border-white/10 bg-slate-900 sticky top-0 z-10 rounded-t-[20px]">
-        <h2 class="text-lg font-display font-bold text-white flex items-center gap-2"><i data-lucide="code-2" class="w-5 h-5 text-brand-400"></i> Inspeção de Payload</h2>
+        <h2 class="text-lg font-display font-bold text-white flex items-center gap-2"><i data-lucide="code-2" class="w-5 h-5 text-brand-400"></i> Inspeção Detalhada</h2>
         <button onclick="window.closeModal()" class="text-slate-400 hover:text-white transition"><i data-lucide="x" class="w-5 h-5"></i></button>
       </div>
       <div class="p-6 bg-slate-950 flex-1">
-        <div class="mb-4 flex flex-col gap-1 text-sm text-slate-400 border-b border-slate-800 pb-4">
-            <p><strong class="text-slate-300">Ação do Sistema:</strong> <span id="modalAction" class="text-brand-300"></span></p>
-            <p><strong class="text-slate-300">Mensagem de Erro:</strong> <span id="modalError" class="text-danger-400">Nenhum</span></p>
-            <p><strong class="text-slate-300">IP de Origem:</strong> <span id="modalIp" class="font-mono"></span></p>
-        </div>
+        <div class="mb-4 flex flex-col gap-1 text-sm text-slate-400 border-b border-slate-800 pb-4" id="modalMetaInfo">
+            </div>
         <div class="json-view" id="jsonContainer">{}</div>
       </div>
     </div>
@@ -138,7 +169,17 @@
     const db = getFirestore(app, "paygodb");
 
     lucide.createIcons();
-    let logsCache = [];
+    let auditCache = [];
+    let webhookCache = [];
+
+    // Sistema de Tabs
+    window.switchTab = (tabName) => {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        
+        document.getElementById(`tab-${tabName}`).classList.add('active');
+        document.getElementById(`content-${tabName}`).classList.add('active');
+    };
 
     // Proteção de Rota Admin
     onAuthStateChanged(auth, async (user) => {
@@ -147,7 +188,8 @@
         if (!docSnap.exists() || (docSnap.data().role !== 'admin' && docSnap.data().role !== 'superadmin')) {
             window.location.href = 'index.html';
         } else {
-            startListeningLogs();
+            startListeningAuditLogs();
+            startListeningWebhooks();
         }
     });
 
@@ -156,53 +198,60 @@
         json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
             let cls = 'json-number';
-            if (/^"/.test(match)) {
-                if (/:$/.test(match)) cls = 'json-key'; else cls = 'json-string';
-            } else if (/true|false/.test(match)) { cls = 'json-boolean'; } 
+            if (/^"/.test(match)) { if (/:$/.test(match)) cls = 'json-key'; else cls = 'json-string'; } 
+            else if (/true|false/.test(match)) { cls = 'json-boolean'; } 
             else if (/null/.test(match)) { cls = 'text-slate-500'; }
             return '<span class="' + cls + '">' + match + '</span>';
         });
     }
 
-    function startListeningLogs() {
-        const q = query(collection(db, "webhook_logs"), orderBy("createdAt", "desc"), limit(50));
-        
+    // =====================================
+    // 🛡️ OUVINTE: AUDITORIA DA EQUIPA
+    // =====================================
+    function startListeningAuditLogs() {
+        const q = query(collection(db, "admin_audit_logs"), orderBy("createdAt", "desc"), limit(50));
         onSnapshot(q, (snapshot) => {
-            logsCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-            renderTable();
+            auditCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+            renderAuditTable();
         });
     }
 
-    function renderTable() {
-        const tbody = document.getElementById('logsTableBody');
-        if (logsCache.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-slate-500">Sem registos recentes.</td></tr>`;
+    function renderAuditTable() {
+        const tbody = document.getElementById('auditTableBody');
+        if (auditCache.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-slate-500">Sem registos da equipa.</td></tr>`;
             return;
         }
 
-        tbody.innerHTML = logsCache.map(log => {
+        tbody.innerHTML = auditCache.map(log => {
             const dataStr = new Date(log.createdAt).toLocaleString('pt-MZ');
             
-            let badgeClass = 'bg-slate-800 text-slate-400 border-slate-700';
-            let icon = 'clock';
-            if (log.status === 'processed') { badgeClass = 'bg-success-500/10 text-success-400 border-success-500/20'; icon = 'check-circle'; }
-            if (log.status === 'error') { badgeClass = 'bg-danger-500/10 text-danger-400 border-danger-500/20'; icon = 'alert-triangle'; }
-            if (log.status === 'ignored') { badgeClass = 'bg-warning-500/10 text-warning-400 border-warning-500/20'; icon = 'slash'; }
+            // Decodificador de Ação
+            let actionBadge = 'bg-slate-800 text-slate-400';
+            let actionName = log.action;
+            let iconUser = 'user';
+            
+            if (log.action === 'UPDATE_ORDER_STATUS') { actionBadge = 'bg-brand-500/20 text-brand-400'; actionName = 'MUDOU FASE LOGÍSTICA'; }
+            if (log.action === 'ADD_INTERNAL_NOTE') { actionBadge = 'bg-warning-500/20 text-warning-400'; actionName = 'ANOTOU SEGREDO'; }
+            if (log.action === 'TOGGLE_PAYMENT_STATUS') { actionBadge = 'bg-success-500/20 text-success-400'; actionName = 'VERIFICOU PAGAMENTO'; }
+            if (log.action === 'DELETE_ORDER') { actionBadge = 'bg-danger-500/20 text-danger-400'; actionName = 'DESTRUIU PEDIDO'; }
+            if (log.action === 'PAGAMENTO_CONFIRMADO') { actionBadge = 'bg-purple-500/20 text-purple-400'; actionName = 'PAYSUITE AUTO-PAY'; iconUser = 'bot'; } // Acionado pelo Robô!
 
             return `
             <tr class="hover:bg-slate-800/40 transition-colors border-b border-slate-800/50">
                 <td class="py-4 px-6 text-slate-300 font-mono text-xs">${dataStr}</td>
                 <td class="py-4 px-6">
-                    <div class="font-bold text-white text-sm">${log.event}</div>
-                    <div class="text-[10px] text-slate-500 uppercase tracking-widest">${log.source} (${log.method})</div>
+                    <div class="font-bold text-white text-sm flex items-center gap-2">
+                        <i data-lucide="${iconUser}" class="w-4 h-4 text-slate-500"></i> ${log.adminName || 'Desconhecido'}
+                    </div>
                 </td>
-                <td class="py-4 px-6 text-brand-400 font-mono text-sm">${log.orderId || 'S/N'}</td>
                 <td class="py-4 px-6">
-                    <span class="status-badge ${badgeClass}"><i data-lucide="${icon}" class="w-3 h-3"></i> ${log.status}</span>
+                    <span class="status-badge ${actionBadge}">${actionName}</span>
                 </td>
+                <td class="py-4 px-6 text-slate-400 font-mono text-xs border-l border-white/5 bg-slate-900/30">${log.targetId}</td>
                 <td class="py-4 px-6 text-right">
-                    <button onclick="window.viewPayload('${log.id}')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-bold transition flex items-center gap-2 inline-flex border border-slate-700">
-                        <i data-lucide="braces" class="w-4 h-4"></i> Inspecionar
+                    <button onclick="window.viewAuditPayload('${log.id}')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-bold transition flex items-center gap-2 inline-flex border border-slate-700">
+                        <i data-lucide="eye" class="w-4 h-4"></i> O que Mudou?
                     </button>
                 </td>
             </tr>`;
@@ -210,19 +259,87 @@
         lucide.createIcons();
     }
 
-    window.viewPayload = (id) => {
-        const log = logsCache.find(l => l.id === id);
+    // =====================================
+    // 🌐 OUVINTE: WEBHOOKS BRUTOS
+    // =====================================
+    function startListeningWebhooks() {
+        const q = query(collection(db, "webhook_logs"), orderBy("createdAt", "desc"), limit(50));
+        onSnapshot(q, (snapshot) => {
+            webhookCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+            renderWebhookTable();
+        });
+    }
+
+    function renderWebhookTable() {
+        const tbody = document.getElementById('webhookTableBody');
+        if (webhookCache.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-slate-500">Sem comunicações externas.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = webhookCache.map(log => {
+            const dataStr = log.createdAt ? new Date(log.createdAt).toLocaleString('pt-MZ') : (log.receivedAt ? new Date(log.receivedAt).toLocaleString('pt-MZ') : 'N/A');
+            
+            let badgeClass = 'bg-slate-800 text-slate-400 border-slate-700';
+            let icon = 'clock';
+            if (log.status === 'processed') { badgeClass = 'bg-success-500/10 text-success-400 border-success-500/20'; icon = 'check-circle'; }
+            if (log.status === 'error') { badgeClass = 'bg-danger-500/10 text-danger-400 border-danger-500/20'; icon = 'alert-triangle'; }
+            if (log.status === 'ignored') { badgeClass = 'bg-warning-500/10 text-warning-400 border-warning-500/20'; icon = 'slash'; }
+            if (log.status === 'received') { badgeClass = 'bg-brand-500/10 text-brand-400 border-brand-500/20'; icon = 'download'; }
+
+            return `
+            <tr class="hover:bg-slate-800/40 transition-colors border-b border-slate-800/50">
+                <td class="py-4 px-6 text-slate-300 font-mono text-xs">${dataStr}</td>
+                <td class="py-4 px-6">
+                    <div class="font-bold text-white text-sm">${log.event || 'Payload Raw'}</div>
+                    <div class="text-[10px] text-slate-500 uppercase tracking-widest">${log.source || 'Desconhecido'}</div>
+                </td>
+                <td class="py-4 px-6 text-brand-400 font-mono text-sm">${log.orderId || 'S/N'}</td>
+                <td class="py-4 px-6">
+                    <span class="status-badge ${badgeClass}"><i data-lucide="${icon}" class="w-3 h-3"></i> ${log.status || 'received'}</span>
+                </td>
+                <td class="py-4 px-6 text-right">
+                    <button onclick="window.viewWebhookPayload('${log.id}')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-bold transition flex items-center gap-2 inline-flex border border-slate-700">
+                        <i data-lucide="braces" class="w-4 h-4"></i> Ver JSON
+                    </button>
+                </td>
+            </tr>`;
+        }).join('');
+        lucide.createIcons();
+    }
+
+    // =====================================
+    // 🔍 VISUALIZADORES DE MODAL
+    // =====================================
+    window.viewAuditPayload = (id) => {
+        const log = auditCache.find(l => l.id === id);
         if (!log) return;
 
-        document.getElementById('jsonContainer').innerHTML = syntaxHighlight(log.payload);
-        document.getElementById('modalAction').textContent = log.actionTaken || 'Nenhuma ação executada';
-        document.getElementById('modalError').textContent = log.errorMsg || 'Nenhum erro registado';
-        document.getElementById('modalIp').textContent = log.ip || 'Desconhecido';
+        document.getElementById('modalMetaInfo').innerHTML = `
+            <p><strong class="text-slate-300">Responsável:</strong> <span class="text-brand-300">${log.adminName}</span> <span class="text-xs text-slate-600">(${log.adminId})</span></p>
+            <p><strong class="text-slate-300">IP Rastreado:</strong> <span class="font-mono text-warning-300">${log.ip || 'Interno'}</span></p>
+        `;
+        document.getElementById('jsonContainer').innerHTML = syntaxHighlight(log.details || { aviso: "Sem detalhes de alteração registados." });
+        openModalBox();
+    };
 
+    window.viewWebhookPayload = (id) => {
+        const log = webhookCache.find(l => l.id === id);
+        if (!log) return;
+
+        document.getElementById('modalMetaInfo').innerHTML = `
+            <p><strong class="text-slate-300">Resultado do Webhook:</strong> <span class="text-brand-300">${log.actionTaken || 'Nenhuma ação/Sem resposta'}</span></p>
+            <p><strong class="text-slate-300">Erro Analisado:</strong> <span class="text-danger-400">${log.errorMsg || 'Limpo (Sem erros)'}</span></p>
+        `;
+        document.getElementById('jsonContainer').innerHTML = syntaxHighlight(log.payload || log.rawPayload || { aviso: "Payload corrompido." });
+        openModalBox();
+    };
+
+    function openModalBox() {
         const modal = document.getElementById('payloadModal');
         modal.style.display = 'flex';
         setTimeout(() => modal.classList.add('active'), 10);
-    };
+    }
 
     window.closeModal = () => {
         const modal = document.getElementById('payloadModal');
