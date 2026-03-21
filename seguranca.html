@@ -225,6 +225,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, applyActionCode, verifyPasswordResetCode, confirmPasswordReset } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
@@ -237,6 +238,7 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        const db = getFirestore(app, "paygodb");
 
         lucide.createIcons();
 
@@ -288,7 +290,6 @@
             setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 5000);
         }
 
-        // Função de Contagem Decrescente Centralizada
         function startCountdown(elementId, redirectUrl) {
             let count = 4;
             const countDisplay = document.getElementById(elementId);
@@ -305,10 +306,9 @@
         // === MÁQUINA DE ESTADOS PRINCIPAL ===
         document.addEventListener('DOMContentLoaded', async () => {
             const urlParams = new URLSearchParams(window.location.search);
-            const mode = urlParams.get('mode'); // 'verifyEmail' ou 'resetPassword'
+            const mode = urlParams.get('mode'); 
             const actionCode = urlParams.get('oobCode');
 
-            // Mapeamento das caixas
             const stateLoad = document.getElementById('loadingState');
             const stateSuccessVerify = document.getElementById('successVerifyState');
             const stateFormReset = document.getElementById('resetFormState');
@@ -316,14 +316,14 @@
             const stateError = document.getElementById('errorState');
             const errorMsg = document.getElementById('errorMsg');
 
-            // UX: Delay natural para simular análise
+            // UX Delay
             await new Promise(r => setTimeout(r, 1200)); 
 
-            // Se o URL estiver incompleto
             if (!actionCode || !mode) {
                 stateLoad.classList.add('hidden');
                 errorMsg.textContent = "O link acedido está incompleto ou o formato não é reconhecido pelos nossos servidores.";
                 stateError.classList.remove('hidden');
+                lucide.createIcons();
                 return;
             }
 
@@ -331,8 +331,22 @@
             if (mode === 'verifyEmail') {
                 try {
                     await applyActionCode(auth, actionCode);
+                    
+                    // 🚀 Se o cliente estiver com sessão iniciada no mesmo browser, ativamos a conta no Firestore na hora!
+                    auth.onAuthStateChanged(async (user) => {
+                        if (user) {
+                            try {
+                                await updateDoc(doc(db, "users", user.uid), {
+                                    emailVerified: true,
+                                    status: 'active'
+                                });
+                            } catch(e) { console.warn("Não foi possível atualizar o Firestore:", e); }
+                        }
+                    });
+
                     stateLoad.classList.add('hidden');
                     stateSuccessVerify.classList.remove('hidden');
+                    lucide.createIcons();
                     startCountdown('countdownVerify', 'login.html');
                 } catch (error) {
                     console.error(error);
@@ -343,19 +357,19 @@
                         errorMsg.textContent = "Link inválido ou já utilizado. O seu email pode já se encontrar verificado.";
                     }
                     stateError.classList.remove('hidden');
+                    lucide.createIcons();
                 }
             } 
             
             // FLUXO 2: RECUPERAÇÃO DE SENHA
             else if (mode === 'resetPassword') {
                 try {
-                    // 1. Verifica se o link é válido
                     const email = await verifyPasswordResetCode(auth, actionCode);
                     
-                    // 2. Mostra o formulário
                     document.getElementById('resetEmailDisplay').textContent = email;
                     stateLoad.classList.add('hidden');
                     stateFormReset.classList.remove('hidden');
+                    lucide.createIcons();
 
                 } catch (error) {
                     console.error(error);
@@ -366,13 +380,14 @@
                         errorMsg.textContent = "Este link é inválido. A senha pode já ter sido alterada através dele.";
                     }
                     stateError.classList.remove('hidden');
+                    lucide.createIcons();
                 }
             } 
-            // Modo não suportado
             else {
                 stateLoad.classList.add('hidden');
                 errorMsg.textContent = "Operação de segurança não suportada no momento.";
                 stateError.classList.remove('hidden');
+                lucide.createIcons();
             }
             
             // Lógica de Submissão do Formulário de Redefinição
@@ -403,17 +418,19 @@
                 lucide.createIcons({root: btn});
 
                 try {
-                    // Gravar a nova senha
                     await confirmPasswordReset(auth, actionCode, pwd);
                     
-                    // Mostrar painel de Sucesso Reset
                     stateFormReset.classList.add('hidden');
                     stateSuccessReset.classList.remove('hidden');
+                    lucide.createIcons();
                     startCountdown('countdownReset', 'login.html');
 
                 } catch(error) {
                     console.error(error);
-                    showToast('Ocorreu um erro ao gravar a senha. O link pode ter expirado.', 'error');
+                    let errMsg = 'Ocorreu um erro ao gravar a senha. O link pode ter expirado.';
+                    if (error.code === 'auth/weak-password') errMsg = 'A senha fornecida é demasiado fraca.';
+                    
+                    showToast(errMsg, 'error');
                     btn.disabled = false;
                     btnText.textContent = "Tentar Novamente";
                     btnIcon.setAttribute('data-lucide', 'arrow-right');
