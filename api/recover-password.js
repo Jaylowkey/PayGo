@@ -39,23 +39,17 @@ export default async function handler(req, res) {
     if (!email) return res.status(400).json({ error: 'Email missing' });
 
     const auth = getAuth();
-    
-    // 🎯 O TRUQUE DE MESTRE: Forçar o domínio oficial com 'www' cravado na pedra!
-    // Ignoramos o VERCEL_URL porque ele usa domínios provisórios que o Firebase bloqueia.
     const baseUrl = 'https://www.paygo.co.mz';
     
-    // 1. Firebase Admin gera o Link Oficial e Seguro
-    const actionCodeSettings = {
-      url: `${baseUrl}/login.html`, // Para onde o cliente volta depois de redefinir
-      handleCodeInApp: false
-    };
-    
-    const firebaseLink = await auth.generatePasswordResetLink(email, actionCodeSettings);
+    // 🎯 A JOGADA DE MESTRE: Pedimos o link ao Firebase SEM lhe dar as regras de domínio.
+    // Assim ele não bloqueia com o "INTERNAL ASSERT FAILED".
+    const firebaseLink = await auth.generatePasswordResetLink(email);
 
-    // 2. Extrair o Token do Firebase e injetar no HTML da PayGo
+    // 🕵️‍♂️ Extrair "à força" o Token Secreto (oobCode) gerado pelo Firebase
     const urlObj = new URL(firebaseLink);
     const oobCode = urlObj.searchParams.get('oobCode');
     
+    // Construímos o nosso link limpo, com o nosso domínio e o nosso ecrã de segurança!
     const customResetLink = `${baseUrl}/seguranca.html?mode=resetPassword&oobCode=${oobCode}`;
 
     // 3. Criar o HTML Premium
@@ -110,6 +104,7 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error('❌ Erro na recuperação de senha:', error);
     
+    // Se o utilizador não existir, damos a resposta como OK para evitar ataques de força bruta a descobrir e-mails
     if (error.code === 'auth/user-not-found') {
         return res.status(200).json({ success: true }); 
     }
