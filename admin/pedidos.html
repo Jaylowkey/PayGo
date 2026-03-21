@@ -66,7 +66,7 @@ body { background-color: #020617; color: #f8fafc; overflow-x: hidden; -webkit-fo
 .toast.success { border-left-color: #22c55e; }
 .toast.warning { border-left-color: #f59e0b; }
 
-/* Modal Premium (Glassmorphism) */
+/* Modal Premium */
 .modal-wrapper { display: none; position: fixed; inset: 0; z-index: 10000; align-items: center; justify-content: center; }
 .modal-wrapper.active { display: flex; }
 .modal-backdrop { position: absolute; inset: 0; background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(8px); opacity: 0; transition: opacity 0.3s ease; }
@@ -300,7 +300,6 @@ const firebaseConfig = {
     appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app, "paygodb");
 const auth = getAuth(app);
@@ -377,7 +376,6 @@ async function sendNotificationEmail(order, actionType) {
     }
 }
 
-// 🛡️ NOVIDADE: Envio da Ação para a Caixa Negra
 async function logAdminAction(actionCode, targetId, previousData, newData) {
     if(!loggedInAdminId) return; 
     
@@ -401,11 +399,30 @@ async function logAdminAction(actionCode, targetId, previousData, newData) {
 }
 
 // ==========================================
-// 📦 BASE DE DADOS (SYNC REAL-TIME)
+// 📦 BASE DE DADOS (SYNC REAL-TIME) E RADAR AUTOMÁTICO
 // ==========================================
 function loadOrdersRealTime() {
     const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
+    let isFirstLoad = true;
+
     ordersUnsubscribe = onSnapshot(q, (snapshot) => {
+        // 🚨 O RADAR: Deteta pagamentos automáticos do Webhook PaySuite!
+        if (!isFirstLoad) {
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === "modified") {
+                    const newData = change.doc.data();
+                    const oldOrder = orders.find(o => o.id === change.doc.id);
+                    
+                    // Compara se o Webhook alterou o pagamento para TRUE!
+                    if (oldOrder && !oldOrder.isPaid && newData.isPaid) {
+                        const fatura = newData.orderId || `ORD-${change.doc.id.slice(0, 8)}`;
+                        showToast(`💰 ALERTA DE RECEITA: Pagamento da fatura ${fatura} confirmado!`, 'success');
+                    }
+                }
+            });
+        }
+
+        // Mapeia todos os dados normais
         orders = snapshot.docs.map(doc => {
             const data = doc.data();
             return {
@@ -425,17 +442,21 @@ function loadOrdersRealTime() {
                 referredBy: data.referredBy || null,
                 userId: data.userId || null,
                 commissionProcessed: data.commissionProcessed || false,
-                adminNotes: data.adminNotes || [], // 🌟 NOTAS INTERNAS CARREGADAS AQUI
+                adminNotes: data.adminNotes || [], 
                 createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : new Date()),
                 paysuitePaymentId: data.paysuitePaymentId || null
             };
         });
+
         window.renderOrders();
         
-        // Se o modal estiver aberto, atualizamos as notas em tempo real para não fechar a janela à equipa
+        // Mantém a janela modal atualizada se estiver aberta
         if (currentOrderId && document.getElementById('orderModal').classList.contains('active')) {
             window.openModal(currentOrderId, true); 
         }
+        
+        isFirstLoad = false;
+
     }, (error) => {
         console.error('Erro de permissão/real-time:', error);
         showToast('Acesso Restrito ao Servidor de Dados.', 'error');
@@ -495,7 +516,6 @@ window.renderOrders = function() {
             'refunded': '<span class="status-badge refunded shadow-sm">🟣 Reembolsado</span>'
         }[order.status] || `<span class="status-badge bg-slate-800 border border-slate-700">${order.status}</span>`;
 
-        // Indicador Visual de Notas
         const notesIcon = order.adminNotes && order.adminNotes.length > 0 
             ? `<span class="ml-2 text-warning-500" title="Contém Notas Secretas"><i data-lucide="sticky-note" class="w-3 h-3 inline"></i></span>` : '';
 
@@ -562,7 +582,6 @@ window.addInternalNote = async (orderId) => {
         await logAdminAction('ADD_INTERNAL_NOTE', orderId, null, { noteAdded: text });
         
         showToast('Nota confidencial guardada no dossier.', 'success');
-        // O RealTime listener fará a janela atualizar sozinha.
         
     } catch(e) {
         console.error(e);
@@ -586,7 +605,6 @@ window.openModal = (orderId, isSilentUpdate = false) => {
     let trackHtml = order.paysuitePaymentId ? 
         `<div class="flex justify-between items-center mt-3 pt-3 border-t border-white/5"><p class="text-[10px] font-bold text-slate-500 uppercase">Referência PaySuite</p><p class="font-mono text-xs text-brand-300 bg-brand-500/10 px-2 py-1 rounded border border-brand-500/20">${order.paysuitePaymentId}</p></div>` : '';
 
-    // 🌟 GERAÇÃO HTML DAS NOTAS INTERNAS
     let notesHtml = '';
     if (order.adminNotes && order.adminNotes.length > 0) {
         notesHtml = order.adminNotes.map(n => `
@@ -696,7 +714,7 @@ window.closeModal = () => {
 };
 
 // ==========================================
-// 💾 AÇÕES DE GESTÃO DO MODAL
+// 💾 AÇÕES DE GESTÃO DO MODAL E AFILIADOS
 // ==========================================
 window.saveOrderStatus = async () => {
     if (!currentOrderId) return;
@@ -745,120 +763,115 @@ window.saveOrderStatus = async () => {
 };
 
 async function processAffiliateCPA(order) {
-try {
-const q = query(collection(db, "users"), where("affiliateCode", "==", order.referredBy), where("role", "==", "affiliate"));
-const snap = await getDocs(q);
-if(snap.empty) return;
+    try {
+        const q = query(collection(db, "users"), where("affiliateCode", "==", order.referredBy), where("role", "==", "affiliate"));
+        const snap = await getDocs(q);
+        if(snap.empty) return;
 
-const refDoc = snap.docs[0];
-const refData = refDoc.data();
+        const refDoc = snap.docs[0];
+        const refData = refDoc.data();
 
-const qClient = query(collection(db, "orders"), where("email", "==", order.email), where("status", "==", "completed"));
-const snapClient = await getDocs(qClient);
-if(snapClient.size > 1) return;
+        const commissionValue = order.tax * (refData.approvedReferrals >= 10 ? 0.05 : 0.03);
 
-const commissionValue = order.tax * (refData.approvedReferrals >= 10 ? 0.05 : 0.03);
+        await updateDoc(doc(db, "users", refDoc.id), {
+            affiliateEarnings: increment(commissionValue),
+            approvedReferrals: increment(1)
+        });
 
-await updateDoc(doc(db, "users", refDoc.id), {
-affiliateEarnings: increment(commissionValue),
-approvedReferrals: increment(1)
-});
-
-console.log(`Comissão de ${commissionValue} creditada!`);
-} catch(e) {
-console.error("Falha ao distribuir comissões", e);
-}
+        console.log(`Comissão de ${commissionValue} creditada!`);
+    } catch(e) {
+        console.error("Falha ao distribuir comissões", e);
+    }
 }
 
 window.togglePaymentStatus = async (orderId, isCurrentlyPaid) => {
-const newStatus = !isCurrentlyPaid;
-const order = orders.find(o => o.id === orderId);
-try {
-    await updateDoc(doc(db, "orders", orderId), { isPaid: newStatus });
-    
-    // 🔥 REGISTO DE AUDITORIA INVISÍVEL
-    await logAdminAction('TOGGLE_PAYMENT_STATUS', orderId, { isPaid: isCurrentlyPaid }, { isPaid: newStatus });
+    const newStatus = !isCurrentlyPaid;
+    const order = orders.find(o => o.id === orderId);
+    try {
+        await updateDoc(doc(db, "orders", orderId), { isPaid: newStatus });
+        
+        // 🔥 REGISTO DE AUDITORIA INVISÍVEL
+        await logAdminAction('TOGGLE_PAYMENT_STATUS', orderId, { isPaid: isCurrentlyPaid }, { isPaid: newStatus });
 
-    showToast(newStatus ? 'Validado como PAGO!' : 'Assinatura Financeira Removida.', 'success');
+        showToast(newStatus ? 'Validado como PAGO!' : 'Assinatura Financeira Removida.', 'success');
 
-    if (newStatus === true) {
-        showToast('Servidor de Emails ativado (Envio Silencioso).', 'info');
-        await sendNotificationEmail(order, 'paid');
+        if (newStatus === true) {
+            showToast('Servidor de Emails ativado (Envio Silencioso).', 'info');
+            await sendNotificationEmail(order, 'paid');
+        }
+        window.closeModal();
+    } catch (e) {
+        console.error('Erro ao atualizar pagamento:', e);
+        showToast('Falha técnica.', 'error');
     }
-    window.closeModal();
-} catch (e) {
-    console.error('Erro ao atualizar pagamento:', e);
-    showToast('Falha técnica.', 'error');
-}
 };
 
 window.deleteSingleOrder = async (orderId) => {
-const confirm1 = confirm(`⚠️ PERIGO EXTREMO ⚠️\n\nTem a certeza absoluta que deseja APAGAR PERMANENTEMENTE a conta deste pedido?`);
-if(!confirm1) return;
+    const confirm1 = confirm(`⚠️ PERIGO EXTREMO ⚠️\n\nTem a certeza absoluta que deseja APAGAR PERMANENTEMENTE a conta deste pedido?`);
+    if(!confirm1) return;
 
-try {
-    // 🔥 REGISTO DE AUDITORIA INVISÍVEL (Antes de apagar para garantir que fica na DB)
-    await logAdminAction('DELETE_ORDER', orderId, { order_id: orderId }, null);
+    try {
+        // 🔥 REGISTO DE AUDITORIA INVISÍVEL
+        await logAdminAction('DELETE_ORDER', orderId, { order_id: orderId }, null);
 
-    await deleteDoc(doc(db, "orders", orderId));
-    showToast(`O documento foi eliminado e vaporizado do sistema.`, 'success');
-    window.closeModal();
-} catch(error) {
-    console.error(error);
-    showToast('Falha técnica ao tentar eliminar o documento da Base de Dados.', 'error');
-}
+        await deleteDoc(doc(db, "orders", orderId));
+        showToast(`O documento foi eliminado e vaporizado do sistema.`, 'success');
+        window.closeModal();
+    } catch(error) {
+        console.error(error);
+        showToast('Falha técnica ao tentar eliminar o documento da Base de Dados.', 'error');
+    }
 };
 
 window.clearHistory = async () => {
-if (currentFilteredOrders.length === 0) return showToast('Aviso: O seu ecrã não possui pedidos visíveis para purgar.', 'warning');
+    if (currentFilteredOrders.length === 0) return showToast('Aviso: O seu ecrã não possui pedidos visíveis para purgar.', 'warning');
 
-const qty = currentFilteredOrders.length;
-if (!confirm(`⚠️ ALERTA VERMELHO ⚠️\n\nIsto irá varrer da base de dados TODOS os ${qty} pedidos que você filtrou no ecrã. Não há volta a dar.\nProceder com a purga tática?`)) return;
+    const qty = currentFilteredOrders.length;
+    if (!confirm(`⚠️ ALERTA VERMELHO ⚠️\n\nIsto irá varrer da base de dados TODOS os ${qty} pedidos que você filtrou no ecrã. Não há volta a dar.\nProceder com a purga tática?`)) return;
 
-showToast('A preparar injeção de eliminação em massa...', 'info');
+    showToast('A preparar injeção de eliminação em massa...', 'info');
 
-try {
-    // 🔥 REGISTO DE AUDITORIA INVISÍVEL
-    await logAdminAction('BULK_DELETE_ORDERS', 'multiple', null, { deletedCount: qty });
+    try {
+        // 🔥 REGISTO DE AUDITORIA INVISÍVEL
+        await logAdminAction('BULK_DELETE_ORDERS', 'multiple', null, { deletedCount: qty });
 
-    const batch = writeBatch(db);
-    currentFilteredOrders.forEach(order => {
-        batch.delete(doc(db, "orders", order.id));
-    });
-    await batch.commit();
-    showToast(`Operação Global: ${qty} Documentos Destruídos.`, 'success');
-} catch (e) {
-    console.error('Erro em batch delete:', e);
-    showToast('O servidor bloqueou a execução em massa (Limites).', 'error');
-}
+        const batch = writeBatch(db);
+        currentFilteredOrders.forEach(order => {
+            batch.delete(doc(db, "orders", order.id));
+        });
+        await batch.commit();
+        showToast(`Operação Global: ${qty} Documentos Destruídos.`, 'success');
+    } catch (e) {
+        console.error('Erro em batch delete:', e);
+        showToast('O servidor bloqueou a execução em massa (Limites).', 'error');
+    }
 };
 
 window.exportToCSV = () => {
-if (currentFilteredOrders.length === 0) { showToast('Dados insuficientes para gerar relatório Contabilístico.', 'warning'); return; }
+    if (currentFilteredOrders.length === 0) { showToast('Dados insuficientes para gerar relatório Contabilístico.', 'warning'); return; }
 
-// 🔥 REGISTO DE AUDITORIA INVISÍVEL
-logAdminAction('EXPORT_CSV', 'all', null, { exportedCount: currentFilteredOrders.length });
+    logAdminAction('EXPORT_CSV', 'all', null, { exportedCount: currentFilteredOrders.length });
 
-let csvContent = "ID de Transacao,Data Servidor,Hora Servidor,Entidade Cliente,Email Contacto,Canal Telemovel,Verificacao Dinheiro,Total Faturado (MT),Etapa Logistica,Resumo Tecnico (Produto)\n";
+    let csvContent = "ID de Transacao,Data Servidor,Hora Servidor,Entidade Cliente,Email Contacto,Canal Telemovel,Verificacao Dinheiro,Total Faturado (MT),Etapa Logistica,Resumo Tecnico (Produto)\n";
 
-currentFilteredOrders.forEach(order => {
-const dateStr = order.createdAt.toLocaleDateString('pt-MZ');
-const timeStr = order.createdAt.toLocaleTimeString('pt-MZ');
-const name = `"${order.name.replace(/"/g, '""')}"`;
-const detail = `"${order.detail.replace(/"/g, '""')}"`;
-const payStatus = order.isPaid ? 'Dinheiro Confirmado' : 'Divida Pendente';
-csvContent += `${order.orderId},${dateStr},${timeStr},${name},${order.email},${order.whatsapp},${payStatus},${order.total},${order.status},${detail}\n`;
-});
+    currentFilteredOrders.forEach(order => {
+        const dateStr = order.createdAt.toLocaleDateString('pt-MZ');
+        const timeStr = order.createdAt.toLocaleTimeString('pt-MZ');
+        const name = `"${order.name.replace(/"/g, '""')}"`;
+        const detail = `"${order.detail.replace(/"/g, '""')}"`;
+        const payStatus = order.isPaid ? 'Dinheiro Confirmado' : 'Divida Pendente';
+        csvContent += `${order.orderId},${dateStr},${timeStr},${name},${order.email},${order.whatsapp},${payStatus},${order.total},${order.status},${detail}\n`;
+    });
 
-const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-const link = document.createElement("a");
-link.href = URL.createObjectURL(blob);
-link.download = `Auditoria_PayGo_Pedidos_${new Date().toISOString().split('T')[0]}.csv`;
-document.body.appendChild(link);
-link.click();
-document.body.removeChild(link);
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `Auditoria_PayGo_Pedidos_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 
-showToast('O Livro de Registos (Excel) foi descarregado.', 'success');
+    showToast('O Livro de Registos (Excel) foi descarregado.', 'success');
 };
 
 // ==========================================
@@ -870,23 +883,23 @@ const sidebarOverlay = document.getElementById('sidebarOverlay');
 const closeSidebarBtn = document.getElementById('closeSidebarBtn');
 
 function toggleMobileSidebar() {
-sidebar.classList.toggle('-translate-x-full');
-if(sidebarOverlay.classList.contains('hidden')) {
-sidebarOverlay.classList.remove('hidden');
-setTimeout(() => sidebarOverlay.classList.remove('opacity-0'), 10);
-} else {
-sidebarOverlay.classList.add('opacity-0');
-setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
-}
+    sidebar.classList.toggle('-translate-x-full');
+    if(sidebarOverlay.classList.contains('hidden')) {
+        sidebarOverlay.classList.remove('hidden');
+        setTimeout(() => sidebarOverlay.classList.remove('opacity-0'), 10);
+    } else {
+        sidebarOverlay.classList.add('opacity-0');
+        setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
+    }
 }
 mobileMenuBtn.addEventListener('click', toggleMobileSidebar);
 closeSidebarBtn.addEventListener('click', toggleMobileSidebar);
 sidebarOverlay.addEventListener('click', toggleMobileSidebar);
 
 document.addEventListener('keydown', (e) => {
-if (e.key === 'Escape' && document.getElementById('orderModal').classList.contains('active')) {
-    window.closeModal();
-}
+    if (e.key === 'Escape' && document.getElementById('orderModal').classList.contains('active')) {
+        window.closeModal();
+    }
 });
 
 window.logout = async function() { 
