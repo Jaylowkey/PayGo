@@ -164,6 +164,7 @@
         }
         .btn-premium:hover::after { left: 100%; }
         .btn-premium:active { transform: scale(0.98); }
+        .btn-premium:disabled { opacity: 0.7; cursor: not-allowed; }
         
         #toast-container {
             position: fixed; top: 20px; right: 20px; z-index: 100000;
@@ -186,6 +187,7 @@
         .toast.show { transform: translateX(0); opacity: 1; }
         .toast.success { border-left-color: #22c55e; }
         .toast.error { border-left-color: #ef4444; }
+        .toast.warning { border-left-color: #f59e0b; }
         .toast.info { border-left-color: #3b82f6; }
         
         /* Modal Styles Premium */
@@ -321,12 +323,31 @@
         </div>
     </div>
 
+    <div id="resendModal" class="modal" role="dialog" aria-modal="true">
+        <div class="modal-overlay" onclick="window.closeResendModal()"></div>
+        <div class="modal-content text-center">
+            <div class="w-16 h-16 mx-auto bg-warning-500/20 border border-warning-500/50 rounded-2xl flex items-center justify-center mb-4">
+                <i data-lucide="mail-warning" class="w-8 h-8 text-warning-400"></i>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2">Conta Pendente</h3>
+            <p class="text-slate-400 mb-6 text-sm">Por questões de segurança, a sua conta encontra-se bloqueada até confirmar o seu endereço de email. Verifique a caixa de SPAM ou solicite um novo link seguro.</p>
+            
+            <button type="button" id="btnResend" onclick="window.resendVerification()" class="w-full bg-brand-600 hover:bg-brand-500 text-white py-3.5 rounded-xl font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-brand-500/20 mb-3 btn-premium">
+                <span class="btn-text">Reenviar Link Oficial</span>
+                <i data-lucide="send" class="btn-text w-4 h-4"></i>
+                <span class="btn-spinner hidden"><i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i></span>
+            </button>
+            <button type="button" onclick="window.closeResendModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-white py-3.5 rounded-xl font-bold transition border border-slate-700 btn-premium">
+                Fechar
+            </button>
+        </div>
+    </div>
+
     <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, doc, getDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // Configuração de Segurança Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
         authDomain: "paygo-14311.firebaseapp.com",
@@ -338,7 +359,12 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    // 🎯 Foco corrigido para paygodb
     const db = getFirestore(app, "paygodb");
+
+    // Variáveis Globais de Retenção de Dados
+    let pendingUserEmail = '';
+    let pendingUserName = '';
 
     // Ferramentas da Interface UI
     window.showToast = function(message, type = 'default') {
@@ -346,8 +372,8 @@
         if (!container) return;
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
-        let icon = type === 'success' ? 'check-circle' : (type === 'error' ? 'alert-circle' : 'info');
-        let color = type === 'success' ? 'text-success-400' : (type === 'error' ? 'text-danger-400' : 'text-brand-400');
+        let icon = type === 'success' ? 'check-circle' : (type === 'error' ? 'alert-circle' : (type === 'warning' ? 'alert-triangle' : 'info'));
+        let color = type === 'success' ? 'text-success-400' : (type === 'error' ? 'text-danger-400' : (type === 'warning' ? 'text-warning-400' : 'text-brand-400'));
         toast.innerHTML = `<i data-lucide="${icon}" class="${color} w-5 h-5 flex-shrink-0"></i><span class="text-sm font-medium text-slate-200">${message}</span>`;
         container.appendChild(toast);
         if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -369,6 +395,7 @@
         if (typeof lucide !== 'undefined') lucide.createIcons();
     };
 
+    // Modal de Recuperação de Senha
     window.openForgotModal = function() {
         const modal = document.getElementById('forgotModal');
         if (modal) modal.classList.add('active');
@@ -383,8 +410,64 @@
         if (emailInput) emailInput.value = '';
     };
 
-    // Motor de Sessão Contínua (Autenticação Automática)
-   // Motor de Sessão Contínua (Autenticação Automática)
+    // 🚀 NOVO: Controlo do Modal de Reenvio
+    window.showResendModal = function(email, name) {
+        pendingUserEmail = email;
+        pendingUserName = name || 'Cliente PayGo';
+        const modal = document.getElementById('resendModal');
+        if (modal) modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    };
+
+    window.closeResendModal = function() {
+        const modal = document.getElementById('resendModal');
+        if (modal) modal.classList.remove('active');
+        document.body.style.overflow = '';
+    };
+
+    // 🚀 Lógica de Reenvio do Link de Verificação
+    window.resendVerification = async function() {
+        const btn = document.getElementById('btnResend');
+        const btnTexts = btn.querySelectorAll('.btn-text');
+        const btnSpinner = btn.querySelector('.btn-spinner');
+
+        btn.disabled = true;
+        btnTexts.forEach(el => el.classList.add('hidden'));
+        btnSpinner.classList.remove('hidden');
+
+        try {
+            const response = await fetch('/api/verify-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: pendingUserEmail, name: pendingUserName })
+            });
+
+            if (response.ok) {
+                window.showToast('✅ Um novo link oficial foi disparado para a sua caixa de entrada.', 'success');
+                window.closeResendModal();
+            } else {
+                throw new Error('Falha no servidor');
+            }
+        } catch (error) {
+            window.showToast('❌ O servidor está sobrecarregado. Tente novamente em alguns minutos.', 'error');
+        } finally {
+            btn.disabled = false;
+            btnTexts.forEach(el => el.classList.remove('hidden'));
+            btnSpinner.classList.add('hidden');
+        }
+    };
+
+    // Restauro da UI do Botão Principal
+    const resetMainLoginButton = () => {
+        const btn = document.getElementById('loginBtn');
+        if (btn) {
+            btn.disabled = false;
+            btn.querySelectorAll('.btn-text').forEach(el => el.classList.remove('hidden'));
+            btn.querySelector('.btn-spinner')?.classList.add('hidden');
+        }
+    };
+
+    // Motor de Sessão Contínua e Escolta (Autenticação Automática)
     let isHandlingLogin = false;
     onAuthStateChanged(auth, async (user) => {
         if (user && !isHandlingLogin) {
@@ -394,21 +477,32 @@
                 if (userDoc.exists()) {
                     const userData = userDoc.data();
                     
-                    // 🛡️ 1. Bloqueia Banidos
+                    // 🛡️ Defesa 1: Banidos
                     if (userData.status === 'blocked' || userData.status === 'banned') {
-                        await auth.signOut();
+                        await signOut(auth);
                         window.showToast('Acesso negado. A sua conta foi bloqueada por razões de segurança.', 'error');
+                        resetMainLoginButton();
                         return;
                     }
                     
-                    // 🛡️ 2. Bloqueia Não Verificados (O drible acaba aqui!)
-                    if (userData.status === 'pending' || userData.emailVerified === false) {
-                        await auth.signOut();
-                        window.showToast('⚠️ Acesso bloqueado. Verifique a sua caixa de e-mail e clique no link de segurança antes de entrar!', 'warning');
+                    // 🛡️ Defesa 2: Email não verificado (O drible morre aqui)
+                    // Nós olhamos diretamente para o núcleo do Google (user.emailVerified)
+                    if (user.emailVerified === true) {
+                        // Se ele verificou no telemóvel e o Firestore ainda está "pending", nós arranjamos isso agora!
+                        if (userData.status === 'pending' || !userData.emailVerified) {
+                            await updateDoc(doc(db, "users", user.uid), { status: 'active', emailVerified: true });
+                            userData.status = 'active';
+                        }
+                    } else {
+                        // Está na base de dados, mas o núcleo diz que é falso. PORTA TRANCADA!
+                        await signOut(auth);
+                        resetMainLoginButton();
+                        window.showResendModal(userData.email || user.email, userData.name);
                         return;
                     }
                     
-                    // Rastreio de atividade
+                    // O utilizador está verificado e limpo. Pode passar!
+                    window.showToast('Identidade Validada! A entrar...', 'success');
                     await updateDoc(doc(db, "users", user.uid), {
                         lastLogin: serverTimestamp(),
                         lastActivity: serverTimestamp()
@@ -417,24 +511,25 @@
                     const urlParams = new URLSearchParams(window.location.search);
                     const redirectParam = urlParams.get('redirect');
                     
-                    // 🎯 3. Redirecionamento Inteligente Corrigido
-                    if (userData.role === 'admin' || userData.role === 'superadmin') {
+                    // 🎯 Redirecionamento Cirúrgico do Afiliado Corrigido
+                    if(userData.role === 'admin' || userData.role === 'superadmin') {
                         window.location.href = redirectParam || 'admin/dashboard.html';
                     } else if (userData.role === 'affiliate') {
-                        window.location.href = redirectParam || 'dashboard-afiliado.html'; // Corrigido para a raiz
+                        window.location.href = redirectParam || 'dashboard-afiliado.html';
                     } else {
-                        window.location.href = redirectParam || 'index.html'; // Cliente normal
+                        window.location.href = redirectParam || 'index.html';
                     }
                 }
             } catch (error) {
                 console.error('Error Auth Sync:', error);
+                resetMainLoginButton();
             } finally {
                 isHandlingLogin = false;
             }
         }
     });
 
-    // Submissão Manual de Credenciais (Login)
+    // Submissão Manual de Credenciais
     document.getElementById('loginForm')?.addEventListener('submit', async function(e) {
         e.preventDefault();
         const btn = document.getElementById('loginBtn');
@@ -450,8 +545,9 @@
         }
 
         try {
+            // Isto dispara o onAuthStateChanged automaticamente se os dados estiverem certos.
+            // Todo o processo de bloqueio e reenvio fica nas mãos do onAuthStateChanged.
             await signInWithEmailAndPassword(auth, email, password);
-            window.showToast('Identidade Validada! A entrar...', 'success');
         } catch (error) {
             console.error('Login error:', error);
             let message = 'Erro de acesso. Verifique as suas credenciais.';
@@ -459,15 +555,11 @@
             if (error.code === 'auth/too-many-requests') message = 'Sistema trancado. Fez demasiadas tentativas. Tente novamente mais tarde.';
             window.showToast(message, 'error');
             
-            if (btn) {
-                btn.disabled = false;
-                btnTexts.forEach(el => el.classList.remove('hidden'));
-                btnSpinner?.classList.add('hidden');
-            }
+            resetMainLoginButton();
         }
     });
 
-    // 🟢 O MOTOR DE RECUPERAÇÃO DE SENHA LIGADO À API 🟢
+    // Recuperação de Senha API
     document.getElementById('forgotForm')?.addEventListener('submit', async function(e) {
         e.preventDefault();
         const email = document.getElementById('forgotEmail')?.value.trim();
@@ -483,33 +575,21 @@
             btnSpinner?.classList.remove('hidden');
         }
 
-       try {
-            // Chamada à tua API oficial de recuperação
+        try {
             const response = await fetch('/api/recover-password', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: email })
             });
 
-            const contentType = response.headers.get("content-type");
-
             if (response.ok) {
-                window.showToast('✅ O link oficial de redefinição de senha foi enviado. Verifique o Spam.', 'success');
+                window.showToast('✅ O link oficial de redefinição de senha foi enviado.', 'success');
                 window.closeForgotModal();
             } else {
-                // 🛡️ SE FOR JSON (Erro controlado pela nossa API)
-                if (contentType && contentType.indexOf("application/json") !== -1) {
-                    const result = await response.json();
-                    throw new Error(result.error || 'Servidor indisponível. Tente novamente.');
-                } 
-                // 🛡️ SE FOR TEXTO/HTML (Erro brutal da Vercel como o "A server error...")
-                else {
-                    throw new Error('O Servidor da Vercel falhou (Erro 500). Verifique os logs na plataforma Vercel.');
-                }
+                throw new Error('Servidor indisponível.');
             }
         } catch (error) {
-            console.error('Erro no Password Reset:', error);
-            window.showToast('❌ ' + error.message, 'error');
+            window.showToast('❌ Falha ao contactar servidor. Tente mais tarde.', 'error');
         } finally {
             if (btn) {
                 btn.disabled = false;
