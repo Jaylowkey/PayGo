@@ -241,6 +241,17 @@
                                     </div>
                                 </div>
 
+                                <div class="input-wrapper mt-3 mb-2">
+                                    <div class="input-field">
+                                        <i data-lucide="shield-check" class="input-icon w-5 h-5"></i>
+                                        <input type="password" id="regConfirmPassword" required placeholder=" " minlength="6" autocomplete="new-password">
+                                        <label for="regConfirmPassword" class="input-label">Confirmar Palavra-passe</label>
+                                        <button type="button" onclick="window.togglePwd('regConfirmPassword')" class="absolute right-4 p-1 text-slate-400 hover:text-white" tabindex="-1">
+                                            <i data-lucide="eye" id="icon-regConfirmPassword" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
                                 <div class="mt-4 mb-6">
                                     <label class="flex items-start gap-3 cursor-pointer group">
                                         <div class="relative flex items-center justify-center mt-0.5">
@@ -311,24 +322,21 @@
 
         lucide.createIcons();
 
-        // 🚀 CAPTURA E BLINDAGEM DO CÓDIGO DE AFILIADO (LocalStorage)
+        // 🚀 CAPTURA E BLINDAGEM DO CÓDIGO DE AFILIADO
         const urlParams = new URLSearchParams(window.location.search);
         let affiliateCode = urlParams.get('ref');
 
         if (affiliateCode) {
-            // Se veio pelo URL, tatuamos no cofre do navegador
             localStorage.setItem('paygo_affiliate_ref', affiliateCode);
         } else {
-            // Se o URL estiver limpo, vamos procurar no cofre
             affiliateCode = localStorage.getItem('paygo_affiliate_ref');
         }
 
-        // Se houver afiliado ativo no sistema, mostra o banner
         if (affiliateCode) {
             document.getElementById('affiliateBanner').classList.remove('hidden');
         }
 
-        // Mostrar/Ocultar Senha
+        // Mostrar/Ocultar Senha Universal
         window.togglePwd = function(id) {
             const input = document.getElementById(id);
             const icon = document.getElementById(`icon-${id}`);
@@ -379,6 +387,15 @@
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            const password = document.getElementById('regPassword').value;
+            const confirmPassword = document.getElementById('regConfirmPassword').value;
+
+            // 🛡️ VALIDAÇÃO PROATIVA: Verifica a igualdade das senhas antes de contactar o servidor
+            if (password !== confirmPassword) {
+                showToast('As palavras-passe não coincidem. Por favor, verifique.', 'error');
+                return;
+            }
+
             const btn = document.getElementById('btnSubmit');
             const btnText = document.getElementById('btnText');
             const btnIcon = document.getElementById('btnIcon');
@@ -386,7 +403,6 @@
             const name = document.getElementById('regName').value.trim();
             const email = document.getElementById('regEmail').value.trim();
             const phone = document.getElementById('regPhone').value.trim();
-            const password = document.getElementById('regPassword').value;
 
             btn.disabled = true;
             btnText.textContent = 'A criar infraestrutura...';
@@ -400,7 +416,7 @@
                 const user = userCredential.user;
                 await updateProfile(user, { displayName: name });
 
-                // 2. Gravar Perfil (Afiliado Seguro incluído)
+                // 2. Gravar Perfil 
                 const userData = {
                     uid: user.uid,
                     name: name,
@@ -408,7 +424,7 @@
                     phone: phone,
                     role: 'user', 
                     status: 'pending',
-                    referredBy: affiliateCode || null, // Garante que não vai 'undefined'
+                    referredBy: affiliateCode || null, 
                     firstPurchaseProcessed: false,
                     totalPurchases: 0,
                     createdAt: new Date().toISOString(),
@@ -423,14 +439,14 @@
                     body: JSON.stringify({ email: email, name: name })
                 }).catch(e => console.warn('Falha silenciosa no envio da verificação:', e));
 
-                // 🚀 Limpar a memória do afiliado (Para não viciar registos futuros)
+                // 🚀 Limpar a memória do afiliado 
                 localStorage.removeItem('paygo_affiliate_ref');
 
                 // 4. Sucesso: Mudar UI
                 document.getElementById('userEmailDisplay').textContent = email;
                 document.getElementById('formState').classList.add('hidden');
                 document.getElementById('successState').classList.remove('hidden');
-                document.getElementById('successState').style.display = 'flex'; // Forçar layout flex
+                document.getElementById('successState').style.display = 'flex'; 
 
             } catch (error) {
                 console.error(error);
