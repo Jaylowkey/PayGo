@@ -445,7 +445,7 @@
       }
     };
 
-    // NOVO: Integração com Resend API para enviar a fatura diretamente para o email
+    // 🚀 NOVO: Integração Inteligente com a API (Recibo HTML no E-mail)
     window.notifyEmail = async function() {
       if (!currentOrder) return;
       const btn = document.getElementById('btnEmail');
@@ -461,20 +461,47 @@
         btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A Enviar...`;
         lucide.createIcons({root: btn});
         
-        // Chamada à API da Vercel (Resend)
+        const isCompleted = currentOrder.status === 'completed' || currentOrder.isPaid === true;
+        
+        // 🎨 Geração do Recibo Dinâmico em HTML
+        const statusHtml = isCompleted 
+          ? '<span style="background: #dcfce7; color: #166534; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px;">✅ PAGO</span>'
+          : '<span style="background: #fef9c3; color: #92400e; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px;">⏳ AGUARDA PAGAMENTO</span>';
+
+        const msgHTML = `
+          <p>A sua fatura eletrónica referente ao pedido <strong>${currentOrder.orderId}</strong> já se encontra disponível no nosso sistema.</p>
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 12px; margin: 20px 0;">
+            <h3 style="margin: 0 0 16px 0; color: #334155; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Resumo Financeiro</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 8px 0; color: #64748b; font-size: 14px; border-bottom: 1px dashed #e2e8f0;">Estado</td>
+                <td style="padding: 8px 0; text-align: right; border-bottom: 1px dashed #e2e8f0;">${statusHtml}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #64748b; font-size: 14px; border-bottom: 1px dashed #e2e8f0;">Data de Emissão</td>
+                <td style="padding: 8px 0; color: #0f172a; font-weight: bold; text-align: right; font-size: 14px; border-bottom: 1px dashed #e2e8f0;">${new Date().toLocaleDateString('pt-MZ')}</td>
+              </tr>
+              <tr>
+                <td style="padding: 16px 0 0 0; color: #0f172a; font-weight: 800; font-size: 16px;">TOTAL LÍQUIDO</td>
+                <td style="padding: 16px 0 0 0; color: #16a34a; font-weight: 800; text-align: right; font-size: 18px;">${formatMZN(currentOrder.total)}</td>
+              </tr>
+            </table>
+          </div>
+          <p style="font-size: 13px; color: #64748b; text-align: center;">Para obter o documento oficial em formato PDF para a sua contabilidade, por favor solicite aos nossos agentes através do WhatsApp ou contacte o suporte.</p>
+        `;
+
+        // Chamada à API da Vercel (Pedimos o template 'default' e enviamos o HTML acima)
         const response = await fetch('/api/send-email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             to: email,
             subject: `🧾 Fatura Eletrónica PayGo - ${currentOrder.orderId}`,
-            template: 'invoice-generated', // O backend lida com este template
+            template: 'default', // O motor usa o design base 
             type: 'transactional',
             variables: { 
               customer_name: currentOrder.name,
-              order_id: currentOrder.orderId,
-              total: formatMZN(currentOrder.total),
-              status: (currentOrder.status === 'completed' || currentOrder.isPaid) ? 'PAGO' : 'AGUARDA PAGAMENTO'
+              message: msgHTML // Injetamos o nosso recibo HTML direto para o cliente!
             }
           })
         });
@@ -491,6 +518,7 @@
       } finally {
         btn.disabled = false;
         btn.innerHTML = origHtml;
+        lucide.createIcons({root: btn});
       }
     }
 
@@ -560,7 +588,7 @@
       doc.setFont("helvetica", "normal"); doc.setTextColor(0, 0, 0); doc.text(order.paymentMethod ? order.paymentMethod.toUpperCase() : "M-Pesa / e-Mola", 16, fY + 10);
       
       doc.setFontSize(7); doc.setTextColor(148, 163, 184); doc.setFont("helvetica", "normal");
-      doc.text("A PayGo Moçambique atua como prestadora de serviços de intermediação financeira.\nEste documento tem validade legal e digital, dispensando carimbo físico. Suporte: admin@paygo.co.mz", 105, 280, { align: "center" });
+      doc.text("A PayGo Moçambique atua como prestadora de serviços de intermediação financeira.\nEste documento tem validade legal e digital, dispensando carimbo físico. Suporte: contact@paygo.co.mz", 105, 280, { align: "center" });
       return doc;
     }
 
