@@ -166,7 +166,7 @@
         .btn-premium:active { transform: scale(0.98); }
         
         #toast-container {
-            position: fixed; top: 20px; right: 20px; z-index: 10000;
+            position: fixed; top: 20px; right: 20px; z-index: 100000;
             display: flex; flex-direction: column; gap: 12px; pointer-events: none;
         }
         .toast {
@@ -186,6 +186,7 @@
         .toast.show { transform: translateX(0); opacity: 1; }
         .toast.success { border-left-color: #22c55e; }
         .toast.error { border-left-color: #ef4444; }
+        .toast.info { border-left-color: #3b82f6; }
         
         /* Modal Styles Premium */
         .modal { display: none; position: fixed; inset: 0; z-index: 10000; align-items: center; justify-content: center; }
@@ -325,7 +326,7 @@
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, doc, getDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // Configuração de Segurança (Mantenha igual aos seus)
+    // Configuração de Segurança Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
         authDomain: "paygo-14311.firebaseapp.com",
@@ -339,7 +340,7 @@
     const auth = getAuth(app);
     const db = getFirestore(app, "paygodb");
 
-    // Ferramentas da Interface
+    // Ferramentas da Interface UI
     window.showToast = function(message, type = 'default') {
         const container = document.getElementById('toast-container');
         if (!container) return;
@@ -382,7 +383,7 @@
         if (emailInput) emailInput.value = '';
     };
 
-    // Motor de Login
+    // Motor de Sessão Contínua (Autenticação Automática)
     let isHandlingLogin = false;
     onAuthStateChanged(auth, async (user) => {
         if (user && !isHandlingLogin) {
@@ -392,26 +393,36 @@
                 if (userDoc.exists()) {
                     const userData = userDoc.data();
                     if (userData.status === 'blocked' || userData.status === 'banned') {
-                        window.showToast('Acesso negado. A sua conta foi bloqueada.', 'error');
+                        window.showToast('Acesso negado. A sua conta foi bloqueada por razões de segurança.', 'error');
                         return;
                     }
+                    
+                    // Rastreio de atividade logado
                     await updateDoc(doc(db, "users", user.uid), {
                         lastLogin: serverTimestamp(),
                         lastActivity: serverTimestamp()
                     });
+                    
+                    // Redirecionamento Inteligente: Vai para onde estava antes do login (ex: Carrinha)
                     const urlParams = new URLSearchParams(window.location.search);
                     const redirectParam = urlParams.get('redirect');
-                    window.location.href = redirectParam || 'index.html';
+                    
+                    // Se for Admin/Afiliado vai para as áreas especiais, senão vai para a home/carrinha
+                    if(userData.role === 'admin' || userData.role === 'superadmin' || userData.role === 'affiliate') {
+                        window.location.href = redirectParam || 'admin/dashboard.html';
+                    } else {
+                        window.location.href = redirectParam || 'index.html';
+                    }
                 }
             } catch (error) {
-                console.error('Error:', error);
+                console.error('Error Auth Sync:', error);
             } finally {
                 isHandlingLogin = false;
             }
         }
     });
 
-    // Validar Credenciais de Entrada
+    // Submissão Manual de Credenciais (Login)
     document.getElementById('loginForm')?.addEventListener('submit', async function(e) {
         e.preventDefault();
         const btn = document.getElementById('loginBtn');
@@ -428,13 +439,14 @@
 
         try {
             await signInWithEmailAndPassword(auth, email, password);
-            window.showToast('Acesso validado! A redirecionar...', 'success');
+            window.showToast('Identidade Validada! A entrar...', 'success');
         } catch (error) {
             console.error('Login error:', error);
-            let message = 'Erro ao fazer login. Verifique as credenciais.';
-            if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') message = 'Email ou senha incorretos.';
-            if (error.code === 'auth/too-many-requests') message = 'Muitas tentativas falhadas. Aguarde um pouco.';
+            let message = 'Erro de acesso. Verifique as suas credenciais.';
+            if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') message = 'O Email ou a Senha estão incorretos.';
+            if (error.code === 'auth/too-many-requests') message = 'Sistema trancado. Fez demasiadas tentativas. Tente novamente mais tarde.';
             window.showToast(message, 'error');
+            
             if (btn) {
                 btn.disabled = false;
                 btnTexts.forEach(el => el.classList.remove('hidden'));
@@ -443,7 +455,7 @@
         }
     });
 
-    // Motor da Nova API de Recuperação (Super Blindado)
+    // 🟢 O MOTOR DE RECUPERAÇÃO DE SENHA LIGADO À API 🟢
     document.getElementById('forgotForm')?.addEventListener('submit', async function(e) {
         e.preventDefault();
         const email = document.getElementById('forgotEmail')?.value.trim();
@@ -451,7 +463,7 @@
         const btnTexts = btn?.querySelectorAll('.btn-text');
         const btnSpinner = btn?.querySelector('.btn-spinner');
 
-        if (!email) return window.showToast('Por favor, digite seu email.', 'error');
+        if (!email) return window.showToast('Por favor, digite o seu email.', 'error');
 
         if (btn) {
             btn.disabled = true;
@@ -460,7 +472,7 @@
         }
 
         try {
-            // Chamada à API exclusiva de recuperação
+            // Chamada à tua API (código que enviaste com a Resend e a Firebase Admin SDK)
             const response = await fetch('/api/recover-password', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -468,15 +480,15 @@
             });
 
             if (response.ok) {
-                window.showToast('✅ Link enviado! Verifique a sua caixa de entrada e Spam.', 'success');
+                window.showToast('✅ O link oficial de redefinição de senha foi enviado. Verifique a sua caixa de entrada e Spam.', 'success');
                 window.closeForgotModal();
             } else {
                 const result = await response.json();
-                throw new Error(result.error || 'Servidor indisponível. Tente mais tarde.');
+                throw new Error(result.error || 'Servidor indisponível. Tente novamente mais tarde.');
             }
         } catch (error) {
-            console.error('Password reset error:', error);
-            window.showToast('❌ Erro no serviço de recuperação. Tente novamente mais tarde.', 'error');
+            console.error('Erro no Password Reset:', error);
+            window.showToast('❌ Falha ao tentar contactar o servidor. ' + error.message, 'error');
         } finally {
             if (btn) {
                 btn.disabled = false;
