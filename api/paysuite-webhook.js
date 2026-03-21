@@ -1,89 +1,100 @@
-// api/paysuite-webhook.js
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
-// ✅ Inicialização Segura do Firebase Admin
-if (!getApps().length) {
-    if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
-        console.error("❌ ERRO CRÍTICO: FIREBASE_SERVICE_ACCOUNT em falta.");
-    } else {
-        try {
-            initializeApp({ credential: cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)) });
-        } catch (e) {
-            console.error("❌ ERRO CRÍTICO: Formato inválido na chave do Firebase.");
-        }
-    }
-}
-
 export default async function handler(req, res) {
-    // ✅ CORS Headers
+    // Cabeçalhos essenciais para a PaySuite
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-paysuite-signature');
 
     if (req.method === 'OPTIONS') return res.status(200).end();
-    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-
-    const db = getFirestore();
-    const payload = req.body || {};
-    
-    // 🟢 1. CRIAR LOG NA CAIXA NEGRA
-    let logRef = null;
-    try {
-        logRef = db.collection('webhook_logs').doc();
-        await logRef.set({
-            source: 'paysuite',
-            event: payload?.event || 'unknown',
-            method: req.method,
-            ip: req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown',
-            payload: payload,
-            status: 'received',
-            createdAt: new Date().toISOString()
-        });
-    } catch (logErr) {
-        console.warn('⚠️ [webhook-log] Falha ao criar log inicial:', logErr.message);
-    }
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Método não permitido' });
 
     try {
+        // 🔥 INICIALIZAÇÃO BLINDADA (A vacina da Vercel)
+        if (!getApps().length) {
+            const envVar = process.env.FIREBASE_SERVICE_ACCOUNT;
+            if (!envVar) return res.status(500).json({ error: "Falta FIREBASE_SERVICE_ACCOUNT" });
+
+            let serviceAccount;
+            try {
+                serviceAccount = JSON.parse(envVar);
+                if (serviceAccount.private_key) {
+                    serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+                }
+            } catch (e) {
+                return res.status(500).json({ error: "JSON corrompido na Vercel." });
+            }
+            initializeApp({ credential: cert(serviceAccount) });
+        }
+
+        // 🎯 O ALVO CORRETO: Apontamos para a tua Base de Dados!
+        const db = getFirestore("paygodb");
+        
+        let payload = req.body;
+        if (typeof payload === 'string') {
+            try { payload = JSON.parse(payload); } catch (e) { payload = {}; }
+        }
+        
+        // 🟢 GRAVAR NA CAIXA NEGRA (Logs de Webhook)
+        let logRef = null;
+        try {
+            logRef = db.collection('webhook_logs').doc();
+            await logRef.set({
+                source: 'paysuite',
+                event: payload?.event || 'unknown',
+                payload: payload,
+                status: 'received',
+                createdAt: new Date().toISOString()
+            });
+        } catch (logErr) {
+            console.warn('⚠️ Falha ao criar log:', logErr.message);
+        }
+
         if (!payload || !payload.event) {
-            if (logRef) await logRef.update({ status: 'error', errorMsg: 'Payload vazio ou sem evento' });
-            return res.status(400).json({ error: 'Invalid payload structure' });
+            if (logRef) await logRef.update({ status: 'error', errorMsg: 'Payload vazio' });
+            return res.status(400).json({ error: 'Payload inválido' });
         }
 
-        const paymentData = payload.data;
-        const transactionId = paymentData?.transaction_id;
+        const paymentData = payload.data || {};
+        
+        // 🎯 INTELIGÊNCIA DE MATCHING: Procurar a referência PG-XXXX
+        const merchantReference = paymentData.reference || paymentData.tx_ref || paymentData.order_id || paymentData.transaction_id;
 
-        if (!transactionId) {
-            if (logRef) await logRef.update({ status: 'error', errorMsg: 'transaction_id ausente' });
-            return res.status(400).json({ error: 'Missing transaction_id' });
+        if (!merchantReference) {
+            if (logRef) await logRef.update({ status: 'error', errorMsg: 'Sem referência (PG-XXXX)' });
+            return res.status(400).json({ error: 'Missing reference' });
         }
 
-        // ✅ 2. PROCURAR PEDIDO NA BASE DE DADOS
+        // ✅ PROCURAR O PEDIDO NO FIREBASE
         const ordersRef = db.collection('orders');
-        const snapshot = await ordersRef.where('orderId', '==', transactionId).get();
+        const snapshot = await ordersRef.where('orderId', '==', merchantReference).get();
 
         if (snapshot.empty) {
-            if (logRef) await logRef.update({ status: 'error', errorMsg: `Pedido não encontrado no Firestore.` });
+            if (logRef) await logRef.update({ status: 'error', errorMsg: `ID [${merchantReference}] não encontrado.` });
             return res.status(404).json({ error: 'Order not found' });
         }
 
         const orderDoc = snapshot.docs[0];
         const orderData = orderDoc.data();
 
-        // ✅ 3. MÁQUINA DE ESTADOS (Atualização Automática)
+        // ✅ MÁQUINA DE ESTADOS (Atualização Automática)
         let updateData = { updatedAt: new Date().toISOString() };
         let actionMessage = '';
 
         switch (payload.event) {
             case 'payment.completed':
+            case 'payment.successful':
                 if (orderData.isPaid) {
-                    if (logRef) await logRef.update({ status: 'ignored', errorMsg: 'Já estava pago' });
+                    if (logRef) await logRef.update({ status: 'ignored', errorMsg: 'Já estava pago.' });
                     return res.status(200).json({ received: true, processed: false, reason: 'Already paid' });
                 }
+                
+                // MÁGICA: Muda para PAGO e EM PROCESSAMENTO!
                 updateData.status = 'processing';
                 updateData.isPaid = true;
-                updateData.paysuitePaymentId = paymentData.payment_id || null;
-                actionMessage = 'Pagamento confirmado e pedido em processamento.';
+                updateData.paysuitePaymentId = paymentData.payment_id || paymentData.id || null;
+                actionMessage = 'Pagamento confirmado automaticamente!';
                 break;
             
             case 'payment.failed':
@@ -91,50 +102,31 @@ export default async function handler(req, res) {
             case 'payment.canceled':
                 updateData.status = 'pending';
                 updateData.isPaid = false;
-                actionMessage = 'Pagamento falhou/expirou. A aguardar pagamento.';
-                break;
-                
-            case 'payment.refunded':
-                updateData.status = 'refunded';
-                updateData.isPaid = false;
-                actionMessage = 'Pagamento reembolsado ao cliente.';
+                actionMessage = 'Pagamento falhou ou expirou.';
                 break;
 
             default:
-                if (logRef) await logRef.update({ status: 'ignored', errorMsg: `Evento ${payload.event} não mapeado.` });
+                if (logRef) await logRef.update({ status: 'ignored', errorMsg: `Evento ${payload.event} ignorado.` });
                 return res.status(200).json({ received: true, ignored: true });
         }
 
-        // Atualizar Base de Dados
+        // DISPARA A ATUALIZAÇÃO!
         await orderDoc.ref.update(updateData);
 
-        // ✅ 4. NOTIFICAR SE FOR SUCESSO
-        if (payload.event === 'payment.completed') {
-            const siteUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://paygo.co.mz';
-            const fullOrderData = { ...orderData, ...updateData };
-
-            fetch(`${siteUrl}/api/notify-order`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ orderData: fullOrderData, action: 'payment_confirmed', sendEmail: true, sendLark: true })
-            }).catch(e => console.warn('Erro silencioso notify-order:', e));
-        }
-
-        // 🟢 5. FECHAR LOG
+        // FECHAR LOG NA CAIXA NEGRA
         if (logRef) {
             await logRef.update({ 
                 status: 'processed', 
-                orderId: transactionId,
+                orderId: merchantReference,
                 actionTaken: actionMessage,
                 completedAt: new Date().toISOString()
             });
         }
 
-        return res.status(200).json({ received: true, processed: true, orderId: transactionId, newStatus: updateData.status });
+        return res.status(200).json({ received: true, processed: true, orderId: merchantReference, newStatus: updateData.status });
 
     } catch (err) {
         console.error('❌ Erro no webhook:', err);
-        if (logRef) await logRef.update({ status: 'error', errorMsg: err.message });
-        return res.status(200).json({ received: true, error: true });
+        return res.status(500).json({ error: err.message });
     }
 }
