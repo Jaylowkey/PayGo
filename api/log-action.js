@@ -30,12 +30,12 @@ export default async function handler(req, res) {
             initializeApp({ credential: cert(serviceAccount) });
         }
 
-        const db = getFirestore();
+        // 🎯 A JOGADA DE MESTRE: Apontar exatamente para a tua base de dados personalizada!
+        const db = getFirestore("paygodb");
         
-        // 🚨 A VACINA DA VERCEL: Se a Vercel entregar o body como Texto em vez de Objeto, nós forçamos a conversão!
         let body = req.body;
         if (typeof body === 'string') {
-            try { body = JSON.parse(body); } catch (e) { throw new Error("O servidor recebeu dados corrompidos do navegador."); }
+            try { body = JSON.parse(body); } catch (e) { throw new Error("O servidor recebeu dados corrompidos."); }
         }
 
         const { adminId, adminName, action, targetId, targetType, previousData, newData } = body || {};
@@ -59,12 +59,12 @@ export default async function handler(req, res) {
             createdAt: new Date().toISOString()
         };
 
+        // Grava na base de dados correta!
         const logRef = await db.collection('admin_audit_logs').add(logData);
         return res.status(200).json({ success: true, logId: logRef.id });
 
     } catch (err) {
         console.error('🔥 Erro Crítico:', err);
-        // Devolvemos o erro detalhado para a aba Network!
         return res.status(500).json({ error: err.message });
     }
 }
