@@ -3,11 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Auditoria Interna | PayGo Admin</title>
+  <title>Auditoria de Sistema | PayGo Admin</title>
   <meta name="theme-color" content="#0f172a">
   <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="Caixa Negra - Registo de Auditoria Interna">
   
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   
@@ -15,192 +20,395 @@
     tailwind.config = {
       theme: {
         extend: {
-          fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'], display: ['"Outfit"', 'sans-serif'], mono: ['"Fira Code"', 'monospace'] },
-          colors: { brand: { 500: '#3b82f6', 600: '#2563eb', 950: '#0f172a' }, success: { 400: '#4ade80' }, warning: { 400: '#fbbf24' }, danger: { 400: '#f87171' } },
+          fontFamily: { 
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'], 
+            display: ['"Outfit"', 'sans-serif'], 
+            mono: ['"Fira Code"', 'monospace'] 
+          },
+          colors: { 
+            brand: { 50: '#eff6ff', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 900: '#1e3a8a', 950: '#0f172a' }, 
+            success: { 400: '#4ade80', 500: '#22c55e' }, 
+            warning: { 400: '#fbbf24', 500: '#f59e0b' }, 
+            danger: { 400: '#f87171', 500: '#ef4444' } 
+          }
         }
       }
     };
   </script>
   
   <style>
-    body { background-color: #0f172a; color: #f8fafc; }
-    ::-webkit-scrollbar { width: 6px; height: 6px;} ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    body { background-color: #020617; color: #f8fafc; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+    ::-webkit-scrollbar { width: 6px; height: 6px;} 
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+    /* Efeitos de Fundo */
     .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
-    .glass-nav { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.08); }
-    .glass-card { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
+    .glass-nav { background: rgba(2, 6, 23, 0.85); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.05); z-index: 50; }
+    .glass-card { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3); }
     
-    .action-badge { padding: 4px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; }
-    .action-badge.update { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); }
-    .action-badge.delete { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
-    .action-badge.create { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.2); }
+    /* Sidebar */
+    .sidebar-link { position: relative; transition: all 0.3s ease; }
+    .sidebar-link::before { content: ''; position: absolute; left: 0; top: 10%; height: 80%; width: 3px; background: transparent; border-radius: 0 4px 4px 0; transition: all 0.3s ease; }
+    .sidebar-link:hover { background: rgba(255,255,255,0.03); color: #fff; }
+    .sidebar-link.active { background: linear-gradient(90deg, rgba(251,191,36,0.1) 0%, transparent 100%); color: #fbbf24; font-weight: 700; }
+    .sidebar-link.active::before { background: #fbbf24; box-shadow: 0 0 10px #fbbf24; }
+
+    /* Badges Operacionais */
+    .action-badge { padding: 4px 10px; border-radius: 6px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; display: inline-block; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1); }
+    .action-badge.update { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .action-badge.delete { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .action-badge.create { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
+    .action-badge.export { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
+
+    /* Toasts */
+    #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+    .toast-item { pointer-events: auto; display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-radius: 14px; color: white; font-weight: 600; font-size: 14px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); transform: translateX(120%); transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); border-left: 4px solid; background: rgba(15,23,42,0.95); backdrop-filter: blur(12px); border-top: 1px solid rgba(255,255,255,0.05); border-right: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .toast-item.show { transform: translateX(0); }
     
-    /* Modal de Detalhes JSON */
-    .modal { display: none; position: fixed; inset: 0; z-index: 10000; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; }
-    .modal.active { display: flex; opacity: 1; }
-    .modal-overlay { position: absolute; inset: 0; background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(4px); }
-    .modal-content { position: relative; background: #0f172a; border-radius: 20px; padding: 0; max-width: 800px; width: 95%; max-height: 90vh; overflow-y: auto; transform: scale(0.95); transition: transform 0.3s; border: 1px solid rgba(255,255,255,0.1); }
-    .modal.active .modal-content { transform: scale(1); }
+    /* Modal JSON Visualizer */
+    .modal-wrapper { display: none; position: fixed; inset: 0; z-index: 10000; align-items: center; justify-content: center; }
+    .modal-wrapper.active { display: flex; }
+    .modal-backdrop { position: absolute; inset: 0; background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(8px); opacity: 0; transition: opacity 0.3s ease; }
+    .modal-wrapper.active .modal-backdrop { opacity: 1; }
+    .modal-panel { position: relative; background: #0f172a; border-radius: 24px; width: 95%; max-width: 800px; max-height: 90vh; display: flex; flex-direction: column; opacity: 0; transform: scale(0.95) translateY(10px); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 30px 60px -10px rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.1); z-index: 10; overflow: hidden; }
+    .modal-wrapper.active .modal-panel { opacity: 1; transform: scale(1) translateY(0); }
     
-    .json-view { background: #020617; border-radius: 12px; padding: 16px; font-family: 'Fira Code', monospace; font-size: 12px; color: #a5b4fc; overflow-x: auto; border: 1px solid rgba(255,255,255,0.05); }
-    .json-key { color: #7dd3fc; }
+    .json-view { background: #020617; border-radius: 12px; padding: 20px; font-family: 'Fira Code', monospace; font-size: 13px; color: #cbd5e1; overflow-x: auto; border: 1px solid rgba(255,255,255,0.05); box-shadow: inset 0 2px 10px rgba(0,0,0,0.5); }
+    .json-key { color: #7dd3fc; font-weight: 500; }
     .json-string { color: #86efac; }
+    .json-number { color: #fca5a5; }
+    .json-boolean { color: #fcd34d; }
+    .json-null { color: #64748b; font-style: italic; }
   </style>
 </head>
-<body class="selection:bg-brand-500 selection:text-white">
+<body class="selection:bg-warning-500 selection:text-white">
 
-  <div class="fixed inset-0 bg-grid opacity-20 pointer-events-none z-0"></div>
+<div id="sysLoader" class="fixed inset-0 bg-[#020617] z-[200] flex flex-col items-center justify-center transition-opacity duration-500">
+  <div class="w-20 h-20 border-4 border-slate-800 border-t-warning-500 rounded-full animate-spin mb-6 shadow-[0_0_30px_rgba(245,158,11,0.3)]"></div>
+  <h2 class="text-white text-3xl font-display font-extrabold tracking-tight">PayGo OS</h2>
+  <p class="text-slate-400 text-sm mt-2 font-medium">A conectar aos servidores de Auditoria Interna...</p>
+</div>
 
-  <header class="fixed w-full z-50 glass-nav">
-    <div class="container mx-auto px-6 h-20 flex justify-between items-center">
-      <div class="flex items-center gap-3">
-        <div class="bg-gradient-to-tr from-brand-500 to-brand-400 p-2.5 rounded-xl text-white"><i data-lucide="eye" class="w-5 h-5"></i></div>
-        <div>
-            <span class="text-xl font-display font-bold text-white">Auditoria da Equipa</span>
-            <span class="text-[10px] text-danger-400 ml-2 px-2 py-0.5 bg-danger-500/10 border border-danger-500/20 rounded-full font-black uppercase tracking-widest">Caixa Negra</span>
-        </div>
+<div class="fixed inset-0 bg-grid opacity-20 pointer-events-none z-0"></div>
+<div class="fixed top-0 left-1/4 w-[800px] h-[600px] bg-warning-600/10 rounded-full mix-blend-screen blur-[120px] pointer-events-none z-0"></div>
+
+<div id="toastContainer"></div>
+
+<header class="fixed w-full z-50 glass-nav shadow-lg">
+  <div class="container mx-auto px-6 h-20 flex justify-between items-center">
+    <div class="flex items-center gap-3">
+      <button id="mobileMenuBtn" class="lg:hidden text-slate-400 hover:text-white p-2 -ml-2 transition-colors rounded-lg hover:bg-white/5">
+        <i data-lucide="menu" class="w-6 h-6"></i>
+      </button>
+      <div class="bg-gradient-to-tr from-warning-500 to-warning-400 p-2.5 rounded-xl text-slate-900 shadow-[0_0_20px_rgba(245,158,11,0.3)]">
+        <i data-lucide="eye" class="w-5 h-5"></i>
       </div>
-      <a href="dashboard.html" class="flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-white transition-colors bg-slate-800 px-4 py-2 rounded-lg border border-slate-700">
-        <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Voltar ao Painel
-      </a>
+      <div class="hidden sm:block">
+        <span class="text-2xl font-display font-bold text-white tracking-wide">Auditoria</span>
+        <span class="text-[10px] text-warning-400 ml-2 px-2 py-0.5 bg-warning-500/10 border border-warning-500/20 rounded-full font-black uppercase tracking-widest shadow-inner">Sec-Ops</span>
+      </div>
     </div>
-  </header>
+    <div class="flex items-center gap-4">
+      <div class="text-right hidden sm:block">
+        <p class="text-sm font-bold text-white" id="adminName">A carregar...</p>
+      </div>
+      <button onclick="window.logout()" class="bg-slate-800 hover:bg-danger-500 hover:text-white text-slate-400 rounded-xl p-2.5 transition-all shadow-md border border-slate-700" title="Sair do sistema">
+        <i data-lucide="power" class="w-5 h-5"></i>
+      </button>
+    </div>
+  </div>
+</header>
 
-  <div class="pt-28 pb-10 relative z-10 container mx-auto px-4 max-w-6xl">
-    <div class="glass-card rounded-2xl p-0 overflow-hidden shadow-lg border border-slate-800">
-      <div class="overflow-x-auto min-h-[500px]">
-        <table class="w-full text-sm text-left whitespace-nowrap">
-          <thead class="bg-slate-900/80 text-[10px] uppercase text-slate-400 border-b border-white/5">
+<div id="sidebarOverlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-40 hidden lg:hidden opacity-0 transition-opacity duration-300"></div>
+
+<div class="pt-28 pb-10 relative z-10 container mx-auto px-4 md:px-6 grid lg:grid-cols-4 xl:grid-cols-5 gap-6 xl:gap-8">
+  
+  <div id="sidebar" class="lg:col-span-1 fixed lg:static top-0 left-0 h-full lg:h-auto w-72 lg:w-auto bg-slate-900/90 lg:bg-transparent z-50 lg:z-auto p-6 lg:p-0 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 border-r border-white/5 lg:border-none backdrop-blur-2xl lg:backdrop-blur-none">
+    <div class="glass-card rounded-3xl p-0 lg:p-6 sticky top-28 border-none lg:border-solid bg-transparent lg:bg-[rgba(15,23,42,0.6)]">
+      <div class="flex justify-between items-center mb-8 lg:hidden pb-4 border-b border-white/10">
+        <span class="text-xl font-display font-bold text-white tracking-wide">PayGo Admin</span>
+        <button id="closeSidebarBtn" class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-white/5 transition-colors">
+          <i data-lucide="x" class="w-6 h-6"></i>
+        </button>
+      </div>
+
+      <nav class="space-y-1.5">
+        <a href="dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-3.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all font-medium">
+          <i data-lucide="layout-dashboard" class="w-5 h-5"></i> <span>Visão Geral</span>
+        </a>
+        <a href="pedidos.html" class="sidebar-link flex items-center gap-3 px-4 py-3.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all font-medium">
+          <i data-lucide="shopping-bag" class="w-5 h-5"></i> <span>Gestão de Pedidos</span>
+        </a>
+        <a href="clientes.html" class="sidebar-link flex items-center gap-3 px-4 py-3.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all font-medium">
+          <i data-lucide="users" class="w-5 h-5"></i> <span>Base de Clientes</span>
+        </a>
+        <a href="afiliados.html" class="sidebar-link flex items-center gap-3 px-4 py-3.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all font-medium">
+          <i data-lucide="network" class="w-5 h-5"></i> <span>Rede de Afiliados</span>
+        </a>
+        
+        <div class="pt-4 mt-4 border-t border-slate-700/50"></div>
+        
+        <a href="logs.html" class="sidebar-link active flex items-center gap-3 px-4 py-3.5 rounded-xl text-white shadow-md">
+          <i data-lucide="activity" class="w-5 h-5"></i> <span>Logs / Auditoria</span>
+        </a>
+        <a href="admin.html" class="sidebar-link flex items-center gap-3 px-4 py-3.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all font-medium">
+          <i data-lucide="shield" class="w-5 h-5"></i> <span>Acessos & Equipa</span>
+        </a>
+        <a href="configuracoes.html" class="sidebar-link flex items-center gap-3 px-4 py-3.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all font-medium mb-4">
+          <i data-lucide="settings" class="w-5 h-5"></i> <span>Definições Globais</span>
+        </a>
+      </nav>
+    </div>
+  </div>
+
+  <div class="lg:col-span-3 xl:col-span-4 space-y-6">
+    <header class="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-6 mb-8">
+      <div>
+        <h1 class="text-3xl md:text-4xl font-display font-extrabold text-white tracking-tight">Caixa Negra da Equipa</h1>
+        <p class="text-slate-400 mt-2 text-sm font-medium">Registo forense e imutável de todas as ações de gestão executadas no sistema.</p>
+      </div>
+      <div class="flex items-center gap-2 bg-slate-900/80 px-5 py-3 rounded-xl border border-slate-700 shadow-inner">
+        <span class="relative flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-success-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-success-500"></span></span>
+        <span class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Monitorização em Tempo Real</span>
+      </div>
+    </header>
+
+    <div class="glass-card rounded-[2rem] p-0 overflow-hidden shadow-2xl border-t-2 border-t-warning-500 flex flex-col">
+      <div class="overflow-x-auto min-h-[600px]">
+        <table class="w-full text-left border-collapse whitespace-nowrap">
+          <thead class="bg-slate-950/80 text-[10px] uppercase text-slate-400 tracking-widest border-b border-white/10 sticky top-0 z-10 backdrop-blur-md">
             <tr>
-              <th class="py-4 px-6 font-bold">Data da Ação</th>
-              <th class="py-4 px-6 font-bold">Membro da Equipa</th>
-              <th class="py-4 px-6 font-bold">Ação Executada</th>
-              <th class="py-4 px-6 font-bold">Alvo Afetado</th>
-              <th class="py-4 px-6 text-right font-bold">Inspecionar</th>
+              <th class="px-6 py-5 font-bold">Data & Hora (MZ)</th>
+              <th class="px-6 py-5 font-bold">Operador (Admin)</th>
+              <th class="px-6 py-5 font-bold">Ação Executada</th>
+              <th class="px-6 py-5 font-bold">Alvo do Registo (ID)</th>
+              <th class="px-6 py-5 text-right font-bold">Inspecionar Base de Dados</th>
             </tr>
           </thead>
-          <tbody id="logsTableBody" class="divide-y divide-slate-800/50">
-            <tr><td colspan="5" class="text-center py-12 text-slate-500"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto mb-2"></i>A ler ficheiros protegidos...</td></tr>
+          <tbody id="logsTableBody" class="divide-y divide-white/5 bg-slate-900/20">
+            <tr><td colspan="5" class="text-center py-16 text-slate-500"><div class="w-10 h-10 border-4 border-warning-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div><p class="font-medium text-sm">A descriptografar ficheiros de log...</p></td></tr>
           </tbody>
         </table>
       </div>
     </div>
   </div>
+</div>
 
-  <div id="payloadModal" class="modal">
-    <div class="modal-overlay" onclick="window.closeModal()"></div>
-    <div class="modal-content flex flex-col h-full md:h-auto border border-slate-700">
-      <div class="flex justify-between items-center p-5 border-b border-white/10 bg-slate-900 sticky top-0 z-10 rounded-t-[20px]">
-        <h2 class="text-lg font-display font-bold text-white flex items-center gap-2"><i data-lucide="file-code" class="w-5 h-5 text-brand-400"></i> Detalhes da Ação</h2>
-        <button onclick="window.closeModal()" class="text-slate-400 hover:text-white transition"><i data-lucide="x" class="w-5 h-5"></i></button>
-      </div>
-      <div class="p-6 bg-slate-950 flex-1">
-        <div class="mb-4 flex flex-col gap-1 text-sm text-slate-400 border-b border-slate-800 pb-4">
-            <p><strong class="text-slate-300">IP de Ligação:</strong> <span id="modalIp" class="font-mono"></span></p>
+<div id="payloadModal" class="modal-wrapper">
+    <div class="modal-backdrop" onclick="window.closeModal()"></div>
+    <div class="modal-panel flex flex-col h-auto max-h-[90vh]">
+        <div class="flex justify-between items-center p-6 border-b border-white/10 bg-slate-950 shrink-0">
+            <h2 class="text-xl font-display font-extrabold text-white flex items-center gap-3">
+                <div class="p-2 bg-warning-500/20 text-warning-400 rounded-xl border border-warning-500/30"><i data-lucide="file-code" class="w-5 h-5"></i></div> 
+                Inspeção Criptográfica
+            </h2>
+            <button onclick="window.closeModal()" class="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-700 hover:text-white flex items-center justify-center transition-colors text-slate-400 focus:outline-none">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
         </div>
-        <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Dados Modificados (JSON)</p>
-        <div class="json-view" id="jsonContainer">{}</div>
-      </div>
+        
+        <div class="p-6 md:p-8 bg-slate-900 flex-1 overflow-y-auto">
+            <div class="flex flex-col md:flex-row gap-4 mb-6 pb-6 border-b border-slate-800">
+                <div class="flex-1 bg-slate-950 p-4 rounded-xl border border-white/5 shadow-inner">
+                    <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1"><i data-lucide="network" class="w-3 h-3 inline pb-0.5"></i> IP de Conexão (Origem)</p>
+                    <p class="font-mono font-bold text-slate-300 text-sm" id="modalIp">A carregar...</p>
+                </div>
+                <div class="flex-1 bg-slate-950 p-4 rounded-xl border border-white/5 shadow-inner">
+                    <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1"><i data-lucide="shield" class="w-3 h-3 inline pb-0.5"></i> Autenticidade Admin</p>
+                    <p class="font-mono font-bold text-slate-300 text-sm" id="modalAdminId">A carregar...</p>
+                </div>
+            </div>
+            
+            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2"><i data-lucide="database" class="w-4 h-4"></i> Payload de Modificação (JSON)</h3>
+            <div class="json-view" id="jsonContainer">{}</div>
+        </div>
     </div>
-  </div>
+</div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, onSnapshot, query, orderBy, limit, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, onSnapshot, query, orderBy, limit, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
-      authDomain: "paygo-14311.firebaseapp.com",
-      projectId: "paygo-14311",
-      storageBucket: "paygo-14311.firebasestorage.app",
-      messagingSenderId: "208360646277",
-      appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
-    };
+const firebaseConfig = {
+    apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
+    authDomain: "paygo-14311.firebaseapp.com",
+    projectId: "paygo-14311",
+    storageBucket: "paygo-14311.firebasestorage.app",
+    messagingSenderId: "208360646277",
+    appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
+};
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app, "paygodb");
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app, "paygodb");
 
-    lucide.createIcons();
-    let logsCache = [];
+lucide.createIcons();
+let logsCache = [];
 
-    // Proteção de Rota
-    onAuthStateChanged(auth, async (user) => {
-        if (!user) { window.location.href = 'login.html'; return; }
-        const docSnap = await getDoc(doc(db, "users", user.uid));
-        if (!docSnap.exists() || docSnap.data().role !== 'superadmin') {
-            alert("Área Restrita Apenas a Super Administradores.");
-            window.location.href = 'index.html';
-        } else {
+// Toasts Premium
+window.showToast = (message, type = 'success') => {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+    const toast = document.createElement('div');
+    const borderColor = type === 'error' ? 'border-danger-500' : type === 'warning' ? 'border-warning-500' : 'border-brand-500';
+    const icon = type === 'error' ? 'alert-octagon text-danger-400' : type === 'warning' ? 'alert-triangle text-warning-400' : 'check-check text-brand-400';
+    toast.className = `flex items-center gap-3 px-5 py-4 rounded-xl shadow-2xl backdrop-blur-xl transform transition-all duration-400 translate-x-full border-l-4 ${borderColor} bg-slate-900/95 border-y border-r border-white/5`;
+    toast.innerHTML = `<i data-lucide="${icon.split(' ')[0]}" class="w-5 h-5 ${icon.split(' ')[1]}"></i> <span class="text-sm font-bold text-white tracking-wide">${message}</span>`;
+    container.appendChild(toast);
+    if (typeof lucide !== 'undefined') lucide.createIcons({ root: toast });
+    requestAnimationFrame(() => toast.classList.remove('translate-x-full'));
+    setTimeout(() => { toast.classList.add('opacity-0', 'translate-x-8'); setTimeout(() => toast.remove(), 400); }, 5000);
+};
+
+// Segurança Mestre
+const fallbackTimer = setTimeout(() => { document.getElementById('sysLoader').style.display = 'none'; }, 3000);
+
+onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = '../login.html'; return; }
+    
+    try {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists() && (userDoc.data().role === 'admin' || userDoc.data().role === 'superadmin')) {
+            document.getElementById('adminName').textContent = userDoc.data().name || 'Controlador';
             startListeningLogs();
+        } else {
+            window.location.href = '../index.html';
         }
+    } catch (error) {
+        showToast("Erro na ligação ao servidor central.", "error");
+    } finally {
+        clearTimeout(fallbackTimer);
+        const ldr = document.getElementById('sysLoader');
+        if(ldr) { ldr.style.opacity = '0'; setTimeout(() => ldr.style.display = 'none', 500); }
+    }
+});
+
+// Sintaxe Colorida para JSON
+function syntaxHighlight(json) {
+    if (typeof json != 'string') json = JSON.stringify(json, undefined, 4);
+    json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+        let cls = 'json-number';
+        if (/^"/.test(match)) { if (/:$/.test(match)) cls = 'json-key'; else cls = 'json-string'; }
+        else if (/true|false/.test(match)) { cls = 'json-boolean'; } 
+        else if (/null/.test(match)) { cls = 'json-null'; }
+        return '<span class="' + cls + '">' + match + '</span>';
+    });
+}
+
+function startListeningLogs() {
+    const q = query(collection(db, "admin_audit_logs"), orderBy("createdAt", "desc"), limit(100));
+    onSnapshot(q, (snapshot) => {
+        logsCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderTable();
+    }, (error) => {
+        console.error(error);
+        showToast('Acesso negado aos ficheiros forenses.', 'error');
+    });
+}
+
+function renderTable() {
+    const tbody = document.getElementById('logsTableBody');
+    if (logsCache.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-16 text-slate-500"><i data-lucide="shield-check" class="w-12 h-12 mx-auto mb-4 opacity-30 text-slate-400"></i><p class="font-bold text-lg text-white">Cofre Limpo</p><p class="text-sm mt-1">Sem registos da equipa administrativa.</p></td></tr>`;
+        lucide.createIcons();
+        return;
+    }
+
+    let htmlContent = '';
+    let lastDateGroup = '';
+
+    logsCache.forEach(log => {
+        const dateObj = new Date(log.createdAt);
+        const dateLabel = dateObj.toLocaleDateString('pt-MZ');
+        const timeStr = dateObj.toLocaleTimeString('pt-MZ', { hour: '2-digit', minute:'2-digit', second:'2-digit' });
+
+        if (dateLabel !== lastDateGroup) {
+            lastDateGroup = dateLabel;
+            htmlContent += `<tr class="date-group-header"><td colspan="5" class="px-6 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-950/80"><i data-lucide="calendar" class="w-3 h-3 inline pb-0.5 mr-1"></i> ${dateLabel}</td></tr>`;
+        }
+        
+        let badgeClass = 'update'; let actionLabel = 'Modificação'; let icon = 'edit-2';
+        if (log.action.includes('DELETE') || log.action.includes('PURGE')) { badgeClass = 'delete'; actionLabel = 'Eliminação Mestra'; icon = 'trash-2'; }
+        if (log.action.includes('CREATE')) { badgeClass = 'create'; actionLabel = 'Criação'; icon = 'plus-circle'; }
+        if (log.action.includes('EXPORT')) { badgeClass = 'export'; actionLabel = 'Exportação de Dados'; icon = 'download'; }
+
+        htmlContent += `
+        <tr class="hover:bg-slate-800/60 transition-colors group border-b border-white/5 last:border-0 cursor-pointer h-[72px]" onclick="window.viewPayload('${log.id}')">
+            <td class="px-6 py-4">
+                <div class="text-sm font-mono font-bold text-slate-300"><i data-lucide="clock" class="w-3.5 h-3.5 inline pb-0.5 text-slate-500 mr-1"></i>${timeStr}</div>
+            </td>
+            <td class="px-6 py-4">
+                <div class="text-sm font-bold text-white flex items-center gap-2">
+                    <div class="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-black text-brand-400 border border-slate-700">${log.adminName.charAt(0).toUpperCase()}</div>
+                    ${log.adminName}
+                </div>
+            </td>
+            <td class="px-6 py-4"><span class="action-badge ${badgeClass} shadow-sm"><i data-lucide="${icon}" class="w-3 h-3 inline mr-1"></i> ${actionLabel}</span></td>
+            <td class="px-6 py-4 text-slate-400 font-mono text-xs"><span class="text-white bg-slate-800 px-2 py-1 rounded border border-slate-700 uppercase tracking-wider text-[9px] mr-2">${log.targetType}</span>${log.targetId}</td>
+            <td class="px-6 py-4 text-right">
+                <button class="px-4 py-2 bg-slate-800 hover:bg-warning-500/20 text-slate-300 hover:text-warning-400 hover:border-warning-500/50 rounded-xl text-xs font-bold transition-all flex items-center gap-2 inline-flex border border-slate-700 shadow-sm">
+                    <i data-lucide="braces" class="w-4 h-4"></i> Código Fonte
+                </button>
+            </td>
+        </tr>`;
     });
 
-    function syntaxHighlight(json) {
-        if (typeof json != 'string') json = JSON.stringify(json, undefined, 2);
-        json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
-            let cls = 'text-brand-300';
-            if (/^"/.test(match)) { if (/:$/.test(match)) cls = 'json-key'; else cls = 'json-string'; }
-            return '<span class="' + cls + '">' + match + '</span>';
-        });
+    document.getElementById('logsTableBody').innerHTML = htmlContent;
+    lucide.createIcons();
+}
+
+window.viewPayload = (id) => {
+    const log = logsCache.find(l => l.id === id);
+    if (!log) return;
+
+    document.getElementById('jsonContainer').innerHTML = syntaxHighlight(log.details);
+    document.getElementById('modalIp').textContent = log.ip || 'Oculto / Servidor Local';
+    document.getElementById('modalAdminId').textContent = log.adminId;
+
+    const modal = document.getElementById('payloadModal');
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    lucide.createIcons({root: modal});
+};
+
+window.closeModal = () => {
+    const modal = document.getElementById('payloadModal');
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+};
+
+// Controlos
+const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+const sidebar = document.getElementById('sidebar');
+const sidebarOverlay = document.getElementById('sidebarOverlay');
+const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+
+function toggleMobileSidebar() {
+    sidebar.classList.toggle('-translate-x-full');
+    if(sidebarOverlay.classList.contains('hidden')) {
+        sidebarOverlay.classList.remove('hidden');
+        setTimeout(() => sidebarOverlay.classList.remove('opacity-0'), 10);
+    } else {
+        sidebarOverlay.classList.add('opacity-0');
+        setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
     }
+}
+mobileMenuBtn?.addEventListener('click', toggleMobileSidebar);
+closeSidebarBtn?.addEventListener('click', toggleMobileSidebar);
+sidebarOverlay?.addEventListener('click', toggleMobileSidebar);
 
-    function startListeningLogs() {
-        const q = query(collection(db, "admin_audit_logs"), orderBy("createdAt", "desc"), limit(100));
-        onSnapshot(q, (snapshot) => {
-            logsCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-            renderTable();
-        });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') window.closeModal(); });
+
+window.logout = async function() {
+    if(confirm('Tem a certeza que deseja encerrar o controlo mestre?')) {
+        await signOut(auth);
+        window.location.href = '../login.html';
     }
-
-    function renderTable() {
-        const tbody = document.getElementById('logsTableBody');
-        if (logsCache.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-slate-500">Sem registos da equipa.</td></tr>`;
-            return;
-        }
-
-        tbody.innerHTML = logsCache.map(log => {
-            const dataStr = new Date(log.createdAt).toLocaleString('pt-MZ');
-            
-            let badgeClass = 'update'; let actionLabel = 'Modificação';
-            if (log.action.includes('DELETE')) { badgeClass = 'delete'; actionLabel = 'Eliminação'; }
-            if (log.action.includes('CREATE')) { badgeClass = 'create'; actionLabel = 'Criação'; }
-
-            return `
-            <tr class="hover:bg-slate-800/40 transition-colors border-b border-slate-800/50">
-                <td class="py-4 px-6 text-slate-300 font-mono text-xs">${dataStr}</td>
-                <td class="py-4 px-6 font-bold text-white">${log.adminName}</td>
-                <td class="py-4 px-6"><span class="action-badge ${badgeClass}">${actionLabel}</span></td>
-                <td class="py-4 px-6 text-brand-400 font-mono text-xs">${log.targetType.toUpperCase()}: ${log.targetId.substring(0,8)}...</td>
-                <td class="py-4 px-6 text-right">
-                    <button onclick="window.viewPayload('${log.id}')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-bold border border-slate-700 inline-flex items-center gap-2">
-                        <i data-lucide="braces" class="w-4 h-4"></i> Visualizar
-                    </button>
-                </td>
-            </tr>`;
-        }).join('');
-        lucide.createIcons();
-    }
-
-    window.viewPayload = (id) => {
-        const log = logsCache.find(l => l.id === id);
-        if (!log) return;
-
-        document.getElementById('jsonContainer').innerHTML = syntaxHighlight(log.details);
-        document.getElementById('modalIp').textContent = log.ip || 'Desconhecido';
-
-        const modal = document.getElementById('payloadModal');
-        modal.style.display = 'flex';
-        setTimeout(() => modal.classList.add('active'), 10);
-    };
-
-    window.closeModal = () => {
-        const modal = document.getElementById('payloadModal');
-        modal.classList.remove('active');
-        setTimeout(() => modal.style.display = 'none', 300);
-    };
-  </script>
+};
+</script>
 </body>
 </html>
