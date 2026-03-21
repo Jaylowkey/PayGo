@@ -14,19 +14,24 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    // 🔥 INICIALIZAÇÃO BLINDADA DO FIREBASE ADMIN
+    // 🔥 INICIALIZAÇÃO BLINDADA DO FIREBASE ADMIN (Com Corretor Vercel)
     if (!getApps().length) {
-        if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
-            console.error("❌ ERRO CRÍTICO: FIREBASE_SERVICE_ACCOUNT não encontrada nas variáveis de ambiente da Vercel.");
-            return res.status(500).json({ error: "Erro de configuração no servidor. Contacte o suporte." });
+        const envVar = process.env.FIREBASE_SERVICE_ACCOUNT;
+        
+        if (!envVar) {
+            return res.status(500).json({ error: "A variável FIREBASE_SERVICE_ACCOUNT não existe na Vercel." });
         }
 
         let serviceAccount;
         try {
-            serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+            serviceAccount = JSON.parse(envVar);
+            // 🚨 O TRUQUE DE MESTRE: Corrigir a chave privada que a Vercel estraga!
+            if (serviceAccount.private_key) {
+                serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+            }
         } catch (parseError) {
-            console.error("❌ ERRO CRÍTICO: O formato do FIREBASE_SERVICE_ACCOUNT é inválido (Não é JSON puro).");
-            return res.status(500).json({ error: "Chave do servidor corrompida. Contacte o suporte." });
+            console.error("Erro no Parse:", parseError);
+            return res.status(500).json({ error: "O JSON colado na Vercel tem um erro de formatação. Por favor, cole o ficheiro JSON original do Firebase." });
         }
 
         initializeApp({
