@@ -379,7 +379,7 @@ async function sendNotificationEmail(order, actionType) {
 
 // 🛡️ NOVIDADE: Envio da Ação para a Caixa Negra
 async function logAdminAction(actionCode, targetId, previousData, newData) {
-    if(!loggedInAdminId) return; // Segurança
+    if(!loggedInAdminId) return; 
     
     try {
         await fetch('/api/log-action', {
@@ -557,9 +557,12 @@ window.addInternalNote = async (orderId) => {
             adminNotes: arrayUnion(noteObj),
             updatedAt: serverTimestamp()
         });
+
+        // 🔥 INJEÇÃO PARA A CAIXA NEGRA (LOGS DE AUDITORIA)
+        await logAdminAction('ADD_INTERNAL_NOTE', orderId, null, { noteAdded: text });
         
         showToast('Nota confidencial guardada no dossier.', 'success');
-        // O RealTime listener (onSnapshot) fará a janela atualizar sozinha.
+        // O RealTime listener fará a janela atualizar sozinha.
         
     } catch(e) {
         console.error(e);
@@ -836,7 +839,7 @@ if (currentFilteredOrders.length === 0) { showToast('Dados insuficientes para ge
 // 🔥 REGISTO DE AUDITORIA INVISÍVEL
 logAdminAction('EXPORT_CSV', 'all', null, { exportedCount: currentFilteredOrders.length });
 
-let csvContent = "ID de Transacao,Data Servidor,Hora Servidor,Entidade Cliente,Email Contacto,Canal Telemovel,Verificacao Dinheiro,Total Faturado (MT),Etapa Logistica,Metodo,Produto Detalhe\n";
+let csvContent = "ID de Transacao,Data Servidor,Hora Servidor,Entidade Cliente,Email Contacto,Canal Telemovel,Verificacao Dinheiro,Total Faturado (MT),Etapa Logistica,Resumo Tecnico (Produto)\n";
 
 currentFilteredOrders.forEach(order => {
 const dateStr = order.createdAt.toLocaleDateString('pt-MZ');
