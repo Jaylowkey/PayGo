@@ -1,7 +1,7 @@
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
-// 🛡️ Filtro de Purificação: Impede que o Firebase crashe com valores 'undefined'
+// 🛡️ Filtro de Purificação
 const purificarDados = (obj) => {
     if (obj === undefined) return null;
     if (typeof obj !== 'object' || obj === null) return obj;
@@ -18,39 +18,33 @@ export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Método não permitido' });
 
     try {
-        // 🔥 INICIALIZAÇÃO BLINDADA (A mesma vacina que curou a Recuperação de Senha)
+        // 🔥 INICIALIZAÇÃO BLINDADA
         if (!getApps().length) {
             const envVar = process.env.FIREBASE_SERVICE_ACCOUNT;
-            
-            if (!envVar) {
-                return res.status(500).json({ error: "A variável FIREBASE_SERVICE_ACCOUNT não existe na Vercel." });
-            }
+            if (!envVar) throw new Error("A variável FIREBASE_SERVICE_ACCOUNT não existe na Vercel.");
 
-            let serviceAccount;
-            try {
-                serviceAccount = JSON.parse(envVar);
-                // O TRUQUE DE MESTRE: Corrige a chave privada que a Vercel desformata
-                if (serviceAccount.private_key) {
-                    serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
-                }
-            } catch (parseError) {
-                return res.status(500).json({ error: "O JSON colado na Vercel tem um erro de formatação." });
+            let serviceAccount = JSON.parse(envVar);
+            if (serviceAccount.private_key) {
+                serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
             }
-
             initializeApp({ credential: cert(serviceAccount) });
         }
 
         const db = getFirestore();
-        const body = req.body || {};
         
-        const { adminId, adminName, action, targetId, targetType, previousData, newData } = body;
-
-        // Validação de Segurança
-        if (!adminId || !action || !targetId) {
-            return res.status(400).json({ error: 'Dados obrigatórios em falta para registar a auditoria.' });
+        // 🚨 A VACINA DA VERCEL: Se a Vercel entregar o body como Texto em vez de Objeto, nós forçamos a conversão!
+        let body = req.body;
+        if (typeof body === 'string') {
+            try { body = JSON.parse(body); } catch (e) { throw new Error("O servidor recebeu dados corrompidos do navegador."); }
         }
 
-        // 📝 Estruturação da Caixa Negra
+        const { adminId, adminName, action, targetId, targetType, previousData, newData } = body || {};
+
+        if (!adminId || !action || !targetId) {
+            return res.status(400).json({ error: 'DADOS_INCOMPLETOS', dados_recebidos: body });
+        }
+
+        // 📝 Estruturação do Log
         const logData = {
             adminId: String(adminId),
             adminName: adminName ? String(adminName) : 'Admin Oculto',
@@ -65,14 +59,12 @@ export default async function handler(req, res) {
             createdAt: new Date().toISOString()
         };
 
-        // Gravar no cofre da Firebase
         const logRef = await db.collection('admin_audit_logs').add(logData);
-
         return res.status(200).json({ success: true, logId: logRef.id });
 
     } catch (err) {
-        console.error('🔥 Erro Crítico na API log-action:', err);
-        // Retornamos o erro exato para ver na consola se algo falhar
+        console.error('🔥 Erro Crítico:', err);
+        // Devolvemos o erro detalhado para a aba Network!
         return res.status(500).json({ error: err.message });
     }
 }
