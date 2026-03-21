@@ -9,7 +9,11 @@
   "orientation": "any",
   "lang": "pt-MZ",
   "dir": "ltr",
-  "categories": ["finance", "shopping", "utilities"],
+  "categories": [
+    "finance",
+    "shopping",
+    "utilities"
+  ],
   "icons": [
     {
       "src": "/icons/icon-192.png",
