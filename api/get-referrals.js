@@ -29,26 +29,47 @@ export default async function handler(req, res) {
         }
 
         const db = getFirestore("paygodb");
-        const { affiliateCode } = req.body;
-
-        if (!affiliateCode) {
-            return res.status(400).json({ error: 'Código de afiliado não fornecido.' });
+        
+        // 🛡️ Vacina da Vercel: Garantir que o body é lido como objeto JSON
+        let body = req.body;
+        if (typeof body === 'string') {
+            try { body = JSON.parse(body); } catch (e) { body = {}; }
         }
 
-        // 🎯 BUSCA SEGURA E FILTRADA (O Firebase Admin ignora as regras do lado do cliente)
+        const { affiliateCode } = body || {};
+
+        if (!affiliateCode) {
+            return res.status(400).json({ error: 'Código de afiliado não fornecido pelo painel.' });
+        }
+
+        // 🎯 BUSCA SEGURA E FILTRADA
         const qUsers = await db.collection("users").where("referredBy", "==", affiliateCode).get();
         
         const referrals = [];
         qUsers.forEach(doc => {
             const data = doc.data();
+            
+            // 🚀 CORREÇÃO CRÍTICA: Lidar com datas em formato String ou Timestamp do Firebase!
+            let dateStr = null;
+            if (data.createdAt) {
+                // Se for um Timestamp nativo do Firebase (tem a função toDate)
+                if (typeof data.createdAt.toDate === 'function') {
+                    dateStr = data.createdAt.toDate().toISOString();
+                } 
+                // Se já for uma String ou um Date normal
+                else {
+                    dateStr = new Date(data.createdAt).toISOString();
+                }
+            }
+
             referrals.push({
                 id: doc.id,
                 name: data.name || 'Cliente PayGo',
-                email: data.email || '', // O Front-End vai mascarar o e-mail
+                email: data.email || '', 
                 status: data.status || 'pending',
                 emailVerified: data.emailVerified || false,
                 firstPurchaseProcessed: data.firstPurchaseProcessed || false,
-                createdAt: data.createdAt ? data.createdAt.toDate().toISOString() : null
+                createdAt: dateStr
             });
         });
 
@@ -56,6 +77,7 @@ export default async function handler(req, res) {
 
     } catch (err) {
         console.error('🔥 Erro na API get-referrals:', err);
+        // O Erro 500 volta detalhado para sabermos exatamente o que partiu
         return res.status(500).json({ error: err.message });
     }
 }
