@@ -2,16 +2,15 @@ import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
 export default async function handler(req, res) {
-    // Cabeçalhos essenciais para a PaySuite
+    // ✅ CORS e Segurança (Permite que a PaySuite entre)
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-paysuite-signature');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-paysuite-signature');
 
     if (req.method === 'OPTIONS') return res.status(200).end();
-    if (req.method !== 'POST') return res.status(405).json({ error: 'Método não permitido' });
 
     try {
-        // 🔥 INICIALIZAÇÃO BLINDADA (A vacina da Vercel)
+        // 🔥 INICIALIZAÇÃO BLINDADA DO FIREBASE (Vacina Vercel)
         if (!getApps().length) {
             const envVar = process.env.FIREBASE_SERVICE_ACCOUNT;
             if (!envVar) return res.status(500).json({ error: "Falta FIREBASE_SERVICE_ACCOUNT" });
@@ -28,102 +27,86 @@ export default async function handler(req, res) {
             initializeApp({ credential: cert(serviceAccount) });
         }
 
-        // 🎯 O ALVO CORRETO: Apontamos para a tua Base de Dados!
         const db = getFirestore("paygodb");
         
+        // 🚨 PREVENÇÃO DE FALHA NA PAYSUITE: Algumas APIs mandam os dados no 'query' em vez do 'body'
         let payload = req.body;
+        if (!payload || Object.keys(payload).length === 0) {
+            payload = req.query; // Tenta ler do URL se o Body estiver vazio
+        }
         if (typeof payload === 'string') {
             try { payload = JSON.parse(payload); } catch (e) { payload = {}; }
         }
-        
-        // 🟢 GRAVAR NA CAIXA NEGRA (Logs de Webhook)
-        let logRef = null;
-        try {
-            logRef = db.collection('webhook_logs').doc();
-            await logRef.set({
-                source: 'paysuite',
-                event: payload?.event || 'unknown',
-                payload: payload,
-                status: 'received',
-                createdAt: new Date().toISOString()
-            });
-        } catch (logErr) {
-            console.warn('⚠️ Falha ao criar log:', logErr.message);
+
+        // 🟢 REGISTO BRUTO (Para sabermos se a PaySuite sequer tentou contactar)
+        await db.collection('webhook_logs').add({
+            source: 'paysuite',
+            rawPayload: payload,
+            receivedAt: new Date().toISOString()
+        });
+
+        // Validação Mínima
+        if (!payload || (!payload.event && !payload.status)) {
+            return res.status(200).json({ warning: 'Payload vazio ou não reconhecido, mas recebido com sucesso.' });
         }
 
-        if (!payload || !payload.event) {
-            if (logRef) await logRef.update({ status: 'error', errorMsg: 'Payload vazio' });
-            return res.status(400).json({ error: 'Payload inválido' });
-        }
-
-        const paymentData = payload.data || {};
+        const paymentData = payload.data || payload;
         
-        // 🎯 INTELIGÊNCIA DE MATCHING: Procurar a referência PG-XXXX
-        const merchantReference = paymentData.reference || paymentData.tx_ref || paymentData.order_id || paymentData.transaction_id;
+        // 🎯 INTELIGÊNCIA DE BUSCA: Procura por várias chaves onde a PaySuite costuma esconder a referência
+        const merchantReference = paymentData.reference || paymentData.tx_ref || paymentData.order_id || paymentData.transaction_id || paymentData.ref;
 
         if (!merchantReference) {
-            if (logRef) await logRef.update({ status: 'error', errorMsg: 'Sem referência (PG-XXXX)' });
-            return res.status(400).json({ error: 'Missing reference' });
+            return res.status(200).json({ warning: 'Sem ID de referência para processar.' });
         }
 
-        // ✅ PROCURAR O PEDIDO NO FIREBASE
+        // ✅ BUSCA O PEDIDO NO FIREBASE
         const ordersRef = db.collection('orders');
         const snapshot = await ordersRef.where('orderId', '==', merchantReference).get();
 
         if (snapshot.empty) {
-            if (logRef) await logRef.update({ status: 'error', errorMsg: `ID [${merchantReference}] não encontrado.` });
-            return res.status(404).json({ error: 'Order not found' });
+            return res.status(200).json({ warning: `Pedido ${merchantReference} não encontrado no sistema.` });
         }
 
         const orderDoc = snapshot.docs[0];
         const orderData = orderDoc.data();
 
-        // ✅ MÁQUINA DE ESTADOS (Atualização Automática)
+        // ✅ MÁQUINA DE ESTADOS E AUDITORIA AUTOMÁTICA
+        const evento = payload.event || payload.status;
         let updateData = { updatedAt: new Date().toISOString() };
-        let actionMessage = '';
 
-        switch (payload.event) {
-            case 'payment.completed':
-            case 'payment.successful':
-                if (orderData.isPaid) {
-                    if (logRef) await logRef.update({ status: 'ignored', errorMsg: 'Já estava pago.' });
-                    return res.status(200).json({ received: true, processed: false, reason: 'Already paid' });
-                }
-                
-                // MÁGICA: Muda para PAGO e EM PROCESSAMENTO!
-                updateData.status = 'processing';
-                updateData.isPaid = true;
-                updateData.paysuitePaymentId = paymentData.payment_id || paymentData.id || null;
-                actionMessage = 'Pagamento confirmado automaticamente!';
-                break;
+        if (evento === 'payment.completed' || evento === 'payment.successful' || evento === 'paid' || evento === 'success') {
+            if (orderData.isPaid) {
+                return res.status(200).json({ message: 'Pedido já se encontrava pago.' });
+            }
             
-            case 'payment.failed':
-            case 'payment.expired':
-            case 'payment.canceled':
-                updateData.status = 'pending';
-                updateData.isPaid = false;
-                actionMessage = 'Pagamento falhou ou expirou.';
-                break;
+            // 1. Atualiza o Pedido
+            updateData.status = 'processing';
+            updateData.isPaid = true;
+            updateData.paysuitePaymentId = paymentData.payment_id || paymentData.id || 'N/A';
+            await orderDoc.ref.update(updateData);
 
-            default:
-                if (logRef) await logRef.update({ status: 'ignored', errorMsg: `Evento ${payload.event} ignorado.` });
-                return res.status(200).json({ received: true, ignored: true });
-        }
-
-        // DISPARA A ATUALIZAÇÃO!
-        await orderDoc.ref.update(updateData);
-
-        // FECHAR LOG NA CAIXA NEGRA
-        if (logRef) {
-            await logRef.update({ 
-                status: 'processed', 
-                orderId: merchantReference,
-                actionTaken: actionMessage,
-                completedAt: new Date().toISOString()
+            // 2. 🤖 O ROBÔ ESCREVE NO LOG DE AUDITORIA (Vai aparecer no teu log.html)
+            await db.collection('admin_audit_logs').add({
+                adminId: 'system_bot',
+                adminName: '🤖 Sistema Automático (PaySuite)',
+                action: 'PAGAMENTO_CONFIRMADO',
+                targetId: String(merchantReference),
+                targetType: 'order',
+                details: {
+                    previous: { status: orderData.status, isPaid: orderData.isPaid },
+                    updated: { status: 'processing', isPaid: true, method: paymentData.method || 'M-Pesa/e-Mola' }
+                },
+                ip: req.headers['x-forwarded-for'] || 'Servidor PaySuite',
+                createdAt: new Date().toISOString()
             });
+
+        } else if (evento === 'payment.failed' || evento === 'failed') {
+            updateData.status = 'pending';
+            updateData.isPaid = false;
+            await orderDoc.ref.update(updateData);
         }
 
-        return res.status(200).json({ received: true, processed: true, orderId: merchantReference, newStatus: updateData.status });
+        return res.status(200).json({ success: true, orderProcessed: merchantReference });
 
     } catch (err) {
         console.error('❌ Erro no webhook:', err);
