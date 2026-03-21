@@ -267,7 +267,7 @@
                         </div>
                     </div>
 
-                   <div id="successState" class="hidden flex-col items-center justify-center p-8 text-center animate-fade-in w-full h-full min-h-[400px]">
+                    <div id="successState" class="hidden flex-col items-center justify-center p-8 text-center animate-fade-in w-full min-h-[400px]">
                         <div class="w-20 h-20 bg-brand-500/20 text-brand-400 rounded-full flex items-center justify-center mb-6 border border-brand-500/30 mx-auto">
                             <i data-lucide="mail-check" class="w-10 h-10 animate-bounce"></i>
                         </div>
@@ -279,8 +279,8 @@
                             <i data-lucide="alert-circle" class="w-5 h-5 text-warning-400 shrink-0 mt-0.5"></i>
                             <p class="text-xs text-warning-200">Para garantir a segurança, <b>precisa de clicar no link enviado para o seu e-mail</b> antes de poder fazer login. Verifique também a pasta de SPAM.</p>
                         </div>
-                        <a href="index.html" class="inline-block text-sm font-bold text-slate-300 hover:text-white px-6 py-3 bg-white/5 hover:bg-white/10 rounded-full transition-colors border border-white/10">
-                            Voltar à Página Inicial
+                        <a href="login.html" class="inline-block text-sm font-bold text-slate-300 hover:text-white px-6 py-3 bg-white/5 hover:bg-white/10 rounded-full transition-colors border border-white/10">
+                            Ir para o Login
                         </a>
                     </div>
 
@@ -311,11 +311,19 @@
 
         lucide.createIcons();
 
-        // Capturar Código de Afiliado do URL
+        // 🚀 CAPTURA E BLINDAGEM DO CÓDIGO DE AFILIADO (LocalStorage)
         const urlParams = new URLSearchParams(window.location.search);
-        const affiliateCode = urlParams.get('ref') || null;
+        let affiliateCode = urlParams.get('ref');
 
-        // Se houver afiliado, mostrar aviso
+        if (affiliateCode) {
+            // Se veio pelo URL, tatuamos no cofre do navegador
+            localStorage.setItem('paygo_affiliate_ref', affiliateCode);
+        } else {
+            // Se o URL estiver limpo, vamos procurar no cofre
+            affiliateCode = localStorage.getItem('paygo_affiliate_ref');
+        }
+
+        // Se houver afiliado ativo no sistema, mostra o banner
         if (affiliateCode) {
             document.getElementById('affiliateBanner').classList.remove('hidden');
         }
@@ -387,20 +395,20 @@
             lucide.createIcons({root: btn});
 
             try {
-                // 1. Criar Autenticação (Firebase Auth)
+                // 1. Criar Autenticação
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
                 await updateProfile(user, { displayName: name });
 
-                // 2. Gravar Perfil na Base de Dados (Com sistema de afiliados incluído)
+                // 2. Gravar Perfil (Afiliado Seguro incluído)
                 const userData = {
                     uid: user.uid,
                     name: name,
                     email: email,
                     phone: phone,
                     role: 'user', 
-                    status: 'pending', // Bloqueado até confirmar o email
-                    referredBy: affiliateCode, // 🚀 Captura automática do Afiliado
+                    status: 'pending',
+                    referredBy: affiliateCode || null, // Garante que não vai 'undefined'
                     firstPurchaseProcessed: false,
                     totalPurchases: 0,
                     createdAt: new Date().toISOString(),
@@ -408,21 +416,21 @@
                 };
                 await setDoc(doc(db, "users", user.uid), userData);
 
-                // 🚀 3. ENVIAR EMAIL DE VERIFICAÇÃO PELA NOSSA API PREMIUM
+                // 3. ENVIAR EMAIL DE VERIFICAÇÃO PELA NOSSA API
                 fetch('/api/verify-email', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: email, name: name })
                 }).catch(e => console.warn('Falha silenciosa no envio da verificação:', e));
 
-                // 4. Sucesso: Mudar UI para Ecrã de "Verifique o Email"
+                // 🚀 Limpar a memória do afiliado (Para não viciar registos futuros)
+                localStorage.removeItem('paygo_affiliate_ref');
+
+                // 4. Sucesso: Mudar UI
                 document.getElementById('userEmailDisplay').textContent = email;
-                document.getElementById('formState').style.opacity = '0';
-                
-                setTimeout(() => {
-                    document.getElementById('formState').classList.add('hidden');
-                    document.getElementById('successState').classList.remove('hidden');
-                }, 300);
+                document.getElementById('formState').classList.add('hidden');
+                document.getElementById('successState').classList.remove('hidden');
+                document.getElementById('successState').style.display = 'flex'; // Forçar layout flex
 
             } catch (error) {
                 console.error(error);
@@ -433,7 +441,6 @@
                 
                 showToast(msg, 'error');
                 
-                // Restaurar botão
                 btn.disabled = false;
                 btnText.textContent = 'Criar Conta Gratuita';
                 btnIcon.setAttribute('data-lucide', 'arrow-right');
