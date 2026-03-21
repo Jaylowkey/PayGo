@@ -471,24 +471,33 @@
             btnSpinner?.classList.remove('hidden');
         }
 
-        try {
-            // Chamada à tua API (código que enviaste com a Resend e a Firebase Admin SDK)
+       try {
+            // Chamada à tua API oficial de recuperação
             const response = await fetch('/api/recover-password', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: email })
             });
 
+            const contentType = response.headers.get("content-type");
+
             if (response.ok) {
-                window.showToast('✅ O link oficial de redefinição de senha foi enviado. Verifique a sua caixa de entrada e Spam.', 'success');
+                window.showToast('✅ O link oficial de redefinição de senha foi enviado. Verifique o Spam.', 'success');
                 window.closeForgotModal();
             } else {
-                const result = await response.json();
-                throw new Error(result.error || 'Servidor indisponível. Tente novamente mais tarde.');
+                // 🛡️ SE FOR JSON (Erro controlado pela nossa API)
+                if (contentType && contentType.indexOf("application/json") !== -1) {
+                    const result = await response.json();
+                    throw new Error(result.error || 'Servidor indisponível. Tente novamente.');
+                } 
+                // 🛡️ SE FOR TEXTO/HTML (Erro brutal da Vercel como o "A server error...")
+                else {
+                    throw new Error('O Servidor da Vercel falhou (Erro 500). Verifique os logs na plataforma Vercel.');
+                }
             }
         } catch (error) {
             console.error('Erro no Password Reset:', error);
-            window.showToast('❌ Falha ao tentar contactar o servidor. ' + error.message, 'error');
+            window.showToast('❌ ' + error.message, 'error');
         } finally {
             if (btn) {
                 btn.disabled = false;
