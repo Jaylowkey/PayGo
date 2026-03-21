@@ -195,6 +195,11 @@
                             <p class="text-slate-400 text-sm mt-1">Acesso ao sistema de pagamentos PayGo.</p>
                         </div>
 
+                        <div id="affiliateBanner" class="hidden bg-brand-500/10 border border-brand-500/30 p-3 rounded-xl mb-6 flex items-center gap-3">
+                            <i data-lucide="award" class="text-brand-400 w-5 h-5 shrink-0"></i>
+                            <p class="text-xs text-brand-200 font-medium">Você foi convidado por um Parceiro Oficial PayGo.</p>
+                        </div>
+
                         <form id="registerForm">
                             <div class="grid grid-cols-1 gap-1">
                                 <div class="input-wrapper">
@@ -288,8 +293,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        // ✅ CORREÇÃO: sendEmailVerification adicionado nativamente
-        import { getAuth, createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getAuth, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -306,6 +310,15 @@
         const db = getFirestore(app, "paygodb");
 
         lucide.createIcons();
+
+        // Capturar Código de Afiliado do URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const affiliateCode = urlParams.get('ref') || null;
+
+        // Se houver afiliado, mostrar aviso
+        if (affiliateCode) {
+            document.getElementById('affiliateBanner').classList.remove('hidden');
+        }
 
         // Mostrar/Ocultar Senha
         window.togglePwd = function(id) {
@@ -346,7 +359,7 @@
             const iconName = type === 'error' ? 'alert-circle' : type === 'warning' ? 'alert-triangle' : 'check-circle';
             
             t.className = `toast border-l-4 ${borderColor}`;
-            t.innerHTML = `<i data-lucide="${iconName}" class="w-5 h-5 ${iconColor}"></i> <span class="text-sm font-semibold">${msg}</span>`;
+            t.innerHTML = `<i data-lucide="${iconName}" class="w-5 h-5 ${iconColor}"></i> <span class="text-sm font-semibold text-white">${msg}</span>`;
             
             container.appendChild(t);
             lucide.createIcons({ root: t });
@@ -379,14 +392,15 @@
                 const user = userCredential.user;
                 await updateProfile(user, { displayName: name });
 
-                // 2. Gravar Perfil na Base de Dados
+                // 2. Gravar Perfil na Base de Dados (Com sistema de afiliados incluído)
                 const userData = {
                     uid: user.uid,
                     name: name,
                     email: email,
                     phone: phone,
                     role: 'user', 
-                    status: 'active',
+                    status: 'pending', // Bloqueado até confirmar o email
+                    referredBy: affiliateCode, // 🚀 Captura automática do Afiliado
                     firstPurchaseProcessed: false,
                     totalPurchases: 0,
                     createdAt: new Date().toISOString(),
@@ -394,23 +408,14 @@
                 };
                 await setDoc(doc(db, "users", user.uid), userData);
 
-                // 🚀 3. ENVIAR EMAIL DE VERIFICAÇÃO NATIVO (Segurança Firebase)
-                await sendEmailVerification(user);
-
-                // 🚀 4. ENVIAR EMAIL DE BOAS VINDAS (Marketing Resend)
-                fetch('/api/send-email', {
+                // 🚀 3. ENVIAR EMAIL DE VERIFICAÇÃO PELA NOSSA API PREMIUM
+                fetch('/api/verify-email', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        to: email,
-                        subject: '🎉 Bem-vindo ao Mundo Global PayGo!',
-                        template: 'welcome',
-                        type: 'transactional',
-                        variables: { customer_name: name }
-                    })
-                }).catch(e => console.warn('Welcome email falhou:', e));
+                    body: JSON.stringify({ email: email, name: name })
+                }).catch(e => console.warn('Falha silenciosa no envio da verificação:', e));
 
-                // 5. Sucesso: Mudar UI para Ecrã de "Verifique o Email"
+                // 4. Sucesso: Mudar UI para Ecrã de "Verifique o Email"
                 document.getElementById('userEmailDisplay').textContent = email;
                 document.getElementById('formState').style.opacity = '0';
                 
