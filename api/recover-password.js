@@ -14,7 +14,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    // 🔥 INICIALIZAÇÃO BLINDADA DO FIREBASE ADMIN (Com Corretor Vercel)
+    // 🔥 INICIALIZAÇÃO BLINDADA DO FIREBASE ADMIN
     if (!getApps().length) {
         const envVar = process.env.FIREBASE_SERVICE_ACCOUNT;
         
@@ -25,18 +25,14 @@ export default async function handler(req, res) {
         let serviceAccount;
         try {
             serviceAccount = JSON.parse(envVar);
-            // 🚨 O TRUQUE DE MESTRE: Corrigir a chave privada que a Vercel estraga!
             if (serviceAccount.private_key) {
                 serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
             }
         } catch (parseError) {
-            console.error("Erro no Parse:", parseError);
-            return res.status(500).json({ error: "O JSON colado na Vercel tem um erro de formatação. Por favor, cole o ficheiro JSON original do Firebase." });
+            return res.status(500).json({ error: "O JSON colado na Vercel tem um erro de formatação." });
         }
 
-        initializeApp({
-            credential: cert(serviceAccount)
-        });
+        initializeApp({ credential: cert(serviceAccount) });
     }
 
     const { email } = req.body;
@@ -44,14 +40,13 @@ export default async function handler(req, res) {
 
     const auth = getAuth();
     
-    // Determinar o URL Base
-    const baseUrl = process.env.VERCEL_URL 
-        ? `https://${process.env.VERCEL_URL}` 
-        : (process.env.NEXT_PUBLIC_SITE_URL || 'https://paygo.co.mz');
+    // 🎯 O TRUQUE DE MESTRE: Forçar o domínio oficial com 'www' cravado na pedra!
+    // Ignoramos o VERCEL_URL porque ele usa domínios provisórios que o Firebase bloqueia.
+    const baseUrl = 'https://www.paygo.co.mz';
     
     // 1. Firebase Admin gera o Link Oficial e Seguro
     const actionCodeSettings = {
-      url: `${baseUrl}/login.html`, // URL de fallback
+      url: `${baseUrl}/login.html`, // Para onde o cliente volta depois de redefinir
       handleCodeInApp: false
     };
     
@@ -115,7 +110,6 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error('❌ Erro na recuperação de senha:', error);
     
-    // Proteção Anti-Hacker
     if (error.code === 'auth/user-not-found') {
         return res.status(200).json({ success: true }); 
     }
