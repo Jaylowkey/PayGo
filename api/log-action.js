@@ -1,30 +1,14 @@
-const admin = require('firebase-admin');
+import { initializeApp, cert, getApps } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 
-// 🔥 Inicialização Blindada e Universal
-if (!admin.apps.length) {
-    try {
-        if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
-            console.error("❌ ERRO: A variável FIREBASE_SERVICE_ACCOUNT não está configurada na Vercel.");
-        } else {
-            const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-            admin.initializeApp({
-                credential: admin.credential.cert(serviceAccount)
-            });
-            console.log("✅ Firebase Admin inicializado com sucesso.");
-        }
-    } catch (error) {
-        console.error("❌ ERRO CRÍTICO: O formato do JSON da Service Account é inválido.", error);
-    }
-}
-
-// Filtro de sujidade para o Firebase não dar crash
+// 🛡️ Filtro de Purificação: O Firebase ODEIA valores 'undefined' e crasha. Isto limpa a sujidade toda.
 const purificarDados = (obj) => {
     if (obj === undefined) return null;
     if (typeof obj !== 'object' || obj === null) return obj;
     return JSON.parse(JSON.stringify(obj)); 
 };
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
     // ✅ CORS Security Headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -34,18 +18,32 @@ module.exports = async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Método não permitido' });
 
     try {
-        // Verifica se a chave foi carregada com sucesso
-        if (!admin.apps.length) {
-            return res.status(500).json({ error: 'Firebase Admin não inicializou. Verifique a variável FIREBASE_SERVICE_ACCOUNT na Vercel.' });
+        // 🔥 INICIALIZAÇÃO BLINDADA DO FIREBASE ADMIN
+        if (!getApps().length) {
+            if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
+                console.error("❌ ERRO: FIREBASE_SERVICE_ACCOUNT em falta.");
+                return res.status(500).json({ error: "Configuração de servidor em falta." });
+            }
+            
+            let serviceAccount;
+            try {
+                serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+            } catch (e) {
+                console.error("❌ ERRO: FIREBASE_SERVICE_ACCOUNT inválido.");
+                return res.status(500).json({ error: "Chave do servidor corrompida." });
+            }
+
+            initializeApp({ credential: cert(serviceAccount) });
         }
 
-        const db = admin.firestore();
+        const db = getFirestore();
         const body = req.body || {};
         
         const { adminId, adminName, action, targetId, targetType, previousData, newData } = body;
 
+        // Validação mínima de segurança
         if (!adminId || !action || !targetId) {
-            return res.status(400).json({ error: 'Faltam dados obrigatórios para auditar a ação.' });
+            return res.status(400).json({ error: 'Dados obrigatórios em falta para auditoria.' });
         }
 
         // 📝 Estruturação Cirúrgica do Log
@@ -63,12 +61,13 @@ module.exports = async function handler(req, res) {
             createdAt: new Date().toISOString()
         };
 
+        // Gravar no cofre da Caixa Negra
         const logRef = await db.collection('admin_audit_logs').add(logData);
-        
+
         return res.status(200).json({ success: true, logId: logRef.id });
 
     } catch (err) {
         console.error('🔥 Erro Crítico na API log-action:', err);
-        return res.status(500).json({ error: err.message, stack: err.stack });
+        return res.status(500).json({ error: err.message });
     }
-};
+}
