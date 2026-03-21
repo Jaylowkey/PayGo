@@ -384,6 +384,7 @@
     };
 
     // Motor de Sessão Contínua (Autenticação Automática)
+   // Motor de Sessão Contínua (Autenticação Automática)
     let isHandlingLogin = false;
     onAuthStateChanged(auth, async (user) => {
         if (user && !isHandlingLogin) {
@@ -392,26 +393,37 @@
                 const userDoc = await getDoc(doc(db, "users", user.uid));
                 if (userDoc.exists()) {
                     const userData = userDoc.data();
+                    
+                    // 🛡️ 1. Bloqueia Banidos
                     if (userData.status === 'blocked' || userData.status === 'banned') {
+                        await auth.signOut();
                         window.showToast('Acesso negado. A sua conta foi bloqueada por razões de segurança.', 'error');
                         return;
                     }
                     
-                    // Rastreio de atividade logado
+                    // 🛡️ 2. Bloqueia Não Verificados (O drible acaba aqui!)
+                    if (userData.status === 'pending' || userData.emailVerified === false) {
+                        await auth.signOut();
+                        window.showToast('⚠️ Acesso bloqueado. Verifique a sua caixa de e-mail e clique no link de segurança antes de entrar!', 'warning');
+                        return;
+                    }
+                    
+                    // Rastreio de atividade
                     await updateDoc(doc(db, "users", user.uid), {
                         lastLogin: serverTimestamp(),
                         lastActivity: serverTimestamp()
                     });
                     
-                    // Redirecionamento Inteligente: Vai para onde estava antes do login (ex: Carrinha)
                     const urlParams = new URLSearchParams(window.location.search);
                     const redirectParam = urlParams.get('redirect');
                     
-                    // Se for Admin/Afiliado vai para as áreas especiais, senão vai para a home/carrinha
-                    if(userData.role === 'admin' || userData.role === 'superadmin' || userData.role === 'affiliate') {
+                    // 🎯 3. Redirecionamento Inteligente Corrigido
+                    if (userData.role === 'admin' || userData.role === 'superadmin') {
                         window.location.href = redirectParam || 'admin/dashboard.html';
+                    } else if (userData.role === 'affiliate') {
+                        window.location.href = redirectParam || 'dashboard-afiliado.html'; // Corrigido para a raiz
                     } else {
-                        window.location.href = redirectParam || 'index.html';
+                        window.location.href = redirectParam || 'index.html'; // Cliente normal
                     }
                 }
             } catch (error) {
