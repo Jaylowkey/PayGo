@@ -7,12 +7,10 @@
 <meta name="theme-color" content="#0f172a">
 <meta name="robots" content="noindex, nofollow">
 <meta name="description" content="Gestão completa de pedidos PayGo - Admin Panel">
-
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233b82f6'><polygon points='13 2 3 14 12 14 11 22 21 10 12 10 13 2'/></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/lucide@latest"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
@@ -26,50 +24,43 @@ tailwind.config = {
             },
             colors: { 
                 brand: { 50: '#eff6ff', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 900: '#1e3a8a', 950: '#0f172a' }, 
-                success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' }, 
-                warning: { 400: '#fbbf24', 500: '#f59e0b', 600: '#d97706' }, 
-                danger: { 400: '#f87171', 500: '#ef4444', 600: '#dc2626' },
-                refund: { 400: '#c084fc', 500: '#a855f7', 900: '#581c87' }
-            },
-            animation: {
-                'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                success: { 400: '#4ade80', 500: '#22c55e' }, 
+                warning: { 400: '#fbbf24', 500: '#f59e0b' }, 
+                danger: { 400: '#f87171', 500: '#ef4444' } 
             }
         }
     }
 };
 </script>
 <style>
-body { background-color: #0f172a; color: #f8fafc; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
-::-webkit-scrollbar { width: 6px; height: 6px; } 
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: #475569; }
+body { background-color: #020617; color: #f8fafc; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+::-webkit-scrollbar { width: 6px; height: 6px; } ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
 
 /* Grid e Efeitos de Fundo */
 .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
-.glass-nav { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.08); z-index: 50; }
-.glass-card { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.3s ease; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+.glass-nav { background: rgba(2, 6, 23, 0.85); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.05); z-index: 50; }
+.glass-card { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.3s ease; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3); }
 
 /* Sidebar Premium */
-.sidebar-link { position: relative; overflow: hidden; }
-.sidebar-link::before { content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 3px; background: #3b82f6; transform: scaleY(0); transition: transform 0.2s ease; transform-origin: left; }
-.sidebar-link:hover::before { transform: scaleY(1); }
-.sidebar-link.active { background: rgba(59, 130, 246, 0.1); color: #60a5fa; font-weight: 700; border-right: 3px solid #3b82f6; }
+.sidebar-link { position: relative; transition: all 0.3s ease; }
+.sidebar-link::before { content: ''; position: absolute; left: 0; top: 10%; height: 80%; width: 3px; background: transparent; border-radius: 0 4px 4px 0; transition: all 0.3s ease; }
+.sidebar-link:hover { background: rgba(255,255,255,0.03); color: #fff; }
+.sidebar-link.active { background: linear-gradient(90deg, rgba(59,130,246,0.1) 0%, transparent 100%); color: #60a5fa; font-weight: 700; }
+.sidebar-link.active::before { background: #3b82f6; box-shadow: 0 0 10px #3b82f6; }
 
 /* Badges de Status (Neon Effect) */
-.status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 8px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; }
-.status-badge.completed { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); box-shadow: 0 0 10px rgba(34,197,94,0.1); }
-.status-badge.processing { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); box-shadow: 0 0 10px rgba(59,130,246,0.1); }
+.status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 8px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1); }
+.status-badge.completed { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
+.status-badge.processing { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
 .status-badge.pending { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
 .status-badge.cancelled { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
 .status-badge.refunded { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
 
-/* Separador de Datas na Tabela */
 .date-group-header { background: rgba(2, 6, 23, 0.95); border-y: 1px solid rgba(255,255,255,0.05); }
 
 /* Toasts Premium */
 #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-.toast { pointer-events: auto; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 12px; display: flex; gap: 12px; transform: translateX(120%); transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); opacity: 0; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+.toast { pointer-events: auto; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 12px; display: flex; gap: 12px; transform: translateX(120%); transition: transform 0.4s ease; opacity: 0; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
 .toast.show { transform: translateX(0); opacity: 1; }
 .toast.error { border-left-color: #ef4444; }
 .toast.success { border-left-color: #22c55e; }
@@ -80,22 +71,19 @@ body { background-color: #0f172a; color: #f8fafc; overflow-x: hidden; -webkit-fo
 .modal-wrapper.active { display: flex; }
 .modal-backdrop { position: absolute; inset: 0; background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(8px); opacity: 0; transition: opacity 0.3s ease; }
 .modal-wrapper.active .modal-backdrop { opacity: 1; }
-.modal-panel { position: relative; background: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; width: 95%; max-width: 800px; max-height: 90vh; display: flex; flex-direction: column; opacity: 0; transform: scale(0.95) translateY(10px); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8); z-index: 10; overflow: hidden; }
+.modal-panel { position: relative; background: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; width: 95%; max-width: 800px; max-height: 90vh; display: flex; flex-direction: column; opacity: 0; transform: scale(0.95) translateY(10px); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 30px 60px -10px rgba(0,0,0,0.8); z-index: 10; overflow: hidden; }
 .modal-wrapper.active .modal-panel { opacity: 1; transform: scale(1) translateY(0); }
 
-/* Utilities */
 .btn-action { transition: all 0.2s ease; position: relative; overflow: hidden; }
-.btn-action:active:not(:disabled) { transform: scale(0.95); }
-select { -webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1rem; }
+.btn-action:active:not(:disabled) { transform: scale(0.96); }
 
-@media (max-width: 768px) {
-  .glass-card { border-radius: 1.5rem; }
-}
+select, input { background-color: rgba(15, 23, 42, 0.5) !important; color: white !important; color-scheme: dark; }
+@media (max-width: 768px) { .glass-card { border-radius: 1.5rem; } }
 </style>
 </head>
 <body class="selection:bg-brand-500 selection:text-white">
 
-<div id="sysLoader" class="fixed inset-0 bg-slate-950 z-[200] flex flex-col items-center justify-center transition-opacity duration-500">
+<div id="sysLoader" class="fixed inset-0 bg-[#020617] z-[200] flex flex-col items-center justify-center transition-opacity duration-500">
   <div class="w-16 h-16 border-4 border-slate-800 border-t-brand-500 rounded-full animate-spin mb-4 shadow-[0_0_20px_rgba(59,130,246,0.5)]"></div>
   <h2 class="text-white text-2xl font-bold font-display tracking-tight">PayGo OS</h2>
   <p class="text-slate-400 text-sm mt-1 font-medium">A sincronizar livros de registos logísticos...</p>
@@ -112,7 +100,7 @@ select { -webkit-appearance: none; -moz-appearance: none; appearance: none; back
       <button id="mobileMenuBtn" class="lg:hidden text-slate-400 hover:text-white p-2 -ml-2 transition-colors rounded-lg hover:bg-white/5" aria-label="Abrir menu">
         <i data-lucide="menu" class="w-6 h-6"></i>
       </button>
-      <div class="bg-gradient-to-tr from-brand-500 to-accent-500 p-2.5 rounded-xl text-white shadow-lg shadow-brand-500/20">
+      <div class="bg-gradient-to-tr from-brand-500 to-brand-400 p-2.5 rounded-xl text-white shadow-lg shadow-brand-500/20">
         <i data-lucide="zap" class="w-5 h-5 fill-current"></i>
       </div>
       <div class="hidden sm:block">
@@ -315,6 +303,8 @@ let orders = [];
 let currentFilteredOrders = [];
 let currentOrderId = null;
 let ordersUnsubscribe = null;
+let loggedInAdminId = null;
+let loggedInAdminName = null;
 
 // ==========================================
 // 🔔 TOAST NOTIFICATIONS PREMIUM
@@ -361,7 +351,7 @@ function getRelativeDateLabel(date) {
 }
 
 // ==========================================
-// 📧 API RESEND & LARK (NOTIFICAÇÕES AUTO)
+// 📧 API RESEND & AUDITORIA DE ADMINS
 // ==========================================
 async function sendNotificationEmail(order, actionType) {
     try {
@@ -378,6 +368,29 @@ async function sendNotificationEmail(order, actionType) {
         showToast('Notificação oficial disparada para o cliente.', 'info');
     } catch (error) {
         console.error('Erro de envio:', error);
+    }
+}
+
+// 🛡️ NOVIDADE: Envio da Ação para a Caixa Negra
+async function logAdminAction(actionCode, targetId, previousData, newData) {
+    if(!loggedInAdminId) return; // Segurança
+    
+    try {
+        await fetch('/api/log-action', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                adminId: loggedInAdminId,
+                adminName: loggedInAdminName,
+                action: actionCode,
+                targetId: targetId,
+                targetType: 'order',
+                previousData: previousData,
+                newData: newData
+            })
+        });
+    } catch (err) {
+        console.warn("Auditoria não conseguiu registar no servidor", err);
     }
 }
 
@@ -534,9 +547,9 @@ window.openModal = (orderId) => {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
             <div class="bg-slate-900/50 p-6 rounded-2xl border border-white/5 flex flex-col gap-4">
                 <h3 class="text-xs font-black text-brand-400 uppercase tracking-widest border-b border-white/10 pb-3 flex items-center gap-2"><i data-lucide="user-circle" class="w-4 h-4"></i> Identidade do Comprador</h3>
-                <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Nome Registado</p><p class="font-bold text-white text-base">${order.name}</p></div>
-                <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Canal de Contacto Seguro</p><a href="https://wa.me/${order.whatsapp.replace(/\D/g,'')}" target="_blank" class="font-bold text-success-400 hover:text-success-300 flex items-center gap-1.5 w-max bg-success-500/10 px-3 py-1.5 rounded-lg border border-success-500/20 transition-all"><i data-lucide="message-square" class="w-4 h-4"></i> ${order.whatsapp}</a></div>
-                <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Correio Eletrónico</p><p class="font-medium text-slate-300 font-mono text-sm">${order.email}</p></div>
+                <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nome Registado</p><p class="font-bold text-white text-base">${order.name}</p></div>
+                <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Canal de Contacto Seguro</p><a href="https://wa.me/${order.whatsapp.replace(/\D/g,'')}" target="_blank" class="font-bold text-success-400 hover:text-success-300 flex items-center gap-1.5 w-max bg-success-500/10 px-3 py-1.5 rounded-lg border border-success-500/20 transition-all"><i data-lucide="message-square" class="w-4 h-4"></i> ${order.whatsapp}</a></div>
+                <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Correio Eletrónico</p><p class="font-medium text-slate-300 font-mono text-sm">${order.email}</p></div>
             </div>
 
             <div class="bg-slate-900 p-6 rounded-2xl border border-brand-500/20 shadow-[0_10px_30px_rgba(37,99,235,0.05)] relative overflow-hidden">
@@ -558,7 +571,7 @@ window.openModal = (orderId) => {
         </div>
 
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-sm">
-            <div class="flex-1">
+            <div class="flex-1 w-full">
                 <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-1"><i data-lucide="shield-check" class="w-3 h-3"></i> Ferramenta de Auditoria de Recebimento</p>
                 <button onclick="window.togglePaymentStatus('${order.id}', ${order.isPaid})" class="w-full sm:w-auto px-6 py-3.5 rounded-xl font-bold text-sm transition-all shadow-lg flex items-center justify-center gap-2 ${order.isPaid ? 'bg-success-600 hover:bg-success-500 text-white shadow-success-500/20' : 'bg-slate-950 border border-danger-500 text-danger-400 hover:bg-danger-500 hover:text-white'}">
                     <i data-lucide="${order.isPaid ? 'check-circle' : 'alert-octagon'}" class="w-4 h-4"></i>
@@ -603,7 +616,7 @@ window.saveOrderStatus = async () => {
     const originalText = btn.innerHTML;
 
     btn.disabled = true;
-    btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A Sincronizar...`;
+    btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A Sincronizar DB...`;
     renderIcons(btn);
 
     try {
@@ -612,20 +625,25 @@ window.saveOrderStatus = async () => {
             updatedAt: serverTimestamp()
         });
 
-        // 🟢 Se fechou com sucesso, processa os afiliados (CPA) e avisa cliente
+        // 🔥 REGISTO DE AUDITORIA INVISÍVEL
+        await logAdminAction('UPDATE_ORDER_STATUS', currentOrderId, { status: oldStatus }, { status: newStatus });
+
+        // Afiliados Logic
+        if (newStatus === 'completed' && order?.referredBy && !order?.commissionProcessed) {
+            await processAffiliateCPA(order);
+            await updateDoc(doc(db, "orders", currentOrderId), { commissionProcessed: true });
+        }
+
+        showToast('Nova etapa logística gravada na Cloud.', 'success');
+
         if (newStatus === 'completed' && oldStatus !== 'completed') {
-            if (order?.referredBy && !order?.commissionProcessed) {
-                await processAffiliateCPA(order);
-                await updateDoc(doc(db, "orders", currentOrderId), { commissionProcessed: true });
-            }
             await sendNotificationEmail(order, 'completed');
         }
 
-        showToast('Nova fase logística cravada na Cloud.', 'success');
         window.closeModal();
     } catch (error) {
-        console.error('Erro de atualização:', error);
-        showToast('Permissão Negada ou Falha de Ligação.', 'error');
+        console.error('Erro ao atualizar status:', error);
+        showToast('Erro interno de permissões.', 'error');
     } finally {
         btn.disabled = false;
         btn.innerHTML = originalText;
@@ -633,126 +651,125 @@ window.saveOrderStatus = async () => {
     }
 };
 
-// 💎 Lógica Distributiva CPA (Afiliados)
 async function processAffiliateCPA(order) {
-    try {
-        const q = query(collection(db, "users"), where("affiliateCode", "==", order.referredBy), where("role", "==", "affiliate"));
-        const snap = await getDocs(q);
-        if(snap.empty) return;
+try {
+const q = query(collection(db, "users"), where("affiliateCode", "==", order.referredBy), where("role", "==", "affiliate"));
+const snap = await getDocs(q);
+if(snap.empty) return;
 
-        const refDoc = snap.docs[0];
-        const refData = refDoc.data();
+const refDoc = snap.docs[0];
+const refData = refDoc.data();
 
-        // Garante que é a PRIMEIRA compra finalizada do cliente
-        const qClient = query(collection(db, "orders"), where("email", "==", order.email), where("status", "==", "completed"));
-        const snapClient = await getDocs(qClient);
-        if(snapClient.size > 1) return; // Se for mais que 1, já não é a primeira.
+const qClient = query(collection(db, "orders"), where("email", "==", order.email), where("status", "==", "completed"));
+const snapClient = await getDocs(qClient);
+if(snapClient.size > 1) return;
 
-        const commissionValue = order.tax * (refData.approvedReferrals >= 10 ? 0.05 : 0.03);
+const commissionValue = order.tax * (refData.approvedReferrals >= 10 ? 0.05 : 0.03);
 
-        await updateDoc(doc(db, "users", refDoc.id), {
-            affiliateEarnings: increment(commissionValue),
-            approvedReferrals: increment(1)
-        });
+await updateDoc(doc(db, "users", refDoc.id), {
+affiliateEarnings: increment(commissionValue),
+approvedReferrals: increment(1)
+});
 
-        console.log(`Comissão de ${commissionValue} creditada no afiliado!`);
-    } catch(e) {
-        console.error("Falha ao distribuir comissão", e);
-    }
+console.log(`Comissão de ${commissionValue} creditada!`);
+} catch(e) {
+console.error("Falha ao distribuir comissões", e);
+}
 }
 
 window.togglePaymentStatus = async (orderId, isCurrentlyPaid) => {
-    const newStatus = !isCurrentlyPaid;
-    const order = orders.find(o => o.id === orderId);
+const newStatus = !isCurrentlyPaid;
+const order = orders.find(o => o.id === orderId);
+try {
+    await updateDoc(doc(db, "orders", orderId), { isPaid: newStatus });
     
-    // Dupla verificação para segurança
-    if(newStatus && !confirm('ATENÇÃO: Confirma que o dinheiro ENTROU FISICAMENTE na conta PayGo e quer assumir este pagamento?')) return;
+    // 🔥 REGISTO DE AUDITORIA INVISÍVEL
+    await logAdminAction('TOGGLE_PAYMENT_STATUS', orderId, { isPaid: isCurrentlyPaid }, { isPaid: newStatus });
 
-    try {
-        await updateDoc(doc(db, "orders", orderId), { 
-            isPaid: newStatus,
-            updatedAt: serverTimestamp() 
-        });
-        
-        showToast(newStatus ? 'Recibo Auditado: PAGO!' : 'Assinatura Financeira Removida.', 'success');
+    showToast(newStatus ? 'Validado como PAGO!' : 'Cancelada Assinatura de Pagamento.', 'success');
 
-        if (newStatus === true) {
-            await sendNotificationEmail(order, 'paid');
-        }
-        window.closeModal();
-    } catch (e) {
-        console.error('Erro de DB:', e);
-        showToast('Falha técnica.', 'error');
+    if (newStatus === true) {
+        showToast('Servidor de Emails ativado (Envio Silencioso).', 'info');
+        await sendNotificationEmail(order, 'paid');
     }
+    window.closeModal();
+} catch (e) {
+    console.error('Erro ao atualizar pagamento:', e);
+    showToast('Falha técnica.', 'error');
+}
 };
 
-// ==========================================
-// 💣 FUNCIONALIDADES PERIGOSAS (DANGER ZONE)
-// ==========================================
 window.deleteSingleOrder = async (orderId) => {
-    if (!confirm('⚠️ AVISO DE AUDITORIA: Destruir permanentemente este registo financeiro fará perder o rasto desta cobrança. Continuar?')) return;
+const confirm1 = confirm(`⚠️ PERIGO EXTREMO ⚠️\n\nTem a certeza absoluta que deseja APAGAR PERMANENTEMENTE a conta deste pedido?`);
+if(!confirm1) return;
 
-    try {
-        await deleteDoc(doc(db, "orders", orderId));
-        showToast('O Documento foi vaporizado dos Servidores Globais.', 'success');
-        window.closeModal();
-    } catch (e) {
-        console.error('Erro:', e);
-        showToast('Acesso Restrito (Ação Negada).', 'error');
-    }
+try {
+    // 🔥 REGISTO DE AUDITORIA INVISÍVEL (Antes de apagar para garantir que fica na DB)
+    await logAdminAction('DELETE_ORDER', orderId, { order_id: orderId }, null);
+
+    await deleteDoc(doc(db, "orders", orderId));
+    showToast(`O documento foi eliminado e vaporizado do sistema.`, 'success');
+    window.closeModal();
+} catch(error) {
+    console.error(error);
+    showToast('Falha técnica ao tentar eliminar o documento da Base de Dados.', 'error');
+}
 };
 
 window.clearHistory = async () => {
-    if (currentFilteredOrders.length === 0) return showToast('Aviso: O seu ecrã não possui pedidos visíveis para purgar.', 'warning');
+if (currentFilteredOrders.length === 0) return showToast('Aviso: O seu ecrã não possui pedidos visíveis para purgar.', 'warning');
 
-    const qty = currentFilteredOrders.length;
-    if (!confirm(`⚠️ ALERTA VERMELHO ⚠️\n\nIsto irá varrer da base de dados TODOS os ${qty} pedidos que você filtrou no ecrã.\nNão há backup nem volta a dar. Proceder com a purga tática?`)) return;
+const qty = currentFilteredOrders.length;
+if (!confirm(`⚠️ ALERTA VERMELHO ⚠️\n\nIsto irá varrer da base de dados TODOS os ${qty} pedidos que você filtrou no ecrã. Não há volta a dar.\nProceder com a purga tática?`)) return;
 
-    showToast('A preparar injeção de eliminação em massa (Batch Delete)...', 'info');
+showToast('A preparar injeção de eliminação em massa...', 'info');
 
-    try {
-        const batch = writeBatch(db);
-        currentFilteredOrders.forEach(order => {
-            batch.delete(doc(db, "orders", order.id));
-        });
-        await batch.commit();
-        showToast(`Operação Limpeza: ${qty} Documentos Destruídos.`, 'success');
-    } catch (e) {
-        console.error('Erro batch:', e);
-        showToast('Ação bloqueada. Limites de segurança da Base de Dados.', 'error');
-    }
-};
+try {
+    // 🔥 REGISTO DE AUDITORIA INVISÍVEL
+    await logAdminAction('BULK_DELETE_ORDERS', 'multiple', null, { deletedCount: qty });
 
-// ==========================================
-// 📊 EXPORTAÇÃO EXCEL (CSV)
-// ==========================================
-window.exportToCSV = () => {
-    if (currentFilteredOrders.length === 0) { showToast('Sem dados para gerar o Relatório Excel.', 'warning'); return; }
-
-    let csvContent = "ID de Transacao,Data,Hora,Cliente,Email,Telemovel,Status Pagamento,Valor Total (MT),Estado Logistico,Metodo,Produto Detalhe\n";
-
+    const batch = writeBatch(db);
     currentFilteredOrders.forEach(order => {
-        const dateStr = order.createdAt.toLocaleDateString('pt-MZ');
-        const timeStr = order.createdAt.toLocaleTimeString('pt-MZ');
-        const name = `"${order.name.replace(/"/g, '""')}"`;
-        const detail = `"${order.detail.replace(/"/g, '""')}"`;
-        const payStatus = order.isPaid ? 'Valor Liquidado' : 'Por Pagar';
-        csvContent += `${order.orderId},${dateStr},${timeStr},${name},${order.email},${order.whatsapp},${payStatus},${order.total},${order.status},${order.paymentMethod},${detail}\n`;
+        batch.delete(doc(db, "orders", order.id));
     });
+    await batch.commit();
+    showToast(`Operação Global: ${qty} Documentos Destruídos.`, 'success');
+} catch (e) {
+    console.error('Erro em batch delete:', e);
+    showToast('O servidor bloqueou a execução em massa (Limites).', 'error');
+}
+};
 
-    const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' }); // \ufeff força utf-8 para ler acentos
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `Auditoria_Financeira_PayGo_${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+window.exportToCSV = () => {
+if (currentFilteredOrders.length === 0) { showToast('Dados insuficientes para gerar relatório Contabilístico.', 'warning'); return; }
 
-    showToast('O Livro de Excel foi gerado e descarregado.', 'success');
+// 🔥 REGISTO DE AUDITORIA INVISÍVEL
+logAdminAction('EXPORT_CSV', 'all', null, { exportedCount: currentFilteredOrders.length });
+
+let csvContent = "ID de Transacao,Data Servidor,Hora Servidor,Entidade Cliente,Email Contacto,Canal Telemovel,Verificacao Dinheiro,Total Faturado (MT),Etapa Logistica,Resumo Tecnico (Produto)\n";
+
+currentFilteredOrders.forEach(order => {
+const dateStr = order.createdAt.toLocaleDateString('pt-MZ');
+const timeStr = order.createdAt.toLocaleTimeString('pt-MZ');
+const name = `"${order.name.replace(/"/g, '""')}"`;
+const detail = `"${order.detail.replace(/"/g, '""')}"`;
+const payStatus = order.isPaid ? 'Dinheiro Confirmado' : 'Divida Pendente';
+csvContent += `${order.orderId},${dateStr},${timeStr},${name},${order.email},${order.whatsapp},${payStatus},${order.total},${order.status},${detail}\n`;
+});
+
+const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+const link = document.createElement("a");
+link.href = URL.createObjectURL(blob);
+link.download = `Auditoria_PayGo_Pedidos_${new Date().toISOString().split('T')[0]}.csv`;
+document.body.appendChild(link);
+link.click();
+document.body.removeChild(link);
+
+showToast('O Livro de Registos (Excel) foi descarregado.', 'success');
 };
 
 // ==========================================
-// 📱 CONTROLOS MÓVEIS E SISTEMA CORE
+// 📱 CONTROLOS MÓVEIS E AÇÕES DE TECLADO
 // ==========================================
 const mobileMenuBtn = document.getElementById('mobileMenuBtn');
 const sidebar = document.getElementById('sidebar');
@@ -760,61 +777,71 @@ const sidebarOverlay = document.getElementById('sidebarOverlay');
 const closeSidebarBtn = document.getElementById('closeSidebarBtn');
 
 function toggleMobileSidebar() {
-    sidebar.classList.toggle('-translate-x-full');
-    if(sidebarOverlay.classList.contains('hidden')) {
-        sidebarOverlay.classList.remove('hidden');
-        setTimeout(() => sidebarOverlay.classList.remove('opacity-0'), 10);
-    } else {
-        sidebarOverlay.classList.add('opacity-0');
-        setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
-    }
+sidebar.classList.toggle('-translate-x-full');
+if(sidebarOverlay.classList.contains('hidden')) {
+sidebarOverlay.classList.remove('hidden');
+setTimeout(() => sidebarOverlay.classList.remove('opacity-0'), 10);
+} else {
+sidebarOverlay.classList.add('opacity-0');
+setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
 }
-
-mobileMenuBtn?.addEventListener('click', toggleMobileSidebar);
-closeSidebarBtn?.addEventListener('click', toggleMobileSidebar);
-sidebarOverlay?.addEventListener('click', toggleMobileSidebar);
+}
+mobileMenuBtn.addEventListener('click', toggleMobileSidebar);
+closeSidebarBtn.addEventListener('click', toggleMobileSidebar);
+sidebarOverlay.addEventListener('click', toggleMobileSidebar);
 
 document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') window.closeModal();
+if (e.key === 'Escape' && document.getElementById('orderModal').classList.contains('active')) {
+    window.closeModal();
+}
 });
 
-window.logout = async function() {
-    if(confirm('Tem a certeza que deseja encerrar o controlo mestre?')) {
-        await signOut(auth);
-        window.location.href = '../login.html';
+window.logout = async function() { 
+    if (confirm('Encerrar sessão de forma segura?')) {
+        await signOut(auth); window.location.href = '../login.html'; 
     }
 };
 
+// ==========================================
+// 🚀 INICIALIZAÇÃO E SESSÃO
+// ==========================================
 const fallbackTimer = setTimeout(() => { document.getElementById('sysLoader').style.display = 'none'; }, 3000);
 
 onAuthStateChanged(auth, async (user) => {
     if (!user) { window.location.href = '../login.html'; return; }
-
+    
     try {
         const userDoc = await getDoc(doc(db, "users", user.uid));
         if (userDoc.exists() && (userDoc.data().role === 'admin' || userDoc.data().role === 'superadmin')) {
-            document.getElementById('adminName').textContent = userDoc.data().name || 'Controlador';
+            const data = userDoc.data();
+            loggedInAdminId = user.uid;
+            loggedInAdminName = data.name || 'Admin Oculto';
+            document.getElementById('adminName').textContent = loggedInAdminName;
+            
+            // Só depois de provarmos que é admin é que carregamos os dados
             loadOrdersRealTime();
         } else {
             window.location.href = '../index.html';
         }
     } catch (error) {
-        console.error(error);
-        showToast("Erro na ligação ao servidor central.", "error");
+        console.error('Erro na ligação:', error);
+        showToast("Erro de ligação à rede segura.", "error");
     } finally {
         clearTimeout(fallbackTimer);
-        const loader = document.getElementById('sysLoader');
-        if(loader) {
-            loader.style.opacity = '0';
-            setTimeout(() => loader.style.display = 'none', 500);
+        const ldr = document.getElementById('sysLoader');
+        if(ldr) {
+            ldr.style.opacity = '0';
+            setTimeout(() => ldr.style.display = 'none', 500);
         }
     }
 });
 
+// Inicializar ícones ao carregar
 document.addEventListener('DOMContentLoaded', () => {
     renderIcons();
 });
 
+// Cleanup ao sair da página
 window.addEventListener('beforeunload', () => {
     if (ordersUnsubscribe) ordersUnsubscribe();
 });
