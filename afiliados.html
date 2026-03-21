@@ -293,7 +293,7 @@
                       <div id="authNotice" class="hidden bg-brand-900/30 border border-brand-500/30 rounded-xl p-4 text-center mb-8">
                           <p class="text-sm text-brand-300">
                               <i data-lucide="user-check" class="w-4 h-4 inline mr-1"></i>
-                              Sessão Autenticada. A sua candidatura será associada à sua conta PayGo.
+                              Sessão Autenticada. A sua candidatura será associada à sua conta PayGo atual.
                           </p>
                       </div>
                       
@@ -339,6 +339,9 @@
                                       <i data-lucide="lock" class="input-icon"></i>
                                       <input type="password" id="affiliateConfirmPassword" placeholder=" " autocomplete="new-password">
                                       <label for="affiliateConfirmPassword" class="input-label">Confirme a Senha *</label>
+                                      <button type="button" onclick="togglePassword('affiliateConfirmPassword')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition">
+                                          <i data-lucide="eye" class="w-5 h-5" id="toggleIcon-affiliateConfirmPassword"></i>
+                                      </button>
                                   </div>
                               </div>
                           </div>
@@ -470,7 +473,6 @@
       }).catch(console.warn);
   });
 
-  // Utilitários de UI
   window.togglePassword = function(inputId) {
       const input = document.getElementById(inputId);
       const icon = document.getElementById(`toggleIcon-${inputId}`);
@@ -538,7 +540,7 @@
   });
 
   // ==========================================
-  // LÓGICA DE SUBMISSÃO DE CANDIDATURA
+  // 🛡️ LÓGICA DE SUBMISSÃO DE CANDIDATURA
   // ==========================================
   document.getElementById('affiliateForm').addEventListener('submit', async function(e) {
       e.preventDefault();
@@ -556,10 +558,8 @@
       try {
           let userId;
           const affiliateCode = generateAffiliateCode(name);
-          
           const initialStatus = affiliateSettings.autoApprove ? 'active' : 'pending';
           const isActiveCode = affiliateSettings.autoApprove ? true : false;
-          const finalRole = affiliateSettings.autoApprove ? 'affiliate' : 'user';
 
           const applicationData = {
               affiliateCode: affiliateCode,
@@ -568,7 +568,8 @@
               socialMediaLinks: socialLinks || null,
               whyAffiliate: whyAff,
               expectedReferrals: expectedRef,
-              affiliateAppliedAt: new Date().toISOString()
+              affiliateAppliedAt: new Date().toISOString(),
+              affiliateStatus: initialStatus // 🛡️ NOVO: Separação de estados (Evita bloqueio da conta principal)
           };
 
           if (currentUser) {
@@ -576,20 +577,22 @@
               const userDoc = await getDoc(doc(db, "users", userId));
               const userData = userDoc.exists() ? userDoc.data() : {};
               
-              if (userData.role === 'affiliate' || userData.status === 'pending') {
+              if (userData.role === 'affiliate' || userData.affiliateStatus === 'pending') {
                   showToast('Você já é afiliado ou a sua candidatura já está pendente!', 'warning');
                   btn.classList.remove('btn-loading');
                   return;
               }
               
-              await updateDoc(doc(db, "users", userId), {
-                  ...applicationData,
-                  status: initialStatus,
-                  role: finalRole
-              });
+              // 🛡️ Prevenção de Downgrade: Se for admin, não lhe tiramos o cargo!
+              let updatePayload = { ...applicationData };
+              if (affiliateSettings.autoApprove && userData.role === 'user') {
+                  updatePayload.role = 'affiliate'; 
+              }
+              
+              await updateDoc(doc(db, "users", userId), updatePayload);
               
           } else {
-              // NOVO UTILIZADOR
+              // 🛡️ NOVO UTILIZADOR: Validação de senhas
               const password = document.getElementById('affiliatePassword').value;
               const confirmPassword = document.getElementById('affiliateConfirmPassword').value;
 
@@ -611,15 +614,23 @@
                   createdAt: new Date().toISOString(),
                   totalPurchases: 0,
                   ...applicationData,
-                  status: initialStatus,
-                  role: finalRole,
+                  status: 'pending', // Conta principal pendente de verificação de e-mail
+                  emailVerified: false,
+                  role: affiliateSettings.autoApprove ? 'affiliate' : 'user',
                   affiliateEarnings: 0,
                   totalReferrals: 0,
                   approvedReferrals: 0
               });
+
+              // 🚀 AÇÃO CRÍTICA: Disparar e-mail de verificação para o novo utilizador
+              fetch('/api/verify-email', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ email: email, name: name })
+              }).catch(e => console.warn('Falha no envio da verificação:', e));
           }
 
-          // 🚀 1. Notificação Cliente (Formatada para Resend Default Template)
+          // Notificação de Estatuto Afiliado (via Resend)
           try {
               const emailSubject = affiliateSettings.autoApprove ? '🎉 Conta de Parceiro Ativada - PayGo' : 'Candidatura Recebida - PayGo';
               
@@ -638,11 +649,9 @@
                       variables: { customer_name: name, message: msgTexto }
                   })
               });
-          } catch(e) {
-              console.warn("Falha no email:", e);
-          }
+          } catch(e) { console.warn("Falha no email de boas vindas:", e); }
 
-          // 2. Webhook Lark para Admins (Opcional, se o ficheiro existir)
+          // Webhook Lark para Admins (Opcional)
           try {
               fetch('/api/webhook-lark', {
                   method: 'POST',
@@ -658,14 +667,14 @@
               showToast('Conta Aprovada Automaticamente! A redirecionar para o painel.', 'success');
               setTimeout(() => { window.location.href = 'dashboard-afiliado.html'; }, 2000);
           } else {
-              showToast('Candidatura enviada! A redirecionar...', 'success');
+              showToast('Candidatura enviada com sucesso! A redirecionar...', 'success');
               setTimeout(() => { window.location.href = `login.html?affiliate_pending=true&email=${encodeURIComponent(email)}`; }, 3000);
           }
 
       } catch (error) {
           console.error('Erro:', error);
           let msg = 'Erro ao processar base de dados.';
-          if (error.code === 'auth/email-already-in-use') msg = 'Email já utilizado. Faça Login primeiro.';
+          if (error.code === 'auth/email-already-in-use') msg = 'Email já utilizado. Entre na sua conta primeiro para se candidatar.';
           if (error.code === 'auth/weak-password') msg = 'A palavra-passe inserida é muito vulnerável.';
           showToast(msg, 'error');
           btn.classList.remove('btn-loading');
