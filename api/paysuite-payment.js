@@ -31,7 +31,7 @@ export default async function handler(req, res) {
       method: cleanMethod,
       reference: cleanReference, 
       description: description || `Pedido PayGo #${orderId}`,
-      callback_url: 'https://www.paygo.co.mz/api/paysuite-webhook', // 👈 FORÇADO SEM VARIÁVEIS PARA NÃO HAVER ERROS!
+      callback_url: 'https://www.paygo.co.mz/api/paysuite-webhook', // 👈 O ÁRBITRO FINAL
       return_url: 'https://www.paygo.co.mz/index.html' // Para onde o cliente volta após pagar
     };
 
