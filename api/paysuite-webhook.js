@@ -2,22 +2,24 @@ import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
 export default async function handler(req, res) {
+    // ✅ CORS e Segurança
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-paysuite-signature');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-paysuite-signature, x-webhook-signature');
 
     if (req.method === 'OPTIONS') return res.status(200).end();
 
+    // 🚨 CAPTURAR OS DADOS (Blindagem Vercel)
     let payload = req.body;
     if (!payload || Object.keys(payload).length === 0) payload = req.query;
     if (typeof payload === 'string') {
         try { payload = JSON.parse(payload); } catch (e) { payload = { raw: payload }; }
     }
 
-    // 🟢 MARCADOR DE VERSÃO PARA A VERCEL (Só terá 1 linha agora!)
-    console.log('🟢 [WEBHOOK PAYSUITE v3] DADOS RECEBIDOS:', JSON.stringify(payload));
+    console.log('🟢 [PAYSUITE WEBHOOK] DADOS RECEBIDOS:', JSON.stringify(payload));
 
     try {
+        // 🔥 INICIALIZAÇÃO FIREBASE
         if (!getApps().length) {
             const envVar = process.env.FIREBASE_SERVICE_ACCOUNT;
             if (!envVar) throw new Error("Falta FIREBASE_SERVICE_ACCOUNT");
@@ -38,34 +40,67 @@ export default async function handler(req, res) {
             receivedAt: agora
         });
 
-        if (!payload || (!payload.event && !payload.status)) {
-            return res.status(200).json({ warning: 'Payload sem event ou status.' });
+        // 🛡️ VALIDAÇÃO DE SEGURANÇA BÁSICA
+        if (!payload || !payload.event) {
+            console.warn("⚠️ Webhook ignorado: Faltam campos principais.");
+            return res.status(200).json({ warning: 'Payload sem event.' }); // Respondemos 200 para a PaySuite não nos bloquear
         }
 
-        const paymentData = payload.data || payload;
-        const merchantReference = paymentData.reference || paymentData.tx_ref || paymentData.order_id || paymentData.transaction_id || paymentData.ref;
+        // 🎯 O ALVO: A PaySuite documenta 'payment.success', mas na prática envia 'payment.completed'. Lemos os dois!
+        const evento = payload.event;
+        const isSuccess = evento === 'payment.completed' || evento === 'payment.success';
+        const isFailed = evento === 'payment.failed';
 
-        if (!merchantReference) return res.status(200).json({ warning: 'Sem Referência' });
+        // Extração Inteligente de Dados (Cobrindo falhas da documentação vs prática)
+        const paymentData = payload.data || payload; 
+        
+        // A referência pode vir no 'data.reference' ou diretamente na raiz
+        let merchantReference = paymentData.reference || payload.reference; 
+        
+        // Formatação Defensiva: Se vier "PG441504", forçamos "PG-441504" para o Firebase encontrar!
+        if (merchantReference && merchantReference.startsWith('PG') && !merchantReference.startsWith('PG-')) {
+             merchantReference = merchantReference.replace('PG', 'PG-');
+        }
 
+        if (!merchantReference) {
+            console.error("❌ Webhook falhou: Não foi possível encontrar a referência (ID do Pedido).");
+            return res.status(200).json({ warning: 'Sem Referência' });
+        }
+
+        console.log(`🔍 Procurando Pedido: ${merchantReference}`);
+
+        // ✅ BUSCA O PEDIDO NO FIREBASE
         const ordersRef = db.collection('orders');
         const snapshot = await ordersRef.where('orderId', '==', merchantReference).get();
 
-        if (snapshot.empty) return res.status(200).json({ warning: `Pedido ${merchantReference} não encontrado.` });
+        if (snapshot.empty) {
+            console.error(`❌ Webhook falhou: Pedido ${merchantReference} não existe na Base de Dados.`);
+            return res.status(200).json({ warning: `Pedido ${merchantReference} não encontrado.` });
+        }
 
         const orderDoc = snapshot.docs[0];
         const orderData = orderDoc.data();
-        const evento = payload.event || payload.status;
 
-        if (evento === 'payment.completed' || evento === 'payment.successful' || evento === 'paid' || evento === 'success') {
-            if (orderData.isPaid) return res.status(200).json({ message: 'Já pago.' });
+        // 💰 PROCESSAR O PAGAMENTO BEM-SUCEDIDO
+        if (isSuccess) {
+            if (orderData.isPaid) {
+                console.log(`ℹ️ Pedido ${merchantReference} já estava pago. Ignorando.`);
+                return res.status(200).json({ message: 'Já pago.' });
+            }
             
+            // Tenta obter o ID da transação da PaySuite
+            let transactionId = 'N/A';
+            if (paymentData.transaction && paymentData.transaction.id) transactionId = paymentData.transaction.id;
+            else if (paymentData.id) transactionId = paymentData.id;
+
             await orderDoc.ref.update({
                 status: 'processing',
                 isPaid: true,
-                paysuitePaymentId: paymentData.payment_id || paymentData.id || 'N/A',
+                paysuitePaymentId: transactionId,
                 updatedAt: agora
             });
 
+            // Registo de Auditoria para o Painel
             await db.collection('admin_audit_logs').add({
                 adminId: 'system_bot',
                 adminName: '🤖 Sistema Automático (PaySuite)',
@@ -79,12 +114,28 @@ export default async function handler(req, res) {
                 ip: req.headers['x-forwarded-for'] || 'PaySuite',
                 createdAt: agora
             });
+
+            console.log(`✅ Pagamento do Pedido ${merchantReference} confirmado com sucesso!`);
+        } 
+        // ❌ PROCESSAR FALHA NO PAGAMENTO
+        else if (isFailed) {
+             console.log(`⚠️ Pagamento do Pedido ${merchantReference} falhou ou foi recusado.`);
+             
+             if (!orderData.isPaid) {
+                 await orderDoc.ref.update({
+                    status: 'cancelled',
+                    updatedAt: agora,
+                    adminNotes: [...(orderData.adminNotes || []), { author: '🤖 Sistema', text: `A PaySuite rejeitou o pagamento. Motivo: ${paymentData.error || 'Desconhecido'}`, date: agora }]
+                 });
+             }
+        } else {
+             console.log(`ℹ️ Evento não financeiro recebido: ${evento}`);
         }
 
         return res.status(200).json({ success: true, orderProcessed: merchantReference });
 
     } catch (err) {
-        console.error('❌ Erro no webhook:', err.message);
+        console.error('❌ Erro Crítico no Webhook:', err.message);
         return res.status(500).json({ error: err.message });
     }
 }
