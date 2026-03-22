@@ -11,33 +11,28 @@ export default async function handler(req, res) {
     // ✅ 2. Receber os dados do Frontend
     const { orderId, amount, method, description } = req.body;
 
-    // ✅ 3. Validações Básicas
     if (!orderId || !amount || !method) {
-      return res.status(400).json({ success: false, error: 'Faltam campos obrigatórios (orderId, amount, method)' });
-    }
-
-    if (isNaN(amount) || amount < 1) {
-      return res.status(400).json({ success: false, error: 'O valor mínimo é 1 MT' });
+      return res.status(400).json({ success: false, error: 'Faltam campos obrigatórios' });
     }
 
     const cleanMethod = (method === 'mpesa' || method === 'm-pesa') ? 'mpesa' : 'emola';
-    
-    // Removemos os traços da referência para garantir compatibilidade máxima com a PaySuite
     const cleanReference = orderId.replace(/[^a-zA-Z0-9]/g, '');
 
-    // ✅ 4. O PAYLOAD CIRÚRGICO (Exatamente como a documentação exige, sem invenções!)
+    // ✅ 3. O PAYLOAD CIRÚRGICO DA PAYSUITE
     const paysuitePayload = {
       amount: parseFloat(amount),
       method: cleanMethod,
       reference: cleanReference, 
       description: description || `Pedido PayGo #${orderId}`,
-      callback_url: 'https://www.paygo.co.mz/api/paysuite-webhook', // 👈 FORÇADO SEM VARIÁVEIS PARA NÃO HAVER ERROS!
-      return_url: 'https://www.paygo.co.mz/pedidos.html' // Para onde o cliente volta após pagar
+      
+      // 🚀 A LIGAÇÃO ABSOLUTA: Obriga a PaySuite a avisar a nossa Vercel!
+      callback_url: 'https://www.paygo.co.mz/api/paysuite-webhook', 
+      return_url: 'https://www.paygo.co.mz/pedidos.html'
     };
 
-    console.log('💳 [paysuite-payment] Iniciando pagamento rigoroso:', paysuitePayload);
+    console.log('💳 Iniciando pagamento na PaySuite:', paysuitePayload.reference);
 
-    // ✅ 5. Chamar a API Oficial da PaySuite
+    // ✅ 4. Chamar a API
     const response = await fetch('https://paysuite.tech/api/v1/payments', {
       method: 'POST',
       headers: {
@@ -51,29 +46,22 @@ export default async function handler(req, res) {
 
     const result = await response.json();
 
-    // ✅ 6. Lidar com Erros
     if (!response.ok || result.status === 'error') {
-      console.error('❌ Erro da API PaySuite:', result);
-      return res.status(400).json({ 
-        success: false, 
-        error: result.message || 'O servidor da PaySuite rejeitou o pagamento.' 
-      });
+      console.error('❌ Erro da PaySuite:', result);
+      return res.status(400).json({ success: false, error: result.message || 'Pagamento rejeitado pela PaySuite.' });
     }
 
-    console.log('✅ Pagamento criado na PaySuite. URL gerado:', result.data?.checkout_url);
-
-    // ✅ 7. Retornar Sucesso para o Frontend
+    // ✅ 5. Retornar Sucesso e o Link de Pagamento
     return res.status(200).json({
       success: true,
       data: {
         paymentId: result.data?.id,
         status: result.data?.status,
         reference: result.data?.reference,
-        checkoutUrl: result.data?.checkout_url, // 👈 O CLIENTE TEM DE SER REDIRECIONADO PARA AQUI!
+        checkoutUrl: result.data?.checkout_url, 
         method: cleanMethod,
         amount: result.data?.amount
-      },
-      message: 'Redirecione o cliente para o checkoutUrl'
+      }
     });
 
   } catch (err) {
