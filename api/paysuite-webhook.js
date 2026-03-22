@@ -9,20 +9,16 @@ export default async function handler(req, res) {
 
     if (req.method === 'OPTIONS') return res.status(200).end();
 
-    // 🚨 1. CAPTURAR OS DADOS IMEDIATAMENTE (O SNIPER)
+    // 🚨 CAPTURAR OS DADOS
     let payload = req.body;
     if (!payload || Object.keys(payload).length === 0) {
-        payload = req.query; // Tenta ler do URL se o Body estiver vazio
+        payload = req.query; 
     }
     if (typeof payload === 'string') {
         try { payload = JSON.parse(payload); } catch (e) { payload = { texto_bruto: payload }; }
     }
 
-    // 🎯 2. IMPRIMIR DIRETAMENTE NA VERCEL (Onde tiraste a foto)
-    console.log('=============================================');
-    console.log('🚨 ALARME PAYSUITE (DADOS RECEBIDOS) 🚨');
-    console.log(JSON.stringify(payload, null, 2));
-    console.log('=============================================');
+    console.log('🚨 ALARME PAYSUITE 🚨', JSON.stringify(payload));
 
     try {
         // 🔥 INICIALIZAÇÃO BLINDADA DO FIREBASE
@@ -38,13 +34,16 @@ export default async function handler(req, res) {
         }
 
         const db = getFirestore("paygodb");
+        const agora = new Date().toISOString();
 
-        // 🟢 REGISTO BRUTO NA CAIXA NEGRA
+        // 🟢 CORREÇÃO MÁXIMA: Usar 'createdAt' para o Firebase mostrar no teu Painel!
         try {
             await db.collection('webhook_logs').add({
                 source: 'paysuite',
                 rawPayload: payload,
-                receivedAt: new Date().toISOString()
+                status: 'received',
+                createdAt: agora, // O TEU PAINEL EXIGE ESTA PALAVRA!
+                receivedAt: agora
             });
         } catch (e) {
             console.error('Falha ao gravar na Caixa Negra:', e.message);
@@ -73,8 +72,9 @@ export default async function handler(req, res) {
         const orderDoc = snapshot.docs[0];
         const orderData = orderDoc.data();
         const evento = payload.event || payload.status;
-        let updateData = { updatedAt: new Date().toISOString() };
+        let updateData = { updatedAt: agora };
 
+        // Processa o pagamento
         if (evento === 'payment.completed' || evento === 'payment.successful' || evento === 'paid' || evento === 'success') {
             if (orderData.isPaid) return res.status(200).json({ message: 'Já pago.' });
             
@@ -95,7 +95,7 @@ export default async function handler(req, res) {
                     updated: { status: 'processing', isPaid: true, method: paymentData.method || 'M-Pesa/e-Mola' }
                 },
                 ip: req.headers['x-forwarded-for'] || 'PaySuite',
-                createdAt: new Date().toISOString()
+                createdAt: agora
             });
         }
 
