@@ -87,7 +87,7 @@
                             </button>
                         </div>
                         <a href="historico.html" class="btn-epic w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-400 text-xs">
-                            <i data-lucide="history" class="w-4 h-4"></i> Meus Pedidos / Extrato
+                            <i data-lucide="history" class="w-4 h-4"></i> Meu Histórico / Extrato
                         </a>
                     </div>
                 </div>
@@ -97,7 +97,7 @@
                     <h3 class="text-xs font-bold text-vip-400 uppercase tracking-widest mb-2 flex items-center gap-2">
                         <i data-lucide="crown" class="w-4 h-4"></i> Plano PayGo VIP
                     </h3>
-                    <p class="text-sm text-slate-400 mb-4" id="vipStatusText">Compre com Taxa ZERO em todos os produtos e tenha prioridade na fila de despacho.</p>
+                    <p class="text-sm text-slate-400 mb-4" id="vipStatusText">Isenção da Taxa de Serviço em todos os pagamentos e prioridade no processamento das suas transações.</p>
                     <button onclick="window.openVipModal()" class="w-full py-3 rounded-xl bg-gradient-to-r from-vip-600 to-brand-600 hover:from-vip-500 hover:to-brand-500 text-white font-bold text-sm shadow-[0_0_15px_rgba(168,85,247,0.3)] transition transform hover:scale-[1.02]">
                         Ver Planos (1200 MT/mês)
                     </button>
@@ -111,7 +111,7 @@
                             <span class="text-sm font-mono font-bold text-brand-400" id="currentRate">-- MT</span>
                         </div>
                         <div class="flex justify-between items-center text-xs text-slate-500">
-                            <span>Taxas Base:</span>
+                            <span>Taxas de Serviço:</span>
                             <span>De <span id="infoTax1">--</span> a <span id="infoTax3">--</span> MT</span>
                         </div>
                     </div>
@@ -122,9 +122,9 @@
                 
                 <div class="glass-card rounded-2xl p-6 md:p-8 relative overflow-hidden">
                     <h2 class="text-2xl font-display font-bold text-white mb-2 flex items-center gap-3 relative z-10">
-                        <i data-lucide="bot" class="w-8 h-8 text-brand-500"></i> Orçamentador Automático
+                        <i data-lucide="bot" class="w-8 h-8 text-brand-500"></i> Orçamentador de Pagamentos
                     </h2>
-                    <p class="text-slate-400 text-sm mb-8 relative z-10">Cole o link do produto que deseja comprar e informe o valor. Processamos automaticamente com o seu saldo.</p>
+                    <p class="text-slate-400 text-sm mb-8 relative z-10">Cole o link do produto que deseja que a PayGo pague por si. Processamos o pagamento internacional instantaneamente com o seu saldo.</p>
 
                     <form id="orderForm" class="space-y-6 relative z-10">
                         <div>
@@ -135,7 +135,7 @@
 
                         <div class="grid md:grid-cols-2 gap-6">
                             <div>
-                                <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Valor do Produto (USD $)</label>
+                                <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Valor Total a Pagar (USD $)</label>
                                 <div class="relative">
                                     <i data-lucide="dollar-sign" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500"></i>
                                     <input type="number" id="productUsd" required min="0.1" step="0.01" placeholder="0.00" 
@@ -152,12 +152,12 @@
 
                         <div class="bg-slate-900 rounded-xl p-5 border border-brand-500/20 shadow-inner mt-4">
                             <div class="flex justify-between items-center text-sm text-slate-400 mb-2">
-                                <span>Conversão (<span id="calcRate">85</span> MT):</span>
+                                <span>Conversão Base (<span id="calcRate">85</span> MT):</span>
                                 <span class="font-mono text-white" id="calcBase">0.00 MT</span>
                             </div>
                             
                             <div class="flex justify-between items-center text-sm text-slate-400 pb-3 border-b border-white/5 mb-3">
-                                <span>Taxa de Serviço:</span>
+                                <span>Taxa de Serviço PayGo:</span>
                                 <span class="font-mono font-bold text-slate-300" id="calcFee">0.00 MT</span>
                             </div>
                             
@@ -168,17 +168,17 @@
                             
                             <div id="balanceWarning" class="hidden mt-4 bg-warning-500/10 border border-warning-500/20 rounded-lg p-3 flex items-start gap-2">
                                 <i data-lucide="alert-triangle" class="w-4 h-4 text-warning-400 mt-0.5 shrink-0"></i>
-                                <p class="text-xs text-warning-300 font-medium leading-tight">O seu saldo (<span id="warnBalance" class="font-bold"></span>) é inferior. <a href="#" onclick="window.openTopUpModal(); return false;" class="text-warning-400 font-bold hover:underline">Depositar mais fundos</a>.</p>
+                                <p class="text-xs text-warning-300 font-medium leading-tight">O seu saldo (<span id="warnBalance" class="font-bold"></span>) é insuficiente. <a href="#" onclick="window.openTopUpModal(); return false;" class="text-warning-400 font-bold hover:underline">Depositar mais fundos</a>.</p>
                             </div>
                             
                             <div id="successReady" class="hidden mt-4 bg-success-500/10 border border-success-500/20 rounded-lg p-3 flex items-start gap-2">
                                 <i data-lucide="check-circle" class="w-4 h-4 text-success-400 mt-0.5 shrink-0"></i>
-                                <p class="text-xs text-success-300 font-medium leading-tight">Saldo suficiente! Ao autorizar, o valor será descontado e a encomenda iniciada automaticamente.</p>
+                                <p class="text-xs text-success-300 font-medium leading-tight">Saldo suficiente! Ao autorizar, o valor será descontado e o pagamento processado pela PayGo.</p>
                             </div>
                         </div>
 
                         <button type="submit" id="btnSubmitOrder" disabled class="btn-epic w-full py-4 bg-success-500 hover:bg-success-600 text-white shadow-[0_0_15px_rgba(34,197,94,0.3)] disabled:bg-slate-800 disabled:text-slate-500 disabled:shadow-none transition-all">
-                            <i data-lucide="shopping-cart" class="w-5 h-5"></i> <span id="btnSubmitText">Autorizar e Comprar</span>
+                            <i data-lucide="credit-card" class="w-5 h-5"></i> <span id="btnSubmitText">Autorizar Pagamento</span>
                         </button>
                     </form>
                 </div>
@@ -255,7 +255,7 @@
             <div class="p-8 text-center bg-gradient-to-b from-vip-900/40 to-transparent">
                 <i data-lucide="crown" class="w-16 h-16 text-vip-400 mx-auto mb-4"></i>
                 <h3 class="text-3xl font-display font-bold text-white mb-2">PayGo <span class="text-vip-400">VIP</span></h3>
-                <p class="text-sm text-slate-400">Isenção total de taxas de despacho. Compre direto da China apenas pelo custo do produto e câmbio limpo.</p>
+                <p class="text-sm text-slate-400">Isenção total da taxa de serviço. Faça pagamentos internacionais apenas pelo custo exato do produto e câmbio limpo.</p>
             </div>
             <div class="p-6 pt-0 space-y-4">
                 <label class="cursor-pointer block">
@@ -360,7 +360,7 @@
             } catch (error) { console.error(error); window.showToast("Falha ao carregar dados.", "error"); }
         });
 
-        // 🤖 ROBÔ ORÇAMENTADOR (AGORA COM LÓGICA VIP)
+        // 🤖 ROBÔ ORÇAMENTADOR 
         const usdInput = document.getElementById('productUsd');
         const btnSubmitOrder = document.getElementById('btnSubmitOrder');
         const warningBox = document.getElementById('balanceWarning'), successBox = document.getElementById('successReady');
@@ -384,15 +384,14 @@
             }
 
             currentCalculatedTax = appliedTax;
-            currentCalculatedTotal = baseMZN + appliedTax; // CORRIGIDO AQUI!
+            currentCalculatedTotal = baseMZN + appliedTax; 
 
             document.getElementById('calcBase').textContent = `${formatMZN(baseMZN)} MT`;
             
             if (isVipFee) document.getElementById('calcFee').innerHTML = `<span class="text-vip-400 font-bold">0.00 MT (VIP)</span>`;
-            else if (isBonus) document.getElementById('calcFee').innerHTML = `<span class="text-success-400 font-bold">0.00 MT (Bónus 1ª Compra)</span>`;
+            else if (isBonus) document.getElementById('calcFee').innerHTML = `<span class="text-success-400 font-bold">0.00 MT (Bónus 1ª Transação)</span>`;
             else document.getElementById('calcFee').innerHTML = `<span class="text-slate-300">${formatMZN(appliedTax)} MT</span>`;
             
-            // CORRIGIDO O TYPO QUE CRASHAVA A TUA APP (currentTotalMZN -> currentCalculatedTotal)
             document.getElementById('calcTotal').textContent = `${formatMZN(currentCalculatedTotal)} MT`;
 
             const currentWallet = userData?.walletBalance || 0;
@@ -409,7 +408,7 @@
             btnSubmitOrder.disabled = true; warningBox.classList.add('hidden'); successBox.classList.add('hidden');
         }
 
-        // 🛒 MÁQUINA DE DESCONTO AUTOMÁTICO
+        // 🛒 MÁQUINA DE DÉBITO AUTOMÁTICO
         document.getElementById('orderForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             if (btnSubmitOrder.disabled || currentCalculatedTotal <= 0) return;
@@ -421,7 +420,7 @@
                 const freshUser = await getDoc(userRef);
                 const freshBalance = freshUser.data().walletBalance || 0;
 
-                if (freshBalance < currentCalculatedTotal) throw new Error("Saldo insuficiente. Recarregue.");
+                if (freshBalance < currentCalculatedTotal) throw new Error("Saldo insuficiente. Recarregue a carteira.");
 
                 const orderId = 'PG-' + Math.floor(100000 + Math.random() * 900000);
                 await updateDoc(userRef, { walletBalance: FieldValue.increment(-currentCalculatedTotal) });
@@ -431,15 +430,15 @@
                     usd: parseFloat(usdInput.value), exchangeRate: sysExchangeRate, tax: currentCalculatedTax, total: currentCalculatedTotal,
                     paymentMethod: 'wallet', isPaid: true, status: 'processing', createdAt: serverTimestamp(), updatedAt: serverTimestamp()
                 });
-                await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: currentCalculatedTotal, description: `Pedido ${orderId}`, reference: orderId, createdAt: new Date().toISOString() });
+                await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: currentCalculatedTotal, description: `Transação PayGo: Pedido ${orderId}`, reference: orderId, createdAt: new Date().toISOString() });
 
                 userData.walletBalance = freshBalance - currentCalculatedTotal;
                 document.getElementById('walletBalance').textContent = formatMZN(userData.walletBalance);
                 isFirstPurchaseEligible = false; 
                 e.target.reset(); resetCalculator();
-                window.showToast("Compra efetuada! Descontado da sua carteira.", "success");
+                window.showToast("Pagamento autorizado e processado com sucesso!", "success");
             } catch (err) { window.showToast(err.message, "error"); } 
-            finally { btnSubmitOrder.disabled = true; btnSubmitOrder.innerHTML = `<i data-lucide="shopping-cart" class="w-5 h-5"></i> <span>Autorizar e Comprar</span>`; lucide.createIcons({root: btnSubmitOrder}); }
+            finally { btnSubmitOrder.disabled = true; btnSubmitOrder.innerHTML = `<i data-lucide="credit-card" class="w-5 h-5"></i> <span>Autorizar Pagamento</span>`; lucide.createIcons({root: btnSubmitOrder}); }
         });
 
         // 🎮 GESTÃO DE MODAIS
@@ -454,7 +453,7 @@
         window.openTransferModal = () => { window.closeModals(); document.getElementById('transferModal').classList.remove('hidden'); document.getElementById('transferModal').classList.add('flex'); };
         window.openVipModal = () => { window.closeModals(); document.getElementById('vipModal').classList.remove('hidden'); document.getElementById('vipModal').classList.add('flex'); };
 
-        // 🏦 TOP-UP (COM OPÇÃO DE BANCO MANUAL)
+        // 🏦 TOP-UP 
         document.querySelectorAll('input[name="topUpMethod"]').forEach(r => r.addEventListener('change', (e) => {
             const btn = document.getElementById('btnProcessTopUp');
             const bankDetails = document.getElementById('bankDetails');
@@ -465,7 +464,7 @@
         document.getElementById('topUpForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const method = document.querySelector('input[name="topUpMethod"]:checked').value;
-            if (method === 'bank') { window.showToast("Por favor, faça a transferência para o NIB indicado e envie o comprovativo no WhatsApp.", "info"); return; }
+            if (method === 'bank') { window.showToast("Por favor, faça a transferência para a conta indicada e contacte-nos no WhatsApp.", "info"); return; }
             
             const btn = document.getElementById('btnProcessTopUp'); const amount = document.getElementById('topUpAmount').value;
             const topUpId = 'TOP-' + Math.floor(100000 + Math.random() * 900000);
@@ -500,9 +499,7 @@
 
                 const receiverId = snap.docs[0].id;
                 
-                // Débito
                 await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: FieldValue.increment(-amount) });
-                // Crédito
                 await updateDoc(doc(db, "users", receiverId), { walletBalance: FieldValue.increment(amount) });
                 
                 await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: amount, description: `Transferência enviada para ${targetEmail}`, createdAt: new Date().toISOString() });
@@ -523,8 +520,8 @@
             const price = plan === 'anual' ? 12600 : 1200;
             const days = plan === 'anual' ? 365 : 30;
 
-            if ((userData?.walletBalance || 0) < price) { window.showToast("Saldo insuficiente. Por favor, deposite na carteira.", "error"); return; }
-            if (confirm(`Deseja comprar o plano ${plan.toUpperCase()} por ${price} MT? O valor será descontado da carteira.`)) {
+            if ((userData?.walletBalance || 0) < price) { window.showToast("Saldo insuficiente na carteira. Efetue um depósito primeiro.", "error"); return; }
+            if (confirm(`Deseja comprar o plano VIP ${plan.toUpperCase()} por ${price} MT? O valor será descontado da carteira.`)) {
                 btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A ativar...`; lucide.createIcons({root: btn});
                 try {
                     const expiryDate = new Date(); expiryDate.setDate(expiryDate.getDate() + days);
