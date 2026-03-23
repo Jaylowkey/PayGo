@@ -15,7 +15,7 @@
             theme: {
                 extend: {
                     fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'], display: ['"Outfit"', 'sans-serif'], mono: ['"Fira Code"', 'monospace'] },
-                    colors: { brand: { 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb' }, success: { 400: '#4ade80', 500: '#22c55e' }, warning: { 400: '#fbbf24', 500: '#f59e0b' }, danger: { 400: '#f87171', 500: '#ef4444' } }
+                    colors: { brand: { 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb' }, success: { 400: '#4ade80', 500: '#22c55e' }, warning: { 400: '#fbbf24', 500: '#f59e0b' }, danger: { 400: '#f87171', 500: '#ef4444' }, vip: { 400: '#c084fc', 500: '#a855f7', 600: '#9333ea' } }
                 }
             }
         };
@@ -32,6 +32,8 @@
         .btn-epic:active:not(:disabled) { transform: scale(0.96); }
         .btn-epic:disabled { opacity: 0.65; cursor: not-allowed; }
         
+        .vip-glow { box-shadow: 0 0 20px rgba(168, 85, 247, 0.3); border: 1px solid rgba(168, 85, 247, 0.5); }
+        
         #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
         .toast { pointer-events: auto; background: rgba(15, 23, 42, 0.95); border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 12px; display: flex; gap: 12px; transform: translateX(120%); transition: transform 0.4s ease; opacity: 0; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         .toast.show { transform: translateX(0); opacity: 1; }
@@ -40,7 +42,7 @@
 <body class="selection:bg-brand-500 selection:text-white">
 
     <div class="fixed inset-0 bg-grid opacity-20 pointer-events-none z-0"></div>
-    <div class="fixed top-0 left-0 w-[500px] h-[500px] bg-brand-600/10 rounded-full mix-blend-screen blur-[120px] pointer-events-none z-0"></div>
+    <div class="fixed top-0 left-0 w-[500px] h-[500px] bg-brand-600/10 rounded-full mix-blend-screen blur-[120px] pointer-events-none z-0" id="glowOrb"></div>
 
     <div id="toastContainer"></div>
 
@@ -53,7 +55,7 @@
             <div class="flex items-center gap-4">
                 <div class="text-right hidden sm:block">
                     <p class="text-sm font-bold text-white" id="userName">A carregar...</p>
-                    <p class="text-xs text-brand-400 font-medium">Cliente Verificado</p>
+                    <p class="text-xs font-medium" id="userBadge"><span class="text-brand-400">Cliente Standard</span></p>
                 </div>
                 <button onclick="window.logout()" class="bg-slate-800 hover:bg-danger-500/20 text-slate-400 hover:text-danger-400 rounded-xl p-2.5 transition-colors" title="Terminar Sessão"><i data-lucide="power" class="w-5 h-5"></i></button>
             </div>
@@ -65,7 +67,7 @@
         <div class="grid lg:grid-cols-3 gap-8">
             
             <div class="lg:col-span-1 space-y-6">
-                <div class="glass-card rounded-2xl p-6 relative overflow-hidden shadow-2xl border-t-4 border-t-brand-500">
+                <div class="glass-card rounded-2xl p-6 relative overflow-hidden shadow-2xl border-t-4 border-t-brand-500" id="walletCard">
                     <div class="absolute -right-6 -top-6 opacity-10"><i data-lucide="wallet" class="w-32 h-32"></i></div>
                     <div class="relative z-10">
                         <h2 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-2">
@@ -76,15 +78,29 @@
                             <span class="text-4xl font-display font-black text-white" id="walletBalance">0.00</span>
                         </div>
                         
-                        <div class="flex flex-col gap-3">
-                            <button onclick="window.openTopUpModal()" class="btn-epic w-full py-3 bg-brand-600 hover:bg-brand-500 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]">
-                                <i data-lucide="plus-circle" class="w-5 h-5"></i> Depositar Fundos
+                        <div class="grid grid-cols-2 gap-2 mb-3">
+                            <button onclick="window.openTopUpModal()" class="btn-epic py-3 bg-brand-600 hover:bg-brand-500 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)] text-sm">
+                                <i data-lucide="plus" class="w-4 h-4"></i> Depositar
                             </button>
-                            <a href="historico.html" class="btn-epic w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700">
-                                <i data-lucide="history" class="w-5 h-5"></i> Meus Pedidos
-                            </a>
+                            <button onclick="window.openTransferModal()" class="btn-epic py-3 bg-slate-700 hover:bg-slate-600 text-white border border-slate-600 text-sm">
+                                <i data-lucide="send" class="w-4 h-4"></i> Transferir
+                            </button>
                         </div>
+                        <a href="historico.html" class="btn-epic w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-400 text-xs">
+                            <i data-lucide="history" class="w-4 h-4"></i> Meus Pedidos / Extrato
+                        </a>
                     </div>
+                </div>
+
+                <div class="glass-card rounded-2xl p-6 border border-slate-800 relative overflow-hidden group">
+                    <div class="absolute right-0 top-0 w-24 h-24 bg-vip-500/10 rounded-full blur-2xl group-hover:bg-vip-500/20 transition"></div>
+                    <h3 class="text-xs font-bold text-vip-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                        <i data-lucide="crown" class="w-4 h-4"></i> Plano PayGo VIP
+                    </h3>
+                    <p class="text-sm text-slate-400 mb-4" id="vipStatusText">Compre com Taxa ZERO em todos os produtos e tenha prioridade na fila de despacho.</p>
+                    <button onclick="window.openVipModal()" class="w-full py-3 rounded-xl bg-gradient-to-r from-vip-600 to-brand-600 hover:from-vip-500 hover:to-brand-500 text-white font-bold text-sm shadow-[0_0_15px_rgba(168,85,247,0.3)] transition transform hover:scale-[1.02]">
+                        Ver Planos (1200 MT/mês)
+                    </button>
                 </div>
 
                 <div class="glass-card rounded-2xl p-5 border border-slate-800">
@@ -95,7 +111,7 @@
                             <span class="text-sm font-mono font-bold text-brand-400" id="currentRate">-- MT</span>
                         </div>
                         <div class="flex justify-between items-center text-xs text-slate-500">
-                            <span>Taxas Fixas:</span>
+                            <span>Taxas Base:</span>
                             <span>De <span id="infoTax1">--</span> a <span id="infoTax3">--</span> MT</span>
                         </div>
                     </div>
@@ -105,11 +121,10 @@
             <div class="lg:col-span-2 space-y-6">
                 
                 <div class="glass-card rounded-2xl p-6 md:p-8 relative overflow-hidden">
-                    
                     <h2 class="text-2xl font-display font-bold text-white mb-2 flex items-center gap-3 relative z-10">
                         <i data-lucide="bot" class="w-8 h-8 text-brand-500"></i> Orçamentador Automático
                     </h2>
-                    <p class="text-slate-400 text-sm mb-8 relative z-10">Cole o link do produto que deseja comprar e informe o valor. Se tiver saldo suficiente, processamos o seu pedido imediatamente.</p>
+                    <p class="text-slate-400 text-sm mb-8 relative z-10">Cole o link do produto que deseja comprar e informe o valor. Processamos automaticamente com o seu saldo.</p>
 
                     <form id="orderForm" class="space-y-6 relative z-10">
                         <div>
@@ -142,7 +157,7 @@
                             </div>
                             
                             <div class="flex justify-between items-center text-sm text-slate-400 pb-3 border-b border-white/5 mb-3">
-                                <span>Taxa de Despacho PayGo:</span>
+                                <span>Taxa de Serviço:</span>
                                 <span class="font-mono font-bold text-slate-300" id="calcFee">0.00 MT</span>
                             </div>
                             
@@ -153,12 +168,12 @@
                             
                             <div id="balanceWarning" class="hidden mt-4 bg-warning-500/10 border border-warning-500/20 rounded-lg p-3 flex items-start gap-2">
                                 <i data-lucide="alert-triangle" class="w-4 h-4 text-warning-400 mt-0.5 shrink-0"></i>
-                                <p class="text-xs text-warning-300 font-medium leading-tight">O seu saldo (<span id="warnBalance" class="font-bold"></span>) é inferior ao valor do pedido. <a href="#" onclick="window.openTopUpModal(); return false;" class="text-warning-400 font-bold hover:underline">Depositar mais fundos</a>.</p>
+                                <p class="text-xs text-warning-300 font-medium leading-tight">O seu saldo (<span id="warnBalance" class="font-bold"></span>) é inferior. <a href="#" onclick="window.openTopUpModal(); return false;" class="text-warning-400 font-bold hover:underline">Depositar mais fundos</a>.</p>
                             </div>
                             
                             <div id="successReady" class="hidden mt-4 bg-success-500/10 border border-success-500/20 rounded-lg p-3 flex items-start gap-2">
                                 <i data-lucide="check-circle" class="w-4 h-4 text-success-400 mt-0.5 shrink-0"></i>
-                                <p class="text-xs text-success-300 font-medium leading-tight">Saldo suficiente! Ao clicar no botão abaixo, o valor será descontado automaticamente e a encomenda efetuada.</p>
+                                <p class="text-xs text-success-300 font-medium leading-tight">Saldo suficiente! Ao autorizar, o valor será descontado e a encomenda iniciada automaticamente.</p>
                             </div>
                         </div>
 
@@ -173,42 +188,101 @@
     </main>
 
     <div id="topUpModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative transform transition-all scale-95 opacity-0" id="topUpContent">
-            <button onclick="window.closeTopUpModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
-            <div class="p-6 pb-0 border-b border-slate-800 mb-6">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative" id="topUpContent">
+            <button onclick="window.closeModals()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <div class="p-6 pb-0 mb-6">
                 <h3 class="text-xl font-display font-bold text-white mb-2">Depositar Fundos</h3>
-                <p class="text-sm text-slate-400 mb-4">Adicione dinheiro à sua carteira via M-Pesa ou e-Mola.</p>
+                <p class="text-sm text-slate-400">Adicione dinheiro à sua carteira PayGo.</p>
             </div>
-            
             <form id="topUpForm" class="p-6 pt-0 space-y-5">
                 <div>
                     <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Valor a Depositar (MT)</label>
-                    <input type="number" id="topUpAmount" required min="10" placeholder="Ex: 500" 
-                        class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 text-white font-mono text-lg font-bold">
+                    <input type="number" id="topUpAmount" required min="10" placeholder="Ex: 500" class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white font-mono text-lg font-bold">
                 </div>
-                
                 <div>
                     <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Método de Pagamento</label>
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="grid grid-cols-3 gap-2">
                         <label class="cursor-pointer">
                             <input type="radio" name="topUpMethod" value="mpesa" class="peer sr-only" checked>
-                            <div class="p-3 border border-slate-700 rounded-xl text-center text-sm font-bold text-slate-400 peer-checked:bg-red-500/10 peer-checked:border-red-500 peer-checked:text-red-500 transition">
-                                M-PESA
-                            </div>
+                            <div class="p-3 border border-slate-700 rounded-xl text-center text-xs font-bold text-slate-400 peer-checked:bg-red-500/10 peer-checked:border-red-500 peer-checked:text-red-500 transition">M-PESA</div>
                         </label>
                         <label class="cursor-pointer">
                             <input type="radio" name="topUpMethod" value="emola" class="peer sr-only">
-                            <div class="p-3 border border-slate-700 rounded-xl text-center text-sm font-bold text-slate-400 peer-checked:bg-orange-500/10 peer-checked:border-orange-500 peer-checked:text-orange-500 transition">
-                                E-MOLA
-                            </div>
+                            <div class="p-3 border border-slate-700 rounded-xl text-center text-xs font-bold text-slate-400 peer-checked:bg-orange-500/10 peer-checked:border-orange-500 peer-checked:text-orange-500 transition">E-MOLA</div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="topUpMethod" value="bank" class="peer sr-only">
+                            <div class="p-3 border border-slate-700 rounded-xl text-center text-xs font-bold text-slate-400 peer-checked:bg-blue-500/10 peer-checked:border-blue-500 peer-checked:text-blue-500 transition">BANCO</div>
                         </label>
                     </div>
                 </div>
-
-                <button type="submit" id="btnProcessTopUp" class="btn-epic w-full py-3.5 bg-brand-600 hover:bg-brand-500 text-white">
-                    <span>Processar Depósito</span> <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                </button>
+                <div id="bankDetails" class="hidden bg-slate-950 rounded-xl p-4 border border-blue-500/30 text-sm text-slate-300">
+                    <p class="mb-2 text-blue-400 font-bold"><i data-lucide="info" class="w-4 h-4 inline"></i> Transferência Manual</p>
+                    <p><strong>Banco:</strong> Millennium BIM</p>
+                    <p><strong>Conta:</strong> 123456789</p>
+                    <p><strong>Titular:</strong> PayGo Lda</p>
+                    <p class="mt-2 text-xs text-slate-400">Faça a transferência e envie o comprovativo pelo WhatsApp para aprovação.</p>
+                </div>
+                <button type="submit" id="btnProcessTopUp" class="btn-epic w-full py-3.5 bg-brand-600 hover:bg-brand-500 text-white">Processar</button>
             </form>
+        </div>
+    </div>
+
+    <div id="transferModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative" id="transferContent">
+            <button onclick="window.closeModals()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <div class="p-6 pb-0 mb-6">
+                <h3 class="text-xl font-display font-bold text-white mb-2">Transferir Saldo</h3>
+                <p class="text-sm text-slate-400">Envie dinheiro para a carteira de outro utilizador PayGo instantaneamente.</p>
+            </div>
+            <form id="transferForm" class="p-6 pt-0 space-y-5">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">E-mail do Destinatário</label>
+                    <input type="email" id="transferEmail" required placeholder="email@exemplo.com" class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Valor (MT)</label>
+                    <input type="number" id="transferAmount" required min="1" placeholder="0" class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white font-mono">
+                </div>
+                <button type="submit" id="btnTransfer" class="btn-epic w-full py-3.5 bg-slate-700 hover:bg-brand-600 text-white border border-slate-600">Enviar Dinheiro</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="vipModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-vip-500/50 rounded-2xl w-full max-w-lg overflow-hidden shadow-[0_0_50px_rgba(168,85,247,0.2)] relative" id="vipContent">
+            <button onclick="window.closeModals()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <div class="p-8 text-center bg-gradient-to-b from-vip-900/40 to-transparent">
+                <i data-lucide="crown" class="w-16 h-16 text-vip-400 mx-auto mb-4"></i>
+                <h3 class="text-3xl font-display font-bold text-white mb-2">PayGo <span class="text-vip-400">VIP</span></h3>
+                <p class="text-sm text-slate-400">Isenção total de taxas de despacho. Compre direto da China apenas pelo custo do produto e câmbio limpo.</p>
+            </div>
+            <div class="p-6 pt-0 space-y-4">
+                <label class="cursor-pointer block">
+                    <input type="radio" name="vipPlan" value="mensal" class="peer sr-only" checked>
+                    <div class="p-4 border border-slate-700 rounded-xl flex justify-between items-center peer-checked:bg-vip-500/10 peer-checked:border-vip-500 transition">
+                        <div>
+                            <p class="font-bold text-white text-lg">Mensal</p>
+                            <p class="text-xs text-slate-400">Renovação automática</p>
+                        </div>
+                        <p class="font-display font-black text-xl text-vip-400">1.200 MT</p>
+                    </div>
+                </label>
+                <label class="cursor-pointer block">
+                    <input type="radio" name="vipPlan" value="anual" class="peer sr-only">
+                    <div class="p-4 border border-slate-700 rounded-xl flex justify-between items-center peer-checked:bg-vip-500/10 peer-checked:border-vip-500 transition relative overflow-hidden">
+                        <div class="absolute top-0 right-0 bg-success-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-bl-lg">POUPE 1.800 MT</div>
+                        <div>
+                            <p class="font-bold text-white text-lg">Anual</p>
+                            <p class="text-xs text-slate-400">12 meses completos</p>
+                        </div>
+                        <p class="font-display font-black text-xl text-vip-400">12.600 MT</p>
+                    </div>
+                </label>
+                <button onclick="window.processVip()" id="btnBuyVip" class="btn-epic w-full py-4 mt-4 bg-vip-600 hover:bg-vip-500 text-white shadow-[0_0_20px_rgba(168,85,247,0.4)]">
+                    Ativar Assinatura VIP
+                </button>
+            </div>
         </div>
     </div>
 
@@ -217,34 +291,16 @@
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, getDocs, collection, query, where, limit, addDoc, updateDoc, serverTimestamp, FieldValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
-            authDomain: "paygo-14311.firebaseapp.com",
-            projectId: "paygo-14311",
-            storageBucket: "paygo-14311.firebasestorage.app",
-            messagingSenderId: "208360646277",
-            appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
-        };
-
+        const firebaseConfig = { apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8", authDomain: "paygo-14311.firebaseapp.com", projectId: "paygo-14311", storageBucket: "paygo-14311.firebasestorage.app", messagingSenderId: "208360646277", appId: "1:208360646277:web:aecc57cc0077ae48a52bec" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app, "paygodb");
-
         lucide.createIcons();
 
-        let currentUser = null;
-        let userData = null;
-        
-        // Variáveis de Sistema dinâmicas
-        let sysExchangeRate = 85; 
-        let sysTax1 = 150; 
-        let sysTax2 = 250; 
-        let sysTax3 = 600;
-        let isFirstPurchaseEligible = false;
-        let firstPurchaseFree = true;
-        
-        let currentCalculatedTotal = 0;
-        let currentCalculatedTax = 0;
+        let currentUser = null, userData = null;
+        let sysExchangeRate = 85, sysTax1 = 150, sysTax2 = 250, sysTax3 = 600;
+        let isFirstPurchaseEligible = false, firstPurchaseFree = true, isUserVip = false;
+        let currentCalculatedTotal = 0, currentCalculatedTax = 0;
 
         const formatMZN = (val) => new Intl.NumberFormat('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val);
 
@@ -252,19 +308,16 @@
             const container = document.getElementById('toastContainer');
             const t = document.createElement('div');
             const isErr = type === 'error', isWarn = type === 'warning';
-            const bg = isErr ? 'bg-danger-500/95 border-danger-400' : isWarn ? 'bg-warning-500/95 border-warning-400' : 'bg-slate-900/95 border-slate-700';
+            const bg = isErr ? 'bg-danger-500/95 border-danger-400' : isWarn ? 'bg-warning-500/95 border-warning-400' : 'bg-slate-900/95 border-brand-500';
             const icon = isErr ? 'alert-octagon text-danger-400' : isWarn ? 'alert-triangle text-warning-400' : 'check-check text-brand-400';
-            
-            t.className = `flex items-center gap-3 px-5 py-4 rounded-xl shadow-2xl backdrop-blur-xl transform transition-all duration-400 translate-x-full border ${bg}`;
-            t.innerHTML = `<i data-lucide="${icon.split(' ')[0]}" class="w-5 h-5 ${icon.split(' ')[1]}"></i> <span class="text-sm font-semibold text-white tracking-wide">${msg}</span>`;
-            
-            container.appendChild(t);
-            lucide.createIcons({ root: t });
-            requestAnimationFrame(() => t.classList.remove('translate-x-full'));
-            setTimeout(() => { t.classList.add('opacity-0', 'translate-x-8'); setTimeout(() => t.remove(), 400); }, 5000);
+            t.className = `flex items-center gap-3 px-5 py-4 rounded-xl shadow-2xl border ${bg} transform transition-all translate-x-full opacity-0`;
+            t.innerHTML = `<i data-lucide="${icon.split(' ')[0]}" class="w-5 h-5 ${icon.split(' ')[1]}"></i> <span class="text-sm font-bold text-white">${msg}</span>`;
+            container.appendChild(t); lucide.createIcons({ root: t });
+            requestAnimationFrame(() => { t.classList.remove('translate-x-full', 'opacity-0'); });
+            setTimeout(() => { t.classList.add('opacity-0', 'translate-x-8'); setTimeout(() => t.remove(), 400); }, 4000);
         }
 
-        // CARREGAR MOTOR E VARIÁVEIS
+        // CARREGAR MOTOR BASE
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = 'login.html'; return; }
             currentUser = user;
@@ -275,267 +328,215 @@
                     userData = userDoc.data();
                     document.getElementById('userName').textContent = userData.name || 'Cliente';
                     document.getElementById('walletBalance').textContent = formatMZN(userData.walletBalance || 0);
+                    
+                    // Verificar VIP
+                    if (userData.isVip && userData.vipExpiry && userData.vipExpiry.toDate() > new Date()) {
+                        isUserVip = true;
+                        document.getElementById('userBadge').innerHTML = `<span class="text-vip-400 flex items-center gap-1"><i data-lucide="crown" class="w-3 h-3"></i> Assinante VIP</span>`;
+                        document.getElementById('glowOrb').classList.replace('bg-brand-600/10', 'bg-vip-600/20');
+                        document.getElementById('walletCard').classList.replace('border-t-brand-500', 'border-t-vip-500');
+                        lucide.createIcons();
+                    }
                 }
 
-                // Carregar as Taxas Oficiais
                 const sysDoc = await getDoc(doc(db, "settings", "global"));
                 if (sysDoc.exists()) {
                     const sysData = sysDoc.data();
                     sysExchangeRate = sysData.exchangeRate || 85;
-                    sysTax1 = sysData.tax1 || 150;
-                    sysTax2 = sysData.tax2 || 250;
-                    sysTax3 = sysData.tax3 || 600;
-                    firstPurchaseFree = sysData.firstPurchaseFree !== false; // Default true
+                    sysTax1 = sysData.tax1 || 150; sysTax2 = sysData.tax2 || 250; sysTax3 = sysData.tax3 || 600;
+                    firstPurchaseFree = sysData.firstPurchaseFree !== false;
                 }
 
-                // Verificar se o cliente tem direito ao Bónus de 1ª Compra
-                if (firstPurchaseFree) {
-                    const q = query(collection(db, "orders"), where("userId", "==", user.uid), limit(1));
-                    const ordersSnap = await getDocs(q);
+                if (firstPurchaseFree && !isUserVip) {
+                    const ordersSnap = await getDocs(query(collection(db, "orders"), where("userId", "==", user.uid), limit(1)));
                     isFirstPurchaseEligible = ordersSnap.empty; 
                 }
 
-                // Atualizar UI Visual
                 document.getElementById('currentRate').textContent = `${sysExchangeRate} MT`;
                 document.getElementById('infoTax1').textContent = sysTax1;
                 document.getElementById('infoTax3').textContent = sysTax3;
                 document.getElementById('calcRate').textContent = sysExchangeRate;
 
-            } catch (error) {
-                console.error(error);
-                window.showToast("Falha ao sincronizar dados. Recarregue a página.", "error");
-            }
+            } catch (error) { console.error(error); window.showToast("Falha ao carregar dados.", "error"); }
         });
 
-        // 🤖 O ROBÔ ORÇAMENTADOR (MATEMÁTICA AVANÇADA)
+        // 🤖 ROBÔ ORÇAMENTADOR (AGORA COM LÓGICA VIP)
         const usdInput = document.getElementById('productUsd');
         const btnSubmitOrder = document.getElementById('btnSubmitOrder');
-        const warningBox = document.getElementById('balanceWarning');
-        const successBox = document.getElementById('successReady');
+        const warningBox = document.getElementById('balanceWarning'), successBox = document.getElementById('successReady');
 
         usdInput.addEventListener('input', function(e) {
             const usdVal = parseFloat(e.target.value) || 0;
-            
-            if (usdVal <= 0) {
-                resetCalculator();
-                return;
-            }
+            if (usdVal <= 0) { resetCalculator(); return; }
 
             const baseMZN = usdVal * sysExchangeRate;
+            let appliedTax = sysTax1;
             
-            // Lógica de Escalonamento de Taxas
-            let appliedTax = sysTax1; // Até $20
             if (usdVal > 20 && usdVal <= 50) appliedTax = sysTax2;
             else if (usdVal > 50) appliedTax = sysTax3;
 
-            // Bónus de 1ª Compra (Até $5)
-            let isBonusActive = false;
-            if (isFirstPurchaseEligible && usdVal <= 5) {
-                appliedTax = 0;
-                isBonusActive = true;
+            // 👑 Lógica de Isenção (VIP ou 1ª Compra)
+            let isBonus = false, isVipFee = false;
+            if (isUserVip) {
+                appliedTax = 0; isVipFee = true;
+            } else if (isFirstPurchaseEligible && usdVal <= 5) {
+                appliedTax = 0; isBonus = true;
             }
 
             currentCalculatedTax = appliedTax;
-            currentCalculatedTotal = baseMZN + appliedTax;
+            currentCalculatedTotal = baseMZN + appliedTax; // CORRIGIDO AQUI!
 
             document.getElementById('calcBase').textContent = `${formatMZN(baseMZN)} MT`;
             
-            if (isBonusActive) {
-                document.getElementById('calcFee').innerHTML = `<span class="text-success-400">0.00 MT (Bónus 1ª Compra!)</span>`;
-            } else {
-                document.getElementById('calcFee').innerHTML = `<span class="text-slate-300">${formatMZN(appliedTax)} MT</span>`;
-            }
+            if (isVipFee) document.getElementById('calcFee').innerHTML = `<span class="text-vip-400 font-bold">0.00 MT (VIP)</span>`;
+            else if (isBonus) document.getElementById('calcFee').innerHTML = `<span class="text-success-400 font-bold">0.00 MT (Bónus 1ª Compra)</span>`;
+            else document.getElementById('calcFee').innerHTML = `<span class="text-slate-300">${formatMZN(appliedTax)} MT</span>`;
             
-            document.getElementById('calcTotal').textContent = `${formatMZN(currentTotalMZN)} MT`;
+            // CORRIGIDO O TYPO QUE CRASHAVA A TUA APP (currentTotalMZN -> currentCalculatedTotal)
+            document.getElementById('calcTotal').textContent = `${formatMZN(currentCalculatedTotal)} MT`;
 
-            // Verificador de Saldo da Carteira
             const currentWallet = userData?.walletBalance || 0;
             if (currentCalculatedTotal > currentWallet) {
-                btnSubmitOrder.disabled = true;
-                successBox.classList.add('hidden');
-                warningBox.classList.remove('hidden');
+                btnSubmitOrder.disabled = true; successBox.classList.add('hidden'); warningBox.classList.remove('hidden');
                 document.getElementById('warnBalance').textContent = `${formatMZN(currentWallet)} MT`;
             } else {
-                btnSubmitOrder.disabled = false;
-                warningBox.classList.add('hidden');
-                successBox.classList.remove('hidden');
+                btnSubmitOrder.disabled = false; warningBox.classList.add('hidden'); successBox.classList.remove('hidden');
             }
         });
 
         function resetCalculator() {
-            document.getElementById('calcBase').textContent = '0.00 MT';
-            document.getElementById('calcFee').innerHTML = '<span class="text-slate-300">0.00 MT</span>';
-            document.getElementById('calcTotal').textContent = '0.00 MT';
-            btnSubmitOrder.disabled = true;
-            warningBox.classList.add('hidden');
-            successBox.classList.add('hidden');
+            document.getElementById('calcBase').textContent = '0.00 MT'; document.getElementById('calcFee').innerHTML = '<span class="text-slate-300">0.00 MT</span>'; document.getElementById('calcTotal').textContent = '0.00 MT';
+            btnSubmitOrder.disabled = true; warningBox.classList.add('hidden'); successBox.classList.add('hidden');
         }
 
-        // ==========================================
-        // 🛒 A MÁQUINA DE DESCONTO AUTOMÁTICO (COMPRAR)
-        // ==========================================
+        // 🛒 MÁQUINA DE DESCONTO AUTOMÁTICO
         document.getElementById('orderForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             if (btnSubmitOrder.disabled || currentCalculatedTotal <= 0) return;
 
-            const url = document.getElementById('productUrl').value;
-            const details = document.getElementById('productDetails').value;
-            const usdAmount = parseFloat(usdInput.value);
-
-            const btnText = document.getElementById('btnSubmitText');
-            btnSubmitOrder.disabled = true;
-            btnSubmitOrder.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> <span>A processar débito...</span>`;
-            lucide.createIcons({root: btnSubmitOrder});
+            btnSubmitOrder.disabled = true; btnSubmitOrder.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> <span>A processar...</span>`; lucide.createIcons({root: btnSubmitOrder});
 
             try {
-                // 1. Verificação Secundária de Segurança (Evitar duplo clique)
                 const userRef = doc(db, "users", currentUser.uid);
                 const freshUser = await getDoc(userRef);
                 const freshBalance = freshUser.data().walletBalance || 0;
 
-                if (freshBalance < currentCalculatedTotal) {
-                    throw new Error("O seu saldo atual é insuficiente. Por favor, recarregue.");
-                }
+                if (freshBalance < currentCalculatedTotal) throw new Error("Saldo insuficiente. Recarregue.");
 
-                // 2. Gerar ID do Pedido
                 const orderId = 'PG-' + Math.floor(100000 + Math.random() * 900000);
-
-                // 3. Débito Atómico da Carteira!
-                await updateDoc(userRef, {
-                    walletBalance: FieldValue.increment(-currentCalculatedTotal)
-                });
-
-                // 4. Criar a Encomenda já marcada como PAGA!
+                await updateDoc(userRef, { walletBalance: FieldValue.increment(-currentCalculatedTotal) });
                 await addDoc(collection(db, "orders"), {
-                    orderId: orderId,
-                    userId: currentUser.uid,
-                    name: freshUser.data().name || '',
-                    email: freshUser.data().email || '',
-                    phone: freshUser.data().phone || '',
-                    detail: `${url} | ${details}`,
-                    usd: usdAmount,
-                    exchangeRate: sysExchangeRate,
-                    tax: currentCalculatedTax,
-                    total: currentCalculatedTotal,
-                    paymentMethod: 'wallet',
-                    isPaid: true,             // 👈 A Magia!
-                    status: 'processing',     // Já vai direto para a fila de compras da equipa
-                    createdAt: serverTimestamp(),
-                    updatedAt: serverTimestamp()
+                    orderId: orderId, userId: currentUser.uid, name: freshUser.data().name || '', email: freshUser.data().email || '', phone: freshUser.data().phone || '',
+                    detail: `${document.getElementById('productUrl').value} | ${document.getElementById('productDetails').value}`,
+                    usd: parseFloat(usdInput.value), exchangeRate: sysExchangeRate, tax: currentCalculatedTax, total: currentCalculatedTotal,
+                    paymentMethod: 'wallet', isPaid: true, status: 'processing', createdAt: serverTimestamp(), updatedAt: serverTimestamp()
                 });
+                await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: currentCalculatedTotal, description: `Pedido ${orderId}`, reference: orderId, createdAt: new Date().toISOString() });
 
-                // 5. Gravar Extrato Financeiro
-                await addDoc(collection(db, "wallet_transactions"), {
-                    userId: currentUser.uid,
-                    type: 'debit',
-                    amount: currentCalculatedTotal,
-                    description: `Pagamento Automático - Pedido ${orderId}`,
-                    reference: orderId,
-                    createdAt: new Date().toISOString()
-                });
-
-                // 6. Atualizar UI Localmente
                 userData.walletBalance = freshBalance - currentCalculatedTotal;
                 document.getElementById('walletBalance').textContent = formatMZN(userData.walletBalance);
-                
-                // Se foi a 1ª compra, ele perde o direito para as próximas!
                 isFirstPurchaseEligible = false; 
-
-                // Reset e Sucesso
-                e.target.reset();
-                resetCalculator();
-                window.showToast("Pagamento autorizado com sucesso! A encomenda está em processamento.", "success");
-                
-                // Dispara o alerta para a tua equipa no Slack/Lark (Opcional, chama a tua API notify-order)
-                fetch('/api/notify-order', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'order_created_wallet', orderId: orderId })
-                }).catch(e => console.error("Aviso interno falhou", e));
-
-            } catch (error) {
-                console.error(error);
-                window.showToast(error.message || "Falha crítica ao processar pedido.", "error");
-            } finally {
-                btnSubmitOrder.disabled = true; // Mantém bloqueado até colocar novo link
-                btnSubmitOrder.innerHTML = `<i data-lucide="shopping-cart" class="w-5 h-5"></i> <span id="btnSubmitText">Autorizar e Comprar</span>`;
-                lucide.createIcons({root: btnSubmitOrder});
-            }
+                e.target.reset(); resetCalculator();
+                window.showToast("Compra efetuada! Descontado da sua carteira.", "success");
+            } catch (err) { window.showToast(err.message, "error"); } 
+            finally { btnSubmitOrder.disabled = true; btnSubmitOrder.innerHTML = `<i data-lucide="shopping-cart" class="w-5 h-5"></i> <span>Autorizar e Comprar</span>`; lucide.createIcons({root: btnSubmitOrder}); }
         });
 
-        // ==========================================
-        // SISTEMA DE RECUPERAÇÃO DE FUNDOS (TOP-UP) (Mantido Intacto)
-        // ==========================================
-        window.openTopUpModal = function() {
-            const modal = document.getElementById('topUpModal');
-            const content = document.getElementById('topUpContent');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            setTimeout(() => { content.classList.remove('scale-95', 'opacity-0'); content.classList.add('scale-100', 'opacity-100'); }, 10);
+        // 🎮 GESTÃO DE MODAIS
+        window.closeModals = function() {
+            document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
+            document.getElementById('topUpModal').classList.add('hidden');
+            document.getElementById('transferModal').classList.add('hidden');
+            document.getElementById('vipModal').classList.add('hidden');
         };
 
-        window.closeTopUpModal = function() {
-            const modal = document.getElementById('topUpModal');
-            const content = document.getElementById('topUpContent');
-            content.classList.remove('scale-100', 'opacity-100');
-            content.classList.add('scale-95', 'opacity-0');
-            setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); }, 300);
-        };
+        window.openTopUpModal = () => { window.closeModals(); document.getElementById('topUpModal').classList.remove('hidden'); document.getElementById('topUpModal').classList.add('flex'); };
+        window.openTransferModal = () => { window.closeModals(); document.getElementById('transferModal').classList.remove('hidden'); document.getElementById('transferModal').classList.add('flex'); };
+        window.openVipModal = () => { window.closeModals(); document.getElementById('vipModal').classList.remove('hidden'); document.getElementById('vipModal').classList.add('flex'); };
+
+        // 🏦 TOP-UP (COM OPÇÃO DE BANCO MANUAL)
+        document.querySelectorAll('input[name="topUpMethod"]').forEach(r => r.addEventListener('change', (e) => {
+            const btn = document.getElementById('btnProcessTopUp');
+            const bankDetails = document.getElementById('bankDetails');
+            if (e.target.value === 'bank') { bankDetails.classList.remove('hidden'); btn.textContent = 'Ver Instruções'; } 
+            else { bankDetails.classList.add('hidden'); btn.textContent = 'Processar Depósito'; }
+        }));
 
         document.getElementById('topUpForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const btn = document.getElementById('btnProcessTopUp');
-            const amount = document.getElementById('topUpAmount').value;
             const method = document.querySelector('input[name="topUpMethod"]:checked').value;
-
+            if (method === 'bank') { window.showToast("Por favor, faça a transferência para o NIB indicado e envie o comprovativo no WhatsApp.", "info"); return; }
+            
+            const btn = document.getElementById('btnProcessTopUp'); const amount = document.getElementById('topUpAmount').value;
             const topUpId = 'TOP-' + Math.floor(100000 + Math.random() * 900000);
-
-            btn.disabled = true;
-            btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A Ligar à PaySuite...`;
-            lucide.createIcons({root: btn});
+            btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Ligar...`; lucide.createIcons({root: btn});
 
             try {
-                const response = await fetch('/api/paysuite-payment', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        orderId: topUpId,
-                        amount: amount,
-                        method: method,
-                        description: `Depósito na Carteira PayGo (${currentUser.uid})`
-                    })
-                });
-
+                const response = await fetch('/api/paysuite-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orderId: topUpId, amount: amount, method: method, description: `Depósito na Carteira PayGo` }) });
                 const result = await response.json();
-
-                if (result.success && result.data?.checkoutUrl) {
-                    await addDoc(collection(db, "topups"), {
-                        topupId: topUpId,
-                        userId: currentUser.uid,
-                        amount: parseFloat(amount),
-                        status: 'pending',
-                        method: method,
-                        createdAt: serverTimestamp()
-                    });
+                if (result.success) {
+                    await addDoc(collection(db, "topups"), { topupId: topUpId, userId: currentUser.uid, amount: parseFloat(amount), status: 'pending', method: method, createdAt: serverTimestamp() });
                     window.location.href = result.data.checkoutUrl;
-                } else {
-                    throw new Error(result.error || 'Falha ao iniciar pagamento');
-                }
-            } catch (err) {
-                console.error(err);
-                window.showToast(err.message, 'error');
-                btn.disabled = false;
-                btn.innerHTML = `<span>Processar Depósito</span> <i data-lucide="arrow-right" class="w-4 h-4"></i>`;
-                lucide.createIcons({root: btn});
-            }
+                } else throw new Error(result.error);
+            } catch (err) { window.showToast(err.message, 'error'); btn.disabled = false; btn.textContent = `Processar Depósito`; }
         });
 
-        window.logout = async () => {
-            if(confirm('Tem a certeza que deseja sair?')) {
-                await signOut(auth);
-                window.location.href = 'login.html';
+        // 💸 TRANSFERÊNCIA P2P
+        document.getElementById('transferForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btnTransfer');
+            const targetEmail = document.getElementById('transferEmail').value.trim();
+            const amount = parseFloat(document.getElementById('transferAmount').value);
+
+            if (targetEmail === currentUser.email) return window.showToast("Não pode enviar dinheiro para si mesmo.", "error");
+            if (amount > (userData?.walletBalance || 0)) return window.showToast("Saldo insuficiente para transferência.", "error");
+
+            btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Processando...`; lucide.createIcons({root: btn});
+
+            try {
+                const q = query(collection(db, "users"), where("email", "==", targetEmail));
+                const snap = await getDocs(q);
+                if (snap.empty) throw new Error("E-mail não registado na PayGo.");
+
+                const receiverId = snap.docs[0].id;
+                
+                // Débito
+                await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: FieldValue.increment(-amount) });
+                // Crédito
+                await updateDoc(doc(db, "users", receiverId), { walletBalance: FieldValue.increment(amount) });
+                
+                await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: amount, description: `Transferência enviada para ${targetEmail}`, createdAt: new Date().toISOString() });
+                await addDoc(collection(db, "wallet_transactions"), { userId: receiverId, type: 'credit', amount: amount, description: `Transferência recebida de ${currentUser.email}`, createdAt: new Date().toISOString() });
+
+                userData.walletBalance -= amount;
+                document.getElementById('walletBalance').textContent = formatMZN(userData.walletBalance);
+                window.closeModals(); e.target.reset();
+                window.showToast("Transferência concluída com sucesso!", "success");
+            } catch (err) { window.showToast(err.message, "error"); }
+            finally { btn.disabled = false; btn.textContent = "Enviar Dinheiro"; }
+        });
+
+        // 👑 SUBSCRIÇÃO VIP
+        window.processVip = async () => {
+            const btn = document.getElementById('btnBuyVip');
+            const plan = document.querySelector('input[name="vipPlan"]:checked').value;
+            const price = plan === 'anual' ? 12600 : 1200;
+            const days = plan === 'anual' ? 365 : 30;
+
+            if ((userData?.walletBalance || 0) < price) { window.showToast("Saldo insuficiente. Por favor, deposite na carteira.", "error"); return; }
+            if (confirm(`Deseja comprar o plano ${plan.toUpperCase()} por ${price} MT? O valor será descontado da carteira.`)) {
+                btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A ativar...`; lucide.createIcons({root: btn});
+                try {
+                    const expiryDate = new Date(); expiryDate.setDate(expiryDate.getDate() + days);
+                    await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: FieldValue.increment(-price), isVip: true, vipPlan: plan, vipExpiry: expiryDate });
+                    await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: price, description: `Assinatura PayGo VIP (${plan})`, createdAt: new Date().toISOString() });
+                    window.showToast("Parabéns! A sua conta agora é VIP.", "success");
+                    setTimeout(() => window.location.reload(), 1500);
+                } catch (err) { window.showToast("Erro ao processar assinatura.", "error"); btn.disabled = false; btn.textContent = "Ativar Assinatura VIP"; }
             }
         };
+
+        window.logout = async () => { if(confirm('Sair da conta?')) { await signOut(auth); window.location.href = 'login.html'; } };
     </script>
 </body>
 </html>
