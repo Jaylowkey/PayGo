@@ -26,7 +26,7 @@
         ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
         .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
         .glass-nav { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.08); }
-        .glass-card { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .glass-card { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.3s ease; }
         
         .btn-epic { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; border-radius: 0.75rem; }
         .btn-epic:active:not(:disabled) { transform: scale(0.96); }
@@ -35,10 +35,6 @@
         #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
         .toast { pointer-events: auto; background: rgba(15, 23, 42, 0.95); border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 12px; display: flex; gap: 12px; transform: translateX(120%); transition: transform 0.4s ease; opacity: 0; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         .toast.show { transform: translateX(0); opacity: 1; }
-        
-        /* Skeleton Loading */
-        .skeleton { background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 0.5rem; }
-        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
     </style>
 </head>
 <body class="selection:bg-brand-500 selection:text-white">
@@ -85,22 +81,22 @@
                                 <i data-lucide="plus-circle" class="w-5 h-5"></i> Depositar Fundos
                             </button>
                             <a href="historico.html" class="btn-epic w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700">
-                                <i data-lucide="history" class="w-5 h-5"></i> Histórico de Transações
+                                <i data-lucide="history" class="w-5 h-5"></i> Meus Pedidos
                             </a>
                         </div>
                     </div>
                 </div>
 
                 <div class="glass-card rounded-2xl p-5 border border-slate-800">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Métricas do Sistema</h3>
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Informação do Sistema</h3>
                     <div class="space-y-3">
                         <div class="flex justify-between items-center pb-2 border-b border-white/5">
                             <span class="text-sm text-slate-400 flex items-center gap-2"><i data-lucide="bar-chart-3" class="w-4 h-4"></i> Câmbio Atual (USD)</span>
                             <span class="text-sm font-mono font-bold text-brand-400" id="currentRate">-- MT</span>
                         </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-slate-400 flex items-center gap-2"><i data-lucide="truck" class="w-4 h-4"></i> Taxa de Despacho</span>
-                            <span class="text-sm font-mono font-bold text-brand-400" id="currentFee">-- MT</span>
+                        <div class="flex justify-between items-center text-xs text-slate-500">
+                            <span>Taxas Fixas:</span>
+                            <span>De <span id="infoTax1">--</span> a <span id="infoTax3">--</span> MT</span>
                         </div>
                     </div>
                 </div>
@@ -108,13 +104,14 @@
 
             <div class="lg:col-span-2 space-y-6">
                 
-                <div class="glass-card rounded-2xl p-6 md:p-8">
-                    <h2 class="text-2xl font-display font-bold text-white mb-2 flex items-center gap-3">
+                <div class="glass-card rounded-2xl p-6 md:p-8 relative overflow-hidden">
+                    
+                    <h2 class="text-2xl font-display font-bold text-white mb-2 flex items-center gap-3 relative z-10">
                         <i data-lucide="bot" class="w-8 h-8 text-brand-500"></i> Orçamentador Automático
                     </h2>
-                    <p class="text-slate-400 text-sm mb-8">Cole o link do produto que deseja comprar e informe o valor em dólares. O nosso robô fará o cálculo imediato.</p>
+                    <p class="text-slate-400 text-sm mb-8 relative z-10">Cole o link do produto que deseja comprar e informe o valor. Se tiver saldo suficiente, processamos o seu pedido imediatamente.</p>
 
-                    <form id="orderForm" class="space-y-6">
+                    <form id="orderForm" class="space-y-6 relative z-10">
                         <div>
                             <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Link do Produto (AliExpress, Shein, etc.)</label>
                             <input type="url" id="productUrl" required placeholder="https://aliexpress.com/item/..." 
@@ -132,34 +129,41 @@
                             </div>
                             
                             <div>
-                                <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Opções Extra (Tamanho, Cor)</label>
-                                <input type="text" id="productDetails" placeholder="Ex: Preto, Tamanho L" 
+                                <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Detalhes (Tamanho, Cor, etc.)</label>
+                                <input type="text" id="productDetails" placeholder="Opcional. Ex: Preto, Tamanho L" 
                                     class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 text-white placeholder:text-slate-600 transition">
                             </div>
                         </div>
 
                         <div class="bg-slate-900 rounded-xl p-5 border border-brand-500/20 shadow-inner mt-4">
                             <div class="flex justify-between items-center text-sm text-slate-400 mb-2">
-                                <span>Conversão Base (<span id="calcRate">85</span> MT):</span>
+                                <span>Conversão (<span id="calcRate">85</span> MT):</span>
                                 <span class="font-mono text-white" id="calcBase">0.00 MT</span>
                             </div>
+                            
                             <div class="flex justify-between items-center text-sm text-slate-400 pb-3 border-b border-white/5 mb-3">
-                                <span>Taxa da PayGo:</span>
-                                <span class="font-mono text-brand-400 font-bold" id="calcFee">0.00 MT</span>
+                                <span>Taxa de Despacho PayGo:</span>
+                                <span class="font-mono font-bold text-slate-300" id="calcFee">0.00 MT</span>
                             </div>
+                            
                             <div class="flex justify-between items-end">
                                 <span class="text-xs font-bold text-slate-500 uppercase tracking-widest">Total a Debitar:</span>
                                 <span class="text-2xl font-display font-black text-white" id="calcTotal">0.00 MT</span>
                             </div>
                             
-                            <div id="balanceWarning" class="hidden mt-4 bg-danger-500/10 border border-danger-500/20 rounded-lg p-3 flex items-start gap-2">
-                                <i data-lucide="alert-circle" class="w-4 h-4 text-danger-400 mt-0.5 shrink-0"></i>
-                                <p class="text-xs text-danger-300 font-medium leading-tight">O seu saldo é inferior ao valor do pedido. <a href="#" onclick="window.openTopUpModal(); return false;" class="text-danger-400 font-bold hover:underline">Recarregue a sua carteira</a> para proceder.</p>
+                            <div id="balanceWarning" class="hidden mt-4 bg-warning-500/10 border border-warning-500/20 rounded-lg p-3 flex items-start gap-2">
+                                <i data-lucide="alert-triangle" class="w-4 h-4 text-warning-400 mt-0.5 shrink-0"></i>
+                                <p class="text-xs text-warning-300 font-medium leading-tight">O seu saldo (<span id="warnBalance" class="font-bold"></span>) é inferior ao valor do pedido. <a href="#" onclick="window.openTopUpModal(); return false;" class="text-warning-400 font-bold hover:underline">Depositar mais fundos</a>.</p>
+                            </div>
+                            
+                            <div id="successReady" class="hidden mt-4 bg-success-500/10 border border-success-500/20 rounded-lg p-3 flex items-start gap-2">
+                                <i data-lucide="check-circle" class="w-4 h-4 text-success-400 mt-0.5 shrink-0"></i>
+                                <p class="text-xs text-success-300 font-medium leading-tight">Saldo suficiente! Ao clicar no botão abaixo, o valor será descontado automaticamente e a encomenda efetuada.</p>
                             </div>
                         </div>
 
                         <button type="submit" id="btnSubmitOrder" disabled class="btn-epic w-full py-4 bg-success-500 hover:bg-success-600 text-white shadow-[0_0_15px_rgba(34,197,94,0.3)] disabled:bg-slate-800 disabled:text-slate-500 disabled:shadow-none transition-all">
-                            <i data-lucide="shopping-cart" class="w-5 h-5"></i> <span>Autorizar Pagamento e Enviar Pedido</span>
+                            <i data-lucide="shopping-cart" class="w-5 h-5"></i> <span id="btnSubmitText">Autorizar e Comprar</span>
                         </button>
                     </form>
                 </div>
@@ -202,7 +206,7 @@
                 </div>
 
                 <button type="submit" id="btnProcessTopUp" class="btn-epic w-full py-3.5 bg-brand-600 hover:bg-brand-500 text-white">
-                    <span>Processar Pagamento</span> <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    <span>Processar Depósito</span> <i data-lucide="arrow-right" class="w-4 h-4"></i>
                 </button>
             </form>
         </div>
@@ -211,7 +215,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, getDocs, collection, query, where, limit, addDoc, updateDoc, serverTimestamp, FieldValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
@@ -229,14 +233,21 @@
         lucide.createIcons();
 
         let currentUser = null;
-        let userWalletBalance = 0;
-        let sysExchangeRate = 85; // Fallback
-        let sysServiceFee = 150;  // Fallback
+        let userData = null;
+        
+        // Variáveis de Sistema dinâmicas
+        let sysExchangeRate = 85; 
+        let sysTax1 = 150; 
+        let sysTax2 = 250; 
+        let sysTax3 = 600;
+        let isFirstPurchaseEligible = false;
+        let firstPurchaseFree = true;
+        
+        let currentCalculatedTotal = 0;
+        let currentCalculatedTax = 0;
 
-        // Formatação de Moeda
         const formatMZN = (val) => new Intl.NumberFormat('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val);
 
-        // Notificações
         window.showToast = function(msg, type = 'success') {
             const container = document.getElementById('toastContainer');
             const t = document.createElement('div');
@@ -253,76 +264,207 @@
             setTimeout(() => { t.classList.add('opacity-0', 'translate-x-8'); setTimeout(() => t.remove(), 400); }, 5000);
         }
 
-        // Carregar Motor Base
+        // CARREGAR MOTOR E VARIÁVEIS
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = 'login.html'; return; }
             currentUser = user;
 
             try {
-                // 1. Carregar Perfil e Saldo da Carteira
                 const userDoc = await getDoc(doc(db, "users", user.uid));
                 if (userDoc.exists()) {
-                    const data = userDoc.data();
-                    document.getElementById('userName').textContent = data.name || 'Cliente';
-                    userWalletBalance = data.walletBalance || 0;
-                    document.getElementById('walletBalance').textContent = formatMZN(userWalletBalance);
+                    userData = userDoc.data();
+                    document.getElementById('userName').textContent = userData.name || 'Cliente';
+                    document.getElementById('walletBalance').textContent = formatMZN(userData.walletBalance || 0);
                 }
 
-                // 2. Carregar Configurações de Câmbio do Sistema
+                // Carregar as Taxas Oficiais
                 const sysDoc = await getDoc(doc(db, "settings", "global"));
                 if (sysDoc.exists()) {
                     const sysData = sysDoc.data();
                     sysExchangeRate = sysData.exchangeRate || 85;
-                    sysServiceFee = sysData.serviceFee || 150;
+                    sysTax1 = sysData.tax1 || 150;
+                    sysTax2 = sysData.tax2 || 250;
+                    sysTax3 = sysData.tax3 || 600;
+                    firstPurchaseFree = sysData.firstPurchaseFree !== false; // Default true
                 }
 
-                // Atualizar o Painel Visual
+                // Verificar se o cliente tem direito ao Bónus de 1ª Compra
+                if (firstPurchaseFree) {
+                    const q = query(collection(db, "orders"), where("userId", "==", user.uid), limit(1));
+                    const ordersSnap = await getDocs(q);
+                    isFirstPurchaseEligible = ordersSnap.empty; 
+                }
+
+                // Atualizar UI Visual
                 document.getElementById('currentRate').textContent = `${sysExchangeRate} MT`;
-                document.getElementById('currentFee').textContent = `${sysServiceFee} MT`;
+                document.getElementById('infoTax1').textContent = sysTax1;
+                document.getElementById('infoTax3').textContent = sysTax3;
                 document.getElementById('calcRate').textContent = sysExchangeRate;
-                document.getElementById('calcFee').textContent = `${sysServiceFee} MT`;
 
             } catch (error) {
-                console.error("Erro ao carregar motor base:", error);
-                window.showToast("Falha de sincronização com o servidor.", "error");
+                console.error(error);
+                window.showToast("Falha ao sincronizar dados. Recarregue a página.", "error");
             }
         });
 
-        // 🤖 O ROBÔ ORÇAMENTADOR (Calculadora em Tempo Real)
+        // 🤖 O ROBÔ ORÇAMENTADOR (MATEMÁTICA AVANÇADA)
         const usdInput = document.getElementById('productUsd');
         const btnSubmitOrder = document.getElementById('btnSubmitOrder');
         const warningBox = document.getElementById('balanceWarning');
-        let currentTotalMZN = 0;
+        const successBox = document.getElementById('successReady');
 
         usdInput.addEventListener('input', function(e) {
             const usdVal = parseFloat(e.target.value) || 0;
             
             if (usdVal <= 0) {
-                document.getElementById('calcBase').textContent = '0.00 MT';
-                document.getElementById('calcTotal').textContent = '0.00 MT';
-                btnSubmitOrder.disabled = true;
-                warningBox.classList.add('hidden');
+                resetCalculator();
                 return;
             }
 
             const baseMZN = usdVal * sysExchangeRate;
-            currentTotalMZN = baseMZN + sysServiceFee;
+            
+            // Lógica de Escalonamento de Taxas
+            let appliedTax = sysTax1; // Até $20
+            if (usdVal > 20 && usdVal <= 50) appliedTax = sysTax2;
+            else if (usdVal > 50) appliedTax = sysTax3;
+
+            // Bónus de 1ª Compra (Até $5)
+            let isBonusActive = false;
+            if (isFirstPurchaseEligible && usdVal <= 5) {
+                appliedTax = 0;
+                isBonusActive = true;
+            }
+
+            currentCalculatedTax = appliedTax;
+            currentCalculatedTotal = baseMZN + appliedTax;
 
             document.getElementById('calcBase').textContent = `${formatMZN(baseMZN)} MT`;
+            
+            if (isBonusActive) {
+                document.getElementById('calcFee').innerHTML = `<span class="text-success-400">0.00 MT (Bónus 1ª Compra!)</span>`;
+            } else {
+                document.getElementById('calcFee').innerHTML = `<span class="text-slate-300">${formatMZN(appliedTax)} MT</span>`;
+            }
+            
             document.getElementById('calcTotal').textContent = `${formatMZN(currentTotalMZN)} MT`;
 
-            // Lógica de Validação da Carteira (Wallet Lock)
-            if (currentTotalMZN > userWalletBalance) {
+            // Verificador de Saldo da Carteira
+            const currentWallet = userData?.walletBalance || 0;
+            if (currentCalculatedTotal > currentWallet) {
                 btnSubmitOrder.disabled = true;
+                successBox.classList.add('hidden');
                 warningBox.classList.remove('hidden');
+                document.getElementById('warnBalance').textContent = `${formatMZN(currentWallet)} MT`;
             } else {
                 btnSubmitOrder.disabled = false;
                 warningBox.classList.add('hidden');
+                successBox.classList.remove('hidden');
+            }
+        });
+
+        function resetCalculator() {
+            document.getElementById('calcBase').textContent = '0.00 MT';
+            document.getElementById('calcFee').innerHTML = '<span class="text-slate-300">0.00 MT</span>';
+            document.getElementById('calcTotal').textContent = '0.00 MT';
+            btnSubmitOrder.disabled = true;
+            warningBox.classList.add('hidden');
+            successBox.classList.add('hidden');
+        }
+
+        // ==========================================
+        // 🛒 A MÁQUINA DE DESCONTO AUTOMÁTICO (COMPRAR)
+        // ==========================================
+        document.getElementById('orderForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (btnSubmitOrder.disabled || currentCalculatedTotal <= 0) return;
+
+            const url = document.getElementById('productUrl').value;
+            const details = document.getElementById('productDetails').value;
+            const usdAmount = parseFloat(usdInput.value);
+
+            const btnText = document.getElementById('btnSubmitText');
+            btnSubmitOrder.disabled = true;
+            btnSubmitOrder.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> <span>A processar débito...</span>`;
+            lucide.createIcons({root: btnSubmitOrder});
+
+            try {
+                // 1. Verificação Secundária de Segurança (Evitar duplo clique)
+                const userRef = doc(db, "users", currentUser.uid);
+                const freshUser = await getDoc(userRef);
+                const freshBalance = freshUser.data().walletBalance || 0;
+
+                if (freshBalance < currentCalculatedTotal) {
+                    throw new Error("O seu saldo atual é insuficiente. Por favor, recarregue.");
+                }
+
+                // 2. Gerar ID do Pedido
+                const orderId = 'PG-' + Math.floor(100000 + Math.random() * 900000);
+
+                // 3. Débito Atómico da Carteira!
+                await updateDoc(userRef, {
+                    walletBalance: FieldValue.increment(-currentCalculatedTotal)
+                });
+
+                // 4. Criar a Encomenda já marcada como PAGA!
+                await addDoc(collection(db, "orders"), {
+                    orderId: orderId,
+                    userId: currentUser.uid,
+                    name: freshUser.data().name || '',
+                    email: freshUser.data().email || '',
+                    phone: freshUser.data().phone || '',
+                    detail: `${url} | ${details}`,
+                    usd: usdAmount,
+                    exchangeRate: sysExchangeRate,
+                    tax: currentCalculatedTax,
+                    total: currentCalculatedTotal,
+                    paymentMethod: 'wallet',
+                    isPaid: true,             // 👈 A Magia!
+                    status: 'processing',     // Já vai direto para a fila de compras da equipa
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                });
+
+                // 5. Gravar Extrato Financeiro
+                await addDoc(collection(db, "wallet_transactions"), {
+                    userId: currentUser.uid,
+                    type: 'debit',
+                    amount: currentCalculatedTotal,
+                    description: `Pagamento Automático - Pedido ${orderId}`,
+                    reference: orderId,
+                    createdAt: new Date().toISOString()
+                });
+
+                // 6. Atualizar UI Localmente
+                userData.walletBalance = freshBalance - currentCalculatedTotal;
+                document.getElementById('walletBalance').textContent = formatMZN(userData.walletBalance);
+                
+                // Se foi a 1ª compra, ele perde o direito para as próximas!
+                isFirstPurchaseEligible = false; 
+
+                // Reset e Sucesso
+                e.target.reset();
+                resetCalculator();
+                window.showToast("Pagamento autorizado com sucesso! A encomenda está em processamento.", "success");
+                
+                // Dispara o alerta para a tua equipa no Slack/Lark (Opcional, chama a tua API notify-order)
+                fetch('/api/notify-order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'order_created_wallet', orderId: orderId })
+                }).catch(e => console.error("Aviso interno falhou", e));
+
+            } catch (error) {
+                console.error(error);
+                window.showToast(error.message || "Falha crítica ao processar pedido.", "error");
+            } finally {
+                btnSubmitOrder.disabled = true; // Mantém bloqueado até colocar novo link
+                btnSubmitOrder.innerHTML = `<i data-lucide="shopping-cart" class="w-5 h-5"></i> <span id="btnSubmitText">Autorizar e Comprar</span>`;
+                lucide.createIcons({root: btnSubmitOrder});
             }
         });
 
         // ==========================================
-        // SISTEMA DE RECUPERAÇÃO DE FUNDOS (TOP-UP)
+        // SISTEMA DE RECUPERAÇÃO DE FUNDOS (TOP-UP) (Mantido Intacto)
         // ==========================================
         window.openTopUpModal = function() {
             const modal = document.getElementById('topUpModal');
@@ -346,7 +488,6 @@
             const amount = document.getElementById('topUpAmount').value;
             const method = document.querySelector('input[name="topUpMethod"]:checked').value;
 
-            // GERADOR DE ID PARA DEPÓSITOS (Prefixo TOP-)
             const topUpId = 'TOP-' + Math.floor(100000 + Math.random() * 900000);
 
             btn.disabled = true;
@@ -354,7 +495,6 @@
             lucide.createIcons({root: btn});
 
             try {
-                // Chama a NOSSA API de Pagamentos que acabámos de corrigir
                 const response = await fetch('/api/paysuite-payment', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -369,7 +509,6 @@
                 const result = await response.json();
 
                 if (result.success && result.data?.checkoutUrl) {
-                    // Grava a intenção de depósito na base de dados
                     await addDoc(collection(db, "topups"), {
                         topupId: topUpId,
                         userId: currentUser.uid,
@@ -378,8 +517,6 @@
                         method: method,
                         createdAt: serverTimestamp()
                     });
-
-                    // Redireciona o cliente para colocar o PIN e meter dinheiro!
                     window.location.href = result.data.checkoutUrl;
                 } else {
                     throw new Error(result.error || 'Falha ao iniciar pagamento');
@@ -388,16 +525,9 @@
                 console.error(err);
                 window.showToast(err.message, 'error');
                 btn.disabled = false;
-                btn.innerHTML = `<span>Processar Pagamento</span> <i data-lucide="arrow-right" class="w-4 h-4"></i>`;
+                btn.innerHTML = `<span>Processar Depósito</span> <i data-lucide="arrow-right" class="w-4 h-4"></i>`;
                 lucide.createIcons({root: btn});
             }
-        });
-
-        // Submissão do Pedido Automático (Desconto da Carteira)
-        document.getElementById('orderForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            // Esta lógica vem no passo a seguir!
-            window.showToast("Funcionalidade em desenvolvimento na Vercel.", "info");
         });
 
         window.logout = async () => {
