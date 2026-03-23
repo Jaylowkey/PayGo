@@ -32,8 +32,6 @@
         .btn-epic:active:not(:disabled) { transform: scale(0.96); }
         .btn-epic:disabled { opacity: 0.65; cursor: not-allowed; }
         
-        .vip-glow { box-shadow: 0 0 20px rgba(168, 85, 247, 0.3); border: 1px solid rgba(168, 85, 247, 0.5); }
-        
         #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
         .toast { pointer-events: auto; background: rgba(15, 23, 42, 0.95); border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 12px; display: flex; gap: 12px; transform: translateX(120%); transition: transform 0.4s ease; opacity: 0; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         .toast.show { transform: translateX(0); opacity: 1; }
@@ -135,19 +133,28 @@
 
                         <div class="grid md:grid-cols-2 gap-6">
                             <div>
-                                <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Valor Total a Pagar (USD $)</label>
+                                <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Valor (USD $)</label>
                                 <div class="relative">
                                     <i data-lucide="dollar-sign" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500"></i>
-                                    <input type="number" id="productUsd" required min="0.1" step="0.01" placeholder="0.00" 
+                                    <input type="number" id="productUsd" min="0.01" step="0.01" placeholder="0.00" 
                                         class="w-full pl-12 pr-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 text-white font-mono transition">
                                 </div>
                             </div>
                             
                             <div>
-                                <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Detalhes (Tamanho, Cor, etc.)</label>
-                                <input type="text" id="productDetails" placeholder="Opcional. Ex: Preto, Tamanho L" 
-                                    class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 text-white placeholder:text-slate-600 transition">
+                                <label class="block text-xs font-bold text-brand-400 uppercase tracking-widest mb-2">Valor (MT)</label>
+                                <div class="relative">
+                                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-500">MT</span>
+                                    <input type="number" id="productMzn" min="1" step="0.01" placeholder="0.00" 
+                                        class="w-full pl-12 pr-4 py-3 bg-slate-900 border border-brand-500/50 rounded-xl focus:outline-none focus:border-brand-500 text-white font-mono transition shadow-[0_0_10px_rgba(59,130,246,0.1)]">
+                                </div>
                             </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Detalhes (Tamanho, Cor, etc.)</label>
+                            <input type="text" id="productDetails" placeholder="Opcional. Ex: Preto, Tamanho L" 
+                                class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 text-white placeholder:text-slate-600 transition">
                         </div>
 
                         <div class="bg-slate-900 rounded-xl p-5 border border-brand-500/20 shadow-inner mt-4">
@@ -287,9 +294,10 @@
     </div>
 
     <script type="module">
+        // 🚀 O SEGREDO DO SUCESSO AQUI: Importar o 'increment' isolado (Firestore Modular SDK v9+)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, getDocs, collection, query, where, limit, addDoc, updateDoc, serverTimestamp, FieldValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, getDocs, collection, query, where, limit, addDoc, updateDoc, serverTimestamp, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = { apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8", authDomain: "paygo-14311.firebaseapp.com", projectId: "paygo-14311", storageBucket: "paygo-14311.firebasestorage.app", messagingSenderId: "208360646277", appId: "1:208360646277:web:aecc57cc0077ae48a52bec" };
         const app = initializeApp(firebaseConfig);
@@ -329,7 +337,6 @@
                     document.getElementById('userName').textContent = userData.name || 'Cliente';
                     document.getElementById('walletBalance').textContent = formatMZN(userData.walletBalance || 0);
                     
-                    // Verificar VIP
                     if (userData.isVip && userData.vipExpiry && userData.vipExpiry.toDate() > new Date()) {
                         isUserVip = true;
                         document.getElementById('userBadge').innerHTML = `<span class="text-vip-400 flex items-center gap-1"><i data-lucide="crown" class="w-3 h-3"></i> Assinante VIP</span>`;
@@ -360,13 +367,32 @@
             } catch (error) { console.error(error); window.showToast("Falha ao carregar dados.", "error"); }
         });
 
-        // 🤖 ROBÔ ORÇAMENTADOR 
+        // 🤖 ROBÔ ORÇAMENTADOR (COM DOIS CAMPOS SINCRONIZADOS USD <-> MZN)
         const usdInput = document.getElementById('productUsd');
+        const mznInput = document.getElementById('productMzn');
         const btnSubmitOrder = document.getElementById('btnSubmitOrder');
         const warningBox = document.getElementById('balanceWarning'), successBox = document.getElementById('successReady');
 
+        // Escuta digitação no campo USD
         usdInput.addEventListener('input', function(e) {
             const usdVal = parseFloat(e.target.value) || 0;
+            const mznVal = usdVal * sysExchangeRate;
+            // Só atualiza o vizinho se for o campo USD que estiver focado
+            if(document.activeElement === usdInput) mznInput.value = mznVal ? mznVal.toFixed(2) : ''; 
+            updateCalculator(usdVal);
+        });
+
+        // Escuta digitação no campo MZN
+        mznInput.addEventListener('input', function(e) {
+            const mznVal = parseFloat(e.target.value) || 0;
+            const usdVal = mznVal / sysExchangeRate;
+            // Só atualiza o vizinho se for o campo MZN que estiver focado
+            if(document.activeElement === mznInput) usdInput.value = usdVal ? usdVal.toFixed(2) : ''; 
+            updateCalculator(usdVal);
+        });
+
+        // Motor Central de Matemática
+        function updateCalculator(usdVal) {
             if (usdVal <= 0) { resetCalculator(); return; }
 
             const baseMZN = usdVal * sysExchangeRate;
@@ -375,7 +401,6 @@
             if (usdVal > 20 && usdVal <= 50) appliedTax = sysTax2;
             else if (usdVal > 50) appliedTax = sysTax3;
 
-            // 👑 Lógica de Isenção (VIP ou 1ª Compra)
             let isBonus = false, isVipFee = false;
             if (isUserVip) {
                 appliedTax = 0; isVipFee = true;
@@ -401,7 +426,7 @@
             } else {
                 btnSubmitOrder.disabled = false; warningBox.classList.add('hidden'); successBox.classList.remove('hidden');
             }
-        });
+        }
 
         function resetCalculator() {
             document.getElementById('calcBase').textContent = '0.00 MT'; document.getElementById('calcFee').innerHTML = '<span class="text-slate-300">0.00 MT</span>'; document.getElementById('calcTotal').textContent = '0.00 MT';
@@ -423,13 +448,17 @@
                 if (freshBalance < currentCalculatedTotal) throw new Error("Saldo insuficiente. Recarregue a carteira.");
 
                 const orderId = 'PG-' + Math.floor(100000 + Math.random() * 900000);
-                await updateDoc(userRef, { walletBalance: FieldValue.increment(-currentCalculatedTotal) });
+                
+                // 🚀 AQUI ESTÁ O FIX DO INCREMENTO: Usamos increment() em vez de FieldValue.increment()
+                await updateDoc(userRef, { walletBalance: increment(-currentCalculatedTotal) });
+                
                 await addDoc(collection(db, "orders"), {
                     orderId: orderId, userId: currentUser.uid, name: freshUser.data().name || '', email: freshUser.data().email || '', phone: freshUser.data().phone || '',
                     detail: `${document.getElementById('productUrl').value} | ${document.getElementById('productDetails').value}`,
                     usd: parseFloat(usdInput.value), exchangeRate: sysExchangeRate, tax: currentCalculatedTax, total: currentCalculatedTotal,
                     paymentMethod: 'wallet', isPaid: true, status: 'processing', createdAt: serverTimestamp(), updatedAt: serverTimestamp()
                 });
+                
                 await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: currentCalculatedTotal, description: `Transação PayGo: Pedido ${orderId}`, reference: orderId, createdAt: new Date().toISOString() });
 
                 userData.walletBalance = freshBalance - currentCalculatedTotal;
@@ -499,8 +528,9 @@
 
                 const receiverId = snap.docs[0].id;
                 
-                await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: FieldValue.increment(-amount) });
-                await updateDoc(doc(db, "users", receiverId), { walletBalance: FieldValue.increment(amount) });
+                // 🚀 FIX DO INCREMENTO P2P
+                await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: increment(-amount) });
+                await updateDoc(doc(db, "users", receiverId), { walletBalance: increment(amount) });
                 
                 await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: amount, description: `Transferência enviada para ${targetEmail}`, createdAt: new Date().toISOString() });
                 await addDoc(collection(db, "wallet_transactions"), { userId: receiverId, type: 'credit', amount: amount, description: `Transferência recebida de ${currentUser.email}`, createdAt: new Date().toISOString() });
@@ -525,8 +555,12 @@
                 btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A ativar...`; lucide.createIcons({root: btn});
                 try {
                     const expiryDate = new Date(); expiryDate.setDate(expiryDate.getDate() + days);
-                    await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: FieldValue.increment(-price), isVip: true, vipPlan: plan, vipExpiry: expiryDate });
+                    
+                    // 🚀 FIX DO INCREMENTO VIP
+                    await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: increment(-price), isVip: true, vipPlan: plan, vipExpiry: expiryDate });
+                    
                     await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: price, description: `Assinatura PayGo VIP (${plan})`, createdAt: new Date().toISOString() });
+                    
                     window.showToast("Parabéns! A sua conta agora é VIP.", "success");
                     setTimeout(() => window.location.reload(), 1500);
                 } catch (err) { window.showToast("Erro ao processar assinatura.", "error"); btn.disabled = false; btn.textContent = "Ativar Assinatura VIP"; }
