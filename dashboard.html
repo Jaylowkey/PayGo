@@ -150,7 +150,7 @@
                                         <div class="relative">
                                             <span class="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-500">MT</span>
                                             <input type="number" id="productMzn" min="1" step="0.01" placeholder="0.00" 
-                                                class="w-full pl-12 pr-4 py-3 bg-slate-900 border border-brand-500/50 rounded-xl focus:outline-none focus:border-brand-500 text-white font-mono transition">
+                                                class="w-full pl-12 pr-4 py-3 bg-slate-900 border border-brand-500/50 rounded-xl focus:outline-none focus:border-brand-500 text-white font-mono transition shadow-[0_0_10px_rgba(59,130,246,0.1)]">
                                         </div>
                                     </div>
                                 </div>
@@ -171,8 +171,8 @@
                                     <input type="text" id="shipName" required placeholder="Nome do recetor" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white">
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">CPF / NUIT / BI</label>
-                                    <input type="text" id="shipDoc" required placeholder="Documento para Alfândega" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white">
+                                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Código Postal</label>
+                                    <input type="text" id="shipZip" required placeholder="Ex: 1100" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white">
                                 </div>
                             </div>
                             <div class="mb-4">
@@ -186,7 +186,7 @@
                                 </div>
                                 <div>
                                     <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Telefone de Contacto</label>
-                                    <input type="text" id="shipPhone" required placeholder="Ex: 841234567" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white">
+                                    <input type="text" id="shipPhone" required placeholder="Ex: +258 84..." class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white">
                                 </div>
                             </div>
                         </div>
@@ -367,7 +367,6 @@
                     document.getElementById('userName').textContent = userData.name || 'Cliente';
                     document.getElementById('walletBalance').textContent = formatMZN(parseFloat(userData.walletBalance) || 0);
                     
-                    // Preencher Automaticamente o Nome e Telefone do Cliente nos Dados de Envio
                     document.getElementById('shipName').value = userData.name || '';
                     document.getElementById('shipPhone').value = userData.phone || '';
 
@@ -401,7 +400,7 @@
             } catch (error) { console.error(error); window.showToast("Falha ao carregar dados.", "error"); }
         });
 
-        // 🤖 ROBÔ ORÇAMENTADOR (COM DOIS CAMPOS SINCRONIZADOS)
+        // 🤖 ROBÔ ORÇAMENTADOR 
         const usdInput = document.getElementById('productUsd');
         const mznInput = document.getElementById('productMzn');
         const btnSubmitOrder = document.getElementById('btnSubmitOrder');
@@ -449,7 +448,6 @@
             document.getElementById('calcTotal').textContent = `${formatMZN(currentCalculatedTotal)} MT`;
 
             const currentWallet = parseFloat(userData?.walletBalance) || 0;
-            // 🛡️ O FIX DO FLOAT: Arredondamos a 2 casas decimais antes de comparar
             const safeTotal = Number(currentCalculatedTotal.toFixed(2));
             
             if (safeTotal > currentWallet) {
@@ -482,10 +480,9 @@
 
                 const orderId = 'PG-' + Math.floor(100000 + Math.random() * 900000);
                 
-                // Recolher Dados de Despacho (Novos Campos)
                 const shippingData = {
                     shipName: document.getElementById('shipName').value,
-                    shipDoc: document.getElementById('shipDoc').value,
+                    shipZip: document.getElementById('shipZip').value, // 👈 Substituição NUIT por Código Postal
                     shipAddress: document.getElementById('shipAddress').value,
                     shipCity: document.getElementById('shipCity').value,
                     shipPhone: document.getElementById('shipPhone').value,
@@ -499,7 +496,7 @@
                     detail: `${document.getElementById('productUrl').value} | ${document.getElementById('productDetails').value}`,
                     usd: parseFloat(usdInput.value), exchangeRate: sysExchangeRate, tax: currentCalculatedTax, total: safeTotal,
                     paymentMethod: 'wallet', isPaid: true, status: 'processing', 
-                    shipping: shippingData, // 📦 Gravamos os dados para a Loja Internacional!
+                    shipping: shippingData,
                     createdAt: serverTimestamp(), updatedAt: serverTimestamp()
                 });
                 
@@ -553,7 +550,7 @@
             } catch (err) { window.showToast(err.message, 'error'); btn.disabled = false; btn.textContent = `Processar Depósito`; }
         });
 
-        // 💸 TRANSFERÊNCIA P2P VIA VERCEL (Segurança Máxima)
+        // 💸 TRANSFERÊNCIA P2P VIA VERCEL
         document.getElementById('transferForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btnTransfer');
@@ -596,7 +593,6 @@
                 try {
                     const expiryDate = new Date(); expiryDate.setDate(expiryDate.getDate() + days);
                     
-                    // Utilização correta e isolada do comando increment()
                     await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: increment(-price), isVip: true, vipPlan: plan, vipExpiry: expiryDate });
                     await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: price, description: `Assinatura PayGo VIP (${plan})`, reference: 'VIP', createdAt: new Date().toISOString() });
                     
