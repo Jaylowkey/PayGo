@@ -122,39 +122,73 @@
                     <h2 class="text-2xl font-display font-bold text-white mb-2 flex items-center gap-3 relative z-10">
                         <i data-lucide="bot" class="w-8 h-8 text-brand-500"></i> Orçamentador de Pagamentos
                     </h2>
-                    <p class="text-slate-400 text-sm mb-8 relative z-10">Cole o link do produto que deseja que a PayGo pague por si. Processamos o pagamento internacional instantaneamente com o seu saldo.</p>
+                    <p class="text-slate-400 text-sm mb-6 relative z-10">Cole o link do produto, informe o valor e os seus dados de entrega. Processamos o pagamento internacional instantaneamente com o seu saldo.</p>
 
                     <form id="orderForm" class="space-y-6 relative z-10">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Link do Produto (AliExpress, Shein, etc.)</label>
-                            <input type="url" id="productUrl" required placeholder="https://aliexpress.com/item/..." 
-                                class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 text-white placeholder:text-slate-600 transition">
-                        </div>
-
-                        <div class="grid md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Valor (USD $)</label>
-                                <div class="relative">
-                                    <i data-lucide="dollar-sign" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500"></i>
-                                    <input type="number" id="productUsd" min="0.01" step="0.01" placeholder="0.00" 
-                                        class="w-full pl-12 pr-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 text-white font-mono transition">
+                        
+                        <div class="p-5 border border-slate-700/50 rounded-xl bg-slate-900/30">
+                            <h3 class="text-sm font-bold text-brand-400 mb-4 flex items-center gap-2"><i data-lucide="shopping-bag" class="w-4 h-4"></i> 1. Dados do Produto</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Link do Produto (AliExpress, Shein, etc.)</label>
+                                    <input type="url" id="productUrl" required placeholder="https://aliexpress.com/item/..." 
+                                        class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 text-white placeholder:text-slate-600 transition">
+                                </div>
+        
+                                <div class="grid md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Valor (USD $)</label>
+                                        <div class="relative">
+                                            <i data-lucide="dollar-sign" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500"></i>
+                                            <input type="number" id="productUsd" min="0.01" step="0.01" placeholder="0.00" 
+                                                class="w-full pl-12 pr-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 text-white font-mono transition">
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-xs font-bold text-brand-400 uppercase tracking-widest mb-2">Valor (MT)</label>
+                                        <div class="relative">
+                                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-500">MT</span>
+                                            <input type="number" id="productMzn" min="1" step="0.01" placeholder="0.00" 
+                                                class="w-full pl-12 pr-4 py-3 bg-slate-900 border border-brand-500/50 rounded-xl focus:outline-none focus:border-brand-500 text-white font-mono transition">
+                                        </div>
+                                    </div>
+                                </div>
+        
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Detalhes Opcionais (Tamanho, Cor)</label>
+                                    <input type="text" id="productDetails" placeholder="Ex: Preto, Tamanho L" 
+                                        class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 text-white placeholder:text-slate-600 transition">
                                 </div>
                             </div>
-                            
-                            <div>
-                                <label class="block text-xs font-bold text-brand-400 uppercase tracking-widest mb-2">Valor (MT)</label>
-                                <div class="relative">
-                                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-500">MT</span>
-                                    <input type="number" id="productMzn" min="1" step="0.01" placeholder="0.00" 
-                                        class="w-full pl-12 pr-4 py-3 bg-slate-900 border border-brand-500/50 rounded-xl focus:outline-none focus:border-brand-500 text-white font-mono transition shadow-[0_0_10px_rgba(59,130,246,0.1)]">
-                                </div>
-                            </div>
                         </div>
 
-                        <div>
-                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Detalhes (Tamanho, Cor, etc.)</label>
-                            <input type="text" id="productDetails" placeholder="Opcional. Ex: Preto, Tamanho L" 
-                                class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 text-white placeholder:text-slate-600 transition">
+                        <div class="p-5 border border-slate-700/50 rounded-xl bg-slate-900/30">
+                            <h3 class="text-sm font-bold text-success-400 mb-4 flex items-center gap-2"><i data-lucide="map-pin" class="w-4 h-4"></i> 2. Endereço de Despacho (Obrigatório)</h3>
+                            <div class="grid md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Nome Completo</label>
+                                    <input type="text" id="shipName" required placeholder="Nome do recetor" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">CPF / NUIT / BI</label>
+                                    <input type="text" id="shipDoc" required placeholder="Documento para Alfândega" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white">
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Morada Completa</label>
+                                <input type="text" id="shipAddress" required placeholder="Rua, Bairro, Número da Casa" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white">
+                            </div>
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Cidade / Província</label>
+                                    <input type="text" id="shipCity" required placeholder="Ex: Maputo, Matola" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Telefone de Contacto</label>
+                                    <input type="text" id="shipPhone" required placeholder="Ex: 841234567" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white">
+                                </div>
+                            </div>
                         </div>
 
                         <div class="bg-slate-900 rounded-xl p-5 border border-brand-500/20 shadow-inner mt-4">
@@ -162,12 +196,10 @@
                                 <span>Conversão Base (<span id="calcRate">85</span> MT):</span>
                                 <span class="font-mono text-white" id="calcBase">0.00 MT</span>
                             </div>
-                            
                             <div class="flex justify-between items-center text-sm text-slate-400 pb-3 border-b border-white/5 mb-3">
                                 <span>Taxa de Serviço PayGo:</span>
                                 <span class="font-mono font-bold text-slate-300" id="calcFee">0.00 MT</span>
                             </div>
-                            
                             <div class="flex justify-between items-end">
                                 <span class="text-xs font-bold text-slate-500 uppercase tracking-widest">Total a Debitar:</span>
                                 <span class="text-2xl font-display font-black text-white" id="calcTotal">0.00 MT</span>
@@ -177,7 +209,6 @@
                                 <i data-lucide="alert-triangle" class="w-4 h-4 text-warning-400 mt-0.5 shrink-0"></i>
                                 <p class="text-xs text-warning-300 font-medium leading-tight">O seu saldo (<span id="warnBalance" class="font-bold"></span>) é insuficiente. <a href="#" onclick="window.openTopUpModal(); return false;" class="text-warning-400 font-bold hover:underline">Depositar mais fundos</a>.</p>
                             </div>
-                            
                             <div id="successReady" class="hidden mt-4 bg-success-500/10 border border-success-500/20 rounded-lg p-3 flex items-start gap-2">
                                 <i data-lucide="check-circle" class="w-4 h-4 text-success-400 mt-0.5 shrink-0"></i>
                                 <p class="text-xs text-success-300 font-medium leading-tight">Saldo suficiente! Ao autorizar, o valor será descontado e o pagamento processado pela PayGo.</p>
@@ -185,7 +216,7 @@
                         </div>
 
                         <button type="submit" id="btnSubmitOrder" disabled class="btn-epic w-full py-4 bg-success-500 hover:bg-success-600 text-white shadow-[0_0_15px_rgba(34,197,94,0.3)] disabled:bg-slate-800 disabled:text-slate-500 disabled:shadow-none transition-all">
-                            <i data-lucide="credit-card" class="w-5 h-5"></i> <span id="btnSubmitText">Autorizar Pagamento</span>
+                            <i data-lucide="credit-card" class="w-5 h-5"></i> <span id="btnSubmitText">Autorizar Pagamento Seguro</span>
                         </button>
                     </form>
                 </div>
@@ -294,7 +325,6 @@
     </div>
 
     <script type="module">
-        // 🚀 O SEGREDO DO SUCESSO AQUI: Importar o 'increment' isolado (Firestore Modular SDK v9+)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, getDocs, collection, query, where, limit, addDoc, updateDoc, serverTimestamp, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -335,8 +365,12 @@
                 if (userDoc.exists()) {
                     userData = userDoc.data();
                     document.getElementById('userName').textContent = userData.name || 'Cliente';
-                    document.getElementById('walletBalance').textContent = formatMZN(userData.walletBalance || 0);
+                    document.getElementById('walletBalance').textContent = formatMZN(parseFloat(userData.walletBalance) || 0);
                     
+                    // Preencher Automaticamente o Nome e Telefone do Cliente nos Dados de Envio
+                    document.getElementById('shipName').value = userData.name || '';
+                    document.getElementById('shipPhone').value = userData.phone || '';
+
                     if (userData.isVip && userData.vipExpiry && userData.vipExpiry.toDate() > new Date()) {
                         isUserVip = true;
                         document.getElementById('userBadge').innerHTML = `<span class="text-vip-400 flex items-center gap-1"><i data-lucide="crown" class="w-3 h-3"></i> Assinante VIP</span>`;
@@ -349,8 +383,8 @@
                 const sysDoc = await getDoc(doc(db, "settings", "global"));
                 if (sysDoc.exists()) {
                     const sysData = sysDoc.data();
-                    sysExchangeRate = sysData.exchangeRate || 85;
-                    sysTax1 = sysData.tax1 || 150; sysTax2 = sysData.tax2 || 250; sysTax3 = sysData.tax3 || 600;
+                    sysExchangeRate = parseFloat(sysData.exchangeRate) || 85;
+                    sysTax1 = parseFloat(sysData.tax1) || 150; sysTax2 = parseFloat(sysData.tax2) || 250; sysTax3 = parseFloat(sysData.tax3) || 600;
                     firstPurchaseFree = sysData.firstPurchaseFree !== false;
                 }
 
@@ -367,31 +401,26 @@
             } catch (error) { console.error(error); window.showToast("Falha ao carregar dados.", "error"); }
         });
 
-        // 🤖 ROBÔ ORÇAMENTADOR (COM DOIS CAMPOS SINCRONIZADOS USD <-> MZN)
+        // 🤖 ROBÔ ORÇAMENTADOR (COM DOIS CAMPOS SINCRONIZADOS)
         const usdInput = document.getElementById('productUsd');
         const mznInput = document.getElementById('productMzn');
         const btnSubmitOrder = document.getElementById('btnSubmitOrder');
         const warningBox = document.getElementById('balanceWarning'), successBox = document.getElementById('successReady');
 
-        // Escuta digitação no campo USD
         usdInput.addEventListener('input', function(e) {
             const usdVal = parseFloat(e.target.value) || 0;
             const mznVal = usdVal * sysExchangeRate;
-            // Só atualiza o vizinho se for o campo USD que estiver focado
             if(document.activeElement === usdInput) mznInput.value = mznVal ? mznVal.toFixed(2) : ''; 
             updateCalculator(usdVal);
         });
 
-        // Escuta digitação no campo MZN
         mznInput.addEventListener('input', function(e) {
             const mznVal = parseFloat(e.target.value) || 0;
             const usdVal = mznVal / sysExchangeRate;
-            // Só atualiza o vizinho se for o campo MZN que estiver focado
             if(document.activeElement === mznInput) usdInput.value = usdVal ? usdVal.toFixed(2) : ''; 
             updateCalculator(usdVal);
         });
 
-        // Motor Central de Matemática
         function updateCalculator(usdVal) {
             if (usdVal <= 0) { resetCalculator(); return; }
 
@@ -419,8 +448,11 @@
             
             document.getElementById('calcTotal').textContent = `${formatMZN(currentCalculatedTotal)} MT`;
 
-            const currentWallet = userData?.walletBalance || 0;
-            if (currentCalculatedTotal > currentWallet) {
+            const currentWallet = parseFloat(userData?.walletBalance) || 0;
+            // 🛡️ O FIX DO FLOAT: Arredondamos a 2 casas decimais antes de comparar
+            const safeTotal = Number(currentCalculatedTotal.toFixed(2));
+            
+            if (safeTotal > currentWallet) {
                 btnSubmitOrder.disabled = true; successBox.classList.add('hidden'); warningBox.classList.remove('hidden');
                 document.getElementById('warnBalance').textContent = `${formatMZN(currentWallet)} MT`;
             } else {
@@ -433,7 +465,7 @@
             btnSubmitOrder.disabled = true; warningBox.classList.add('hidden'); successBox.classList.add('hidden');
         }
 
-        // 🛒 MÁQUINA DE DÉBITO AUTOMÁTICO
+        // 🛒 MÁQUINA DE DÉBITO E COMPRA
         document.getElementById('orderForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             if (btnSubmitOrder.disabled || currentCalculatedTotal <= 0) return;
@@ -443,31 +475,43 @@
             try {
                 const userRef = doc(db, "users", currentUser.uid);
                 const freshUser = await getDoc(userRef);
-                const freshBalance = freshUser.data().walletBalance || 0;
+                const freshBalance = parseFloat(freshUser.data().walletBalance) || 0;
+                const safeTotal = Number(currentCalculatedTotal.toFixed(2));
 
-                if (freshBalance < currentCalculatedTotal) throw new Error("Saldo insuficiente. Recarregue a carteira.");
+                if (freshBalance < safeTotal) throw new Error(`Saldo insuficiente. O seu saldo real é ${formatMZN(freshBalance)} MT.`);
 
                 const orderId = 'PG-' + Math.floor(100000 + Math.random() * 900000);
                 
-                // 🚀 AQUI ESTÁ O FIX DO INCREMENTO: Usamos increment() em vez de FieldValue.increment()
-                await updateDoc(userRef, { walletBalance: increment(-currentCalculatedTotal) });
+                // Recolher Dados de Despacho (Novos Campos)
+                const shippingData = {
+                    shipName: document.getElementById('shipName').value,
+                    shipDoc: document.getElementById('shipDoc').value,
+                    shipAddress: document.getElementById('shipAddress').value,
+                    shipCity: document.getElementById('shipCity').value,
+                    shipPhone: document.getElementById('shipPhone').value,
+                };
+
+                await updateDoc(userRef, { walletBalance: increment(-safeTotal) });
                 
                 await addDoc(collection(db, "orders"), {
-                    orderId: orderId, userId: currentUser.uid, name: freshUser.data().name || '', email: freshUser.data().email || '', phone: freshUser.data().phone || '',
+                    orderId: orderId, userId: currentUser.uid, 
+                    name: freshUser.data().name || '', email: freshUser.data().email || '', 
                     detail: `${document.getElementById('productUrl').value} | ${document.getElementById('productDetails').value}`,
-                    usd: parseFloat(usdInput.value), exchangeRate: sysExchangeRate, tax: currentCalculatedTax, total: currentCalculatedTotal,
-                    paymentMethod: 'wallet', isPaid: true, status: 'processing', createdAt: serverTimestamp(), updatedAt: serverTimestamp()
+                    usd: parseFloat(usdInput.value), exchangeRate: sysExchangeRate, tax: currentCalculatedTax, total: safeTotal,
+                    paymentMethod: 'wallet', isPaid: true, status: 'processing', 
+                    shipping: shippingData, // 📦 Gravamos os dados para a Loja Internacional!
+                    createdAt: serverTimestamp(), updatedAt: serverTimestamp()
                 });
                 
-                await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: currentCalculatedTotal, description: `Transação PayGo: Pedido ${orderId}`, reference: orderId, createdAt: new Date().toISOString() });
+                await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: safeTotal, description: `Transação PayGo: Pedido ${orderId}`, reference: orderId, createdAt: new Date().toISOString() });
 
-                userData.walletBalance = freshBalance - currentCalculatedTotal;
+                userData.walletBalance = freshBalance - safeTotal;
                 document.getElementById('walletBalance').textContent = formatMZN(userData.walletBalance);
                 isFirstPurchaseEligible = false; 
                 e.target.reset(); resetCalculator();
                 window.showToast("Pagamento autorizado e processado com sucesso!", "success");
             } catch (err) { window.showToast(err.message, "error"); } 
-            finally { btnSubmitOrder.disabled = true; btnSubmitOrder.innerHTML = `<i data-lucide="credit-card" class="w-5 h-5"></i> <span>Autorizar Pagamento</span>`; lucide.createIcons({root: btnSubmitOrder}); }
+            finally { btnSubmitOrder.disabled = true; btnSubmitOrder.innerHTML = `<i data-lucide="credit-card" class="w-5 h-5"></i> <span>Autorizar Pagamento Seguro</span>`; lucide.createIcons({root: btnSubmitOrder}); }
         });
 
         // 🎮 GESTÃO DE MODAIS
@@ -509,7 +553,7 @@
             } catch (err) { window.showToast(err.message, 'error'); btn.disabled = false; btn.textContent = `Processar Depósito`; }
         });
 
-        // 💸 TRANSFERÊNCIA P2P
+        // 💸 TRANSFERÊNCIA P2P VIA VERCEL (Segurança Máxima)
         document.getElementById('transferForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btnTransfer');
@@ -517,28 +561,24 @@
             const amount = parseFloat(document.getElementById('transferAmount').value);
 
             if (targetEmail === currentUser.email) return window.showToast("Não pode enviar dinheiro para si mesmo.", "error");
-            if (amount > (userData?.walletBalance || 0)) return window.showToast("Saldo insuficiente para transferência.", "error");
+            if (amount > (parseFloat(userData?.walletBalance) || 0)) return window.showToast("Saldo insuficiente para transferência.", "error");
 
             btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Processando...`; lucide.createIcons({root: btn});
 
             try {
-                const q = query(collection(db, "users"), where("email", "==", targetEmail));
-                const snap = await getDocs(q);
-                if (snap.empty) throw new Error("E-mail não registado na PayGo.");
+                const response = await fetch('/api/p2p-transfer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ senderId: currentUser.uid, receiverEmail: targetEmail, amount: amount })
+                });
 
-                const receiverId = snap.docs[0].id;
-                
-                // 🚀 FIX DO INCREMENTO P2P
-                await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: increment(-amount) });
-                await updateDoc(doc(db, "users", receiverId), { walletBalance: increment(amount) });
-                
-                await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: amount, description: `Transferência enviada para ${targetEmail}`, createdAt: new Date().toISOString() });
-                await addDoc(collection(db, "wallet_transactions"), { userId: receiverId, type: 'credit', amount: amount, description: `Transferência recebida de ${currentUser.email}`, createdAt: new Date().toISOString() });
-
-                userData.walletBalance -= amount;
-                document.getElementById('walletBalance').textContent = formatMZN(userData.walletBalance);
-                window.closeModals(); e.target.reset();
-                window.showToast("Transferência concluída com sucesso!", "success");
+                const result = await response.json();
+                if (result.success) {
+                    userData.walletBalance -= amount;
+                    document.getElementById('walletBalance').textContent = formatMZN(userData.walletBalance);
+                    window.closeModals(); e.target.reset();
+                    window.showToast("Transferência enviada com sucesso!", "success");
+                } else throw new Error(result.error || 'Falha no Servidor');
             } catch (err) { window.showToast(err.message, "error"); }
             finally { btn.disabled = false; btn.textContent = "Enviar Dinheiro"; }
         });
@@ -550,16 +590,15 @@
             const price = plan === 'anual' ? 12600 : 1200;
             const days = plan === 'anual' ? 365 : 30;
 
-            if ((userData?.walletBalance || 0) < price) { window.showToast("Saldo insuficiente na carteira. Efetue um depósito primeiro.", "error"); return; }
+            if ((parseFloat(userData?.walletBalance) || 0) < price) { window.showToast("Saldo insuficiente na carteira. Efetue um depósito primeiro.", "error"); return; }
             if (confirm(`Deseja comprar o plano VIP ${plan.toUpperCase()} por ${price} MT? O valor será descontado da carteira.`)) {
                 btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A ativar...`; lucide.createIcons({root: btn});
                 try {
                     const expiryDate = new Date(); expiryDate.setDate(expiryDate.getDate() + days);
                     
-                    // 🚀 FIX DO INCREMENTO VIP
+                    // Utilização correta e isolada do comando increment()
                     await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: increment(-price), isVip: true, vipPlan: plan, vipExpiry: expiryDate });
-                    
-                    await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: price, description: `Assinatura PayGo VIP (${plan})`, createdAt: new Date().toISOString() });
+                    await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: price, description: `Assinatura PayGo VIP (${plan})`, reference: 'VIP', createdAt: new Date().toISOString() });
                     
                     window.showToast("Parabéns! A sua conta agora é VIP.", "success");
                     setTimeout(() => window.location.reload(), 1500);
