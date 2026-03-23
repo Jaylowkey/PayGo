@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="pt-MZ" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Painel | PayGo Moçambique</title>
+    <meta name="theme-color" content="#0f172a">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'], display: ['"Outfit"', 'sans-serif'], mono: ['"Fira Code"', 'monospace'] },
+                    colors: { brand: { 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb' }, success: { 400: '#4ade80', 500: '#22c55e' }, warning: { 400: '#fbbf24', 500: '#f59e0b' }, danger: { 400: '#f87171', 500: '#ef4444' } }
+                }
+            }
+        };
+    </script>
+    
+    <style>
+        body { background-color: #0f172a; color: #f8fafc; }
+        ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
+        .glass-nav { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .glass-card { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        
+        .btn-epic { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; border-radius: 0.75rem; }
+        .btn-epic:active:not(:disabled) { transform: scale(0.96); }
+        .btn-epic:disabled { opacity: 0.65; cursor: not-allowed; }
+        
+        #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+        .toast { pointer-events: auto; background: rgba(15, 23, 42, 0.95); border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 12px; display: flex; gap: 12px; transform: translateX(120%); transition: transform 0.4s ease; opacity: 0; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .toast.show { transform: translateX(0); opacity: 1; }
+        
+        /* Skeleton Loading */
+        .skeleton { background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 0.5rem; }
+        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+    </style>
+</head>
+<body class="selection:bg-brand-500 selection:text-white">
+
+    <div class="fixed inset-0 bg-grid opacity-20 pointer-events-none z-0"></div>
+    <div class="fixed top-0 left-0 w-[500px] h-[500px] bg-brand-600/10 rounded-full mix-blend-screen blur-[120px] pointer-events-none z-0"></div>
+
+    <div id="toastContainer"></div>
+
+    <header class="fixed w-full z-50 glass-nav">
+        <div class="container mx-auto px-6 h-20 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-gradient-to-tr from-brand-500 to-brand-400 p-2.5 rounded-xl text-white shadow-lg"><i data-lucide="zap" class="w-5 h-5"></i></div>
+                <span class="text-2xl font-display font-bold text-white">PayGo</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="text-right hidden sm:block">
+                    <p class="text-sm font-bold text-white" id="userName">A carregar...</p>
+                    <p class="text-xs text-brand-400 font-medium">Cliente Verificado</p>
+                </div>
+                <button onclick="window.logout()" class="bg-slate-800 hover:bg-danger-500/20 text-slate-400 hover:text-danger-400 rounded-xl p-2.5 transition-colors" title="Terminar Sessão"><i data-lucide="power" class="w-5 h-5"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <main class="pt-28 pb-20 relative z-10 container mx-auto px-6 max-w-6xl">
+        
+        <div class="grid lg:grid-cols-3 gap-8">
+            
+            <div class="lg:col-span-1 space-y-6">
+                <div class="glass-card rounded-2xl p-6 relative overflow-hidden shadow-2xl border-t-4 border-t-brand-500">
+                    <div class="absolute -right-6 -top-6 opacity-10"><i data-lucide="wallet" class="w-32 h-32"></i></div>
+                    <div class="relative z-10">
+                        <h2 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-2">
+                            <i data-lucide="shield-check" class="w-4 h-4 text-success-400"></i> Carteira PayGo
+                        </h2>
+                        <div class="mt-4 mb-6">
+                            <span class="text-sm text-slate-400 font-medium align-top">MT</span>
+                            <span class="text-4xl font-display font-black text-white" id="walletBalance">0.00</span>
+                        </div>
+                        
+                        <div class="flex flex-col gap-3">
+                            <button onclick="window.openTopUpModal()" class="btn-epic w-full py-3 bg-brand-600 hover:bg-brand-500 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]">
+                                <i data-lucide="plus-circle" class="w-5 h-5"></i> Depositar Fundos
+                            </button>
+                            <a href="historico.html" class="btn-epic w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700">
+                                <i data-lucide="history" class="w-5 h-5"></i> Histórico de Transações
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-2xl p-5 border border-slate-800">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Métricas do Sistema</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center pb-2 border-b border-white/5">
+                            <span class="text-sm text-slate-400 flex items-center gap-2"><i data-lucide="bar-chart-3" class="w-4 h-4"></i> Câmbio Atual (USD)</span>
+                            <span class="text-sm font-mono font-bold text-brand-400" id="currentRate">-- MT</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-slate-400 flex items-center gap-2"><i data-lucide="truck" class="w-4 h-4"></i> Taxa de Despacho</span>
+                            <span class="text-sm font-mono font-bold text-brand-400" id="currentFee">-- MT</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-2 space-y-6">
+                
+                <div class="glass-card rounded-2xl p-6 md:p-8">
+                    <h2 class="text-2xl font-display font-bold text-white mb-2 flex items-center gap-3">
+                        <i data-lucide="bot" class="w-8 h-8 text-brand-500"></i> Orçamentador Automático
+                    </h2>
+                    <p class="text-slate-400 text-sm mb-8">Cole o link do produto que deseja comprar e informe o valor em dólares. O nosso robô fará o cálculo imediato.</p>
+
+                    <form id="orderForm" class="space-y-6">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Link do Produto (AliExpress, Shein, etc.)</label>
+                            <input type="url" id="productUrl" required placeholder="https://aliexpress.com/item/..." 
+                                class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 text-white placeholder:text-slate-600 transition">
+                        </div>
+
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Valor do Produto (USD $)</label>
+                                <div class="relative">
+                                    <i data-lucide="dollar-sign" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500"></i>
+                                    <input type="number" id="productUsd" required min="0.1" step="0.01" placeholder="0.00" 
+                                        class="w-full pl-12 pr-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 text-white font-mono transition">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Opções Extra (Tamanho, Cor)</label>
+                                <input type="text" id="productDetails" placeholder="Ex: Preto, Tamanho L" 
+                                    class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 text-white placeholder:text-slate-600 transition">
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900 rounded-xl p-5 border border-brand-500/20 shadow-inner mt-4">
+                            <div class="flex justify-between items-center text-sm text-slate-400 mb-2">
+                                <span>Conversão Base (<span id="calcRate">85</span> MT):</span>
+                                <span class="font-mono text-white" id="calcBase">0.00 MT</span>
+                            </div>
+                            <div class="flex justify-between items-center text-sm text-slate-400 pb-3 border-b border-white/5 mb-3">
+                                <span>Taxa da PayGo:</span>
+                                <span class="font-mono text-brand-400 font-bold" id="calcFee">0.00 MT</span>
+                            </div>
+                            <div class="flex justify-between items-end">
+                                <span class="text-xs font-bold text-slate-500 uppercase tracking-widest">Total a Debitar:</span>
+                                <span class="text-2xl font-display font-black text-white" id="calcTotal">0.00 MT</span>
+                            </div>
+                            
+                            <div id="balanceWarning" class="hidden mt-4 bg-danger-500/10 border border-danger-500/20 rounded-lg p-3 flex items-start gap-2">
+                                <i data-lucide="alert-circle" class="w-4 h-4 text-danger-400 mt-0.5 shrink-0"></i>
+                                <p class="text-xs text-danger-300 font-medium leading-tight">O seu saldo é inferior ao valor do pedido. <a href="#" onclick="window.openTopUpModal(); return false;" class="text-danger-400 font-bold hover:underline">Recarregue a sua carteira</a> para proceder.</p>
+                            </div>
+                        </div>
+
+                        <button type="submit" id="btnSubmitOrder" disabled class="btn-epic w-full py-4 bg-success-500 hover:bg-success-600 text-white shadow-[0_0_15px_rgba(34,197,94,0.3)] disabled:bg-slate-800 disabled:text-slate-500 disabled:shadow-none transition-all">
+                            <i data-lucide="shopping-cart" class="w-5 h-5"></i> <span>Autorizar Pagamento e Enviar Pedido</span>
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <div id="topUpModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative transform transition-all scale-95 opacity-0" id="topUpContent">
+            <button onclick="window.closeTopUpModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <div class="p-6 pb-0 border-b border-slate-800 mb-6">
+                <h3 class="text-xl font-display font-bold text-white mb-2">Depositar Fundos</h3>
+                <p class="text-sm text-slate-400 mb-4">Adicione dinheiro à sua carteira via M-Pesa ou e-Mola.</p>
+            </div>
+            
+            <form id="topUpForm" class="p-6 pt-0 space-y-5">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Valor a Depositar (MT)</label>
+                    <input type="number" id="topUpAmount" required min="10" placeholder="Ex: 500" 
+                        class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 text-white font-mono text-lg font-bold">
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Método de Pagamento</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="topUpMethod" value="mpesa" class="peer sr-only" checked>
+                            <div class="p-3 border border-slate-700 rounded-xl text-center text-sm font-bold text-slate-400 peer-checked:bg-red-500/10 peer-checked:border-red-500 peer-checked:text-red-500 transition">
+                                M-PESA
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="topUpMethod" value="emola" class="peer sr-only">
+                            <div class="p-3 border border-slate-700 rounded-xl text-center text-sm font-bold text-slate-400 peer-checked:bg-orange-500/10 peer-checked:border-orange-500 peer-checked:text-orange-500 transition">
+                                E-MOLA
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" id="btnProcessTopUp" class="btn-epic w-full py-3.5 bg-brand-600 hover:bg-brand-500 text-white">
+                    <span>Processar Pagamento</span> <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
+            authDomain: "paygo-14311.firebaseapp.com",
+            projectId: "paygo-14311",
+            storageBucket: "paygo-14311.firebasestorage.app",
+            messagingSenderId: "208360646277",
+            appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app, "paygodb");
+
+        lucide.createIcons();
+
+        let currentUser = null;
+        let userWalletBalance = 0;
+        let sysExchangeRate = 85; // Fallback
+        let sysServiceFee = 150;  // Fallback
+
+        // Formatação de Moeda
+        const formatMZN = (val) => new Intl.NumberFormat('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val);
+
+        // Notificações
+        window.showToast = function(msg, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const t = document.createElement('div');
+            const isErr = type === 'error', isWarn = type === 'warning';
+            const bg = isErr ? 'bg-danger-500/95 border-danger-400' : isWarn ? 'bg-warning-500/95 border-warning-400' : 'bg-slate-900/95 border-slate-700';
+            const icon = isErr ? 'alert-octagon text-danger-400' : isWarn ? 'alert-triangle text-warning-400' : 'check-check text-brand-400';
+            
+            t.className = `flex items-center gap-3 px-5 py-4 rounded-xl shadow-2xl backdrop-blur-xl transform transition-all duration-400 translate-x-full border ${bg}`;
+            t.innerHTML = `<i data-lucide="${icon.split(' ')[0]}" class="w-5 h-5 ${icon.split(' ')[1]}"></i> <span class="text-sm font-semibold text-white tracking-wide">${msg}</span>`;
+            
+            container.appendChild(t);
+            lucide.createIcons({ root: t });
+            requestAnimationFrame(() => t.classList.remove('translate-x-full'));
+            setTimeout(() => { t.classList.add('opacity-0', 'translate-x-8'); setTimeout(() => t.remove(), 400); }, 5000);
+        }
+
+        // Carregar Motor Base
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { window.location.href = 'login.html'; return; }
+            currentUser = user;
+
+            try {
+                // 1. Carregar Perfil e Saldo da Carteira
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                if (userDoc.exists()) {
+                    const data = userDoc.data();
+                    document.getElementById('userName').textContent = data.name || 'Cliente';
+                    userWalletBalance = data.walletBalance || 0;
+                    document.getElementById('walletBalance').textContent = formatMZN(userWalletBalance);
+                }
+
+                // 2. Carregar Configurações de Câmbio do Sistema
+                const sysDoc = await getDoc(doc(db, "settings", "global"));
+                if (sysDoc.exists()) {
+                    const sysData = sysDoc.data();
+                    sysExchangeRate = sysData.exchangeRate || 85;
+                    sysServiceFee = sysData.serviceFee || 150;
+                }
+
+                // Atualizar o Painel Visual
+                document.getElementById('currentRate').textContent = `${sysExchangeRate} MT`;
+                document.getElementById('currentFee').textContent = `${sysServiceFee} MT`;
+                document.getElementById('calcRate').textContent = sysExchangeRate;
+                document.getElementById('calcFee').textContent = `${sysServiceFee} MT`;
+
+            } catch (error) {
+                console.error("Erro ao carregar motor base:", error);
+                window.showToast("Falha de sincronização com o servidor.", "error");
+            }
+        });
+
+        // 🤖 O ROBÔ ORÇAMENTADOR (Calculadora em Tempo Real)
+        const usdInput = document.getElementById('productUsd');
+        const btnSubmitOrder = document.getElementById('btnSubmitOrder');
+        const warningBox = document.getElementById('balanceWarning');
+        let currentTotalMZN = 0;
+
+        usdInput.addEventListener('input', function(e) {
+            const usdVal = parseFloat(e.target.value) || 0;
+            
+            if (usdVal <= 0) {
+                document.getElementById('calcBase').textContent = '0.00 MT';
+                document.getElementById('calcTotal').textContent = '0.00 MT';
+                btnSubmitOrder.disabled = true;
+                warningBox.classList.add('hidden');
+                return;
+            }
+
+            const baseMZN = usdVal * sysExchangeRate;
+            currentTotalMZN = baseMZN + sysServiceFee;
+
+            document.getElementById('calcBase').textContent = `${formatMZN(baseMZN)} MT`;
+            document.getElementById('calcTotal').textContent = `${formatMZN(currentTotalMZN)} MT`;
+
+            // Lógica de Validação da Carteira (Wallet Lock)
+            if (currentTotalMZN > userWalletBalance) {
+                btnSubmitOrder.disabled = true;
+                warningBox.classList.remove('hidden');
+            } else {
+                btnSubmitOrder.disabled = false;
+                warningBox.classList.add('hidden');
+            }
+        });
+
+        // ==========================================
+        // SISTEMA DE RECUPERAÇÃO DE FUNDOS (TOP-UP)
+        // ==========================================
+        window.openTopUpModal = function() {
+            const modal = document.getElementById('topUpModal');
+            const content = document.getElementById('topUpContent');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => { content.classList.remove('scale-95', 'opacity-0'); content.classList.add('scale-100', 'opacity-100'); }, 10);
+        };
+
+        window.closeTopUpModal = function() {
+            const modal = document.getElementById('topUpModal');
+            const content = document.getElementById('topUpContent');
+            content.classList.remove('scale-100', 'opacity-100');
+            content.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); }, 300);
+        };
+
+        document.getElementById('topUpForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btnProcessTopUp');
+            const amount = document.getElementById('topUpAmount').value;
+            const method = document.querySelector('input[name="topUpMethod"]:checked').value;
+
+            // GERADOR DE ID PARA DEPÓSITOS (Prefixo TOP-)
+            const topUpId = 'TOP-' + Math.floor(100000 + Math.random() * 900000);
+
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A Ligar à PaySuite...`;
+            lucide.createIcons({root: btn});
+
+            try {
+                // Chama a NOSSA API de Pagamentos que acabámos de corrigir
+                const response = await fetch('/api/paysuite-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        orderId: topUpId,
+                        amount: amount,
+                        method: method,
+                        description: `Depósito na Carteira PayGo (${currentUser.uid})`
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success && result.data?.checkoutUrl) {
+                    // Grava a intenção de depósito na base de dados
+                    await addDoc(collection(db, "topups"), {
+                        topupId: topUpId,
+                        userId: currentUser.uid,
+                        amount: parseFloat(amount),
+                        status: 'pending',
+                        method: method,
+                        createdAt: serverTimestamp()
+                    });
+
+                    // Redireciona o cliente para colocar o PIN e meter dinheiro!
+                    window.location.href = result.data.checkoutUrl;
+                } else {
+                    throw new Error(result.error || 'Falha ao iniciar pagamento');
+                }
+            } catch (err) {
+                console.error(err);
+                window.showToast(err.message, 'error');
+                btn.disabled = false;
+                btn.innerHTML = `<span>Processar Pagamento</span> <i data-lucide="arrow-right" class="w-4 h-4"></i>`;
+                lucide.createIcons({root: btn});
+            }
+        });
+
+        // Submissão do Pedido Automático (Desconto da Carteira)
+        document.getElementById('orderForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            // Esta lógica vem no passo a seguir!
+            window.showToast("Funcionalidade em desenvolvimento na Vercel.", "info");
+        });
+
+        window.logout = async () => {
+            if(confirm('Tem a certeza que deseja sair?')) {
+                await signOut(auth);
+                window.location.href = 'login.html';
+            }
+        };
+    </script>
+</body>
+</html>
