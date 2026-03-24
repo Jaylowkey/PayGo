@@ -474,7 +474,7 @@
             } catch (error) { console.error(error); window.showToast("Falha ao carregar dados.", "error"); }
         });
 
-        // 🦎 O FORMULÁRIO CAMALEÃO (Alternar Produtos / Serviços / Jogos)
+        // 🦎 O FORMULÁRIO CAMALEÃO
         const orderCategory = document.getElementById('orderCategory');
         const physicalFields = document.getElementById('physicalFields');
         const digitalFields = document.getElementById('digitalFields');
@@ -638,10 +638,18 @@
             finally { btnSubmitOrder.disabled = true; btnSubmitOrder.innerHTML = `<i data-lucide="credit-card" class="w-5 h-5"></i> <span>Autorizar Pagamento Seguro</span>`; lucide.createIcons({root: btnSubmitOrder}); }
         });
 
-        // 🎮 GESTÃO DE MODAIS
+        // 🎮 GESTÃO DE MODAIS - CORREÇÃO BLINDADA
         window.closeModals = function() {
-            document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
+            // Seleciona explicitamente cada ID para remover o flex e adicionar o hidden
+            ['topUpModal', 'transferModal', 'vipModal'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.classList.remove('flex');
+                    el.classList.add('hidden');
+                }
+            });
         };
+        
         window.openTopUpModal = () => { window.closeModals(); document.getElementById('topUpModal').classList.remove('hidden'); document.getElementById('topUpModal').classList.add('flex'); };
         window.openTransferModal = () => { window.closeModals(); document.getElementById('transferModal').classList.remove('hidden'); document.getElementById('transferModal').classList.add('flex'); };
         window.openVipModal = () => { window.closeModals(); document.getElementById('vipModal').classList.remove('hidden'); document.getElementById('vipModal').classList.add('flex'); };
