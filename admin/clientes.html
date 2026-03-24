@@ -59,7 +59,6 @@
     .skeleton { background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 0.25rem; }
     @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 
-    /* Modal Animation */
     .modal { display: none; position: fixed; inset: 0; z-index: 10000; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; }
     .modal.active { display: flex; opacity: 1; }
     .modal-overlay { position: absolute; inset: 0; background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(4px); }
@@ -140,7 +139,7 @@
       <header class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
         <div>
           <h1 class="text-3xl font-display font-extrabold text-white tracking-tight">Gestão de Clientes</h1>
-          <p class="text-slate-400 text-sm mt-1">Monitorize quem está online, elimine fantasmas e gira acessos.</p>
+          <p class="text-slate-400 text-sm mt-1">Gira acessos, monitorize a atividade e adicione fundos à carteira.</p>
         </div>
       </header>
 
@@ -193,9 +192,9 @@
               <tr>
                 <th class="py-4 px-6 font-bold">Cliente / Conta</th>
                 <th class="py-4 px-6 font-bold">Contato (Email/Tel)</th>
-                <th class="py-4 px-6 font-bold">Status</th>
-                <th class="py-4 px-6 font-bold">Visto por Último</th>
-                <th class="py-4 px-6 text-right font-bold">Ações Soberanas</th>
+                <th class="py-4 px-6 font-bold text-right">Carteira (MT)</th>
+                <th class="py-4 px-6 font-bold text-center">Status</th>
+                <th class="py-4 px-6 text-right font-bold">Gerir</th>
               </tr>
             </thead>
             <tbody id="usersTableBody" class="divide-y divide-slate-800/50">
@@ -211,6 +210,7 @@
   <div id="clientModal" class="modal">
     <div class="modal-overlay" onclick="window.closeClientModal()"></div>
     <div class="modal-content flex flex-col h-full md:h-auto border border-slate-700">
+      
       <div class="flex justify-between items-center p-6 border-b border-white/10 bg-slate-900 sticky top-0 z-10 rounded-t-[24px]">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 bg-brand-500/20 text-brand-400 rounded-full flex items-center justify-center font-bold text-lg border border-brand-500/30" id="modalClientInitials">C</div>
@@ -225,6 +225,22 @@
       </div>
       
       <div class="p-6 overflow-y-auto bg-slate-950 flex-1">
+        
+        <div class="bg-brand-900/20 border border-brand-500/30 p-5 rounded-2xl mb-6 flex flex-col sm:flex-row justify-between items-center gap-4 shadow-[inset_0_2px_15px_rgba(37,99,235,0.1)]">
+            <div>
+                <p class="text-[10px] font-bold text-brand-400 uppercase tracking-widest mb-1 flex items-center gap-1"><i data-lucide="wallet" class="w-3 h-3"></i> Saldo da Carteira (Meticais)</p>
+                <p class="font-extrabold text-white text-3xl font-mono tracking-tight" id="modalClientWallet">0.00 MT</p>
+            </div>
+            <div class="flex gap-2 w-full sm:w-auto">
+                <button onclick="window.adjustWalletBalance('add')" class="flex-1 sm:flex-none bg-success-600 hover:bg-success-500 text-white px-5 py-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(34,197,94,0.3)]">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i> Depositar
+                </button>
+                <button onclick="window.adjustWalletBalance('sub')" class="flex-1 sm:flex-none bg-slate-800 hover:bg-danger-600 text-slate-300 hover:text-white px-5 py-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 border border-slate-700 hover:border-danger-500">
+                    <i data-lucide="minus-circle" class="w-4 h-4"></i> Debitar
+                </button>
+            </div>
+        </div>
+
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-sm">
             <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-1"><i data-lucide="phone" class="w-3 h-3"></i> Telefone</p>
@@ -258,16 +274,9 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, deleteDoc, serverTimestamp, increment, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
-      authDomain: "paygo-14311.firebaseapp.com",
-      projectId: "paygo-14311",
-      storageBucket: "paygo-14311.firebasestorage.app",
-      messagingSenderId: "208360646277",
-      appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
-    };
+    const firebaseConfig = { apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8", authDomain: "paygo-14311.firebaseapp.com", projectId: "paygo-14311", storageBucket: "paygo-14311.firebasestorage.app", messagingSenderId: "208360646277", appId: "1:208360646277:web:aecc57cc0077ae48a52bec" };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
@@ -275,6 +284,7 @@
 
     lucide.createIcons();
     let allUsers = [];
+    let currentViewedUserId = null;
 
     const fallbackTimer = setTimeout(() => { document.getElementById('sysLoader').style.display = 'none'; }, 3000);
 
@@ -289,15 +299,16 @@
         } else {
           window.location.href = '../index.html';
         }
-      } catch (error) {
-        showToast("Erro na ligação ao servidor.", "error");
-      } finally {
+      } catch (error) { showToast("Erro na ligação ao servidor.", "error"); } 
+      finally {
         clearTimeout(fallbackTimer);
         const ldr = document.getElementById('sysLoader');
         ldr.style.opacity = '0';
         setTimeout(() => ldr.style.display = 'none', 500);
       }
     });
+
+    const formatMZN = (val) => new Intl.NumberFormat('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val);
 
     window.loadUsersDatabase = async function() {
       try {
@@ -310,7 +321,8 @@
         snap.forEach(doc => {
             const data = doc.data();
             if(data.role !== 'admin' && data.role !== 'superadmin') {
-                allUsers.push({ id: doc.id, ...data });
+                // Recuperar Saldo também!
+                allUsers.push({ id: doc.id, walletBalance: data.walletBalance || 0, ...data });
                 if(data.status === 'active') active++;
                 if(data.status === 'banned' || data.status === 'blocked') banned++;
             }
@@ -328,15 +340,13 @@
         
         window.filterTable();
       } catch (error) {
-        showToast('Erro ao carregar a base de dados de clientes.', 'error');
-        console.error(error);
+        showToast('Erro ao carregar a base de dados.', 'error');
       }
     };
 
     function timeAgo(date) {
         const seconds = Math.floor((new Date() - date) / 1000);
         if (seconds < 300) return '🟢 Online Agora'; 
-        
         let interval = seconds / 31536000;
         if (interval > 1) return Math.floor(interval) + " anos atrás";
         interval = seconds / 2592000;
@@ -366,20 +376,18 @@
             const isOnline = lastAct && (Date.now() - lastAct.getTime() < 300000); 
             if(isOnline && u.status === 'active') onlineCount++;
 
-            const seenText = lastAct ? timeAgo(lastAct) : 'Nunca acedeu';
             const statusBadge = u.status === 'active' ? 'active' : (u.status === 'banned' ? 'banned' : 'blocked');
             const statusText = u.status === 'active' ? 'Ativo' : (u.status === 'banned' ? 'Banido' : 'Bloqueado');
+            const createdStr = u.createdAt?.toDate ? u.createdAt.toDate().toISOString() : '';
 
-            let actionBtns = `<button onclick="window.viewClientModal('${u.id}', '${u.name || 'Cliente'}', '${u.email}', '${u.phone || ''}', '${u.createdAt?.toDate ? u.createdAt.toDate().toISOString() : ''}')" class="action-btn bg-slate-800 text-slate-300 hover:bg-slate-700 mr-2" title="Ver Histórico"><i data-lucide="eye" class="w-4 h-4"></i> Abrir</button>`;
+            let actionBtns = `<button onclick="window.viewClientModal('${u.id}', '${u.name || 'Cliente'}', '${u.email}', '${u.phone || ''}', '${createdStr}', ${u.walletBalance})" class="action-btn bg-slate-800 text-slate-300 hover:bg-brand-600 hover:text-white mr-2" title="Gerir Conta"><i data-lucide="settings-2" class="w-4 h-4"></i> Gerir</button>`;
 
             if(u.status === 'active') {
-                actionBtns += `<button onclick="window.changeStatus('${u.id}', 'blocked')" class="action-btn block" title="Suspender Conta"><i data-lucide="lock" class="w-4 h-4"></i></button>`;
+                actionBtns += `<button onclick="window.changeStatus('${u.id}', 'blocked')" class="action-btn block" title="Suspender"><i data-lucide="lock" class="w-4 h-4"></i></button>`;
             } else {
-                actionBtns += `<button onclick="window.changeStatus('${u.id}', 'active')" class="action-btn activate" title="Restaurar Conta"><i data-lucide="unlock" class="w-4 h-4"></i></button>`;
+                actionBtns += `<button onclick="window.changeStatus('${u.id}', 'active')" class="action-btn activate" title="Restaurar"><i data-lucide="unlock" class="w-4 h-4"></i></button>`;
             }
-            
-            // 🚨 BOTÃO DE ELIMINAÇÃO TOTAL 🚨
-            actionBtns += `<button onclick="window.deleteUserRecord('${u.id}', '${u.name || u.email}')" class="action-btn delete ml-2 !border-danger-500 !text-danger-500" title="Erradicar Perfil e Conta (Remover Fantasma)"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
+            actionBtns += `<button onclick="window.deleteUserRecord('${u.id}', '${u.name || u.email}')" class="action-btn delete ml-2 !border-danger-500 !text-danger-500" title="Apagar Ficha"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
 
             return `
             <tr class="hover:bg-slate-800/40 transition-colors">
@@ -397,12 +405,12 @@
                 </td>
                 <td class="py-4 px-6">
                     <div class="text-sm text-slate-300 font-mono mb-1"><i data-lucide="mail" class="w-3 h-3 inline text-slate-500 mr-1"></i> ${u.email}</div>
-                    <div class="text-xs text-slate-400 font-mono"><i data-lucide="phone" class="w-3 h-3 inline text-slate-500 mr-1"></i> ${u.phone || 'S/ Telemóvel'}</div>
+                    <div class="text-xs text-slate-400 font-mono"><i data-lucide="phone" class="w-3 h-3 inline text-slate-500 mr-1"></i> ${u.phone || 'N/A'}</div>
                 </td>
-                <td class="py-4 px-6"><span class="status-badge ${statusBadge}">${statusText}</span></td>
-                <td class="py-4 px-6">
-                    <span class="text-xs font-bold ${isOnline && u.status==='active' ? 'text-success-400' : 'text-slate-400'}">${seenText}</span>
+                <td class="py-4 px-6 text-right">
+                    <span class="font-bold font-mono text-brand-400 bg-brand-500/10 px-2 py-1 rounded border border-brand-500/20">${formatMZN(u.walletBalance)}</span>
                 </td>
+                <td class="py-4 px-6 text-center"><span class="status-badge ${statusBadge}">${statusText}</span></td>
                 <td class="py-4 px-6 text-right whitespace-nowrap">
                     ${actionBtns}
                 </td>
@@ -447,50 +455,36 @@
             await updateDoc(doc(db, "users", userId), { status: newStatus, updatedAt: serverTimestamp() });
             showToast('Estado da conta atualizado com sucesso.', 'success');
             await window.loadUsersDatabase(); 
-        } catch(error) {
-            showToast('Erro ao tentar atualizar a base de dados.', 'error');
-        }
+        } catch(error) { showToast('Erro ao tentar atualizar a DB.', 'error'); }
     };
 
-    // ==========================================
-    // 🚀 LÓGICA DE LIMPEZA DE FANTASMAS (Auth + DB)
-    // ==========================================
     window.deleteUserRecord = async function(userId, userName) {
-        const confirm1 = confirm(`⚠️ PERIGO EXTREMO ⚠️\n\nTem a certeza absoluta que deseja APAGAR PERMANENTEMENTE a conta de ${userName}?\n\nIsto limpará o registo da Base de Dados e destruirá a Conta de Acesso (Login).`);
+        const confirm1 = confirm(`⚠️ PERIGO EXTREMO ⚠️\n\nApagar PERMANENTEMENTE a conta de ${userName}? Isto limpará a DB e destruirá a Conta de Login.`);
         if(!confirm1) return;
         
-        const confirm2 = prompt(`ÚLTIMO AVISO:\nEscreva a palavra APAGAR para confirmar a desintegração total:`);
-        if(confirm2 !== 'APAGAR') {
-            showToast('Ação cancelada pelo administrador.', 'info');
-            return;
-        }
+        const confirm2 = prompt(`ÚLTIMO AVISO:\nEscreva a palavra APAGAR para confirmar:`);
+        if(confirm2 !== 'APAGAR') return showToast('Ação cancelada.', 'info');
 
         try {
-            showToast('A contactar servidores para desintegração...', 'info');
-
-            // 1. Tentar Apagar do Firebase Auth (Chamada à nova API)
-            await fetch('/api/delete-user', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ uid: userId })
-            }).catch(e => console.warn('Aviso: API de eliminação falhou ou ainda não existe. Limpando apenas Firestore...', e));
-
-            // 2. Apagar da Base de Dados Local (Firestore)
+            showToast('A desintegrar conta...', 'info');
+            await fetch('/api/delete-user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ uid: userId }) }).catch(e => {});
             await deleteDoc(doc(db, "users", userId));
-            
-            showToast(`A conta de ${userName} foi completamente erradicada do sistema.`, 'success');
+            showToast(`A conta foi erradicada.`, 'success');
             await window.loadUsersDatabase();
-        } catch(error) {
-            console.error(error);
-            showToast('Ocorreu um erro ao eliminar a conta.', 'error');
-        }
+        } catch(error) { showToast('Ocorreu um erro ao eliminar a conta.', 'error'); }
     };
 
-    window.viewClientModal = async function(userId, name, email, phone, createdIso) {
+    // ==========================================
+    // GESTÃO DO MODAL DE CLIENTE (CARTEIRA E HISTÓRICO)
+    // ==========================================
+    window.viewClientModal = async function(userId, name, email, phone, createdIso, walletBalance) {
+        currentViewedUserId = userId;
+        
         document.getElementById('modalClientName').textContent = name;
         document.getElementById('modalClientInitials').textContent = name.charAt(0).toUpperCase();
         document.getElementById('modalClientEmail').textContent = email;
         document.getElementById('modalClientPhone').textContent = phone || 'N/A';
+        document.getElementById('modalClientWallet').textContent = formatMZN(walletBalance) + ' MT';
         
         const dateStr = createdIso ? new Date(createdIso).toLocaleDateString('pt-MZ') : 'Desconhecido';
         document.getElementById('modalClientDate').textContent = dateStr;
@@ -501,33 +495,28 @@
         modal.style.display = 'flex';
         setTimeout(() => modal.classList.add('active'), 10);
         
-        timeline.innerHTML = `<div class="text-center py-8 text-slate-500"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto mb-2 text-brand-500"></i><p>A procurar registos financeiros...</p></div>`;
+        timeline.innerHTML = `<div class="text-center py-8 text-slate-500"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto mb-2 text-brand-500"></i><p>A extrair faturas...</p></div>`;
         lucide.createIcons();
 
         try {
             const q = query(collection(db, "orders"), where("email", "==", email));
             const snap = await getDocs(q);
             
-            let totalGasto = 0;
-            let totalPedidos = 0;
-            let ordersHtml = '';
-            let ordersData = [];
+            let totalGasto = 0; let totalPedidos = 0;
+            let ordersHtml = ''; let ordersData = [];
 
             snap.forEach(d => {
                 ordersData.push(d.data());
                 totalPedidos++;
-                if(d.data().status === 'completed' || d.data().isPaid) {
-                    totalGasto += (d.data().total || 0);
-                }
+                if(d.data().status === 'completed' || d.data().isPaid) totalGasto += (d.data().total || 0);
             });
 
             document.getElementById('modalClientOrdersCount').textContent = `${totalPedidos} Faturas`;
-            document.getElementById('modalClientLTV').textContent = `${new Intl.NumberFormat('pt-MZ').format(totalGasto)} MT`;
+            document.getElementById('modalClientLTV').textContent = `${formatMZN(totalGasto)} MT`;
 
             if(ordersData.length === 0) {
-                timeline.innerHTML = `<div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl text-center"><i data-lucide="package-x" class="w-8 h-8 text-slate-600 mx-auto mb-2"></i><p class="text-slate-400">O cliente ainda não realizou nenhum pedido.</p></div>`;
-                lucide.createIcons();
-                return;
+                timeline.innerHTML = `<div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl text-center"><i data-lucide="package-x" class="w-8 h-8 text-slate-600 mx-auto mb-2"></i><p class="text-slate-400">O cliente não tem faturas ativas.</p></div>`;
+                lucide.createIcons(); return;
             }
 
             ordersData.sort((a,b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
@@ -537,7 +526,6 @@
                 const statusColor = isPaid ? 'success-400' : (o.status === 'cancelled' ? 'danger-400' : 'warning-400');
                 const statusBg = isPaid ? 'success-500/10' : (o.status === 'cancelled' ? 'danger-500/10' : 'warning-500/10');
                 const statusIcon = isPaid ? 'check-circle' : (o.status === 'cancelled' ? 'x-circle' : 'clock');
-                
                 const dataFormat = o.createdAt?.toDate ? o.createdAt.toDate().toLocaleDateString('pt-MZ') : '-';
 
                 ordersHtml += `
@@ -552,24 +540,70 @@
                         </div>
                     </div>
                     <div class="text-right">
-                        <p class="font-black text-${isPaid ? 'success-400' : 'white'}">${new Intl.NumberFormat('pt-MZ').format(o.total || 0)} MT</p>
-                        <p class="text-[10px] uppercase font-bold text-slate-500 tracking-widest">${o.paymentMethod || 'M-Pesa'}</p>
+                        <p class="font-black text-${isPaid ? 'success-400' : 'white'}">${formatMZN(o.total || 0)} MT</p>
+                        <p class="text-[10px] uppercase font-bold text-slate-500 tracking-widest">${o.paymentMethod || 'Carteira'}</p>
                     </div>
                 </div>`;
             });
-
-            timeline.innerHTML = ordersHtml;
-            lucide.createIcons();
-
-        } catch(error) {
-            timeline.innerHTML = `<p class="text-danger-400 text-center py-4">Erro ao carregar faturas.</p>`;
-        }
+            timeline.innerHTML = ordersHtml; lucide.createIcons();
+        } catch(error) { timeline.innerHTML = `<p class="text-danger-400 text-center py-4">Erro ao extrair faturas.</p>`; }
     };
 
     window.closeClientModal = function() {
         const m = document.getElementById('clientModal');
         m.classList.remove('active');
         setTimeout(() => m.style.display = 'none', 300);
+    };
+
+    // ==========================================
+    // 💰 APROVAR DEPÓSITOS & AJUSTES MANUAIS DA CARTEIRA
+    // ==========================================
+    window.adjustWalletBalance = async (action) => {
+        if (!currentViewedUserId) return;
+
+        const actionName = action === 'add' ? 'adicionar (Aprovar Depósito Bancário)' : 'remover (Acerto Contabilístico)';
+        const amountStr = prompt(`💵 Digite o valor a ${actionName} em Meticais:`);
+        
+        if (!amountStr) return;
+        const amount = parseFloat(amountStr);
+        if (isNaN(amount) || amount <= 0) { showToast('O valor introduzido é inválido.', 'error'); return; }
+
+        const confirmMsg = action === 'add' 
+            ? `Confirmar a INJEÇÃO de ${amount} MT na carteira deste cliente?` 
+            : `Confirmar a REMOÇÃO de ${amount} MT da carteira deste cliente?`;
+        
+        if (!confirm(confirmMsg)) return;
+
+        try {
+            const val = action === 'add' ? amount : -amount;
+            const txType = action === 'add' ? 'credit' : 'debit';
+            const txDesc = action === 'add' ? 'Depósito Aprovado (Admin)' : 'Ajuste de Saldo Administrativo';
+
+            // 1. Atualizar Saldo do Cliente
+            await updateDoc(doc(db, "users", currentViewedUserId), {
+                walletBalance: increment(val)
+            });
+
+            // 2. Gerar Recibo na Coleção de Extratos (Para o cliente ver no histórico)
+            await addDoc(collection(db, "wallet_transactions"), {
+                userId: currentViewedUserId,
+                type: txType,
+                amount: amount,
+                description: txDesc,
+                reference: 'ADMIN-' + Date.now().toString().slice(-6),
+                createdAt: new Date().toISOString()
+            });
+
+            showToast(action === 'add' ? 'Fundos injetados com sucesso!' : 'Fundos removidos com sucesso.', 'success');
+            
+            // Fecha e recarrega dados para ver o novo saldo
+            window.closeClientModal();
+            await window.loadUsersDatabase();
+
+        } catch(e) {
+            console.error(e);
+            showToast('Falha técnica ao tentar ajustar os fundos do cliente.', 'error');
+        }
     };
 
     window.logout = async function() { await signOut(auth); window.location.href = '../login.html'; };
