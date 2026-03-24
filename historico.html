@@ -10,6 +10,9 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    
     <script>
         tailwind.config = {
             theme: {
@@ -32,7 +35,8 @@
         .tab-btn.active { color: #fff; font-weight: 700; background: rgba(59, 130, 246, 0.1); border-color: #3b82f6; }
         .tab-btn.active::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 2px; background: #3b82f6; border-radius: 2px 2px 0 0; }
         
-        /* Skeleton Loader */
+        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
+        
         .skeleton { background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 0.5rem; }
         @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
     </style>
@@ -42,6 +46,8 @@
     <div class="fixed inset-0 bg-grid opacity-20 pointer-events-none z-0"></div>
     <div class="fixed top-0 right-0 w-[600px] h-[600px] bg-brand-600/10 rounded-full mix-blend-screen blur-[120px] pointer-events-none z-0"></div>
 
+    <div id="toastContainer" class="fixed top-24 right-6 z-[9999] flex flex-col gap-2 pointer-events-none"></div>
+
     <header class="fixed w-full z-50 glass-nav">
         <div class="container mx-auto px-6 h-20 flex justify-between items-center">
             <div class="flex items-center gap-3">
@@ -50,7 +56,7 @@
             </div>
             <div class="flex items-center gap-4">
                 <a href="dashboard.html" class="bg-slate-800 hover:bg-brand-500/20 text-slate-400 hover:text-brand-400 rounded-xl px-4 py-2.5 transition-colors font-bold text-sm flex items-center gap-2">
-                    <i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar ao Painel
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i> <span class="hidden sm:inline">Voltar ao Painel</span>
                 </a>
             </div>
         </div>
@@ -61,7 +67,7 @@
         <div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
                 <h1 class="text-3xl font-display font-bold text-white mb-2">Meu Histórico</h1>
-                <p class="text-slate-400">Acompanhe as suas encomendas e o extrato da sua Carteira.</p>
+                <p class="text-slate-400">Acompanhe as suas encomendas e exporte os seus extratos.</p>
             </div>
             <div class="glass-card px-5 py-3 rounded-xl border border-slate-700/50 flex items-center gap-4">
                 <div class="w-10 h-10 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-400"><i data-lucide="wallet" class="w-5 h-5"></i></div>
@@ -83,8 +89,8 @@
 
         <div id="content-orders" class="space-y-4">
             <div id="ordersLoading" class="space-y-4">
-                <div class="skeleton h-24 w-full"></div>
-                <div class="skeleton h-24 w-full"></div>
+                <div class="skeleton h-32 w-full"></div>
+                <div class="skeleton h-32 w-full"></div>
             </div>
             <div id="ordersList" class="hidden grid gap-4"></div>
             <div id="ordersEmpty" class="hidden glass-card rounded-2xl p-12 text-center border border-slate-800">
@@ -96,15 +102,41 @@
         </div>
 
         <div id="content-wallet" class="hidden space-y-4">
-            <div id="walletLoading" class="space-y-3">
-                <div class="skeleton h-16 w-full"></div>
-                <div class="skeleton h-16 w-full"></div>
-                <div class="skeleton h-16 w-full"></div>
+            
+            <div class="glass-card rounded-xl p-4 border border-slate-700/50 flex flex-col md:flex-row gap-4 items-end justify-between">
+                <div class="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+                    <div class="w-full md:w-auto">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Data Inicial</label>
+                        <input type="date" id="filterStartDate" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:border-brand-500 outline-none">
+                    </div>
+                    <div class="w-full md:w-auto">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Data Final</label>
+                        <input type="date" id="filterEndDate" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:border-brand-500 outline-none">
+                    </div>
+                    <div class="flex gap-2 w-full md:w-auto">
+                        <button onclick="applyWalletFilter()" class="flex-1 md:flex-none bg-brand-600 hover:bg-brand-500 text-white px-4 py-2 rounded-lg text-sm font-bold transition flex items-center justify-center gap-2">
+                            <i data-lucide="filter" class="w-4 h-4"></i> Filtrar
+                        </button>
+                        <button onclick="clearWalletFilter()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-2 rounded-lg text-sm transition flex items-center justify-center" title="Limpar Filtro">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+                <button onclick="downloadFilteredReport()" id="btnDownloadReport" class="w-full md:w-auto bg-success-600 hover:bg-success-500 text-white px-5 py-2.5 rounded-lg text-sm font-bold transition flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(34,197,94,0.2)]">
+                    <i data-lucide="download" class="w-4 h-4"></i> Baixar Relatório (PDF)
+                </button>
             </div>
+
+            <div id="walletLoading" class="space-y-3 mt-4">
+                <div class="skeleton h-12 w-full"></div>
+                <div class="skeleton h-12 w-full"></div>
+                <div class="skeleton h-12 w-full"></div>
+            </div>
+            
             <div class="glass-card rounded-2xl overflow-hidden border border-slate-800 hidden" id="walletContainer">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-sm">
-                        <thead class="bg-slate-900/50 text-slate-400 text-xs uppercase font-bold tracking-wider">
+                        <thead class="bg-slate-900/80 text-slate-400 text-xs uppercase font-bold tracking-wider">
                             <tr>
                                 <th class="px-6 py-4">Data & Hora</th>
                                 <th class="px-6 py-4">Descrição / Referência</th>
@@ -116,10 +148,11 @@
                     </table>
                 </div>
             </div>
-            <div id="walletEmpty" class="hidden glass-card rounded-2xl p-12 text-center border border-slate-800">
-                <div class="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-500"><i data-lucide="inbox" class="w-8 h-8"></i></div>
-                <h3 class="text-lg font-bold text-white mb-2">Extrato Vazio</h3>
-                <p class="text-slate-400">Ainda não existem movimentos na sua carteira digital.</p>
+            
+            <div id="walletEmpty" class="hidden glass-card rounded-2xl p-12 text-center border border-slate-800 mt-4">
+                <div class="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-500"><i data-lucide="search-x" class="w-8 h-8"></i></div>
+                <h3 class="text-lg font-bold text-white mb-2">Nenhum movimento encontrado</h3>
+                <p class="text-slate-400">Não existem transações para o período selecionado.</p>
             </div>
         </div>
 
@@ -135,12 +168,18 @@
         const auth = getAuth(app);
         const db = getFirestore(app, "paygodb");
 
+        // Variáveis Globais de Retenção de Dados
+        let currentUser = null;
+        let userData = null;
+        let allOrders = [];
+        let allWalletTransactions = [];
+        let displayedWalletTransactions = []; // O que está filtrado atualmente
+
         lucide.createIcons();
 
-        let currentUser = null;
         const formatMZN = (val) => new Intl.NumberFormat('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val);
         
-        // Função de Formatação de Data Segura
+        // Utilitários de Data
         const formatDate = (dateInput) => {
             if (!dateInput) return 'Data Indisponível';
             try {
@@ -149,88 +188,87 @@
             } catch(e) { return 'Data Inválida'; }
         };
 
-        // Função de Formatação de Timestamp para ordenação
         const getTimestamp = (dateInput) => {
             if (!dateInput) return 0;
-            try {
-                return dateInput.toDate ? dateInput.toDate().getTime() : new Date(dateInput).getTime();
-            } catch(e) { return 0; }
+            try { return dateInput.toDate ? dateInput.toDate().getTime() : new Date(dateInput).getTime(); } 
+            catch(e) { return 0; }
         };
 
-        // TABS LOGIC
+        // UI: Tostas
+        window.showToast = function(msg, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const t = document.createElement('div');
+            const bg = type === 'error' ? 'bg-danger-500/95 border-danger-400' : 'bg-slate-900/95 border-brand-500';
+            const icon = type === 'error' ? 'alert-octagon text-danger-400' : 'check-check text-brand-400';
+            t.className = `flex items-center gap-3 px-5 py-3 rounded-xl shadow-2xl border ${bg} transform transition-all translate-x-full opacity-0 pointer-events-auto`;
+            t.innerHTML = `<i data-lucide="${icon.split(' ')[0]}" class="w-5 h-5 ${icon.split(' ')[1]}"></i> <span class="text-sm font-bold text-white">${msg}</span>`;
+            container.appendChild(t); lucide.createIcons({ root: t });
+            requestAnimationFrame(() => { t.classList.remove('translate-x-full', 'opacity-0'); });
+            setTimeout(() => { t.classList.add('opacity-0', 'translate-x-8'); setTimeout(() => t.remove(), 400); }, 3000);
+        }
+
+        // UI: Mudança de Abas
         window.switchTab = (tabName) => {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(`tab-${tabName}`).classList.add('active');
-            
             document.getElementById('content-orders').classList.add('hidden');
             document.getElementById('content-wallet').classList.add('hidden');
-            
             document.getElementById(`content-${tabName}`).classList.remove('hidden');
         };
 
-        // CARREGAR DADOS
+        // INICIALIZAÇÃO
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = 'login.html'; return; }
             currentUser = user;
 
             try {
-                // 1. Carregar Saldo
                 const userDoc = await getDoc(doc(db, "users", user.uid));
                 if (userDoc.exists()) {
-                    document.getElementById('headerBalance').textContent = formatMZN(parseFloat(userDoc.data().walletBalance) || 0) + ' MT';
+                    userData = userDoc.data();
+                    document.getElementById('headerBalance').textContent = formatMZN(parseFloat(userData.walletBalance) || 0) + ' MT';
                 }
-
-                // 2. Carregar Pedidos
-                loadOrders(user.uid);
-                
-                // 3. Carregar Extrato
-                loadWalletTransactions(user.uid);
-
+                await loadOrders(user.uid);
+                await loadWalletTransactions(user.uid);
             } catch (error) {
-                console.error(error);
-                alert("Erro ao carregar os dados. Verifique a sua ligação.");
+                console.error(error); window.showToast("Falha de sincronização. Recarregue a página.", "error");
             }
         });
 
-        // RENDERIZAR PEDIDOS
+        // ==========================================
+        // 📦 ABA 1: CARREGAR PEDIDOS
+        // ==========================================
         async function loadOrders(uid) {
             const q = query(collection(db, "orders"), where("userId", "==", uid));
             const snap = await getDocs(q);
-            
             document.getElementById('ordersLoading').classList.add('hidden');
             
-            if (snap.empty) {
-                document.getElementById('ordersEmpty').classList.remove('hidden');
-                return;
-            }
+            if (snap.empty) { document.getElementById('ordersEmpty').classList.remove('hidden'); return; }
 
-            // Converter para Array e ordenar por data decrescente (JS-side para evitar index errors)
-            let orders = [];
-            snap.forEach(doc => orders.push({ id: doc.id, ...doc.data() }));
-            orders.sort((a, b) => getTimestamp(b.createdAt) - getTimestamp(a.createdAt));
+            allOrders = [];
+            snap.forEach(doc => allOrders.push({ id: doc.id, ...doc.data() }));
+            allOrders.sort((a, b) => getTimestamp(b.createdAt) - getTimestamp(a.createdAt));
 
             const listContainer = document.getElementById('ordersList');
             listContainer.classList.remove('hidden');
             
             let html = '';
-            orders.forEach(order => {
-                // Lógica de Status
+            allOrders.forEach(order => {
                 let statusColor = 'bg-warning-500/10 text-warning-400 border-warning-500/20';
-                let statusIcon = 'loader-2';
-                let statusText = 'Em Processamento';
+                let statusIcon = 'loader-2'; let statusText = 'Em Processamento';
 
                 if (order.status === 'shipped') { statusColor = 'bg-brand-500/10 text-brand-400 border-brand-500/20'; statusIcon = 'plane'; statusText = 'Em Trânsito'; }
                 if (order.status === 'completed') { statusColor = 'bg-success-500/10 text-success-400 border-success-500/20'; statusIcon = 'check-circle'; statusText = 'Concluído'; }
                 if (order.status === 'cancelled') { statusColor = 'bg-danger-500/10 text-danger-400 border-danger-500/20'; statusIcon = 'x-circle'; statusText = 'Cancelado'; }
 
-                // Ícone de Categoria
-                let catIcon = 'shopping-bag';
-                let catText = 'Produto Físico';
+                let catIcon = 'shopping-bag'; let catText = 'Produto Físico';
                 if (order.category === 'digital') { catIcon = 'laptop'; catText = 'Serviço Digital'; }
                 if (order.category === 'game') { catIcon = 'gamepad-2'; catText = 'Jogos/Recargas'; }
 
+                // Codificamos os dados do pedido num JSON stringificado no botão para o PDF
+                const orderDataStr = encodeURIComponent(JSON.stringify(order));
+
                 html += `
-                <div class="glass-card rounded-xl p-5 md:p-6 border border-slate-700/50 hover:border-brand-500/30 transition-all flex flex-col md:flex-row justify-between gap-4 md:items-center">
+                <div class="glass-card rounded-xl p-5 border border-slate-700/50 hover:border-brand-500/30 transition-all flex flex-col md:flex-row justify-between gap-4 md:items-center">
                     <div class="flex items-start gap-4">
                         <div class="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400 shrink-0">
                             <i data-lucide="${catIcon}" class="w-6 h-6"></i>
@@ -248,9 +286,14 @@
                             ${order.trackingCode ? `<div class="mt-3 inline-flex items-center gap-2 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-700 text-xs font-mono text-brand-400"><i data-lucide="truck" class="w-4 h-4"></i> Rastreio: ${order.trackingCode}</div>` : ''}
                         </div>
                     </div>
-                    <div class="text-left md:text-right flex flex-row md:flex-col justify-between items-center md:items-end border-t md:border-t-0 border-slate-800 pt-4 md:pt-0">
-                        <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Total Pago</p>
-                        <p class="text-2xl font-display font-black text-white">${formatMZN(order.total)} <span class="text-sm font-medium text-slate-500">MT</span></p>
+                    <div class="text-left md:text-right flex flex-col justify-between items-start md:items-end border-t md:border-t-0 border-slate-800 pt-4 md:pt-0 gap-3">
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest md:text-right">Total Pago</p>
+                            <p class="text-2xl font-display font-black text-white">${formatMZN(order.total)} <span class="text-sm font-medium text-slate-500">MT</span></p>
+                        </div>
+                        <button onclick="downloadSingleReceipt('${orderDataStr}')" class="flex items-center gap-2 bg-slate-800 hover:bg-brand-600 text-slate-300 hover:text-white px-4 py-2 rounded-lg text-xs font-bold transition border border-slate-700 hover:border-brand-500">
+                            <i data-lucide="download-cloud" class="w-4 h-4"></i> Baixar Recibo
+                        </button>
                     </div>
                 </div>`;
             });
@@ -258,7 +301,9 @@
             lucide.createIcons();
         }
 
-        // RENDERIZAR EXTRATO
+        // ==========================================
+        // 🧾 ABA 2: CARREGAR EXTRATO DA CARTEIRA
+        // ==========================================
         async function loadWalletTransactions(uid) {
             const q = query(collection(db, "wallet_transactions"), where("userId", "==", uid));
             const snap = await getDocs(q);
@@ -267,16 +312,37 @@
             
             if (snap.empty) {
                 document.getElementById('walletEmpty').classList.remove('hidden');
+                document.getElementById('btnDownloadReport').disabled = true;
                 return;
             }
 
-            let txs = [];
-            snap.forEach(doc => txs.push({ id: doc.id, ...doc.data() }));
-            txs.sort((a, b) => getTimestamp(b.createdAt) - getTimestamp(a.createdAt));
+            allWalletTransactions = [];
+            snap.forEach(doc => allWalletTransactions.push({ id: doc.id, ...doc.data() }));
+            allWalletTransactions.sort((a, b) => getTimestamp(b.createdAt) - getTimestamp(a.createdAt));
 
+            // Na primeira carga, exibe tudo
+            displayedWalletTransactions = [...allWalletTransactions];
+            renderWalletTable(displayedWalletTransactions);
+        }
+
+        function renderWalletTable(txs) {
             const container = document.getElementById('walletContainer');
+            const emptyBox = document.getElementById('walletEmpty');
             const tbody = document.getElementById('walletList');
+            const btnDownload = document.getElementById('btnDownloadReport');
+
+            if (txs.length === 0) {
+                container.classList.add('hidden');
+                emptyBox.classList.remove('hidden');
+                btnDownload.disabled = true;
+                btnDownload.classList.add('opacity-50', 'cursor-not-allowed');
+                return;
+            }
+
             container.classList.remove('hidden');
+            emptyBox.classList.add('hidden');
+            btnDownload.disabled = false;
+            btnDownload.classList.remove('opacity-50', 'cursor-not-allowed');
             
             let html = '';
             txs.forEach(tx => {
@@ -291,12 +357,12 @@
                     <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-400">${formatDate(tx.createdAt)}</td>
                     <td class="px-6 py-4">
                         <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-lg flex items-center justify-center ${bgIcon}">
+                            <div class="w-8 h-8 rounded-lg flex items-center justify-center ${bgIcon} shrink-0">
                                 ${icon}
                             </div>
                             <div>
-                                <p class="font-bold text-slate-200">${tx.description || 'Transação'}</p>
-                                <p class="text-[10px] text-slate-500 uppercase tracking-widest">Ref: ${tx.reference || 'N/A'}</p>
+                                <p class="font-bold text-slate-200 line-clamp-1">${tx.description || 'Transação'}</p>
+                                <p class="text-[10px] text-slate-500 uppercase tracking-widest">Ref: ${tx.reference || 'SISTEMA'}</p>
                             </div>
                         </div>
                     </td>
@@ -308,6 +374,188 @@
             tbody.innerHTML = html;
             lucide.createIcons();
         }
+
+        // ==========================================
+        // 🔎 FILTRAGEM DE DATAS (EXTRATO)
+        // ==========================================
+        window.applyWalletFilter = function() {
+            const startInput = document.getElementById('filterStartDate').value;
+            const endInput = document.getElementById('filterEndDate').value;
+
+            if (!startInput && !endInput) {
+                window.showToast("Selecione pelo menos uma data para filtrar.", "error");
+                return;
+            }
+
+            let startTs = startInput ? new Date(startInput).setHours(0,0,0,0) : 0;
+            let endTs = endInput ? new Date(endInput).setHours(23,59,59,999) : Infinity;
+
+            displayedWalletTransactions = allWalletTransactions.filter(tx => {
+                const txTs = getTimestamp(tx.createdAt);
+                return txTs >= startTs && txTs <= endTs;
+            });
+
+            renderWalletTable(displayedWalletTransactions);
+            window.showToast(`Filtro aplicado: ${displayedWalletTransactions.length} resultados.`, "success");
+        };
+
+        window.clearWalletFilter = function() {
+            document.getElementById('filterStartDate').value = '';
+            document.getElementById('filterEndDate').value = '';
+            displayedWalletTransactions = [...allWalletTransactions];
+            renderWalletTable(displayedWalletTransactions);
+        };
+
+        // ==========================================
+        // 📄 MOTOR DE GERAÇÃO DE PDF (jsPDF)
+        // ==========================================
+        const { jsPDF } = window.jspdf;
+
+        // 1. Gerar Recibo de uma única Encomenda
+        window.downloadSingleReceipt = function(orderDataEncoded) {
+            try {
+                const order = JSON.parse(decodeURIComponent(orderDataEncoded));
+                const doc = new jsPDF();
+                
+                // Design do Recibo PayGo
+                doc.setFillColor(37, 99, 235); // Brand Blue
+                doc.rect(0, 0, 210, 40, 'F');
+                
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(24);
+                doc.setFont("helvetica", "bold");
+                doc.text("PayGo Moçambique", 14, 25);
+                
+                doc.setFontSize(12);
+                doc.setFont("helvetica", "normal");
+                doc.text("RECIBO DE PAGAMENTO", 140, 25);
+
+                doc.setTextColor(0, 0, 0);
+                doc.setFontSize(14);
+                doc.setFont("helvetica", "bold");
+                doc.text("Detalhes da Transação", 14, 55);
+
+                doc.setFontSize(11);
+                doc.setFont("helvetica", "normal");
+                doc.text(`ID do Pedido: #${order.orderId}`, 14, 65);
+                doc.text(`Data: ${formatDate(order.createdAt)}`, 14, 72);
+                doc.text(`Cliente: ${order.name || userData?.name || 'N/A'}`, 14, 79);
+                doc.text(`Método: Saldo da Carteira (Wallet)`, 14, 86);
+                doc.text(`Status: PAGO`, 14, 93);
+
+                // Tabela de Itens
+                doc.autoTable({
+                    startY: 105,
+                    headStyles: { fillColor: [15, 23, 42] },
+                    head: [['Descrição', 'Categoria', 'Valor (USD)', 'Taxa (MT)']],
+                    body: [
+                        [
+                            (order.detail || '').substring(0, 40) + '...', 
+                            order.category || 'Produto', 
+                            `$${order.usd || '0.00'}`, 
+                            `${order.tax || '0.00'} MT`
+                        ],
+                    ],
+                });
+
+                const finalY = doc.lastAutoTable.finalY || 120;
+                
+                doc.setFontSize(14);
+                doc.setFont("helvetica", "bold");
+                doc.text(`Total Debitado: ${formatMZN(order.total)} MT`, 130, finalY + 15);
+
+                doc.setFontSize(10);
+                doc.setFont("helvetica", "normal");
+                doc.setTextColor(150, 150, 150);
+                doc.text("Documento gerado eletronicamente por paygo.co.mz", 14, 280);
+
+                doc.save(`Recibo_PayGo_${order.orderId}.pdf`);
+                window.showToast("Recibo baixado com sucesso!");
+
+            } catch (err) {
+                console.error(err);
+                window.showToast("Erro ao gerar o PDF.", "error");
+            }
+        };
+
+        // 2. Gerar Relatório de Extrato Consolidado
+        window.downloadFilteredReport = function() {
+            if (displayedWalletTransactions.length === 0) return;
+
+            try {
+                const doc = new jsPDF();
+                const btn = document.getElementById('btnDownloadReport');
+                const originalText = btn.innerHTML;
+                
+                btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A gerar PDF...`;
+                lucide.createIcons({root: btn});
+
+                // Header
+                doc.setFillColor(15, 23, 42); // Dark Slate
+                doc.rect(0, 0, 210, 30, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(20);
+                doc.setFont("helvetica", "bold");
+                doc.text("Extrato de Movimentos - PayGo", 14, 20);
+
+                doc.setTextColor(0, 0, 0);
+                doc.setFontSize(11);
+                doc.setFont("helvetica", "normal");
+                
+                // Cálculo de Totais
+                let totalEntradas = 0;
+                let totalSaidas = 0;
+
+                const tableData = displayedWalletTransactions.map(tx => {
+                    const val = parseFloat(tx.amount) || 0;
+                    if (tx.type === 'credit') totalEntradas += val;
+                    else totalSaidas += val;
+
+                    return [
+                        formatDate(tx.createdAt),
+                        tx.reference || '-',
+                        tx.description || '',
+                        tx.type === 'credit' ? `+ ${formatMZN(val)}` : `- ${formatMZN(val)}`
+                    ];
+                });
+
+                // Informação do Período
+                const startD = document.getElementById('filterStartDate').value || 'Sempre';
+                const endD = document.getElementById('filterEndDate').value || 'Sempre';
+                doc.text(`Cliente: ${userData?.name || currentUser.email}`, 14, 45);
+                doc.text(`Período do Relatório: ${startD} a ${endD}`, 14, 52);
+
+                // Resumo Financeiro
+                doc.setFont("helvetica", "bold");
+                doc.setTextColor(34, 197, 94); // Green
+                doc.text(`Entradas: +${formatMZN(totalEntradas)} MT`, 140, 45);
+                doc.setTextColor(239, 68, 68); // Red
+                doc.text(`Saídas: -${formatMZN(totalSaidas)} MT`, 140, 52);
+
+                // Tabela
+                doc.autoTable({
+                    startY: 65,
+                    headStyles: { fillColor: [59, 130, 246] },
+                    head: [['Data', 'Ref.', 'Descrição', 'Valor (MT)']],
+                    body: tableData,
+                });
+
+                doc.setFontSize(9);
+                doc.setTextColor(150, 150, 150);
+                doc.text(`Gerado em ${new Date().toLocaleString('pt-MZ')}`, 14, doc.internal.pageSize.getHeight() - 10);
+
+                doc.save(`Extrato_PayGo_${new Date().getTime()}.pdf`);
+                
+                btn.innerHTML = originalText;
+                lucide.createIcons({root: btn});
+                window.showToast("Relatório exportado com sucesso!");
+
+            } catch (err) {
+                console.error(err);
+                window.showToast("Erro ao exportar relatório.", "error");
+            }
+        };
+
     </script>
 </body>
 </html>
