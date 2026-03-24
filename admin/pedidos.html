@@ -52,6 +52,7 @@ body { background-color: #020617; color: #f8fafc; overflow-x: hidden; -webkit-fo
 .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 8px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1); }
 .status-badge.completed { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
 .status-badge.processing { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+.status-badge.shipped { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
 .status-badge.pending { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
 .status-badge.cancelled { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
 .status-badge.refunded { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
@@ -201,6 +202,7 @@ select, input { background-color: rgba(15, 23, 42, 0.5) !important; color: white
             <option value="all">Todas as Fases</option>
             <option value="pending">⏳ Aguardando Ação (Pendente)</option>
             <option value="processing">🔄 Em Processamento / Compra</option>
+            <option value="shipped">✈️ Em Trânsito / Despachado</option>
             <option value="completed">✅ Concluídos (Fechados)</option>
             <option value="cancelled">❌ Cancelados / Recusados</option>
             <option value="refunded">🟣 Reembolsados ao Cliente</option>
@@ -211,7 +213,7 @@ select, input { background-color: rgba(15, 23, 42, 0.5) !important; color: white
           <label for="paymentFilter" class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2.5 ml-1">Controlo Financeiro</label>
           <select id="paymentFilter" class="w-full px-4 py-3.5 bg-slate-900/80 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50 text-sm text-slate-200 font-bold cursor-pointer transition-all shadow-inner" onchange="window.renderOrders()">
             <option value="all">Todo o Histórico</option>
-            <option value="paid">🟢 Liquidados (Dinheiro Recebido)</option>
+            <option value="paid">🟢 Liquidados (Confirmados)</option>
             <option value="unpaid">🔴 Por Liquidar (Em Dívida)</option>
           </select>
         </div>
@@ -230,14 +232,13 @@ select, input { background-color: rgba(15, 23, 42, 0.5) !important; color: white
             <tr>
               <th class="px-6 py-5 font-bold">Data & ID Transação</th>
               <th class="px-6 py-5 font-bold">Cliente e Contactos</th>
-              <th class="px-6 py-5 font-bold">Valor Base (USD)</th>
+              <th class="px-6 py-5 font-bold">Categoria & Base (USD)</th>
               <th class="px-6 py-5 font-bold">Cobrado Líquido (MT)</th>
               <th class="px-6 py-5 font-bold text-center">Status Operacional</th>
-              <th class="px-6 py-5 text-right font-bold">Ação</th>
             </tr>
           </thead>
           <tbody id="ordersTable" class="divide-y divide-white/5 bg-slate-900/20">
-            <tr><td colspan="6" class="text-center py-16 text-slate-500"><div class="w-10 h-10 border-4 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div><p class="font-medium text-sm">A sincronizar com a central...</p></td></tr>
+            <tr><td colspan="5" class="text-center py-16 text-slate-500"><div class="w-10 h-10 border-4 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div><p class="font-medium text-sm">A sincronizar com a central...</p></td></tr>
           </tbody>
         </table>
       </div>
@@ -260,25 +261,37 @@ select, input { background-color: rgba(15, 23, 42, 0.5) !important; color: white
             </button>
         </div>
         
-        <div id="modalContent" class="p-6 md:p-8 overflow-y-auto space-y-6 bg-slate-900 flex-1 relative">
+        <div id="modalContent" class="p-6 md:p-8 overflow-y-auto space-y-6 bg-slate-900 flex-1 relative notes-scrollbar">
             </div>
 
-        <div class="p-6 border-t border-white/10 bg-slate-950 flex flex-col sm:flex-row gap-4 shrink-0 shadow-[0_-10px_20px_rgba(0,0,0,0.3)] relative z-20">
-            <div class="relative flex-1">
-                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Forçar Atualização de Fase Logística</label>
-                <div class="relative">
-                    <i data-lucide="git-commit" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
-                    <select id="statusSelect" class="w-full pl-12 pr-4 py-4 border border-slate-700 bg-slate-800 text-white rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50 font-bold text-sm cursor-pointer shadow-inner appearance-none transition-all">
-                        <option value="pending">⏳ Ação Necessária (Pendente)</option>
-                        <option value="processing">🔄 Em Compra Internacional (Processando)</option>
-                        <option value="completed">✅ Finalizado com Sucesso (Envia Email Automático)</option>
-                        <option value="cancelled">❌ Cancelar / Recusar Encomenda</option>
-                        <option value="refunded">🟣 Marcar como Reembolsado ao Cliente</option>
-                    </select>
+        <div class="p-6 border-t border-white/10 bg-slate-950 flex flex-col gap-4 shrink-0 shadow-[0_-10px_20px_rgba(0,0,0,0.3)] relative z-20">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Fase Logística (Atualizar)</label>
+                    <div class="relative">
+                        <i data-lucide="git-commit" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
+                        <select id="statusSelect" class="w-full pl-12 pr-4 py-3.5 border border-slate-700 bg-slate-800 text-white rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50 font-bold text-sm cursor-pointer shadow-inner appearance-none transition-all">
+                            <option value="pending">⏳ Ação Necessária (Pendente)</option>
+                            <option value="processing">🔄 Em Compra Internacional (Processando)</option>
+                            <option value="shipped">✈️ Em Trânsito (Enviado / Código Rastreio)</option>
+                            <option value="completed">✅ Finalizado com Sucesso (Envia Email)</option>
+                            <option value="cancelled">❌ Cancelar / Recusar Encomenda</option>
+                            <option value="refunded">🟣 Marcar como Reembolsado ao Cliente</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div id="trackingContainer" class="hidden">
+                    <label class="block text-[10px] font-black text-brand-400 uppercase tracking-widest mb-2 ml-1">Código de Rastreio (Físicos)</label>
+                    <div class="relative">
+                        <i data-lucide="truck" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-500"></i>
+                        <input type="text" id="trackingInput" placeholder="Ex: SY123456789" class="w-full pl-12 pr-4 py-3.5 border border-brand-500/50 bg-slate-800 text-white rounded-xl focus:outline-none focus:border-brand-500 font-mono text-sm transition-all uppercase">
+                    </div>
                 </div>
             </div>
-            <div class="flex items-end">
-                <button id="updateStatusBtn" onclick="window.saveOrderStatus()" class="btn-action w-full sm:w-auto px-8 py-4 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(37,99,235,0.4)] whitespace-nowrap h-[54px] border border-brand-500">
+            
+            <div class="flex items-end justify-end mt-2">
+                <button id="updateStatusBtn" onclick="window.saveOrderStatus()" class="btn-action w-full sm:w-auto px-8 py-3.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(37,99,235,0.4)] border border-brand-500">
                     <i data-lucide="save" class="w-4 h-4"></i> <span>Salvar Decisão</span>
                 </button>
             </div>
@@ -323,7 +336,6 @@ window.showToast = (message, type = 'success') => {
     const icon = type === 'error' ? 'alert-octagon text-danger-400' : type === 'warning' ? 'alert-triangle text-warning-400' : 'check-check text-brand-400';
 
     toast.className = `flex items-center gap-3 px-5 py-4 rounded-xl shadow-2xl backdrop-blur-xl transform transition-all duration-400 translate-x-full border-l-4 ${borderColor} bg-slate-900/95 border-y border-r border-white/5`;
-    toast.setAttribute('role', 'alert');
     toast.innerHTML = `<i data-lucide="${icon.split(' ')[0]}" class="w-5 h-5 ${icon.split(' ')[1]}"></i> <span class="text-sm font-bold text-white tracking-wide">${message}</span>`;
 
     container.appendChild(toast);
@@ -406,14 +418,13 @@ function loadOrdersRealTime() {
     let isFirstLoad = true;
 
     ordersUnsubscribe = onSnapshot(q, (snapshot) => {
-        // 🚨 O RADAR: Deteta pagamentos automáticos do Webhook PaySuite!
+        // 🚨 O RADAR: Deteta pagamentos automáticos
         if (!isFirstLoad) {
             snapshot.docChanges().forEach((change) => {
                 if (change.type === "modified") {
                     const newData = change.doc.data();
                     const oldOrder = orders.find(o => o.id === change.doc.id);
                     
-                    // Compara se o Webhook alterou o pagamento para TRUE!
                     if (oldOrder && !oldOrder.isPaid && newData.isPaid) {
                         const fatura = newData.orderId || `ORD-${change.doc.id.slice(0, 8)}`;
                         showToast(`💰 ALERTA DE RECEITA: Pagamento da fatura ${fatura} confirmado!`, 'success');
@@ -422,7 +433,6 @@ function loadOrdersRealTime() {
             });
         }
 
-        // Mapeia todos os dados normais
         orders = snapshot.docs.map(doc => {
             const data = doc.data();
             return {
@@ -430,12 +440,16 @@ function loadOrdersRealTime() {
                 orderId: data.orderId || `ORD-${doc.id.slice(0, 8)}`,
                 name: data.name || 'Sem Nome',
                 email: data.email || 'N/A',
+                category: data.category || 'physical', // physical, digital, game
+                shipping: data.shipping || null,
+                digitalData: data.digitalData || null,
                 whatsapp: data.whatsapp || 'N/A',
                 type: data.type || 'unknown',
                 usd: Number(data.usd) || 0,
                 total: Number(data.total) || 0,
                 tax: Number(data.tax) || 0,
                 status: data.status || 'pending',
+                trackingCode: data.trackingCode || '',
                 isPaid: data.isPaid || false,
                 paymentMethod: data.paymentMethod || 'mpesa',
                 detail: data.detail || 'N/A',
@@ -450,7 +464,6 @@ function loadOrdersRealTime() {
 
         window.renderOrders();
         
-        // Mantém a janela modal atualizada se estiver aberta
         if (currentOrderId && document.getElementById('orderModal').classList.contains('active')) {
             window.openModal(currentOrderId, true); 
         }
@@ -487,7 +500,7 @@ window.renderOrders = function() {
     if (countEl) countEl.textContent = `${currentFilteredOrders.length} Resultados da Auditoria`;
 
     if (currentFilteredOrders.length === 0) {
-        table.innerHTML = `<tr><td colspan="6" class="text-center py-16 text-slate-500"><i data-lucide="search-x" class="w-12 h-12 mx-auto mb-4 opacity-30 text-slate-400"></i><p class="font-bold text-lg">Sem Registos</p><p class="text-sm mt-1">Altere o filtro de segurança para encontrar a transação.</p></td></tr>`;
+        table.innerHTML = `<tr><td colspan="5" class="text-center py-16 text-slate-500"><i data-lucide="search-x" class="w-12 h-12 mx-auto mb-4 opacity-30 text-slate-400"></i><p class="font-bold text-lg">Sem Registos</p><p class="text-sm mt-1">Altere o filtro de segurança para encontrar a transação.</p></td></tr>`;
         renderIcons(table);
         return;
     }
@@ -501,7 +514,7 @@ window.renderOrders = function() {
 
         if (dateLabel !== lastDateGroup) {
             lastDateGroup = dateLabel;
-            htmlContent += `<tr class="date-group-header"><td colspan="6" class="px-6 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-950/80"><i data-lucide="calendar" class="w-3 h-3 inline pb-0.5 mr-1"></i> ${dateLabel}</td></tr>`;
+            htmlContent += `<tr class="date-group-header"><td colspan="5" class="px-6 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-950/80"><i data-lucide="calendar" class="w-3 h-3 inline pb-0.5 mr-1"></i> ${dateLabel}</td></tr>`;
         }
 
         const payBadge = order.isPaid
@@ -511,10 +524,15 @@ window.renderOrders = function() {
         const logStatus = {
             'pending': '<span class="status-badge pending shadow-sm">⏳ Pendente</span>',
             'processing': '<span class="status-badge processing shadow-sm">🔄 Em Compra</span>',
+            'shipped': '<span class="status-badge shipped shadow-sm">✈️ Em Trânsito</span>',
             'completed': '<span class="status-badge completed shadow-sm">✅ Fechado</span>',
             'cancelled': '<span class="status-badge cancelled shadow-sm">❌ Cancelado</span>',
             'refunded': '<span class="status-badge refunded shadow-sm">🟣 Reembolsado</span>'
         }[order.status] || `<span class="status-badge bg-slate-800 border border-slate-700">${order.status}</span>`;
+
+        let catIcon = 'package'; let catLabel = 'Físico';
+        if(order.category === 'digital') { catIcon = 'laptop'; catLabel = 'Digital'; }
+        if(order.category === 'game') { catIcon = 'gamepad-2'; catLabel = 'Jogo'; }
 
         const notesIcon = order.adminNotes && order.adminNotes.length > 0 
             ? `<span class="ml-2 text-warning-500" title="Contém Notas Secretas"><i data-lucide="sticky-note" class="w-3 h-3 inline"></i></span>` : '';
@@ -529,15 +547,21 @@ window.renderOrders = function() {
                 <div class="text-sm font-bold text-white group-hover:text-brand-300 transition-colors truncate max-w-[200px]">${order.name}</div>
                 <div class="text-xs text-slate-500 font-mono mt-0.5 truncate max-w-[200px]">${order.email}</div>
             </td>
-            <td class="px-6 py-4 text-sm font-black text-slate-300 font-mono">${formatValue(order.usd, 'usd')}</td>
-            <td class="px-6 py-4 text-sm font-black text-white font-mono tracking-tight">${formatValue(order.total, 'currency')}</td>
-            <td class="px-6 py-4 text-center">
-                <div class="flex flex-col gap-2 items-center justify-center">
+            <td class="px-6 py-4">
+                <div class="flex items-center gap-2 mb-1">
+                    <i data-lucide="${catIcon}" class="w-4 h-4 text-brand-400"></i>
+                    <span class="text-xs font-bold text-slate-300">${catLabel}</span>
+                </div>
+                <span class="text-sm font-black text-slate-400 font-mono">${formatValue(order.usd, 'usd')}</span>
+            </td>
+            <td class="px-6 py-4 text-sm font-black text-white font-mono tracking-tight">
+                <div class="flex flex-col gap-1 items-start">
+                    ${formatValue(order.total, 'currency')}
                     ${payBadge}
-                    ${logStatus}
                 </div>
             </td>
-            <td class="px-6 py-4 text-right">
+            <td class="px-6 py-4 text-center flex items-center justify-between gap-4 h-[72px]">
+                ${logStatus}
                 <button class="w-10 h-10 inline-flex items-center justify-center rounded-xl bg-slate-800 text-slate-400 group-hover:bg-brand-600 group-hover:text-white transition-all shadow-md border border-slate-700 group-hover:border-brand-500" onclick="event.stopPropagation(); window.openModal('${order.id}')" title="Inspecionar">
                     <i data-lucide="chevron-right" class="w-5 h-5"></i>
                 </button>
@@ -549,10 +573,6 @@ window.renderOrders = function() {
     table.innerHTML = htmlContent;
     renderIcons(table);
 };
-
-function renderIcons(container = document.body) {
-    if (typeof lucide !== 'undefined') { try { lucide.createIcons({ root: container }); } catch(e) {} }
-}
 
 // ==========================================
 // 📝 ADICIONAR NOTA SECRETA DA EQUIPA
@@ -592,18 +612,18 @@ window.addInternalNote = async (orderId) => {
 };
 
 // ==========================================
-// 🔍 ECRÃ DE DOSSIER (MODAL UPGRADE COM POST-ITS)
+// 🔍 ECRÃ DE DOSSIER (MODAL CAMALEÃO COM POST-ITS E DELETES)
 // ==========================================
 window.openModal = (orderId, isSilentUpdate = false) => {
     const order = orders.find(o => o.id === orderId);
     if (!order) return;
 
     currentOrderId = orderId;
-    const methodColor = order.paymentMethod === 'mpesa' ? 'danger' : 'brand';
-    const methodName = order.paymentMethod === 'mpesa' ? 'M-Pesa (Vodacom)' : 'e-Mola (Movitel)';
+    const methodColor = (order.paymentMethod === 'mpesa' || order.paymentMethod === 'e-mola') ? 'brand' : 'warning';
+    const methodName = order.paymentMethod ? order.paymentMethod.toUpperCase() : 'CARTEIRA (WALLET)';
     
-    let trackHtml = order.paysuitePaymentId ? 
-        `<div class="flex justify-between items-center mt-3 pt-3 border-t border-white/5"><p class="text-[10px] font-bold text-slate-500 uppercase">Referência PaySuite</p><p class="font-mono text-xs text-brand-300 bg-brand-500/10 px-2 py-1 rounded border border-brand-500/20">${order.paysuitePaymentId}</p></div>` : '';
+    let trackRefHtml = order.paysuitePaymentId ? 
+        `<div class="flex justify-between items-center mt-3 pt-3 border-t border-white/5"><p class="text-[10px] font-bold text-slate-500 uppercase">Referência Externa</p><p class="font-mono text-xs text-brand-300 bg-brand-500/10 px-2 py-1 rounded border border-brand-500/20">${order.paysuitePaymentId}</p></div>` : '';
 
     let notesHtml = '';
     if (order.adminNotes && order.adminNotes.length > 0) {
@@ -621,6 +641,40 @@ window.openModal = (orderId, isSilentUpdate = false) => {
         notesHtml = `<div class="text-center py-6 text-slate-600"><i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-50"></i><p class="text-xs font-medium">O cofre confidencial deste pedido está vazio.</p></div>`;
     }
 
+    // 🦎 Lógica do Camaleão: Mostrar o que interessa (Físico vs Digital)
+    let dynamicDataHtml = '';
+    if (order.category === 'physical' || !order.category) {
+        const ship = order.shipping || {};
+        dynamicDataHtml = `
+            <div class="bg-brand-900/20 p-5 rounded-2xl border border-brand-500/30 shadow-inner">
+                <h3 class="text-xs font-black text-brand-400 uppercase tracking-widest border-b border-brand-500/20 pb-3 mb-3 flex items-center gap-2"><i data-lucide="truck" class="w-4 h-4"></i> Dados de Despacho Logístico</h3>
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div><p class="text-[10px] text-slate-500 uppercase">Nome Recetor</p><p class="text-white font-bold">${ship.shipName || order.name}</p></div>
+                    <div><p class="text-[10px] text-slate-500 uppercase">Telefone</p><p class="text-white font-bold">${ship.shipPhone || 'N/A'}</p></div>
+                    <div><p class="text-[10px] text-slate-500 uppercase">Província / Cidade</p><p class="text-white">${ship.shipCity || 'N/A'}</p></div>
+                    <div><p class="text-[10px] text-brand-400 uppercase font-bold">Código Postal (ZIP)</p><p class="text-brand-300 font-mono font-bold text-lg">${ship.shipZip || 'N/A'}</p></div>
+                    <div class="col-span-2"><p class="text-[10px] text-slate-500 uppercase">Morada Completa</p><p class="text-white bg-slate-950 p-3 rounded-xl border border-slate-800">${ship.shipAddress || 'N/A'}</p></div>
+                </div>
+            </div>
+        `;
+        document.getElementById('trackingContainer').classList.remove('hidden');
+    } else {
+        const digital = order.digitalData || {};
+        dynamicDataHtml = `
+            <div class="bg-vip-900/20 p-5 rounded-2xl border border-vip-500/30 shadow-inner">
+                <h3 class="text-xs font-black text-vip-400 uppercase tracking-widest border-b border-vip-500/20 pb-3 mb-3 flex items-center gap-2"><i data-lucide="gamepad-2" class="w-4 h-4"></i> Credenciais da Conta / Jogo</h3>
+                <div>
+                    <p class="text-[10px] text-slate-500 uppercase mb-1">Player ID / E-mail da Conta</p>
+                    <p class="text-white font-mono font-bold text-2xl bg-slate-950 p-4 rounded-xl border border-slate-800 select-all">${digital.accountOrId || 'N/A'}</p>
+                </div>
+            </div>
+        `;
+        document.getElementById('trackingContainer').classList.add('hidden');
+    }
+
+    const urlStr = order.detail ? order.detail.split(' | ')[0] : '#';
+    const detStr = order.detail ? order.detail.split(' | ')[1] : 'Sem observações do cliente.';
+
     document.getElementById('modalContent').innerHTML = `
         <div class="bg-slate-950 p-6 rounded-2xl flex justify-between items-center border border-slate-800 shadow-[inset_0_2px_15px_rgba(0,0,0,0.5)]">
             <div>
@@ -637,7 +691,6 @@ window.openModal = (orderId, isSilentUpdate = false) => {
             <div class="bg-slate-900/50 p-6 rounded-2xl border border-white/5 flex flex-col gap-4">
                 <h3 class="text-xs font-black text-brand-400 uppercase tracking-widest border-b border-white/10 pb-3 flex items-center gap-2"><i data-lucide="user-circle" class="w-4 h-4"></i> Identidade do Comprador</h3>
                 <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nome Registado</p><p class="font-bold text-white text-base">${order.name}</p></div>
-                <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Canal de Contacto Seguro</p><a href="https://wa.me/${order.whatsapp.replace(/\D/g,'')}" target="_blank" class="font-bold text-success-400 hover:text-success-300 flex items-center gap-1.5 w-max bg-success-500/10 px-3 py-1.5 rounded-lg border border-success-500/20 transition-all"><i data-lucide="message-square" class="w-4 h-4"></i> ${order.whatsapp}</a></div>
                 <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Correio Eletrónico</p><p class="font-medium text-slate-300 font-mono text-sm">${order.email}</p></div>
             </div>
 
@@ -647,18 +700,20 @@ window.openModal = (orderId, isSilentUpdate = false) => {
                 <div class="space-y-3 relative z-10 mt-4">
                     <div class="flex justify-between items-center"><p class="text-xs font-bold text-slate-400">Conversão de Divisa (USD)</p><p class="font-mono font-bold text-slate-200 bg-slate-800 px-2 py-1 rounded">${formatValue(order.usd, 'usd')}</p></div>
                     <div class="flex justify-between items-center"><p class="text-xs font-bold text-slate-400">Taxa do Serviço PayGo</p><p class="font-mono font-bold text-slate-300">${formatValue(order.tax, 'currency')}</p></div>
-                    <div class="flex justify-between items-center"><p class="text-xs font-bold text-slate-400">Canal Recetor</p><p class="text-[10px] font-black text-${methodColor}-400 bg-${methodColor}-500/20 px-2.5 py-1 rounded border border-${methodColor}-500/30 uppercase tracking-widest shadow-sm">${methodName}</p></div>
-                    ${trackHtml}
-                    <div class="flex justify-between pt-4 border-t border-white/10 mt-2 items-end"><p class="text-xs font-black text-white uppercase tracking-widest mb-1">LÍQUIDO A RECEBER</p><p class="font-black text-3xl text-success-400 tracking-tight">${formatValue(order.total, 'currency')}</p></div>
+                    <div class="flex justify-between items-center"><p class="text-xs font-bold text-slate-400">Canal Pagamento</p><p class="text-[10px] font-black text-${methodColor}-400 bg-${methodColor}-500/20 px-2.5 py-1 rounded border border-${methodColor}-500/30 uppercase tracking-widest shadow-sm">${methodName}</p></div>
+                    ${trackRefHtml}
+                    <div class="flex justify-between pt-4 border-t border-white/10 mt-2 items-end"><p class="text-xs font-black text-white uppercase tracking-widest mb-1">TOTAL PAGO</p><p class="font-black text-3xl text-success-400 tracking-tight">${formatValue(order.total, 'currency')}</p></div>
                 </div>
             </div>
         </div>
 
+        ${dynamicDataHtml}
+
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-2">
-            
             <div class="bg-slate-800/80 rounded-2xl p-6 border border-slate-700 shadow-inner flex flex-col">
                 <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5"><i data-lucide="shopping-cart" class="w-3 h-3"></i> O que o cliente quer comprar</p>
-                <div class="bg-slate-950 p-4 rounded-xl font-mono text-sm text-brand-200 break-words leading-relaxed border border-white/5 whitespace-pre-wrap flex-1">${order.detail}</div>
+                <a href="${urlStr}" target="_blank" class="text-brand-400 font-medium hover:underline break-all block mb-4 bg-slate-950 p-3 rounded-xl border border-slate-800"><i data-lucide="external-link" class="w-3 h-3 inline"></i> ${urlStr}</a>
+                <div class="bg-slate-950 p-4 rounded-xl font-mono text-sm text-brand-200 break-words leading-relaxed border border-white/5 whitespace-pre-wrap flex-1">${detStr}</div>
             </div>
 
             <div class="bg-slate-900 rounded-2xl p-6 border border-warning-500/20 shadow-[0_10px_30px_rgba(245,158,11,0.05)] relative overflow-hidden flex flex-col">
@@ -676,7 +731,6 @@ window.openModal = (orderId, isSilentUpdate = false) => {
                     </button>
                 </div>
             </div>
-
         </div>
 
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-sm mt-2">
@@ -696,6 +750,7 @@ window.openModal = (orderId, isSilentUpdate = false) => {
     `;
 
     document.getElementById('statusSelect').value = order.status;
+    document.getElementById('trackingInput').value = order.trackingCode || '';
 
     if (!isSilentUpdate) {
         const modal = document.getElementById('orderModal');
@@ -714,12 +769,13 @@ window.closeModal = () => {
 };
 
 // ==========================================
-// 💾 AÇÕES DE GESTÃO DO MODAL E AFILIADOS
+// 💾 AÇÕES DE GESTÃO DO MODAL (STATUS, APAGAR, PAGO, CPA)
 // ==========================================
 window.saveOrderStatus = async () => {
     if (!currentOrderId) return;
 
     const newStatus = document.getElementById('statusSelect').value;
+    const newTracking = document.getElementById('trackingInput').value.trim();
     const order = orders.find(o => o.id === currentOrderId);
     const oldStatus = order?.status;
 
@@ -733,13 +789,14 @@ window.saveOrderStatus = async () => {
     try {
         await updateDoc(doc(db, "orders", currentOrderId), {
             status: newStatus,
+            trackingCode: newTracking || null,
             updatedAt: serverTimestamp()
         });
 
         // 🔥 REGISTO DE AUDITORIA INVISÍVEL
         await logAdminAction('UPDATE_ORDER_STATUS', currentOrderId, { status: oldStatus }, { status: newStatus });
 
-        // Afiliados Logic
+        // Afiliados Logic (CPA)
         if (newStatus === 'completed' && order?.referredBy && !order?.commissionProcessed) {
             await processAffiliateCPA(order);
             await updateDoc(doc(db, "orders", currentOrderId), { commissionProcessed: true });
@@ -852,7 +909,7 @@ window.exportToCSV = () => {
 
     logAdminAction('EXPORT_CSV', 'all', null, { exportedCount: currentFilteredOrders.length });
 
-    let csvContent = "ID de Transacao,Data Servidor,Hora Servidor,Entidade Cliente,Email Contacto,Canal Telemovel,Verificacao Dinheiro,Total Faturado (MT),Etapa Logistica,Resumo Tecnico (Produto)\n";
+    let csvContent = "ID de Transacao,Data Servidor,Hora Servidor,Entidade Cliente,Email Contacto,Categoria,Verificacao Dinheiro,Total Faturado (MT),Etapa Logistica,Resumo Tecnico (Produto)\n";
 
     currentFilteredOrders.forEach(order => {
         const dateStr = order.createdAt.toLocaleDateString('pt-MZ');
@@ -860,7 +917,9 @@ window.exportToCSV = () => {
         const name = `"${order.name.replace(/"/g, '""')}"`;
         const detail = `"${order.detail.replace(/"/g, '""')}"`;
         const payStatus = order.isPaid ? 'Dinheiro Confirmado' : 'Divida Pendente';
-        csvContent += `${order.orderId},${dateStr},${timeStr},${name},${order.email},${order.whatsapp},${payStatus},${order.total},${order.status},${detail}\n`;
+        const category = order.category === 'digital' ? 'Digital' : (order.category === 'game' ? 'Jogo' : 'Físico');
+        
+        csvContent += `${order.orderId},${dateStr},${timeStr},${name},${order.email},${category},${payStatus},${order.total},${order.status},${detail}\n`;
     });
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
