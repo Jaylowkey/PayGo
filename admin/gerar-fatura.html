@@ -149,7 +149,7 @@
             <i data-lucide="file-scan" class="w-10 h-10 text-slate-500"></i>
           </div>
           <h3 class="text-xl font-display font-bold text-white mb-2">Terminal Aguardando Instruções</h3>
-          <p class="text-slate-400 font-medium max-w-sm mx-auto">Introduza um ID de pedido válido na barra de pesquisa acima para gerar os documentos.</p>
+          <p class="text-slate-400 font-medium max-w-sm mx-auto">Introduza um ID de pedido válido (Ex: PG-12345) na barra de pesquisa acima para gerar os documentos.</p>
         </div>
 
         <div id="skeletonState" class="hidden grid lg:grid-cols-3 gap-6">
@@ -172,7 +172,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
@@ -212,7 +212,7 @@
       }
     });
 
-    // Auto Formatação do Input
+    // Auto Formatação do Input (Adiciona "PG-" se o admin só digitar números)
     document.getElementById('orderIdInput').addEventListener('input', function(e) {
       let val = e.target.value.toUpperCase().replace(/\s/g, '');
       if (val.length > 0 && !val.startsWith('PG-')) {
@@ -243,15 +243,15 @@
         const snap = await getDocs(q);
 
         if (snap.empty) {
-          document.getElementById('skeletonState').classList.add('hidden');
-          renderErrorCard();
-          showToast('Auditoria: Registo não encontrado.', 'error');
+            document.getElementById('skeletonState').classList.add('hidden');
+            renderErrorCard();
+            showToast('Auditoria: Registo não encontrado.', 'error');
         } else {
-          currentOrder = snap.docs[0].data();
-          currentOrder.firestoreId = snap.docs[0].id; 
-          document.getElementById('skeletonState').classList.add('hidden');
-          renderOrderData(currentOrder);
-          showToast('Dados sincronizados com sucesso.', 'success');
+            currentOrder = snap.docs[0].data();
+            currentOrder.firestoreId = snap.docs[0].id; 
+            document.getElementById('skeletonState').classList.add('hidden');
+            renderOrderData(currentOrder);
+            showToast('Dados sincronizados com sucesso.', 'success');
         }
       } catch (err) {
         document.getElementById('skeletonState').classList.add('hidden');
@@ -272,13 +272,13 @@
       const dataEmissao = order.createdAt?.toDate ? new Date(order.createdAt.toDate()).toLocaleString('pt-MZ', {dateStyle: 'medium', timeStyle: 'short'}) : 'N/A';
       
       const statusBadge = isCompleted 
-        ? `<span class="px-3 py-1 bg-success-500/20 border border-success-500/30 text-success-400 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-1.5"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Pago / Concluído</span>`
+        ? `<span class="px-3 py-1 bg-success-500/20 border border-success-500/30 text-success-400 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-1.5"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Pago / Confirmado</span>`
         : isProcessing
         ? `<span class="px-3 py-1 bg-blue-500/20 border border-blue-500/30 text-blue-400 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-1.5"><i data-lucide="refresh-cw" class="w-3.5 h-3.5 animate-spin"></i> Em Processo</span>`
         : `<span class="px-3 py-1 bg-warning-500/20 border border-warning-500/30 text-warning-400 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-1.5"><i data-lucide="clock" class="w-3.5 h-3.5"></i> Aguarda Pagamento</span>`;
 
       container.innerHTML = `
-        <div class="grid lg:grid-cols-3 gap-6 animate-slide-up">
+        <div class="grid lg:grid-cols-3 gap-6 animate-[slideUp_0.5s_ease-out_forwards]">
           
           <div class="lg:col-span-2 space-y-6">
             <div class="glass-card p-8 rounded-2xl relative overflow-hidden">
@@ -314,10 +314,10 @@
                     <div class="absolute -right-4 -bottom-4 opacity-5"><i data-lucide="wallet" class="w-24 h-24"></i></div>
                     <div class="relative z-10">
                       <div class="flex justify-between text-sm text-slate-400 border-b border-white/5 pb-2"><span>Valor Base:</span> <span class="font-mono text-white">$${(order.usd || 0).toFixed(2)}</span></div>
-                      <div class="flex justify-between text-sm text-slate-400 border-b border-white/5 pb-2 pt-2"><span>Câmbio:</span> <span class="font-mono text-white">${order.exchangeRate || 88} MT/$</span></div>
+                      <div class="flex justify-between text-sm text-slate-400 border-b border-white/5 pb-2 pt-2"><span>Câmbio Base:</span> <span class="font-mono text-white">${order.exchangeRate || '--'} MT/$</span></div>
                       <div class="flex justify-between text-sm text-slate-400 pb-2 pt-2"><span>Taxa PayGo:</span> <span class="font-mono font-bold text-brand-400">${order.tax === 0 ? 'GRÁTIS' : formatMZN(order.tax)}</span></div>
                       <div class="pt-2 flex flex-col items-end">
-                        <span class="text-[10px] font-black text-brand-400 tracking-widest uppercase">Total a Pagar</span>
+                        <span class="text-[10px] font-black text-brand-400 tracking-widest uppercase">Total a Debitar</span>
                         <span class="text-2xl font-display font-black text-white">${formatMZN(order.total)}</span>
                       </div>
                     </div>
@@ -329,7 +329,7 @@
               <div class="mt-6 p-4 bg-slate-900/50 rounded-xl border border-slate-800 flex items-start gap-3">
                 <i data-lucide="link" class="w-5 h-5 text-brand-400 flex-shrink-0 mt-0.5"></i>
                 <div class="min-w-0">
-                  <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Referência (Produto)</p>
+                  <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Referência do Pedido</p>
                   <p class="text-sm font-medium text-slate-300 truncate">${order.detail}</p>
                 </div>
               </div>` : ''}
@@ -342,7 +342,7 @@
               <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2"><i data-lucide="send" class="w-4 h-4"></i> Distribuição Oficial</h3>
               <div class="space-y-3">
                 <button id="btnPdf" onclick="exportDocument()" class="btn-epic w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700">
-                  <i data-lucide="file-down" class="w-4 h-4"></i> <span>Extrair PDF</span>
+                  <i data-lucide="file-down" class="w-4 h-4"></i> <span>Extrair Fatura em PDF</span>
                 </button>
                 <button id="btnWa" onclick="notifyWhatsApp()" class="btn-epic w-full py-3.5 bg-[#25D366] hover:bg-[#1fb355] text-white">
                   <i data-lucide="message-circle" class="w-4 h-4"></i> <span>WhatsApp Direto</span>
@@ -364,14 +364,14 @@
                 </div>
 
                 <div class="relative pl-6">
-                  <div class="absolute -left-[9px] top-1 w-4 h-4 rounded-full ${isPaid(order) ? 'bg-success-500 ring-4 ring-slate-900' : 'bg-slate-800'} transition-colors"></div>
-                  <p class="text-sm font-bold ${isPaid(order) ? 'text-white' : 'text-slate-500'}">Pagamento Confirmado</p>
-                  <p class="text-[10px] text-slate-500">Via ${order.paymentMethod ? order.paymentMethod.toUpperCase() : 'Sistema'}</p>
+                  <div class="absolute -left-[9px] top-1 w-4 h-4 rounded-full ${order.isPaid ? 'bg-success-500 ring-4 ring-slate-900' : 'bg-slate-800'} transition-colors"></div>
+                  <p class="text-sm font-bold ${order.isPaid ? 'text-white' : 'text-slate-500'}">Dedução de Saldo</p>
+                  <p class="text-[10px] text-slate-500">Via ${order.paymentMethod === 'wallet' ? 'CARTEIRA PAYGO' : (order.paymentMethod || 'Sistema')}</p>
                 </div>
 
                 <div class="relative pl-6">
                   <div class="absolute -left-[9px] top-1 w-4 h-4 rounded-full ${isCompleted ? 'bg-brand-500 ring-4 ring-slate-900' : 'bg-slate-800'} transition-colors"></div>
-                  <p class="text-sm font-bold ${isCompleted ? 'text-brand-400' : 'text-slate-500'}">Finalizado (Entregue)</p>
+                  <p class="text-sm font-bold ${isCompleted ? 'text-brand-400' : 'text-slate-500'}">Operação Finalizada</p>
                   <p class="text-[10px] text-slate-500">Logística Fechada</p>
                 </div>
 
@@ -388,19 +388,118 @@
     function renderErrorCard() {
       const container = document.getElementById('dataState');
       container.innerHTML = `
-        <div class="glass-card p-16 text-center animate-slide-up rounded-2xl border border-danger-500/30">
+        <div class="glass-card p-16 text-center animate-[slideUp_0.5s_ease-out_forwards] rounded-2xl border border-danger-500/30">
           <div class="w-20 h-20 bg-danger-500/10 border border-danger-500/30 rounded-full flex items-center justify-center mx-auto mb-5 text-danger-400">
             <i data-lucide="shield-alert" class="w-10 h-10"></i>
           </div>
           <h3 class="text-2xl font-display font-bold text-white mb-2">Auditoria Falhou</h3>
-          <p class="text-slate-400 font-medium max-w-md mx-auto">Não existe nenhuma fatura ou pedido com este identificador. Por favor confirme o código com o cliente.</p>
+          <p class="text-slate-400 font-medium max-w-md mx-auto">Não existe nenhuma fatura ou pedido com este identificador. Por favor confirme a referência de 6 dígitos.</p>
         </div>
       `;
       container.classList.remove('hidden');
       lucide.createIcons();
     }
 
-    // Motores de Saída
+    function formatMZN(val) { return new Intl.NumberFormat('pt-MZ', { minimumFractionDigits: 2 }).format(val || 0) + ' MT'; }
+
+    // ==========================================
+    // 🖨️ MOTOR DE GERAÇÃO DE PDF PROFISSIONAL
+    // ==========================================
+    async function buildProfessionalPDF(order) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: "p", unit: "mm", format: "a4" });
+      const dark = [15, 23, 42];
+      const baseMZ = order.usd * (order.exchangeRate || 85);
+      const isCompleted = order.status === 'completed' || order.isPaid === true;
+
+      // Marca de Água (Se Pago)
+      if (isCompleted) {
+        doc.setTextColor(220, 252, 231); 
+        doc.setFontSize(100); doc.setFont("helvetica", "bold");
+        doc.text("PAGO", 105, 160, { angle: 45, align: "center" });
+      }
+
+      // Cabeçalho Oficial
+      doc.setFillColor(...dark); doc.rect(0, 0, 210, 45, 'F');
+      doc.setTextColor(255, 255, 255); doc.setFontSize(28); doc.setFont("helvetica", "bold"); doc.text("PayGo", 16, 26);
+      doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.text("Moçambique Sem Fronteiras.", 55, 26);
+
+      // QR Code de Autenticidade
+      try {
+        const qr = await QRCode.toDataURL(`https://paygo.co.mz/rastreio.html?id=${order.orderId}`, { margin: 0, color: { dark: '#0f172a', light: '#ffffff' } });
+        doc.addImage(qr, 'PNG', 170, 10, 20, 20);
+        doc.setFontSize(6); doc.setFont("helvetica", "bold"); doc.text("RASTREIO RÁPIDO", 180, 34, { align: "center" });
+      } catch(e) {}
+
+      // Título do Documento
+      doc.setTextColor(...dark); doc.setFontSize(22); doc.setFont("helvetica", "bold"); doc.text("FATURA COMERCIAL", 16, 60);
+      doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.setTextColor(100, 116, 139);
+      doc.text(`Cód. Transação:`, 16, 68); doc.setTextColor(0, 0, 0); doc.setFont("helvetica", "bold"); doc.text(order.orderId, 48, 68);
+      doc.setTextColor(100, 116, 139); doc.setFont("helvetica", "normal"); doc.text(`Data Emissão:`, 16, 74);
+      doc.setTextColor(0, 0, 0); doc.setFont("helvetica", "bold"); doc.text(new Date().toLocaleDateString('pt-MZ'), 48, 74);
+
+      // Caixa do Cliente
+      doc.setFillColor(248, 250, 252); doc.rect(110, 52, 84, 30, 'F');
+      doc.setFontSize(8); doc.setTextColor(148, 163, 184); doc.setFont("helvetica", "bold"); doc.text("ENTIDADE COBRADA:", 115, 60);
+      doc.setFontSize(11); doc.setTextColor(0, 0, 0); doc.text(order.name || "Cliente PayGo", 115, 66);
+      doc.setFontSize(9); doc.setFont("helvetica", "normal"); doc.setTextColor(71, 85, 105);
+      doc.text(order.whatsapp || order.phone || "S/ Telefone Registado", 115, 72); 
+      doc.text(order.email || "S/ Email Registado", 115, 78);
+
+      // 🦎 Lógica do Camaleão no PDF: Descrição dinâmica
+      let descricaoFatura = `Pagamento de Serviço Internacional\nRef: ${(order.detail || "S/N").split('|')[0].trim().substring(0, 60)}`;
+      
+      if (order.category === 'physical' && order.shipping) {
+          descricaoFatura += `\nMorada de Entrega: ${order.shipping.shipCity} - ${order.shipping.shipZip}`;
+      } else if (order.category === 'game' || order.category === 'digital') {
+          if (order.digitalData && order.digitalData.accountOrId) {
+             descricaoFatura += `\nCredencial a Carregar: ${order.digitalData.accountOrId}`;
+          }
+      }
+
+      // Tabela de Preços
+      doc.autoTable({
+        startY: 95,
+        head: [['DESCRIÇÃO TÉCNICA', 'QTD', 'CÂMBIO', 'MONTANTE (MT)']],
+        body: [[descricaoFatura, '1', `${order.exchangeRate || 85} MT`, formatMZN(baseMZ)]],
+        theme: 'plain', headStyles: { fillColor: [241, 245, 249], textColor: [15, 23, 42], fontStyle: 'bold', fontSize: 9 },
+        bodyStyles: { textColor: [51, 65, 85], fontSize: 10, cellPadding: 8 },
+        columnStyles: { 0: { cellWidth: 80 }, 1: { halign: 'center' }, 2: { halign: 'center' }, 3: { halign: 'right', fontStyle: 'bold', textColor: [0,0,0] } },
+        didDrawCell: function(data) {
+          if (data.section === 'head') {
+            doc.setDrawColor(226, 232, 240); doc.setLineWidth(0.5);
+            doc.line(data.cell.x, data.cell.y + data.cell.height, data.cell.x + data.cell.width, data.cell.y + data.cell.height);
+          }
+        }
+      });
+
+      // Cálculos Finais
+      let fY = doc.lastAutoTable.finalY + 12;
+      doc.setFontSize(10); doc.setTextColor(100, 116, 139); doc.text("Valor Base:", 140, fY); doc.text("Taxa Serviço:", 140, fY + 8);
+      doc.setTextColor(0, 0, 0); doc.setFont("helvetica", "bold"); doc.text(formatMZN(baseMZ), 194, fY, { align: "right" });
+      doc.text(order.tax === 0 ? "ISENTO (Promo)" : formatMZN(order.tax), 194, fY + 8, { align: "right" });
+
+      doc.setFillColor(isCompleted ? 220 : 241, isCompleted ? 252 : 245, isCompleted ? 231 : 249); 
+      doc.rect(130, fY + 14, 66, 14, 'F');
+      doc.setFontSize(14); doc.setTextColor(isCompleted ? 21 : 37, isCompleted ? 128 : 99, isCompleted ? 61 : 235); 
+      doc.text("TOTAL PAGO", 134, fY + 23);
+      doc.setFontSize(16); doc.text(formatMZN(order.total), 194, fY + 23, { align: "right" });
+
+      doc.setFontSize(8); doc.setTextColor(148, 163, 184); doc.setFont("helvetica", "bold"); doc.text("MÉTODO DE COBRANÇA", 16, fY + 5);
+      doc.setFont("helvetica", "normal"); doc.setTextColor(0, 0, 0); 
+      
+      const metodoPagamento = order.paymentMethod === 'wallet' ? "SALDO DA CARTEIRA PAYGO" : (order.paymentMethod ? order.paymentMethod.toUpperCase() : "M-PESA / E-MOLA");
+      doc.text(metodoPagamento, 16, fY + 10);
+      
+      // Rodapé Legal
+      doc.setFontSize(7); doc.setTextColor(148, 163, 184); doc.setFont("helvetica", "normal");
+      doc.text("A PayGo Moçambique atua como facilitadora tecnológica de pagamentos e logística internacional.\nEste documento tem validade legal e digital (Art. 14 da Lei das Transações Eletrónicas de Moçambique).", 105, 280, { align: "center" });
+      return doc;
+    }
+
+    // ==========================================
+    // 📤 AÇÕES DE SAÍDA (PDF, WhatsApp, Email)
+    // ==========================================
     window.exportDocument = async function() {
       if (!currentOrder) return;
       const btn = document.getElementById('btnPdf');
@@ -410,11 +509,12 @@
         lucide.createIcons({root: btn});
         const doc = await buildProfessionalPDF(currentOrder);
         doc.save(`PAYGO_FATURA_${currentOrder.orderId}.pdf`);
-        showToast("Download iniciado.", "success");
+        showToast("Download da fatura concluído.", "success");
       } catch(e) {
-        showToast("Erro ao compilar PDF.", "error");
+        showToast("Erro de memória ao compilar PDF.", "error");
       } finally {
         btn.innerHTML = origHtml;
+        lucide.createIcons({root: btn});
       }
     };
 
@@ -432,20 +532,19 @@
         if (phone.length === 9 && ['84','85','86','87'].includes(phone.substring(0,2))) phone = '258' + phone;
 
         const isCompleted = currentOrder.status === 'completed' || currentOrder.isPaid;
-        const msg = encodeURIComponent(`Olá *${currentOrder.name || 'Cliente'}*! 👋\n\n🧾 *Fatura PayGo: ${currentOrder.orderId}*\nEstado: ${isCompleted ? '✅ PAGO' : '⏳ AGUARDA PAGAMENTO'}\nValor: *${formatMZN(currentOrder.total)}*\n\nA sua fatura oficial segue em anexo (Verifique o QR Code de autenticidade). Obrigado! 🇲🇿`);
+        const msg = encodeURIComponent(`Olá *${currentOrder.name || 'Cliente'}*! 👋\n\n🧾 *Fatura Eletrónica PayGo: ${currentOrder.orderId}*\nEstado: ${isCompleted ? '✅ PAGO' : '⏳ AGUARDA PAGAMENTO'}\nValor Debitado: *${formatMZN(currentOrder.total)}*\n\nA sua fatura segue em anexo (Verifique o QR Code para rastrear a sua encomenda). Obrigado por usar a PayGo! 🇲🇿`);
         
         doc.save(`Fatura_PayGo_${currentOrder.orderId}.pdf`);
         window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
-        showToast("PDF guardado. Anexe ao WhatsApp.", "info");
-
+        showToast("PDF baixado para anexar à mensagem.", "info");
       } catch (e) {
-        showToast("Erro no WhatsApp.", "error");
+        showToast("Erro na ligação à API do WhatsApp.", "error");
       } finally {
         btn.innerHTML = origHtml;
+        lucide.createIcons({root: btn});
       }
     };
 
-    // 🚀 NOVO: Integração Inteligente com a API (Recibo HTML no E-mail)
     window.notifyEmail = async function() {
       if (!currentOrder) return;
       const btn = document.getElementById('btnEmail');
@@ -453,154 +552,75 @@
       
       const email = currentOrder.email;
       if (!email || !email.includes('@')) {
-        return showToast("O cliente não tem um endereço de email válido registado.", "error");
+        return showToast("Cliente sem endereço de email válido.", "error");
       }
 
       try {
         btn.disabled = true;
-        btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A Enviar...`;
+        btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A Ligar ao Servidor...`;
         lucide.createIcons({root: btn});
         
         const isCompleted = currentOrder.status === 'completed' || currentOrder.isPaid === true;
         
-        // 🎨 Geração do Recibo Dinâmico em HTML
         const statusHtml = isCompleted 
-          ? '<span style="background: #dcfce7; color: #166534; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px;">✅ PAGO</span>'
+          ? '<span style="background: #dcfce7; color: #166534; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px;">✅ PAGO / SALDO DEBITADO</span>'
           : '<span style="background: #fef9c3; color: #92400e; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px;">⏳ AGUARDA PAGAMENTO</span>';
 
         const msgHTML = `
-          <p>A sua fatura eletrónica referente ao pedido <strong>${currentOrder.orderId}</strong> já se encontra disponível no nosso sistema.</p>
+          <p>O seu pedido/fatura <strong>${currentOrder.orderId}</strong> foi sincronizado no nosso sistema.</p>
           <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 12px; margin: 20px 0;">
-            <h3 style="margin: 0 0 16px 0; color: #334155; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Resumo Financeiro</h3>
+            <h3 style="margin: 0 0 16px 0; color: #334155; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Extrato Financeiro</h3>
             <table style="width: 100%; border-collapse: collapse;">
               <tr>
                 <td style="padding: 8px 0; color: #64748b; font-size: 14px; border-bottom: 1px dashed #e2e8f0;">Estado</td>
                 <td style="padding: 8px 0; text-align: right; border-bottom: 1px dashed #e2e8f0;">${statusHtml}</td>
               </tr>
               <tr>
-                <td style="padding: 8px 0; color: #64748b; font-size: 14px; border-bottom: 1px dashed #e2e8f0;">Data de Emissão</td>
-                <td style="padding: 8px 0; color: #0f172a; font-weight: bold; text-align: right; font-size: 14px; border-bottom: 1px dashed #e2e8f0;">${new Date().toLocaleDateString('pt-MZ')}</td>
+                <td style="padding: 8px 0; color: #64748b; font-size: 14px; border-bottom: 1px dashed #e2e8f0;">Método de Pagamento</td>
+                <td style="padding: 8px 0; color: #0f172a; font-weight: bold; text-align: right; font-size: 14px; border-bottom: 1px dashed #e2e8f0;">${currentOrder.paymentMethod === 'wallet' ? 'Carteira PayGo' : 'Padrão'}</td>
               </tr>
               <tr>
-                <td style="padding: 16px 0 0 0; color: #0f172a; font-weight: 800; font-size: 16px;">TOTAL LÍQUIDO</td>
-                <td style="padding: 16px 0 0 0; color: #16a34a; font-weight: 800; text-align: right; font-size: 18px;">${formatMZN(currentOrder.total)}</td>
+                <td style="padding: 16px 0 0 0; color: #0f172a; font-weight: 800; font-size: 16px;">TOTAL</td>
+                <td style="padding: 16px 0 0 0; color: #3b82f6; font-weight: 800; text-align: right; font-size: 18px;">${formatMZN(currentOrder.total)}</td>
               </tr>
             </table>
           </div>
-          <p style="font-size: 13px; color: #64748b; text-align: center;">Para obter o documento oficial em formato PDF para a sua contabilidade, por favor solicite aos nossos agentes através do WhatsApp ou contacte o suporte.</p>
+          <p style="font-size: 13px; color: #64748b; text-align: center;">Acompanhe o estado da sua encomenda em tempo real fazendo login na plataforma PayGo.</p>
         `;
 
-        // Chamada à API da Vercel (Pedimos o template 'default' e enviamos o HTML acima)
         const response = await fetch('/api/send-email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             to: email,
-            subject: `🧾 Fatura Eletrónica PayGo - ${currentOrder.orderId}`,
-            template: 'default', // O motor usa o design base 
+            subject: `🧾 Atualização do Pedido PayGo - ${currentOrder.orderId}`,
+            template: 'default',
             type: 'transactional',
-            variables: { 
-              customer_name: currentOrder.name,
-              message: msgHTML // Injetamos o nosso recibo HTML direto para o cliente!
-            }
+            variables: { customer_name: currentOrder.name, message: msgHTML }
           })
         });
 
         if (response.ok) {
-          showToast("Fatura enviada com sucesso para a caixa de correio do cliente!", "success");
+          showToast("Recibo eletrónico injetado na caixa de correio do cliente!", "success");
         } else {
-          throw new Error('Falha no servidor de emails');
+          throw new Error('Falha no router de emails');
         }
 
       } catch (e) {
-        showToast("Erro ao comunicar com o servidor de emails (Resend).", "error");
+        showToast("Ocorreu um erro no servidor Resend.", "error");
         console.error(e);
       } finally {
         btn.disabled = false;
         btn.innerHTML = origHtml;
         lucide.createIcons({root: btn});
       }
-    }
-
-    async function buildProfessionalPDF(order) {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({ orientation: "p", unit: "mm", format: "a4" });
-      const primary = [37, 99, 235]; const dark = [15, 23, 42];
-      const baseMZ = order.usd * (order.exchangeRate || 88);
-      const isCompleted = order.status === 'completed' || order.isPaid === true;
-
-      if (isCompleted) {
-        doc.setTextColor(220, 252, 231); 
-        doc.setFontSize(100); doc.setFont("helvetica", "bold");
-        doc.text("PAGO", 105, 160, { angle: 45, align: "center" });
-      }
-
-      doc.setFillColor(...dark); doc.rect(0, 0, 210, 45, 'F');
-      doc.setTextColor(255, 255, 255); doc.setFontSize(28); doc.setFont("helvetica", "bold"); doc.text("PayGo", 16, 26);
-      doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.text("Moçambique Sem Fronteiras.", 55, 26);
-
-      try {
-        const qr = await QRCode.toDataURL(`https://paygo.co.mz/validar?id=${order.orderId}`, { margin: 0, color: { dark: '#0f172a', light: '#ffffff' } });
-        doc.addImage(qr, 'PNG', 170, 10, 20, 20);
-        doc.setFontSize(6); doc.setFont("helvetica", "bold"); doc.text("VALIDAÇÃO DIGITAL", 180, 34, { align: "center" });
-      } catch(e) {}
-
-      doc.setTextColor(...dark); doc.setFontSize(22); doc.setFont("helvetica", "bold"); doc.text("FATURA COMERCIAL", 16, 60);
-      doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.setTextColor(100, 116, 139);
-      doc.text(`Cód. Transação:`, 16, 68); doc.setTextColor(0, 0, 0); doc.setFont("helvetica", "bold"); doc.text(order.orderId, 48, 68);
-      doc.setTextColor(100, 116, 139); doc.setFont("helvetica", "normal"); doc.text(`Data Emissão:`, 16, 74);
-      doc.setTextColor(0, 0, 0); doc.setFont("helvetica", "bold"); doc.text(new Date().toLocaleDateString('pt-MZ'), 48, 74);
-
-      doc.setFillColor(248, 250, 252); doc.rect(110, 52, 84, 30, 'F');
-      doc.setFontSize(8); doc.setTextColor(148, 163, 184); doc.setFont("helvetica", "bold"); doc.text("ENTIDADE COBRADA:", 115, 60);
-      doc.setFontSize(11); doc.setTextColor(0, 0, 0); doc.text(order.name || "Cliente PayGo", 115, 66);
-      doc.setFontSize(9); doc.setFont("helvetica", "normal"); doc.setTextColor(71, 85, 105);
-      doc.text(order.whatsapp || order.phone || "S/ Telefone Registado", 115, 72); 
-      doc.text(order.email || "S/ Email Registado", 115, 78);
-
-      doc.autoTable({
-        startY: 95,
-        head: [['DESCRIÇÃO TÉCNICA', 'QTD', 'CÂMBIO', 'MONTANTE (MT)']],
-        body: [[`Pagamento de Produtos/Serviços Internacionais\nRef: ${(order.detail || "S/N").substring(0,60)}`, '1', `${order.exchangeRate || 88} MT`, formatMZN(baseMZ)]],
-        theme: 'plain', headStyles: { fillColor: [241, 245, 249], textColor: [15, 23, 42], fontStyle: 'bold', fontSize: 9 },
-        bodyStyles: { textColor: [51, 65, 85], fontSize: 10, cellPadding: 8 },
-        columnStyles: { 0: { cellWidth: 80 }, 1: { halign: 'center' }, 2: { halign: 'center' }, 3: { halign: 'right', fontStyle: 'bold', textColor: [0,0,0] } },
-        didDrawCell: function(data) {
-          if (data.section === 'head') {
-            doc.setDrawColor(226, 232, 240); doc.setLineWidth(0.5);
-            doc.line(data.cell.x, data.cell.y + data.cell.height, data.cell.x + data.cell.width, data.cell.y + data.cell.height);
-          }
-        }
-      });
-
-      let fY = doc.lastAutoTable.finalY + 12;
-      doc.setFontSize(10); doc.setTextColor(100, 116, 139); doc.text("Valor Parcial:", 140, fY); doc.text("Taxa PayGo:", 140, fY + 8);
-      doc.setTextColor(0, 0, 0); doc.setFont("helvetica", "bold"); doc.text(formatMZN(baseMZ), 194, fY, { align: "right" });
-      doc.text(order.tax === 0 ? "ISENTO (Bónus)" : formatMZN(order.tax), 194, fY + 8, { align: "right" });
-
-      doc.setFillColor(isCompleted ? 220 : 241, isCompleted ? 252 : 245, isCompleted ? 231 : 249); 
-      doc.rect(130, fY + 14, 66, 14, 'F');
-      doc.setFontSize(14); doc.setTextColor(isCompleted ? 21 : 37, isCompleted ? 128 : 99, isCompleted ? 61 : 235); 
-      doc.text("TOTAL LÍQUIDO", 134, fY + 23);
-      doc.setFontSize(16); doc.text(formatMZN(order.total), 194, fY + 23, { align: "right" });
-
-      doc.setFontSize(8); doc.setTextColor(148, 163, 184); doc.setFont("helvetica", "bold"); doc.text("CANAL DE LIQUIDAÇÃO", 16, fY + 5);
-      doc.setFont("helvetica", "normal"); doc.setTextColor(0, 0, 0); doc.text(order.paymentMethod ? order.paymentMethod.toUpperCase() : "M-Pesa / e-Mola", 16, fY + 10);
-      
-      doc.setFontSize(7); doc.setTextColor(148, 163, 184); doc.setFont("helvetica", "normal");
-      doc.text("A PayGo Moçambique atua como prestadora de serviços de intermediação financeira.\nEste documento tem validade legal e digital, dispensando carimbo físico. Suporte: contact@paygo.co.mz", 105, 280, { align: "center" });
-      return doc;
-    }
-
-    // Helpers UI
-    function formatMZN(val) { return new Intl.NumberFormat('pt-MZ', { minimumFractionDigits: 2 }).format(val || 0) + ' MT'; }
-    function isPaid(order) { return order.status === 'completed' || order.isPaid === true; }
+    };
 
     function showToast(msg, type = 'success') {
       const container = document.getElementById('toastContainer');
       const t = document.createElement('div');
       const isErr = type === 'error', isWarn = type === 'warning';
-      const bg = isErr ? 'bg-danger-500/95 border-danger-400' : isWarn ? 'bg-warning-500/95 border-warning-400' : 'bg-slate-900/95 border-slate-700';
+      const bg = isErr ? 'bg-danger-500/95 border-danger-400' : isWarn ? 'bg-warning-500/95 border-warning-400' : 'bg-slate-900/95 border-brand-500';
       const icon = isErr ? 'alert-octagon text-danger-400' : isWarn ? 'alert-triangle text-warning-400' : 'check-check text-brand-400';
       
       t.className = `flex items-center gap-3 px-5 py-4 rounded-xl shadow-2xl backdrop-blur-xl transform transition-all duration-400 translate-x-full border ${bg}`;
@@ -612,7 +632,6 @@
       setTimeout(() => { t.classList.add('opacity-0', 'translate-x-8'); setTimeout(() => t.remove(), 400); }, 5000);
     }
 
-    // Mobile Sidebar Logic
     const mobileMenuBtn = document.getElementById('mobileMenuBtn');
     const sidebar = document.getElementById('sidebar');
     const sidebarOverlay = document.getElementById('sidebarOverlay');
@@ -634,8 +653,7 @@
 
     window.logout = async function() {
       if(confirm('Encerrar sessão de administração?')) {
-        await signOut(auth);
-        window.location.href = '../login.html';
+        await signOut(auth); window.location.href = '../login.html';
       }
     }
 
