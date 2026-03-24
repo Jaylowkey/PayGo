@@ -943,7 +943,7 @@ const FIREBASE_CONFIG = {
     measurementId: "G-N9E391HCFL"
 };
 
-const WHATSAPP_NUMBER = '258837522255'; // Atualizado para o correto do footer
+const WHATSAPP_NUMBER = '258837522255'; 
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc, query, where, getDocs, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -1051,7 +1051,7 @@ window.processDirectPayment = async function() {
     const origHtml = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Processando...`;
-    lucide.createIcons({root: btn});
+    if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
 
     // Calcula Totais
     const converted = usd * BINANCE_RATE;
@@ -1077,7 +1077,7 @@ window.processDirectPayment = async function() {
         category: serviceType === 'jogo' ? 'game' : 'physical',
         isFirstPurchase: isFirst,
         referredBy: affiliateRef,
-        createdAt: serverTimestamp(),
+        createdAt: window.PayGoDB.serverTimestamp(),
         source: 'direct-checkout'
     };
 
@@ -1088,7 +1088,8 @@ window.processDirectPayment = async function() {
             
             if (currentBalance < totalFinal) {
                 showToast(`Saldo insuficiente. O seu saldo é ${formatMZN(currentBalance)}. Deposite primeiro.`, 'error');
-                btn.disabled = false; btn.innerHTML = origHtml; lucide.createIcons({root: btn});
+                btn.disabled = false; btn.innerHTML = origHtml; 
+                if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
                 setTimeout(() => window.location.href = 'dashboard.html', 3000);
                 return;
             }
@@ -1151,12 +1152,13 @@ window.processDirectPayment = async function() {
 
     } catch (err) {
         showToast(err.message || 'Falha ao iniciar pagamento.', 'error');
-        btn.disabled = false; btn.innerHTML = origHtml; lucide.createIcons({root: btn});
+        btn.disabled = false; btn.innerHTML = origHtml; 
+        if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
     }
 };
 
 // ========================================================================
-// 🚀 ENVIAR PEDIDO VIA WHATSAPP
+// 🚀 ENVIAR PEDIDO VIA WHATSAPP (COM ADD TO CART AUTO)
 // ========================================================================
 document.getElementById('paygoForm').addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -1192,10 +1194,12 @@ document.getElementById('paygoForm').addEventListener('submit', async function(e
     const tax = (formData.usd <= 5 && formData.isFirst) ? 0 : (formData.usd <= 20 ? 150 : (formData.usd <= 50 ? 250 : (formData.usd <= 100 ? 600 : converted * 0.07)));
     const total = converted + tax;
     const orderId = 'PG-' + Date.now().toString().slice(-6).toUpperCase();
+    const affiliateRef = localStorage.getItem('paygo_affiliate_ref') || null;
 
     const orderData = {
         orderId, ...formData, tax, total, exchangeRate: BINANCE_RATE, status: 'pending', isPaid: false, userId: currentFirebaseUser.uid,
         category: formData.type === 'jogo' ? 'game' : 'physical',
+        referredBy: affiliateRef,
         createdAt: window.PayGoDB.serverTimestamp()
     };
 
@@ -1211,7 +1215,9 @@ document.getElementById('paygoForm').addEventListener('submit', async function(e
         
         const tipoServico = formData.type === 'compra' ? 'Produto Internacional' : 'Jogo / Recarga';
         const metodoPgto = formData.paymentMethod === 'wallet' ? 'CARTEIRA PAYGO' : formData.paymentMethod.toUpperCase();
-        const msg = `*NOVO PEDIDO PAYGO* 🛒\n--------------------------------------\n*🆔 Ref:* #${orderId}\n*👤 Cliente:* ${formData.name}\n*🛍️ DADOS DO SERVIÇO*\n*Categoria:* ${tipoServico}\n*Detalhe:* ${formData.detail}\n*Valor:* $${formData.usd.toFixed(2)} USD\n\n*💰 TOTAL:* ${total.toFixed(2)} MT\n*💳 MÉTODO:* ${metodoPgto}\n\n_Aguardando instruções..._`;
+        const bonusTxt = (formData.isFirst && tax === 0) ? ' (1ª Compra Grátis 🎁)' : '';
+
+        const msg = `*NOVO PEDIDO PAYGO* 🛒\n--------------------------------------\n*🆔 Ref:* #${orderId}\n*👤 Cliente:* ${formData.name}\n*📱 Contacto:* ${formData.whatsapp}\n*📧 Email:* ${formData.email}\n\n*🛍️ DADOS DO SERVIÇO*\n*Categoria:* ${tipoServico}\n*Detalhe/Link:* ${formData.detail}\n*Valor em Dólar:* $${formData.usd.toFixed(2)} USD\n\n*💰 RESUMO FINANCEIRO*\n*Câmbio Base:* ${BINANCE_RATE.toFixed(2)} MT\n*Taxa PayGo:* ${tax.toFixed(2)} MT${bonusTxt}\n*TOTAL A PAGAR:* ${total.toFixed(2)} MT\n\n*💳 MÉTODO DE PAGAMENTO*\n${metodoPgto}\n\n_Aguardando instruções da equipa..._`;
 
         setTimeout(() => {
             window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
@@ -1226,7 +1232,7 @@ document.getElementById('paygoForm').addEventListener('submit', async function(e
 });
 
 // ========================================================================
-// 🔐 AUTENTICAÇÃO E RENDERIZAÇÃO DA NAVBAR
+// 🔐 AUTENTICAÇÃO E CONTROLO DE HEADER (CORRIGIDO E BLINDADO)
 // ========================================================================
 function formatMZN(val) { return new Intl.NumberFormat('pt-MZ', { minimumFractionDigits: 2 }).format(val || 0); }
 
@@ -1250,16 +1256,16 @@ onAuthStateChanged(auth, async (user) => {
                 const userName = currentUserData.name || 'Cliente';
                 const walletBal = parseFloat(currentUserData.walletBalance) || 0;
                 
-                document.getElementById('headerUserName').textContent = userName;
-                document.getElementById('headerUserAvatar').textContent = userName.charAt(0).toUpperCase();
-                document.getElementById('headerWalletBalance').textContent = formatMZN(walletBal) + ' MT';
+                // Blindagem: Verifica se os IDs existem antes de os alterar
+                if(document.getElementById('headerUserName')) document.getElementById('headerUserName').textContent = userName;
+                if(document.getElementById('headerWalletBalance')) document.getElementById('headerWalletBalance').textContent = formatMZN(walletBal) + ' MT';
                 
                 if(document.getElementById('mobileUserName')) document.getElementById('mobileUserName').textContent = userName;
                 if(document.getElementById('mobileWalletBalance')) document.getElementById('mobileWalletBalance').textContent = formatMZN(walletBal) + ' MT';
 
                 if(currentUserData.role === 'admin' || currentUserData.role === 'superadmin') {
-                    document.getElementById('adminDashboardLink')?.classList.remove('hidden');
-                    document.getElementById('mobileAdminLink')?.classList.remove('hidden');
+                    if(document.getElementById('adminDashboardLink')) document.getElementById('adminDashboardLink').classList.remove('hidden');
+                    if(document.getElementById('mobileAdminLink')) document.getElementById('mobileAdminLink').classList.remove('hidden');
                 }
 
                 if(document.getElementById('userName')) document.getElementById('userName').value = userName;
@@ -1271,6 +1277,7 @@ onAuthStateChanged(auth, async (user) => {
     } else {
         currentFirebaseUser = null;
         currentUserData = null;
+        
         if(userSection) userSection.style.display = 'none';
         if(guestSection) guestSection.style.display = 'flex';
         if(mobileUser) { mobileUser.classList.add('hidden'); mobileUser.classList.remove('flex'); }
@@ -1293,13 +1300,13 @@ window.logoutFromHeader = async function() {
 // ========================================================================
 window.openTrackingModal = function() {
     document.getElementById('trackingModal').classList.add('active');
-    document.getElementById('trackResult').classList.add('hidden');
-    document.getElementById('trackOrderId').value = '';
+    if(document.getElementById('trackResult')) document.getElementById('trackResult').classList.add('hidden');
+    if(document.getElementById('trackOrderId')) document.getElementById('trackOrderId').value = '';
     document.body.style.overflow = 'hidden';
 };
 
 window.closeTrackingModal = function() {
-    document.getElementById('trackingModal').classList.remove('active');
+    if(document.getElementById('trackingModal')) document.getElementById('trackingModal').classList.remove('active');
     document.body.style.overflow = '';
 };
 
@@ -1314,7 +1321,7 @@ window.trackOrderAction = async function() {
     
     resultDiv.classList.remove('hidden');
     resultDiv.innerHTML = '<div class="flex flex-col items-center"><i data-lucide="loader-2" class="animate-spin w-8 h-8 text-brand-500 mb-2"></i><p class="text-sm font-medium text-slate-500">A buscar informações...</p></div>';
-    lucide.createIcons();
+    if(typeof lucide !== 'undefined') lucide.createIcons();
 
     try {
         const q = window.PayGoDB.query(window.PayGoDB.collection(window.PayGoDB.db, "orders"), window.PayGoDB.where("orderId", "==", idInput));
@@ -1322,7 +1329,8 @@ window.trackOrderAction = async function() {
 
         if(snap.empty) {
             resultDiv.innerHTML = '<div class="text-center"><i data-lucide="search-x" class="w-10 h-10 text-slate-300 mx-auto mb-2"></i><p class="text-red-500 font-bold">Pedido não encontrado.</p><p class="text-xs text-slate-500 mt-1">Verifique o código e tente novamente.</p></div>';
-            lucide.createIcons(); return;
+            if(typeof lucide !== 'undefined') lucide.createIcons();
+            return;
         }
         
         const order = snap.docs[0].data();
@@ -1382,7 +1390,7 @@ window.trackOrderAction = async function() {
                 ${trackingHtml}
             </div>
         `;
-        lucide.createIcons();
+        if(typeof lucide !== 'undefined') lucide.createIcons();
     } catch(e) {
         console.error("Erro rastreio:", e);
         resultDiv.innerHTML = '<p class="text-red-500 text-sm font-bold">Erro ao contactar o servidor.</p>';
@@ -1406,8 +1414,11 @@ window.updatePaymentMethod = function() {
 };
 
 window.calculate = function() {
-    const usd = parseFloat(document.getElementById('userUSD').value) || 0;
-    const isFirst = document.getElementById('chkFirstPurchase').checked;
+    const userUsdElem = document.getElementById('userUSD');
+    const usd = parseFloat(userUsdElem ? userUsdElem.value : 0) || 0;
+    
+    const chkElem = document.getElementById('chkFirstPurchase');
+    const isFirst = chkElem ? chkElem.checked : false;
     
     const converted = usd * BINANCE_RATE;
     let tax = 0;
@@ -1415,25 +1426,25 @@ window.calculate = function() {
     
     if (usd > 0) {
         if (usd <= 5 && isFirst) {
-            tax = 0; badge.classList.remove('hidden');
+            tax = 0; if(badge) badge.classList.remove('hidden');
         } else {
-            badge.classList.add('hidden');
+            if(badge) badge.classList.add('hidden');
             if (usd <= 20) tax = 150;
             else if (usd <= 50) tax = 250;
             else if (usd <= 100) tax = 600;
             else tax = converted * 0.07;
         }
     } else {
-        badge.classList.add('hidden');
+        if(badge) badge.classList.add('hidden');
     }
     
     const total = converted + tax;
     
-    document.getElementById('receipt-converted').textContent = `${converted.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`;
-    document.getElementById('receipt-tax').textContent = `${tax.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`;
+    if(document.getElementById('receipt-converted')) document.getElementById('receipt-converted').textContent = `${converted.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`;
+    if(document.getElementById('receipt-tax')) document.getElementById('receipt-tax').textContent = `${tax.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`;
     const totalRounded = Math.floor(total);
     const cents = Math.round((total % 1) * 100).toString().padStart(2, '0');
-    document.getElementById('receipt-total').innerHTML = `${totalRounded.toLocaleString('pt-MZ')}<span class="text-lg text-slate-400 font-normal">.${cents} MT</span>`;
+    if(document.getElementById('receipt-total')) document.getElementById('receipt-total').innerHTML = `${totalRounded.toLocaleString('pt-MZ')}<span class="text-lg text-slate-400 font-normal">.${cents} MT</span>`;
 };
 
 // ========================================================================
@@ -1451,10 +1462,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const menuBtn = document.getElementById('menu-btn');
     const mobileMenu = document.getElementById('mobile-menu');
     const closeMenuBtn = document.getElementById('close-menu-btn');
-    function toggleMenu() { mobileMenu.classList.toggle('translate-x-full'); document.body.classList.toggle('overflow-hidden'); }
+    function toggleMenu() { 
+        if(mobileMenu) mobileMenu.classList.toggle('translate-x-full'); 
+        document.body.classList.toggle('overflow-hidden'); 
+    }
     if (menuBtn) menuBtn.addEventListener('click', toggleMenu);
     if (closeMenuBtn) closeMenuBtn.addEventListener('click', toggleMenu);
-    document.querySelectorAll('.anchor-link').forEach(link => { link.addEventListener('click', () => { if (!mobileMenu.classList.contains('translate-x-full')) toggleMenu(); }); });
+    document.querySelectorAll('.anchor-link').forEach(link => { 
+        link.addEventListener('click', () => { 
+            if (mobileMenu && !mobileMenu.classList.contains('translate-x-full')) toggleMenu(); 
+        }); 
+    });
     
     window.addEventListener('scroll', function() {
         const nav = document.getElementById('navbar');
@@ -1464,7 +1482,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const urlParams = new URLSearchParams(window.location.search);
     const refCode = urlParams.get('ref');
     if (refCode) {
-        document.getElementById('redirectLoader').classList.remove('hidden');
+        if(document.getElementById('redirectLoader')) document.getElementById('redirectLoader').classList.remove('hidden');
         localStorage.setItem('paygo_affiliate_ref', refCode);
         setTimeout(() => { window.location.href = `register.html?ref=${refCode}`; }, 1500); 
     }
@@ -1475,10 +1493,34 @@ document.addEventListener('DOMContentLoaded', function() {
     const cookieKey = "paygo_cookies_v2";
 
     if (!localStorage.getItem(cookieKey) && cookieConsent) { setTimeout(() => { cookieConsent.classList.add("show"); }, 1500); }
-    const closeAndSave = (value) => { localStorage.setItem(cookieKey, value); cookieConsent.classList.remove("show"); };
+    const closeAndSave = (value) => { 
+        localStorage.setItem(cookieKey, value); 
+        if(cookieConsent) cookieConsent.classList.remove("show"); 
+    };
     if(btnAccept) btnAccept.addEventListener("click", () => closeAndSave('all'));
     if(btnReject) btnReject.addEventListener("click", () => closeAndSave('essential'));
 });
+
+// Toasts base
+function showToast(message, type = 'default', duration = 4000) {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  const icons = { success: 'check-circle', error: 'alert-circle', warning: 'alert-triangle', info: 'info' };
+  const colors = { success: 'text-green-500', error: 'text-red-500', warning: 'text-amber-500', info: 'text-blue-500', default: 'text-blue-500' };
+  toast.innerHTML = `
+    <i data-lucide="${icons[type] || icons.default}" class="${colors[type] || colors.default} w-5 h-5 flex-shrink-0" aria-hidden="true"></i>
+    <span class="text-sm font-medium text-slate-700">${message}</span>
+    <button class="ml-auto text-slate-400 hover:text-slate-600 transition focus:outline-none" onclick="this.parentElement.remove()" aria-label="Fechar notificação">
+    <i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>
+    </button>
+  `;
+  container.appendChild(toast);
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+  requestAnimationFrame(() => toast.classList.add('show'));
+  setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, duration);
+}
 </script>
 </body>
 </html>
