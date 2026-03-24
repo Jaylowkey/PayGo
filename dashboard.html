@@ -57,7 +57,14 @@
                     <p class="text-sm font-bold text-white" id="userName">A carregar...</p>
                     <p class="text-xs font-medium" id="userBadge"><span class="text-brand-400">Cliente Standard</span></p>
                 </div>
-                <button onclick="window.logout()" class="bg-slate-800 hover:bg-danger-500/20 text-slate-400 hover:text-danger-400 rounded-xl p-2.5 transition-colors" title="Terminar Sessão"><i data-lucide="power" class="w-5 h-5"></i></button>
+                <div class="flex items-center gap-2">
+                    <a href="index.html" class="bg-slate-800 hover:bg-brand-500/20 text-slate-400 hover:text-brand-400 rounded-xl p-2.5 transition-colors" title="Página Inicial">
+                        <i data-lucide="home" class="w-5 h-5"></i>
+                    </a>
+                    <button onclick="window.logout()" class="bg-slate-800 hover:bg-danger-500/20 text-slate-400 hover:text-danger-400 rounded-xl p-2.5 transition-colors" title="Terminar Sessão">
+                        <i data-lucide="power" class="w-5 h-5"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </header>
@@ -433,16 +440,13 @@
                         document.getElementById('vipCurrentStatusText').textContent = `O seu Plano VIP ${currentPlan} está ativo até ${expiryDateStr}.`;
                         
                         if (userData.vipPlan === 'anual') {
-                            // Se for Anual, esconde tudo, ele já tem o máximo.
                             document.getElementById('vipOptionMensal').classList.add('hidden');
                             document.getElementById('vipOptionAnual').classList.add('hidden');
                             document.getElementById('btnBuyVip').classList.add('hidden');
                         } else {
-                            // Se for Mensal, esconde o Mensal e mostra só o Upgrade para Anual
                             document.getElementById('vipOptionMensal').classList.add('hidden');
                             document.getElementById('vipOptionAnualLabel').textContent = 'Fazer Upgrade para Anual';
                             document.getElementById('vipAnualBadge').textContent = 'MUDAR PLANO';
-                            // Forçar seleção no Anual já que o mensal está escondido
                             document.querySelector('input[value="anual"]').checked = true;
                         }
                         lucide.createIcons();
@@ -477,24 +481,20 @@
         const labelUrl = document.getElementById('labelUrl');
         const labelDigital = document.getElementById('labelDigital');
         const digitalAccount = document.getElementById('digitalAccount');
-        const reqPhysicals = document.querySelectorAll('.physical-req'); // Inputs que são obrigatórios apenas em produtos físicos
+        const reqPhysicals = document.querySelectorAll('.physical-req'); 
 
         orderCategory.addEventListener('change', function(e) {
             const cat = e.target.value;
             
             if (cat === 'physical') {
-                // Modo Produto Físico (Padrão)
                 physicalFields.classList.remove('hidden');
                 digitalFields.classList.add('hidden');
                 labelUrl.textContent = "Link do Produto (AliExpress, Shein, etc.)";
-                // Devolve a obrigatoriedade aos campos de morada
                 reqPhysicals.forEach(el => el.setAttribute('required', 'true'));
                 digitalAccount.removeAttribute('required');
             } else {
-                // Modo Serviços Digitais ou Jogos
                 physicalFields.classList.add('hidden');
                 digitalFields.classList.remove('hidden');
-                // Retira a obrigatoriedade da morada
                 reqPhysicals.forEach(el => el.removeAttribute('required'));
                 digitalAccount.setAttribute('required', 'true');
                 
@@ -579,7 +579,7 @@
             btnSubmitOrder.disabled = true; warningBox.classList.add('hidden'); successBox.classList.add('hidden');
         }
 
-        // 🛒 MÁQUINA DE DÉBITO E COMPRA (ADAPTADA ÀS CATEGORIAS)
+        // 🛒 MÁQUINA DE DÉBITO E COMPRA
         document.getElementById('orderForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             if (btnSubmitOrder.disabled || currentCalculatedTotal <= 0) return;
@@ -597,18 +597,16 @@
                 const orderId = 'PG-' + Math.floor(100000 + Math.random() * 900000);
                 const cat = orderCategory.value;
                 
-                // Preparar a Payload consoante a Categoria!
                 let payloadData = {
                     orderId: orderId, userId: currentUser.uid, 
                     name: freshUser.data().name || '', email: freshUser.data().email || '', 
-                    category: cat, // Guardar se é produto, serviço ou jogo
+                    category: cat,
                     detail: `${document.getElementById('productUrl').value} | ${document.getElementById('productDetails').value}`,
                     usd: parseFloat(usdInput.value), exchangeRate: sysExchangeRate, tax: currentCalculatedTax, total: safeTotal,
                     paymentMethod: 'wallet', isPaid: true, status: 'processing', 
                     createdAt: serverTimestamp(), updatedAt: serverTimestamp()
                 };
 
-                // Se for Físico, guarda morada. Se for Digital, guarda a Conta/ID.
                 if (cat === 'physical') {
                     payloadData.shipping = {
                         shipName: document.getElementById('shipName').value,
@@ -632,7 +630,6 @@
                 isFirstPurchaseEligible = false; 
                 e.target.reset(); resetCalculator();
                 
-                // Reset da interface para o padrão
                 orderCategory.value = 'physical';
                 orderCategory.dispatchEvent(new Event('change'));
                 
@@ -641,7 +638,7 @@
             finally { btnSubmitOrder.disabled = true; btnSubmitOrder.innerHTML = `<i data-lucide="credit-card" class="w-5 h-5"></i> <span>Autorizar Pagamento Seguro</span>`; lucide.createIcons({root: btnSubmitOrder}); }
         });
 
-        // 🎮 GESTÃO DE MODAIS E TOP-UP (MANTIDOS)
+        // 🎮 GESTÃO DE MODAIS
         window.closeModals = function() {
             document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
         };
