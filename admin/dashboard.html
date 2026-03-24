@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dashboard | PayGo Moçambique</title>
+    <title>Dashboard Central | PayGo Admin</title>
     <meta name="robots" content="noindex, nofollow">
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
@@ -29,7 +29,6 @@
                         warning: { 400: '#fbbf24', 500: '#f59e0b' }
                     },
                     animation: {
-                        'spin-slow': 'spin 4s linear infinite',
                         'blob': 'blob 10s infinite',
                         'shimmer': 'shimmer 2s infinite linear',
                     },
@@ -54,47 +53,32 @@
         .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
         .glass-nav { background: rgba(2, 6, 23, 0.85); backdrop-filter: blur(20px) saturate(180%); border-bottom: 1px solid rgba(255,255,255,0.05); }
         .glass-card { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3); transition: all 0.4s ease; }
-        .glass-card:hover { border-color: rgba(255,255,255,0.1); transform: translateY(-4px); box-shadow: 0 30px 60px -12px rgba(59, 130, 246, 0.15); }
         
         .sidebar-link { position: relative; transition: all 0.3s ease; }
         .sidebar-link::before { content: ''; position: absolute; left: 0; top: 10%; height: 80%; width: 3px; background: transparent; border-radius: 0 4px 4px 0; transition: all 0.3s ease; }
         .sidebar-link:hover { background: rgba(255,255,255,0.03); color: #fff; }
         .sidebar-link.active { background: linear-gradient(90deg, rgba(59,130,246,0.1) 0%, transparent 100%); color: #60a5fa; font-weight: 700; }
         .sidebar-link.active::before { background: #3b82f6; box-shadow: 0 0 10px #3b82f6; }
-        .sidebar-link.affiliate-active { background: linear-gradient(90deg, rgba(34,197,94,0.1) 0%, transparent 100%); color: #4ade80; font-weight: 700; }
-        .sidebar-link.affiliate-active::before { background: #22c55e; box-shadow: 0 0 10px #22c55e; }
 
         .status-badge { padding: 6px 12px; border-radius: 8px; font-size: 10px; font-weight: 800; display: inline-flex; align-items: center; gap: 4px; text-transform: uppercase; letter-spacing: 0.05em; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1); }
         .status-pending { background: rgba(245, 158, 11, 0.1); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.2); }
         .status-processing { background: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); }
+        .status-shipped { background: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); }
         .status-completed { background: rgba(34, 197, 94, 0.1); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.2); }
         .status-cancelled { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
-        .status-refunded { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
         
         .skeleton { background: linear-gradient(90deg, rgba(30,41,59,0.5) 25%, rgba(51,65,85,0.5) 50%, rgba(30,41,59,0.5) 75%); background-size: 200% 100%; animation: shimmer 2s infinite; color: transparent !important; border-radius: 8px; }
         
-        .earnings-card { background: linear-gradient(135deg, #064e3b 0%, #022c22 100%); position: relative; border: 1px solid rgba(52, 211, 153, 0.2); }
-        .earnings-card::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at top right, rgba(52, 211, 153, 0.15), transparent 70%); pointer-events: none; }
-        .affiliate-badge { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); text-shadow: 0 0 10px rgba(74, 222, 128, 0.5); }
-
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #475569; }
         
-        .modal { display: none; position: fixed; inset: 0; z-index: 10000; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; }
-        .modal.active { display: flex; opacity: 1; }
-        .modal-overlay { position: absolute; inset: 0; background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(8px); }
-        .modal-content { position: relative; background: #0f172a; border-radius: 24px; padding: 0; max-width: 800px; width: 95%; max-height: 90vh; overflow-y: auto; transform: scale(0.95); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 30px 60px -10px rgba(0,0,0,0.8); display: flex; flex-direction: column; }
-        .modal.active .modal-content { transform: scale(1); }
-
         #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-        .toast-item { pointer-events: auto; display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-radius: 14px; color: white; font-weight: 600; font-size: 14px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); transform: translateX(120%); transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); border-left: 4px solid; background: rgba(15,23,42,0.95); backdrop-filter: blur(12px); border-top: 1px solid rgba(255,255,255,0.05); border-right: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .toast-item { pointer-events: auto; display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-radius: 14px; color: white; font-weight: 600; font-size: 14px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); transform: translateX(120%); transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); border-left: 4px solid; background: rgba(15,23,42,0.95); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); }
         .toast-item.show { transform: translateX(0); }
         
         .btn-action { transition: all 0.2s ease; position: relative; overflow: hidden; }
         .btn-action:active:not(:disabled) { transform: scale(0.96); }
-        select, input { background-color: rgba(15, 23, 42, 0.5) !important; color: white !important; color-scheme: dark; }
     </style>
 </head>
 <body class="selection:bg-brand-500 selection:text-white antialiased">
@@ -102,12 +86,11 @@
     <div id="sysLoader" class="fixed inset-0 bg-[#020617] z-[200] flex flex-col items-center justify-center transition-opacity duration-500">
         <div class="w-20 h-20 border-4 border-slate-800 border-t-brand-500 rounded-full animate-spin mb-6 shadow-[0_0_30px_rgba(59,130,246,0.3)]"></div>
         <h2 class="text-white text-3xl font-display font-extrabold tracking-tight">PayGo OS</h2>
-        <p class="text-slate-400 text-sm mt-2 font-medium">A sincronizar o seu ecossistema financeiro...</p>
+        <p class="text-slate-400 text-sm mt-2 font-medium">A conectar à Central de Comando...</p>
     </div>
 
     <div class="fixed inset-0 bg-grid opacity-20 pointer-events-none z-0"></div>
     <div class="fixed top-0 left-1/4 w-[800px] h-[600px] bg-brand-600/10 rounded-full mix-blend-screen blur-[120px] pointer-events-none z-0 animate-blob"></div>
-    <div class="fixed bottom-0 right-1/4 w-[600px] h-[600px] bg-purple-600/10 rounded-full mix-blend-screen blur-[120px] pointer-events-none z-0 animate-blob" style="animation-delay: 2s;"></div>
 
     <div id="toastContainer"></div>
 
@@ -118,7 +101,7 @@
             </div>
             <span class="font-display font-extrabold text-xl tracking-wide">PayGo</span>
         </div>
-        <button onclick="window.toggleSidebar()" class="text-white p-2 focus:outline-none bg-white/5 rounded-lg transition-colors hover:bg-white/10 border border-white/5">
+        <button onclick="window.toggleSidebar()" class="text-white p-2 focus:outline-none bg-white/5 rounded-lg transition-colors border border-white/5">
             <i data-lucide="menu" class="w-6 h-6"></i>
         </button>
     </div>
@@ -128,27 +111,23 @@
     <aside class="fixed left-0 top-0 h-full w-64 bg-slate-900/80 backdrop-blur-2xl text-white p-6 z-50 flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-300 border-r border-white/5" id="sidebar">
         <div class="flex items-center justify-between mb-8 pb-6 border-b border-white/5 mt-12 md:mt-0">
             <div class="flex items-center gap-3">
-                <div class="w-11 h-11 bg-gradient-to-tr from-brand-500 to-accent-500 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(59,130,246,0.3)]">
+                <div class="w-11 h-11 bg-gradient-to-tr from-brand-500 to-brand-400 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(59,130,246,0.3)]">
                     <i data-lucide="zap" class="w-6 h-6 text-white fill-current"></i>
                 </div>
                 <div>
                     <span class="text-2xl font-display font-bold tracking-wide text-white">PayGo</span>
-                    <span class="block text-[9px] text-brand-400 font-black uppercase tracking-widest mt-0.5" id="roleBadge">...</span>
+                    <span class="block text-[9px] text-brand-400 font-black uppercase tracking-widest mt-0.5" id="roleBadge">Admin Supremo</span>
                 </div>
             </div>
             <button onclick="window.toggleSidebar()" class="md:hidden text-slate-400 hover:text-white transition-colors bg-white/5 p-2 rounded-lg"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
-        <nav class="flex-1 space-y-1.5 hidden" id="adminNav">
-            <a href="#dashboard" class="sidebar-link active flex items-center gap-3 px-4 py-3.5 rounded-xl">
-                <i data-lucide="layout-dashboard" class="w-5 h-5"></i> <span class="text-sm">Dashboard Central</span>
+        <nav class="flex-1 space-y-1.5" id="adminNav">
+            <a href="dashboard.html" class="sidebar-link active flex items-center gap-3 px-4 py-3.5 rounded-xl">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i> <span class="text-sm">Visão Central</span>
             </a>
             
-            <a href="admin.html" class="flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all bg-gradient-to-r from-slate-800 to-slate-800/50 text-white font-bold border border-slate-700 shadow-lg group hover:border-brand-500/50 mt-4 mb-6">
-                <i data-lucide="shield-alert" class="w-5 h-5 text-brand-400 group-hover:scale-110 transition-transform"></i> <span class="text-sm">Painel Supremo</span>
-            </a>
-
-            <div class="pt-2 pb-2"><p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold px-4">Operações</p></div>
+            <div class="pt-4 pb-2"><p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold px-4">Operações Logísticas</p></div>
 
             <a href="pedidos.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 rounded-xl font-medium">
                 <i data-lucide="shopping-bag" class="w-5 h-5"></i> <span class="text-sm">Gestão de Pedidos</span>
@@ -159,20 +138,20 @@
             <a href="afiliados.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 rounded-xl font-medium">
                 <i data-lucide="network" class="w-5 h-5"></i> <span class="text-sm">Rede de Afiliados</span>
             </a>
-            <a href="logs.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 rounded-xl font-medium mt-auto">
+            <a href="gerar-fatura.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 rounded-xl font-medium">
+                <i data-lucide="file-check-2" class="w-5 h-5"></i> <span class="text-sm">Gerar Faturas</span>
+            </a>
+
+            <div class="pt-4 pb-2"><p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold px-4">Segurança do Sistema</p></div>
+
+            <a href="logs.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 rounded-xl font-medium">
                 <i data-lucide="activity" class="w-5 h-5 text-warning-400"></i> <span class="text-sm">Auditoria (Logs)</span>
             </a>
-            <a href="configuracoes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 rounded-xl font-medium">
+            <a href="admin.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 rounded-xl font-medium">
+                <i data-lucide="shield" class="w-5 h-5"></i> <span class="text-sm">Gestão de Equipa</span>
+            </a>
+            <a href="configuracoes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 rounded-xl font-medium mt-auto">
                 <i data-lucide="settings" class="w-5 h-5"></i> <span class="text-sm">Configurações</span>
-            </a>
-        </nav>
-
-        <nav class="flex-1 space-y-1.5 hidden" id="affiliateNav">
-            <a href="#affiliate-dashboard" class="sidebar-link affiliate-active flex items-center gap-3 px-4 py-3.5 rounded-xl">
-                <i data-lucide="wallet" class="w-5 h-5"></i> <span class="text-sm">Painel de Ganhos</span>
-            </a>
-            <a href="#my-referrals" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white rounded-xl font-medium">
-                <i data-lucide="users" class="w-5 h-5"></i> <span class="text-sm">Minhas Indicações</span>
             </a>
         </nav>
 
@@ -184,249 +163,119 @@
                     <p class="text-[10px] text-slate-400 truncate font-mono" id="userEmail">...</p>
                 </div>
             </div>
-            <button id="logoutBtn" onclick="window.logoutFromHeader()" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-danger-500/10 border border-danger-500/20 hover:bg-danger-500 hover:text-white text-danger-400 rounded-xl transition-all text-sm font-bold btn-action">
-                <i data-lucide="log-out" class="w-4 h-4"></i> Sair com Segurança
+            <button onclick="window.logoutFromHeader()" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-danger-500/10 border border-danger-500/20 hover:bg-danger-500 hover:text-white text-danger-400 rounded-xl transition-all text-sm font-bold btn-action">
+                <i data-lucide="log-out" class="w-4 h-4"></i> Encerrar Sessão
             </button>
         </div>
     </aside>
 
     <main class="md:ml-64 p-4 md:p-8 pt-24 md:pt-8 min-h-screen transition-all relative z-10">
 
-        <div id="adminView" class="hidden">
-            <header class="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-6 mb-8">
-                <div>
-                    <h1 class="text-3xl md:text-4xl font-display font-extrabold text-white tracking-tight">Dashboard Central</h1>
-                    <p class="text-slate-400 mt-2 text-sm font-medium">Visão global das operações financeiras e fluxo logístico.</p>
-                </div>
-                <div class="flex flex-col sm:flex-row flex-wrap items-center gap-3 w-full xl:w-auto">
-                    <div class="relative w-full sm:w-auto">
-                        <input type="text" id="searchInput" placeholder="Pesquisar pedido..." class="pl-12 pr-4 py-3.5 w-full sm:w-64 border border-slate-700 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand-500/50 focus:border-brand-500 text-sm bg-slate-900/50 text-white font-mono placeholder:font-sans transition-all shadow-inner">
-                        <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
-                    </div>
-                    <select id="statusFilter" class="w-full sm:w-auto px-4 py-3.5 border border-slate-700 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand-500/50 text-sm bg-slate-900/50 font-bold text-slate-300 cursor-pointer shadow-inner">
-                        <option value="all">Todos os Status</option>
-                        <option value="pending">⏳ Apenas Pendentes</option>
-                        <option value="processing">🔄 Em Processamento</option>
-                        <option value="completed">✅ Concluídos</option>
-                        <option value="refunded">🟣 Reembolsados</option>
-                    </select>
-                    <button onclick="window.refreshOrders()" class="btn-action w-full sm:w-auto px-6 py-3.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(37,99,235,0.4)] border border-brand-500">
-                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Atualizar
-                    </button>
-                </div>
-            </header>
+        <header class="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-6 mb-8">
+            <div>
+                <h1 class="text-3xl md:text-4xl font-display font-extrabold text-white tracking-tight">Dashboard Central</h1>
+                <p class="text-slate-400 mt-2 text-sm font-medium">Visão global das operações financeiras, fluxo logístico e conversões.</p>
+            </div>
+            <div class="flex flex-col sm:flex-row flex-wrap items-center gap-3 w-full xl:w-auto">
+                <button onclick="window.fetchDashboardData()" class="btn-action w-full sm:w-auto px-6 py-3.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(37,99,235,0.4)] border border-brand-500">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i> Atualizar Dados
+                </button>
+            </div>
+        </header>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
-                <div class="glass-card p-6 rounded-[2rem] border-t-4 border-t-slate-600">
-                    <div class="flex items-center justify-between mb-4">
-                        <span class="text-xs font-black text-slate-400 uppercase tracking-widest">Total Pedidos</span>
-                        <div class="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center border border-slate-700"><i data-lucide="shopping-bag" class="w-5 h-5 text-slate-300"></i></div>
-                    </div>
-                    <p class="text-4xl font-display font-extrabold text-white skeleton" id="statTotal">0</p>
+        <h2 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2"><i data-lucide="bar-chart-3" class="w-4 h-4"></i> Volume de Vendas</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+            <div class="glass-card p-6 rounded-[2rem] border-t-4 border-t-brand-500 bg-brand-900/10 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-24 h-24 bg-brand-500/20 blur-xl rounded-full"></div>
+                <div class="flex items-center justify-between mb-4 relative z-10">
+                    <span class="text-xs font-black text-brand-400 uppercase tracking-widest">Faturação Bruta</span>
+                    <div class="w-10 h-10 bg-brand-500/20 rounded-xl flex items-center justify-center border border-brand-500/30"><i data-lucide="banknote" class="w-5 h-5 text-brand-400"></i></div>
                 </div>
-                
-                <div class="glass-card p-6 rounded-[2rem] border-t-4 border-t-warning-500 bg-warning-900/5">
-                    <div class="flex items-center justify-between mb-4">
-                        <span class="text-xs font-black text-warning-400 uppercase tracking-widest">Pendentes</span>
-                        <div class="w-10 h-10 bg-warning-500/20 rounded-xl flex items-center justify-center border border-warning-500/30"><i data-lucide="clock" class="w-5 h-5 text-warning-400"></i></div>
-                    </div>
-                    <p class="text-4xl font-display font-extrabold text-white skeleton" id="statPending">0</p>
-                </div>
-                
-                <div class="glass-card p-6 rounded-[2rem] border-t-4 border-t-success-500 bg-success-900/5">
-                    <div class="flex items-center justify-between mb-4">
-                        <span class="text-xs font-black text-success-400 uppercase tracking-widest">Concluídos</span>
-                        <div class="w-10 h-10 bg-success-500/20 rounded-xl flex items-center justify-center border border-success-500/30"><i data-lucide="check-circle" class="w-5 h-5 text-success-400"></i></div>
-                    </div>
-                    <p class="text-4xl font-display font-extrabold text-white skeleton" id="statCompleted">0</p>
-                </div>
-                
-                <div class="glass-card p-6 rounded-[2rem] border-t-4 border-t-brand-500 bg-brand-900/10 relative overflow-hidden">
-                    <div class="absolute top-0 right-0 w-24 h-24 bg-brand-500/20 blur-xl rounded-full"></div>
-                    <div class="flex items-center justify-between mb-4 relative z-10">
-                        <span class="text-xs font-black text-brand-400 uppercase tracking-widest">Lucro Operacional</span>
-                        <div class="w-10 h-10 bg-brand-500/20 rounded-xl flex items-center justify-center border border-brand-500/30"><i data-lucide="banknote" class="w-5 h-5 text-brand-400"></i></div>
-                    </div>
-                    <p class="text-3xl font-display font-extrabold text-white skeleton truncate relative z-10" id="statRevenue">0 MT</p>
-                </div>
+                <p class="text-3xl font-display font-extrabold text-white skeleton truncate relative z-10" id="statRevenue">0 MT</p>
             </div>
 
-            <div class="glass-card rounded-[2rem] p-0 overflow-hidden border border-slate-800 flex flex-col">
-                <div class="p-6 border-b border-white/5 flex justify-between items-center bg-slate-900/80 backdrop-blur-sm">
-                    <h2 class="text-sm font-bold text-white flex items-center gap-2"><i data-lucide="list" class="w-4 h-4 text-brand-400"></i> Fila Rápida de Operações</h2>
-                    <span class="text-[10px] font-black px-3 py-1.5 bg-brand-500/20 border border-brand-500/30 rounded-full text-brand-400 shadow-sm uppercase tracking-widest" id="ordersCount">0 encontrados</span>
+            <div class="glass-card p-6 rounded-[2rem] border-t-4 border-t-success-500 bg-success-900/5">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-xs font-black text-success-400 uppercase tracking-widest">Concluídos</span>
+                    <div class="w-10 h-10 bg-success-500/20 rounded-xl flex items-center justify-center border border-success-500/30"><i data-lucide="check-circle" class="w-5 h-5 text-success-400"></i></div>
                 </div>
-
-                <div id="loadingState" class="p-20 text-center text-slate-500 flex flex-col items-center justify-center">
-                    <div class="w-12 h-12 border-4 border-slate-800 border-t-brand-500 rounded-full animate-spin mb-4"></div>
-                    <p class="font-bold text-slate-300">A sincronizar com a Base de Dados...</p>
+                <p class="text-4xl font-display font-extrabold text-white skeleton" id="statCompleted">0</p>
+            </div>
+            
+            <div class="glass-card p-6 rounded-[2rem] border-t-4 border-t-warning-500 bg-warning-900/5">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-xs font-black text-warning-400 uppercase tracking-widest">Pendentes / Trânsito</span>
+                    <div class="w-10 h-10 bg-warning-500/20 rounded-xl flex items-center justify-center border border-warning-500/30"><i data-lucide="clock" class="w-5 h-5 text-warning-400"></i></div>
                 </div>
-
-                <div id="emptyState" class="p-20 text-center text-slate-500 hidden flex flex-col items-center justify-center">
-                    <div class="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-700 shadow-inner">
-                        <i data-lucide="inbox" class="w-8 h-8 text-slate-400"></i>
-                    </div>
-                    <p class="font-bold text-white text-xl">Nenhum registo encontrado.</p>
+                <p class="text-4xl font-display font-extrabold text-white skeleton" id="statPending">0</p>
+            </div>
+            
+            <div class="glass-card p-6 rounded-[2rem] border-t-4 border-t-slate-600">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-xs font-black text-slate-400 uppercase tracking-widest">Total Pedidos</span>
+                    <div class="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center border border-slate-700"><i data-lucide="shopping-bag" class="w-5 h-5 text-slate-300"></i></div>
                 </div>
-
-                <div class="overflow-x-auto min-h-[400px]">
-                    <table class="w-full text-left border-collapse whitespace-nowrap">
-                        <thead class="bg-slate-950/80 text-[10px] uppercase text-slate-400 tracking-widest border-b border-white/10 sticky top-0 z-10 backdrop-blur-md">
-                            <tr>
-                                <th class="px-6 py-5 font-bold">Referência ID</th>
-                                <th class="px-6 py-5 font-bold">Cliente</th>
-                                <th class="px-6 py-5 font-bold">Categoria</th>
-                                <th class="px-6 py-5 font-bold">Valor (MT)</th>
-                                <th class="px-6 py-5 font-bold text-center">Status</th>
-                                <th class="px-6 py-5 font-bold">Data</th>
-                                <th class="px-6 py-5 text-right font-bold">Abrir</th>
-                            </tr>
-                        </thead>
-                        <tbody id="ordersTable" class="divide-y divide-white/5 bg-slate-900/30"></tbody>
-                    </table>
-                </div>
+                <p class="text-4xl font-display font-extrabold text-white skeleton" id="statTotal">0</p>
             </div>
         </div>
 
-        <div id="affiliateView" class="hidden">
-            <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
-                <div>
-                    <h1 class="text-3xl md:text-4xl font-display font-extrabold text-white tracking-tight flex items-center gap-3">
-                        <span class="affiliate-badge px-3 py-1 rounded-full text-[10px] uppercase tracking-widest shadow-sm">Parceiro VIP</span>
-                        Painel de Ganhos
-                    </h1>
-                    <p class="text-slate-400 mt-2 text-sm font-medium">Acompanhe a sua rede de conversões em tempo real.</p>
+        <h2 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2"><i data-lucide="network" class="w-4 h-4"></i> Performance da Rede de Afiliados</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 mb-8">
+            <div class="glass-card p-6 rounded-[2rem] border border-slate-700">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-xs font-black text-slate-300 uppercase tracking-widest">Parceiros Ativos</span>
+                    <div class="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center border border-slate-600"><i data-lucide="users" class="w-5 h-5 text-slate-300"></i></div>
                 </div>
-            </header>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
-                <div class="earnings-card p-6 md:p-8 rounded-[2rem] text-white shadow-[0_15px_30px_rgba(16,185,129,0.2)] overflow-hidden">
-                    <div class="flex items-center justify-between mb-4 relative z-10">
-                        <span class="text-xs font-black uppercase tracking-widest opacity-80">Saldo Disponível</span>
-                        <div class="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-md border border-white/20"><i data-lucide="wallet" class="w-5 h-5"></i></div>
-                    </div>
-                    <p class="text-4xl md:text-5xl font-display font-extrabold skeleton relative z-10 tracking-tight" id="affiliateEarnings">0 MT</p>
-                </div>
-                
-                <div class="glass-card p-6 rounded-[2rem] border-t-4 border-t-brand-500">
-                    <div class="flex items-center justify-between mb-4">
-                        <span class="text-xs font-black text-slate-400 uppercase tracking-widest">Cliques (Leads)</span>
-                        <div class="w-10 h-10 bg-brand-500/20 rounded-xl flex items-center justify-center border border-brand-500/30"><i data-lucide="users" class="w-5 h-5 text-brand-400"></i></div>
-                    </div>
-                    <p class="text-4xl font-display font-extrabold text-white skeleton" id="affiliateReferrals">0</p>
-                </div>
-                
-                <div class="glass-card p-6 rounded-[2rem] border-t-4 border-t-success-500">
-                    <div class="flex items-center justify-between mb-4">
-                        <span class="text-xs font-black text-slate-400 uppercase tracking-widest">Converteram</span>
-                        <div class="w-10 h-10 bg-success-500/20 rounded-xl flex items-center justify-center border border-success-500/30"><i data-lucide="shopping-cart" class="w-5 h-5 text-success-400"></i></div>
-                    </div>
-                    <p class="text-4xl font-display font-extrabold text-white skeleton" id="affiliateApproved">0</p>
-                </div>
-                
-                <div class="glass-card p-6 rounded-[2rem] bg-slate-900 border border-slate-700 relative overflow-hidden flex flex-col justify-between">
-                    <div class="absolute top-0 right-0 w-32 h-32 bg-accent-500/10 rounded-full blur-xl pointer-events-none"></div>
-                    <div class="flex items-center justify-between mb-2 relative z-10">
-                        <span class="text-xs font-black text-slate-400 uppercase tracking-widest">O Seu Código</span>
-                        <div class="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center border border-slate-700"><i data-lucide="tag" class="w-5 h-5 text-accent-400"></i></div>
-                    </div>
-                    <div class="relative z-10">
-                        <p class="text-2xl font-mono font-bold text-white truncate" id="affiliateCode">...</p>
-                        <button onclick="window.copyAffiliateCode()" class="text-[10px] text-accent-400 hover:text-accent-300 mt-2 font-bold uppercase tracking-widest flex items-center gap-1.5 transition-colors bg-accent-500/10 px-2.5 py-1.5 rounded-lg border border-accent-500/20 w-max btn-action">
-                            <i data-lucide="copy" class="w-3 h-3"></i> Copiar Chave
-                        </button>
-                    </div>
-                </div>
+                <p class="text-3xl font-display font-extrabold text-white skeleton" id="statAffiliatesCount">0</p>
             </div>
 
-            <div class="mb-8 bg-slate-900 rounded-[2rem] p-8 md:p-10 text-white relative overflow-hidden shadow-[0_20px_40px_rgba(0,0,0,0.4)] border border-slate-800">
-                <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-brand-600/10 rounded-full blur-[80px] translate-x-1/3 -translate-y-1/3 pointer-events-none"></div>
-                <div class="relative z-10">
-                    <h3 class="text-2xl font-display font-extrabold mb-3 flex items-center gap-3"><div class="p-2 bg-brand-500/20 rounded-xl border border-brand-500/30 text-brand-400"><i data-lucide="share-2" class="w-5 h-5"></i></div> Multiplique os seus ganhos agora</h3>
-                    <p class="text-slate-400 text-sm mb-8 max-w-2xl font-medium leading-relaxed">Partilhe este link no seu WhatsApp, Instagram ou TikTok. Se a pessoa criar conta e fizer a primeira compra na PayGo, a comissão entra diretamente neste cofre.</p>
-                    <div class="flex flex-col sm:flex-row gap-3 max-w-3xl">
-                        <input type="text" id="affiliateLink" readonly class="flex-1 px-5 py-4 rounded-xl bg-slate-950 border border-slate-700 text-white font-mono text-sm focus:outline-none shadow-inner" value="A gerar link seguro...">
-                        <button onclick="window.copyAffiliateLink()" class="btn-action px-8 py-4 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(37,99,235,0.4)] border border-brand-500 whitespace-nowrap">
-                            <i data-lucide="copy" class="w-5 h-5"></i> Copiar Link Oficial
-                        </button>
-                    </div>
+            <div class="glass-card p-6 rounded-[2rem] border border-slate-700">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-xs font-black text-slate-300 uppercase tracking-widest">Vendas Feitas (Leads)</span>
+                    <div class="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center border border-slate-600"><i data-lucide="target" class="w-5 h-5 text-slate-300"></i></div>
                 </div>
+                <p class="text-3xl font-display font-extrabold text-white skeleton" id="statAffiliatesLeads">0</p>
             </div>
 
-            <div class="glass-card rounded-[2rem] p-0 overflow-hidden border border-slate-800 flex flex-col">
-                <div class="p-6 border-b border-white/5 flex justify-between items-center bg-slate-900/80 backdrop-blur-sm">
-                    <h2 class="text-sm font-bold text-white flex items-center gap-2"><i data-lucide="users" class="w-4 h-4 text-success-400"></i> Funil de Conversão</h2>
+            <div class="glass-card p-6 rounded-[2rem] border border-success-500/20 bg-success-900/10">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-xs font-black text-success-400 uppercase tracking-widest">Comissões a Pagar</span>
+                    <div class="w-10 h-10 bg-success-500/20 rounded-xl flex items-center justify-center border border-success-500/30"><i data-lucide="wallet" class="w-5 h-5 text-success-400"></i></div>
                 </div>
-                <div id="referralsLoading" class="p-20 text-center text-slate-500 flex flex-col items-center justify-center">
-                    <div class="w-12 h-12 border-4 border-slate-800 border-t-success-500 rounded-full animate-spin mb-4"></div>
-                    <p class="font-bold text-slate-300">A carregar a sua rede...</p>
-                </div>
-                <div id="referralsEmpty" class="p-20 text-center text-slate-500 hidden flex flex-col items-center justify-center">
-                    <div class="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-700 shadow-inner">
-                        <i data-lucide="network" class="w-8 h-8 text-slate-400"></i>
-                    </div>
-                    <p class="font-bold text-white text-xl">Ainda não tem indicações</p>
-                </div>
-                <div class="overflow-x-auto min-h-[300px]">
-                    <table class="w-full text-left border-collapse whitespace-nowrap">
-                        <thead class="bg-slate-950/80 text-[10px] uppercase text-slate-400 tracking-widest border-b border-white/10 sticky top-0 z-10 backdrop-blur-md">
-                            <tr>
-                                <th class="px-6 py-5 font-bold">Cliente</th>
-                                <th class="px-6 py-5 font-bold">Data</th>
-                                <th class="px-6 py-5 font-bold">Status da Venda</th>
-                                <th class="px-6 py-5 font-bold text-right">Sua Comissão</th>
-                            </tr>
-                        </thead>
-                        <tbody id="referralsTable" class="divide-y divide-white/5 bg-slate-900/30"></tbody>
-                    </table>
-                </div>
+                <p class="text-3xl font-display font-extrabold text-success-400 skeleton" id="statAffiliatesCommissions">0 MT</p>
+            </div>
+        </div>
+
+        <div class="glass-card rounded-[2rem] p-0 overflow-hidden border border-slate-800 flex flex-col">
+            <div class="p-6 border-b border-white/5 flex justify-between items-center bg-slate-900/80 backdrop-blur-sm">
+                <h2 class="text-sm font-bold text-white flex items-center gap-2"><i data-lucide="list" class="w-4 h-4 text-brand-400"></i> Fila Rápida de Operações (Últimos 15)</h2>
+                <a href="pedidos.html" class="text-xs font-bold text-brand-400 hover:text-brand-300 uppercase tracking-widest flex items-center gap-1">Ver Todos <i data-lucide="arrow-right" class="w-3 h-3"></i></a>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse whitespace-nowrap">
+                    <thead class="bg-slate-950/80 text-[10px] uppercase text-slate-400 tracking-widest border-b border-white/10">
+                        <tr>
+                            <th class="px-6 py-5 font-bold">Referência ID</th>
+                            <th class="px-6 py-5 font-bold">Cliente</th>
+                            <th class="px-6 py-5 font-bold">Valor Base (USD)</th>
+                            <th class="px-6 py-5 font-bold">Cobrado (MT)</th>
+                            <th class="px-6 py-5 font-bold text-center">Status</th>
+                            <th class="px-6 py-5 text-right font-bold">Abrir</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ordersTable" class="divide-y divide-white/5 bg-slate-900/30">
+                        <tr><td colspan="6" class="text-center py-10 text-slate-500"><div class="w-8 h-8 border-4 border-slate-800 border-t-brand-500 rounded-full animate-spin mx-auto mb-2"></div><p class="text-sm font-medium">A analisar matriz...</p></td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </main>
 
-    <div id="orderModal" class="modal">
-        <div class="modal-overlay" onclick="window.closeModal()"></div>
-        <div class="modal-content flex flex-col h-auto max-h-[90vh]">
-            <div class="flex justify-between items-center p-6 border-b border-white/10 bg-slate-950 shrink-0">
-                <h2 class="text-xl font-display font-extrabold text-white flex items-center gap-3">
-                    <div class="p-2 bg-brand-500/20 text-brand-400 rounded-xl border border-brand-500/30"><i data-lucide="file-text" class="w-5 h-5"></i></div> 
-                    Dossier Logístico
-                </h2>
-                <button onclick="window.closeModal()" class="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-700 hover:text-white flex items-center justify-center transition-colors text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
-            
-            <div id="modalContent" class="p-6 md:p-8 overflow-y-auto space-y-6 bg-slate-900 flex-1 relative">
-                </div>
-            
-            <div class="p-6 border-t border-white/10 bg-slate-950 flex flex-col sm:flex-row gap-4 shrink-0 shadow-[0_-10px_20px_rgba(0,0,0,0.3)] relative z-20">
-                <div class="relative flex-1">
-                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Atualizar Fase Logística</label>
-                    <div class="relative">
-                        <i data-lucide="git-commit" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
-                        <select id="statusSelect" class="w-full pl-12 pr-4 py-4 border border-slate-700 bg-slate-800 text-white rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50 font-bold text-sm cursor-pointer shadow-inner appearance-none transition-all">
-                            <option value="pending">⏳ Ação Necessária: PENDENTE</option>
-                            <option value="processing">🔄 Em Compra: EM PROCESSAMENTO</option>
-                            <option value="completed">✅ Finalizado: CONCLUÍDO (Envia Email)</option>
-                            <option value="cancelled">❌ Abortar: CANCELADO</option>
-                            <option value="refunded">🟣 Reembolsado ao Cliente</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="flex items-end">
-                    <button onclick="window.saveOrderStatus()" class="btn-action w-full sm:w-auto px-8 py-4 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(37,99,235,0.4)] whitespace-nowrap h-[54px] border border-brand-500" id="updateStatusBtn">
-                        <i data-lucide="save" class="w-4 h-4"></i> <span>Salvar Decisão</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, doc, updateDoc, onSnapshot, query, orderBy, getDoc, where, getDocs, serverTimestamp, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, getDoc, getDocs, query, orderBy, limit, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
@@ -442,18 +291,10 @@
         const db = getFirestore(app, "paygodb");
 
         let currentUser = null;
-        let userRole = null; 
-        let orders = [];
-        let currentOrderId = null;
-        let ordersUnsubscribe = null;
-        let affiliateData = null;
 
-        // Ativa ícones base
-        document.addEventListener('DOMContentLoaded', () => {
-            if(typeof lucide !== 'undefined') lucide.createIcons();
-        });
+        // UI Setup
+        document.addEventListener('DOMContentLoaded', () => { if(typeof lucide !== 'undefined') lucide.createIcons(); });
 
-        // Toggle Sidebar Mobile
         window.toggleSidebar = () => {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('mobileOverlay');
@@ -462,7 +303,6 @@
             document.body.style.overflow = sidebar.classList.contains('-translate-x-full') ? '' : 'hidden';
         };
 
-        // Toasts Premium Glassmorphism
         window.showToast = (message, type = 'success') => {
             const container = document.getElementById('toastContainer');
             if (!container) return;
@@ -488,446 +328,148 @@
             return String(value);
         }
 
-        function getStatusBadge(status) {
-            const badges = {
-                pending: '<span class="status-badge status-pending shadow-sm">⏳ Pendente</span>',
-                processing: '<span class="status-badge status-processing shadow-sm">🔄 Em Compra</span>',
-                completed: '<span class="status-badge status-completed shadow-sm">✅ Fechado</span>',
-                cancelled: '<span class="status-badge status-cancelled shadow-sm">❌ Cancelado</span>',
-                refunded: '<span class="status-badge status-refunded shadow-sm">🟣 Reembolsado</span>'
-            };
-            return badges[status] || `<span class="status-badge bg-slate-800 text-slate-300 border border-slate-700">${status}</span>`;
-        }
-
-        // ==========================================
-        // 🔐 AUTENTICAÇÃO E ROTEAMENTO
-        // ==========================================
-        const fallbackTimer = setTimeout(() => { const ldr = document.getElementById('sysLoader'); if(ldr) ldr.style.display = 'none'; }, 3000);
-
+        // Auth & Security
         onAuthStateChanged(auth, async (user) => {
-            if (!user) { window.location.href = 'login.html?redirect=dashboard.html'; return; }
+            if (!user) { window.location.href = '../login.html'; return; }
             currentUser = user;
             try {
-                const userRef = doc(db, "users", user.uid);
-                const userSnap = await getDoc(userRef);
-                
-                if (!userSnap.exists()) {
-                    await signOut(auth);
-                    window.location.href = 'login.html?error=user_not_found';
-                    return;
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                if (!userDoc.exists() || (userDoc.data().role !== 'admin' && userDoc.data().role !== 'superadmin')) {
+                    window.location.href = '../index.html'; return;
                 }
                 
-                const userData = userSnap.data();
-                userRole = userData.role || 'user';
-                
-                document.getElementById('userName').textContent = userData.name || 'Usuário';
+                const userData = userDoc.data();
+                document.getElementById('userName').textContent = userData.name || 'Equipa PayGo';
                 document.getElementById('userEmail').textContent = userData.email || '';
                 document.getElementById('userInitial').textContent = (userData.name || 'U').charAt(0).toUpperCase();
 
-                if (userRole === 'admin' || userRole === 'superadmin') {
-                    setupAdminView();
-                } else if (userRole === 'affiliate' && userData.affiliateCodeActive) {
-                    affiliateData = userData;
-                    setupAffiliateView();
-                } else {
-                    window.showToast('Acesso Restrito pelo sistema de segurança.', 'error');
-                    setTimeout(() => { window.location.href = 'index.html'; }, 2000);
-                }
+                await window.fetchDashboardData();
+                
             } catch (error) {
-                console.error('Erro Auth:', error);
+                window.showToast('Erro ao validar sessão.', 'error');
             } finally {
-                clearTimeout(fallbackTimer);
                 const ldr = document.getElementById('sysLoader');
                 if(ldr) { ldr.style.opacity = '0'; setTimeout(() => ldr.style.display = 'none', 500); }
             }
         });
 
-        function setupAdminView() {
-            document.getElementById('roleBadge').textContent = 'Admin Supremo';
-            document.getElementById('adminNav').classList.remove('hidden');
-            document.getElementById('adminView').classList.remove('hidden');
-            loadOrders();
-        }
-
-        function setupAffiliateView() {
-            document.getElementById('roleBadge').textContent = 'Parceiro Oficial';
-            document.getElementById('affiliateNav').classList.remove('hidden');
-            document.getElementById('affiliateView').classList.remove('hidden');
-            loadAffiliateDashboard();
-        }
-
-        // ==========================================
-        // 🤝 LÓGICA: AFILIADO
-        // ==========================================
-        async function loadAffiliateDashboard() {
-            if (!affiliateData || !currentUser) return;
-            
-            document.getElementById('affiliateEarnings').classList.remove('skeleton');
-            document.getElementById('affiliateReferrals').classList.remove('skeleton');
-            document.getElementById('affiliateApproved').classList.remove('skeleton');
-            
-            document.getElementById('affiliateEarnings').textContent = formatValue(affiliateData.affiliateEarnings || 0, 'currency');
-            document.getElementById('affiliateReferrals').textContent = affiliateData.totalReferrals || 0;
-            document.getElementById('affiliateApproved').textContent = affiliateData.approvedReferrals || 0;
-            document.getElementById('affiliateCode').textContent = affiliateData.affiliateCode || 'N/A';
-            
-            const siteUrl = window.location.origin;
-            document.getElementById('affiliateLink').value = `${siteUrl}/register.html?ref=${affiliateData.affiliateCode || ''}`;
-            
-            await loadAffiliateReferrals();
-        }
-
-        async function loadAffiliateReferrals() {
-            if (!affiliateData?.affiliateCode) {
-                document.getElementById('referralsLoading').classList.add('hidden');
-                document.getElementById('referralsEmpty').classList.remove('hidden');
-                return;
-            }
-            
+        // Dashboard Data Fetcher
+        window.fetchDashboardData = async () => {
             try {
-                const usersRef = collection(db, "users");
-                const q = query(usersRef, where("referredBy", "==", affiliateData.affiliateCode));
-                const snapshot = await getDocs(q);
-                const referrals = [];
-                
-                snapshot.forEach(doc => {
+                // 1. Fetch Orders (For KPIs and Recent Table)
+                const ordersSnap = await getDocs(collection(db, "orders"));
+                let totalOrders = 0, pendingOrders = 0, completedOrders = 0, totalRevenue = 0;
+                let allOrders = [];
+
+                ordersSnap.forEach(doc => {
                     const data = doc.data();
-                    referrals.push({
-                        name: data.name || 'N/A',
-                        createdAt: data.createdAt,
-                        firstPurchaseProcessed: data.firstPurchaseProcessed || false,
-                        totalSpent: data.totalSpent || 0
-                    });
-                });
-                
-                renderReferralsTable(referrals);
-            } catch (error) {
-                document.getElementById('referralsLoading').classList.add('hidden');
-                document.getElementById('referralsEmpty').classList.remove('hidden');
-            }
-        }
-
-        function renderReferralsTable(referrals) {
-            const table = document.getElementById('referralsTable');
-            document.getElementById('referralsLoading').classList.add('hidden');
-            
-            if (referrals.length === 0) {
-                document.getElementById('referralsEmpty').classList.remove('hidden');
-                table.innerHTML = '';
-                return;
-            }
-            
-            document.getElementById('referralsEmpty').classList.add('hidden');
-            table.innerHTML = referrals.map(ref => {
-                const hasCommission = ref.firstPurchaseProcessed;
-                const commission = hasCommission ? (ref.totalSpent * 0.03) : 0;
-                const dateStr = ref.createdAt ? new Date(ref.createdAt.toDate ? ref.createdAt.toDate() : ref.createdAt).toLocaleDateString('pt-MZ') : 'N/A';
-                
-                return `
-                    <tr class="hover:bg-slate-800/40 transition-colors border-b border-white/5 last:border-0 h-[64px]">
-                        <td class="px-6 py-4"><div class="font-bold text-white text-sm">${ref.name}</div></td>
-                        <td class="px-6 py-4 text-sm font-medium text-slate-400">${dateStr}</td>
-                        <td class="px-6 py-4">
-                            ${hasCommission 
-                                ? `<span class="inline-flex items-center gap-1.5 text-success-400 font-bold bg-success-500/10 border border-success-500/20 px-3 py-1 rounded-lg text-[10px] uppercase tracking-widest"><i data-lucide="check" class="w-3 h-3"></i> Validada</span>` 
-                                : `<span class="inline-flex items-center gap-1.5 text-slate-400 font-bold bg-slate-800 border border-slate-700 px-3 py-1 rounded-lg text-[10px] uppercase tracking-widest"><i data-lucide="clock" class="w-3 h-3"></i> Pendente</span>`}
-                        </td>
-                        <td class="px-6 py-4 font-black ${hasCommission ? 'text-success-400 font-mono text-base' : 'text-slate-500'}">
-                            ${hasCommission ? formatValue(commission, 'currency') : '0.00 MT'}
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-            if(typeof lucide !== 'undefined') lucide.createIcons({root: table});
-        }
-
-        window.copyAffiliateCode = async () => {
-            if (!affiliateData?.affiliateCode) return;
-            try { await navigator.clipboard.writeText(affiliateData.affiliateCode); window.showToast('Chave copiada!', 'success'); } catch (err) {}
-        };
-
-        window.copyAffiliateLink = async () => {
-            const link = document.getElementById('affiliateLink').value;
-            try { await navigator.clipboard.writeText(link); window.showToast('Link de parceria copiado!', 'success'); } catch (err) {}
-        };
-
-        // ==========================================
-        // 👑 LÓGICA: ADMIN
-        // ==========================================
-        function loadOrders() {
-            if (userRole !== 'admin' && userRole !== 'superadmin') return;
-            document.getElementById('loadingState').classList.remove('hidden');
-            document.getElementById('emptyState').classList.add('hidden');
-            
-            if (ordersUnsubscribe) ordersUnsubscribe();
-            
-            const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
-            ordersUnsubscribe = onSnapshot(q, (snapshot) => {
-                document.getElementById('loadingState').classList.add('hidden');
-                
-                orders = snapshot.docs.map(doc => {
-                    const data = doc.data();
-                    return {
-                        id: doc.id,
-                        orderId: data.orderId || `ORD-${doc.id.slice(0, 8)}`,
-                        name: data.name || 'Sem Nome',
-                        email: data.email || 'N/A',
-                        type: data.type || 'unknown',
-                        usd: Number(data.usd) || 0,
-                        total: Number(data.total) || 0,
-                        tax: Number(data.tax) || 0,
-                        status: data.status || 'pending',
-                        paymentMethod: data.paymentMethod || 'mpesa',
-                        detail: data.detail || 'N/A',
-                        whatsapp: data.whatsapp || 'N/A',
-                        isPaid: data.isPaid || false,
-                        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : new Date())
-                    };
-                });
-                
-                renderOrders();
-                updateStats();
-            }, (error) => {
-                document.getElementById('loadingState').classList.add('hidden');
-                window.showToast('Firewall: Acesso negado à DB.', 'error');
-            });
-        }
-
-        window.refreshOrders = () => { if (userRole === 'admin' || userRole === 'superadmin') loadOrders(); };
-
-        function renderOrders() {
-            const table = document.getElementById('ordersTable');
-            const emptyState = document.getElementById('emptyState');
-            const search = document.getElementById('searchInput')?.value.toLowerCase() || '';
-            const statusFilter = document.getElementById('statusFilter')?.value || 'all';
-            
-            const filtered = orders.filter(order => {
-                const matchSearch = order.name.toLowerCase().includes(search) || order.orderId.toLowerCase().includes(search) || order.email.toLowerCase().includes(search);
-                const matchStatus = statusFilter === 'all' || order.status === statusFilter;
-                return matchSearch && matchStatus;
-            });
-            
-            document.getElementById('ordersCount').textContent = `${filtered.length} Registos Oficiais`;
-            
-            if (filtered.length === 0) {
-                emptyState.classList.remove('hidden');
-                table.innerHTML = '';
-                return;
-            }
-            
-            emptyState.classList.add('hidden');
-            table.innerHTML = filtered.map(order => {
-                const dateStr = order.createdAt.toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short', hour: '2-digit', minute:'2-digit' });
-                
-                return `
-                    <tr class="hover:bg-slate-800/60 transition-colors group cursor-pointer border-b border-white/5 last:border-0 h-[72px]" onclick="window.openModal('${order.id}')">
-                        <td class="px-6 py-4">
-                            <span class="text-xs font-mono font-bold text-brand-400 bg-brand-900/20 border border-brand-500/20 px-2 py-1 rounded shadow-sm">${order.orderId}</span>
-                        </td>
-                        <td class="px-6 py-4">
-                            <div class="text-sm font-bold text-white group-hover:text-brand-300 transition-colors truncate max-w-[150px]">${order.name}</div>
-                            <div class="text-[10px] text-slate-500 font-mono tracking-widest mt-0.5 uppercase">${order.whatsapp}</div>
-                        </td>
-                        <td class="px-6 py-4">
-                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[9px] font-black uppercase tracking-widest rounded border ${order.type === 'compra' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 'bg-purple-500/10 text-purple-400 border-purple-500/20'}">
-                                <i data-lucide="${order.type === 'compra' ? 'shopping-bag' : 'gamepad-2'}" class="w-3 h-3"></i> ${order.type}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 text-sm font-black text-white font-mono tracking-tight">${formatValue(order.total, 'currency')}</td>
-                        <td class="px-6 py-4 text-center">${getStatusBadge(order.status)}</td>
-                        <td class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">${dateStr}</td>
-                        <td class="px-6 py-4 text-right">
-                            <button class="w-9 h-9 inline-flex items-center justify-center rounded-xl bg-slate-800 border border-slate-700 text-slate-400 group-hover:bg-brand-600 group-hover:border-brand-500 group-hover:text-white transition-all shadow-md">
-                                <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-            
-            if(typeof lucide !== 'undefined') lucide.createIcons({root: table});
-        }
-
-        function updateStats() {
-            const total = orders.length;
-            const pending = orders.filter(o => o.status === 'pending').length;
-            const completed = orders.filter(o => o.status === 'completed').length;
-            const revenue = orders.filter(o => o.status === 'completed' && o.tax).reduce((sum, o) => sum + Number(o.tax), 0);
-            
-            ['statTotal', 'statPending', 'statCompleted', 'statRevenue'].forEach(id => document.getElementById(id).classList.remove('skeleton'));
-            
-            document.getElementById('statTotal').textContent = total;
-            document.getElementById('statPending').textContent = pending;
-            document.getElementById('statCompleted').textContent = completed;
-            document.getElementById('statRevenue').textContent = formatValue(revenue, 'currency');
-        }
-
-        // Filtros (Admin)
-        let searchTimeout;
-        document.getElementById('searchInput')?.addEventListener('input', () => {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => { renderOrders(); }, 300);
-        });
-        document.getElementById('statusFilter')?.addEventListener('change', renderOrders);
-
-        // ==========================================
-        // 🪟 DOSSIER DA ENCOMENDA (MODAL GLASS)
-        // ==========================================
-        // Define as funções the window global object 
-        window.openModal = (orderId) => {
-            const order = orders.find(o => o.id === orderId);
-            if (!order) return;
-            
-            currentOrderId = orderId;
-            const isMpesa = order.paymentMethod === 'mpesa';
-            
-            let productHtml = `<div class="font-mono text-sm text-brand-200 break-words leading-relaxed whitespace-pre-wrap">${order.detail}</div>`;
-            
-            if (order.detail.includes('http')) {
-                productHtml = `
-                    <div class="flex flex-col gap-3">
-                        <textarea readonly class="w-full text-xs p-4 rounded-xl bg-slate-950 border border-white/5 outline-none font-mono text-slate-400 shadow-inner resize-none focus:border-brand-500 transition-colors" rows="3">${order.detail}</textarea>
-                        <a href="${order.detail}" target="_blank" class="inline-flex items-center justify-center gap-2 bg-brand-600/20 text-brand-400 border border-brand-500/30 px-5 py-3 rounded-xl text-xs font-bold hover:bg-brand-600 hover:text-white transition-all shadow-lg w-max active:scale-95 uppercase tracking-widest">
-                            <i data-lucide="external-link" class="w-4 h-4"></i> Inspecionar Link
-                        </a>
-                    </div>
-                `;
-            }
-
-            document.getElementById('modalContent').innerHTML = `
-                <div class="bg-slate-950 p-6 rounded-2xl flex justify-between items-center border border-slate-800 shadow-inner">
-                    <div>
-                        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">ID Criptográfico</p>
-                        <p class="font-mono font-black text-brand-400 text-2xl tracking-tight">${order.orderId}</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Registo do Servidor</p>
-                        <p class="font-bold text-white text-sm bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">${order.createdAt.toLocaleString('pt-MZ')}</p>
-                    </div>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                    <div class="bg-slate-900/50 p-6 rounded-2xl border border-white/5 flex flex-col gap-4">
-                        <h3 class="text-xs font-black text-brand-400 uppercase tracking-widest border-b border-white/10 pb-3 flex items-center gap-2"><i data-lucide="user-circle" class="w-4 h-4"></i> Identidade do Comprador</h3>
-                        <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nome Registado</p><p class="font-bold text-white text-base">${order.name}</p></div>
-                        <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Canal Seguro</p><a href="https://wa.me/${order.whatsapp.replace(/\D/g,'')}" target="_blank" class="font-bold text-success-400 hover:text-success-300 flex items-center gap-1.5 w-max bg-success-500/10 px-3 py-1.5 rounded-lg border border-success-500/20 transition-all"><i data-lucide="message-square" class="w-4 h-4"></i> ${order.whatsapp}</a></div>
-                        <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Correio Eletrónico</p><p class="font-medium text-slate-300 font-mono text-sm">${order.email}</p></div>
-                    </div>
+                    allOrders.push({ id: doc.id, ...data });
+                    totalOrders++;
                     
-                    <div class="bg-slate-900 p-6 rounded-2xl border border-brand-500/20 shadow-[0_10px_30px_rgba(37,99,235,0.05)] relative overflow-hidden">
-                        <div class="absolute top-0 right-0 w-32 h-32 bg-brand-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
-                        <h3 class="text-xs font-black text-brand-400 uppercase tracking-widest border-b border-white/10 pb-3 flex items-center gap-2 relative z-10"><i data-lucide="calculator" class="w-4 h-4"></i> Extrato Financeiro</h3>
-                        <div class="space-y-3 relative z-10 mt-4">
-                            <div class="flex justify-between items-center"><p class="text-xs font-bold text-slate-400">Conversão Pura (USD)</p><p class="font-mono font-bold text-slate-200 bg-slate-800 px-2 py-1 rounded">${formatValue(order.usd, 'usd')}</p></div>
-                            <div class="flex justify-between items-center"><p class="text-xs font-bold text-slate-400">Taxa Logística</p><p class="font-mono font-bold text-brand-400">${formatValue(order.tax, 'currency')}</p></div>
-                            <div class="flex justify-between items-center"><p class="text-xs font-bold text-slate-400">Via de Pagamento</p><p class="text-[9px] font-black text-${isMpesa ? 'danger' : 'warning'}-400 bg-${isMpesa ? 'danger' : 'warning'}-500/20 px-2 py-1 rounded border border-${isMpesa ? 'danger' : 'warning'}-500/30 uppercase tracking-widest">${isMpesa ? 'M-PESA' : 'E-MOLA'}</p></div>
-                            <div class="flex justify-between pt-4 border-t border-white/10 mt-2 items-end"><p class="text-xs font-black text-white uppercase tracking-widest mb-1">TOTAL LÍQUIDO</p><p class="font-black text-3xl text-success-400 tracking-tight">${formatValue(order.total, 'currency')}</p></div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="mt-6 bg-slate-800/80 p-6 rounded-2xl border border-slate-700 shadow-inner">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5"><i data-lucide="shopping-cart" class="w-3 h-3"></i> O que o cliente quer adquirir</p>
-                    ${productHtml}
-                </div>
-            `;
-            
-            document.getElementById('statusSelect').value = order.status;
-            
-            const modal = document.getElementById('orderModal');
-            modal.style.display = 'flex';
-            
-            // Allow CSS transition to catch the display change
-            requestAnimationFrame(() => {
-                modal.classList.add('active');
-            });
-            
-            document.body.style.overflow = 'hidden'; 
-            
-            if(typeof lucide !== 'undefined') lucide.createIcons({root: modal});
-        };
-
-        window.closeModal = () => {
-            const modal = document.getElementById('orderModal');
-            modal.classList.remove('active');
-            document.body.style.overflow = '';
-            currentOrderId = null;
-            
-            // Wait for transition to finish before hiding completely
-            setTimeout(() => {
-                modal.style.display = 'none';
-            }, 300);
-        };
-
-        // Gravar Novo Status com Inteligência Logística
-        window.saveOrderStatus = async () => {
-            if (!currentOrderId || (userRole !== 'admin' && userRole !== 'superadmin')) return;
-            
-            const newStatus = document.getElementById('statusSelect').value;
-            const order = orders.find(o => o.id === currentOrderId);
-            const oldStatus = order?.status;
-
-            const btn = document.getElementById('updateStatusBtn');
-            const originalText = btn.innerHTML;
-            
-            btn.disabled = true;
-            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A Gravar Protocolo...`;
-            if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
-            
-            try {
-                await updateDoc(doc(db, "orders", currentOrderId), {
-                    status: newStatus,
-                    updatedAt: serverTimestamp()
-                });
-
-                // Automação CPA
-                if (newStatus === 'completed' && oldStatus !== 'completed') {
-                    if (order?.referredBy && !order?.commissionProcessed) {
-                        try {
-                            const qRef = query(collection(db, "users"), where("affiliateCode", "==", order.referredBy));
-                            const snapRef = await getDocs(qRef);
-                            if(!snapRef.empty) {
-                                const refDoc = snapRef.docs[0];
-                                const commissionValue = order.tax * 0.03;
-                                await updateDoc(doc(db, "users", refDoc.id), {
-                                    affiliateEarnings: increment(commissionValue),
-                                    approvedReferrals: increment(1)
-                                });
-                                await updateDoc(doc(db, "orders", currentOrderId), { commissionProcessed: true });
-                            }
-                        } catch(e) { console.warn("Erro a creditar CPA:", e); }
+                    if (data.status === 'pending' || data.status === 'processing' || data.status === 'shipped') pendingOrders++;
+                    if (data.status === 'completed') {
+                        completedOrders++;
+                        totalRevenue += (Number(data.total) || 0); // Assuming total represents revenue. If you want profit, use tax.
                     }
-                    
-                    fetch('/api/notify-order', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ orderData: order, action: 'order_completed', sendEmail: true })
-                    }).catch(e=>{});
-                }
+                });
 
-                window.showToast('Fase logística atualizada.', 'success');
-                window.closeModal();
-            } catch (error) {
-                console.error(error);
-                window.showToast('Permissão Negada. Firewall ativada.', 'error');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = originalText;
-                if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
+                // Update Order KPIs
+                ['statTotal', 'statPending', 'statCompleted', 'statRevenue'].forEach(id => document.getElementById(id).classList.remove('skeleton'));
+                document.getElementById('statTotal').textContent = totalOrders;
+                document.getElementById('statPending').textContent = pendingOrders;
+                document.getElementById('statCompleted').textContent = completedOrders;
+                document.getElementById('statRevenue').textContent = formatValue(totalRevenue, 'currency');
+
+                // 2. Render Recent Orders Table (Top 15)
+                allOrders.sort((a, b) => {
+                    const tA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
+                    const tB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
+                    return tB - tA;
+                });
+                renderRecentOrdersTable(allOrders.slice(0, 15));
+
+                // 3. Fetch Affiliate Metrics
+                const affiliatesQuery = query(collection(db, "users"), where("role", "==", "affiliate"));
+                const affiliatesSnap = await getDocs(affiliatesQuery);
+                
+                let countAffiliates = 0, totalLeads = 0, totalCommissions = 0;
+                affiliatesSnap.forEach(doc => {
+                    const af = doc.data();
+                    if (af.status === 'active') countAffiliates++;
+                    totalLeads += (Number(af.approvedReferrals) || 0);
+                    totalCommissions += (Number(af.affiliateEarnings) || 0);
+                });
+
+                ['statAffiliatesCount', 'statAffiliatesLeads', 'statAffiliatesCommissions'].forEach(id => document.getElementById(id).classList.remove('skeleton'));
+                document.getElementById('statAffiliatesCount').textContent = countAffiliates;
+                document.getElementById('statAffiliatesLeads').textContent = totalLeads;
+                document.getElementById('statAffiliatesCommissions').textContent = formatValue(totalCommissions, 'currency');
+
+                window.showToast('Dados sincronizados com sucesso.', 'success');
+
+            } catch (err) {
+                console.error(err);
+                window.showToast('Falha ao ler dados da base de dados.', 'error');
             }
         };
 
-        // Listeners Extra
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && document.getElementById('orderModal').classList.contains('active')) {
-                window.closeModal();
+        function renderRecentOrdersTable(orders) {
+            const table = document.getElementById('ordersTable');
+            if (orders.length === 0) {
+                table.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-slate-500"><i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>Nenhuma operação recente.</td></tr>`;
+                if(typeof lucide !== 'undefined') lucide.createIcons();
+                return;
             }
-        });
+
+            let html = '';
+            orders.forEach(order => {
+                const dateStr = order.createdAt?.toDate ? order.createdAt.toDate().toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short', hour: '2-digit', minute:'2-digit' }) : 'N/A';
+                
+                const logStatus = {
+                    'pending': '<span class="status-badge status-pending">⏳ Pendente</span>',
+                    'processing': '<span class="status-badge status-processing">🔄 Em Compra</span>',
+                    'shipped': '<span class="status-badge status-shipped">✈️ Trânsito</span>',
+                    'completed': '<span class="status-badge status-completed">✅ Fechado</span>',
+                    'cancelled': '<span class="status-badge status-cancelled">❌ Cancelado</span>',
+                }[order.status] || `<span class="status-badge bg-slate-800">${order.status}</span>`;
+
+                const payBadge = order.isPaid ? `<span class="text-[9px] font-black bg-success-500/20 text-success-400 px-1.5 py-0.5 rounded ml-2 uppercase tracking-widest">Pago</span>` : `<span class="text-[9px] font-black bg-danger-500/20 text-danger-400 px-1.5 py-0.5 rounded ml-2 uppercase tracking-widest">Dívida</span>`;
+
+                html += `
+                    <tr class="hover:bg-slate-800/40 transition-colors border-b border-white/5 last:border-0 h-[64px]">
+                        <td class="px-6 py-4">
+                            <span class="text-xs font-mono font-bold text-brand-400 bg-brand-900/20 border border-brand-500/20 px-2 py-1 rounded shadow-sm">${order.orderId || 'S/N'}</span>
+                            <div class="text-[10px] text-slate-500 font-bold tracking-widest uppercase mt-1">${dateStr}</div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-bold text-white truncate max-w-[150px]">${order.name || 'Cliente'}</div>
+                            <div class="text-xs text-slate-400 font-mono truncate max-w-[150px]">${order.email}</div>
+                        </td>
+                        <td class="px-6 py-4 text-sm font-black text-slate-400 font-mono">${formatValue(order.usd, 'usd')}</td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center">
+                                <span class="text-sm font-black text-white font-mono tracking-tight">${formatValue(order.total, 'currency')}</span>
+                                ${payBadge}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-center">${logStatus}</td>
+                        <td class="px-6 py-4 text-right">
+                            <a href="pedidos.html" class="w-8 h-8 inline-flex items-center justify-center rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:bg-brand-600 hover:border-brand-500 hover:text-white transition-all shadow-md">
+                                <i data-lucide="external-link" class="w-4 h-4"></i>
+                            </a>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            table.innerHTML = html;
+            if(typeof lucide !== 'undefined') lucide.createIcons({root: table});
+        }
 
         window.logoutFromHeader = async function() {
             if (confirm('Sair da conta de forma segura?')) {
                 await signOut(auth);
-                window.location.href = 'login.html';
+                window.location.href = '../login.html';
             }
         };
     </script>
