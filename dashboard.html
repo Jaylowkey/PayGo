@@ -547,19 +547,12 @@
             </div>
         </div>
     </div>
-    <script type="module">
+<script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, getDocs, collection, query, where, limit, addDoc, updateDoc, serverTimestamp, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const firebaseConfig = { 
-            apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8", 
-            authDomain: "paygo-14311.firebaseapp.com", 
-            projectId: "paygo-14311", 
-            storageBucket: "paygo-14311.firebasestorage.app", 
-            messagingSenderId: "208360646277", 
-            appId: "1:208360646277:web:aecc57cc0077ae48a52bec" 
-        };
+        const firebaseConfig = { apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8", authDomain: "paygo-14311.firebaseapp.com", projectId: "paygo-14311", storageBucket: "paygo-14311.firebasestorage.app", messagingSenderId: "208360646277", appId: "1:208360646277:web:aecc57cc0077ae48a52bec" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app, "paygodb");
@@ -600,14 +593,13 @@
         }
 
         // =====================================
-        // CARREGAR DADOS DO UTILIZADOR
+        // CARREGAR DADOS INICIAIS
         // =====================================
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = 'login.html'; return; }
             currentUser = user;
 
             try {
-                // 1. Definições Globais
                 const sysDoc = await getDoc(doc(db, "settings", "global"));
                 if (sysDoc.exists()) {
                     const sysData = sysDoc.data();
@@ -619,7 +611,6 @@
                 setSafeText('currentRate', `${sysExchangeRate} MT`); setSafeText('calcRate', sysExchangeRate);
                 setSafeText('infoTax1', sysTax1); setSafeText('infoTax3', sysTax3);
 
-                // 2. Dados do Cliente
                 const userDoc = await getDoc(doc(db, "users", user.uid));
                 if (userDoc.exists()) {
                     userData = userDoc.data();
@@ -653,19 +644,19 @@
                         isFirstPurchaseEligible = ordersSnap.empty; 
                     }
 
-                    // CARTÃO VIRTUAL LÓGICA
+                    // VC LÓGICA
                     if (userData.virtualCard) {
                         rawVcNumber = userData.virtualCard.number || ''; rawVcCvc = userData.virtualCard.cvc || '***';
                         setSafeText('vcNumber', `**** **** **** ${rawVcNumber.slice(-4)}`);
                         setSafeText('vcExpiry', userData.virtualCard.expiry);
                         setSafeText('vcBalanceDisplay', `$${formatUSD(userData.vcBalance || 0)}`);
                         const btnReveal = document.getElementById('btnRevealCard'); if (btnReveal) btnReveal.classList.remove('hidden');
-                        
+                        if(userData.virtualCard.destination) setSafeValue('vcTopUpDestination', userData.virtualCard.destination);
                         setSafeHTML('vcStatusText', `<span class="text-success-400 font-bold">Cartão Vinculado.</span> Controle o saldo e recarregue diretamente da carteira.`);
-                        setSafeHTML('vcActionButtons', `<button onclick="window.openVcTopUpModal()" class="flex-1 py-3.5 bg-success-600 hover:bg-success-500 text-white rounded-xl font-bold text-sm transition shadow-[0_0_20px_rgba(34,197,94,0.3)] flex items-center justify-center gap-2"><i data-lucide="zap" class="w-4 h-4"></i> Recarregar ($)</button> <button onclick="window.unlinkVirtualCard()" class="py-3.5 px-4 bg-slate-800 hover:bg-danger-900/50 text-slate-400 hover:text-danger-400 border border-slate-700 hover:border-danger-500/50 rounded-xl font-bold transition flex items-center justify-center gap-2" title="Desvincular Cartão"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`);
+                        setSafeHTML('vcActionButtons', `<button onclick="window.openVcTopUpModal()" class="flex-1 py-3 bg-success-600 hover:bg-success-500 text-white rounded-xl font-bold text-sm transition shadow-[0_0_15px_rgba(34,197,94,0.3)] flex items-center justify-center gap-2"><i data-lucide="zap" class="w-4 h-4"></i> Recarregar ($)</button> <button onclick="window.unlinkVirtualCard()" class="py-3 px-4 bg-slate-800 hover:bg-danger-900/50 text-slate-400 hover:text-danger-400 border border-slate-700 hover:border-danger-500/50 rounded-xl font-bold transition flex items-center justify-center gap-2" title="Desvincular Cartão"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`);
                     } else if (userData.vcRequestPending) {
                         setSafeHTML('vcStatusText', `<span class="text-warning-400 font-bold">Aguardando Aprovação.</span> O Admin está a gerar o seu cartão.`);
-                        setSafeHTML('vcActionButtons', `<button disabled class="flex-1 py-3.5 bg-slate-800 text-slate-500 border border-slate-700 rounded-xl font-bold text-sm cursor-not-allowed flex items-center justify-center gap-2"><i data-lucide="clock" class="w-4 h-4"></i> Pedido em Análise</button>`);
+                        setSafeHTML('vcActionButtons', `<button disabled class="flex-1 py-3 bg-slate-800 text-slate-500 border border-slate-700 rounded-xl font-bold text-sm cursor-not-allowed flex items-center justify-center gap-2"><i data-lucide="clock" class="w-4 h-4"></i> Pedido em Análise</button>`);
                     }
                     lucide.createIcons();
                 }
@@ -688,7 +679,7 @@
         };
 
         // =====================================
-        // ORÇAMENTADOR (LÓGICA VISUAL)
+        // ORÇAMENTADOR CAMALEÃO (FUNÇÕES NO WINDOW)
         // =====================================
         const orderCategory = document.getElementById('orderCategory');
         if(orderCategory) {
@@ -737,8 +728,10 @@
         }
 
         // =====================================
-        // 🛒 1. PAGAR ENCOMENDA (DASHBOARD)
+        // PROCESSAMENTOS SEGUROS (WINDOW API)
         // =====================================
+        
+        // 🛒 1. PAGAR ENCOMENDA (SÓ COM CARTEIRA NO DASHBOARD)
         window.processOrder = async () => {
             const btn = document.getElementById('btnSubmitOrder'); 
             btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Processando...`; lucide.createIcons({root: btn});
@@ -748,7 +741,7 @@
 
             if(safeTotal > userBal || safeTotal <= 0) {
                 window.showToast("Operação bloqueada: Saldo insuficiente.", "error");
-                btn.disabled = true; btn.innerHTML = `<i data-lucide="lock" class="w-5 h-5"></i> <span id="btnSubmitText">Autorizar Pagamento Seguro</span>`; lucide.createIcons({root: btn}); return;
+                btn.disabled = true; btn.innerHTML = `<i data-lucide="credit-card" class="w-5 h-5"></i> Autorizar Pagamento Seguro`; lucide.createIcons({root: btn}); return;
             }
 
             try {
@@ -764,26 +757,20 @@
                 if (cat === 'physical') { payloadData.shipping = { shipName: document.getElementById('shipName').value, shipZip: document.getElementById('shipZip').value, shipAddress: document.getElementById('shipAddress').value, shipCity: document.getElementById('shipCity').value, shipPhone: document.getElementById('shipPhone').value }; } 
                 else { payloadData.digitalData = { accountOrId: document.getElementById('digitalAccount').value }; }
 
-                // Débito da Carteira e Criação do Pedido
                 await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: increment(-safeTotal) });
                 await addDoc(collection(db, "orders"), payloadData);
                 await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: safeTotal, description: `Pedido ${orderId}`, reference: orderId, createdAt: new Date().toISOString() });
 
                 userData.walletBalance -= safeTotal; setSafeText('walletBalance', formatMZN(userData.walletBalance));
                 document.getElementById('orderForm').reset(); updateCalculator(0); window.showToast("Pagamento processado com sucesso!", "success");
-            } catch (err) { 
-                window.showToast("Falha ao debitar a carteira.", "error"); 
-            } finally { 
-                btn.disabled = false; btn.innerHTML = `<i data-lucide="lock" class="w-5 h-5"></i> <span id="btnSubmitText">Autorizar Pagamento Seguro</span>`; lucide.createIcons({root: btn}); 
-            }
+            } catch (err) { window.showToast("Falha ao debitar a carteira.", "error"); } 
+            finally { btn.disabled = false; btn.innerHTML = `<i data-lucide="credit-card" class="w-5 h-5"></i> Autorizar Pagamento Seguro`; lucide.createIcons({root: btn}); }
         };
 
-        // =====================================
-        // 💰 2. DEPOSITAR FUNDOS (INTEGRAÇÃO PAYSUITE)
-        // =====================================
+        // 💰 2. DEPOSITAR (CONECTADO À TUA PAYSUITE API: paysuite-payment.js)
         window.processTopUp = async () => {
             const btn = document.getElementById('btnProcessTopUp');
-            btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A processar...`; lucide.createIcons({root: btn});
+            btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A enviar...`; lucide.createIcons({root: btn});
 
             const amount = parseFloat(document.getElementById('topUpAmount').value);
             const method = document.querySelector('input[name="topUpMethod"]:checked').value;
@@ -792,145 +779,132 @@
 
             try {
                 if (method === 'bank') {
-                    // Transferência Bancária - Vai para o Admin aprovar manualmente
                     await addDoc(collection(db, "support_tickets"), { userId: currentUser.uid, userName: userData.name, userEmail: currentUser.email, type: 'deposit_request', amount: amount, paymentMethod: method, message: `Depósito Bancário de ${formatMZN(amount)} MT.`, status: 'open', createdAt: serverTimestamp() });
-                    window.closeModals(); document.getElementById('topUpForm').reset(); window.showToast("Pedido enviado! O Admin confirmará o depósito após verificação.", "success");
+                    window.closeModals(); document.getElementById('topUpForm').reset(); window.showToast("Pedido enviado! O Admin confirmará o depósito.", "success");
                 } else {
-                    // M-Pesa e e-Mola - Vai para a PaySuite
+                    // API PAYSUITE CORRETA (A tua API usa 'paysuite-payment')
                     window.showToast("A conectar à rede PaySuite...", "info");
-                    const response = await fetch('/api/paysuite-topup', {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ userId: currentUser.uid, userEmail: currentUser.email, userName: userData.name, userPhone: userData.phone || '', amount: amount, channel: method })
-                    });
-                    const data = await response.json();
-                    if (!response.ok) throw new Error(data.message || "Erro na comunicação com a PaySuite");
+                    const topupId = 'TOP-' + Date.now().toString().slice(-6).toUpperCase();
+                    
+                    // Criamos o registo de TOPUP na Base de dados (Pendente) para o Webhook saber onde carregar o dinheiro!
+                    await addDoc(collection(db, "topups"), { topupId: topupId, userId: currentUser.uid, amount: amount, method: method, status: 'pending', createdAt: serverTimestamp() });
 
-                    if (data.paymentUrl) { 
-                        window.location.href = data.paymentUrl; 
+                    const response = await fetch('/api/paysuite-payment', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            orderId: topupId, // Usa a ref TOP- para o webhook saber que é depósito
+                            amount: amount, 
+                            method: method,
+                            description: `Depósito Carteira PayGo: ${topupId}`
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (!response.ok) throw new Error(data.error || "Erro na PaySuite");
+
+                    if (data.data && data.data.checkoutUrl) { 
+                        window.location.href = data.data.checkoutUrl; 
                     } else { 
-                        window.closeModals(); document.getElementById('topUpForm').reset(); 
-                        window.showToast("Notificação Push enviada! Verifique o seu telemóvel para colocar o PIN.", "success"); 
+                        window.closeModals(); document.getElementById('topUpForm').reset(); window.showToast("Aguardando confirmação...", "success"); 
                     }
                 }
-            } catch (err) { 
-                window.showToast(err.message || "Falha técnica ao iniciar pagamento.", "error"); 
-            } finally { 
-                btn.disabled = false; btn.innerHTML = "Enviar Pedido de Depósito"; 
-            }
+            } catch (err) { window.showToast(err.message || "Falha técnica ao iniciar pagamento.", "error"); } 
+            finally { btn.disabled = false; btn.innerHTML = "Enviar Pedido de Depósito"; }
         };
 
-        // =====================================
-        // OUTRAS FUNCIONALIDADES
-        // =====================================
-        window.processTransfer = async () => { window.showToast("A funcionalidade de transferência P2P está em desenvolvimento.", "info"); };
+        // 📤 3. TRANSFERÊNCIA P2P (CONECTADO À TUA API p2p-transfer.js)
+        window.processTransfer = async () => { 
+            const btn = document.getElementById('btnTransfer');
+            btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A transferir...`; lucide.createIcons({root: btn});
 
-        window.processVip = async () => {
-            const btn = document.getElementById('btnBuyVip');
-            const plan = document.querySelector('input[name="vipPlan"]:checked').value;
-            const price = plan === 'anual' ? 12600 : 1200;
-            if ((parseFloat(userData?.walletBalance) || 0) < price) return window.showToast("Saldo insuficiente. Deposite na carteira primeiro.", "error");
-            if (confirm(`Confirmar assinatura VIP ${plan.toUpperCase()} por ${price} MT?`)) {
-                btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A ativar...`; lucide.createIcons({root: btn});
-                try {
-                    const expiryDate = new Date(); expiryDate.setDate(expiryDate.getDate() + (plan === 'anual' ? 365 : 30));
-                    await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: increment(-price), isVip: true, vipPlan: plan, vipExpiry: expiryDate });
-                    await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: price, description: `Assinatura VIP (${plan})`, reference: 'VIP', createdAt: new Date().toISOString() });
-                    await addDoc(collection(db, "vip_subscriptions"), { userId: currentUser.uid, userName: userData.name, userEmail: currentUser.email, plan: plan, amountPaid: price, expiryDate: expiryDate, createdAt: serverTimestamp() });
-                    window.showToast("Parabéns! Conta VIP ativada.", "success"); setTimeout(() => window.location.reload(), 1500);
-                } catch (err) { window.showToast("Erro.", "error"); btn.disabled = false; btn.textContent = "Confirmar Pagamento VIP"; }
+            const emailDestino = document.getElementById('transferEmail').value.trim();
+            const amount = parseFloat(document.getElementById('transferAmount').value);
+
+            if (amount < 1 || !emailDestino) {
+                window.showToast("Dados inválidos para transferência.", "error");
+                btn.disabled = false; btn.innerHTML = "Enviar Dinheiro"; return;
             }
+
+            try {
+                const response = await fetch('/api/p2p-transfer', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ senderId: currentUser.uid, receiverEmail: emailDestino, amount: amount })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) throw new Error(data.error || "Erro na transferência.");
+
+                window.closeModals(); document.getElementById('transferForm').reset();
+                window.showToast(`Transferência de ${formatMZN(amount)} MT enviada com sucesso!`, "success");
+                
+                // Atualiza o saldo visual (A API já atualizou na Base de dados)
+                userData.walletBalance -= amount; setSafeText('walletBalance', formatMZN(userData.walletBalance));
+                
+            } catch (err) { window.showToast(err.message, "error"); } 
+            finally { btn.disabled = false; btn.innerHTML = "Enviar Dinheiro"; }
         };
 
+        // 🪪 4. VINCULAR CARTÃO VIRTUAL
         window.processVcAdd = async () => {
             const btn = document.getElementById('btnSubmitVc'); btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Guardando...`; lucide.createIcons({root: btn});
             const vcData = { number: document.getElementById('vcInputNumber').value, expiry: document.getElementById('vcInputExpiry').value, cvc: document.getElementById('vcInputCvc').value, destination: document.getElementById('vcInputDestination').value.trim(), addedAt: new Date().toISOString() };
             try { await updateDoc(doc(db, "users", currentUser.uid), { virtualCard: vcData, vcBalance: 0 }); window.showToast("Cartão vinculado!", "success"); setTimeout(() => window.location.reload(), 1000); } 
-            catch (err) { window.showToast("Erro.", "error"); btn.disabled = false; btn.textContent = "Vincular Cartão"; }
+            catch (err) { window.showToast("Erro ao guardar cartão.", "error"); btn.disabled = false; btn.textContent = "Vincular Cartão"; }
         };
 
+        // 💳 5. PEDIR NOVO CARTÃO VIRTUAL
         window.processVcRequest = async () => {
             const btn = document.getElementById('btnRequestVc'); const price = 1000;
-            if ((parseFloat(userData?.walletBalance) || 0) < price) return window.showToast("Saldo insuficiente (Mínimo: 1.000 MT).", "error");
+            if ((parseFloat(userData?.walletBalance) || 0) < price) return window.showToast("Saldo insuficiente na Carteira (Mínimo: 1.000 MT).", "error");
             btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Processando...`; lucide.createIcons({root: btn});
             try {
                 await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: increment(-price), vcRequestPending: true });
-                await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: price, description: `Emissão de Cartão Virtual`, reference: 'VC-EMISSION', createdAt: new Date().toISOString() });
+                await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: price, description: `Emissão VC`, reference: 'VC-EMISSION', createdAt: new Date().toISOString() });
                 await addDoc(collection(db, "vc_requests"), { userId: currentUser.uid, userName: userData.name, userEmail: currentUser.email, status: 'pending', amountPaid: price, createdAt: serverTimestamp() });
-                window.closeModals(); window.showToast("Solicitação enviada!", "success"); setTimeout(() => window.location.reload(), 1500);
-            } catch (err) { window.showToast("Erro.", "error"); btn.disabled = false; btn.textContent = "Solicitar Emissão (1.000 MT)"; }
+                window.closeModals(); window.showToast("Solicitação enviada ao Admin!", "success"); setTimeout(() => window.location.reload(), 1500);
+            } catch (err) { window.showToast("Erro ao processar emissão.", "error"); btn.disabled = false; btn.textContent = "Solicitar Emissão"; }
         };
 
+        // ⚡ 6. RECARREGAR CARTÃO VIRTUAL
         window.processVcTopUp = async () => {
             const usdAmount = parseFloat(document.getElementById('vcTopUpAmount').value);
             const destination = document.getElementById('vcTopUpDestination').value.trim(); 
-            if(usdAmount < 10) return window.showToast("Recarga mínima de $10.", "warning");
+            if(usdAmount < 10) return window.showToast("Recarga mínima $10.", "warning");
             const mznCost = usdAmount * sysExchangeRate; 
-            if ((parseFloat(userData?.walletBalance) || 0) < mznCost) return window.showToast("Saldo insuficiente na Carteira PayGo.", "error");
+            if ((parseFloat(userData?.walletBalance) || 0) < mznCost) return window.showToast(`Saldo insuficiente.`, "error");
 
             const btn = document.getElementById('btnProcessVcTopUp'); btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A enviar...`; lucide.createIcons({root: btn});
             try {
                 await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: increment(-mznCost) });
                 await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: mznCost, description: `Recarga VC ($${usdAmount})`, reference: 'VC-TOPUP', createdAt: new Date().toISOString() });
-                await addDoc(collection(db, "support_tickets"), { userId: currentUser.uid, type: 'vc_topup', usdAmount: usdAmount, mznCost: mznCost, userName: userData.name, userEmail: currentUser.email, destination: destination, message: `Recarga VC: $${usdAmount} para o destino: ${destination}`, status: 'open', createdAt: serverTimestamp() });
-                window.closeModals(); window.showToast("Pedido enviado à equipa!", "success");
+                await addDoc(collection(db, "support_tickets"), { userId: currentUser.uid, type: 'vc_topup', usdAmount: usdAmount, mznCost: mznCost, userName: userData.name, userEmail: currentUser.email, destination: destination, message: `Recarga VC: $${usdAmount}`, status: 'open', createdAt: serverTimestamp() });
+                window.closeModals(); window.showToast("Pedido enviado à Equipa!", "success");
                 userData.walletBalance -= mznCost; setSafeText('walletBalance', formatMZN(userData.walletBalance)); document.getElementById('vcTopUpForm').reset();
-            } catch (err) { window.showToast("Erro.", "error"); } finally { btn.disabled = false; btn.innerHTML = "Enviar Pedido de Recarga"; }
+            } catch (err) { window.showToast("Erro na transação.", "error"); } finally { btn.disabled = false; btn.innerHTML = "Enviar Pedido"; }
         };
 
-        window.unlinkVirtualCard = async () => {
-            if (confirm("Tem a certeza que deseja remover este cartão?")) {
-                try { await updateDoc(doc(db, "users", currentUser.uid), { virtualCard: null, vcBalance: 0 }); window.showToast("Cartão removido.", "success"); setTimeout(() => window.location.reload(), 1000); } 
-                catch(e) { window.showToast("Erro ao remover.", "error"); }
-            }
-        };
-
-        window.calcVcTopUp = () => {
-            const usd = parseFloat(document.getElementById('vcTopUpAmount').value) || 0;
-            setSafeText('vcTopUpCostDisplay', formatMZN(usd * sysExchangeRate) + " MT");
-        };
-
+        // 🎧 7. SUPORTE (CHAT/REEMBOLSO)
         window.processSupport = async () => {
             const type = document.getElementById('supportType').value, msg = document.getElementById('supportMessage').value, orderId = document.getElementById('supportOrderId').value;
             if (type === 'refund' && !orderId) return window.showToast("Selecione um pedido.", "error");
             const btn = document.getElementById('btnSubmitSupport'); btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A enviar...`; lucide.createIcons({root: btn});
             try {
                 await addDoc(collection(db, "support_tickets"), { userId: currentUser.uid, userName: userData.name, userEmail: currentUser.email, type: type, orderId: type === 'refund' ? orderId : null, message: msg, status: 'open', createdAt: serverTimestamp() });
-                window.closeModals(); document.getElementById('supportForm').reset(); window.showToast("Enviado com sucesso!", "success");
-            } catch (err) { window.showToast("Erro.", "error"); btn.disabled = false; btn.textContent = "Enviar para Equipa"; }
+                window.closeModals(); document.getElementById('supportForm').reset(); window.showToast("Mensagem enviada com sucesso!", "success");
+            } catch (err) { window.showToast("Erro ao enviar mensagem.", "error"); btn.disabled = false; btn.textContent = "Enviar"; }
         };
 
         // =====================================
-        // CONTROLO DE MODAIS E LOGOUT
+        // UTILS FINAIS (LOGOUT E ABERTURAS)
         // =====================================
         window.closeModals = function() { ['topUpModal', 'transferModal', 'vipModal', 'vcModal', 'vcTopUpModal', 'supportModal'].forEach(id => { const el = document.getElementById(id); if(el) { el.classList.remove('flex'); el.classList.add('hidden'); } }); };
         window.openTopUpModal = () => { window.closeModals(); const el = document.getElementById('topUpModal'); if(el) el.classList.replace('hidden', 'flex'); };
         window.openTransferModal = () => { window.closeModals(); const el = document.getElementById('transferModal'); if(el) el.classList.replace('hidden', 'flex'); };
         window.openVipModal = () => { window.closeModals(); const el = document.getElementById('vipModal'); if(el) el.classList.replace('hidden', 'flex'); };
         
-        window.openSupportModal = async (type) => {
-            window.closeModals(); const modal = document.getElementById('supportModal'); document.getElementById('supportType').value = type;
-            const selectCont = document.getElementById('orderSelectContainer');
-            if (type === 'refund') {
-                setSafeText('supportTitleText', "Solicitar Reembolso"); 
-                const icon = document.getElementById('supportIcon'); if(icon) { icon.setAttribute('data-lucide', 'rotate-ccw'); icon.classList.replace('text-brand-400', 'text-danger-400'); }
-                if(selectCont) selectCont.classList.remove('hidden');
-                
-                const orderSelect = document.getElementById('supportOrderId'); 
-                if(orderSelect) {
-                    orderSelect.innerHTML = '<option value="">A carregar...</option>';
-                    const snap = await getDocs(query(collection(db, "orders"), where("userId", "==", currentUser.uid), where("status", "in", ["pending", "processing"]), limit(10)));
-                    if (snap.empty) { orderSelect.innerHTML = '<option value="">Sem pedidos elegíveis.</option>'; orderSelect.disabled = true; } 
-                    else { orderSelect.innerHTML = '<option value="" disabled selected>Selecione um pedido...</option>'; snap.forEach(doc => { const d = doc.data(); orderSelect.innerHTML += `<option value="${d.orderId}">#${d.orderId} - $${d.usd}</option>`; }); orderSelect.disabled = false; }
-                }
-            } else {
-                setSafeText('supportTitleText', "Enviar Mensagem à Equipa"); 
-                const icon = document.getElementById('supportIcon'); if(icon) { icon.setAttribute('data-lucide', 'message-square'); icon.classList.replace('text-danger-400', 'text-brand-400'); }
-                if(selectCont) selectCont.classList.add('hidden');
-            }
-            lucide.createIcons(); if(modal) modal.classList.replace('hidden', 'flex');
-        };
-
-        window.logout = async () => { if(confirm('Tem a certeza que deseja sair?')) { await signOut(auth); window.location.href = 'login.html'; } };
+        window.logout = async () => { if(confirm('Sair da conta?')) { await signOut(auth); window.location.href = 'login.html'; } };
     </script>
 </body>
 </html>
