@@ -599,23 +599,175 @@
         </div>
     </div>
 
+<div id="topUpModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative">
+            <button type="button" onclick="window.closeModals()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <div class="p-6 pb-0 mb-6">
+                <h3 class="text-xl font-display font-bold text-white mb-2">Depositar Fundos</h3>
+                <p class="text-sm text-slate-400">Adicione dinheiro à sua carteira PayGo em Meticais.</p>
+            </div>
+            <form id="topUpForm" onsubmit="event.preventDefault(); window.processTopUp();" class="p-6 pt-0 space-y-5">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Valor (MT)</label>
+                    <input type="number" id="topUpAmount" required min="10" placeholder="Ex: 500" class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white font-mono text-lg font-bold">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Método de Pagamento</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="topUpMethod" value="mpesa" class="peer sr-only" checked>
+                            <div class="p-3 border border-slate-700 rounded-xl text-center text-xs font-bold text-slate-400 peer-checked:bg-red-500/10 peer-checked:border-red-500 peer-checked:text-red-500 transition">M-PESA</div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="topUpMethod" value="emola" class="peer sr-only">
+                            <div class="p-3 border border-slate-700 rounded-xl text-center text-xs font-bold text-slate-400 peer-checked:bg-orange-500/10 peer-checked:border-orange-500 peer-checked:text-orange-500 transition">E-MOLA</div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="topUpMethod" value="bank" class="peer sr-only">
+                            <div class="p-3 border border-slate-700 rounded-xl text-center text-xs font-bold text-slate-400 peer-checked:bg-blue-500/10 peer-checked:border-blue-500 peer-checked:text-blue-500 transition">BANCO</div>
+                        </label>
+                    </div>
+                </div>
+                <div id="bankDetails" class="hidden bg-slate-950 rounded-xl p-4 border border-blue-500/30 text-sm text-slate-300">
+                    <p class="mb-2 text-blue-400 font-bold"><i data-lucide="info" class="w-4 h-4 inline"></i> Transferência Manual</p>
+                    <p><strong>Banco:</strong> Millennium BIM</p>
+                    <p><strong>Conta:</strong> 501829113</p>
+                    <p><strong>NIB:</strong> 000100000050182911357</p>
+                    <p><strong>Titular:</strong> PayGo Lda</p>
+                    <p class="mt-2 text-xs text-slate-400">Faça a transferência e envie o comprovativo pelo WhatsApp.</p>
+                </div>
+                <button type="submit" id="btnProcessTopUp" class="btn-epic w-full py-3.5 bg-brand-600 hover:bg-brand-500 text-white">
+                    Enviar Pedido de Depósito
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="transferModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative">
+            <button type="button" onclick="window.closeModals()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <div class="p-6 pb-0 mb-6">
+                <h3 class="text-xl font-display font-bold text-white mb-2">Transferir Saldo</h3>
+                <p class="text-sm text-slate-400">Envie dinheiro para outro utilizador PayGo instantaneamente.</p>
+            </div>
+            <form id="transferForm" onsubmit="event.preventDefault(); window.processTransfer();" class="p-6 pt-0 space-y-5">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">E-mail do Destinatário</label>
+                    <input type="email" id="transferEmail" required placeholder="email@exemplo.com" class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Valor (MT)</label>
+                    <input type="number" id="transferAmount" required min="1" placeholder="0" class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white font-mono">
+                </div>
+                <button type="submit" id="btnTransfer" class="btn-epic w-full py-3.5 bg-slate-700 hover:bg-brand-600 text-white border border-slate-600">Enviar Dinheiro</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="vipModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-vip-500/50 rounded-2xl w-full max-w-lg overflow-hidden shadow-[0_0_50px_rgba(168,85,247,0.2)] relative">
+            <button type="button" onclick="window.closeModals()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <div class="p-8 text-center bg-gradient-to-b from-vip-900/40 to-transparent">
+                <i data-lucide="crown" class="w-16 h-16 text-vip-400 mx-auto mb-4"></i>
+                <h3 class="text-3xl font-display font-bold text-white mb-2">PayGo <span class="text-vip-400">VIP</span></h3>
+                <p class="text-sm text-slate-400" id="vipModalSubtitle">Isenção total da taxa de serviço em todos os pagamentos.</p>
+            </div>
+            <div class="p-6 pt-0 space-y-4" id="vipPlansContainer">
+                <div id="vipCurrentStatusBox" class="hidden bg-vip-900/30 border border-vip-500/30 rounded-xl p-4 text-center mb-4">
+                    <p class="text-vip-400 font-bold" id="vipCurrentStatusText">Você já possui uma assinatura VIP.</p>
+                </div>
+                <label class="cursor-pointer block" id="vipOptionMensal">
+                    <input type="radio" name="vipPlan" value="mensal" class="peer sr-only" checked>
+                    <div class="p-4 border border-slate-700 rounded-xl flex justify-between items-center peer-checked:bg-vip-500/10 peer-checked:border-vip-500 transition">
+                        <div>
+                            <p class="font-bold text-white text-lg">Mensal</p>
+                            <p class="text-xs text-slate-400">Acesso por 30 dias</p>
+                        </div>
+                        <p class="font-display font-black text-xl text-vip-400">1.200 MT</p>
+                    </div>
+                </label>
+                <label class="cursor-pointer block" id="vipOptionAnual">
+                    <input type="radio" name="vipPlan" value="anual" class="peer sr-only">
+                    <div class="p-4 border border-slate-700 rounded-xl flex justify-between items-center peer-checked:bg-vip-500/10 peer-checked:border-vip-500 transition relative overflow-hidden">
+                        <div class="absolute top-0 right-0 bg-success-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-bl-lg" id="vipAnualBadge">POUPE 1.800 MT</div>
+                        <div>
+                            <p class="font-bold text-white text-lg" id="vipOptionAnualLabel">Anual</p>
+                            <p class="text-xs text-slate-400">12 meses completos</p>
+                        </div>
+                        <p class="font-display font-black text-xl text-vip-400">12.600 MT</p>
+                    </div>
+                </label>
+                <button type="button" onclick="window.processVip()" id="btnBuyVip" class="btn-epic w-full py-4 mt-4 bg-vip-600 hover:bg-vip-500 text-white shadow-[0_0_20px_rgba(168,85,247,0.4)]">
+                    Confirmar Pagamento VIP
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="vcModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-brand-500/30 rounded-2xl w-full max-w-md overflow-hidden shadow-[0_0_30px_rgba(59,130,246,0.2)] relative">
+            <button type="button" onclick="window.closeModals()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <div class="p-6 pb-0 mb-6">
+                <h3 class="text-xl font-display font-bold text-white mb-2" id="vcModalTitle">Vincular Cartão Virtual</h3>
+                <p class="text-sm text-slate-400" id="vcModalDesc">Introduza os dados do seu cartão RedotPay ou Visa/Mastercard.</p>
+            </div>
+            
+            <form id="vcAddForm" onsubmit="event.preventDefault(); window.processVcAdd();" class="p-6 pt-0 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Número do Cartão</label>
+                    <div class="relative">
+                        <i data-lucide="credit-card" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500"></i>
+                        <input type="text" id="vcInputNumber" required maxlength="19" placeholder="0000 0000 0000 0000" class="w-full pl-10 pr-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white font-mono">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Validade</label>
+                        <input type="text" id="vcInputExpiry" required maxlength="5" placeholder="MM/AA" class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white font-mono text-center">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">CVC</label>
+                        <input type="password" id="vcInputCvc" required maxlength="3" placeholder="***" class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white font-mono text-center">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Pay ID ou Link TRC20</label>
+                    <div class="relative">
+                        <i data-lucide="wallet" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
+                        <input type="text" id="vcInputDestination" required placeholder="Ex: 123456789 ou T..." class="w-full pl-10 pr-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white font-mono text-sm">
+                    </div>
+                </div>
+                <button type="submit" id="btnSubmitVc" class="btn-epic w-full py-3.5 mt-2 bg-brand-600 hover:bg-brand-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+                    Vincular Cartão
+                </button>
+            </form>
+
+            <form id="vcRequestForm" onsubmit="event.preventDefault(); window.processVcRequest();" class="p-6 pt-0 space-y-4 hidden">
+                <div class="bg-brand-500/10 border border-brand-500/30 p-4 rounded-xl mb-4">
+                    <p class="text-sm text-slate-300">A equipa PayGo irá analisar o pedido e gerar um Cartão Virtual exclusivo em seu nome. <strong class="text-brand-400">A taxa de emissão é de 1.000 MT</strong>.</p>
+                </div>
+                <button type="submit" id="btnRequestVc" class="btn-epic w-full py-3.5 bg-brand-600 hover:bg-brand-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+                    Solicitar Emissão (1.000 MT)
+                </button>
+            </form>
+        </div>
+    </div>
+
     <div id="vcTopUpModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl relative">
             <button type="button" onclick="window.closeModals()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
             <div class="p-6 pb-0 mb-6 text-center">
                 <div class="w-12 h-12 bg-success-500/20 text-success-400 rounded-full flex items-center justify-center mx-auto mb-4"><i data-lucide="zap" class="w-6 h-6"></i></div>
                 <h3 class="text-xl font-display font-bold text-white mb-2">Recarregar Cartão</h3>
-                <p class="text-xs text-slate-400">Envie fundos do seu saldo PayGo para o Cartão Virtual.</p>
             </div>
-            <form id="vcTopUpForm" class="p-6 pt-0 space-y-4">
+            <form id="vcTopUpForm" onsubmit="event.preventDefault(); window.processVcTopUp();" class="p-6 pt-0 space-y-4">
                 <div>
                     <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">ID do Cartão / TRC20</label>
                     <div class="relative">
                         <i data-lucide="wallet" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
-                        <input type="text" id="vcTopUpDestination" required placeholder="Ex: Pay ID ou Link TRC20" class="w-full pl-9 pr-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white font-mono text-sm">
+                        <input type="text" id="vcTopUpDestination" required placeholder="Ex: Pay ID" class="w-full pl-9 pr-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white font-mono text-sm">
                     </div>
                 </div>
-
                 <div>
                     <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Valor a Recarregar (USD)</label>
                     <div class="relative">
@@ -627,7 +779,6 @@
                     <p class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Será debitado da Carteira PayGo</p>
                     <p class="text-lg font-bold text-brand-400" id="vcTopUpCostDisplay">0.00 MT</p>
                 </div>
-                <p class="text-xs text-center text-slate-500">A recarga será enviada para processamento.</p>
                 <button type="submit" id="btnProcessVcTopUp" class="btn-epic w-full py-3.5 bg-success-600 hover:bg-success-500 text-white shadow-[0_0_15px_rgba(34,197,94,0.3)]">
                     Enviar Pedido de Recarga
                 </button>
@@ -642,10 +793,9 @@
                 <h3 class="text-xl font-display font-bold text-white mb-2 flex items-center gap-2" id="supportTitle">
                     <i data-lucide="message-square" class="w-5 h-5 text-brand-400" id="supportIcon"></i> <span id="supportTitleText">Enviar Mensagem</span>
                 </h3>
-                <p class="text-sm text-slate-400">A nossa equipa responderá o mais breve possível.</p>
             </div>
             
-            <form id="supportForm" class="p-6 pt-0 space-y-4">
+            <form id="supportForm" onsubmit="event.preventDefault(); window.processSupport();" class="p-6 pt-0 space-y-4">
                 <input type="hidden" id="supportType" value="message">
                 
                 <div id="orderSelectContainer" class="hidden">
@@ -657,7 +807,7 @@
 
                 <div>
                     <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2" id="supportMsgLabel">Mensagem</label>
-                    <textarea id="supportMessage" required rows="4" placeholder="Escreva aqui a sua mensagem ou justificação..." class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white resize-none"></textarea>
+                    <textarea id="supportMessage" required rows="4" placeholder="Escreva aqui a sua mensagem..." class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white resize-none"></textarea>
                 </div>
 
                 <button type="submit" id="btnSubmitSupport" class="btn-epic w-full py-3.5 bg-brand-600 hover:bg-brand-500 text-white">
@@ -683,29 +833,19 @@
         let isFirstPurchaseEligible = false, firstPurchaseFree = true, isUserVip = false;
         let currentCalculatedTotal = 0, currentCalculatedTax = 0;
         
-        // Variáveis globais para o Cartão Virtual
-        let rawVcNumber = '';
-        let rawVcCvc = '';
-        let isCardRevealed = false;
+        let rawVcNumber = ''; let rawVcCvc = ''; let isCardRevealed = false;
 
         const formatMZN = (val) => new Intl.NumberFormat('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val);
         const formatUSD = (val) => new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val);
 
-        // 🛡️ FUNÇÕES DE INJEÇÃO SEGURA E UTILITÁRIAS
         const setSafeText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
         const setSafeHTML = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
         const setSafeValue = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
 
-        // 💡 FUNÇÃO UTILITÁRIA PARA GERIR O 'REQUIRED'
         const setRequiredElements = (selector, isRequired) => {
             document.querySelectorAll(selector).forEach(el => {
-                if (isRequired) {
-                    el.setAttribute('required', 'true');
-                    el.disabled = false;
-                } else {
-                    el.removeAttribute('required');
-                    el.disabled = true; // Desabilita para não prender a validação do formulário
-                }
+                if (isRequired) { el.setAttribute('required', 'true'); el.disabled = false; } 
+                else { el.removeAttribute('required'); el.disabled = true; }
             });
         };
 
@@ -722,25 +862,8 @@
             setTimeout(() => { t.classList.add('opacity-0', 'translate-x-8'); setTimeout(() => t.remove(), 400); }, 4000);
         }
 
-        // 👁️ REVELAR NÚMERO DO CARTÃO VIRTUAL
-        window.toggleCardView = () => {
-            isCardRevealed = !isCardRevealed;
-            const eyeIcon = document.getElementById('vcEyeIcon');
-            
-            if (isCardRevealed) {
-                setSafeText('vcNumber', rawVcNumber);
-                setSafeText('vcCvc', rawVcCvc);
-                if (eyeIcon) eyeIcon.setAttribute('data-lucide', 'eye-off');
-            } else {
-                setSafeText('vcNumber', `**** **** **** ${rawVcNumber.slice(-4)}`);
-                setSafeText('vcCvc', '***');
-                if (eyeIcon) eyeIcon.setAttribute('data-lucide', 'eye');
-            }
-            lucide.createIcons();
-        };
-
         // =====================================
-        // CARREGAR DADOS INICIAIS E SESSÃO
+        // CARREGAR DADOS INICIAIS
         // =====================================
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = 'login.html'; return; }
@@ -755,10 +878,8 @@
                     firstPurchaseFree = sysData.firstPurchaseFree !== false;
                 }
                 
-                setSafeText('currentRate', `${sysExchangeRate} MT`);
-                setSafeText('calcRate', sysExchangeRate);
-                setSafeText('infoTax1', sysTax1);
-                setSafeText('infoTax3', sysTax3);
+                setSafeText('currentRate', `${sysExchangeRate} MT`); setSafeText('calcRate', sysExchangeRate);
+                setSafeText('infoTax1', sysTax1); setSafeText('infoTax3', sysTax3);
 
                 const userDoc = await getDoc(doc(db, "users", user.uid));
                 if (userDoc.exists()) {
@@ -766,10 +887,9 @@
                     setSafeText('userName', userData.name || 'Cliente');
                     setSafeText('walletBalance', formatMZN(parseFloat(userData.walletBalance) || 0));
                     setSafeText('vcNameDisplay', userData.name ? userData.name.toUpperCase() : 'CLIENTE PAYGO');
-                    setSafeValue('shipName', userData.name || '');
-                    setSafeValue('shipPhone', userData.phone || '');
+                    setSafeValue('shipName', userData.name || ''); setSafeValue('shipPhone', userData.phone || '');
 
-                    // LÓGICA E BLOQUEIO VIP
+                    // VIP LÓGICA
                     if (userData.isVip && userData.vipExpiry && userData.vipExpiry.toDate() > new Date()) {
                         isUserVip = true;
                         setSafeHTML('userBadge', `<span class="text-vip-400 flex items-center gap-1"><i data-lucide="crown" class="w-3 h-3"></i> VIP</span>`);
@@ -784,11 +904,9 @@
                             const optM = document.getElementById('vipOptionMensal'); if(optM) optM.classList.add('hidden');
                             const optA = document.getElementById('vipOptionAnual'); if(optA) optA.classList.add('hidden');
                             const btnBuy = document.getElementById('btnBuyVip'); if(btnBuy) btnBuy.classList.add('hidden');
-                            setSafeHTML('vipCurrentStatusText', `<span class="text-success-400 font-bold"><i data-lucide="check-circle" class="inline w-4 h-4 mb-1"></i> Plano Anual VIP Ativo</span><br><span class="text-slate-400 text-xs mt-1 block">Está protegido com isenção total de taxas durante 1 ano.</span>`);
                         } else {
                             const optM = document.getElementById('vipOptionMensal'); if(optM) optM.classList.add('hidden');
-                            const btnBuy = document.getElementById('btnBuyVip'); 
-                            if(btnBuy) btnBuy.innerHTML = 'Fazer Upgrade para Anual (12.600 MT)';
+                            const btnBuy = document.getElementById('btnBuyVip'); if(btnBuy) btnBuy.innerHTML = 'Fazer Upgrade para Anual (12.600 MT)';
                             document.querySelector('input[value="anual"]').checked = true;
                         }
                     } else if (firstPurchaseFree) {
@@ -796,72 +914,39 @@
                         isFirstPurchaseEligible = ordersSnap.empty; 
                     }
 
-                    // 📍 LÓGICA DO CARTÃO VIRTUAL E SALDO
+                    // VC LÓGICA
                     if (userData.virtualCard) {
-                        rawVcNumber = userData.virtualCard.number || '';
-                        rawVcCvc = userData.virtualCard.cvc || '***';
-                        
+                        rawVcNumber = userData.virtualCard.number || ''; rawVcCvc = userData.virtualCard.cvc || '***';
                         setSafeText('vcNumber', `**** **** **** ${rawVcNumber.slice(-4)}`);
                         setSafeText('vcExpiry', userData.virtualCard.expiry);
                         setSafeText('vcBalanceDisplay', `$${formatUSD(userData.vcBalance || 0)}`);
-                        
-                        const btnReveal = document.getElementById('btnRevealCard');
-                        if (btnReveal) btnReveal.classList.remove('hidden');
-
-                        if(userData.virtualCard.destination) {
-                            setSafeValue('vcTopUpDestination', userData.virtualCard.destination);
-                        }
-                        
+                        const btnReveal = document.getElementById('btnRevealCard'); if (btnReveal) btnReveal.classList.remove('hidden');
+                        if(userData.virtualCard.destination) setSafeValue('vcTopUpDestination', userData.virtualCard.destination);
                         setSafeHTML('vcStatusText', `<span class="text-success-400 font-bold">Cartão Vinculado.</span> Controle o saldo e recarregue diretamente da carteira.`);
-                        setSafeHTML('vcActionButtons', `
-                            <button onclick="window.openVcTopUpModal()" class="flex-1 py-3 bg-success-600 hover:bg-success-500 text-white rounded-xl font-bold text-sm transition shadow-[0_0_15px_rgba(34,197,94,0.3)] flex items-center justify-center gap-2">
-                                <i data-lucide="zap" class="w-4 h-4"></i> Recarregar ($)
-                            </button>
-                            <button onclick="window.unlinkVirtualCard()" class="py-3 px-4 bg-slate-800 hover:bg-danger-900/50 text-slate-400 hover:text-danger-400 border border-slate-700 hover:border-danger-500/50 rounded-xl font-bold transition flex items-center justify-center gap-2" title="Desvincular Cartão">
-                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                            </button>
-                        `);
+                        setSafeHTML('vcActionButtons', `<button onclick="window.openVcTopUpModal()" class="flex-1 py-3 bg-success-600 hover:bg-success-500 text-white rounded-xl font-bold text-sm transition shadow-[0_0_15px_rgba(34,197,94,0.3)] flex items-center justify-center gap-2"><i data-lucide="zap" class="w-4 h-4"></i> Recarregar ($)</button> <button onclick="window.unlinkVirtualCard()" class="py-3 px-4 bg-slate-800 hover:bg-danger-900/50 text-slate-400 hover:text-danger-400 border border-slate-700 hover:border-danger-500/50 rounded-xl font-bold transition flex items-center justify-center gap-2" title="Desvincular Cartão"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`);
                     } else if (userData.vcRequestPending) {
                         setSafeHTML('vcStatusText', `<span class="text-warning-400 font-bold">Aguardando Aprovação.</span> O Admin está a gerar o seu cartão.`);
-                        setSafeHTML('vcActionButtons', `
-                            <button disabled class="flex-1 py-3 bg-slate-800 text-slate-500 border border-slate-700 rounded-xl font-bold text-sm cursor-not-allowed flex items-center justify-center gap-2">
-                                <i data-lucide="clock" class="w-4 h-4"></i> Pedido em Análise
-                            </button>
-                        `);
+                        setSafeHTML('vcActionButtons', `<button disabled class="flex-1 py-3 bg-slate-800 text-slate-500 border border-slate-700 rounded-xl font-bold text-sm cursor-not-allowed flex items-center justify-center gap-2"><i data-lucide="clock" class="w-4 h-4"></i> Pedido em Análise</button>`);
                     }
                     lucide.createIcons();
                 }
-            } catch (error) { 
-                console.error(error);
-                window.showToast("Falha ao carregar dados do utilizador.", "error"); 
-            }
+            } catch (error) { window.showToast("Falha ao carregar dados do utilizador.", "error"); }
         });
 
         // =====================================
-        // ORÇAMENTADOR CAMALEÃO E PREPARAÇÃO
+        // ORÇAMENTADOR CAMALEÃO (FUNÇÕES NO WINDOW)
         // =====================================
         const orderCategory = document.getElementById('orderCategory');
         if(orderCategory) {
             orderCategory.addEventListener('change', function(e) {
                 const cat = e.target.value;
                 if (cat === 'physical') {
-                    // Mostrar Morada, Esconder Digital
-                    document.getElementById('physicalFields').classList.remove('hidden'); 
-                    document.getElementById('digitalFields').classList.add('hidden');
+                    document.getElementById('physicalFields').classList.remove('hidden'); document.getElementById('digitalFields').classList.add('hidden');
                     setSafeText('labelUrl', "Link do Produto");
-                    
-                    // Obriga Físicos, Liberta Digitais
-                    setRequiredElements('.physical-req', true);
-                    setRequiredElements('#digitalAccount', false);
+                    setRequiredElements('.physical-req', true); setRequiredElements('#digitalAccount', false);
                 } else {
-                    // Esconder Morada, Mostrar Digital
-                    document.getElementById('physicalFields').classList.add('hidden'); 
-                    document.getElementById('digitalFields').classList.remove('hidden');
-                    
-                    // Liberta Físicos, Obriga Digitais
-                    setRequiredElements('.physical-req', false);
-                    setRequiredElements('#digitalAccount', true);
-                    
+                    document.getElementById('physicalFields').classList.add('hidden'); document.getElementById('digitalFields').classList.remove('hidden');
+                    setRequiredElements('.physical-req', false); setRequiredElements('#digitalAccount', true);
                     if (cat === 'game') { setSafeText('labelUrl', "Link do Jogo"); setSafeText('labelDigital', "Player ID"); } 
                     else { setSafeText('labelUrl', "Link do Software"); setSafeText('labelDigital', "E-mail da Conta"); }
                 }
@@ -869,398 +954,168 @@
         }
 
         const shipCity = document.getElementById('shipCity');
-        if(shipCity) {
-            shipCity.addEventListener('change', function(e) { setSafeValue('shipZip', e.target.options[e.target.selectedIndex].getAttribute('data-zip') || ''); });
-        }
+        if(shipCity) shipCity.addEventListener('change', function(e) { setSafeValue('shipZip', e.target.options[e.target.selectedIndex].getAttribute('data-zip') || ''); });
 
         const usdInput = document.getElementById('productUsd'), mznInput = document.getElementById('productMzn');
         if(usdInput && mznInput) {
-            usdInput.addEventListener('input', e => { 
-                const usdVal = parseFloat(e.target.value) || 0; 
-                mznInput.value = usdVal ? (usdVal * sysExchangeRate).toFixed(2) : ''; 
-                updateCalculator(usdVal); 
-            });
-            mznInput.addEventListener('input', e => { 
-                const mznVal = parseFloat(e.target.value) || 0; 
-                const usdVal = mznVal / sysExchangeRate; 
-                usdInput.value = usdVal ? usdVal.toFixed(2) : ''; 
-                updateCalculator(usdVal); 
-            });
+            usdInput.addEventListener('input', e => { const usdVal = parseFloat(e.target.value) || 0; mznInput.value = usdVal ? (usdVal * sysExchangeRate).toFixed(2) : ''; updateCalculator(usdVal); });
+            mznInput.addEventListener('input', e => { const mznVal = parseFloat(e.target.value) || 0; const usdVal = mznVal / sysExchangeRate; usdInput.value = usdVal ? usdVal.toFixed(2) : ''; updateCalculator(usdVal); });
         }
 
         function updateCalculator(usdVal) {
-            const btnSub = document.getElementById('btnSubmitOrder');
-            const warn = document.getElementById('balanceWarning');
-            const succ = document.getElementById('successReady');
-            
-            if (usdVal <= 0) { 
-                currentCalculatedTotal = 0; 
-                setSafeText('calcTotal', '0.00 MT'); 
-                if(btnSub) btnSub.disabled = true; 
-                if(warn) warn.classList.add('hidden'); 
-                if(succ) succ.classList.add('hidden'); 
-                return; 
-            }
+            const btnSub = document.getElementById('btnSubmitOrder'), warn = document.getElementById('balanceWarning'), succ = document.getElementById('successReady');
+            if (usdVal <= 0) { currentCalculatedTotal = 0; setSafeText('calcTotal', '0.00 MT'); if(btnSub) btnSub.disabled = true; if(warn) warn.classList.add('hidden'); if(succ) succ.classList.add('hidden'); return; }
             
             const baseMZN = usdVal * sysExchangeRate;
             let appliedTax = sysTax1;
-            if (usdVal > 20 && usdVal <= 50) appliedTax = sysTax2; 
-            else if (usdVal > 50) appliedTax = sysTax3;
-            
+            if (usdVal > 20 && usdVal <= 50) appliedTax = sysTax2; else if (usdVal > 50) appliedTax = sysTax3;
             if (isUserVip || (isFirstPurchaseEligible && usdVal <= 5)) appliedTax = 0;
             
-            currentCalculatedTax = appliedTax; 
-            currentCalculatedTotal = baseMZN + appliedTax; 
+            currentCalculatedTax = appliedTax; currentCalculatedTotal = baseMZN + appliedTax; 
             
-            setSafeText('calcBase', `${formatMZN(baseMZN)} MT`);
-            setSafeText('calcFee', `${formatMZN(appliedTax)} MT`);
-            setSafeText('calcTotal', `${formatMZN(currentCalculatedTotal)} MT`);
+            setSafeText('calcBase', `${formatMZN(baseMZN)} MT`); setSafeText('calcFee', `${formatMZN(appliedTax)} MT`); setSafeText('calcTotal', `${formatMZN(currentCalculatedTotal)} MT`);
 
             const safeTotal = Number(currentCalculatedTotal.toFixed(2));
             const userBal = parseFloat(userData?.walletBalance) || 0;
             
-            if (safeTotal > userBal) { 
-                if(btnSub) btnSub.disabled = true; 
-                if(succ) succ.classList.add('hidden'); 
-                if(warn) warn.classList.remove('hidden'); 
-            } else { 
-                if(btnSub) btnSub.disabled = false; 
-                if(warn) warn.classList.add('hidden'); 
-                if(succ) succ.classList.remove('hidden'); 
+            if (safeTotal > userBal) { if(btnSub) btnSub.disabled = true; if(succ) succ.classList.add('hidden'); if(warn) warn.classList.remove('hidden'); } 
+            else { if(btnSub) btnSub.disabled = false; if(warn) warn.classList.add('hidden'); if(succ) succ.classList.remove('hidden'); }
+        }
+
+        // =====================================
+        // PROCESSAMENTOS SEGUROS VIA SUBMIT (WINDOW)
+        // =====================================
+        
+        // 🛒 1. PAGAR ENCOMENDA
+        window.processOrder = async () => {
+            const btn = document.getElementById('btnSubmitOrder'); 
+            btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Processando...`; lucide.createIcons({root: btn});
+
+            const safeTotal = Number(currentCalculatedTotal.toFixed(2));
+            const userBal = parseFloat(userData?.walletBalance) || 0;
+
+            if(safeTotal > userBal || safeTotal <= 0) {
+                window.showToast("Operação bloqueada: Saldo insuficiente.", "error");
+                btn.disabled = true; btn.innerHTML = `<i data-lucide="credit-card" class="w-5 h-5"></i> Autorizar Pagamento Seguro`; lucide.createIcons({root: btn}); return;
             }
-        }
 
-        // =====================================
-        // PROCESSAR PAGAMENTO (SEGURO E ÚNICO)
-        // =====================================
-        const orderForm = document.getElementById('orderForm');
-        if(orderForm) {
-            orderForm.addEventListener('submit', async (e) => {
-                e.preventDefault(); // Impede o Recarregamento Imediato da Página
+            try {
+                const orderId = 'PG-' + Math.floor(100000 + Math.random() * 900000);
+                const cat = document.getElementById('orderCategory').value;
+                let payloadData = {
+                    orderId: orderId, userId: currentUser.uid, name: userData.name || '', email: currentUser.email || '', 
+                    category: cat, detail: `${document.getElementById('productUrl').value} | ${document.getElementById('productDetails').value}`,
+                    usd: parseFloat(document.getElementById('productUsd').value), exchangeRate: sysExchangeRate, tax: currentCalculatedTax, total: safeTotal,
+                    paymentMethod: 'wallet', isPaid: true, status: 'processing', createdAt: serverTimestamp()
+                };
                 
-                const btn = document.getElementById('btnSubmitOrder'); 
-                btn.disabled = true; 
-                btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Processando...`; 
-                lucide.createIcons({root: btn});
+                if (cat === 'physical') { payloadData.shipping = { shipName: document.getElementById('shipName').value, shipZip: document.getElementById('shipZip').value, shipAddress: document.getElementById('shipAddress').value, shipCity: document.getElementById('shipCity').value, shipPhone: document.getElementById('shipPhone').value }; } 
+                else { payloadData.digitalData = { accountOrId: document.getElementById('digitalAccount').value }; }
 
-                const safeTotal = Number(currentCalculatedTotal.toFixed(2));
-                const userBal = parseFloat(userData?.walletBalance) || 0;
+                await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: increment(-safeTotal) });
+                await addDoc(collection(db, "orders"), payloadData);
+                await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: safeTotal, description: `Pedido ${orderId}`, reference: orderId, createdAt: new Date().toISOString() });
 
-                // Dupla Confirmação de Saldo
-                if(safeTotal > userBal || safeTotal <= 0) {
-                    window.showToast("Operação bloqueada: Saldo insuficiente ou valor inválido.", "error");
-                    btn.disabled = true; 
-                    btn.innerHTML = `<i data-lucide="credit-card" class="w-5 h-5"></i> <span id="btnSubmitText">Autorizar Pagamento Seguro</span>`; 
-                    lucide.createIcons({root: btn});
-                    return;
+                userData.walletBalance -= safeTotal; setSafeText('walletBalance', formatMZN(userData.walletBalance));
+                document.getElementById('orderForm').reset(); updateCalculator(0); window.showToast("Pagamento processado com sucesso!", "success");
+            } catch (err) { window.showToast("Falha ao debitar a carteira.", "error"); } 
+            finally { btn.disabled = false; btn.innerHTML = `<i data-lucide="credit-card" class="w-5 h-5"></i> Autorizar Pagamento Seguro`; lucide.createIcons({root: btn}); }
+        };
+        // Vincula a função ao formulário Orçamentador
+        const orderFormEl = document.getElementById('orderForm');
+        if(orderFormEl) orderFormEl.onsubmit = (e) => { e.preventDefault(); window.processOrder(); };
+
+        // 💰 2. DEPOSITAR (PAYSUITE)
+        window.processTopUp = async () => {
+            const btn = document.getElementById('btnProcessTopUp');
+            btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A enviar...`; lucide.createIcons({root: btn});
+
+            const amount = parseFloat(document.getElementById('topUpAmount').value);
+            const method = document.querySelector('input[name="topUpMethod"]:checked').value;
+
+            if (amount < 10) { window.showToast("O depósito mínimo é de 10 MT.", "warning"); btn.disabled = false; btn.innerHTML = "Enviar Pedido de Depósito"; return; }
+
+            try {
+                if (method === 'bank') {
+                    await addDoc(collection(db, "support_tickets"), { userId: currentUser.uid, userName: userData.name, userEmail: currentUser.email, type: 'deposit_request', amount: amount, paymentMethod: method, message: `Depósito Bancário de ${formatMZN(amount)} MT.`, status: 'open', createdAt: serverTimestamp() });
+                    window.closeModals(); document.getElementById('topUpForm').reset(); window.showToast("Pedido enviado! O Admin confirmará o depósito.", "success");
+                } else {
+                    window.showToast("A conectar à rede PaySuite...", "info");
+                    const response = await fetch('/api/paysuite-topup', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userId: currentUser.uid, userEmail: currentUser.email, userName: userData.name, userPhone: userData.phone || '', amount: amount, channel: method })
+                    });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.message || "Erro na PaySuite");
+
+                    if (data.paymentUrl) { window.location.href = data.paymentUrl; } 
+                    else { window.closeModals(); document.getElementById('topUpForm').reset(); window.showToast("Verifique o seu telemóvel (PIN)!", "success"); }
                 }
+            } catch (err) { window.showToast(err.message || "Falha técnica ao iniciar pagamento.", "error"); } 
+            finally { btn.disabled = false; btn.innerHTML = "Enviar Pedido de Depósito"; }
+        };
 
-                try {
-                    const orderId = 'PG-' + Math.floor(100000 + Math.random() * 900000);
-                    const cat = document.getElementById('orderCategory').value;
-                    let payloadData = {
-                        orderId: orderId, userId: currentUser.uid, name: userData.name || '', email: currentUser.email || '', 
-                        category: cat, detail: `${document.getElementById('productUrl').value} | ${document.getElementById('productDetails').value}`,
-                        usd: parseFloat(document.getElementById('productUsd').value), 
-                        exchangeRate: sysExchangeRate, tax: currentCalculatedTax, total: safeTotal,
-                        paymentMethod: 'wallet', isPaid: true, status: 'processing', createdAt: serverTimestamp()
-                    };
-                    
-                    if (cat === 'physical') { 
-                        payloadData.shipping = { 
-                            shipName: document.getElementById('shipName').value, 
-                            shipZip: document.getElementById('shipZip').value, 
-                            shipAddress: document.getElementById('shipAddress').value, 
-                            shipCity: document.getElementById('shipCity').value, 
-                            shipPhone: document.getElementById('shipPhone').value 
-                        }; 
-                    } else { 
-                        payloadData.digitalData = { accountOrId: document.getElementById('digitalAccount').value }; 
-                    }
+        // 📤 3. TRANSFERÊNCIA P2P
+        window.processTransfer = async () => { window.showToast("Transferência P2P em desenvolvimento.", "info"); };
 
-                    // Gravar na DB
-                    await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: increment(-safeTotal) });
-                    await addDoc(collection(db, "orders"), payloadData);
-                    await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: safeTotal, description: `Pedido ${orderId}`, reference: orderId, createdAt: new Date().toISOString() });
+        // 🪪 4. VINCULAR CARTÃO VIRTUAL
+        window.processVcAdd = async () => {
+            const btn = document.getElementById('btnSubmitVc'); btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Guardando...`; lucide.createIcons({root: btn});
+            const vcData = { number: document.getElementById('vcInputNumber').value, expiry: document.getElementById('vcInputExpiry').value, cvc: document.getElementById('vcInputCvc').value, destination: document.getElementById('vcInputDestination').value.trim(), addedAt: new Date().toISOString() };
+            try { await updateDoc(doc(db, "users", currentUser.uid), { virtualCard: vcData, vcBalance: 0 }); window.showToast("Cartão vinculado!", "success"); setTimeout(() => window.location.reload(), 1000); } 
+            catch (err) { window.showToast("Erro.", "error"); btn.disabled = false; btn.textContent = "Vincular Cartão"; }
+        };
 
-                    userData.walletBalance -= safeTotal; 
-                    setSafeText('walletBalance', formatMZN(userData.walletBalance));
-                    e.target.reset(); 
-                    updateCalculator(0); 
-                    window.showToast("Pagamento processado com sucesso!", "success");
-                    
-                } catch (err) { 
-                    console.error("Erro no Orçamentador:", err);
-                    window.showToast("Falha ao debitar a carteira.", "error"); 
-                } finally { 
-                    btn.disabled = false; 
-                    btn.innerHTML = `<i data-lucide="credit-card" class="w-5 h-5"></i> <span id="btnSubmitText">Autorizar Pagamento Seguro</span>`; 
-                    lucide.createIcons({root: btn}); 
-                }
-            });
-        }
+        // 💳 5. PEDIR NOVO CARTÃO VIRTUAL
+        window.processVcRequest = async () => {
+            const btn = document.getElementById('btnRequestVc'); const price = 1000;
+            if ((parseFloat(userData?.walletBalance) || 0) < price) return window.showToast("Saldo insuficiente (Min 1.000 MT).", "error");
+            btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Processando...`; lucide.createIcons({root: btn});
+            try {
+                await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: increment(-price), vcRequestPending: true });
+                await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: price, description: `Emissão VC`, reference: 'VC-EMISSION', createdAt: new Date().toISOString() });
+                await addDoc(collection(db, "vc_requests"), { userId: currentUser.uid, userName: userData.name, userEmail: currentUser.email, status: 'pending', amountPaid: price, createdAt: serverTimestamp() });
+                window.closeModals(); window.showToast("Solicitação enviada!", "success"); setTimeout(() => window.location.reload(), 1500);
+            } catch (err) { window.showToast("Erro.", "error"); btn.disabled = false; btn.textContent = "Solicitar Emissão"; }
+        };
+
+        // ⚡ 6. RECARREGAR CARTÃO VIRTUAL
+        window.processVcTopUp = async () => {
+            const usdAmount = parseFloat(document.getElementById('vcTopUpAmount').value);
+            const destination = document.getElementById('vcTopUpDestination').value.trim(); 
+            if(usdAmount < 10) return window.showToast("Recarga mínima $10.", "warning");
+            const mznCost = usdAmount * sysExchangeRate; 
+            if ((parseFloat(userData?.walletBalance) || 0) < mznCost) return window.showToast(`Saldo insuficiente.`, "error");
+
+            const btn = document.getElementById('btnProcessVcTopUp'); btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A enviar...`; lucide.createIcons({root: btn});
+            try {
+                await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: increment(-mznCost) });
+                await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: mznCost, description: `Recarga VC ($${usdAmount})`, reference: 'VC-TOPUP', createdAt: new Date().toISOString() });
+                await addDoc(collection(db, "support_tickets"), { userId: currentUser.uid, type: 'vc_topup', usdAmount: usdAmount, mznCost: mznCost, userName: userData.name, userEmail: currentUser.email, destination: destination, message: `Recarga VC: $${usdAmount}`, status: 'open', createdAt: serverTimestamp() });
+                window.closeModals(); window.showToast("Pedido enviado!", "success");
+                userData.walletBalance -= mznCost; setSafeText('walletBalance', formatMZN(userData.walletBalance)); document.getElementById('vcTopUpForm').reset();
+            } catch (err) { window.showToast("Erro.", "error"); } finally { btn.disabled = false; btn.innerHTML = "Enviar Pedido"; }
+        };
+
+        // 🎧 7. SUPORTE (CHAT/REEMBOLSO)
+        window.processSupport = async () => {
+            const type = document.getElementById('supportType').value, msg = document.getElementById('supportMessage').value, orderId = document.getElementById('supportOrderId').value;
+            if (type === 'refund' && !orderId) return window.showToast("Selecione um pedido.", "error");
+            const btn = document.getElementById('btnSubmitSupport'); btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A enviar...`; lucide.createIcons({root: btn});
+            try {
+                await addDoc(collection(db, "support_tickets"), { userId: currentUser.uid, userName: userData.name, userEmail: currentUser.email, type: type, orderId: type === 'refund' ? orderId : null, message: msg, status: 'open', createdAt: serverTimestamp() });
+                window.closeModals(); document.getElementById('supportForm').reset(); window.showToast("Enviado com sucesso!", "success");
+            } catch (err) { window.showToast("Erro.", "error"); btn.disabled = false; btn.textContent = "Enviar"; }
+        };
 
         // =====================================
-        // MODAIS BASE (DEPÓSITO, TRANSFERÊNCIA E VIP)
+        // UTILS FINAIS (LOGOUT E ABERTURAS)
         // =====================================
         window.closeModals = function() { ['topUpModal', 'transferModal', 'vipModal', 'vcModal', 'vcTopUpModal', 'supportModal'].forEach(id => { const el = document.getElementById(id); if(el) { el.classList.remove('flex'); el.classList.add('hidden'); } }); };
         window.openTopUpModal = () => { window.closeModals(); const el = document.getElementById('topUpModal'); if(el) el.classList.replace('hidden', 'flex'); };
         window.openTransferModal = () => { window.closeModals(); const el = document.getElementById('transferModal'); if(el) el.classList.replace('hidden', 'flex'); };
         window.openVipModal = () => { window.closeModals(); const el = document.getElementById('vipModal'); if(el) el.classList.replace('hidden', 'flex'); };
-
-        window.processVip = async () => {
-            const btn = document.getElementById('btnBuyVip');
-            const plan = document.querySelector('input[name="vipPlan"]:checked').value;
-            const price = plan === 'anual' ? 12600 : 1200;
-            if ((parseFloat(userData?.walletBalance) || 0) < price) return window.showToast("Saldo insuficiente. Efetue depósito.", "error");
-            if (confirm(`Confirmar assinatura VIP ${plan.toUpperCase()} por ${price} MT?`)) {
-                btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A ativar...`; lucide.createIcons({root: btn});
-                try {
-                    const expiryDate = new Date(); expiryDate.setDate(expiryDate.getDate() + (plan === 'anual' ? 365 : 30));
-                    await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: increment(-price), isVip: true, vipPlan: plan, vipExpiry: expiryDate });
-                    await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: price, description: `Assinatura VIP (${plan})`, reference: 'VIP', createdAt: new Date().toISOString() });
-                    await addDoc(collection(db, "vip_subscriptions"), { userId: currentUser.uid, userName: userData.name, userEmail: currentUser.email, plan: plan, amountPaid: price, expiryDate: expiryDate, createdAt: serverTimestamp() });
-
-                    window.showToast("Parabéns! Conta VIP ativada.", "success");
-                    setTimeout(() => window.location.reload(), 1500);
-                } catch (err) { window.showToast("Erro.", "error"); btn.disabled = false; btn.textContent = "Confirmar Pagamento VIP"; }
-            }
-        };
-
-        // =====================================
-        // GESTÃO DE DEPÓSITOS (TOP-UP COM PAYSUITE)
-        // =====================================
-        const topUpForm = document.getElementById('topUpForm');
-        if (topUpForm) {
-            topUpForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-
-                const btn = document.getElementById('btnProcessTopUp');
-                btn.disabled = true;
-                btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A enviar...`;
-                lucide.createIcons({root: btn});
-
-                const amount = parseFloat(document.getElementById('topUpAmount').value);
-                const method = document.querySelector('input[name="topUpMethod"]:checked').value;
-
-                if (amount < 10) {
-                    window.showToast("O depósito mínimo é de 10 MT.", "warning");
-                    btn.disabled = false; btn.innerHTML = "Enviar Pedido de Depósito";
-                    return;
-                }
-
-                try {
-                    if (method === 'bank') {
-                        await addDoc(collection(db, "support_tickets"), {
-                            userId: currentUser.uid,
-                            userName: userData.name,
-                            userEmail: currentUser.email,
-                            type: 'deposit_request',
-                            amount: amount,
-                            paymentMethod: method,
-                            message: `Depósito Bancário de ${formatMZN(amount)} MT. Verifique o extrato e credite.`,
-                            status: 'open',
-                            createdAt: serverTimestamp()
-                        });
-
-                        window.closeModals(); e.target.reset();
-                        window.showToast(`Pedido de depósito enviado! O Admin irá creditar o valor após confirmar o banco.`, "success");
-                    } else {
-                        // PAYSUITE API FETCH AQUI
-                        window.showToast("A conectar à rede PaySuite...", "info");
-                        
-                        const response = await fetch('/api/paysuite-topup', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                userId: currentUser.uid,
-                                userEmail: currentUser.email,
-                                userName: userData.name,
-                                userPhone: userData.phone || '',
-                                amount: amount,
-                                channel: method 
-                            })
-                        });
-
-                        const data = await response.json();
-
-                        if (!response.ok) throw new Error(data.message || "Erro na comunicação com a PaySuite");
-
-                        if (data.paymentUrl) {
-                            window.location.href = data.paymentUrl;
-                        } else {
-                            window.closeModals(); e.target.reset();
-                            window.showToast("Por favor, verifique o seu telemóvel para colocar o PIN!", "success");
-                        }
-                    }
-                } catch (err) {
-                    console.error("Erro no depósito:", err);
-                    window.showToast(err.message || "Falha técnica ao iniciar pagamento.", "error");
-                } finally {
-                    btn.disabled = false;
-                    btn.innerHTML = "Enviar Pedido de Depósito";
-                }
-            });
-        }
-
-        // Transferência
-        const transferForm = document.getElementById('transferForm');
-        if(transferForm) {
-            transferForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                window.showToast("Funcionalidade de transferência P2P em desenvolvimento.", "info");
-            });
-        }
-
-        // =====================================
-        // CARTÃO VIRTUAL (VINCULAR E RECARGA)
-        // =====================================
-        window.openVirtualCardModal = (type) => {
-            window.closeModals(); const modal = document.getElementById('vcModal'); if(modal) modal.classList.replace('hidden', 'flex');
-            if (type === 'link') {
-                setSafeText('vcModalTitle', "Vincular Cartão Existente"); setSafeText('vcModalDesc', "Introduza os dados do seu cartão.");
-                const addF = document.getElementById('vcAddForm'); if(addF) addF.classList.remove('hidden'); 
-                const reqF = document.getElementById('vcRequestForm'); if(reqF) reqF.classList.add('hidden');
-            } else {
-                setSafeText('vcModalTitle', "Solicitar Cartão Virtual"); setSafeText('vcModalDesc', "A nossa equipa irá criar um cartão exclusivo.");
-                const addF = document.getElementById('vcAddForm'); if(addF) addF.classList.add('hidden'); 
-                const reqF = document.getElementById('vcRequestForm'); if(reqF) reqF.classList.remove('hidden');
-            }
-        };
-
-        const inputNum = document.getElementById('vcInputNumber'); if(inputNum) inputNum.addEventListener('input', e => e.target.value = e.target.value.replace(/[^\d]/g, '').replace(/(.{4})/g, '$1 ').trim());
-        const inputExp = document.getElementById('vcInputExpiry'); if(inputExp) inputExp.addEventListener('input', e => e.target.value = e.target.value.replace(/[^\d]/g, '').replace(/(.{2})/, '$1/').trim().substring(0, 5));
-
-        const vcAddForm = document.getElementById('vcAddForm');
-        if(vcAddForm) {
-            vcAddForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const btn = document.getElementById('btnSubmitVc'); btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Guardando...`; lucide.createIcons({root: btn});
-                
-                const vcData = { 
-                    number: document.getElementById('vcInputNumber').value, 
-                    expiry: document.getElementById('vcInputExpiry').value, 
-                    cvc: document.getElementById('vcInputCvc').value, 
-                    destination: document.getElementById('vcInputDestination').value.trim(),
-                    addedAt: new Date().toISOString() 
-                };
-                try {
-                    await updateDoc(doc(db, "users", currentUser.uid), { virtualCard: vcData, vcBalance: 0 });
-                    window.showToast("Cartão vinculado!", "success"); setTimeout(() => window.location.reload(), 1000);
-                } catch (err) { window.showToast("Erro.", "error"); btn.disabled = false; btn.textContent = "Vincular Cartão"; }
-            });
-        }
-
-        const vcReqForm = document.getElementById('vcRequestForm');
-        if(vcReqForm) {
-            vcReqForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const btn = document.getElementById('btnRequestVc'); const price = 1000;
-                if ((parseFloat(userData?.walletBalance) || 0) < price) return window.showToast("Saldo insuficiente (Min 1.000 MT).", "error");
-                btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Processando...`; lucide.createIcons({root: btn});
-                try {
-                    await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: increment(-price), vcRequestPending: true });
-                    await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: price, description: `Emissão de Cartão Virtual`, reference: 'VC-EMISSION', createdAt: new Date().toISOString() });
-                    await addDoc(collection(db, "vc_requests"), { userId: currentUser.uid, userName: userData.name, userEmail: currentUser.email, status: 'pending', amountPaid: price, createdAt: serverTimestamp() });
-                    window.closeModals(); window.showToast("Solicitação enviada ao Admin!", "success");
-                    setTimeout(() => window.location.reload(), 1500);
-                } catch (err) { window.showToast("Erro.", "error"); btn.disabled = false; btn.textContent = "Solicitar Emissão"; }
-            });
-        }
-
-        window.unlinkVirtualCard = async () => {
-            if (confirm("Tem a certeza que deseja desvincular o seu cartão virtual da PayGo?")) {
-                try {
-                    await updateDoc(doc(db, "users", currentUser.uid), { virtualCard: null, vcBalance: 0 });
-                    window.showToast("Cartão removido com sucesso.", "success");
-                    setTimeout(() => window.location.reload(), 1000);
-                } catch(e) { window.showToast("Erro ao remover cartão.", "error"); }
-            }
-        };
-
-        window.openVcTopUpModal = () => { window.closeModals(); const el = document.getElementById('vcTopUpModal'); if(el) el.classList.replace('hidden', 'flex'); };
-        window.calcVcTopUp = () => {
-            const usd = parseFloat(document.getElementById('vcTopUpAmount').value) || 0;
-            setSafeText('vcTopUpCostDisplay', formatMZN(usd * sysExchangeRate) + " MT");
-        };
-
-        const vcTopUpForm = document.getElementById('vcTopUpForm');
-        if(vcTopUpForm) {
-            vcTopUpForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const usdAmount = parseFloat(document.getElementById('vcTopUpAmount').value);
-                const destination = document.getElementById('vcTopUpDestination').value.trim(); 
-                
-                if(usdAmount < 10) return window.showToast("A recarga mínima é de $10.", "warning");
-                
-                const mznCost = usdAmount * sysExchangeRate; 
-                if ((parseFloat(userData?.walletBalance) || 0) < mznCost) return window.showToast(`Saldo insuficiente. Necessita de ${formatMZN(mznCost)} MT.`, "error");
-
-                const btn = document.getElementById('btnProcessVcTopUp');
-                btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A enviar...`; lucide.createIcons({root: btn});
-
-                try {
-                    await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: increment(-mznCost) });
-                    await addDoc(collection(db, "wallet_transactions"), { 
-                        userId: currentUser.uid, type: 'debit', amount: mznCost, 
-                        description: `Recarga VC ($${usdAmount}) p/ ${destination}`,
-                        reference: 'VC-TOPUP', createdAt: new Date().toISOString() 
-                    });
-                    
-                    await addDoc(collection(db, "support_tickets"), {
-                        userId: currentUser.uid, type: 'vc_topup', usdAmount: usdAmount, mznCost: mznCost, 
-                        userName: userData.name, userEmail: currentUser.email, destination: destination,
-                        message: `Pedido de Recarga: Transferir $${usdAmount} para o Cartão/TRC20: ${destination}.`,
-                        status: 'open', createdAt: serverTimestamp()
-                    });
-
-                    window.closeModals(); window.showToast("Pedido de recarga enviado para o Admin!", "success");
-                    userData.walletBalance -= mznCost; setSafeText('walletBalance', formatMZN(userData.walletBalance));
-                    e.target.reset(); setSafeText('vcTopUpCostDisplay', "0.00 MT");
-                } catch (err) { window.showToast("Erro.", "error"); } finally { btn.disabled = false; btn.innerHTML = "Enviar Pedido de Recarga"; }
-            });
-        }
-
-        // =====================================
-        // SUPORTE / TICKETS
-        // =====================================
-        window.openSupportModal = async (type) => {
-            window.closeModals(); const modal = document.getElementById('supportModal'); document.getElementById('supportType').value = type;
-            const selectCont = document.getElementById('orderSelectContainer');
-            if (type === 'refund') {
-                setSafeText('supportTitleText', "Solicitar Reembolso"); 
-                const icon = document.getElementById('supportIcon'); if(icon) { icon.setAttribute('data-lucide', 'rotate-ccw'); icon.classList.replace('text-brand-400', 'text-danger-400'); }
-                if(selectCont) selectCont.classList.remove('hidden');
-                
-                const orderSelect = document.getElementById('supportOrderId'); 
-                if(orderSelect) {
-                    orderSelect.innerHTML = '<option value="">A carregar...</option>';
-                    const snap = await getDocs(query(collection(db, "orders"), where("userId", "==", currentUser.uid), where("status", "in", ["pending", "processing"]), limit(10)));
-                    if (snap.empty) { orderSelect.innerHTML = '<option value="">Sem pedidos elegíveis.</option>'; orderSelect.disabled = true; } 
-                    else { orderSelect.innerHTML = '<option value="" disabled selected>Selecione um pedido...</option>'; snap.forEach(doc => { const d = doc.data(); orderSelect.innerHTML += `<option value="${d.orderId}">#${d.orderId} - $${d.usd}</option>`; }); orderSelect.disabled = false; }
-                }
-            } else {
-                setSafeText('supportTitleText', "Enviar Mensagem à Equipa"); 
-                const icon = document.getElementById('supportIcon'); if(icon) { icon.setAttribute('data-lucide', 'message-square'); icon.classList.replace('text-danger-400', 'text-brand-400'); }
-                if(selectCont) selectCont.classList.add('hidden');
-            }
-            lucide.createIcons(); if(modal) modal.classList.replace('hidden', 'flex');
-        };
-
-        const supportForm = document.getElementById('supportForm');
-        if(supportForm) {
-            supportForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const type = document.getElementById('supportType').value, msg = document.getElementById('supportMessage').value, orderId = document.getElementById('supportOrderId').value;
-                if (type === 'refund' && !orderId) return window.showToast("Selecione um pedido.", "error");
-                const btn = document.getElementById('btnSubmitSupport'); btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A enviar...`; lucide.createIcons({root: btn});
-                try {
-                    await addDoc(collection(db, "support_tickets"), { userId: currentUser.uid, userName: userData.name, userEmail: currentUser.email, type: type, orderId: type === 'refund' ? orderId : null, message: msg, status: 'open', createdAt: serverTimestamp() });
-                    window.closeModals(); e.target.reset(); window.showToast("Enviado com sucesso!", "success");
-                } catch (err) { window.showToast("Erro.", "error"); btn.disabled = false; btn.textContent = "Enviar para Equipa"; }
-            });
-        }
-
+        
         window.logout = async () => { if(confirm('Sair da conta?')) { await signOut(auth); window.location.href = 'login.html'; } };
     </script>
 </body>
