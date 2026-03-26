@@ -2,383 +2,517 @@
 <html lang="pt-MZ" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dashboard Central | PayGo Admin</title>
-    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Painel | PayGo Moçambique</title>
+    <meta name="theme-color" content="#0f172a">
     
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
-    
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: {
-                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
-                        display: ['"Outfit"', 'sans-serif'],
-                        mono: ['"Fira Code"', 'monospace']
-                    },
-                    colors: {
-                        brand: { 50: '#eff6ff', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 900: '#1e3a8a', 950: '#0f172a' },
-                        accent: { 400: '#22d3ee', 500: '#06b6d4' },
-                        success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' },
-                        danger: { 400: '#f87171', 500: '#ef4444' },
-                        warning: { 400: '#fbbf24', 500: '#f59e0b' },
-                        vip: { 400: '#c084fc', 500: '#a855f7', 600: '#9333ea' }
-                    },
-                    animation: {
-                        'blob': 'blob 10s infinite',
-                        'shimmer': 'shimmer 2s infinite linear',
-                    },
-                    keyframes: {
-                        blob: {
-                            '0%, 100%': { transform: 'translate(0px, 0px) scale(1)' },
-                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
-                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
-                        },
-                        shimmer: {
-                            '0%': { backgroundPosition: '-200% 0' },
-                            '100%': { backgroundPosition: '200% 0' }
-                        }
-                    }
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'], display: ['"Outfit"', 'sans-serif'], mono: ['"Fira Code"', 'monospace'] },
+                    colors: { brand: { 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb' }, success: { 400: '#4ade80', 500: '#22c55e' }, warning: { 400: '#fbbf24', 500: '#f59e0b' }, danger: { 400: '#f87171', 500: '#ef4444' }, vip: { 400: '#c084fc', 500: '#a855f7', 600: '#9333ea' } }
                 }
             }
-        }
+        };
     </script>
+    
     <style>
-        body { background-color: #020617; color: #f8fafc; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
-        
+        body { background-color: #0f172a; color: #f8fafc; -webkit-font-smoothing: antialiased; }
+        ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
         .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
-        .glass-nav { background: rgba(2, 6, 23, 0.85); backdrop-filter: blur(20px) saturate(180%); border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .glass-card { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3); transition: all 0.4s ease; }
+        .glass-nav { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.08); z-index: 50; }
+        .glass-card { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.3s ease; }
         
-        .sidebar-link { position: relative; transition: all 0.3s ease; }
-        .sidebar-link::before { content: ''; position: absolute; left: 0; top: 10%; height: 80%; width: 3px; background: transparent; border-radius: 0 4px 4px 0; transition: all 0.3s ease; }
-        .sidebar-link:hover { background: rgba(255,255,255,0.03); color: #fff; }
-        .sidebar-link.active { background: linear-gradient(90deg, rgba(59,130,246,0.1) 0%, transparent 100%); color: #60a5fa; font-weight: 700; }
-        .sidebar-link.active::before { background: #3b82f6; box-shadow: 0 0 10px #3b82f6; }
-
-        .status-badge { padding: 6px 12px; border-radius: 8px; font-size: 10px; font-weight: 800; display: inline-flex; align-items: center; gap: 4px; text-transform: uppercase; letter-spacing: 0.05em; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1); }
-        .status-pending { background: rgba(245, 158, 11, 0.1); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.2); }
-        .status-processing { background: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); }
-        .status-shipped { background: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); }
-        .status-completed { background: rgba(34, 197, 94, 0.1); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.2); }
-        .status-cancelled { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
+        .btn-epic { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; border-radius: 0.75rem; }
+        .btn-epic:active:not(:disabled) { transform: scale(0.96); }
+        .btn-epic:disabled { opacity: 0.65; cursor: not-allowed; }
         
-        .skeleton { background: linear-gradient(90deg, rgba(30,41,59,0.5) 25%, rgba(51,65,85,0.5) 50%, rgba(30,41,59,0.5) 75%); background-size: 200% 100%; animation: shimmer 2s infinite; color: transparent !important; border-radius: 8px; }
-        
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        select option { background-color: #0f172a; color: #f8fafc; }
         
         #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
         .toast-item { pointer-events: auto; display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-radius: 14px; color: white; font-weight: 600; font-size: 14px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); transform: translateX(120%); transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); border-left: 4px solid; background: rgba(15,23,42,0.95); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); }
         .toast-item.show { transform: translateX(0); }
-        
-        .btn-action { transition: all 0.2s ease; position: relative; overflow: hidden; }
-        .btn-action:active:not(:disabled) { transform: scale(0.96); }
 
-        /* Estilos de Tabelas Premium */
-        table { border-collapse: separate; border-spacing: 0; width: 100%; }
-        th { background: rgba(15, 23, 42, 0.8); padding: 16px; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8; font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        td { padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; color: #e2e8f0; }
-        tr:hover td { background: rgba(255,255,255,0.02); }
-        tr:last-child td { border-bottom: none; }
-
-        /* Modal Custom */
-        .modal-wrapper { display: none; position: fixed; inset: 0; z-index: 10000; align-items: center; justify-content: center; }
-        .modal-wrapper.active { display: flex; }
-        .modal-backdrop { position: absolute; inset: 0; background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(8px); opacity: 0; transition: opacity 0.3s ease; }
-        .modal-wrapper.active .modal-backdrop { opacity: 1; }
-        .modal-panel { position: relative; background: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; width: 95%; max-width: 500px; opacity: 0; transform: scale(0.95) translateY(10px); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 30px 60px -10px rgba(0,0,0,0.8); z-index: 10; }
-        .modal-wrapper.active .modal-panel { opacity: 1; transform: scale(1) translateY(0); }
+        /* Cartão Realista */
+        .realistic-card { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); box-shadow: -10px 10px 30px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.1); }
+        .realistic-card::before { content: ''; position: absolute; top: -50%; right: -20%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 60%); pointer-events: none; }
     </style>
 </head>
-<body class="selection:bg-brand-500 selection:text-white antialiased">
-
-    <div id="sysLoader" class="fixed inset-0 bg-[#020617] z-[200] flex flex-col items-center justify-center transition-opacity duration-500">
-        <div class="w-20 h-20 border-4 border-slate-800 border-t-brand-500 rounded-full animate-spin mb-6 shadow-[0_0_30px_rgba(59,130,246,0.3)]"></div>
-        <h2 class="text-white text-3xl font-display font-extrabold tracking-tight">PayGo OS</h2>
-        <p class="text-slate-400 text-sm mt-2 font-medium">A conectar à Central de Comando...</p>
-    </div>
+<body class="selection:bg-brand-500 selection:text-white">
 
     <div class="fixed inset-0 bg-grid opacity-20 pointer-events-none z-0"></div>
-    <div class="fixed top-0 left-1/4 w-[800px] h-[600px] bg-brand-600/10 rounded-full mix-blend-screen blur-[120px] pointer-events-none z-0 animate-blob"></div>
-
+    <div class="fixed top-0 left-0 w-[500px] h-[500px] bg-brand-600/10 rounded-full mix-blend-screen blur-[120px] pointer-events-none z-0" id="glowOrb"></div>
     <div id="toastContainer"></div>
 
-    <div class="md:hidden bg-slate-900/80 backdrop-blur-md text-white p-4 flex justify-between items-center fixed w-full z-40 top-0 border-b border-white/5">
-        <div class="flex items-center gap-3">
-            <div class="w-9 h-9 bg-gradient-to-tr from-brand-500 to-accent-500 rounded-lg flex items-center justify-center shadow-lg shadow-brand-500/20">
-                <i data-lucide="zap" class="w-5 h-5 text-white"></i>
-            </div>
-            <span class="font-display font-extrabold text-xl tracking-wide">PayGo</span>
-        </div>
-        <button onclick="window.toggleSidebar()" class="text-white p-2 focus:outline-none bg-white/5 rounded-lg transition-colors border border-white/5">
-            <i data-lucide="menu" class="w-6 h-6"></i>
-        </button>
-    </div>
-
-    <div id="mobileOverlay" onclick="window.toggleSidebar()" class="fixed inset-0 bg-slate-950/80 z-40 hidden md:hidden backdrop-blur-sm transition-opacity duration-300"></div>
-
-    <aside class="fixed left-0 top-0 h-full w-64 bg-slate-900/80 backdrop-blur-2xl text-white p-6 z-50 flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-300 border-r border-white/5" id="sidebar">
-        <div class="flex items-center justify-between mb-8 pb-6 border-b border-white/5 mt-12 md:mt-0">
+    <header class="fixed w-full z-50 glass-nav shadow-lg">
+        <div class="container mx-auto px-6 h-20 flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <div class="w-11 h-11 bg-gradient-to-tr from-brand-500 to-brand-400 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(59,130,246,0.3)]">
-                    <i data-lucide="zap" class="w-6 h-6 text-white fill-current"></i>
-                </div>
-                <div>
-                    <span class="text-2xl font-display font-bold tracking-wide text-white">PayGo</span>
-                    <span class="block text-[9px] text-brand-400 font-black uppercase tracking-widest mt-0.5" id="roleBadge">Admin Supremo</span>
-                </div>
+                <div class="bg-gradient-to-tr from-brand-500 to-brand-400 p-2.5 rounded-xl text-white shadow-lg"><i data-lucide="zap" class="w-5 h-5"></i></div>
+                <span class="text-2xl font-display font-bold text-white">PayGo</span>
             </div>
-            <button onclick="window.toggleSidebar()" class="md:hidden text-slate-400 hover:text-white transition-colors bg-white/5 p-2 rounded-lg"><i data-lucide="x" class="w-5 h-5"></i></button>
-        </div>
-
-        <nav class="flex-1 space-y-1.5" id="adminNav">
-            <a href="dashboard.html" class="sidebar-link active flex items-center gap-3 px-4 py-3.5 rounded-xl">
-                <i data-lucide="layout-dashboard" class="w-5 h-5"></i> <span class="text-sm">Visão Central</span>
-            </a>
-            
-            <div class="pt-4 pb-2"><p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold px-4">Operações Logísticas</p></div>
-
-            <a href="pedidos.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 rounded-xl font-medium">
-                <i data-lucide="shopping-bag" class="w-5 h-5"></i> <span class="text-sm">Gestão de Pedidos</span>
-            </a>
-            <a href="clientes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 rounded-xl font-medium">
-                <i data-lucide="users" class="w-5 h-5"></i> <span class="text-sm">Base de Clientes</span>
-            </a>
-            <a href="afiliados.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 rounded-xl font-medium">
-                <i data-lucide="network" class="w-5 h-5"></i> <span class="text-sm">Rede de Afiliados</span>
-            </a>
-            <a href="gerar-fatura.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 rounded-xl font-medium">
-                <i data-lucide="file-check-2" class="w-5 h-5"></i> <span class="text-sm">Gerar Faturas</span>
-            </a>
-
-            <div class="pt-4 pb-2"><p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold px-4">Segurança do Sistema</p></div>
-
-            <a href="logs.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 rounded-xl font-medium">
-                <i data-lucide="activity" class="w-5 h-5 text-warning-400"></i> <span class="text-sm">Auditoria (Logs)</span>
-            </a>
-            <a href="admin.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 rounded-xl font-medium">
-                <i data-lucide="shield" class="w-5 h-5"></i> <span class="text-sm">Gestão de Equipa</span>
-            </a>
-            <a href="configuracoes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 rounded-xl font-medium mt-auto">
-                <i data-lucide="settings" class="w-5 h-5"></i> <span class="text-sm">Configurações</span>
-            </a>
-        </nav>
-
-        <div class="pt-4 border-t border-white/5 mt-auto">
-            <div class="flex items-center gap-3 px-4 py-3.5 mb-3 bg-slate-950/50 rounded-xl border border-white/5 shadow-inner">
-                <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-sm font-bold border border-slate-600 text-brand-400" id="userInitial"></div>
-                <div class="flex-1 min-w-0">
-                    <p class="text-sm font-bold truncate text-white" id="userName">A carregar...</p>
-                    <p class="text-[10px] text-slate-400 truncate font-mono" id="userEmail">...</p>
+            <div class="flex items-center gap-4">
+                <div class="text-right hidden sm:block">
+                    <p class="text-sm font-bold text-white" id="userName">A carregar...</p>
+                    <p class="text-xs font-medium" id="userBadge"><span class="text-brand-400">Cliente Standard</span></p>
                 </div>
-            </div>
-            <button onclick="window.logoutFromHeader()" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-danger-500/10 border border-danger-500/20 hover:bg-danger-500 hover:text-white text-danger-400 rounded-xl transition-all text-sm font-bold btn-action">
-                <i data-lucide="log-out" class="w-4 h-4"></i> Encerrar Sessão
-            </button>
-        </div>
-    </aside>
-
-    <main class="md:ml-64 p-4 md:p-8 pt-24 md:pt-8 min-h-screen transition-all relative z-10">
-
-        <header class="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-6 mb-8">
-            <div>
-                <h1 class="text-3xl md:text-4xl font-display font-extrabold text-white tracking-tight">Dashboard Central</h1>
-                <p class="text-slate-400 mt-2 text-sm font-medium">Visão global das operações financeiras, fluxo logístico e conversões.</p>
-            </div>
-            <div class="flex flex-col sm:flex-row flex-wrap items-center gap-3 w-full xl:w-auto">
-                <a href="mensagem.html" class="btn-action w-full sm:w-auto px-6 py-3.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 border border-slate-700">
-                    <i data-lucide="message-square" class="w-4 h-4"></i> Central de Mensagens
-                </a>
-                <button onclick="window.fetchDashboardData()" class="btn-action w-full sm:w-auto px-6 py-3.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(37,99,235,0.4)] border border-brand-500">
-                    <i data-lucide="refresh-cw" class="w-4 h-4"></i> Atualizar Dados
-                </button>
-            </div>
-        </header>
-
-        <h2 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2"><i data-lucide="bar-chart-3" class="w-4 h-4"></i> Operações & Logística</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
-            <div class="glass-card p-6 rounded-[2rem] border-t-4 border-t-brand-500 bg-brand-900/10 relative overflow-hidden">
-                <div class="absolute top-0 right-0 w-24 h-24 bg-brand-500/20 blur-xl rounded-full"></div>
-                <div class="flex items-center justify-between mb-4 relative z-10">
-                    <span class="text-xs font-black text-brand-400 uppercase tracking-widest">Faturação Bruta</span>
-                    <div class="w-10 h-10 bg-brand-500/20 rounded-xl flex items-center justify-center border border-brand-500/30"><i data-lucide="banknote" class="w-5 h-5 text-brand-400"></i></div>
+                <div class="flex items-center gap-2">
+                    <a href="index.html" class="bg-slate-800 hover:bg-brand-500/20 text-slate-400 hover:text-brand-400 rounded-xl p-2.5 transition-colors" title="Página Inicial"><i data-lucide="home" class="w-5 h-5"></i></a>
+                    <button onclick="window.logout()" class="bg-slate-800 hover:bg-danger-500/20 text-slate-400 hover:text-danger-400 rounded-xl p-2.5 transition-colors border border-transparent hover:border-danger-500/30" title="Terminar Sessão"><i data-lucide="power" class="w-5 h-5"></i></button>
                 </div>
-                <p class="text-3xl font-display font-extrabold text-white skeleton truncate relative z-10" id="statRevenue">0 MT</p>
-            </div>
-
-            <div class="glass-card p-6 rounded-[2rem] border-t-4 border-t-success-500 bg-success-900/5">
-                <div class="flex items-center justify-between mb-4">
-                    <span class="text-xs font-black text-success-400 uppercase tracking-widest">Concluídos</span>
-                    <div class="w-10 h-10 bg-success-500/20 rounded-xl flex items-center justify-center border border-success-500/30"><i data-lucide="check-circle" class="w-5 h-5 text-success-400"></i></div>
-                </div>
-                <p class="text-4xl font-display font-extrabold text-white skeleton" id="statCompleted">0</p>
-            </div>
-            
-            <div class="glass-card p-6 rounded-[2rem] border-t-4 border-t-warning-500 bg-warning-900/5">
-                <div class="flex items-center justify-between mb-4">
-                    <span class="text-xs font-black text-warning-400 uppercase tracking-widest">Pendentes / Trânsito</span>
-                    <div class="w-10 h-10 bg-warning-500/20 rounded-xl flex items-center justify-center border border-warning-500/30"><i data-lucide="clock" class="w-5 h-5 text-warning-400"></i></div>
-                </div>
-                <p class="text-4xl font-display font-extrabold text-white skeleton" id="statPending">0</p>
-            </div>
-            
-            <div class="glass-card p-6 rounded-[2rem] border-t-4 border-t-slate-600">
-                <div class="flex items-center justify-between mb-4">
-                    <span class="text-xs font-black text-slate-400 uppercase tracking-widest">Total Pedidos</span>
-                    <div class="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center border border-slate-700"><i data-lucide="shopping-bag" class="w-5 h-5 text-slate-300"></i></div>
-                </div>
-                <p class="text-4xl font-display font-extrabold text-white skeleton" id="statTotal">0</p>
             </div>
         </div>
+    </header>
 
-        <h2 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2"><i data-lucide="network" class="w-4 h-4"></i> Performance da Rede de Afiliados</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 mb-8">
-            <div class="glass-card p-6 rounded-[2rem] border border-slate-700">
-                <div class="flex items-center justify-between mb-4">
-                    <span class="text-xs font-black text-slate-300 uppercase tracking-widest">Parceiros Ativos</span>
-                    <div class="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center border border-slate-600"><i data-lucide="users" class="w-5 h-5 text-slate-300"></i></div>
-                </div>
-                <p class="text-3xl font-display font-extrabold text-white skeleton" id="statAffiliatesCount">0</p>
-            </div>
-
-            <div class="glass-card p-6 rounded-[2rem] border border-slate-700">
-                <div class="flex items-center justify-between mb-4">
-                    <span class="text-xs font-black text-slate-300 uppercase tracking-widest">Vendas Feitas (Leads)</span>
-                    <div class="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center border border-slate-600"><i data-lucide="target" class="w-5 h-5 text-slate-300"></i></div>
-                </div>
-                <p class="text-3xl font-display font-extrabold text-white skeleton" id="statAffiliatesLeads">0</p>
-            </div>
-
-            <div class="glass-card p-6 rounded-[2rem] border border-success-500/20 bg-success-900/10">
-                <div class="flex items-center justify-between mb-4">
-                    <span class="text-xs font-black text-success-400 uppercase tracking-widest">Comissões a Pagar</span>
-                    <div class="w-10 h-10 bg-success-500/20 rounded-xl flex items-center justify-center border border-success-500/30"><i data-lucide="wallet" class="w-5 h-5 text-success-400"></i></div>
-                </div>
-                <p class="text-3xl font-display font-extrabold text-success-400 skeleton" id="statAffiliatesCommissions">0 MT</p>
-            </div>
-        </div>
-
+    <main class="pt-28 pb-20 relative z-10 container mx-auto px-6 max-w-6xl">
         <div class="grid lg:grid-cols-3 gap-8">
             
+            <div class="lg:col-span-1 space-y-6">
+                <div class="glass-card rounded-2xl p-6 relative overflow-hidden shadow-2xl border-t-4 border-t-brand-500" id="walletCard">
+                    <div class="absolute -right-6 -top-6 opacity-10"><i data-lucide="wallet" class="w-32 h-32"></i></div>
+                    <div class="relative z-10">
+                        <h2 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-2">
+                            <i data-lucide="shield-check" class="w-4 h-4 text-success-400"></i> Carteira PayGo
+                        </h2>
+                        <div class="mt-4 mb-6">
+                            <span class="text-sm text-slate-400 font-medium align-top">MT</span>
+                            <span class="text-4xl font-display font-black text-white tracking-tight" id="walletBalance">0.00</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 mb-3">
+                            <button onclick="window.openTopUpModal()" class="btn-epic py-3 bg-brand-600 hover:bg-brand-500 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)] text-sm">
+                                <i data-lucide="plus" class="w-4 h-4"></i> Depositar
+                            </button>
+                            <button onclick="window.openTransferModal()" class="btn-epic py-3 bg-slate-700 hover:bg-slate-600 text-white border border-slate-600 text-sm">
+                                <i data-lucide="send" class="w-4 h-4"></i> Transferir
+                            </button>
+                        </div>
+                        <a href="historico.html" class="btn-epic w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-400 text-xs">
+                            <i data-lucide="history" class="w-4 h-4"></i> Meu Histórico / Extrato
+                        </a>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-2xl p-6 border border-slate-800 relative overflow-hidden group">
+                    <div class="absolute right-0 top-0 w-24 h-24 bg-vip-500/10 rounded-full blur-2xl group-hover:bg-vip-500/20 transition"></div>
+                    <h3 class="text-xs font-bold text-vip-400 uppercase tracking-widest mb-2 flex items-center gap-2"><i data-lucide="crown" class="w-4 h-4"></i> Plano PayGo VIP</h3>
+                    <p class="text-sm text-slate-400 mb-4" id="vipStatusText">Isenção da Taxa de Serviço em todos os pagamentos e prioridade no processamento.</p>
+                    <button onclick="window.openVipModal()" id="btnOpenVip" class="w-full py-3 rounded-xl bg-gradient-to-r from-vip-600 to-brand-600 hover:from-vip-500 hover:to-brand-500 text-white font-bold text-sm shadow-[0_0_15px_rgba(168,85,247,0.3)] transition transform hover:scale-[1.02]">
+                        Gerir Assinatura
+                    </button>
+                </div>
+
+                <div class="glass-card rounded-2xl p-6 border border-brand-500/20 relative overflow-hidden bg-brand-500/5">
+                    <div class="absolute -right-4 -bottom-4 text-brand-500/20"><i data-lucide="gift" class="w-24 h-24"></i></div>
+                    <div class="relative z-10">
+                        <h3 class="text-sm font-display font-bold text-white mb-2 flex items-center gap-2">
+                            <i data-lucide="share-2" class="w-4 h-4 text-brand-400"></i> Sugira e Ganhe Bónus
+                        </h3>
+                        <p class="text-xs text-slate-400 mb-4">Convide amigos a aderir à PayGo e ganhe fundos diretos na sua carteira para cada amigo que fizer a primeira compra.</p>
+                        <a href="afiliados.html" class="inline-flex items-center justify-center w-full py-2.5 bg-white text-slate-900 hover:bg-slate-200 rounded-xl font-bold text-xs transition">
+                            Gerar o meu Link
+                        </a>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-2xl p-5 border border-slate-800">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2"><i data-lucide="life-buoy" class="w-4 h-4 text-brand-400"></i> Centro de Apoio</h3>
+                    <div class="space-y-2">
+                        <button onclick="window.openSupportModal('message')" class="w-full flex items-center justify-between p-3 rounded-xl bg-slate-800/50 hover:bg-slate-700 transition-colors border border-transparent hover:border-slate-600 group">
+                            <div class="flex items-center gap-3">
+                                <div class="bg-brand-500/20 text-brand-400 p-2 rounded-lg"><i data-lucide="message-square" class="w-4 h-4"></i></div>
+                                <span class="text-sm text-slate-300 font-bold group-hover:text-white">Enviar Mensagem</span>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 group-hover:text-white"></i>
+                        </button>
+                        <button onclick="window.openSupportModal('refund')" class="w-full flex items-center justify-between p-3 rounded-xl bg-slate-800/50 hover:bg-danger-900/30 transition-colors border border-transparent hover:border-danger-500/30 group">
+                            <div class="flex items-center gap-3">
+                                <div class="bg-danger-500/20 text-danger-400 p-2 rounded-lg"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></div>
+                                <span class="text-sm text-slate-300 font-bold group-hover:text-danger-400">Cancelar / Reembolso</span>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 group-hover:text-danger-400"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-2xl p-5 border border-slate-800">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Informação do Sistema</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center pb-2 border-b border-white/5">
+                            <span class="text-sm text-slate-400 flex items-center gap-2"><i data-lucide="bar-chart-3" class="w-4 h-4"></i> Câmbio Atual (USD)</span>
+                            <span class="text-sm font-mono font-bold text-brand-400" id="currentRate">-- MT</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs text-slate-500">
+                            <span>Taxas de Serviço:</span>
+                            <span>De <span id="infoTax1">--</span> a <span id="infoTax3">--</span> MT</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="lg:col-span-2 space-y-6">
-                <div class="glass-card rounded-[2rem] p-0 overflow-hidden shadow-2xl border border-warning-500/20">
-                    <div class="p-6 border-b border-slate-800 bg-slate-900/50 flex justify-between items-center">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-warning-500/20 text-warning-400 flex items-center justify-center"><i data-lucide="credit-card" class="w-5 h-5"></i></div>
-                            <div>
-                                <h2 class="text-lg font-display font-bold text-white leading-tight">Emissões de Cartão Virtual</h2>
-                                <p class="text-xs text-slate-400">Pedidos pagos de 1.000 MT aguardando emissão.</p>
+                
+                <div class="glass-card rounded-2xl p-6 border border-brand-500/30 shadow-[0_0_30px_rgba(59,130,246,0.1)] relative overflow-hidden">
+                    <div class="flex flex-col md:flex-row gap-8 items-center">
+                        <div class="realistic-card w-full md:w-80 h-48 rounded-2xl p-6 flex flex-col justify-between shrink-0 transform transition-transform hover:scale-[1.02] relative overflow-hidden group">
+                            <button onclick="window.toggleCardView()" class="absolute top-6 right-6 text-white/30 hover:text-white transition z-20 hidden" id="btnRevealCard" title="Mostrar/Ocultar Detalhes do Cartão">
+                                <i data-lucide="eye" id="vcEyeIcon" class="w-5 h-5"></i>
+                            </button>
+                            <div class="flex justify-between items-start z-10">
+                                <div class="w-12 h-9 bg-gradient-to-br from-yellow-200 via-yellow-400 to-yellow-600 rounded-md shadow-sm relative overflow-hidden opacity-90 border border-yellow-300/50">
+                                    <div class="absolute top-0 left-0 w-full h-[40%] bg-white/20"></div>
+                                    <div class="w-full h-px bg-yellow-700/30 mt-3"></div><div class="w-full h-px bg-yellow-700/30 mt-2"></div>
+                                </div>
+                                <div class="text-right pr-8">
+                                    <p class="text-[10px] text-white/50 uppercase font-bold tracking-widest mb-0.5">Saldo Virtual</p>
+                                    <p class="text-xl font-display font-black text-white" id="vcBalanceDisplay">$0.00</p>
+                                </div>
+                            </div>
+                            <div class="z-10 text-center mt-2">
+                                <p class="text-2xl font-mono font-bold tracking-[0.15em] text-white/95 drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)]" id="vcNumber">**** **** **** ****</p>
+                            </div>
+                            <div class="flex justify-between items-end z-10">
+                                <div class="flex flex-col">
+                                    <p class="text-[8px] uppercase tracking-widest text-white/50 mb-0.5">Titular</p>
+                                    <p class="text-xs font-mono font-bold text-white tracking-widest uppercase" id="vcNameDisplay">CLIENTE PAYGO</p>
+                                </div>
+                                <div class="flex gap-4 text-right">
+                                    <div><p class="text-[8px] uppercase tracking-widest text-white/50 mb-0.5">Validade</p><p class="text-xs font-mono font-bold text-white" id="vcExpiry">MM/AA</p></div>
+                                    <div><p class="text-[8px] uppercase tracking-widest text-white/50 mb-0.5">CVC</p><p class="text-xs font-mono font-bold text-white transition-all" id="vcCvc">***</p></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex-1 w-full text-center md:text-left">
+                            <h2 class="text-2xl font-display font-bold text-white mb-2 flex items-center justify-center md:justify-start gap-2">
+                                <i data-lucide="credit-card" class="w-6 h-6 text-brand-400"></i> O Meu Cartão
+                            </h2>
+                            <p class="text-sm text-slate-400 mb-6" id="vcStatusText">Adicione um Cartão Virtual Existente à sua conta ou solicite um novo exclusivo da PayGo.</p>
+                            <div id="vcActionButtons" class="flex flex-col sm:flex-row gap-3">
+                                <button onclick="window.openVirtualCardModal('link')" class="flex-1 py-3 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-bold text-sm transition shadow-lg flex items-center justify-center gap-2">
+                                    <i data-lucide="link" class="w-4 h-4"></i> Vincular Cartão
+                                </button>
+                                <button onclick="window.openVirtualCardModal('request')" class="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-white border border-slate-600 rounded-xl font-bold text-sm transition flex items-center justify-center gap-2">
+                                    <i data-lucide="plus-circle" class="w-4 h-4"></i> Solicitar Novo
+                                </button>
                             </div>
                         </div>
                     </div>
-                    <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
-                        <table class="w-full">
-                            <thead class="bg-slate-950/80 text-[10px] uppercase text-slate-400 tracking-widest border-b border-white/10 sticky top-0 z-10 backdrop-blur-md">
-                                <tr>
-                                    <th class="px-6 py-4 font-bold">Data / Cliente</th>
-                                    <th class="px-6 py-4 font-bold">Taxa Paga</th>
-                                    <th class="px-6 py-4 font-bold">Status</th>
-                                    <th class="px-6 py-4 font-bold text-right">Ação</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tableVcRequests" class="divide-y divide-white/5 bg-slate-900/20">
-                                <tr><td colspan="4" class="text-center py-10 text-slate-500"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2"></i> A carregar pedidos...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
                 </div>
-                
-                <div class="glass-card rounded-[2rem] p-0 overflow-hidden border border-slate-800 flex flex-col">
-                    <div class="p-6 border-b border-white/5 flex justify-between items-center bg-slate-900/80 backdrop-blur-sm">
-                        <h2 class="text-sm font-bold text-white flex items-center gap-2"><i data-lucide="list" class="w-4 h-4 text-brand-400"></i> Últimas 10 Operações</h2>
-                        <a href="pedidos.html" class="text-xs font-bold text-brand-400 hover:text-brand-300 uppercase tracking-widest flex items-center gap-1">Ver Todos <i data-lucide="arrow-right" class="w-3 h-3"></i></a>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse whitespace-nowrap">
-                            <thead class="bg-slate-950/80 text-[10px] uppercase text-slate-400 tracking-widest border-b border-white/10">
-                                <tr>
-                                    <th class="px-6 py-4 font-bold">Referência ID</th>
-                                    <th class="px-6 py-4 font-bold">Cliente</th>
-                                    <th class="px-6 py-4 font-bold">Cobrado (MT)</th>
-                                    <th class="px-6 py-4 font-bold text-center">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="ordersTable" class="divide-y divide-white/5 bg-slate-900/30">
-                                <tr><td colspan="4" class="text-center py-10 text-slate-500"><div class="w-8 h-8 border-4 border-slate-800 border-t-brand-500 rounded-full animate-spin mx-auto mb-2"></div><p class="text-sm font-medium">A analisar matriz...</p></td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
 
-            <div class="lg:col-span-1 space-y-6">
-                <div class="glass-card rounded-[2rem] overflow-hidden shadow-2xl border border-vip-500/20">
-                    <div class="p-6 border-b border-slate-800 bg-slate-900/50">
-                        <h2 class="text-sm font-display font-bold text-white flex items-center gap-2">
-                            <i data-lucide="crown" class="w-4 h-4 text-vip-400"></i> Últimas Assinaturas VIP
-                        </h2>
-                    </div>
-                    <div class="overflow-x-auto max-h-[880px] overflow-y-auto">
-                        <table class="w-full">
-                            <tbody id="tableVipSubs" class="divide-y divide-white/5 bg-slate-900/20">
-                                <tr><td class="text-center py-6 text-slate-500 text-xs">A carregar VIPs...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+                <div class="glass-card rounded-2xl p-6 md:p-8 relative overflow-hidden">
+                    <h2 class="text-2xl font-display font-bold text-white mb-2 flex items-center gap-3 relative z-10"><i data-lucide="bot" class="w-8 h-8 text-brand-500"></i> Orçamentador de Pagamentos</h2>
+                    <p class="text-slate-400 text-sm mb-6 relative z-10">Pague qualquer site internacional com o seu saldo PayGo.</p>
 
+                    <form id="orderForm" class="space-y-6 relative z-10">
+                        <div class="p-5 border border-slate-700/50 rounded-xl bg-slate-900/30">
+                            <h3 class="text-sm font-bold text-brand-400 mb-4 flex items-center gap-2"><i data-lucide="shopping-bag" class="w-4 h-4"></i> 1. O que deseja pagar?</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Categoria de Pagamento</label>
+                                    <div class="relative">
+                                        <select id="orderCategory" class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white appearance-none cursor-pointer font-bold">
+                                            <option value="physical">📦 Produto Físico (AliExpress, Shein...)</option>
+                                            <option value="digital">💻 Serviço Digital (Netflix, Softwares...)</option>
+                                            <option value="game">🎮 Jogos e Recargas (Free Fire, PSN...)</option>
+                                        </select>
+                                        <i data-lucide="chevron-down" class="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"></i>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2" id="labelUrl">Link do Produto / Site</label>
+                                    <input type="url" id="productUrl" required placeholder="https://..." class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 text-white transition">
+                                </div>
+                                <div class="grid md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Valor (USD $)</label>
+                                        <div class="relative">
+                                            <i data-lucide="dollar-sign" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500"></i>
+                                            <input type="number" id="productUsd" required min="0.01" step="0.01" placeholder="0.00" class="w-full pl-12 pr-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 text-white font-mono transition">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-brand-400 uppercase tracking-widest mb-2">Valor convertido (MT)</label>
+                                        <div class="relative">
+                                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-500">MT</span>
+                                            <input type="number" id="productMzn" required min="1" step="0.01" placeholder="0.00" class="w-full pl-12 pr-4 py-3 bg-slate-900 border border-brand-500/50 rounded-xl focus:outline-none focus:border-brand-500 text-white font-mono transition shadow-[0_0_10px_rgba(59,130,246,0.1)]">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="digitalFields" class="hidden bg-slate-950 p-4 border border-brand-500/30 rounded-xl mt-4">
+                                    <label class="block text-xs font-bold text-brand-400 uppercase tracking-widest mb-2" id="labelDigital">Player ID / E-mail da Conta</label>
+                                    <input type="text" id="digitalAccount" placeholder="Insira o ID ou email para recarga" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white transition">
+                                </div>
+                                <div id="extraDetailsContainer">
+                                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Observações / Detalhes (Opcional)</label>
+                                    <input type="text" id="productDetails" placeholder="Tamanho, Cor, ou instrução especial" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 text-white transition">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="physicalFields" class="p-5 border border-slate-700/50 rounded-xl bg-slate-900/30">
+                            <h3 class="text-sm font-bold text-success-400 mb-4 flex items-center gap-2"><i data-lucide="map-pin" class="w-4 h-4"></i> 2. Endereço de Despacho</h3>
+                            <div class="grid md:grid-cols-2 gap-4 mb-4">
+                                <div><label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Nome Completo</label><input type="text" id="shipName" required placeholder="Nome para Alfândega" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white physical-req"></div>
+                                <div><label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Telefone</label><input type="text" id="shipPhone" required placeholder="Ex: +258 84..." class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white physical-req"></div>
+                            </div>
+                            <div class="grid md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Província / Cidade</label>
+                                    <select id="shipCity" required class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white physical-req">
+                                        <option value="" disabled selected>Selecione a Província</option>
+                                        <option value="Maputo (Cidade)" data-zip="1100">Maputo (Cidade)</option>
+                                        <option value="Sofala" data-zip="2100">Sofala (Beira)</option>
+                                        <option value="Nampula" data-zip="3100">Nampula</option>
+                                    </select>
+                                </div>
+                                <div><label class="block text-xs font-bold text-brand-400 uppercase tracking-widest mb-2">Código Postal</label><input type="text" id="shipZip" required readonly placeholder="0000" class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-brand-400 font-mono font-bold cursor-not-allowed physical-req"></div>
+                            </div>
+                            <div><label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Morada</label><input type="text" id="shipAddress" required placeholder="Ex: Bairro Central..." class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white physical-req"></div>
+                        </div>
+
+                        <div class="bg-slate-900 rounded-xl p-5 border border-brand-500/20">
+                            <div class="flex justify-between items-center text-sm text-slate-400 mb-2">
+                                <span>Conversão Base (<span id="calcRate">85</span> MT):</span>
+                                <span class="font-mono text-white" id="calcBase">0.00 MT</span>
+                            </div>
+                            <div class="flex justify-between items-center text-sm text-slate-400 pb-3 border-b border-white/5 mb-3"><span>Taxa de Serviço:</span><span class="font-mono font-bold text-slate-300" id="calcFee">0.00 MT</span></div>
+                            <div class="flex justify-between items-end"><span class="text-xs font-bold text-slate-500 uppercase tracking-widest">Total a Debitar:</span><span class="text-2xl font-display font-black text-white" id="calcTotal">0.00 MT</span></div>
+                            
+                            <div id="balanceWarning" class="hidden mt-4 bg-warning-500/10 border border-warning-500/20 rounded-lg p-3"><p class="text-xs text-warning-300 font-medium">Saldo insuficiente. Efetue um depósito.</p></div>
+                            <div id="successReady" class="hidden mt-4 bg-success-500/10 border border-success-500/20 rounded-lg p-3"><p class="text-xs text-success-300 font-medium">Saldo suficiente! Pode liquidar.</p></div>
+                        </div>
+
+                        <button type="submit" id="btnSubmitOrder" disabled class="btn-epic w-full py-4 bg-success-500 hover:bg-success-600 text-white transition-all shadow-[0_0_15px_rgba(34,197,94,0.3)] disabled:bg-slate-800 disabled:text-slate-500 disabled:shadow-none">
+                            <i data-lucide="credit-card" class="w-5 h-5"></i> <span id="btnSubmitText">Autorizar Pagamento Seguro</span>
+                        </button>
+                    </form>
+                </div>
+
+            </div>
         </div>
     </main>
-    <div id="vcApproveModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4 transition-opacity">
-        <div class="bg-slate-900 border border-brand-500/30 rounded-2xl w-full max-w-md overflow-hidden shadow-[0_0_50px_rgba(59,130,246,0.15)] relative">
-            <button onclick="window.closeVcModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white transition"><i data-lucide="x" class="w-6 h-6"></i></button>
+
+    <div id="topUpModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative">
+            <button onclick="window.closeModals()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
             <div class="p-6 pb-0 mb-6">
-                <h3 class="text-xl font-display font-bold text-white mb-2 flex items-center gap-2">
-                    <i data-lucide="check-square" class="w-5 h-5 text-brand-400"></i> Aprovar Cartão
-                </h3>
-                <p class="text-sm text-slate-400">Insira os dados gerados no RedotPay para <span id="vcClientName" class="text-white font-bold">o Cliente</span>.</p>
+                <h3 class="text-xl font-display font-bold text-white mb-2">Depositar Fundos</h3>
+                <p class="text-sm text-slate-400">Adicione dinheiro à sua carteira PayGo em Meticais.</p>
+            </div>
+            <form id="topUpForm" class="p-6 pt-0 space-y-5">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Valor (MT)</label>
+                    <input type="number" id="topUpAmount" required min="10" placeholder="Ex: 500" class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white font-mono text-lg font-bold">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Método de Pagamento</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="topUpMethod" value="mpesa" class="peer sr-only" checked>
+                            <div class="p-3 border border-slate-700 rounded-xl text-center text-xs font-bold text-slate-400 peer-checked:bg-red-500/10 peer-checked:border-red-500 peer-checked:text-red-500 transition">M-PESA</div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="topUpMethod" value="emola" class="peer sr-only">
+                            <div class="p-3 border border-slate-700 rounded-xl text-center text-xs font-bold text-slate-400 peer-checked:bg-orange-500/10 peer-checked:border-orange-500 peer-checked:text-orange-500 transition">E-MOLA</div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="topUpMethod" value="bank" class="peer sr-only">
+                            <div class="p-3 border border-slate-700 rounded-xl text-center text-xs font-bold text-slate-400 peer-checked:bg-blue-500/10 peer-checked:border-blue-500 peer-checked:text-blue-500 transition">BANCO</div>
+                        </label>
+                    </div>
+                </div>
+                <div id="bankDetails" class="hidden bg-slate-950 rounded-xl p-4 border border-blue-500/30 text-sm text-slate-300">
+                    <p class="mb-2 text-blue-400 font-bold"><i data-lucide="info" class="w-4 h-4 inline"></i> Transferência Manual</p>
+                    <p><strong>Banco:</strong> Millennium BIM</p>
+                    <p><strong>Conta:</strong> 501829113</p>
+                    <p><strong>NIB:</strong> 000100000050182911357</p>
+                    <p><strong>Titular:</strong> PayGo Lda</p>
+                    <p class="mt-2 text-xs text-slate-400">Faça a transferência e envie o comprovativo pelo WhatsApp.</p>
+                </div>
+                <button type="submit" id="btnProcessTopUp" class="btn-epic w-full py-3.5 bg-brand-600 hover:bg-brand-500 text-white">Processar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="transferModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative">
+            <button onclick="window.closeModals()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <div class="p-6 pb-0 mb-6">
+                <h3 class="text-xl font-display font-bold text-white mb-2">Transferir Saldo</h3>
+                <p class="text-sm text-slate-400">Envie dinheiro para outro utilizador PayGo instantaneamente.</p>
+            </div>
+            <form id="transferForm" class="p-6 pt-0 space-y-5">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">E-mail do Destinatário</label>
+                    <input type="email" id="transferEmail" required placeholder="email@exemplo.com" class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Valor (MT)</label>
+                    <input type="number" id="transferAmount" required min="1" placeholder="0" class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white font-mono">
+                </div>
+                <button type="submit" id="btnTransfer" class="btn-epic w-full py-3.5 bg-slate-700 hover:bg-brand-600 text-white border border-slate-600">Enviar Dinheiro</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="vipModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-vip-500/50 rounded-2xl w-full max-w-lg overflow-hidden shadow-[0_0_50px_rgba(168,85,247,0.2)] relative">
+            <button onclick="window.closeModals()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <div class="p-8 text-center bg-gradient-to-b from-vip-900/40 to-transparent">
+                <i data-lucide="crown" class="w-16 h-16 text-vip-400 mx-auto mb-4"></i>
+                <h3 class="text-3xl font-display font-bold text-white mb-2">PayGo <span class="text-vip-400">VIP</span></h3>
+                <p class="text-sm text-slate-400" id="vipModalSubtitle">Isenção total da taxa de serviço em todos os seus pagamentos.</p>
+            </div>
+            <div class="p-6 pt-0 space-y-4" id="vipPlansContainer">
+                <div id="vipCurrentStatusBox" class="hidden bg-vip-900/30 border border-vip-500/30 rounded-xl p-4 text-center mb-4">
+                    <p class="text-vip-400 font-bold" id="vipCurrentStatusText">Você já possui uma assinatura VIP.</p>
+                </div>
+                <label class="cursor-pointer block" id="vipOptionMensal">
+                    <input type="radio" name="vipPlan" value="mensal" class="peer sr-only" checked>
+                    <div class="p-4 border border-slate-700 rounded-xl flex justify-between items-center peer-checked:bg-vip-500/10 peer-checked:border-vip-500 transition">
+                        <div>
+                            <p class="font-bold text-white text-lg">Mensal</p>
+                            <p class="text-xs text-slate-400">Acesso por 30 dias</p>
+                        </div>
+                        <p class="font-display font-black text-xl text-vip-400">1.200 MT</p>
+                    </div>
+                </label>
+                <label class="cursor-pointer block" id="vipOptionAnual">
+                    <input type="radio" name="vipPlan" value="anual" class="peer sr-only">
+                    <div class="p-4 border border-slate-700 rounded-xl flex justify-between items-center peer-checked:bg-vip-500/10 peer-checked:border-vip-500 transition relative overflow-hidden">
+                        <div class="absolute top-0 right-0 bg-success-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-bl-lg" id="vipAnualBadge">POUPE 1.800 MT</div>
+                        <div>
+                            <p class="font-bold text-white text-lg" id="vipOptionAnualLabel">Anual</p>
+                            <p class="text-xs text-slate-400">12 meses completos</p>
+                        </div>
+                        <p class="font-display font-black text-xl text-vip-400">12.600 MT</p>
+                    </div>
+                </label>
+                <button onclick="window.processVip()" id="btnBuyVip" class="btn-epic w-full py-4 mt-4 bg-vip-600 hover:bg-vip-500 text-white shadow-[0_0_20px_rgba(168,85,247,0.4)]">
+                    Confirmar Pagamento VIP
+                </button>
+            </div>
+        </div>
+    </div>
+    <div id="vcModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-brand-500/30 rounded-2xl w-full max-w-md overflow-hidden shadow-[0_0_30px_rgba(59,130,246,0.2)] relative">
+            <button onclick="window.closeModals()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <div class="p-6 pb-0 mb-6">
+                <h3 class="text-xl font-display font-bold text-white mb-2" id="vcModalTitle">Vincular Cartão Virtual</h3>
+                <p class="text-sm text-slate-400" id="vcModalDesc">Introduza os dados do seu cartão RedotPay ou Visa/Mastercard.</p>
             </div>
             
-            <form id="vcApproveForm" class="p-6 pt-0 space-y-4">
-                <input type="hidden" id="vcApproveReqId">
-                <input type="hidden" id="vcApproveUserId">
-                
+            <form id="vcAddForm" class="p-6 pt-0 space-y-4">
                 <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Número do Cartão Gerado</label>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Número do Cartão</label>
                     <div class="relative">
                         <i data-lucide="credit-card" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500"></i>
-                        <input type="text" id="vcApproveNumber" required maxlength="19" placeholder="0000 0000 0000 0000" class="w-full pl-10 pr-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white font-mono transition-colors">
+                        <input type="text" id="vcInputNumber" required maxlength="19" placeholder="0000 0000 0000 0000" class="w-full pl-10 pr-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white font-mono">
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Validade</label>
-                        <input type="text" id="vcApproveExpiry" required maxlength="5" placeholder="MM/AA" class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white font-mono text-center transition-colors">
+                        <input type="text" id="vcInputExpiry" required maxlength="5" placeholder="MM/AA" class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white font-mono text-center">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">CVC</label>
-                        <input type="text" id="vcApproveCvc" required maxlength="3" placeholder="***" class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white font-mono text-center transition-colors">
+                        <input type="password" id="vcInputCvc" required maxlength="3" placeholder="***" class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white font-mono text-center">
                     </div>
                 </div>
+                
                 <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Pay ID / TRC20 do Cliente</label>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Pay ID ou Link TRC20 (Para Recargas)</label>
                     <div class="relative">
                         <i data-lucide="wallet" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
-                        <input type="text" id="vcApproveDestination" required placeholder="Obrigatório para recargas futuras" class="w-full pl-10 pr-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white font-mono text-sm transition-colors">
+                        <input type="text" id="vcInputDestination" required placeholder="Ex: 123456789 ou T..." class="w-full pl-10 pr-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white font-mono text-sm">
                     </div>
-                    <p class="text-[9px] text-warning-400 font-medium mt-1"><i data-lucide="alert-triangle" class="w-3 h-3 inline"></i> Este ID é essencial para tu processares as recargas futuras.</p>
+                    <p class="text-[9px] text-slate-500 mt-1">Este ID será guardado automaticamente para as suas recargas futuras.</p>
                 </div>
 
-                <button type="submit" id="btnSubmitApproveVc" class="btn-epic w-full py-3.5 mt-2 bg-brand-600 hover:bg-brand-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]">
-                    <i data-lucide="send" class="w-4 h-4"></i> Entregar Cartão ao Cliente
+                <button type="submit" id="btnSubmitVc" class="btn-epic w-full py-3.5 mt-2 bg-brand-600 hover:bg-brand-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+                    Vincular Cartão
+                </button>
+            </form>
+
+            <form id="vcRequestForm" class="p-6 pt-0 space-y-4 hidden">
+                <div class="bg-brand-500/10 border border-brand-500/30 p-4 rounded-xl mb-4">
+                    <p class="text-sm text-slate-300">A equipa PayGo irá analisar o pedido e gerar um Cartão Virtual exclusivo em seu nome. <strong class="text-brand-400">A taxa de emissão é de 1.000 MT</strong> (debitada da sua carteira).</p>
+                </div>
+                <button type="submit" id="btnRequestVc" class="btn-epic w-full py-3.5 bg-brand-600 hover:bg-brand-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+                    Solicitar Emissão (1.000 MT)
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="vcTopUpModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl relative">
+            <button onclick="window.closeModals()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <div class="p-6 pb-0 mb-6 text-center">
+                <div class="w-12 h-12 bg-success-500/20 text-success-400 rounded-full flex items-center justify-center mx-auto mb-4"><i data-lucide="zap" class="w-6 h-6"></i></div>
+                <h3 class="text-xl font-display font-bold text-white mb-2">Recarregar Cartão</h3>
+                <p class="text-xs text-slate-400">Envie fundos do seu saldo PayGo para o Cartão Virtual.</p>
+            </div>
+            <form id="vcTopUpForm" class="p-6 pt-0 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">ID do Cartão / TRC20</label>
+                    <div class="relative">
+                        <i data-lucide="wallet" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
+                        <input type="text" id="vcTopUpDestination" required placeholder="Ex: Pay ID ou Link TRC20" class="w-full pl-9 pr-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white font-mono text-sm">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Valor a Recarregar (USD)</label>
+                    <div class="relative">
+                        <i data-lucide="dollar-sign" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
+                        <input type="number" id="vcTopUpAmount" required min="10" step="1" placeholder="Mínimo: $10" class="w-full pl-9 pr-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-success-500 text-white font-mono text-center text-xl" oninput="window.calcVcTopUp()">
+                    </div>
+                </div>
+                <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 text-center">
+                    <p class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Será debitado da Carteira PayGo</p>
+                    <p class="text-lg font-bold text-brand-400" id="vcTopUpCostDisplay">0.00 MT</p>
+                </div>
+                <p class="text-xs text-center text-slate-500">A recarga será enviada para processamento.</p>
+                <button type="submit" id="btnProcessVcTopUp" class="btn-epic w-full py-3.5 bg-success-600 hover:bg-success-500 text-white shadow-[0_0_15px_rgba(34,197,94,0.3)]">
+                    Enviar Pedido de Recarga
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="supportModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative">
+            <button onclick="window.closeModals()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <div class="p-6 pb-0 mb-6">
+                <h3 class="text-xl font-display font-bold text-white mb-2 flex items-center gap-2" id="supportTitle">
+                    <i data-lucide="message-square" class="w-5 h-5 text-brand-400" id="supportIcon"></i> <span id="supportTitleText">Enviar Mensagem</span>
+                </h3>
+                <p class="text-sm text-slate-400">A nossa equipa responderá o mais breve possível.</p>
+            </div>
+            
+            <form id="supportForm" class="p-6 pt-0 space-y-4">
+                <input type="hidden" id="supportType" value="message">
+                
+                <div id="orderSelectContainer" class="hidden">
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Selecione o Pedido</label>
+                    <select id="supportOrderId" class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white font-mono text-sm">
+                        <option value="">A carregar pedidos...</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2" id="supportMsgLabel">Mensagem</label>
+                    <textarea id="supportMessage" required rows="4" placeholder="Escreva aqui a sua mensagem ou justificação..." class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white resize-none"></textarea>
+                </div>
+
+                <button type="submit" id="btnSubmitSupport" class="btn-epic w-full py-3.5 bg-brand-600 hover:bg-brand-500 text-white">
+                    Enviar para Equipa
                 </button>
             </form>
         </div>
@@ -387,339 +521,420 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, getDocs, collection, query, orderBy, limit, where, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, getDocs, collection, query, where, limit, addDoc, updateDoc, serverTimestamp, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
-            authDomain: "paygo-14311.firebaseapp.com",
-            projectId: "paygo-14311",
-            storageBucket: "paygo-14311.firebasestorage.app",
-            messagingSenderId: "208360646277",
-            appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
-        };
-
+        const firebaseConfig = { apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8", authDomain: "paygo-14311.firebaseapp.com", projectId: "paygo-14311", storageBucket: "paygo-14311.firebasestorage.app", messagingSenderId: "208360646277", appId: "1:208360646277:web:aecc57cc0077ae48a52bec" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app, "paygodb");
+        lucide.createIcons();
 
-        let loggedInAdminId = null;
+        let currentUser = null, userData = null;
+        let sysExchangeRate = 85, sysTax1 = 150, sysTax2 = 250, sysTax3 = 600;
+        let isFirstPurchaseEligible = false, firstPurchaseFree = true, isUserVip = false;
+        let currentCalculatedTotal = 0, currentCalculatedTax = 0;
+        
+        // Variáveis globais para o Cartão Virtual
+        let rawVcNumber = '';
+        let rawVcCvc = '';
+        let isCardRevealed = false;
 
-        // 🛡️ VACINA ANTI-XSS
-        const escapeHTML = (str) => {
-            if (!str) return '';
-            return String(str).replace(/[&<>'"]/g, tag => ({
-                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
-            }[tag] || tag));
-        };
+        const formatMZN = (val) => new Intl.NumberFormat('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val);
+        const formatUSD = (val) => new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val);
 
-        // 🔔 TOAST NOTIFICATIONS
-        window.showToast = (message, type = 'success') => {
+        // 🛡️ FUNÇÕES DE INJEÇÃO SEGURA
+        const setSafeText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+        const setSafeHTML = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+        const setSafeValue = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+
+        window.showToast = function(msg, type = 'success') {
             const container = document.getElementById('toastContainer');
-            if (!container) return;
-            const toast = document.createElement('div');
-            const borderColor = type === 'error' ? 'border-danger-500' : type === 'warning' ? 'border-warning-500' : 'border-brand-500';
+            if(!container) return;
+            const t = document.createElement('div');
+            const bg = type === 'error' ? 'bg-danger-500/95 border-danger-400' : type === 'warning' ? 'bg-warning-500/95 border-warning-400' : 'bg-slate-900/95 border-brand-500';
             const icon = type === 'error' ? 'alert-octagon text-danger-400' : type === 'warning' ? 'alert-triangle text-warning-400' : 'check-check text-brand-400';
-
-            toast.className = `toast-item border-l-4 ${borderColor}`;
-            toast.innerHTML = `<i data-lucide="${icon.split(' ')[0]}" class="w-6 h-6 flex-shrink-0 ${icon.split(' ')[1]}"></i><span class="flex-1">${escapeHTML(message)}</span>`;
-            container.appendChild(toast);
-            if(typeof lucide !== 'undefined') lucide.createIcons({root: toast});
-
-            requestAnimationFrame(() => toast.classList.add('show'));
-            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 4000);
-        };
-
-        function formatValue(value, type = 'currency') {
-            if (value === null || value === undefined) return type === 'currency' ? '0.00 MT' : '0';
-            if (type === 'currency') return `${Number(value).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`;
-            if (type === 'usd') return `$${Number(value).toFixed(2)}`;
-            return String(value);
+            t.className = `flex items-center gap-3 px-5 py-4 rounded-xl shadow-2xl border ${bg} transform transition-all translate-x-full opacity-0`;
+            t.innerHTML = `<i data-lucide="${icon.split(' ')[0]}" class="w-5 h-5 ${icon.split(' ')[1]}"></i> <span class="text-sm font-bold text-white">${msg}</span>`;
+            container.appendChild(t); lucide.createIcons({ root: t });
+            requestAnimationFrame(() => { t.classList.remove('translate-x-full', 'opacity-0'); });
+            setTimeout(() => { t.classList.add('opacity-0', 'translate-x-8'); setTimeout(() => t.remove(), 400); }, 4000);
         }
 
-        // ==========================================
-        // 🚀 INICIALIZAÇÃO DA SESSÃO ADMIN
-        // ==========================================
-        const fallbackTimer = setTimeout(() => { const ldr = document.getElementById('sysLoader'); if(ldr) ldr.style.display = 'none'; }, 3000);
-
-        onAuthStateChanged(auth, async (user) => {
-            if (!user) { window.location.href = '../login.html'; return; }
+        // 👁️ REVELAR NÚMERO DO CARTÃO VIRTUAL
+        window.toggleCardView = () => {
+            isCardRevealed = !isCardRevealed;
+            const eyeIcon = document.getElementById('vcEyeIcon');
             
+            if (isCardRevealed) {
+                setSafeText('vcNumber', rawVcNumber);
+                setSafeText('vcCvc', rawVcCvc);
+                if (eyeIcon) eyeIcon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                setSafeText('vcNumber', `**** **** **** ${rawVcNumber.slice(-4)}`);
+                setSafeText('vcCvc', '***');
+                if (eyeIcon) eyeIcon.setAttribute('data-lucide', 'eye');
+            }
+            lucide.createIcons();
+        };
+
+        // =====================================
+        // CARREGAR DADOS INICIAIS
+        // =====================================
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { window.location.href = 'login.html'; return; }
+            currentUser = user;
+
             try {
-                const userDoc = await getDoc(doc(db, "users", user.uid));
-                if (!userDoc.exists() || (userDoc.data().role !== 'admin' && userDoc.data().role !== 'superadmin')) {
-                    window.location.href = '../dashboard.html'; return; // Expulsa não-admins
+                const sysDoc = await getDoc(doc(db, "settings", "global"));
+                if (sysDoc.exists()) {
+                    const sysData = sysDoc.data();
+                    sysExchangeRate = parseFloat(sysData.exchangeRate) || 85;
+                    sysTax1 = parseFloat(sysData.tax1) || 150; sysTax2 = parseFloat(sysData.tax2) || 250; sysTax3 = parseFloat(sysData.tax3) || 600;
+                    firstPurchaseFree = sysData.firstPurchaseFree !== false;
                 }
                 
-                const userData = userDoc.data();
-                loggedInAdminId = user.uid;
-                
-                document.getElementById('userName').textContent = userData.name || 'Equipa PayGo';
-                document.getElementById('userEmail').textContent = userData.email || '';
-                document.getElementById('userInitial').textContent = (userData.name || 'P').charAt(0).toUpperCase();
-                document.getElementById('adminName').textContent = userData.name || 'Equipa PayGo';
+                setSafeText('currentRate', `${sysExchangeRate} MT`);
+                setSafeText('calcRate', sysExchangeRate);
+                setSafeText('infoTax1', sysTax1);
+                setSafeText('infoTax3', sysTax3);
 
-                await window.fetchDashboardData();
-                
-            } catch (error) {
-                console.error("Erro de Sessão Admin:", error);
-                window.showToast('Erro ao validar sessão segura.', 'error');
-            } finally {
-                clearTimeout(fallbackTimer);
-                const ldr = document.getElementById('sysLoader');
-                if(ldr) { ldr.style.opacity = '0'; setTimeout(() => ldr.style.display = 'none', 500); }
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                if (userDoc.exists()) {
+                    userData = userDoc.data();
+                    setSafeText('userName', userData.name || 'Cliente');
+                    setSafeText('walletBalance', formatMZN(parseFloat(userData.walletBalance) || 0));
+                    setSafeText('vcNameDisplay', userData.name ? userData.name.toUpperCase() : 'CLIENTE PAYGO');
+                    setSafeValue('shipName', userData.name || '');
+                    setSafeValue('shipPhone', userData.phone || '');
+
+                    // LÓGICA E BLOQUEIO VIP
+                    if (userData.isVip && userData.vipExpiry && userData.vipExpiry.toDate() > new Date()) {
+                        isUserVip = true;
+                        setSafeHTML('userBadge', `<span class="text-vip-400 flex items-center gap-1"><i data-lucide="crown" class="w-3 h-3"></i> VIP</span>`);
+                        const orb = document.getElementById('glowOrb'); if(orb) orb.classList.replace('bg-brand-600/10', 'bg-vip-600/20');
+                        const card = document.getElementById('walletCard'); if(card) card.classList.replace('border-t-brand-500', 'border-t-vip-500');
+                        
+                        const vipBox = document.getElementById('vipCurrentStatusBox'); if(vipBox) vipBox.classList.remove('hidden');
+                        const planName = userData.vipPlan === 'anual' ? 'Anual' : 'Mensal';
+                        setSafeText('vipCurrentStatusText', `O seu Plano VIP ${planName} está ativo.`);
+
+                        if (userData.vipPlan === 'anual') {
+                            const optM = document.getElementById('vipOptionMensal'); if(optM) optM.classList.add('hidden');
+                            const optA = document.getElementById('vipOptionAnual'); if(optA) optA.classList.add('hidden');
+                            const btnBuy = document.getElementById('btnBuyVip'); if(btnBuy) btnBuy.classList.add('hidden');
+                            setSafeHTML('vipCurrentStatusText', `<span class="text-success-400 font-bold"><i data-lucide="check-circle" class="inline w-4 h-4 mb-1"></i> Plano Anual VIP Ativo</span><br><span class="text-slate-400 text-xs mt-1 block">Está protegido com isenção total de taxas durante 1 ano.</span>`);
+                        } else {
+                            const optM = document.getElementById('vipOptionMensal'); if(optM) optM.classList.add('hidden');
+                            const btnBuy = document.getElementById('btnBuyVip'); 
+                            if(btnBuy) btnBuy.innerHTML = 'Fazer Upgrade para Anual (12.600 MT)';
+                            document.querySelector('input[value="anual"]').checked = true;
+                        }
+                    } else if (firstPurchaseFree) {
+                        const ordersSnap = await getDocs(query(collection(db, "orders"), where("userId", "==", user.uid), limit(1)));
+                        isFirstPurchaseEligible = ordersSnap.empty; 
+                    }
+
+                    // 📍 LÓGICA DO CARTÃO VIRTUAL E SALDO
+                    if (userData.virtualCard) {
+                        rawVcNumber = userData.virtualCard.number || '';
+                        rawVcCvc = userData.virtualCard.cvc || '***';
+                        
+                        setSafeText('vcNumber', `**** **** **** ${rawVcNumber.slice(-4)}`);
+                        setSafeText('vcExpiry', userData.virtualCard.expiry);
+                        setSafeText('vcBalanceDisplay', `$${formatUSD(userData.vcBalance || 0)}`);
+                        
+                        const btnReveal = document.getElementById('btnRevealCard');
+                        if (btnReveal) btnReveal.classList.remove('hidden');
+
+                        if(userData.virtualCard.destination) {
+                            setSafeValue('vcTopUpDestination', userData.virtualCard.destination);
+                        }
+                        
+                        setSafeHTML('vcStatusText', `<span class="text-success-400 font-bold">Cartão Vinculado.</span> Controle o saldo e recarregue diretamente da carteira.`);
+                        setSafeHTML('vcActionButtons', `
+                            <button onclick="window.openVcTopUpModal()" class="flex-1 py-3 bg-success-600 hover:bg-success-500 text-white rounded-xl font-bold text-sm transition shadow-[0_0_15px_rgba(34,197,94,0.3)] flex items-center justify-center gap-2">
+                                <i data-lucide="zap" class="w-4 h-4"></i> Recarregar ($)
+                            </button>
+                            <button onclick="window.unlinkVirtualCard()" class="py-3 px-4 bg-slate-800 hover:bg-danger-900/50 text-slate-400 hover:text-danger-400 border border-slate-700 hover:border-danger-500/50 rounded-xl font-bold transition flex items-center justify-center gap-2" title="Desvincular Cartão">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        `);
+                    } else if (userData.vcRequestPending) {
+                        setSafeHTML('vcStatusText', `<span class="text-warning-400 font-bold">Aguardando Aprovação.</span> O Admin está a gerar o seu cartão.`);
+                        setSafeHTML('vcActionButtons', `
+                            <button disabled class="flex-1 py-3 bg-slate-800 text-slate-500 border border-slate-700 rounded-xl font-bold text-sm cursor-not-allowed flex items-center justify-center gap-2">
+                                <i data-lucide="clock" class="w-4 h-4"></i> Pedido em Análise
+                            </button>
+                        `);
+                    }
+                    lucide.createIcons();
+                }
+            } catch (error) { 
+                console.error(error);
+                window.showToast("Falha ao carregar dados do utilizador.", "error"); 
             }
         });
 
-        // ==========================================
-        // 📊 EXTRAÇÃO GLOBAL DE DADOS (DASHBOARD)
-        // ==========================================
-        window.fetchDashboardData = async () => {
-            try {
-                // 1. DADOS DE ENCOMENDAS E RECEITA
-                const ordersSnap = await getDocs(collection(db, "orders"));
-                let totalOrders = 0, pendingOrders = 0, completedOrders = 0, totalRevenue = 0;
-                let allOrders = [];
-
-                ordersSnap.forEach(doc => {
-                    const data = doc.data();
-                    allOrders.push({ id: doc.id, ...data });
-                    totalOrders++;
-                    
-                    if (data.status === 'pending' || data.status === 'processing' || data.status === 'shipped') pendingOrders++;
-                    if (data.status === 'completed') {
-                        completedOrders++;
-                        totalRevenue += (Number(data.total) || 0);
-                    }
-                });
-
-                ['statTotal', 'statPending', 'statCompleted', 'statRevenue'].forEach(id => document.getElementById(id).classList.remove('skeleton'));
-                document.getElementById('statTotal').textContent = totalOrders;
-                document.getElementById('statPending').textContent = pendingOrders;
-                document.getElementById('statCompleted').textContent = completedOrders;
-                document.getElementById('statRevenue').textContent = formatValue(totalRevenue, 'currency');
-
-                // Render Fila Rápida (Top 10 Recentes)
-                allOrders.sort((a, b) => (b.createdAt?.toDate?.() || 0) - (a.createdAt?.toDate?.() || 0));
-                renderRecentOrders(allOrders.slice(0, 10));
-
-                // 2. DADOS DE REDE DE AFILIADOS
-                const affiliatesSnap = await getDocs(query(collection(db, "users"), where("role", "==", "affiliate")));
-                let countAffiliates = 0, totalLeads = 0, totalCommissions = 0;
-                
-                affiliatesSnap.forEach(doc => {
-                    const af = doc.data();
-                    if (af.status === 'active') countAffiliates++;
-                    totalLeads += (Number(af.approvedReferrals) || 0);
-                    totalCommissions += (Number(af.affiliateEarnings) || 0);
-                });
-
-                ['statAffiliatesCount', 'statAffiliatesLeads', 'statAffiliatesCommissions'].forEach(id => document.getElementById(id).classList.remove('skeleton'));
-                document.getElementById('statAffiliatesCount').textContent = countAffiliates;
-                document.getElementById('statAffiliatesLeads').textContent = totalLeads;
-                document.getElementById('statAffiliatesCommissions').textContent = formatValue(totalCommissions, 'currency');
-
-                // 3. CARTÕES VIRTUAIS (PEDIDOS 1.000 MT)
-                const vcSnap = await getDocs(query(collection(db, "vc_requests"), orderBy("createdAt", "desc")));
-                let pendingVcCount = 0;
-                let vcHtml = '';
-                
-                vcSnap.forEach(docSnap => {
-                    const vc = { id: docSnap.id, ...docSnap.data() };
-                    const isPending = vc.status === 'pending';
-                    if(isPending) pendingVcCount++;
-                    
-                    const dateStr = vc.createdAt?.toDate ? vc.createdAt.toDate().toLocaleDateString('pt-MZ', {day:'2-digit', month:'short'}) : 'N/A';
-                    const statusBadge = isPending 
-                        ? `<span class="px-2 py-1 rounded bg-warning-500/20 text-warning-400 text-[9px] font-bold uppercase tracking-widest border border-warning-500/30">⏳ Pendente</span>`
-                        : `<span class="px-2 py-1 rounded bg-success-500/20 text-success-400 text-[9px] font-bold uppercase tracking-widest border border-success-500/30">✅ Emitido</span>`;
-
-                    const actionBtn = isPending
-                        ? `<button onclick="window.openVcApproveModal('${vc.id}', '${vc.userId}', '${escapeHTML(vc.userName)}')" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-500 text-white rounded-lg text-xs font-bold transition shadow-md">Aprovar Emissão</button>`
-                        : `<span class="text-xs text-slate-500 font-bold">Concluído</span>`;
-
-                    vcHtml += `
-                        <tr class="hover:bg-slate-800/40 transition">
-                            <td class="px-6 py-4">
-                                <div class="font-bold text-white text-sm">${escapeHTML(vc.userName)}</div>
-                                <div class="text-[10px] text-slate-400 font-mono mt-0.5">${dateStr}</div>
-                            </td>
-                            <td class="px-6 py-4 text-sm font-bold text-slate-300 font-mono">${formatValue(vc.amountPaid, 'currency')}</td>
-                            <td class="px-6 py-4">${statusBadge}</td>
-                            <td class="px-6 py-4 text-right">${actionBtn}</td>
-                        </tr>
-                    `;
-                });
-                
-                document.getElementById('metricVcPending').textContent = pendingVcCount;
-                document.getElementById('metricVcApproved').textContent = vcSnap.size - pendingVcCount; // Total emitidos
-                document.getElementById('tableVcRequests').innerHTML = vcHtml || `<tr><td colspan="4" class="text-center py-8 text-slate-500 text-xs">Sem pedidos na fila.</td></tr>`;
-
-                // 4. SUBSCRIÇÕES VIP
-                const vipSnap = await getDocs(query(collection(db, "vip_subscriptions"), orderBy("createdAt", "desc"), limit(20)));
-                let vipHtml = '';
-                let totalVipRevenue = 0;
-                
-                // Pega a receita total VIP (Lendo todos para somar)
-                const allVips = await getDocs(collection(db, "vip_subscriptions"));
-                allVips.forEach(v => totalVipRevenue += (Number(v.data().amountPaid) || 0));
-                document.getElementById('metricVipRevenue').textContent = formatValue(totalVipRevenue, 'currency').replace(' MT','');
-
-                vipSnap.forEach(docSnap => {
-                    const v = docSnap.data();
-                    const dateStr = v.createdAt?.toDate ? v.createdAt.toDate().toLocaleDateString('pt-MZ', {day:'2-digit', month:'short'}) : 'N/A';
-                    const isAnual = v.plan === 'anual';
-                    
-                    vipHtml += `
-                        <tr class="hover:bg-slate-800/40 transition">
-                            <td class="px-6 py-4">
-                                <div class="font-bold text-white text-sm truncate max-w-[150px]">${escapeHTML(v.userName)}</div>
-                                <div class="text-[10px] text-slate-400 font-mono mt-0.5">${dateStr}</div>
-                            </td>
-                            <td class="px-6 py-4 text-right">
-                                <div class="text-sm font-bold ${isAnual ? 'text-success-400' : 'text-vip-400'} font-mono">${formatValue(v.amountPaid, 'currency')}</div>
-                                <div class="text-[9px] ${isAnual ? 'text-success-500 bg-success-500/10 border-success-500/20' : 'text-vip-400 bg-vip-500/10 border-vip-500/20'} px-1.5 py-0.5 inline-block rounded uppercase tracking-widest mt-1 border">${isAnual ? 'ANUAL' : 'MENSAL'}</div>
-                            </td>
-                        </tr>
-                    `;
-                });
-                document.getElementById('tableVipSubs').innerHTML = vipHtml || `<tr><td colspan="2" class="text-center py-8 text-slate-500 text-xs">Nenhuma subscrição VIP encontrada.</td></tr>`;
-
-                if(typeof lucide !== 'undefined') lucide.createIcons();
-
-            } catch (err) {
-                console.error("Dashboard Fetch Error:", err);
-                window.showToast("Falha ao sincronizar dados.", "error");
-            }
-        };
-
-        function renderRecentOrders(orders) {
-            const table = document.getElementById('ordersTable');
-            if (orders.length === 0) {
-                table.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-500"><i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>Nenhuma operação recente.</td></tr>`;
-                return;
-            }
-
-            let html = '';
-            orders.forEach(order => {
-                const payStatus = order.isPaid 
-                    ? '<span class="text-[10px] font-black text-success-400">PAGO</span>' 
-                    : '<span class="text-[10px] font-black text-danger-400">DÍVIDA</span>';
-                
-                const logStatus = {
-                    'pending': '<span class="px-2 py-1 rounded bg-warning-500/20 text-warning-400 text-[9px] font-bold uppercase tracking-widest border border-warning-500/30">Pendente</span>',
-                    'completed': '<span class="px-2 py-1 rounded bg-success-500/20 text-success-400 text-[9px] font-bold uppercase tracking-widest border border-success-500/30">Fechado</span>'
-                }[order.status] || `<span class="px-2 py-1 rounded bg-slate-800 text-slate-300 text-[9px] font-bold uppercase tracking-widest border border-slate-700">${order.status}</span>`;
-
-                html += `
-                    <tr class="hover:bg-slate-800/40 transition">
-                        <td class="px-6 py-4">
-                            <span class="text-xs font-mono font-bold text-brand-400 bg-brand-900/20 border border-brand-500/20 px-2 py-1 rounded">${order.orderId}</span>
-                        </td>
-                        <td class="px-6 py-4">
-                            <div class="text-sm font-bold text-white truncate max-w-[120px]">${escapeHTML(order.name)}</div>
-                        </td>
-                        <td class="px-6 py-4">
-                            <div class="text-sm font-black text-white font-mono">${formatValue(order.total, 'currency')}</div>
-                            ${payStatus}
-                        </td>
-                        <td class="px-6 py-4 text-center">${logStatus}</td>
-                    </tr>
-                `;
+        // =====================================
+        // ORÇAMENTADOR CAMALEÃO E PAGAMENTO ÚNICO
+        // =====================================
+        const orderCategory = document.getElementById('orderCategory');
+        if(orderCategory) {
+            orderCategory.addEventListener('change', function(e) {
+                const cat = e.target.value;
+                if (cat === 'physical') {
+                    document.getElementById('physicalFields').classList.remove('hidden'); document.getElementById('digitalFields').classList.add('hidden');
+                    setSafeText('labelUrl', "Link do Produto");
+                    document.querySelectorAll('.physical-req').forEach(el => el.setAttribute('required', 'true'));
+                    document.getElementById('digitalAccount').removeAttribute('required');
+                } else {
+                    document.getElementById('physicalFields').classList.add('hidden'); document.getElementById('digitalFields').classList.remove('hidden');
+                    document.querySelectorAll('.physical-req').forEach(el => el.removeAttribute('required'));
+                    document.getElementById('digitalAccount').setAttribute('required', 'true');
+                    if (cat === 'game') { setSafeText('labelUrl', "Link do Jogo"); setSafeText('labelDigital', "Player ID"); } 
+                    else { setSafeText('labelUrl', "Link do Software"); setSafeText('labelDigital', "E-mail da Conta"); }
+                }
             });
-            table.innerHTML = html;
         }
 
-        // ==========================================
-        // 💳 APROVAÇÃO E EMISSÃO DE CARTÃO VIRTUAL
-        // ==========================================
-        window.openVcApproveModal = (reqId, userId, userName) => {
-            document.getElementById('vcApproveReqId').value = reqId;
-            document.getElementById('vcApproveUserId').value = userId;
-            document.getElementById('vcClientName').textContent = userName;
+        const shipCity = document.getElementById('shipCity');
+        if(shipCity) {
+            shipCity.addEventListener('change', function(e) { setSafeValue('shipZip', e.target.options[e.target.selectedIndex].getAttribute('data-zip') || ''); });
+        }
+
+        const usdInput = document.getElementById('productUsd'), mznInput = document.getElementById('productMzn');
+        if(usdInput && mznInput) {
+            usdInput.addEventListener('input', e => { const usdVal = parseFloat(e.target.value) || 0; mznInput.value = usdVal ? (usdVal * sysExchangeRate).toFixed(2) : ''; updateCalculator(usdVal); });
+            mznInput.addEventListener('input', e => { const mznVal = parseFloat(e.target.value) || 0; const usdVal = mznVal / sysExchangeRate; usdInput.value = usdVal ? usdVal.toFixed(2) : ''; updateCalculator(usdVal); });
+        }
+
+        function updateCalculator(usdVal) {
+            const btnSub = document.getElementById('btnSubmitOrder'), warn = document.getElementById('balanceWarning'), succ = document.getElementById('successReady');
+            if (usdVal <= 0) { currentCalculatedTotal = 0; setSafeText('calcTotal', '0.00 MT'); if(btnSub) btnSub.disabled = true; if(warn) warn.classList.add('hidden'); if(succ) succ.classList.add('hidden'); return; }
             
-            document.getElementById('vcApproveForm').reset();
-            const modal = document.getElementById('vcApproveModal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
+            const baseMZN = usdVal * sysExchangeRate;
+            let appliedTax = sysTax1;
+            if (usdVal > 20 && usdVal <= 50) appliedTax = sysTax2; else if (usdVal > 50) appliedTax = sysTax3;
+            if (isUserVip || (isFirstPurchaseEligible && usdVal <= 5)) appliedTax = 0;
+            
+            currentCalculatedTax = appliedTax; currentCalculatedTotal = baseMZN + appliedTax; 
+            
+            setSafeText('calcBase', `${formatMZN(baseMZN)} MT`);
+            setSafeText('calcFee', `${formatMZN(appliedTax)} MT`);
+            setSafeText('calcTotal', `${formatMZN(currentCalculatedTotal)} MT`);
+
+            const safeTotal = Number(currentCalculatedTotal.toFixed(2));
+            if (safeTotal > (parseFloat(userData?.walletBalance) || 0)) { 
+                if(btnSub) btnSub.disabled = true; if(succ) succ.classList.add('hidden'); if(warn) warn.classList.remove('hidden'); 
+            } else { 
+                if(btnSub) btnSub.disabled = false; if(warn) warn.classList.add('hidden'); if(succ) succ.classList.remove('hidden'); 
+            }
+        }
+
+        // Apenas UMA instância deste event listener!
+        const orderForm = document.getElementById('orderForm');
+        if(orderForm) {
+            orderForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('btnSubmitOrder'); btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Processando...`; lucide.createIcons({root: btn});
+                try {
+                    const safeTotal = Number(currentCalculatedTotal.toFixed(2));
+                    const orderId = 'PG-' + Math.floor(100000 + Math.random() * 900000);
+                    const cat = document.getElementById('orderCategory').value;
+                    let payloadData = {
+                        orderId: orderId, userId: currentUser.uid, name: userData.name || '', email: currentUser.email || '', 
+                        category: cat, detail: `${document.getElementById('productUrl').value} | ${document.getElementById('productDetails').value}`,
+                        usd: parseFloat(usdInput.value), exchangeRate: sysExchangeRate, tax: currentCalculatedTax, total: safeTotal,
+                        paymentMethod: 'wallet', isPaid: true, status: 'processing', createdAt: serverTimestamp()
+                    };
+                    if (cat === 'physical') { payloadData.shipping = { shipName: document.getElementById('shipName').value, shipZip: document.getElementById('shipZip').value, shipAddress: document.getElementById('shipAddress').value, shipCity: document.getElementById('shipCity').value, shipPhone: document.getElementById('shipPhone').value }; } 
+                    else { payloadData.digitalData = { accountOrId: document.getElementById('digitalAccount').value }; }
+
+                    await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: increment(-safeTotal) });
+                    await addDoc(collection(db, "orders"), payloadData);
+                    await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: safeTotal, description: `Pedido ${orderId}`, reference: orderId, createdAt: new Date().toISOString() });
+
+                    userData.walletBalance -= safeTotal; setSafeText('walletBalance', formatMZN(userData.walletBalance));
+                    e.target.reset(); updateCalculator(0); window.showToast("Pagamento processado com sucesso!", "success");
+                } catch (err) { window.showToast(err.message, "error"); } 
+                finally { btn.disabled = false; btn.innerHTML = `<i data-lucide="credit-card" class="w-5 h-5"></i> <span id="btnSubmitText">Autorizar Pagamento Seguro</span>`; lucide.createIcons({root: btn}); }
+            });
+        }
+
+        // =====================================
+        // MODAIS BASE (DEPÓSITO, TRANSFERÊNCIA E VIP)
+        // =====================================
+        window.closeModals = function() { ['topUpModal', 'transferModal', 'vipModal', 'vcModal', 'vcTopUpModal', 'supportModal'].forEach(id => { const el = document.getElementById(id); if(el) { el.classList.remove('flex'); el.classList.add('hidden'); } }); };
+        window.openTopUpModal = () => { window.closeModals(); const el = document.getElementById('topUpModal'); if(el) el.classList.replace('hidden', 'flex'); };
+        window.openTransferModal = () => { window.closeModals(); const el = document.getElementById('transferModal'); if(el) el.classList.replace('hidden', 'flex'); };
+        window.openVipModal = () => { window.closeModals(); const el = document.getElementById('vipModal'); if(el) el.classList.replace('hidden', 'flex'); };
+
+        window.processVip = async () => {
+            const btn = document.getElementById('btnBuyVip');
+            const plan = document.querySelector('input[name="vipPlan"]:checked').value;
+            const price = plan === 'anual' ? 12600 : 1200;
+            if ((parseFloat(userData?.walletBalance) || 0) < price) return window.showToast("Saldo insuficiente. Efetue depósito.", "error");
+            if (confirm(`Confirmar assinatura VIP ${plan.toUpperCase()} por ${price} MT?`)) {
+                btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A ativar...`; lucide.createIcons({root: btn});
+                try {
+                    const expiryDate = new Date(); expiryDate.setDate(expiryDate.getDate() + (plan === 'anual' ? 365 : 30));
+                    await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: increment(-price), isVip: true, vipPlan: plan, vipExpiry: expiryDate });
+                    await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: price, description: `Assinatura VIP (${plan})`, reference: 'VIP', createdAt: new Date().toISOString() });
+                    await addDoc(collection(db, "vip_subscriptions"), { userId: currentUser.uid, userName: userData.name, userEmail: currentUser.email, plan: plan, amountPaid: price, expiryDate: expiryDate, createdAt: serverTimestamp() });
+
+                    window.showToast("Parabéns! Conta VIP ativada.", "success");
+                    setTimeout(() => window.location.reload(), 1500);
+                } catch (err) { window.showToast("Erro.", "error"); btn.disabled = false; btn.textContent = "Confirmar Pagamento VIP"; }
+            }
         };
 
-        window.closeVcModal = () => {
-            const modal = document.getElementById('vcApproveModal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
+        // =====================================
+        // CARTÃO VIRTUAL E SUPORTE
+        // =====================================
+        window.openVirtualCardModal = (type) => {
+            window.closeModals(); const modal = document.getElementById('vcModal'); if(modal) modal.classList.replace('hidden', 'flex');
+            if (type === 'link') {
+                setSafeText('vcModalTitle', "Vincular Cartão Existente"); setSafeText('vcModalDesc', "Introduza os dados do seu cartão.");
+                const addF = document.getElementById('vcAddForm'); if(addF) addF.classList.remove('hidden'); 
+                const reqF = document.getElementById('vcRequestForm'); if(reqF) reqF.classList.add('hidden');
+            } else {
+                setSafeText('vcModalTitle', "Solicitar Cartão Virtual"); setSafeText('vcModalDesc', "A nossa equipa irá criar um cartão exclusivo.");
+                const addF = document.getElementById('vcAddForm'); if(addF) addF.classList.add('hidden'); 
+                const reqF = document.getElementById('vcRequestForm'); if(reqF) reqF.classList.remove('hidden');
+            }
         };
 
-        // Formatação Automática dos Inputs
-        const inputNum = document.getElementById('vcApproveNumber');
-        if(inputNum) inputNum.addEventListener('input', e => e.target.value = e.target.value.replace(/[^\d]/g, '').replace(/(.{4})/g, '$1 ').trim());
-        const inputExp = document.getElementById('vcApproveExpiry');
-        if(inputExp) inputExp.addEventListener('input', e => e.target.value = e.target.value.replace(/[^\d]/g, '').replace(/(.{2})/, '$1/').trim().substring(0, 5));
+        const inputNum = document.getElementById('vcInputNumber'); if(inputNum) inputNum.addEventListener('input', e => e.target.value = e.target.value.replace(/[^\d]/g, '').replace(/(.{4})/g, '$1 ').trim());
+        const inputExp = document.getElementById('vcInputExpiry'); if(inputExp) inputExp.addEventListener('input', e => e.target.value = e.target.value.replace(/[^\d]/g, '').replace(/(.{2})/, '$1/').trim().substring(0, 5));
 
-        document.getElementById('vcApproveForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const btn = document.getElementById('btnSubmitApproveVc');
-            btn.disabled = true; 
-            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A Injetar Cartão...`;
-            if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
-
-            const reqId = document.getElementById('vcApproveReqId').value;
-            const userId = document.getElementById('vcApproveUserId').value;
-            
-            const vcData = { 
-                number: document.getElementById('vcApproveNumber').value, 
-                expiry: document.getElementById('vcApproveExpiry').value, 
-                cvc: document.getElementById('vcApproveCvc').value, 
-                destination: document.getElementById('vcApproveDestination').value.trim(),
-                addedAt: new Date().toISOString() 
-            };
-
-            try {
-                // 1. Injetar o Cartão na conta do Cliente e remover a flag de "Pendente"
-                await updateDoc(doc(db, "users", userId), { 
-                    virtualCard: vcData, 
-                    vcBalance: 0,
-                    vcRequestPending: false
-                });
-
-                // 2. Marcar o Ticket de Pedido como Completo
-                await updateDoc(doc(db, "vc_requests", reqId), {
-                    status: 'completed',
-                    approvedAt: serverTimestamp()
-                });
-
-                window.showToast("Cartão entregue com sucesso! O cliente já pode usá-lo.", "success");
-                window.closeVcModal();
-                await window.fetchDashboardData(); // Recarregar tabelas
+        const vcAddForm = document.getElementById('vcAddForm');
+        if(vcAddForm) {
+            vcAddForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('btnSubmitVc'); btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Guardando...`; lucide.createIcons({root: btn});
                 
-            } catch (err) {
-                console.error(err);
-                window.showToast("Falha ao entregar o cartão.", "error");
-            } finally {
-                btn.disabled = false; 
-                btn.innerHTML = `<i data-lucide="send" class="w-4 h-4"></i> Entregar Cartão ao Cliente`;
-                if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
-            }
-        });
+                const vcData = { 
+                    number: document.getElementById('vcInputNumber').value, 
+                    expiry: document.getElementById('vcInputExpiry').value, 
+                    cvc: document.getElementById('vcInputCvc').value, 
+                    destination: document.getElementById('vcInputDestination').value.trim(),
+                    addedAt: new Date().toISOString() 
+                };
+                try {
+                    await updateDoc(doc(db, "users", currentUser.uid), { virtualCard: vcData, vcBalance: 0 });
+                    window.showToast("Cartão vinculado!", "success"); setTimeout(() => window.location.reload(), 1000);
+                } catch (err) { window.showToast("Erro.", "error"); btn.disabled = false; btn.textContent = "Vincular Cartão"; }
+            });
+        }
 
-        // ==========================================
-        // 📱 UX E LOGOUT
-        // ==========================================
-        window.toggleSidebar = () => {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('mobileOverlay');
-            sidebar.classList.toggle('-translate-x-full');
-            overlay.classList.toggle('hidden');
-            document.body.style.overflow = sidebar.classList.contains('-translate-x-full') ? '' : 'hidden';
+        const vcReqForm = document.getElementById('vcRequestForm');
+        if(vcReqForm) {
+            vcReqForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('btnRequestVc'); const price = 1000;
+                if ((parseFloat(userData?.walletBalance) || 0) < price) return window.showToast("Saldo insuficiente (Min 1.000 MT).", "error");
+                btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Processando...`; lucide.createIcons({root: btn});
+                try {
+                    await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: increment(-price), vcRequestPending: true });
+                    await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: price, description: `Emissão de Cartão Virtual`, reference: 'VC-EMISSION', createdAt: new Date().toISOString() });
+                    await addDoc(collection(db, "vc_requests"), { userId: currentUser.uid, userName: userData.name, userEmail: currentUser.email, status: 'pending', amountPaid: price, createdAt: serverTimestamp() });
+                    window.closeModals(); window.showToast("Solicitação enviada ao Admin!", "success");
+                    setTimeout(() => window.location.reload(), 1500);
+                } catch (err) { window.showToast("Erro.", "error"); btn.disabled = false; btn.textContent = "Solicitar Emissão"; }
+            });
+        }
+
+        window.unlinkVirtualCard = async () => {
+            if (confirm("Tem a certeza que deseja desvincular o seu cartão virtual da PayGo?")) {
+                try {
+                    await updateDoc(doc(db, "users", currentUser.uid), { virtualCard: null, vcBalance: 0 });
+                    window.showToast("Cartão removido com sucesso.", "success");
+                    setTimeout(() => window.location.reload(), 1000);
+                } catch(e) { window.showToast("Erro ao remover cartão.", "error"); }
+            }
         };
 
-        window.logoutAdmin = window.logoutFromHeader = async () => {
-            if (confirm('Encerrar sessão no Centro de Comando?')) {
-                await signOut(auth);
-                window.location.href = '../login.html';
-            }
+        window.openVcTopUpModal = () => { window.closeModals(); const el = document.getElementById('vcTopUpModal'); if(el) el.classList.replace('hidden', 'flex'); };
+        window.calcVcTopUp = () => {
+            const usd = parseFloat(document.getElementById('vcTopUpAmount').value) || 0;
+            setSafeText('vcTopUpCostDisplay', formatMZN(usd * sysExchangeRate) + " MT");
         };
 
+        const vcTopUpForm = document.getElementById('vcTopUpForm');
+        if(vcTopUpForm) {
+            vcTopUpForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const usdAmount = parseFloat(document.getElementById('vcTopUpAmount').value);
+                const destination = document.getElementById('vcTopUpDestination').value.trim(); 
+                
+                if(usdAmount < 10) return window.showToast("A recarga mínima é de $10.", "warning");
+                
+                const mznCost = usdAmount * sysExchangeRate; 
+                if ((parseFloat(userData?.walletBalance) || 0) < mznCost) return window.showToast(`Saldo insuficiente. Necessita de ${formatMZN(mznCost)} MT.`, "error");
+
+                const btn = document.getElementById('btnProcessVcTopUp');
+                btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A enviar...`; lucide.createIcons({root: btn});
+
+                try {
+                    await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: increment(-mznCost) });
+                    await addDoc(collection(db, "wallet_transactions"), { 
+                        userId: currentUser.uid, type: 'debit', amount: mznCost, 
+                        description: `Recarga VC ($${usdAmount}) p/ ${destination}`,
+                        reference: 'VC-TOPUP', createdAt: new Date().toISOString() 
+                    });
+                    
+                    await addDoc(collection(db, "support_tickets"), {
+                        userId: currentUser.uid, type: 'vc_topup', usdAmount: usdAmount, mznCost: mznCost, 
+                        userName: userData.name, userEmail: currentUser.email, destination: destination,
+                        message: `Pedido de Recarga: Transferir $${usdAmount} para o Cartão/TRC20: ${destination}.`,
+                        status: 'open', createdAt: serverTimestamp()
+                    });
+
+                    window.closeModals(); window.showToast("Pedido de recarga enviado para o Admin!", "success");
+                    userData.walletBalance -= mznCost; setSafeText('walletBalance', formatMZN(userData.walletBalance));
+                    e.target.reset(); setSafeText('vcTopUpCostDisplay', "0.00 MT");
+                } catch (err) { window.showToast("Erro.", "error"); } finally { btn.disabled = false; btn.innerHTML = "Enviar Pedido de Recarga"; }
+            });
+        }
+
+        window.openSupportModal = async (type) => {
+            window.closeModals(); const modal = document.getElementById('supportModal'); document.getElementById('supportType').value = type;
+            const selectCont = document.getElementById('orderSelectContainer');
+            if (type === 'refund') {
+                setSafeText('supportTitleText', "Solicitar Reembolso"); 
+                const icon = document.getElementById('supportIcon'); if(icon) { icon.setAttribute('data-lucide', 'rotate-ccw'); icon.classList.replace('text-brand-400', 'text-danger-400'); }
+                if(selectCont) selectCont.classList.remove('hidden');
+                
+                const orderSelect = document.getElementById('supportOrderId'); 
+                if(orderSelect) {
+                    orderSelect.innerHTML = '<option value="">A carregar...</option>';
+                    const snap = await getDocs(query(collection(db, "orders"), where("userId", "==", currentUser.uid), where("status", "in", ["pending", "processing"]), limit(10)));
+                    if (snap.empty) { orderSelect.innerHTML = '<option value="">Sem pedidos elegíveis.</option>'; orderSelect.disabled = true; } 
+                    else { orderSelect.innerHTML = '<option value="" disabled selected>Selecione um pedido...</option>'; snap.forEach(doc => { const d = doc.data(); orderSelect.innerHTML += `<option value="${d.orderId}">#${d.orderId} - $${d.usd}</option>`; }); orderSelect.disabled = false; }
+                }
+            } else {
+                setSafeText('supportTitleText', "Enviar Mensagem à Equipa"); 
+                const icon = document.getElementById('supportIcon'); if(icon) { icon.setAttribute('data-lucide', 'message-square'); icon.classList.replace('text-danger-400', 'text-brand-400'); }
+                if(selectCont) selectCont.classList.add('hidden');
+            }
+            lucide.createIcons(); if(modal) modal.classList.replace('hidden', 'flex');
+        };
+
+        const supportForm = document.getElementById('supportForm');
+        if(supportForm) {
+            supportForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const type = document.getElementById('supportType').value, msg = document.getElementById('supportMessage').value, orderId = document.getElementById('supportOrderId').value;
+                if (type === 'refund' && !orderId) return window.showToast("Selecione um pedido.", "error");
+                const btn = document.getElementById('btnSubmitSupport'); btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A enviar...`; lucide.createIcons({root: btn});
+                try {
+                    await addDoc(collection(db, "support_tickets"), { userId: currentUser.uid, userName: userData.name, userEmail: currentUser.email, type: type, orderId: type === 'refund' ? orderId : null, message: msg, status: 'open', createdAt: serverTimestamp() });
+                    window.closeModals(); e.target.reset(); window.showToast("Enviado com sucesso!", "success");
+                } catch (err) { window.showToast("Erro.", "error"); btn.disabled = false; btn.textContent = "Enviar para Equipa"; }
+            });
+        }
+
+        window.logout = async () => { if(confirm('Sair da conta?')) { await signOut(auth); window.location.href = 'login.html'; } };
     </script>
 </body>
 </html>
