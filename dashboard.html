@@ -305,7 +305,7 @@
             </div>
         </div>
     </main>
-    <div id="topUpModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+   <div id="topUpModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative">
             <button onclick="window.closeModals()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
             <div class="p-6 pb-0 mb-6">
@@ -374,7 +374,7 @@
             <div class="p-8 text-center bg-gradient-to-b from-vip-900/40 to-transparent">
                 <i data-lucide="crown" class="w-16 h-16 text-vip-400 mx-auto mb-4"></i>
                 <h3 class="text-3xl font-display font-bold text-white mb-2">PayGo <span class="text-vip-400">VIP</span></h3>
-                <p class="text-sm text-slate-400" id="vipModalSubtitle">Isenção total da taxa de serviço em todos os pagamentos.</p>
+                <p class="text-sm text-slate-400" id="vipModalSubtitle">Isenção total da taxa de serviço em todos os seus pagamentos.</p>
             </div>
             <div class="p-6 pt-0 space-y-4" id="vipPlansContainer">
                 <div id="vipCurrentStatusBox" class="hidden bg-vip-900/30 border border-vip-500/30 rounded-xl p-4 text-center mb-4">
@@ -441,10 +441,10 @@
 
             <form id="vcRequestForm" class="p-6 pt-0 space-y-4 hidden">
                 <div class="bg-brand-500/10 border border-brand-500/30 p-4 rounded-xl mb-4">
-                    <p class="text-sm text-slate-300">Ao solicitar, a equipa PayGo irá gerar um Cartão Virtual RedotPay em seu nome. <strong class="text-brand-400">A taxa de emissão é de 500 MT</strong> (debitada da sua carteira).</p>
+                    <p class="text-sm text-slate-300">Ao solicitar, a equipa PayGo irá analisar o pedido e gerar um Cartão Virtual exclusivo em seu nome. <strong class="text-brand-400">A taxa de emissão é de 1.000 MT</strong> (debitada da sua carteira).</p>
                 </div>
                 <button type="submit" id="btnRequestVc" class="btn-epic w-full py-3.5 bg-brand-600 hover:bg-brand-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]">
-                    Solicitar Emissão (500 MT)
+                    Solicitar Emissão (1.000 MT)
                 </button>
             </form>
         </div>
@@ -577,6 +577,15 @@
                         document.getElementById('vcActionButtons').innerHTML = `
                             <button onclick="window.openVcTopUpModal()" class="flex-1 py-3 bg-success-600 hover:bg-success-500 text-white rounded-xl font-bold text-sm transition shadow-[0_0_15px_rgba(34,197,94,0.3)] flex items-center justify-center gap-2">
                                 <i data-lucide="zap" class="w-4 h-4"></i> Recarregar Cartão
+                            </button>
+                        `;
+                        lucide.createIcons();
+                    } else if (userData.vcRequestPending) {
+                        // Se pagou os 1000 MT e está à espera do Admin
+                        document.getElementById('vcStatusText').innerHTML = `<span class="text-warning-400 font-bold">Aguardando Aprovação.</span> O Admin está a gerar o seu cartão.`;
+                        document.getElementById('vcActionButtons').innerHTML = `
+                            <button disabled class="flex-1 py-3 bg-slate-800 text-slate-500 border border-slate-700 rounded-xl font-bold text-sm cursor-not-allowed flex items-center justify-center gap-2">
+                                <i data-lucide="clock" class="w-4 h-4"></i> Pedido em Análise
                             </button>
                         `;
                         lucide.createIcons();
@@ -762,30 +771,46 @@
             } catch (err) { window.showToast("Erro ao guardar cartão.", "error"); btn.disabled = false; btn.textContent = "Tentar Novamente"; }
         });
 
-        // Solicitar Emissão (Paga 500 MT)
+        // Solicitar Emissão (Paga 1.000 MT)
         document.getElementById('vcRequestForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btnRequestVc');
-            const price = 500;
+            const price = 1000;
             
-            if ((parseFloat(userData?.walletBalance) || 0) < price) return window.showToast("Saldo insuficiente. Deposite 500 MT primeiro.", "error");
+            if ((parseFloat(userData?.walletBalance) || 0) < price) return window.showToast("Saldo insuficiente. Deposite 1.000 MT primeiro.", "error");
 
             btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A processar...`; lucide.createIcons({root: btn});
             try {
-                // Debita o utilizador
-                await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: increment(-price) });
+                // Debita o utilizador e adiciona flag "pending"
+                await updateDoc(doc(db, "users", currentUser.uid), { 
+                    walletBalance: increment(-price),
+                    vcRequestPending: true 
+                });
+                
                 await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: price, description: `Taxa de Emissão de Cartão Virtual`, reference: 'VC-EMISSION', createdAt: new Date().toISOString() });
                 
-                // Cria o Ticket para o Admin
+                // Cria o Ticket para o Admin Confirmar
                 await addDoc(collection(db, "vc_requests"), {
                     userId: currentUser.uid, userName: userData.name, userEmail: currentUser.email,
                     status: 'pending', amountPaid: price, createdAt: serverTimestamp()
                 });
 
                 window.closeModals();
-                window.showToast("Solicitação enviada! A equipa irá contactá-lo brevemente.", "success");
-                userData.walletBalance -= price; document.getElementById('walletBalance').textContent = formatMZN(userData.walletBalance);
-            } catch (err) { window.showToast("Erro ao solicitar.", "error"); btn.disabled = false; btn.textContent = "Solicitar Emissão (500 MT)"; }
+                window.showToast("Solicitação enviada! O Admin irá confirmar a emissão em breve.", "success");
+                userData.walletBalance -= price; 
+                userData.vcRequestPending = true;
+                document.getElementById('walletBalance').textContent = formatMZN(userData.walletBalance);
+                
+                // Atualiza UI Imediatamente
+                document.getElementById('vcStatusText').innerHTML = `<span class="text-warning-400 font-bold">Aguardando Aprovação.</span> O Admin está a gerar o seu cartão.`;
+                document.getElementById('vcActionButtons').innerHTML = `
+                    <button disabled class="flex-1 py-3 bg-slate-800 text-slate-500 border border-slate-700 rounded-xl font-bold text-sm cursor-not-allowed flex items-center justify-center gap-2">
+                        <i data-lucide="clock" class="w-4 h-4"></i> Pedido em Análise
+                    </button>
+                `;
+                lucide.createIcons();
+
+            } catch (err) { window.showToast("Erro ao solicitar.", "error"); btn.disabled = false; btn.textContent = "Solicitar Emissão (1.000 MT)"; }
         });
 
         // ⚡ RECARGA DO CARTÃO VIRTUAL
@@ -794,7 +819,7 @@
         document.getElementById('vcTopUpForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const usdAmount = parseFloat(document.getElementById('vcTopUpAmount').value);
-            const mznCost = usdAmount * sysExchangeRate; // Exemplo: Sem taxa extra de recarga ou podes somar uma taxa.
+            const mznCost = usdAmount * sysExchangeRate; 
             
             if ((parseFloat(userData?.walletBalance) || 0) < mznCost) return window.showToast(`Saldo insuficiente. A recarga de $${usdAmount} custa ${formatMZN(mznCost)} MT.`, "error");
 
@@ -833,7 +858,7 @@
                 document.getElementById('supportMsgLabel').textContent = "Justificação (Obrigatório)";
                 selectContainer.classList.remove('hidden');
 
-                // Carregar pedidos recentes do cliente para ele escolher qual quer cancelar
+                // Carregar pedidos recentes do cliente
                 const orderSelect = document.getElementById('supportOrderId');
                 orderSelect.innerHTML = '<option value="">A carregar...</option>';
                 const q = query(collection(db, "orders"), where("userId", "==", currentUser.uid), where("status", "in", ["pending", "processing"]), limit(10));
@@ -874,7 +899,6 @@
             btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A enviar...`; lucide.createIcons({root: btn});
 
             try {
-                // Grava a mensagem na coleção de tickets (para a página mensagem.html do admin ler)
                 await addDoc(collection(db, "support_tickets"), {
                     userId: currentUser.uid,
                     userName: userData.name,
@@ -891,9 +915,8 @@
             } catch (err) { window.showToast("Erro ao enviar mensagem.", "error"); btn.disabled = false; btn.textContent = "Tentar Novamente"; }
         });
 
-        // Funções Antigas (TopUp, Transfer) mantidas intactas.
-        document.getElementById('topUpForm').addEventListener('submit', async (e) => { /* Lógica de Depósito intacta no código HTML original da PayGo */ });
-        document.getElementById('transferForm').addEventListener('submit', async (e) => { /* Lógica de P2P intacta no código HTML original da PayGo */ });
+        document.getElementById('topUpForm').addEventListener('submit', async (e) => { /* Lógica de Depósito */ });
+        document.getElementById('transferForm').addEventListener('submit', async (e) => { /* Lógica de P2P */ });
 
         window.logout = async () => { if(confirm('Sair da conta?')) { await signOut(auth); window.location.href = 'login.html'; } };
     </script>
