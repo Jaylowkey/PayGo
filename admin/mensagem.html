@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="pt-MZ" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Central de Mensagens | Admin PayGo</title>
+    <meta name="theme-color" content="#0f172a">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'], display: ['"Outfit"', 'sans-serif'], mono: ['"Fira Code"', 'monospace'] },
+                    colors: { brand: { 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb' }, success: { 400: '#4ade80', 500: '#22c55e' }, warning: { 400: '#fbbf24', 500: '#f59e0b' }, danger: { 400: '#f87171', 500: '#ef4444' } }
+                }
+            }
+        };
+    </script>
+    
+    <style>
+        body { background-color: #0f172a; color: #f8fafc; overflow: hidden; } /* Overflow hidden para o layout de app de chat */
+        ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
+        .glass-nav { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .glass-card { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        
+        .chat-scroll { overflow-y: auto; scroll-behavior: smooth; }
+        .ticket-item.active { background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; }
+        
+        /* Balões de Chat */
+        .msg-admin { background: #2563eb; color: white; border-radius: 16px 16px 4px 16px; align-self: flex-end; }
+        .msg-client { background: #1e293b; color: #e2e8f0; border-radius: 16px 16px 16px 4px; align-self: flex-start; border: 1px solid rgba(255,255,255,0.05); }
+        
+        #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+        .toast { pointer-events: auto; background: rgba(15, 23, 42, 0.95); border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 12px; display: flex; gap: 12px; transform: translateX(120%); transition: transform 0.4s ease; opacity: 0; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .toast.show { transform: translateX(0); opacity: 1; }
+    </style>
+</head>
+<body class="selection:bg-brand-500 selection:text-white flex flex-col h-screen">
+
+    <audio id="notifSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+
+    <div class="fixed inset-0 bg-grid opacity-20 pointer-events-none z-0"></div>
+    <div id="toastContainer"></div>
+
+    <header class="w-full z-50 glass-nav shrink-0">
+        <div class="container mx-auto px-6 h-16 flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <a href="dashboard.html" class="text-slate-400 hover:text-white transition"><i data-lucide="arrow-left" class="w-5 h-5"></i></a>
+                <div class="bg-brand-500/20 text-brand-400 p-2 rounded-lg"><i data-lucide="message-square" class="w-4 h-4"></i></div>
+                <span class="text-xl font-display font-bold text-white">Central de Mensagens</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="relative">
+                    <i data-lucide="bell" class="w-5 h-5 text-slate-400"></i>
+                    <span class="absolute -top-1 -right-1 flex h-3 w-3">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-danger-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-3 w-3 bg-danger-500 border-2 border-[#0f172a]" id="unreadBadge">0</span>
+                    </span>
+                </div>
+                <div class="w-px h-6 bg-slate-700 mx-2"></div>
+                <span class="text-sm font-bold text-slate-300">Admin PayGo</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 container mx-auto px-2 sm:px-6 py-6 relative z-10 flex overflow-hidden">
+        
+        <div class="flex w-full h-full glass-card rounded-2xl overflow-hidden shadow-2xl">
+            
+            <div class="w-full md:w-1/3 flex flex-col border-r border-slate-700/50 bg-slate-900/50 shrink-0">
+                <div class="p-4 border-b border-slate-700/50 space-y-3 shrink-0">
+                    <div class="relative">
+                        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
+                        <input type="text" id="searchInput" placeholder="Procurar cliente ou pedido..." class="w-full pl-9 pr-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-sm text-white focus:border-brand-500 outline-none transition">
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="window.filterTickets('all')" class="flex-1 py-1.5 text-[10px] font-bold uppercase tracking-widest bg-brand-500/20 text-brand-400 rounded border border-brand-500/30 transition hover:bg-brand-500/30" id="filter-all">Todos</button>
+                        <button onclick="window.filterTickets('open')" class="flex-1 py-1.5 text-[10px] font-bold uppercase tracking-widest bg-slate-800 text-slate-400 rounded border border-slate-700 transition hover:bg-slate-700" id="filter-open">Abertos</button>
+                    </div>
+                </div>
+
+                <div class="flex-1 chat-scroll" id="ticketList">
+                    <div class="p-4 flex items-center gap-3 animate-pulse">
+                        <div class="w-10 h-10 bg-slate-800 rounded-full"></div>
+                        <div class="flex-1 space-y-2">
+                            <div class="h-3 bg-slate-800 rounded w-3/4"></div>
+                            <div class="h-2 bg-slate-800 rounded w-1/2"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hidden md:flex flex-col flex-1 bg-slate-950 relative" id="chatArea">
+                
+                <div id="emptyChatState" class="absolute inset-0 flex flex-col items-center justify-center text-center p-6 z-20 bg-slate-950">
+                    <div class="w-20 h-20 bg-slate-900 rounded-full flex items-center justify-center mb-4 text-slate-700">
+                        <i data-lucide="message-square-dashed" class="w-10 h-10"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Caixa de Entrada</h3>
+                    <p class="text-slate-500 text-sm max-w-sm">Selecione uma conversa ao lado para responder a pedidos de reembolso, suporte ou recargas do Cartão Virtual.</p>
+                </div>
+
+                <div class="p-4 border-b border-slate-800 bg-slate-900/80 flex justify-between items-center shrink-0">
+                    <div class="flex items-center gap-3">
+                        <button class="md:hidden text-slate-400 p-1" onclick="window.closeMobileChat()"><i data-lucide="chevron-left" class="w-6 h-6"></i></button>
+                        <div class="w-10 h-10 rounded-full bg-brand-500 flex items-center justify-center text-white font-bold text-lg" id="chatAvatar">C</div>
+                        <div>
+                            <h3 class="font-bold text-white leading-tight" id="chatClientName">Nome do Cliente</h3>
+                            <p class="text-xs text-slate-400 font-mono" id="chatClientEmail">cliente@email.com</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span id="chatTicketType" class="px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-widest bg-slate-800 text-slate-300 border border-slate-700">TICKET</span>
+                        <select id="ticketStatusSelect" onchange="window.updateTicketStatus(this.value)" class="bg-slate-950 border border-slate-700 text-sm text-white rounded-lg px-3 py-1.5 focus:border-brand-500 outline-none">
+                            <option value="open">Aberto (Pendente)</option>
+                            <option value="in_progress">Em Análise</option>
+                            <option value="closed">Concluído / Fechado</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="chatContextBox" class="bg-slate-900/50 p-3 border-b border-slate-800 text-xs shrink-0 hidden">
+                    </div>
+
+                <div class="flex-1 chat-scroll p-4 md:p-6 space-y-4 flex flex-col" id="messageHistory">
+                    </div>
+
+                <div class="p-4 bg-slate-900 border-t border-slate-800 shrink-0">
+                    <form id="replyForm" class="flex items-end gap-2">
+                        
+                        <div class="relative shrink-0">
+                            <input type="file" id="fileUpload" class="hidden" accept="image/*, .pdf, .doc, .docx" onchange="window.handleFileSelect(event)">
+                            <button type="button" onclick="document.getElementById('fileUpload').click()" class="w-12 h-12 rounded-xl bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-brand-400 transition" title="Anexar Comprovativo ou Imagem">
+                                <i data-lucide="paperclip" class="w-5 h-5"></i>
+                            </button>
+                            <div id="fileBadge" class="absolute -top-2 -right-2 w-4 h-4 bg-success-500 rounded-full hidden border-2 border-slate-900"></div>
+                        </div>
+
+                        <div class="flex-1 bg-slate-950 border border-slate-700 rounded-xl relative focus-within:border-brand-500 transition-colors">
+                            <textarea id="replyMessage" rows="1" class="w-full bg-transparent text-white px-4 py-3 outline-none resize-none text-sm max-h-32 min-h-[48px] chat-scroll" placeholder="Escreva a sua resposta ou envie um comprovativo..." oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea>
+                        </div>
+
+                        <button type="submit" id="btnSendReply" class="w-12 h-12 rounded-xl bg-brand-600 hover:bg-brand-500 flex items-center justify-center text-white transition shadow-lg shrink-0">
+                            <i data-lucide="send" class="w-5 h-5 ml-1"></i>
+                        </button>
+                    </form>
+                    <div id="fileNameDisplay" class="text-[10px] text-brand-400 mt-2 font-mono hidden truncate px-1">Ficheiro: comprovativo.pdf</div>
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+
+<script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, collection, query, orderBy, onSnapshot, updateDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
+        const firebaseConfig = { apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8", authDomain: "paygo-14311.firebaseapp.com", projectId: "paygo-14311", storageBucket: "paygo-14311.firebasestorage.app", messagingSenderId: "208360646277", appId: "1:208360646277:web:aecc57cc0077ae48a52bec" };
+        
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app, "paygodb");
+        const storage = getStorage(app);
+        lucide.createIcons();
+
+        let currentAdmin = null;
+        let allTickets = [];
+        let activeTicketId = null;
+        let currentFilter = 'all';
+        let initialLoad = true;
+        let unsubscribeMessages = null;
+        let selectedFile = null;
+
+        const notifSound = document.getElementById('notifSound');
+
+        // 🛡️ SEGURANÇA E INICIALIZAÇÃO
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { window.location.href = '../login.html'; return; }
+            
+            try {
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                if (!userDoc.exists() || (userDoc.data().role !== 'admin' && userDoc.data().role !== 'superadmin')) {
+                    window.location.href = '../dashboard.html'; // Não é admin, volta para o painel de cliente
+                    return;
+                }
+                currentAdmin = user;
+                loadTickets(); // Inicia a escuta em tempo real
+            } catch (error) { console.error("Erro de Auth:", error); }
+        });
+
+        // 📥 CARREGAR TICKETS EM TEMPO REAL
+        function loadTickets() {
+            const q = query(collection(db, "support_tickets"), orderBy("createdAt", "desc"));
+            
+            onSnapshot(q, (snapshot) => {
+                let unreadCount = 0;
+                let hasNewTicket = false;
+                allTickets = [];
+
+                snapshot.forEach((doc) => {
+                    const ticket = { id: doc.id, ...doc.data() };
+                    allTickets.push(ticket);
+                    if (ticket.status === 'open') unreadCount++;
+                });
+
+                // Toca som se houver novos documentos e não for o carregamento inicial da página
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === "added" && !initialLoad) { hasNewTicket = true; }
+                });
+
+                if (hasNewTicket) {
+                    try { notifSound.play(); } catch(e) { console.log('Áudio bloqueado pelo navegador.'); }
+                    showToast("Nova mensagem recebida!", "info");
+                }
+
+                document.getElementById('unreadBadge').textContent = unreadCount;
+                renderTicketList();
+                initialLoad = false;
+                
+                // Atualizar o ticket ativo se o status mudar externamente
+                if (activeTicketId) {
+                    const updatedActive = allTickets.find(t => t.id === activeTicketId);
+                    if (updatedActive && updatedActive.status !== document.getElementById('ticketStatusSelect').value) {
+                        document.getElementById('ticketStatusSelect').value = updatedActive.status;
+                    }
+                }
+            });
+        }
+
+        // 📋 RENDERIZAR LISTA DE TICKETS (BARRA LATERAL)
+        window.filterTickets = (type) => {
+            currentFilter = type;
+            document.getElementById('filter-all').classList.remove('bg-brand-500/20', 'text-brand-400');
+            document.getElementById('filter-all').classList.add('bg-slate-800', 'text-slate-400');
+            document.getElementById('filter-open').classList.remove('bg-brand-500/20', 'text-brand-400');
+            document.getElementById('filter-open').classList.add('bg-slate-800', 'text-slate-400');
+            
+            document.getElementById(`filter-${type}`).classList.remove('bg-slate-800', 'text-slate-400');
+            document.getElementById(`filter-${type}`).classList.add('bg-brand-500/20', 'text-brand-400');
+            renderTicketList();
+        };
+
+        // Filtro de Busca
+        document.getElementById('searchInput').addEventListener('input', () => renderTicketList());
+
+        function renderTicketList() {
+            const listEl = document.getElementById('ticketList');
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            listEl.innerHTML = '';
+
+            let filtered = allTickets.filter(t => {
+                if (currentFilter === 'open' && t.status !== 'open') return false;
+                if (search && !((t.userName || '').toLowerCase().includes(search) || (t.userEmail || '').toLowerCase().includes(search) || (t.orderId || '').toLowerCase().includes(search))) return false;
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                listEl.innerHTML = `<div class="p-6 text-center text-slate-500 text-sm">Nenhum ticket encontrado.</div>`;
+                return;
+            }
+
+            filtered.forEach(ticket => {
+                const dateStr = ticket.createdAt && ticket.createdAt.toDate ? ticket.createdAt.toDate().toLocaleDateString('pt-MZ') : 'Recente';
+                const initial = (ticket.userName || 'C').charAt(0).toUpperCase();
+                const isActive = activeTicketId === ticket.id ? 'active' : '';
+                const isUnread = ticket.status === 'open' ? '<div class="w-2 h-2 rounded-full bg-brand-500 absolute right-4 top-4 shadow-[0_0_8px_rgba(59,130,246,0.8)]"></div>' : '';
+
+                // Tipos de badge
+                let typeBadge = '';
+                if (ticket.type === 'refund') typeBadge = `<span class="text-[8px] px-1.5 py-0.5 rounded bg-danger-500/20 text-danger-400 border border-danger-500/30">REEMBOLSO</span>`;
+                else if (ticket.type === 'vc_topup') typeBadge = `<span class="text-[8px] px-1.5 py-0.5 rounded bg-success-500/20 text-success-400 border border-success-500/30">RECARGA VC</span>`;
+                else typeBadge = `<span class="text-[8px] px-1.5 py-0.5 rounded bg-slate-700 text-slate-300 border border-slate-600">MENSAGEM</span>`;
+
+                const div = document.createElement('div');
+                div.className = `ticket-item p-4 border-b border-slate-800/50 cursor-pointer hover:bg-slate-800/30 transition relative flex gap-3 ${isActive}`;
+                div.onclick = () => selectTicket(ticket.id);
+                div.innerHTML = `
+                    ${isUnread}
+                    <div class="w-10 h-10 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center font-bold shrink-0 border border-slate-700">${initial}</div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-start mb-1">
+                            <h4 class="text-sm font-bold text-white truncate pr-4">${ticket.userName || 'Cliente PayGo'}</h4>
+                            <span class="text-[9px] text-slate-500 whitespace-nowrap">${dateStr}</span>
+                        </div>
+                        <div class="flex items-center gap-2 mb-1">
+                            ${typeBadge}
+                            <span class="text-xs text-slate-400 truncate">${ticket.orderId ? '#' + ticket.orderId : ''}</span>
+                        </div>
+                        <p class="text-xs text-slate-500 truncate pr-2">${ticket.message || 'Sem mensagem inicial'}</p>
+                    </div>
+                `;
+                listEl.appendChild(div);
+            });
+        }
+
+        // 💬 ABRIR E GERIR O CHAT ATIVO
+        window.selectTicket = async (id) => {
+            activeTicketId = id;
+            renderTicketList(); // Atualiza a barra azul no ticket selecionado
+
+            const ticket = allTickets.find(t => t.id === id);
+            if (!ticket) return;
+
+            // Esconder Vazio, Mostrar Chat
+            document.getElementById('emptyChatState').classList.add('hidden');
+            document.getElementById('chatArea').classList.remove('hidden', 'md:flex'); // Mostra no mobile
+            document.getElementById('chatArea').classList.add('flex');
+
+            // Preencher Cabeçalho
+            document.getElementById('chatAvatar').textContent = (ticket.userName || 'C').charAt(0).toUpperCase();
+            document.getElementById('chatClientName').textContent = ticket.userName || 'Cliente PayGo';
+            document.getElementById('chatClientEmail').textContent = ticket.userEmail || 'N/A';
+            document.getElementById('ticketStatusSelect').value = ticket.status || 'open';
+
+            // Preencher Contexto
+            const ctxBox = document.getElementById('chatContextBox');
+            ctxBox.classList.remove('hidden');
+            if (ticket.type === 'refund') {
+                ctxBox.innerHTML = `<span class="text-danger-400 font-bold">Pedido de Reembolso / Cancelamento:</span> Referente à Ordem <b>#${ticket.orderId}</b>.`;
+                ctxBox.className = "bg-danger-900/10 p-3 border-b border-danger-500/20 text-xs shrink-0";
+            } else if (ticket.type === 'vc_topup') {
+                ctxBox.innerHTML = `<span class="text-success-400 font-bold">Pedido de Recarga Cartão Virtual:</span> O cliente pagou ${formatMZN(ticket.mznCost)} MT para recarregar <b>$${ticket.usdAmount}</b>. <br/>💳 Destino/TRC20: <b class="font-mono bg-slate-950 px-1 py-0.5 rounded text-white">${ticket.destination || 'Não informado'}</b>`;
+                ctxBox.className = "bg-success-900/10 p-3 border-b border-success-500/20 text-xs shrink-0";
+            } else {
+                ctxBox.innerHTML = `<span class="text-brand-400 font-bold">Mensagem de Suporte Geral</span>`;
+                ctxBox.className = "bg-slate-900/50 p-3 border-b border-slate-800 text-xs shrink-0";
+            }
+
+            // Mudar Status para In Progress automaticamente se estiver Open
+            if (ticket.status === 'open') {
+                await updateDoc(doc(db, "support_tickets", id), { status: 'in_progress' });
+            }
+
+            // Escutar as Mensagens deste Ticket (Subcoleção)
+            if (unsubscribeMessages) unsubscribeMessages(); // Limpa o listener anterior
+            
+            const msgQ = query(collection(db, "support_tickets", id, "messages"), orderBy("createdAt", "asc"));
+            unsubscribeMessages = onSnapshot(msgQ, (snap) => {
+                const historyEl = document.getElementById('messageHistory');
+                historyEl.innerHTML = '';
+                
+                // Mensagem Inicial do Cliente (A que criou o ticket)
+                const initialTime = ticket.createdAt && ticket.createdAt.toDate ? ticket.createdAt.toDate().toLocaleTimeString('pt-MZ', {hour: '2-digit', minute:'2-digit'}) : '';
+                historyEl.innerHTML += `
+                    <div class="flex flex-col msg-client max-w-[85%] p-3 text-sm shadow-md">
+                        <p>${ticket.message}</p>
+                        <span class="text-[9px] text-slate-400 self-end mt-1">${initialTime}</span>
+                    </div>
+                `;
+
+                snap.forEach(docMsg => {
+                    const m = docMsg.data();
+                    const time = m.createdAt && m.createdAt.toDate ? m.createdAt.toDate().toLocaleTimeString('pt-MZ', {hour: '2-digit', minute:'2-digit'}) : '';
+                    const isAdmin = m.sender === 'admin';
+                    const cssClass = isAdmin ? 'msg-admin max-w-[85%] p-3 text-sm shadow-md' : 'msg-client max-w-[85%] p-3 text-sm shadow-md';
+                    
+                    let attachHtml = '';
+                    if (m.attachmentUrl) {
+                        attachHtml = `<a href="${m.attachmentUrl}" target="_blank" class="block mb-2 mt-1 px-3 py-2 bg-black/20 rounded-lg text-xs font-bold hover:bg-black/30 transition flex items-center gap-2"><i data-lucide="paperclip" class="w-3 h-3"></i> Ver Anexo / Comprovativo</a>`;
+                    }
+
+                    historyEl.innerHTML += `
+                        <div class="flex flex-col ${cssClass}">
+                            ${attachHtml}
+                            <p>${m.text || ''}</p>
+                            <span class="text-[9px] ${isAdmin ? 'text-blue-200' : 'text-slate-400'} self-end mt-1">${time}</span>
+                        </div>
+                    `;
+                });
+                lucide.createIcons();
+                historyEl.scrollTop = historyEl.scrollHeight; // Fazer scroll para o fundo
+            });
+        };
+
+        // 📱 FECHAR CHAT NO MOBILE
+        window.closeMobileChat = () => {
+            document.getElementById('chatArea').classList.add('hidden');
+            document.getElementById('chatArea').classList.remove('flex');
+            activeTicketId = null;
+            renderTicketList();
+        };
+
+        // 🟢 ATUALIZAR STATUS DO TICKET
+        window.updateTicketStatus = async (newStatus) => {
+            if (!activeTicketId) return;
+            try {
+                await updateDoc(doc(db, "support_tickets", activeTicketId), { status: newStatus });
+                showToast(`Ticket marcado como: ${newStatus === 'closed' ? 'Fechado' : 'Em Análise'}`, 'success');
+            } catch (e) { showToast("Erro ao atualizar status.", "error"); }
+        };
+
+        // 📎 UPLOAD DE FICHEIRO
+        window.handleFileSelect = (e) => {
+            selectedFile = e.target.files[0];
+            const badge = document.getElementById('fileBadge');
+            const display = document.getElementById('fileNameDisplay');
+            if (selectedFile) {
+                badge.classList.remove('hidden');
+                display.classList.remove('hidden');
+                display.textContent = `Ficheiro Anexado: ${selectedFile.name}`;
+            } else {
+                badge.classList.add('hidden');
+                display.classList.add('hidden');
+            }
+        };
+
+        // 📤 ENVIAR RESPOSTA
+        document.getElementById('replyForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!activeTicketId) return;
+
+            const input = document.getElementById('replyMessage');
+            const text = input.value.trim();
+            if (!text && !selectedFile) return;
+
+            const btn = document.getElementById('btnSendReply');
+            btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>`; lucide.createIcons({root: btn});
+
+            try {
+                let attachmentUrl = null;
+
+                // 1. Fazer Upload do Ficheiro se existir
+                if (selectedFile) {
+                    const fileRef = ref(storage, `ticket_attachments/${activeTicketId}/${Date.now()}_${selectedFile.name}`);
+                    await uploadBytes(fileRef, selectedFile);
+                    attachmentUrl = await getDownloadURL(fileRef);
+                }
+
+                // 2. Guardar a mensagem na Subcoleção
+                await addDoc(collection(db, "support_tickets", activeTicketId, "messages"), {
+                    sender: 'admin',
+                    text: text,
+                    attachmentUrl: attachmentUrl,
+                    createdAt: serverTimestamp()
+                });
+
+                // 3. Atualizar Data do Ticket principal (Para subir na lista)
+                await updateDoc(doc(db, "support_tickets", activeTicketId), {
+                    updatedAt: serverTimestamp(),
+                    status: document.getElementById('ticketStatusSelect').value // Garante que guarda o status atual
+                });
+
+                // Limpar Form
+                input.value = ''; input.style.height = '';
+                selectedFile = null;
+                document.getElementById('fileUpload').value = '';
+                document.getElementById('fileBadge').classList.add('hidden');
+                document.getElementById('fileNameDisplay').classList.add('hidden');
+
+            } catch (err) {
+                console.error(err);
+                showToast("Erro ao enviar mensagem.", "error");
+            } finally {
+                btn.disabled = false; btn.innerHTML = `<i data-lucide="send" class="w-5 h-5 ml-1"></i>`; lucide.createIcons({root: btn});
+            }
+        });
+
+        // UTILITÁRIO GERAL
+        window.showToast = function(msg, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            if(!container) return;
+            const t = document.createElement('div');
+            const bg = type === 'error' ? 'bg-danger-500/95 border-danger-400' : type === 'info' ? 'bg-slate-800/95 border-brand-400' : 'bg-slate-900/95 border-brand-500';
+            const icon = type === 'error' ? 'alert-octagon text-danger-400' : type === 'info' ? 'bell text-brand-400' : 'check-check text-brand-400';
+            t.className = `flex items-center gap-3 px-5 py-4 rounded-xl shadow-2xl border ${bg} transform transition-all translate-x-full opacity-0`;
+            t.innerHTML = `<i data-lucide="${icon.split(' ')[0]}" class="w-5 h-5 ${icon.split(' ')[1]}"></i> <span class="text-sm font-bold text-white">${msg}</span>`;
+            container.appendChild(t); lucide.createIcons({ root: t });
+            requestAnimationFrame(() => { t.classList.remove('translate-x-full', 'opacity-0'); });
+            setTimeout(() => { t.classList.add('opacity-0', 'translate-x-8'); setTimeout(() => t.remove(), 400); }, 4000);
+        }
+    </script>
+</body>
+</html>
