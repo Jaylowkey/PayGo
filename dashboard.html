@@ -538,7 +538,7 @@
         </div>
     </div>
 
-    <script type="module">
+  <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, getDocs, collection, query, where, limit, addDoc, updateDoc, serverTimestamp, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -562,10 +562,23 @@
         const formatMZN = (val) => new Intl.NumberFormat('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val);
         const formatUSD = (val) => new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val);
 
-        // 🛡️ FUNÇÕES DE INJEÇÃO SEGURA
+        // 🛡️ FUNÇÕES DE INJEÇÃO SEGURA E UTILITÁRIAS
         const setSafeText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
         const setSafeHTML = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
         const setSafeValue = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+
+        // 💡 FUNÇÃO UTILITÁRIA PARA GERIR O 'REQUIRED'
+        const setRequiredElements = (selector, isRequired) => {
+            document.querySelectorAll(selector).forEach(el => {
+                if (isRequired) {
+                    el.setAttribute('required', 'true');
+                    el.disabled = false;
+                } else {
+                    el.removeAttribute('required');
+                    el.disabled = true; // Desabilita para não ir no post
+                }
+            });
+        };
 
         window.showToast = function(msg, type = 'success') {
             const container = document.getElementById('toastContainer');
@@ -598,7 +611,7 @@
         };
 
         // =====================================
-        // CARREGAR DADOS INICIAIS
+        // CARREGAR DADOS INICIAIS E SESSÃO
         // =====================================
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = 'login.html'; return; }
@@ -696,21 +709,30 @@
         });
 
         // =====================================
-        // ORÇAMENTADOR CAMALEÃO E PAGAMENTO ÚNICO
+        // ORÇAMENTADOR CAMALEÃO (CORRIGIDO E SEGURO)
         // =====================================
         const orderCategory = document.getElementById('orderCategory');
         if(orderCategory) {
             orderCategory.addEventListener('change', function(e) {
                 const cat = e.target.value;
                 if (cat === 'physical') {
-                    document.getElementById('physicalFields').classList.remove('hidden'); document.getElementById('digitalFields').classList.add('hidden');
+                    // Mostrar Morada, Esconder Digital
+                    document.getElementById('physicalFields').classList.remove('hidden'); 
+                    document.getElementById('digitalFields').classList.add('hidden');
                     setSafeText('labelUrl', "Link do Produto");
-                    document.querySelectorAll('.physical-req').forEach(el => el.setAttribute('required', 'true'));
-                    document.getElementById('digitalAccount').removeAttribute('required');
+                    
+                    // Obriga Físicos, Liberta Digitais
+                    setRequiredElements('.physical-req', true);
+                    setRequiredElements('#digitalAccount', false);
                 } else {
-                    document.getElementById('physicalFields').classList.add('hidden'); document.getElementById('digitalFields').classList.remove('hidden');
-                    document.querySelectorAll('.physical-req').forEach(el => el.removeAttribute('required'));
-                    document.getElementById('digitalAccount').setAttribute('required', 'true');
+                    // Esconder Morada, Mostrar Digital
+                    document.getElementById('physicalFields').classList.add('hidden'); 
+                    document.getElementById('digitalFields').classList.remove('hidden');
+                    
+                    // Liberta Físicos, Obriga Digitais
+                    setRequiredElements('.physical-req', false);
+                    setRequiredElements('#digitalAccount', true);
+                    
                     if (cat === 'game') { setSafeText('labelUrl', "Link do Jogo"); setSafeText('labelDigital', "Player ID"); } 
                     else { setSafeText('labelUrl', "Link do Software"); setSafeText('labelDigital', "E-mail da Conta"); }
                 }
@@ -724,30 +746,58 @@
 
         const usdInput = document.getElementById('productUsd'), mznInput = document.getElementById('productMzn');
         if(usdInput && mznInput) {
-            usdInput.addEventListener('input', e => { const usdVal = parseFloat(e.target.value) || 0; mznInput.value = usdVal ? (usdVal * sysExchangeRate).toFixed(2) : ''; updateCalculator(usdVal); });
-            mznInput.addEventListener('input', e => { const mznVal = parseFloat(e.target.value) || 0; const usdVal = mznVal / sysExchangeRate; usdInput.value = usdVal ? usdVal.toFixed(2) : ''; updateCalculator(usdVal); });
+            usdInput.addEventListener('input', e => { 
+                const usdVal = parseFloat(e.target.value) || 0; 
+                mznInput.value = usdVal ? (usdVal * sysExchangeRate).toFixed(2) : ''; 
+                updateCalculator(usdVal); 
+            });
+            mznInput.addEventListener('input', e => { 
+                const mznVal = parseFloat(e.target.value) || 0; 
+                const usdVal = mznVal / sysExchangeRate; 
+                usdInput.value = usdVal ? usdVal.toFixed(2) : ''; 
+                updateCalculator(usdVal); 
+            });
         }
 
         function updateCalculator(usdVal) {
-            const btnSub = document.getElementById('btnSubmitOrder'), warn = document.getElementById('balanceWarning'), succ = document.getElementById('successReady');
-            if (usdVal <= 0) { currentCalculatedTotal = 0; setSafeText('calcTotal', '0.00 MT'); if(btnSub) btnSub.disabled = true; if(warn) warn.classList.add('hidden'); if(succ) succ.classList.add('hidden'); return; }
+            const btnSub = document.getElementById('btnSubmitOrder');
+            const warn = document.getElementById('balanceWarning');
+            const succ = document.getElementById('successReady');
+            
+            if (usdVal <= 0) { 
+                currentCalculatedTotal = 0; 
+                setSafeText('calcTotal', '0.00 MT'); 
+                if(btnSub) btnSub.disabled = true; 
+                if(warn) warn.classList.add('hidden'); 
+                if(succ) succ.classList.add('hidden'); 
+                return; 
+            }
             
             const baseMZN = usdVal * sysExchangeRate;
             let appliedTax = sysTax1;
-            if (usdVal > 20 && usdVal <= 50) appliedTax = sysTax2; else if (usdVal > 50) appliedTax = sysTax3;
+            if (usdVal > 20 && usdVal <= 50) appliedTax = sysTax2; 
+            else if (usdVal > 50) appliedTax = sysTax3;
+            
             if (isUserVip || (isFirstPurchaseEligible && usdVal <= 5)) appliedTax = 0;
             
-            currentCalculatedTax = appliedTax; currentCalculatedTotal = baseMZN + appliedTax; 
+            currentCalculatedTax = appliedTax; 
+            currentCalculatedTotal = baseMZN + appliedTax; 
             
             setSafeText('calcBase', `${formatMZN(baseMZN)} MT`);
             setSafeText('calcFee', `${formatMZN(appliedTax)} MT`);
             setSafeText('calcTotal', `${formatMZN(currentCalculatedTotal)} MT`);
 
             const safeTotal = Number(currentCalculatedTotal.toFixed(2));
-            if (safeTotal > (parseFloat(userData?.walletBalance) || 0)) { 
-                if(btnSub) btnSub.disabled = true; if(succ) succ.classList.add('hidden'); if(warn) warn.classList.remove('hidden'); 
+            const userBal = parseFloat(userData?.walletBalance) || 0;
+            
+            if (safeTotal > userBal) { 
+                if(btnSub) btnSub.disabled = true; 
+                if(succ) succ.classList.add('hidden'); 
+                if(warn) warn.classList.remove('hidden'); 
             } else { 
-                if(btnSub) btnSub.disabled = false; if(warn) warn.classList.add('hidden'); if(succ) succ.classList.remove('hidden'); 
+                if(btnSub) btnSub.disabled = false; 
+                if(warn) warn.classList.add('hidden'); 
+                if(succ) succ.classList.remove('hidden'); 
             }
         }
 
@@ -756,28 +806,66 @@
         if(orderForm) {
             orderForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const btn = document.getElementById('btnSubmitOrder'); btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Processando...`; lucide.createIcons({root: btn});
+                
+                const btn = document.getElementById('btnSubmitOrder'); 
+                btn.disabled = true; 
+                btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Processando...`; 
+                lucide.createIcons({root: btn});
+
+                const safeTotal = Number(currentCalculatedTotal.toFixed(2));
+                const userBal = parseFloat(userData?.walletBalance) || 0;
+
+                // Tripla Confirmação de Saldo (Para evitar burlas de inspecionar elemento)
+                if(safeTotal > userBal || safeTotal <= 0) {
+                    window.showToast("Operação bloqueada: Saldo insuficiente ou valor inválido.", "error");
+                    btn.disabled = true; 
+                    btn.innerHTML = `<i data-lucide="credit-card" class="w-5 h-5"></i> <span id="btnSubmitText">Autorizar Pagamento Seguro</span>`; 
+                    lucide.createIcons({root: btn});
+                    return;
+                }
+
                 try {
-                    const safeTotal = Number(currentCalculatedTotal.toFixed(2));
                     const orderId = 'PG-' + Math.floor(100000 + Math.random() * 900000);
                     const cat = document.getElementById('orderCategory').value;
                     let payloadData = {
                         orderId: orderId, userId: currentUser.uid, name: userData.name || '', email: currentUser.email || '', 
                         category: cat, detail: `${document.getElementById('productUrl').value} | ${document.getElementById('productDetails').value}`,
-                        usd: parseFloat(usdInput.value), exchangeRate: sysExchangeRate, tax: currentCalculatedTax, total: safeTotal,
+                        usd: parseFloat(document.getElementById('productUsd').value), 
+                        exchangeRate: sysExchangeRate, tax: currentCalculatedTax, total: safeTotal,
                         paymentMethod: 'wallet', isPaid: true, status: 'processing', createdAt: serverTimestamp()
                     };
-                    if (cat === 'physical') { payloadData.shipping = { shipName: document.getElementById('shipName').value, shipZip: document.getElementById('shipZip').value, shipAddress: document.getElementById('shipAddress').value, shipCity: document.getElementById('shipCity').value, shipPhone: document.getElementById('shipPhone').value }; } 
-                    else { payloadData.digitalData = { accountOrId: document.getElementById('digitalAccount').value }; }
+                    
+                    if (cat === 'physical') { 
+                        payloadData.shipping = { 
+                            shipName: document.getElementById('shipName').value, 
+                            shipZip: document.getElementById('shipZip').value, 
+                            shipAddress: document.getElementById('shipAddress').value, 
+                            shipCity: document.getElementById('shipCity').value, 
+                            shipPhone: document.getElementById('shipPhone').value 
+                        }; 
+                    } else { 
+                        payloadData.digitalData = { accountOrId: document.getElementById('digitalAccount').value }; 
+                    }
 
+                    // Transações Duplas (Garante que se falhar uma, a outra não avança)
                     await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: increment(-safeTotal) });
                     await addDoc(collection(db, "orders"), payloadData);
                     await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: safeTotal, description: `Pedido ${orderId}`, reference: orderId, createdAt: new Date().toISOString() });
 
-                    userData.walletBalance -= safeTotal; setSafeText('walletBalance', formatMZN(userData.walletBalance));
-                    e.target.reset(); updateCalculator(0); window.showToast("Pagamento processado com sucesso!", "success");
-                } catch (err) { window.showToast(err.message, "error"); } 
-                finally { btn.disabled = false; btn.innerHTML = `<i data-lucide="credit-card" class="w-5 h-5"></i> <span id="btnSubmitText">Autorizar Pagamento Seguro</span>`; lucide.createIcons({root: btn}); }
+                    userData.walletBalance -= safeTotal; 
+                    setSafeText('walletBalance', formatMZN(userData.walletBalance));
+                    e.target.reset(); 
+                    updateCalculator(0); 
+                    window.showToast("Pagamento processado com sucesso!", "success");
+                    
+                } catch (err) { 
+                    console.error("Erro no Orçamentador:", err);
+                    window.showToast("Falha ao debitar a carteira.", "error"); 
+                } finally { 
+                    btn.disabled = false; 
+                    btn.innerHTML = `<i data-lucide="credit-card" class="w-5 h-5"></i> <span id="btnSubmitText">Autorizar Pagamento Seguro</span>`; 
+                    lucide.createIcons({root: btn}); 
+                }
             });
         }
 
@@ -814,7 +902,7 @@
         const topUpForm = document.getElementById('topUpForm');
         if (topUpForm) {
             topUpForm.addEventListener('submit', async (e) => {
-                e.preventDefault(); // 📍 ESTA É A LINHA MÁGICA QUE IMPEDE O REFRESH DA PÁGINA
+                e.preventDefault();
 
                 const btn = document.getElementById('btnProcessTopUp');
                 btn.disabled = true;
@@ -831,7 +919,6 @@
                 }
 
                 try {
-                    // Envia o pedido de depósito para a tabela de suporte para o Admin aprovar manualmente
                     await addDoc(collection(db, "support_tickets"), {
                         userId: currentUser.uid,
                         userName: userData.name,
