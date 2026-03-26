@@ -317,7 +317,7 @@
 
     <div id="topUpModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative">
-            <button onclick="window.closeModals()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <button type="button" onclick="window.closeModals()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
             <div class="p-6 pb-0 mb-6">
                 <h3 class="text-xl font-display font-bold text-white mb-2">Depositar Fundos</h3>
                 <p class="text-sm text-slate-400">Adicione dinheiro à sua carteira PayGo em Meticais.</p>
@@ -352,11 +352,12 @@
                     <p><strong>Titular:</strong> PayGo Lda</p>
                     <p class="mt-2 text-xs text-slate-400">Faça a transferência e envie o comprovativo pelo WhatsApp.</p>
                 </div>
-                <button type="submit" id="btnProcessTopUp" class="btn-epic w-full py-3.5 bg-brand-600 hover:bg-brand-500 text-white">Processar</button>
+                <button type="submit" id="btnProcessTopUp" class="btn-epic w-full py-3.5 bg-brand-600 hover:bg-brand-500 text-white">
+                    Enviar Pedido de Depósito
+                </button>
             </form>
         </div>
     </div>
-
     <div id="transferModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative">
             <button onclick="window.closeModals()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
@@ -806,6 +807,56 @@
                 } catch (err) { window.showToast("Erro.", "error"); btn.disabled = false; btn.textContent = "Confirmar Pagamento VIP"; }
             }
         };
+
+        // =====================================
+        // GESTÃO DE DEPÓSITOS (TOP-UP)
+        // =====================================
+        const topUpForm = document.getElementById('topUpForm');
+        if (topUpForm) {
+            topUpForm.addEventListener('submit', async (e) => {
+                e.preventDefault(); // 📍 ESTA É A LINHA MÁGICA QUE IMPEDE O REFRESH DA PÁGINA
+
+                const btn = document.getElementById('btnProcessTopUp');
+                btn.disabled = true;
+                btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A enviar...`;
+                lucide.createIcons({root: btn});
+
+                const amount = parseFloat(document.getElementById('topUpAmount').value);
+                const method = document.querySelector('input[name="topUpMethod"]:checked').value;
+
+                if (amount < 10) {
+                    window.showToast("O depósito mínimo é de 10 MT.", "warning");
+                    btn.disabled = false; btn.innerHTML = "Enviar Pedido de Depósito";
+                    return;
+                }
+
+                try {
+                    // Envia o pedido de depósito para a tabela de suporte para o Admin aprovar manualmente
+                    await addDoc(collection(db, "support_tickets"), {
+                        userId: currentUser.uid,
+                        userName: userData.name,
+                        userEmail: currentUser.email,
+                        type: 'deposit_request',
+                        amount: amount,
+                        paymentMethod: method,
+                        message: `O cliente solicitou um depósito de ${formatMZN(amount)} MT via ${method.toUpperCase()}. Verifique a conta.`,
+                        status: 'open',
+                        createdAt: serverTimestamp()
+                    });
+
+                    window.closeModals();
+                    e.target.reset();
+                    window.showToast(`Pedido de depósito enviado! O Admin irá creditar os ${formatMZN(amount)} MT após confirmar a transferência.`, "success");
+                    
+                } catch (err) {
+                    console.error("Erro no depósito:", err);
+                    window.showToast("Falha técnica ao enviar pedido.", "error");
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = "Enviar Pedido de Depósito";
+                }
+            });
+        }
 
         // =====================================
         // CARTÃO VIRTUAL E SUPORTE
