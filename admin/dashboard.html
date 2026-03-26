@@ -26,7 +26,8 @@
                         accent: { 400: '#22d3ee', 500: '#06b6d4' },
                         success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' },
                         danger: { 400: '#f87171', 500: '#ef4444' },
-                        warning: { 400: '#fbbf24', 500: '#f59e0b' }
+                        warning: { 400: '#fbbf24', 500: '#f59e0b' },
+                        vip: { 400: '#c084fc', 500: '#a855f7', 600: '#9333ea' }
                     },
                     animation: {
                         'blob': 'blob 10s infinite',
@@ -79,6 +80,21 @@
         
         .btn-action { transition: all 0.2s ease; position: relative; overflow: hidden; }
         .btn-action:active:not(:disabled) { transform: scale(0.96); }
+
+        /* Estilos de Tabelas Premium */
+        table { border-collapse: separate; border-spacing: 0; width: 100%; }
+        th { background: rgba(15, 23, 42, 0.8); padding: 16px; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8; font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        td { padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; color: #e2e8f0; }
+        tr:hover td { background: rgba(255,255,255,0.02); }
+        tr:last-child td { border-bottom: none; }
+
+        /* Modal Custom */
+        .modal-wrapper { display: none; position: fixed; inset: 0; z-index: 10000; align-items: center; justify-content: center; }
+        .modal-wrapper.active { display: flex; }
+        .modal-backdrop { position: absolute; inset: 0; background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(8px); opacity: 0; transition: opacity 0.3s ease; }
+        .modal-wrapper.active .modal-backdrop { opacity: 1; }
+        .modal-panel { position: relative; background: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; width: 95%; max-width: 500px; opacity: 0; transform: scale(0.95) translateY(10px); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 30px 60px -10px rgba(0,0,0,0.8); z-index: 10; }
+        .modal-wrapper.active .modal-panel { opacity: 1; transform: scale(1) translateY(0); }
     </style>
 </head>
 <body class="selection:bg-brand-500 selection:text-white antialiased">
@@ -177,13 +193,16 @@
                 <p class="text-slate-400 mt-2 text-sm font-medium">Visão global das operações financeiras, fluxo logístico e conversões.</p>
             </div>
             <div class="flex flex-col sm:flex-row flex-wrap items-center gap-3 w-full xl:w-auto">
+                <a href="mensagem.html" class="btn-action w-full sm:w-auto px-6 py-3.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 border border-slate-700">
+                    <i data-lucide="message-square" class="w-4 h-4"></i> Central de Mensagens
+                </a>
                 <button onclick="window.fetchDashboardData()" class="btn-action w-full sm:w-auto px-6 py-3.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(37,99,235,0.4)] border border-brand-500">
                     <i data-lucide="refresh-cw" class="w-4 h-4"></i> Atualizar Dados
                 </button>
             </div>
         </header>
 
-        <h2 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2"><i data-lucide="bar-chart-3" class="w-4 h-4"></i> Volume de Vendas</h2>
+        <h2 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2"><i data-lucide="bar-chart-3" class="w-4 h-4"></i> Operações & Logística</h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
             <div class="glass-card p-6 rounded-[2rem] border-t-4 border-t-brand-500 bg-brand-900/10 relative overflow-hidden">
                 <div class="absolute top-0 right-0 w-24 h-24 bg-brand-500/20 blur-xl rounded-full"></div>
@@ -246,36 +265,129 @@
             </div>
         </div>
 
-        <div class="glass-card rounded-[2rem] p-0 overflow-hidden border border-slate-800 flex flex-col">
-            <div class="p-6 border-b border-white/5 flex justify-between items-center bg-slate-900/80 backdrop-blur-sm">
-                <h2 class="text-sm font-bold text-white flex items-center gap-2"><i data-lucide="list" class="w-4 h-4 text-brand-400"></i> Fila Rápida de Operações (Últimos 15)</h2>
-                <a href="pedidos.html" class="text-xs font-bold text-brand-400 hover:text-brand-300 uppercase tracking-widest flex items-center gap-1">Ver Todos <i data-lucide="arrow-right" class="w-3 h-3"></i></a>
+        <div class="grid lg:grid-cols-3 gap-8">
+            
+            <div class="lg:col-span-2 space-y-6">
+                <div class="glass-card rounded-[2rem] p-0 overflow-hidden shadow-2xl border border-warning-500/20">
+                    <div class="p-6 border-b border-slate-800 bg-slate-900/50 flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-warning-500/20 text-warning-400 flex items-center justify-center"><i data-lucide="credit-card" class="w-5 h-5"></i></div>
+                            <div>
+                                <h2 class="text-lg font-display font-bold text-white leading-tight">Emissões de Cartão Virtual</h2>
+                                <p class="text-xs text-slate-400">Pedidos pagos de 1.000 MT aguardando emissão.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
+                        <table class="w-full">
+                            <thead class="bg-slate-950/80 text-[10px] uppercase text-slate-400 tracking-widest border-b border-white/10 sticky top-0 z-10 backdrop-blur-md">
+                                <tr>
+                                    <th class="px-6 py-4 font-bold">Data / Cliente</th>
+                                    <th class="px-6 py-4 font-bold">Taxa Paga</th>
+                                    <th class="px-6 py-4 font-bold">Status</th>
+                                    <th class="px-6 py-4 font-bold text-right">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableVcRequests" class="divide-y divide-white/5 bg-slate-900/20">
+                                <tr><td colspan="4" class="text-center py-10 text-slate-500"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2"></i> A carregar pedidos...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="glass-card rounded-[2rem] p-0 overflow-hidden border border-slate-800 flex flex-col">
+                    <div class="p-6 border-b border-white/5 flex justify-between items-center bg-slate-900/80 backdrop-blur-sm">
+                        <h2 class="text-sm font-bold text-white flex items-center gap-2"><i data-lucide="list" class="w-4 h-4 text-brand-400"></i> Últimas 10 Operações</h2>
+                        <a href="pedidos.html" class="text-xs font-bold text-brand-400 hover:text-brand-300 uppercase tracking-widest flex items-center gap-1">Ver Todos <i data-lucide="arrow-right" class="w-3 h-3"></i></a>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse whitespace-nowrap">
+                            <thead class="bg-slate-950/80 text-[10px] uppercase text-slate-400 tracking-widest border-b border-white/10">
+                                <tr>
+                                    <th class="px-6 py-4 font-bold">Referência ID</th>
+                                    <th class="px-6 py-4 font-bold">Cliente</th>
+                                    <th class="px-6 py-4 font-bold">Cobrado (MT)</th>
+                                    <th class="px-6 py-4 font-bold text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ordersTable" class="divide-y divide-white/5 bg-slate-900/30">
+                                <tr><td colspan="4" class="text-center py-10 text-slate-500"><div class="w-8 h-8 border-4 border-slate-800 border-t-brand-500 rounded-full animate-spin mx-auto mb-2"></div><p class="text-sm font-medium">A analisar matriz...</p></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse whitespace-nowrap">
-                    <thead class="bg-slate-950/80 text-[10px] uppercase text-slate-400 tracking-widest border-b border-white/10">
-                        <tr>
-                            <th class="px-6 py-5 font-bold">Referência ID</th>
-                            <th class="px-6 py-5 font-bold">Cliente</th>
-                            <th class="px-6 py-5 font-bold">Valor Base (USD)</th>
-                            <th class="px-6 py-5 font-bold">Cobrado (MT)</th>
-                            <th class="px-6 py-5 font-bold text-center">Status</th>
-                            <th class="px-6 py-5 text-right font-bold">Abrir</th>
-                        </tr>
-                    </thead>
-                    <tbody id="ordersTable" class="divide-y divide-white/5 bg-slate-900/30">
-                        <tr><td colspan="6" class="text-center py-10 text-slate-500"><div class="w-8 h-8 border-4 border-slate-800 border-t-brand-500 rounded-full animate-spin mx-auto mb-2"></div><p class="text-sm font-medium">A analisar matriz...</p></td></tr>
-                    </tbody>
-                </table>
+            <div class="lg:col-span-1 space-y-6">
+                <div class="glass-card rounded-[2rem] overflow-hidden shadow-2xl border border-vip-500/20">
+                    <div class="p-6 border-b border-slate-800 bg-slate-900/50">
+                        <h2 class="text-sm font-display font-bold text-white flex items-center gap-2">
+                            <i data-lucide="crown" class="w-4 h-4 text-vip-400"></i> Últimas Assinaturas VIP
+                        </h2>
+                    </div>
+                    <div class="overflow-x-auto max-h-[880px] overflow-y-auto">
+                        <table class="w-full">
+                            <tbody id="tableVipSubs" class="divide-y divide-white/5 bg-slate-900/20">
+                                <tr><td class="text-center py-6 text-slate-500 text-xs">A carregar VIPs...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
+
         </div>
     </main>
+    <div id="vcApproveModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4 transition-opacity">
+        <div class="bg-slate-900 border border-brand-500/30 rounded-2xl w-full max-w-md overflow-hidden shadow-[0_0_50px_rgba(59,130,246,0.15)] relative">
+            <button onclick="window.closeVcModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white transition"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <div class="p-6 pb-0 mb-6">
+                <h3 class="text-xl font-display font-bold text-white mb-2 flex items-center gap-2">
+                    <i data-lucide="check-square" class="w-5 h-5 text-brand-400"></i> Aprovar Cartão
+                </h3>
+                <p class="text-sm text-slate-400">Insira os dados gerados no RedotPay para <span id="vcClientName" class="text-white font-bold">o Cliente</span>.</p>
+            </div>
+            
+            <form id="vcApproveForm" class="p-6 pt-0 space-y-4">
+                <input type="hidden" id="vcApproveReqId">
+                <input type="hidden" id="vcApproveUserId">
+                
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Número do Cartão Gerado</label>
+                    <div class="relative">
+                        <i data-lucide="credit-card" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500"></i>
+                        <input type="text" id="vcApproveNumber" required maxlength="19" placeholder="0000 0000 0000 0000" class="w-full pl-10 pr-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white font-mono transition-colors">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Validade</label>
+                        <input type="text" id="vcApproveExpiry" required maxlength="5" placeholder="MM/AA" class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white font-mono text-center transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">CVC</label>
+                        <input type="text" id="vcApproveCvc" required maxlength="3" placeholder="***" class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white font-mono text-center transition-colors">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Pay ID / TRC20 do Cliente</label>
+                    <div class="relative">
+                        <i data-lucide="wallet" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
+                        <input type="text" id="vcApproveDestination" required placeholder="Obrigatório para recargas futuras" class="w-full pl-10 pr-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white font-mono text-sm transition-colors">
+                    </div>
+                    <p class="text-[9px] text-warning-400 font-medium mt-1"><i data-lucide="alert-triangle" class="w-3 h-3 inline"></i> Este ID é essencial para tu processares as recargas futuras.</p>
+                </div>
+
+                <button type="submit" id="btnSubmitApproveVc" class="btn-epic w-full py-3.5 mt-2 bg-brand-600 hover:bg-brand-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+                    <i data-lucide="send" class="w-4 h-4"></i> Entregar Cartão ao Cliente
+                </button>
+            </form>
+        </div>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, doc, getDoc, getDocs, query, orderBy, limit, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, getDocs, collection, query, orderBy, limit, where, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
@@ -290,33 +402,29 @@
         const auth = getAuth(app);
         const db = getFirestore(app, "paygodb");
 
-        let currentUser = null;
+        let loggedInAdminId = null;
 
-        // UI Setup
-        document.addEventListener('DOMContentLoaded', () => { if(typeof lucide !== 'undefined') lucide.createIcons(); });
-
-        window.toggleSidebar = () => {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('mobileOverlay');
-            sidebar.classList.toggle('-translate-x-full');
-            overlay.classList.toggle('hidden');
-            document.body.style.overflow = sidebar.classList.contains('-translate-x-full') ? '' : 'hidden';
+        // 🛡️ VACINA ANTI-XSS
+        const escapeHTML = (str) => {
+            if (!str) return '';
+            return String(str).replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+            }[tag] || tag));
         };
 
+        // 🔔 TOAST NOTIFICATIONS
         window.showToast = (message, type = 'success') => {
             const container = document.getElementById('toastContainer');
             if (!container) return;
             const toast = document.createElement('div');
-            const config = { 
-                success: { border: 'border-green-500', icon: 'check-circle text-green-400' }, 
-                error: { border: 'border-red-500', icon: 'alert-octagon text-red-400' }, 
-                warning: { border: 'border-amber-500', icon: 'alert-triangle text-amber-400' }, 
-                info: { border: 'border-brand-500', icon: 'info text-brand-400' } 
-            };
-            toast.className = `toast-item ${config[type].border}`;
-            toast.innerHTML = `<i data-lucide="${config[type].icon.split(' ')[0]}" class="w-6 h-6 flex-shrink-0 ${config[type].icon.split(' ')[1]}"></i><span class="flex-1">${message}</span>`;
+            const borderColor = type === 'error' ? 'border-danger-500' : type === 'warning' ? 'border-warning-500' : 'border-brand-500';
+            const icon = type === 'error' ? 'alert-octagon text-danger-400' : type === 'warning' ? 'alert-triangle text-warning-400' : 'check-check text-brand-400';
+
+            toast.className = `toast-item border-l-4 ${borderColor}`;
+            toast.innerHTML = `<i data-lucide="${icon.split(' ')[0]}" class="w-6 h-6 flex-shrink-0 ${icon.split(' ')[1]}"></i><span class="flex-1">${escapeHTML(message)}</span>`;
             container.appendChild(toast);
             if(typeof lucide !== 'undefined') lucide.createIcons({root: toast});
+
             requestAnimationFrame(() => toast.classList.add('show'));
             setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 4000);
         };
@@ -328,35 +436,46 @@
             return String(value);
         }
 
-        // Auth & Security
+        // ==========================================
+        // 🚀 INICIALIZAÇÃO DA SESSÃO ADMIN
+        // ==========================================
+        const fallbackTimer = setTimeout(() => { const ldr = document.getElementById('sysLoader'); if(ldr) ldr.style.display = 'none'; }, 3000);
+
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = '../login.html'; return; }
-            currentUser = user;
+            
             try {
                 const userDoc = await getDoc(doc(db, "users", user.uid));
                 if (!userDoc.exists() || (userDoc.data().role !== 'admin' && userDoc.data().role !== 'superadmin')) {
-                    window.location.href = '../index.html'; return;
+                    window.location.href = '../dashboard.html'; return; // Expulsa não-admins
                 }
                 
                 const userData = userDoc.data();
+                loggedInAdminId = user.uid;
+                
                 document.getElementById('userName').textContent = userData.name || 'Equipa PayGo';
                 document.getElementById('userEmail').textContent = userData.email || '';
-                document.getElementById('userInitial').textContent = (userData.name || 'U').charAt(0).toUpperCase();
+                document.getElementById('userInitial').textContent = (userData.name || 'P').charAt(0).toUpperCase();
+                document.getElementById('adminName').textContent = userData.name || 'Equipa PayGo';
 
                 await window.fetchDashboardData();
                 
             } catch (error) {
-                window.showToast('Erro ao validar sessão.', 'error');
+                console.error("Erro de Sessão Admin:", error);
+                window.showToast('Erro ao validar sessão segura.', 'error');
             } finally {
+                clearTimeout(fallbackTimer);
                 const ldr = document.getElementById('sysLoader');
                 if(ldr) { ldr.style.opacity = '0'; setTimeout(() => ldr.style.display = 'none', 500); }
             }
         });
 
-        // Dashboard Data Fetcher
+        // ==========================================
+        // 📊 EXTRAÇÃO GLOBAL DE DADOS (DASHBOARD)
+        // ==========================================
         window.fetchDashboardData = async () => {
             try {
-                // 1. Fetch Orders (For KPIs and Recent Table)
+                // 1. DADOS DE ENCOMENDAS E RECEITA
                 const ordersSnap = await getDocs(collection(db, "orders"));
                 let totalOrders = 0, pendingOrders = 0, completedOrders = 0, totalRevenue = 0;
                 let allOrders = [];
@@ -369,30 +488,24 @@
                     if (data.status === 'pending' || data.status === 'processing' || data.status === 'shipped') pendingOrders++;
                     if (data.status === 'completed') {
                         completedOrders++;
-                        totalRevenue += (Number(data.total) || 0); // Assuming total represents revenue. If you want profit, use tax.
+                        totalRevenue += (Number(data.total) || 0);
                     }
                 });
 
-                // Update Order KPIs
                 ['statTotal', 'statPending', 'statCompleted', 'statRevenue'].forEach(id => document.getElementById(id).classList.remove('skeleton'));
                 document.getElementById('statTotal').textContent = totalOrders;
                 document.getElementById('statPending').textContent = pendingOrders;
                 document.getElementById('statCompleted').textContent = completedOrders;
                 document.getElementById('statRevenue').textContent = formatValue(totalRevenue, 'currency');
 
-                // 2. Render Recent Orders Table (Top 15)
-                allOrders.sort((a, b) => {
-                    const tA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
-                    const tB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
-                    return tB - tA;
-                });
-                renderRecentOrdersTable(allOrders.slice(0, 15));
+                // Render Fila Rápida (Top 10 Recentes)
+                allOrders.sort((a, b) => (b.createdAt?.toDate?.() || 0) - (a.createdAt?.toDate?.() || 0));
+                renderRecentOrders(allOrders.slice(0, 10));
 
-                // 3. Fetch Affiliate Metrics
-                const affiliatesQuery = query(collection(db, "users"), where("role", "==", "affiliate"));
-                const affiliatesSnap = await getDocs(affiliatesQuery);
-                
+                // 2. DADOS DE REDE DE AFILIADOS
+                const affiliatesSnap = await getDocs(query(collection(db, "users"), where("role", "==", "affiliate")));
                 let countAffiliates = 0, totalLeads = 0, totalCommissions = 0;
+                
                 affiliatesSnap.forEach(doc => {
                     const af = doc.data();
                     if (af.status === 'active') countAffiliates++;
@@ -405,73 +518,208 @@
                 document.getElementById('statAffiliatesLeads').textContent = totalLeads;
                 document.getElementById('statAffiliatesCommissions').textContent = formatValue(totalCommissions, 'currency');
 
-                window.showToast('Dados sincronizados com sucesso.', 'success');
+                // 3. CARTÕES VIRTUAIS (PEDIDOS 1.000 MT)
+                const vcSnap = await getDocs(query(collection(db, "vc_requests"), orderBy("createdAt", "desc")));
+                let pendingVcCount = 0;
+                let vcHtml = '';
+                
+                vcSnap.forEach(docSnap => {
+                    const vc = { id: docSnap.id, ...docSnap.data() };
+                    const isPending = vc.status === 'pending';
+                    if(isPending) pendingVcCount++;
+                    
+                    const dateStr = vc.createdAt?.toDate ? vc.createdAt.toDate().toLocaleDateString('pt-MZ', {day:'2-digit', month:'short'}) : 'N/A';
+                    const statusBadge = isPending 
+                        ? `<span class="px-2 py-1 rounded bg-warning-500/20 text-warning-400 text-[9px] font-bold uppercase tracking-widest border border-warning-500/30">⏳ Pendente</span>`
+                        : `<span class="px-2 py-1 rounded bg-success-500/20 text-success-400 text-[9px] font-bold uppercase tracking-widest border border-success-500/30">✅ Emitido</span>`;
+
+                    const actionBtn = isPending
+                        ? `<button onclick="window.openVcApproveModal('${vc.id}', '${vc.userId}', '${escapeHTML(vc.userName)}')" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-500 text-white rounded-lg text-xs font-bold transition shadow-md">Aprovar Emissão</button>`
+                        : `<span class="text-xs text-slate-500 font-bold">Concluído</span>`;
+
+                    vcHtml += `
+                        <tr class="hover:bg-slate-800/40 transition">
+                            <td class="px-6 py-4">
+                                <div class="font-bold text-white text-sm">${escapeHTML(vc.userName)}</div>
+                                <div class="text-[10px] text-slate-400 font-mono mt-0.5">${dateStr}</div>
+                            </td>
+                            <td class="px-6 py-4 text-sm font-bold text-slate-300 font-mono">${formatValue(vc.amountPaid, 'currency')}</td>
+                            <td class="px-6 py-4">${statusBadge}</td>
+                            <td class="px-6 py-4 text-right">${actionBtn}</td>
+                        </tr>
+                    `;
+                });
+                
+                document.getElementById('metricVcPending').textContent = pendingVcCount;
+                document.getElementById('metricVcApproved').textContent = vcSnap.size - pendingVcCount; // Total emitidos
+                document.getElementById('tableVcRequests').innerHTML = vcHtml || `<tr><td colspan="4" class="text-center py-8 text-slate-500 text-xs">Sem pedidos na fila.</td></tr>`;
+
+                // 4. SUBSCRIÇÕES VIP
+                const vipSnap = await getDocs(query(collection(db, "vip_subscriptions"), orderBy("createdAt", "desc"), limit(20)));
+                let vipHtml = '';
+                let totalVipRevenue = 0;
+                
+                // Pega a receita total VIP (Lendo todos para somar)
+                const allVips = await getDocs(collection(db, "vip_subscriptions"));
+                allVips.forEach(v => totalVipRevenue += (Number(v.data().amountPaid) || 0));
+                document.getElementById('metricVipRevenue').textContent = formatValue(totalVipRevenue, 'currency').replace(' MT','');
+
+                vipSnap.forEach(docSnap => {
+                    const v = docSnap.data();
+                    const dateStr = v.createdAt?.toDate ? v.createdAt.toDate().toLocaleDateString('pt-MZ', {day:'2-digit', month:'short'}) : 'N/A';
+                    const isAnual = v.plan === 'anual';
+                    
+                    vipHtml += `
+                        <tr class="hover:bg-slate-800/40 transition">
+                            <td class="px-6 py-4">
+                                <div class="font-bold text-white text-sm truncate max-w-[150px]">${escapeHTML(v.userName)}</div>
+                                <div class="text-[10px] text-slate-400 font-mono mt-0.5">${dateStr}</div>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <div class="text-sm font-bold ${isAnual ? 'text-success-400' : 'text-vip-400'} font-mono">${formatValue(v.amountPaid, 'currency')}</div>
+                                <div class="text-[9px] ${isAnual ? 'text-success-500 bg-success-500/10 border-success-500/20' : 'text-vip-400 bg-vip-500/10 border-vip-500/20'} px-1.5 py-0.5 inline-block rounded uppercase tracking-widest mt-1 border">${isAnual ? 'ANUAL' : 'MENSAL'}</div>
+                            </td>
+                        </tr>
+                    `;
+                });
+                document.getElementById('tableVipSubs').innerHTML = vipHtml || `<tr><td colspan="2" class="text-center py-8 text-slate-500 text-xs">Nenhuma subscrição VIP encontrada.</td></tr>`;
+
+                if(typeof lucide !== 'undefined') lucide.createIcons();
 
             } catch (err) {
-                console.error(err);
-                window.showToast('Falha ao ler dados da base de dados.', 'error');
+                console.error("Dashboard Fetch Error:", err);
+                window.showToast("Falha ao sincronizar dados.", "error");
             }
         };
 
-        function renderRecentOrdersTable(orders) {
+        function renderRecentOrders(orders) {
             const table = document.getElementById('ordersTable');
             if (orders.length === 0) {
-                table.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-slate-500"><i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>Nenhuma operação recente.</td></tr>`;
-                if(typeof lucide !== 'undefined') lucide.createIcons();
+                table.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-500"><i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>Nenhuma operação recente.</td></tr>`;
                 return;
             }
 
             let html = '';
             orders.forEach(order => {
-                const dateStr = order.createdAt?.toDate ? order.createdAt.toDate().toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short', hour: '2-digit', minute:'2-digit' }) : 'N/A';
+                const payStatus = order.isPaid 
+                    ? '<span class="text-[10px] font-black text-success-400">PAGO</span>' 
+                    : '<span class="text-[10px] font-black text-danger-400">DÍVIDA</span>';
                 
                 const logStatus = {
-                    'pending': '<span class="status-badge status-pending">⏳ Pendente</span>',
-                    'processing': '<span class="status-badge status-processing">🔄 Em Compra</span>',
-                    'shipped': '<span class="status-badge status-shipped">✈️ Trânsito</span>',
-                    'completed': '<span class="status-badge status-completed">✅ Fechado</span>',
-                    'cancelled': '<span class="status-badge status-cancelled">❌ Cancelado</span>',
-                }[order.status] || `<span class="status-badge bg-slate-800">${order.status}</span>`;
-
-                const payBadge = order.isPaid ? `<span class="text-[9px] font-black bg-success-500/20 text-success-400 px-1.5 py-0.5 rounded ml-2 uppercase tracking-widest">Pago</span>` : `<span class="text-[9px] font-black bg-danger-500/20 text-danger-400 px-1.5 py-0.5 rounded ml-2 uppercase tracking-widest">Dívida</span>`;
+                    'pending': '<span class="px-2 py-1 rounded bg-warning-500/20 text-warning-400 text-[9px] font-bold uppercase tracking-widest border border-warning-500/30">Pendente</span>',
+                    'completed': '<span class="px-2 py-1 rounded bg-success-500/20 text-success-400 text-[9px] font-bold uppercase tracking-widest border border-success-500/30">Fechado</span>'
+                }[order.status] || `<span class="px-2 py-1 rounded bg-slate-800 text-slate-300 text-[9px] font-bold uppercase tracking-widest border border-slate-700">${order.status}</span>`;
 
                 html += `
-                    <tr class="hover:bg-slate-800/40 transition-colors border-b border-white/5 last:border-0 h-[64px]">
+                    <tr class="hover:bg-slate-800/40 transition">
                         <td class="px-6 py-4">
-                            <span class="text-xs font-mono font-bold text-brand-400 bg-brand-900/20 border border-brand-500/20 px-2 py-1 rounded shadow-sm">${order.orderId || 'S/N'}</span>
-                            <div class="text-[10px] text-slate-500 font-bold tracking-widest uppercase mt-1">${dateStr}</div>
+                            <span class="text-xs font-mono font-bold text-brand-400 bg-brand-900/20 border border-brand-500/20 px-2 py-1 rounded">${order.orderId}</span>
                         </td>
                         <td class="px-6 py-4">
-                            <div class="text-sm font-bold text-white truncate max-w-[150px]">${order.name || 'Cliente'}</div>
-                            <div class="text-xs text-slate-400 font-mono truncate max-w-[150px]">${order.email}</div>
+                            <div class="text-sm font-bold text-white truncate max-w-[120px]">${escapeHTML(order.name)}</div>
                         </td>
-                        <td class="px-6 py-4 text-sm font-black text-slate-400 font-mono">${formatValue(order.usd, 'usd')}</td>
                         <td class="px-6 py-4">
-                            <div class="flex items-center">
-                                <span class="text-sm font-black text-white font-mono tracking-tight">${formatValue(order.total, 'currency')}</span>
-                                ${payBadge}
-                            </div>
+                            <div class="text-sm font-black text-white font-mono">${formatValue(order.total, 'currency')}</div>
+                            ${payStatus}
                         </td>
                         <td class="px-6 py-4 text-center">${logStatus}</td>
-                        <td class="px-6 py-4 text-right">
-                            <a href="pedidos.html" class="w-8 h-8 inline-flex items-center justify-center rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:bg-brand-600 hover:border-brand-500 hover:text-white transition-all shadow-md">
-                                <i data-lucide="external-link" class="w-4 h-4"></i>
-                            </a>
-                        </td>
                     </tr>
                 `;
             });
-            
             table.innerHTML = html;
-            if(typeof lucide !== 'undefined') lucide.createIcons({root: table});
         }
 
-        window.logoutFromHeader = async function() {
-            if (confirm('Sair da conta de forma segura?')) {
+        // ==========================================
+        // 💳 APROVAÇÃO E EMISSÃO DE CARTÃO VIRTUAL
+        // ==========================================
+        window.openVcApproveModal = (reqId, userId, userName) => {
+            document.getElementById('vcApproveReqId').value = reqId;
+            document.getElementById('vcApproveUserId').value = userId;
+            document.getElementById('vcClientName').textContent = userName;
+            
+            document.getElementById('vcApproveForm').reset();
+            const modal = document.getElementById('vcApproveModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        };
+
+        window.closeVcModal = () => {
+            const modal = document.getElementById('vcApproveModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+
+        // Formatação Automática dos Inputs
+        const inputNum = document.getElementById('vcApproveNumber');
+        if(inputNum) inputNum.addEventListener('input', e => e.target.value = e.target.value.replace(/[^\d]/g, '').replace(/(.{4})/g, '$1 ').trim());
+        const inputExp = document.getElementById('vcApproveExpiry');
+        if(inputExp) inputExp.addEventListener('input', e => e.target.value = e.target.value.replace(/[^\d]/g, '').replace(/(.{2})/, '$1/').trim().substring(0, 5));
+
+        document.getElementById('vcApproveForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const btn = document.getElementById('btnSubmitApproveVc');
+            btn.disabled = true; 
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A Injetar Cartão...`;
+            if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
+
+            const reqId = document.getElementById('vcApproveReqId').value;
+            const userId = document.getElementById('vcApproveUserId').value;
+            
+            const vcData = { 
+                number: document.getElementById('vcApproveNumber').value, 
+                expiry: document.getElementById('vcApproveExpiry').value, 
+                cvc: document.getElementById('vcApproveCvc').value, 
+                destination: document.getElementById('vcApproveDestination').value.trim(),
+                addedAt: new Date().toISOString() 
+            };
+
+            try {
+                // 1. Injetar o Cartão na conta do Cliente e remover a flag de "Pendente"
+                await updateDoc(doc(db, "users", userId), { 
+                    virtualCard: vcData, 
+                    vcBalance: 0,
+                    vcRequestPending: false
+                });
+
+                // 2. Marcar o Ticket de Pedido como Completo
+                await updateDoc(doc(db, "vc_requests", reqId), {
+                    status: 'completed',
+                    approvedAt: serverTimestamp()
+                });
+
+                window.showToast("Cartão entregue com sucesso! O cliente já pode usá-lo.", "success");
+                window.closeVcModal();
+                await window.fetchDashboardData(); // Recarregar tabelas
+                
+            } catch (err) {
+                console.error(err);
+                window.showToast("Falha ao entregar o cartão.", "error");
+            } finally {
+                btn.disabled = false; 
+                btn.innerHTML = `<i data-lucide="send" class="w-4 h-4"></i> Entregar Cartão ao Cliente`;
+                if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
+            }
+        });
+
+        // ==========================================
+        // 📱 UX E LOGOUT
+        // ==========================================
+        window.toggleSidebar = () => {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobileOverlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+            document.body.style.overflow = sidebar.classList.contains('-translate-x-full') ? '' : 'hidden';
+        };
+
+        window.logoutAdmin = window.logoutFromHeader = async () => {
+            if (confirm('Encerrar sessão no Centro de Comando?')) {
                 await signOut(auth);
                 window.location.href = '../login.html';
             }
         };
+
     </script>
 </body>
 </html>
