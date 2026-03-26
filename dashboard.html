@@ -432,6 +432,16 @@
                         <input type="password" id="vcInputCvc" required maxlength="3" placeholder="***" class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white font-mono text-center">
                     </div>
                 </div>
+                
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Pay ID ou Link TRC20 (Para Recargas)</label>
+                    <div class="relative">
+                        <i data-lucide="wallet" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
+                        <input type="text" id="vcInputDestination" required placeholder="Ex: 123456789 ou T..." class="w-full pl-10 pr-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white font-mono text-sm">
+                    </div>
+                    <p class="text-[9px] text-slate-500 mt-1">Este ID será guardado automaticamente para as suas recargas futuras.</p>
+                </div>
+
                 <button type="submit" id="btnSubmitVc" class="btn-epic w-full py-3.5 mt-2 bg-brand-600 hover:bg-brand-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]">
                     Vincular Cartão
                 </button>
@@ -457,6 +467,14 @@
                 <p class="text-xs text-slate-400">Envie fundos do seu saldo PayGo para o Cartão Virtual.</p>
             </div>
             <form id="vcTopUpForm" class="p-6 pt-0 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">ID do Cartão / TRC20</label>
+                    <div class="relative">
+                        <i data-lucide="wallet" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
+                        <input type="text" id="vcTopUpDestination" required placeholder="Ex: Pay ID ou Link TRC20" class="w-full pl-9 pr-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white font-mono text-sm">
+                    </div>
+                </div>
+
                 <div>
                     <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Valor a Recarregar (USD)</label>
                     <div class="relative">
@@ -588,12 +606,17 @@
                         isFirstPurchaseEligible = ordersSnap.empty; 
                     }
 
-                    // LÓGICA DO CARTÃO VIRTUAL E SALDO
+                    // 📍 LÓGICA DO CARTÃO VIRTUAL E SALDO
                     if (userData.virtualCard) {
                         const rawNum = userData.virtualCard.number.replace(/\s/g, '');
                         setSafeText('vcNumber', `**** **** **** ${rawNum.slice(-4)}`);
                         setSafeText('vcExpiry', userData.virtualCard.expiry);
                         setSafeText('vcBalanceDisplay', `$${formatUSD(userData.vcBalance || 0)}`);
+                        
+                        // AUTO PREENCHER DESTINO DE RECARGA SE EXISTIR
+                        if(userData.virtualCard.destination) {
+                            setSafeValue('vcTopUpDestination', userData.virtualCard.destination);
+                        }
                         
                         setSafeHTML('vcStatusText', `<span class="text-success-400 font-bold">Cartão Vinculado.</span> Controle o saldo e recarregue diretamente da carteira.`);
                         setSafeHTML('vcActionButtons', `
@@ -757,7 +780,15 @@
             vcAddForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const btn = document.getElementById('btnSubmitVc'); btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Guardando...`; lucide.createIcons({root: btn});
-                const vcData = { number: document.getElementById('vcInputNumber').value, expiry: document.getElementById('vcInputExpiry').value, cvc: document.getElementById('vcInputCvc').value, addedAt: new Date().toISOString() };
+                
+                // 📍 GRAVA O TRC20/ID NO FIREBASE
+                const vcData = { 
+                    number: document.getElementById('vcInputNumber').value, 
+                    expiry: document.getElementById('vcInputExpiry').value, 
+                    cvc: document.getElementById('vcInputCvc').value, 
+                    destination: document.getElementById('vcInputDestination').value.trim(),
+                    addedAt: new Date().toISOString() 
+                };
                 try {
                     await updateDoc(doc(db, "users", currentUser.uid), { virtualCard: vcData, vcBalance: 0 });
                     window.showToast("Cartão vinculado!", "success"); setTimeout(() => window.location.reload(), 1000);
@@ -805,6 +836,8 @@
             vcTopUpForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const usdAmount = parseFloat(document.getElementById('vcTopUpAmount').value);
+                const destination = document.getElementById('vcTopUpDestination').value.trim(); // 📍 CAPTURA O DESTINO
+                
                 if(usdAmount < 10) return window.showToast("A recarga mínima é de $10.", "warning");
                 
                 const mznCost = usdAmount * sysExchangeRate; 
@@ -815,10 +848,17 @@
 
                 try {
                     await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: increment(-mznCost) });
-                    await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: mznCost, description: `Pedido de Recarga VC ($${usdAmount})`, reference: 'VC-TOPUP', createdAt: new Date().toISOString() });
+                    await addDoc(collection(db, "wallet_transactions"), { 
+                        userId: currentUser.uid, type: 'debit', amount: mznCost, 
+                        description: `Recarga VC ($${usdAmount}) p/ ${destination}`,
+                        reference: 'VC-TOPUP', createdAt: new Date().toISOString() 
+                    });
+                    
+                    // 📍 ENVIA DESTINO PARA O ADMIN
                     await addDoc(collection(db, "support_tickets"), {
-                        userId: currentUser.uid, type: 'vc_topup', usdAmount: usdAmount, mznCost: mznCost, userName: userData.name, userEmail: currentUser.email,
-                        message: `Pedido de Recarga: Transferir $${usdAmount} para o Cartão Virtual.`,
+                        userId: currentUser.uid, type: 'vc_topup', usdAmount: usdAmount, mznCost: mznCost, 
+                        userName: userData.name, userEmail: currentUser.email, destination: destination,
+                        message: `Pedido de Recarga: Transferir $${usdAmount} para o Cartão/TRC20: ${destination}.`,
                         status: 'open', createdAt: serverTimestamp()
                     });
 
