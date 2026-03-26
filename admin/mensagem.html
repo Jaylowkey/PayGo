@@ -22,7 +22,7 @@
     </script>
     
     <style>
-        body { background-color: #0f172a; color: #f8fafc; overflow: hidden; } /* Overflow hidden para o layout de app de chat */
+        body { background-color: #0f172a; color: #f8fafc; overflow: hidden; } 
         ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
         .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
         .glass-nav { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.08); }
@@ -40,9 +40,9 @@
         .toast.show { transform: translateX(0); opacity: 1; }
     </style>
 </head>
-<body class="selection:bg-brand-500 selection:text-white flex flex-col h-screen">
+<body class="selection:bg-brand-500 selection:text-white flex flex-col h-screen relative">
 
-    <audio id="notifSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+    <audio id="notifSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="none"></audio>
 
     <div class="fixed inset-0 bg-grid opacity-20 pointer-events-none z-0"></div>
     <div id="toastContainer"></div>
@@ -50,7 +50,7 @@
     <header class="w-full z-50 glass-nav shrink-0">
         <div class="container mx-auto px-6 h-16 flex justify-between items-center">
             <div class="flex items-center gap-4">
-                <a href="dashboard.html" class="text-slate-400 hover:text-white transition"><i data-lucide="arrow-left" class="w-5 h-5"></i></a>
+                <a href="../dashboard.html" class="text-slate-400 hover:text-white transition" title="Voltar ao Dashboard"><i data-lucide="arrow-left" class="w-5 h-5"></i></a>
                 <div class="bg-brand-500/20 text-brand-400 p-2 rounded-lg"><i data-lucide="message-square" class="w-4 h-4"></i></div>
                 <span class="text-xl font-display font-bold text-white">Central de Mensagens</span>
             </div>
@@ -59,7 +59,7 @@
                     <i data-lucide="bell" class="w-5 h-5 text-slate-400"></i>
                     <span class="absolute -top-1 -right-1 flex h-3 w-3">
                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-danger-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-3 w-3 bg-danger-500 border-2 border-[#0f172a]" id="unreadBadge">0</span>
+                        <span class="relative inline-flex rounded-full h-3 w-3 bg-danger-500 border-2 border-[#0f172a] text-[8px] flex items-center justify-center font-bold" id="unreadBadge">0</span>
                     </span>
                 </div>
                 <div class="w-px h-6 bg-slate-700 mx-2"></div>
@@ -98,28 +98,30 @@
             <div class="hidden md:flex flex-col flex-1 bg-slate-950 relative" id="chatArea">
                 
                 <div id="emptyChatState" class="absolute inset-0 flex flex-col items-center justify-center text-center p-6 z-20 bg-slate-950">
-                    <div class="w-20 h-20 bg-slate-900 rounded-full flex items-center justify-center mb-4 text-slate-700">
+                    <div class="w-20 h-20 bg-slate-900 rounded-full flex items-center justify-center mb-4 text-slate-700 shadow-inner">
                         <i data-lucide="message-square-dashed" class="w-10 h-10"></i>
                     </div>
-                    <h3 class="text-xl font-bold text-white mb-2">Caixa de Entrada</h3>
-                    <p class="text-slate-500 text-sm max-w-sm">Selecione uma conversa ao lado para responder a pedidos de reembolso, suporte ou recargas do Cartão Virtual.</p>
+                    <h3 class="text-xl font-bold text-white mb-2">Caixa de Entrada Segura</h3>
+                    <p class="text-slate-500 text-sm max-w-sm">Selecione uma conversa ao lado para responder a pedidos de reembolso, suporte ou recargas de Cartão Virtual.</p>
                 </div>
 
                 <div class="p-4 border-b border-slate-800 bg-slate-900/80 flex justify-between items-center shrink-0">
                     <div class="flex items-center gap-3">
-                        <button class="md:hidden text-slate-400 p-1" onclick="window.closeMobileChat()"><i data-lucide="chevron-left" class="w-6 h-6"></i></button>
-                        <div class="w-10 h-10 rounded-full bg-brand-500 flex items-center justify-center text-white font-bold text-lg" id="chatAvatar">C</div>
+                        <button class="md:hidden text-slate-400 hover:text-white p-1 transition" onclick="window.closeMobileChat()"><i data-lucide="chevron-left" class="w-6 h-6"></i></button>
+                        <div class="w-10 h-10 rounded-full bg-brand-500 flex items-center justify-center text-white font-bold text-lg shadow-sm" id="chatAvatar">C</div>
                         <div>
                             <h3 class="font-bold text-white leading-tight" id="chatClientName">Nome do Cliente</h3>
-                            <p class="text-xs text-slate-400 font-mono" id="chatClientEmail">cliente@email.com</p>
+                            <p class="text-[11px] text-slate-400 font-mono" id="chatClientEmail">cliente@email.com</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-3">
-                        <span id="chatTicketType" class="px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-widest bg-slate-800 text-slate-300 border border-slate-700">TICKET</span>
-                        <select id="ticketStatusSelect" onchange="window.updateTicketStatus(this.value)" class="bg-slate-950 border border-slate-700 text-sm text-white rounded-lg px-3 py-1.5 focus:border-brand-500 outline-none">
-                            <option value="open">Aberto (Pendente)</option>
-                            <option value="in_progress">Em Análise</option>
-                            <option value="closed">Concluído / Fechado</option>
+                    <div class="flex items-center gap-2 sm:gap-3">
+                        <div id="chatTicketTypeContainer">
+                            <span id="chatTicketType" class="px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-widest bg-slate-800 text-slate-300 border border-slate-700">TICKET</span>
+                        </div>
+                        <select id="ticketStatusSelect" onchange="window.updateTicketStatus(this.value)" class="bg-slate-950 border border-slate-700 text-xs sm:text-sm text-white rounded-lg px-2 sm:px-3 py-1.5 focus:border-brand-500 outline-none cursor-pointer">
+                            <option value="open">🟢 Pendente</option>
+                            <option value="in_progress">🟡 Em Análise</option>
+                            <option value="closed">🔴 Concluído</option>
                         </select>
                     </div>
                 </div>
@@ -131,7 +133,7 @@
                     </div>
 
                 <div class="p-4 bg-slate-900 border-t border-slate-800 shrink-0">
-                    <form id="replyForm" class="flex items-end gap-2">
+                    <form id="replyForm" class="flex items-end gap-2 relative">
                         
                         <div class="relative shrink-0">
                             <input type="file" id="fileUpload" class="hidden" accept="image/*, .pdf, .doc, .docx" onchange="window.handleFileSelect(event)">
@@ -149,17 +151,15 @@
                             <i data-lucide="send" class="w-5 h-5 ml-1"></i>
                         </button>
                     </form>
-                    <div id="fileNameDisplay" class="text-[10px] text-brand-400 mt-2 font-mono hidden truncate px-1">Ficheiro: comprovativo.pdf</div>
+                    <div id="fileNameDisplay" class="text-[10px] text-brand-400 mt-2 font-mono hidden truncate px-1">Ficheiro selecionado</div>
                 </div>
 
             </div>
-
         </div>
     </main>
-
-<script type="module">
+    <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, collection, query, orderBy, onSnapshot, updateDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
@@ -181,6 +181,20 @@
 
         const notifSound = document.getElementById('notifSound');
 
+        // 🛡️ VACINA ANTI-XSS (NEUTRALIZA CÓDIGO MALICIOSO NOS CHATS)
+        const escapeHTML = (str) => {
+            if (!str) return '';
+            return str.replace(/[&<>'"]/g, 
+                tag => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                }[tag] || tag)
+            );
+        };
+
         // 🛡️ SEGURANÇA E INICIALIZAÇÃO
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = '../login.html'; return; }
@@ -188,7 +202,7 @@
             try {
                 const userDoc = await getDoc(doc(db, "users", user.uid));
                 if (!userDoc.exists() || (userDoc.data().role !== 'admin' && userDoc.data().role !== 'superadmin')) {
-                    window.location.href = '../dashboard.html'; // Não é admin, volta para o painel de cliente
+                    window.location.href = '../dashboard.html'; // Expulsa se não for Admin
                     return;
                 }
                 currentAdmin = user;
@@ -217,8 +231,10 @@
                 });
 
                 if (hasNewTicket) {
-                    try { notifSound.play(); } catch(e) { console.log('Áudio bloqueado pelo navegador.'); }
-                    showToast("Nova mensagem recebida!", "info");
+                    try { 
+                        notifSound.play().catch(e => console.log('Áudio bloqueado pelo navegador aguardando interação.', e)); 
+                    } catch(e) {}
+                    showToast("Nova mensagem ou pedido recebido!", "info");
                 }
 
                 document.getElementById('unreadBadge').textContent = unreadCount;
@@ -269,7 +285,7 @@
 
             filtered.forEach(ticket => {
                 const dateStr = ticket.createdAt && ticket.createdAt.toDate ? ticket.createdAt.toDate().toLocaleDateString('pt-MZ') : 'Recente';
-                const initial = (ticket.userName || 'C').charAt(0).toUpperCase();
+                const initial = escapeHTML(ticket.userName || 'C').charAt(0).toUpperCase();
                 const isActive = activeTicketId === ticket.id ? 'active' : '';
                 const isUnread = ticket.status === 'open' ? '<div class="w-2 h-2 rounded-full bg-brand-500 absolute right-4 top-4 shadow-[0_0_8px_rgba(59,130,246,0.8)]"></div>' : '';
 
@@ -287,14 +303,14 @@
                     <div class="w-10 h-10 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center font-bold shrink-0 border border-slate-700">${initial}</div>
                     <div class="flex-1 min-w-0">
                         <div class="flex justify-between items-start mb-1">
-                            <h4 class="text-sm font-bold text-white truncate pr-4">${ticket.userName || 'Cliente PayGo'}</h4>
+                            <h4 class="text-sm font-bold text-white truncate pr-4">${escapeHTML(ticket.userName || 'Cliente PayGo')}</h4>
                             <span class="text-[9px] text-slate-500 whitespace-nowrap">${dateStr}</span>
                         </div>
                         <div class="flex items-center gap-2 mb-1">
                             ${typeBadge}
-                            <span class="text-xs text-slate-400 truncate">${ticket.orderId ? '#' + ticket.orderId : ''}</span>
+                            <span class="text-xs text-slate-400 truncate">${ticket.orderId ? '#' + escapeHTML(ticket.orderId) : ''}</span>
                         </div>
-                        <p class="text-xs text-slate-500 truncate pr-2">${ticket.message || 'Sem mensagem inicial'}</p>
+                        <p class="text-xs text-slate-500 truncate pr-2">${escapeHTML(ticket.message || 'Sem mensagem inicial')}</p>
                     </div>
                 `;
                 listEl.appendChild(div);
@@ -315,22 +331,31 @@
             document.getElementById('chatArea').classList.add('flex');
 
             // Preencher Cabeçalho
-            document.getElementById('chatAvatar').textContent = (ticket.userName || 'C').charAt(0).toUpperCase();
-            document.getElementById('chatClientName').textContent = ticket.userName || 'Cliente PayGo';
-            document.getElementById('chatClientEmail').textContent = ticket.userEmail || 'N/A';
+            document.getElementById('chatAvatar').textContent = escapeHTML(ticket.userName || 'C').charAt(0).toUpperCase();
+            document.getElementById('chatClientName').textContent = escapeHTML(ticket.userName || 'Cliente PayGo');
+            document.getElementById('chatClientEmail').textContent = escapeHTML(ticket.userEmail || 'N/A');
             document.getElementById('ticketStatusSelect').value = ticket.status || 'open';
 
-            // Preencher Contexto
+            // Preencher Contexto e Label da Badge Principal
             const ctxBox = document.getElementById('chatContextBox');
+            const mainBadge = document.getElementById('chatTicketType');
             ctxBox.classList.remove('hidden');
+            
             if (ticket.type === 'refund') {
-                ctxBox.innerHTML = `<span class="text-danger-400 font-bold">Pedido de Reembolso / Cancelamento:</span> Referente à Ordem <b>#${ticket.orderId}</b>.`;
+                mainBadge.className = "px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-widest bg-danger-500/20 text-danger-400 border border-danger-500/30";
+                mainBadge.textContent = "PEDIDO DE REEMBOLSO";
+                ctxBox.innerHTML = `<span class="text-danger-400 font-bold">Cancelamento / Reembolso:</span> Referente à Ordem <b>#${escapeHTML(ticket.orderId)}</b>.`;
                 ctxBox.className = "bg-danger-900/10 p-3 border-b border-danger-500/20 text-xs shrink-0";
             } else if (ticket.type === 'vc_topup') {
-                ctxBox.innerHTML = `<span class="text-success-400 font-bold">Pedido de Recarga Cartão Virtual:</span> O cliente pagou ${formatMZN(ticket.mznCost)} MT para recarregar <b>$${ticket.usdAmount}</b>. <br/>💳 Destino/TRC20: <b class="font-mono bg-slate-950 px-1 py-0.5 rounded text-white">${ticket.destination || 'Não informado'}</b>`;
+                mainBadge.className = "px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-widest bg-success-500/20 text-success-400 border border-success-500/30";
+                mainBadge.textContent = "RECARGA CARTÃO VIRTUAL";
+                const formatMZN = (val) => new Intl.NumberFormat('pt-MZ', { minimumFractionDigits: 2 }).format(val);
+                ctxBox.innerHTML = `<span class="text-success-400 font-bold">Recarga:</span> O cliente pagou ${formatMZN(ticket.mznCost)} MT para recarregar <b>$${ticket.usdAmount}</b>. <br/>💳 Destino/TRC20: <b class="font-mono bg-slate-950 px-1 py-0.5 rounded text-white">${escapeHTML(ticket.destination || 'Não informado')}</b>`;
                 ctxBox.className = "bg-success-900/10 p-3 border-b border-success-500/20 text-xs shrink-0";
             } else {
-                ctxBox.innerHTML = `<span class="text-brand-400 font-bold">Mensagem de Suporte Geral</span>`;
+                mainBadge.className = "px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-widest bg-slate-800 text-slate-300 border border-slate-700";
+                mainBadge.textContent = "SUPORTE GERAL";
+                ctxBox.innerHTML = `<span class="text-brand-400 font-bold">Mensagem de Suporte</span>`;
                 ctxBox.className = "bg-slate-900/50 p-3 border-b border-slate-800 text-xs shrink-0";
             }
 
@@ -351,7 +376,7 @@
                 const initialTime = ticket.createdAt && ticket.createdAt.toDate ? ticket.createdAt.toDate().toLocaleTimeString('pt-MZ', {hour: '2-digit', minute:'2-digit'}) : '';
                 historyEl.innerHTML += `
                     <div class="flex flex-col msg-client max-w-[85%] p-3 text-sm shadow-md">
-                        <p>${ticket.message}</p>
+                        <p class="whitespace-pre-wrap">${escapeHTML(ticket.message)}</p>
                         <span class="text-[9px] text-slate-400 self-end mt-1">${initialTime}</span>
                     </div>
                 `;
@@ -370,13 +395,14 @@
                     historyEl.innerHTML += `
                         <div class="flex flex-col ${cssClass}">
                             ${attachHtml}
-                            <p>${m.text || ''}</p>
+                            <p class="whitespace-pre-wrap">${escapeHTML(m.text || '')}</p>
                             <span class="text-[9px] ${isAdmin ? 'text-blue-200' : 'text-slate-400'} self-end mt-1">${time}</span>
                         </div>
                     `;
                 });
                 lucide.createIcons();
-                historyEl.scrollTop = historyEl.scrollHeight; // Fazer scroll para o fundo
+                // Força o scroll para o fim, mesmo quando carrega imagens
+                setTimeout(() => { historyEl.scrollTop = historyEl.scrollHeight; }, 50);
             });
         };
 
@@ -405,7 +431,7 @@
             if (selectedFile) {
                 badge.classList.remove('hidden');
                 display.classList.remove('hidden');
-                display.textContent = `Ficheiro Anexado: ${selectedFile.name}`;
+                display.textContent = `Anexo: ${selectedFile.name}`;
             } else {
                 badge.classList.add('hidden');
                 display.classList.add('hidden');
@@ -457,7 +483,7 @@
 
             } catch (err) {
                 console.error(err);
-                showToast("Erro ao enviar mensagem.", "error");
+                showToast("Erro ao enviar mensagem. Verifique permissões do Storage.", "error");
             } finally {
                 btn.disabled = false; btn.innerHTML = `<i data-lucide="send" class="w-5 h-5 ml-1"></i>`; lucide.createIcons({root: btn});
             }
