@@ -283,7 +283,9 @@
                                     <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Província / Cidade</label>
                                     <select id="shipCity" required class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white physical-req">
                                         <option value="" disabled selected>Selecione a Província</option>
-                                        <option value="Maputo (Cidade)" data-zip="1100">Maputo (Cidade)</option><option value="Sofala" data-zip="2100">Sofala (Beira)</option><option value="Nampula" data-zip="3100">Nampula</option>
+                                        <option value="Maputo (Cidade)" data-zip="1100">Maputo (Cidade)</option>
+                                        <option value="Sofala" data-zip="2100">Sofala (Beira)</option>
+                                        <option value="Nampula" data-zip="3100">Nampula</option>
                                     </select>
                                 </div>
                                 <div><label class="block text-xs font-bold text-brand-400 uppercase tracking-widest mb-2">Código Postal</label><input type="text" id="shipZip" required readonly placeholder="0000" class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-brand-400 font-mono font-bold cursor-not-allowed physical-req"></div>
@@ -298,16 +300,21 @@
                             </div>
                             <div class="flex justify-between items-center text-sm text-slate-400 pb-3 border-b border-white/5 mb-3"><span>Taxa de Serviço:</span><span class="font-mono font-bold text-slate-300" id="calcFee">0.00 MT</span></div>
                             <div class="flex justify-between items-end"><span class="text-xs font-bold text-slate-500 uppercase tracking-widest">Total a Debitar:</span><span class="text-2xl font-display font-black text-white" id="calcTotal">0.00 MT</span></div>
-                            <div id="balanceWarning" class="hidden mt-4 bg-warning-500/10 border border-warning-500/20 rounded-lg p-3"><p class="text-xs text-warning-300 font-medium">Saldo insuficiente.</p></div>
-                            <div id="successReady" class="hidden mt-4 bg-success-500/10 border border-success-500/20 rounded-lg p-3"><p class="text-xs text-success-300 font-medium">Saldo suficiente!</p></div>
+                            
+                            <div id="balanceWarning" class="hidden mt-4 bg-warning-500/10 border border-warning-500/20 rounded-lg p-3"><p class="text-xs text-warning-300 font-medium">Saldo insuficiente. Recarregue a carteira.</p></div>
+                            <div id="successReady" class="hidden mt-4 bg-success-500/10 border border-success-500/20 rounded-lg p-3"><p class="text-xs text-success-300 font-medium">Saldo suficiente! Pronto para liquidar.</p></div>
                         </div>
 
-                        <button type="submit" id="btnSubmitOrder" disabled class="btn-epic w-full py-4 bg-success-500 hover:bg-success-600 text-white transition-all"><i data-lucide="credit-card" class="w-5 h-5"></i> <span id="btnSubmitText">Autorizar Pagamento</span></button>
+                        <button type="submit" id="btnSubmitOrder" disabled class="btn-epic w-full py-4 bg-success-500 hover:bg-success-600 text-white transition-all shadow-[0_0_15px_rgba(34,197,94,0.3)] disabled:bg-slate-800 disabled:text-slate-500 disabled:shadow-none">
+                            <i data-lucide="credit-card" class="w-5 h-5"></i> <span id="btnSubmitText">Autorizar Pagamento Seguro</span>
+                        </button>
                     </form>
                 </div>
+
             </div>
         </div>
     </main>
+
     <div id="topUpModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative">
             <button onclick="window.closeModals()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
@@ -377,7 +384,7 @@
             <div class="p-8 text-center bg-gradient-to-b from-vip-900/40 to-transparent">
                 <i data-lucide="crown" class="w-16 h-16 text-vip-400 mx-auto mb-4"></i>
                 <h3 class="text-3xl font-display font-bold text-white mb-2">PayGo <span class="text-vip-400">VIP</span></h3>
-                <p class="text-sm text-slate-400" id="vipModalSubtitle">Isenção total da taxa de serviço em todos os seus pagamentos.</p>
+                <p class="text-sm text-slate-400" id="vipModalSubtitle">Isenção total da taxa de serviço em todos os pagamentos.</p>
             </div>
             <div class="p-6 pt-0 space-y-4" id="vipPlansContainer">
                 <div id="vipCurrentStatusBox" class="hidden bg-vip-900/30 border border-vip-500/30 rounded-xl p-4 text-center mb-4">
@@ -410,7 +417,6 @@
             </div>
         </div>
     </div>
-
     <div id="vcModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
         <div class="bg-slate-900 border border-brand-500/30 rounded-2xl w-full max-w-md overflow-hidden shadow-[0_0_30px_rgba(59,130,246,0.2)] relative">
             <button onclick="window.closeModals()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
@@ -631,14 +637,12 @@
                         const planName = userData.vipPlan === 'anual' ? 'Anual' : 'Mensal';
                         setSafeText('vipCurrentStatusText', `O seu Plano VIP ${planName} está ativo.`);
 
-                        // Bloquear ou Ocultar Botões VIP
                         if (userData.vipPlan === 'anual') {
                             const optM = document.getElementById('vipOptionMensal'); if(optM) optM.classList.add('hidden');
                             const optA = document.getElementById('vipOptionAnual'); if(optA) optA.classList.add('hidden');
                             const btnBuy = document.getElementById('btnBuyVip'); if(btnBuy) btnBuy.classList.add('hidden');
                             setSafeHTML('vipCurrentStatusText', `<span class="text-success-400 font-bold"><i data-lucide="check-circle" class="inline w-4 h-4 mb-1"></i> Plano Anual VIP Ativo</span><br><span class="text-slate-400 text-xs mt-1 block">Está protegido com isenção total de taxas durante 1 ano.</span>`);
                         } else {
-                            // Se for Mensal, permite upgrade para anual
                             const optM = document.getElementById('vipOptionMensal'); if(optM) optM.classList.add('hidden');
                             const btnBuy = document.getElementById('btnBuyVip'); 
                             if(btnBuy) btnBuy.innerHTML = 'Fazer Upgrade para Anual (12.600 MT)';
@@ -658,11 +662,9 @@
                         setSafeText('vcExpiry', userData.virtualCard.expiry);
                         setSafeText('vcBalanceDisplay', `$${formatUSD(userData.vcBalance || 0)}`);
                         
-                        // Mostrar o Olho para ver os detalhes
                         const btnReveal = document.getElementById('btnRevealCard');
                         if (btnReveal) btnReveal.classList.remove('hidden');
 
-                        // AUTO PREENCHER DESTINO DE RECARGA SE EXISTIR
                         if(userData.virtualCard.destination) {
                             setSafeValue('vcTopUpDestination', userData.virtualCard.destination);
                         }
@@ -693,7 +695,7 @@
         });
 
         // =====================================
-        // ORÇAMENTADOR CAMALEÃO
+        // ORÇAMENTADOR CAMALEÃO E PAGAMENTO ÚNICO
         // =====================================
         const orderCategory = document.getElementById('orderCategory');
         if(orderCategory) {
@@ -748,6 +750,7 @@
             }
         }
 
+        // Apenas UMA instância deste event listener!
         const orderForm = document.getElementById('orderForm');
         if(orderForm) {
             orderForm.addEventListener('submit', async (e) => {
@@ -771,21 +774,20 @@
                     await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: safeTotal, description: `Pedido ${orderId}`, reference: orderId, createdAt: new Date().toISOString() });
 
                     userData.walletBalance -= safeTotal; setSafeText('walletBalance', formatMZN(userData.walletBalance));
-                    e.target.reset(); updateCalculator(0); window.showToast("Pagamento processado!", "success");
+                    e.target.reset(); updateCalculator(0); window.showToast("Pagamento processado com sucesso!", "success");
                 } catch (err) { window.showToast(err.message, "error"); } 
-                finally { btn.disabled = false; btn.innerHTML = `<i data-lucide="credit-card" class="w-5 h-5"></i> Autorizar Pagamento`; lucide.createIcons({root: btn}); }
+                finally { btn.disabled = false; btn.innerHTML = `<i data-lucide="credit-card" class="w-5 h-5"></i> <span id="btnSubmitText">Autorizar Pagamento Seguro</span>`; lucide.createIcons({root: btn}); }
             });
         }
 
         // =====================================
-        // MODAIS BASE
+        // MODAIS BASE (DEPÓSITO, TRANSFERÊNCIA E VIP)
         // =====================================
         window.closeModals = function() { ['topUpModal', 'transferModal', 'vipModal', 'vcModal', 'vcTopUpModal', 'supportModal'].forEach(id => { const el = document.getElementById(id); if(el) { el.classList.remove('flex'); el.classList.add('hidden'); } }); };
         window.openTopUpModal = () => { window.closeModals(); const el = document.getElementById('topUpModal'); if(el) el.classList.replace('hidden', 'flex'); };
         window.openTransferModal = () => { window.closeModals(); const el = document.getElementById('transferModal'); if(el) el.classList.replace('hidden', 'flex'); };
         window.openVipModal = () => { window.closeModals(); const el = document.getElementById('vipModal'); if(el) el.classList.replace('hidden', 'flex'); };
 
-        // Lógica VIP (Grava para Admin)
         window.processVip = async () => {
             const btn = document.getElementById('btnBuyVip');
             const plan = document.querySelector('input[name="vipPlan"]:checked').value;
@@ -830,7 +832,6 @@
                 e.preventDefault();
                 const btn = document.getElementById('btnSubmitVc'); btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Guardando...`; lucide.createIcons({root: btn});
                 
-                // 📍 GRAVA O TRC20/ID NO FIREBASE
                 const vcData = { 
                     number: document.getElementById('vcInputNumber').value, 
                     expiry: document.getElementById('vcInputExpiry').value, 
@@ -862,7 +863,6 @@
             });
         }
 
-        // Função de Desvincular
         window.unlinkVirtualCard = async () => {
             if (confirm("Tem a certeza que deseja desvincular o seu cartão virtual da PayGo?")) {
                 try {
@@ -873,7 +873,6 @@
             }
         };
 
-        // Lógica de Recarga (Min $10 e cálculo MZN)
         window.openVcTopUpModal = () => { window.closeModals(); const el = document.getElementById('vcTopUpModal'); if(el) el.classList.replace('hidden', 'flex'); };
         window.calcVcTopUp = () => {
             const usd = parseFloat(document.getElementById('vcTopUpAmount').value) || 0;
@@ -885,7 +884,7 @@
             vcTopUpForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const usdAmount = parseFloat(document.getElementById('vcTopUpAmount').value);
-                const destination = document.getElementById('vcTopUpDestination').value.trim(); // 📍 CAPTURA O DESTINO
+                const destination = document.getElementById('vcTopUpDestination').value.trim(); 
                 
                 if(usdAmount < 10) return window.showToast("A recarga mínima é de $10.", "warning");
                 
@@ -903,7 +902,6 @@
                         reference: 'VC-TOPUP', createdAt: new Date().toISOString() 
                     });
                     
-                    // 📍 ENVIA DESTINO PARA O ADMIN
                     await addDoc(collection(db, "support_tickets"), {
                         userId: currentUser.uid, type: 'vc_topup', usdAmount: usdAmount, mznCost: mznCost, 
                         userName: userData.name, userEmail: currentUser.email, destination: destination,
@@ -918,7 +916,6 @@
             });
         }
 
-        // Suporte / Reembolso
         window.openSupportModal = async (type) => {
             window.closeModals(); const modal = document.getElementById('supportModal'); document.getElementById('supportType').value = type;
             const selectCont = document.getElementById('orderSelectContainer');
