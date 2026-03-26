@@ -144,6 +144,20 @@
                         </button>
                     </div>
                 </div>
+
+                <div class="glass-card rounded-2xl p-5 border border-slate-800">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Informação do Sistema</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center pb-2 border-b border-white/5">
+                            <span class="text-sm text-slate-400 flex items-center gap-2"><i data-lucide="bar-chart-3" class="w-4 h-4"></i> Câmbio Atual (USD)</span>
+                            <span class="text-sm font-mono font-bold text-brand-400" id="currentRate">-- MT</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs text-slate-500">
+                            <span>Taxas de Serviço:</span>
+                            <span>De <span id="infoTax1">--</span> a <span id="infoTax3">--</span> MT</span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="lg:col-span-2 space-y-6">
@@ -273,6 +287,10 @@
                         </div>
 
                         <div class="bg-slate-900 rounded-xl p-5 border border-brand-500/20">
+                            <div class="flex justify-between items-center text-sm text-slate-400 mb-2">
+                                <span>Conversão Base (<span id="calcRate">85</span> MT):</span>
+                                <span class="font-mono text-white" id="calcBase">0.00 MT</span>
+                            </div>
                             <div class="flex justify-between items-center text-sm text-slate-400 pb-3 border-b border-white/5 mb-3"><span>Taxa de Serviço:</span><span class="font-mono font-bold text-slate-300" id="calcFee">0.00 MT</span></div>
                             <div class="flex justify-between items-end"><span class="text-xs font-bold text-slate-500 uppercase tracking-widest">Total a Debitar:</span><span class="text-2xl font-display font-black text-white" id="calcTotal">0.00 MT</span></div>
                             <div id="balanceWarning" class="hidden mt-4 bg-warning-500/10 border border-warning-500/20 rounded-lg p-3"><p class="text-xs text-warning-300 font-medium">Saldo insuficiente.</p></div>
@@ -285,7 +303,7 @@
             </div>
         </div>
     </main>
-   <div id="topUpModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+    <div id="topUpModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative">
             <button onclick="window.closeModals()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
             <div class="p-6 pb-0 mb-6">
@@ -354,7 +372,7 @@
             <div class="p-8 text-center bg-gradient-to-b from-vip-900/40 to-transparent">
                 <i data-lucide="crown" class="w-16 h-16 text-vip-400 mx-auto mb-4"></i>
                 <h3 class="text-3xl font-display font-bold text-white mb-2">PayGo <span class="text-vip-400">VIP</span></h3>
-                <p class="text-sm text-slate-400" id="vipModalSubtitle">Isenção total da taxa de serviço em todos os pagamentos.</p>
+                <p class="text-sm text-slate-400" id="vipModalSubtitle">Isenção total da taxa de serviço em todos os seus pagamentos.</p>
             </div>
             <div class="p-6 pt-0 space-y-4" id="vipPlansContainer">
                 <div id="vipCurrentStatusBox" class="hidden bg-vip-900/30 border border-vip-500/30 rounded-xl p-4 text-center mb-4">
@@ -373,7 +391,7 @@
                 <label class="cursor-pointer block" id="vipOptionAnual">
                     <input type="radio" name="vipPlan" value="anual" class="peer sr-only">
                     <div class="p-4 border border-slate-700 rounded-xl flex justify-between items-center peer-checked:bg-vip-500/10 peer-checked:border-vip-500 transition relative overflow-hidden">
-                        <div class="absolute top-0 right-0 bg-success-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-bl-lg">POUPE 1.800 MT</div>
+                        <div class="absolute top-0 right-0 bg-success-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-bl-lg" id="vipAnualBadge">POUPE 1.800 MT</div>
                         <div>
                             <p class="font-bold text-white text-lg" id="vipOptionAnualLabel">Anual</p>
                             <p class="text-xs text-slate-400">12 meses completos</p>
@@ -509,8 +527,14 @@
         const formatMZN = (val) => new Intl.NumberFormat('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val);
         const formatUSD = (val) => new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val);
 
+        // 🛡️ FUNÇÕES DE INJEÇÃO SEGURA (Evitam o erro "Falha ao carregar dados")
+        const setSafeText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+        const setSafeHTML = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+        const setSafeValue = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+
         window.showToast = function(msg, type = 'success') {
             const container = document.getElementById('toastContainer');
+            if(!container) return;
             const t = document.createElement('div');
             const bg = type === 'error' ? 'bg-danger-500/95 border-danger-400' : type === 'warning' ? 'bg-warning-500/95 border-warning-400' : 'bg-slate-900/95 border-brand-500';
             const icon = type === 'error' ? 'alert-octagon text-danger-400' : type === 'warning' ? 'alert-triangle text-warning-400' : 'check-check text-brand-400';
@@ -536,26 +560,29 @@
                     sysTax1 = parseFloat(sysData.tax1) || 150; sysTax2 = parseFloat(sysData.tax2) || 250; sysTax3 = parseFloat(sysData.tax3) || 600;
                     firstPurchaseFree = sysData.firstPurchaseFree !== false;
                 }
-                document.getElementById('currentRate').textContent = `${sysExchangeRate} MT`;
-                document.getElementById('calcRate').textContent = sysExchangeRate;
+                
+                setSafeText('currentRate', `${sysExchangeRate} MT`);
+                setSafeText('calcRate', sysExchangeRate);
+                setSafeText('infoTax1', sysTax1);
+                setSafeText('infoTax3', sysTax3);
 
                 const userDoc = await getDoc(doc(db, "users", user.uid));
                 if (userDoc.exists()) {
                     userData = userDoc.data();
-                    document.getElementById('userName').textContent = userData.name || 'Cliente';
-                    document.getElementById('walletBalance').textContent = formatMZN(parseFloat(userData.walletBalance) || 0);
-                    document.getElementById('vcNameDisplay').textContent = userData.name ? userData.name.toUpperCase() : 'CLIENTE PAYGO';
-                    document.getElementById('shipName').value = userData.name || '';
-                    document.getElementById('shipPhone').value = userData.phone || '';
+                    setSafeText('userName', userData.name || 'Cliente');
+                    setSafeText('walletBalance', formatMZN(parseFloat(userData.walletBalance) || 0));
+                    setSafeText('vcNameDisplay', userData.name ? userData.name.toUpperCase() : 'CLIENTE PAYGO');
+                    setSafeValue('shipName', userData.name || '');
+                    setSafeValue('shipPhone', userData.phone || '');
 
                     // LÓGICA VIP
                     if (userData.isVip && userData.vipExpiry && userData.vipExpiry.toDate() > new Date()) {
                         isUserVip = true;
-                        document.getElementById('userBadge').innerHTML = `<span class="text-vip-400 flex items-center gap-1"><i data-lucide="crown" class="w-3 h-3"></i> VIP</span>`;
-                        document.getElementById('glowOrb').classList.replace('bg-brand-600/10', 'bg-vip-600/20');
-                        document.getElementById('walletCard').classList.replace('border-t-brand-500', 'border-t-vip-500');
-                        document.getElementById('vipCurrentStatusBox').classList.remove('hidden');
-                        document.getElementById('vipCurrentStatusText').textContent = `O seu Plano VIP está ativo.`;
+                        setSafeHTML('userBadge', `<span class="text-vip-400 flex items-center gap-1"><i data-lucide="crown" class="w-3 h-3"></i> VIP</span>`);
+                        const orb = document.getElementById('glowOrb'); if(orb) orb.classList.replace('bg-brand-600/10', 'bg-vip-600/20');
+                        const card = document.getElementById('walletCard'); if(card) card.classList.replace('border-t-brand-500', 'border-t-vip-500');
+                        const vipBox = document.getElementById('vipCurrentStatusBox'); if(vipBox) vipBox.classList.remove('hidden');
+                        setSafeText('vipCurrentStatusText', `O seu Plano VIP está ativo.`);
                     } else if (firstPurchaseFree) {
                         const ordersSnap = await getDocs(query(collection(db, "orders"), where("userId", "==", user.uid), limit(1)));
                         isFirstPurchaseEligible = ordersSnap.empty; 
@@ -564,60 +591,71 @@
                     // LÓGICA DO CARTÃO VIRTUAL E SALDO
                     if (userData.virtualCard) {
                         const rawNum = userData.virtualCard.number.replace(/\s/g, '');
-                        document.getElementById('vcNumber').textContent = `**** **** **** ${rawNum.slice(-4)}`;
-                        document.getElementById('vcExpiry').textContent = userData.virtualCard.expiry;
-                        document.getElementById('vcBalanceDisplay').textContent = `$${formatUSD(userData.vcBalance || 0)}`;
+                        setSafeText('vcNumber', `**** **** **** ${rawNum.slice(-4)}`);
+                        setSafeText('vcExpiry', userData.virtualCard.expiry);
+                        setSafeText('vcBalanceDisplay', `$${formatUSD(userData.vcBalance || 0)}`);
                         
-                        document.getElementById('vcStatusText').innerHTML = `<span class="text-success-400 font-bold">Cartão Vinculado.</span> Controle o saldo e recarregue diretamente da carteira.`;
-                        document.getElementById('vcActionButtons').innerHTML = `
+                        setSafeHTML('vcStatusText', `<span class="text-success-400 font-bold">Cartão Vinculado.</span> Controle o saldo e recarregue diretamente da carteira.`);
+                        setSafeHTML('vcActionButtons', `
                             <button onclick="window.openVcTopUpModal()" class="flex-1 py-3 bg-success-600 hover:bg-success-500 text-white rounded-xl font-bold text-sm transition shadow-[0_0_15px_rgba(34,197,94,0.3)] flex items-center justify-center gap-2">
                                 <i data-lucide="zap" class="w-4 h-4"></i> Recarregar ($)
                             </button>
                             <button onclick="window.unlinkVirtualCard()" class="py-3 px-4 bg-slate-800 hover:bg-danger-900/50 text-slate-400 hover:text-danger-400 border border-slate-700 hover:border-danger-500/50 rounded-xl font-bold transition flex items-center justify-center gap-2" title="Desvincular Cartão">
                                 <i data-lucide="trash-2" class="w-4 h-4"></i>
                             </button>
-                        `;
+                        `);
                     } else if (userData.vcRequestPending) {
-                        document.getElementById('vcStatusText').innerHTML = `<span class="text-warning-400 font-bold">Aguardando Aprovação.</span> O Admin está a gerar o seu cartão.`;
-                        document.getElementById('vcActionButtons').innerHTML = `
+                        setSafeHTML('vcStatusText', `<span class="text-warning-400 font-bold">Aguardando Aprovação.</span> O Admin está a gerar o seu cartão.`);
+                        setSafeHTML('vcActionButtons', `
                             <button disabled class="flex-1 py-3 bg-slate-800 text-slate-500 border border-slate-700 rounded-xl font-bold text-sm cursor-not-allowed flex items-center justify-center gap-2">
                                 <i data-lucide="clock" class="w-4 h-4"></i> Pedido em Análise
                             </button>
-                        `;
+                        `);
                     }
                     lucide.createIcons();
                 }
-            } catch (error) { window.showToast("Falha ao carregar dados.", "error"); }
-        });
-
-        // =====================================
-        // ORÇAMENTADOR CAMALEÃO (REDUZIDO PARA ESPAÇO, LÓGICA MANTIDA)
-        // =====================================
-        document.getElementById('orderCategory').addEventListener('change', function(e) {
-            const cat = e.target.value;
-            if (cat === 'physical') {
-                document.getElementById('physicalFields').classList.remove('hidden'); document.getElementById('digitalFields').classList.add('hidden');
-                document.getElementById('labelUrl').textContent = "Link do Produto";
-                document.querySelectorAll('.physical-req').forEach(el => el.setAttribute('required', 'true'));
-                document.getElementById('digitalAccount').removeAttribute('required');
-            } else {
-                document.getElementById('physicalFields').classList.add('hidden'); document.getElementById('digitalFields').classList.remove('hidden');
-                document.querySelectorAll('.physical-req').forEach(el => el.removeAttribute('required'));
-                document.getElementById('digitalAccount').setAttribute('required', 'true');
-                if (cat === 'game') { document.getElementById('labelUrl').textContent = "Link do Jogo"; document.getElementById('labelDigital').textContent = "Player ID"; } 
-                else { document.getElementById('labelUrl').textContent = "Link do Software"; document.getElementById('labelDigital').textContent = "E-mail da Conta"; }
+            } catch (error) { 
+                console.error(error);
+                window.showToast("Falha ao carregar dados do utilizador.", "error"); 
             }
         });
 
-        document.getElementById('shipCity').addEventListener('change', function(e) { document.getElementById('shipZip').value = e.target.options[e.target.selectedIndex].getAttribute('data-zip') || ''; });
+        // =====================================
+        // ORÇAMENTADOR CAMALEÃO
+        // =====================================
+        const orderCategory = document.getElementById('orderCategory');
+        if(orderCategory) {
+            orderCategory.addEventListener('change', function(e) {
+                const cat = e.target.value;
+                if (cat === 'physical') {
+                    document.getElementById('physicalFields').classList.remove('hidden'); document.getElementById('digitalFields').classList.add('hidden');
+                    setSafeText('labelUrl', "Link do Produto");
+                    document.querySelectorAll('.physical-req').forEach(el => el.setAttribute('required', 'true'));
+                    document.getElementById('digitalAccount').removeAttribute('required');
+                } else {
+                    document.getElementById('physicalFields').classList.add('hidden'); document.getElementById('digitalFields').classList.remove('hidden');
+                    document.querySelectorAll('.physical-req').forEach(el => el.removeAttribute('required'));
+                    document.getElementById('digitalAccount').setAttribute('required', 'true');
+                    if (cat === 'game') { setSafeText('labelUrl', "Link do Jogo"); setSafeText('labelDigital', "Player ID"); } 
+                    else { setSafeText('labelUrl', "Link do Software"); setSafeText('labelDigital', "E-mail da Conta"); }
+                }
+            });
+        }
+
+        const shipCity = document.getElementById('shipCity');
+        if(shipCity) {
+            shipCity.addEventListener('change', function(e) { setSafeValue('shipZip', e.target.options[e.target.selectedIndex].getAttribute('data-zip') || ''); });
+        }
 
         const usdInput = document.getElementById('productUsd'), mznInput = document.getElementById('productMzn');
-        usdInput.addEventListener('input', e => { const usdVal = parseFloat(e.target.value) || 0; mznInput.value = usdVal ? (usdVal * sysExchangeRate).toFixed(2) : ''; updateCalculator(usdVal); });
-        mznInput.addEventListener('input', e => { const mznVal = parseFloat(e.target.value) || 0; const usdVal = mznVal / sysExchangeRate; usdInput.value = usdVal ? usdVal.toFixed(2) : ''; updateCalculator(usdVal); });
+        if(usdInput && mznInput) {
+            usdInput.addEventListener('input', e => { const usdVal = parseFloat(e.target.value) || 0; mznInput.value = usdVal ? (usdVal * sysExchangeRate).toFixed(2) : ''; updateCalculator(usdVal); });
+            mznInput.addEventListener('input', e => { const mznVal = parseFloat(e.target.value) || 0; const usdVal = mznVal / sysExchangeRate; usdInput.value = usdVal ? usdVal.toFixed(2) : ''; updateCalculator(usdVal); });
+        }
 
         function updateCalculator(usdVal) {
             const btnSub = document.getElementById('btnSubmitOrder'), warn = document.getElementById('balanceWarning'), succ = document.getElementById('successReady');
-            if (usdVal <= 0) { currentCalculatedTotal = 0; document.getElementById('calcTotal').textContent = '0.00 MT'; btnSub.disabled = true; warn.classList.add('hidden'); succ.classList.add('hidden'); return; }
+            if (usdVal <= 0) { currentCalculatedTotal = 0; setSafeText('calcTotal', '0.00 MT'); if(btnSub) btnSub.disabled = true; if(warn) warn.classList.add('hidden'); if(succ) succ.classList.add('hidden'); return; }
             
             const baseMZN = usdVal * sysExchangeRate;
             let appliedTax = sysTax1;
@@ -625,49 +663,57 @@
             if (isUserVip || (isFirstPurchaseEligible && usdVal <= 5)) appliedTax = 0;
             
             currentCalculatedTax = appliedTax; currentCalculatedTotal = baseMZN + appliedTax; 
-            document.getElementById('calcFee').textContent = `${formatMZN(appliedTax)} MT`;
-            document.getElementById('calcTotal').textContent = `${formatMZN(currentCalculatedTotal)} MT`;
+            
+            setSafeText('calcBase', `${formatMZN(baseMZN)} MT`);
+            setSafeText('calcFee', `${formatMZN(appliedTax)} MT`);
+            setSafeText('calcTotal', `${formatMZN(currentCalculatedTotal)} MT`);
 
             const safeTotal = Number(currentCalculatedTotal.toFixed(2));
-            if (safeTotal > (parseFloat(userData?.walletBalance) || 0)) { btnSub.disabled = true; succ.classList.add('hidden'); warn.classList.remove('hidden'); } 
-            else { btnSub.disabled = false; warn.classList.add('hidden'); succ.classList.remove('hidden'); }
+            if (safeTotal > (parseFloat(userData?.walletBalance) || 0)) { 
+                if(btnSub) btnSub.disabled = true; if(succ) succ.classList.add('hidden'); if(warn) warn.classList.remove('hidden'); 
+            } else { 
+                if(btnSub) btnSub.disabled = false; if(warn) warn.classList.add('hidden'); if(succ) succ.classList.remove('hidden'); 
+            }
         }
 
-        document.getElementById('orderForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('btnSubmitOrder'); btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Processando...`; lucide.createIcons({root: btn});
-            try {
-                const safeTotal = Number(currentCalculatedTotal.toFixed(2));
-                const orderId = 'PG-' + Math.floor(100000 + Math.random() * 900000);
-                const cat = document.getElementById('orderCategory').value;
-                let payloadData = {
-                    orderId: orderId, userId: currentUser.uid, name: userData.name || '', email: currentUser.email || '', 
-                    category: cat, detail: `${document.getElementById('productUrl').value} | ${document.getElementById('productDetails').value}`,
-                    usd: parseFloat(usdInput.value), exchangeRate: sysExchangeRate, tax: currentCalculatedTax, total: safeTotal,
-                    paymentMethod: 'wallet', isPaid: true, status: 'processing', createdAt: serverTimestamp()
-                };
-                if (cat === 'physical') { payloadData.shipping = { shipName: document.getElementById('shipName').value, shipZip: document.getElementById('shipZip').value, shipAddress: document.getElementById('shipAddress').value, shipCity: document.getElementById('shipCity').value, shipPhone: document.getElementById('shipPhone').value }; } 
-                else { payloadData.digitalData = { accountOrId: document.getElementById('digitalAccount').value }; }
+        const orderForm = document.getElementById('orderForm');
+        if(orderForm) {
+            orderForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('btnSubmitOrder'); btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Processando...`; lucide.createIcons({root: btn});
+                try {
+                    const safeTotal = Number(currentCalculatedTotal.toFixed(2));
+                    const orderId = 'PG-' + Math.floor(100000 + Math.random() * 900000);
+                    const cat = document.getElementById('orderCategory').value;
+                    let payloadData = {
+                        orderId: orderId, userId: currentUser.uid, name: userData.name || '', email: currentUser.email || '', 
+                        category: cat, detail: `${document.getElementById('productUrl').value} | ${document.getElementById('productDetails').value}`,
+                        usd: parseFloat(usdInput.value), exchangeRate: sysExchangeRate, tax: currentCalculatedTax, total: safeTotal,
+                        paymentMethod: 'wallet', isPaid: true, status: 'processing', createdAt: serverTimestamp()
+                    };
+                    if (cat === 'physical') { payloadData.shipping = { shipName: document.getElementById('shipName').value, shipZip: document.getElementById('shipZip').value, shipAddress: document.getElementById('shipAddress').value, shipCity: document.getElementById('shipCity').value, shipPhone: document.getElementById('shipPhone').value }; } 
+                    else { payloadData.digitalData = { accountOrId: document.getElementById('digitalAccount').value }; }
 
-                await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: increment(-safeTotal) });
-                await addDoc(collection(db, "orders"), payloadData);
-                await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: safeTotal, description: `Pedido ${orderId}`, reference: orderId, createdAt: new Date().toISOString() });
+                    await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: increment(-safeTotal) });
+                    await addDoc(collection(db, "orders"), payloadData);
+                    await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: safeTotal, description: `Pedido ${orderId}`, reference: orderId, createdAt: new Date().toISOString() });
 
-                userData.walletBalance -= safeTotal; document.getElementById('walletBalance').textContent = formatMZN(userData.walletBalance);
-                e.target.reset(); updateCalculator(0); window.showToast("Pagamento processado!", "success");
-            } catch (err) { window.showToast(err.message, "error"); } 
-            finally { btn.disabled = false; btn.innerHTML = `<i data-lucide="credit-card" class="w-5 h-5"></i> Autorizar Pagamento`; lucide.createIcons({root: btn}); }
-        });
+                    userData.walletBalance -= safeTotal; setSafeText('walletBalance', formatMZN(userData.walletBalance));
+                    e.target.reset(); updateCalculator(0); window.showToast("Pagamento processado!", "success");
+                } catch (err) { window.showToast(err.message, "error"); } 
+                finally { btn.disabled = false; btn.innerHTML = `<i data-lucide="credit-card" class="w-5 h-5"></i> Autorizar Pagamento`; lucide.createIcons({root: btn}); }
+            });
+        }
 
         // =====================================
         // MODAIS BASE
         // =====================================
         window.closeModals = function() { ['topUpModal', 'transferModal', 'vipModal', 'vcModal', 'vcTopUpModal', 'supportModal'].forEach(id => { const el = document.getElementById(id); if(el) { el.classList.remove('flex'); el.classList.add('hidden'); } }); };
-        window.openTopUpModal = () => { window.closeModals(); document.getElementById('topUpModal').classList.replace('hidden', 'flex'); };
-        window.openTransferModal = () => { window.closeModals(); document.getElementById('transferModal').classList.replace('hidden', 'flex'); };
-        window.openVipModal = () => { window.closeModals(); document.getElementById('vipModal').classList.replace('hidden', 'flex'); };
+        window.openTopUpModal = () => { window.closeModals(); const el = document.getElementById('topUpModal'); if(el) el.classList.replace('hidden', 'flex'); };
+        window.openTransferModal = () => { window.closeModals(); const el = document.getElementById('transferModal'); if(el) el.classList.replace('hidden', 'flex'); };
+        window.openVipModal = () => { window.closeModals(); const el = document.getElementById('vipModal'); if(el) el.classList.replace('hidden', 'flex'); };
 
-        // Lógica VIP Atualizada (Grava para Admin)
+        // Lógica VIP (Grava para Admin)
         window.processVip = async () => {
             const btn = document.getElementById('btnBuyVip');
             const plan = document.querySelector('input[name="vipPlan"]:checked').value;
@@ -679,12 +725,7 @@
                     const expiryDate = new Date(); expiryDate.setDate(expiryDate.getDate() + (plan === 'anual' ? 365 : 30));
                     await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: increment(-price), isVip: true, vipPlan: plan, vipExpiry: expiryDate });
                     await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: price, description: `Assinatura VIP (${plan})`, reference: 'VIP', createdAt: new Date().toISOString() });
-                    
-                    // Notificar Admin
-                    await addDoc(collection(db, "vip_subscriptions"), {
-                        userId: currentUser.uid, userName: userData.name, userEmail: currentUser.email,
-                        plan: plan, amountPaid: price, expiryDate: expiryDate, createdAt: serverTimestamp()
-                    });
+                    await addDoc(collection(db, "vip_subscriptions"), { userId: currentUser.uid, userName: userData.name, userEmail: currentUser.email, plan: plan, amountPaid: price, expiryDate: expiryDate, createdAt: serverTimestamp() });
 
                     window.showToast("Parabéns! Conta VIP ativada.", "success");
                     setTimeout(() => window.location.reload(), 1500);
@@ -696,42 +737,50 @@
         // CARTÃO VIRTUAL E SUPORTE
         // =====================================
         window.openVirtualCardModal = (type) => {
-            window.closeModals(); document.getElementById('vcModal').classList.replace('hidden', 'flex');
+            window.closeModals(); const modal = document.getElementById('vcModal'); if(modal) modal.classList.replace('hidden', 'flex');
             if (type === 'link') {
-                document.getElementById('vcModalTitle').textContent = "Vincular Cartão Existente"; document.getElementById('vcModalDesc').textContent = "Introduza os dados do seu cartão.";
-                document.getElementById('vcAddForm').classList.remove('hidden'); document.getElementById('vcRequestForm').classList.add('hidden');
+                setSafeText('vcModalTitle', "Vincular Cartão Existente"); setSafeText('vcModalDesc', "Introduza os dados do seu cartão.");
+                const addF = document.getElementById('vcAddForm'); if(addF) addF.classList.remove('hidden'); 
+                const reqF = document.getElementById('vcRequestForm'); if(reqF) reqF.classList.add('hidden');
             } else {
-                document.getElementById('vcModalTitle').textContent = "Solicitar Cartão Virtual"; document.getElementById('vcModalDesc').textContent = "A nossa equipa irá criar um cartão exclusivo.";
-                document.getElementById('vcAddForm').classList.add('hidden'); document.getElementById('vcRequestForm').classList.remove('hidden');
+                setSafeText('vcModalTitle', "Solicitar Cartão Virtual"); setSafeText('vcModalDesc', "A nossa equipa irá criar um cartão exclusivo.");
+                const addF = document.getElementById('vcAddForm'); if(addF) addF.classList.add('hidden'); 
+                const reqF = document.getElementById('vcRequestForm'); if(reqF) reqF.classList.remove('hidden');
             }
         };
 
-        document.getElementById('vcInputNumber').addEventListener('input', e => e.target.value = e.target.value.replace(/[^\d]/g, '').replace(/(.{4})/g, '$1 ').trim());
-        document.getElementById('vcInputExpiry').addEventListener('input', e => e.target.value = e.target.value.replace(/[^\d]/g, '').replace(/(.{2})/, '$1/').trim().substring(0, 5));
+        const inputNum = document.getElementById('vcInputNumber'); if(inputNum) inputNum.addEventListener('input', e => e.target.value = e.target.value.replace(/[^\d]/g, '').replace(/(.{4})/g, '$1 ').trim());
+        const inputExp = document.getElementById('vcInputExpiry'); if(inputExp) inputExp.addEventListener('input', e => e.target.value = e.target.value.replace(/[^\d]/g, '').replace(/(.{2})/, '$1/').trim().substring(0, 5));
 
-        document.getElementById('vcAddForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('btnSubmitVc'); btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Guardando...`; lucide.createIcons({root: btn});
-            const vcData = { number: document.getElementById('vcInputNumber').value, expiry: document.getElementById('vcInputExpiry').value, cvc: document.getElementById('vcInputCvc').value, addedAt: new Date().toISOString() };
-            try {
-                await updateDoc(doc(db, "users", currentUser.uid), { virtualCard: vcData, vcBalance: 0 });
-                window.showToast("Cartão vinculado!", "success"); setTimeout(() => window.location.reload(), 1000);
-            } catch (err) { window.showToast("Erro.", "error"); btn.disabled = false; btn.textContent = "Vincular Cartão"; }
-        });
+        const vcAddForm = document.getElementById('vcAddForm');
+        if(vcAddForm) {
+            vcAddForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('btnSubmitVc'); btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Guardando...`; lucide.createIcons({root: btn});
+                const vcData = { number: document.getElementById('vcInputNumber').value, expiry: document.getElementById('vcInputExpiry').value, cvc: document.getElementById('vcInputCvc').value, addedAt: new Date().toISOString() };
+                try {
+                    await updateDoc(doc(db, "users", currentUser.uid), { virtualCard: vcData, vcBalance: 0 });
+                    window.showToast("Cartão vinculado!", "success"); setTimeout(() => window.location.reload(), 1000);
+                } catch (err) { window.showToast("Erro.", "error"); btn.disabled = false; btn.textContent = "Vincular Cartão"; }
+            });
+        }
 
-        document.getElementById('vcRequestForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('btnRequestVc'); const price = 1000;
-            if ((parseFloat(userData?.walletBalance) || 0) < price) return window.showToast("Saldo insuficiente (Min 1.000 MT).", "error");
-            btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Processando...`; lucide.createIcons({root: btn});
-            try {
-                await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: increment(-price), vcRequestPending: true });
-                await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: price, description: `Emissão de Cartão Virtual`, reference: 'VC-EMISSION', createdAt: new Date().toISOString() });
-                await addDoc(collection(db, "vc_requests"), { userId: currentUser.uid, userName: userData.name, userEmail: currentUser.email, status: 'pending', amountPaid: price, createdAt: serverTimestamp() });
-                window.closeModals(); window.showToast("Solicitação enviada ao Admin!", "success");
-                setTimeout(() => window.location.reload(), 1500);
-            } catch (err) { window.showToast("Erro.", "error"); btn.disabled = false; btn.textContent = "Solicitar Emissão"; }
-        });
+        const vcReqForm = document.getElementById('vcRequestForm');
+        if(vcReqForm) {
+            vcReqForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('btnRequestVc'); const price = 1000;
+                if ((parseFloat(userData?.walletBalance) || 0) < price) return window.showToast("Saldo insuficiente (Min 1.000 MT).", "error");
+                btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Processando...`; lucide.createIcons({root: btn});
+                try {
+                    await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: increment(-price), vcRequestPending: true });
+                    await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: price, description: `Emissão de Cartão Virtual`, reference: 'VC-EMISSION', createdAt: new Date().toISOString() });
+                    await addDoc(collection(db, "vc_requests"), { userId: currentUser.uid, userName: userData.name, userEmail: currentUser.email, status: 'pending', amountPaid: price, createdAt: serverTimestamp() });
+                    window.closeModals(); window.showToast("Solicitação enviada ao Admin!", "success");
+                    setTimeout(() => window.location.reload(), 1500);
+                } catch (err) { window.showToast("Erro.", "error"); btn.disabled = false; btn.textContent = "Solicitar Emissão"; }
+            });
+        }
 
         // Função de Desvincular
         window.unlinkVirtualCard = async () => {
@@ -745,67 +794,78 @@
         };
 
         // Lógica de Recarga (Min $10 e cálculo MZN)
-        window.openVcTopUpModal = () => { window.closeModals(); document.getElementById('vcTopUpModal').classList.replace('hidden', 'flex'); };
+        window.openVcTopUpModal = () => { window.closeModals(); const el = document.getElementById('vcTopUpModal'); if(el) el.classList.replace('hidden', 'flex'); };
         window.calcVcTopUp = () => {
             const usd = parseFloat(document.getElementById('vcTopUpAmount').value) || 0;
-            document.getElementById('vcTopUpCostDisplay').textContent = formatMZN(usd * sysExchangeRate) + " MT";
+            setSafeText('vcTopUpCostDisplay', formatMZN(usd * sysExchangeRate) + " MT");
         };
 
-        document.getElementById('vcTopUpForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const usdAmount = parseFloat(document.getElementById('vcTopUpAmount').value);
-            if(usdAmount < 10) return window.showToast("A recarga mínima é de $10.", "warning");
-            
-            const mznCost = usdAmount * sysExchangeRate; 
-            if ((parseFloat(userData?.walletBalance) || 0) < mznCost) return window.showToast(`Saldo insuficiente. Necessita de ${formatMZN(mznCost)} MT.`, "error");
-
-            const btn = document.getElementById('btnProcessVcTopUp');
-            btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A enviar...`; lucide.createIcons({root: btn});
-
-            try {
-                await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: increment(-mznCost) });
-                await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: mznCost, description: `Pedido de Recarga VC ($${usdAmount})`, reference: 'VC-TOPUP', createdAt: new Date().toISOString() });
+        const vcTopUpForm = document.getElementById('vcTopUpForm');
+        if(vcTopUpForm) {
+            vcTopUpForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const usdAmount = parseFloat(document.getElementById('vcTopUpAmount').value);
+                if(usdAmount < 10) return window.showToast("A recarga mínima é de $10.", "warning");
                 
-                await addDoc(collection(db, "support_tickets"), {
-                    userId: currentUser.uid, type: 'vc_topup', usdAmount: usdAmount, mznCost: mznCost,
-                    message: `Pedido de Recarga: Transferir $${usdAmount} para o Cartão Virtual.`,
-                    status: 'open', createdAt: serverTimestamp()
-                });
+                const mznCost = usdAmount * sysExchangeRate; 
+                if ((parseFloat(userData?.walletBalance) || 0) < mznCost) return window.showToast(`Saldo insuficiente. Necessita de ${formatMZN(mznCost)} MT.`, "error");
 
-                window.closeModals(); window.showToast("Pedido de recarga enviado para o Admin!", "success");
-                userData.walletBalance -= mznCost; document.getElementById('walletBalance').textContent = formatMZN(userData.walletBalance);
-                e.target.reset(); document.getElementById('vcTopUpCostDisplay').textContent = "0.00 MT";
-            } catch (err) { window.showToast("Erro.", "error"); } finally { btn.disabled = false; btn.innerHTML = "Enviar Pedido de Recarga"; }
-        });
+                const btn = document.getElementById('btnProcessVcTopUp');
+                btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A enviar...`; lucide.createIcons({root: btn});
+
+                try {
+                    await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: increment(-mznCost) });
+                    await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: mznCost, description: `Pedido de Recarga VC ($${usdAmount})`, reference: 'VC-TOPUP', createdAt: new Date().toISOString() });
+                    await addDoc(collection(db, "support_tickets"), {
+                        userId: currentUser.uid, type: 'vc_topup', usdAmount: usdAmount, mznCost: mznCost, userName: userData.name, userEmail: currentUser.email,
+                        message: `Pedido de Recarga: Transferir $${usdAmount} para o Cartão Virtual.`,
+                        status: 'open', createdAt: serverTimestamp()
+                    });
+
+                    window.closeModals(); window.showToast("Pedido de recarga enviado para o Admin!", "success");
+                    userData.walletBalance -= mznCost; setSafeText('walletBalance', formatMZN(userData.walletBalance));
+                    e.target.reset(); setSafeText('vcTopUpCostDisplay', "0.00 MT");
+                } catch (err) { window.showToast("Erro.", "error"); } finally { btn.disabled = false; btn.innerHTML = "Enviar Pedido de Recarga"; }
+            });
+        }
 
         // Suporte / Reembolso
         window.openSupportModal = async (type) => {
             window.closeModals(); const modal = document.getElementById('supportModal'); document.getElementById('supportType').value = type;
             const selectCont = document.getElementById('orderSelectContainer');
             if (type === 'refund') {
-                document.getElementById('supportTitleText').textContent = "Solicitar Reembolso"; document.getElementById('supportIcon').setAttribute('data-lucide', 'rotate-ccw'); document.getElementById('supportIcon').classList.replace('text-brand-400', 'text-danger-400');
-                selectCont.classList.remove('hidden');
-                const orderSelect = document.getElementById('supportOrderId'); orderSelect.innerHTML = '<option value="">A carregar...</option>';
-                const snap = await getDocs(query(collection(db, "orders"), where("userId", "==", currentUser.uid), where("status", "in", ["pending", "processing"]), limit(10)));
-                if (snap.empty) { orderSelect.innerHTML = '<option value="">Sem pedidos elegíveis.</option>'; orderSelect.disabled = true; } 
-                else { orderSelect.innerHTML = '<option value="" disabled selected>Selecione um pedido...</option>'; snap.forEach(doc => { const d = doc.data(); orderSelect.innerHTML += `<option value="${d.orderId}">#${d.orderId} - $${d.usd}</option>`; }); orderSelect.disabled = false; }
+                setSafeText('supportTitleText', "Solicitar Reembolso"); 
+                const icon = document.getElementById('supportIcon'); if(icon) { icon.setAttribute('data-lucide', 'rotate-ccw'); icon.classList.replace('text-brand-400', 'text-danger-400'); }
+                if(selectCont) selectCont.classList.remove('hidden');
+                
+                const orderSelect = document.getElementById('supportOrderId'); 
+                if(orderSelect) {
+                    orderSelect.innerHTML = '<option value="">A carregar...</option>';
+                    const snap = await getDocs(query(collection(db, "orders"), where("userId", "==", currentUser.uid), where("status", "in", ["pending", "processing"]), limit(10)));
+                    if (snap.empty) { orderSelect.innerHTML = '<option value="">Sem pedidos elegíveis.</option>'; orderSelect.disabled = true; } 
+                    else { orderSelect.innerHTML = '<option value="" disabled selected>Selecione um pedido...</option>'; snap.forEach(doc => { const d = doc.data(); orderSelect.innerHTML += `<option value="${d.orderId}">#${d.orderId} - $${d.usd}</option>`; }); orderSelect.disabled = false; }
+                }
             } else {
-                document.getElementById('supportTitleText').textContent = "Enviar Mensagem à Equipa"; document.getElementById('supportIcon').setAttribute('data-lucide', 'message-square'); document.getElementById('supportIcon').classList.replace('text-danger-400', 'text-brand-400');
-                selectCont.classList.add('hidden');
+                setSafeText('supportTitleText', "Enviar Mensagem à Equipa"); 
+                const icon = document.getElementById('supportIcon'); if(icon) { icon.setAttribute('data-lucide', 'message-square'); icon.classList.replace('text-danger-400', 'text-brand-400'); }
+                if(selectCont) selectCont.classList.add('hidden');
             }
-            lucide.createIcons(); modal.classList.replace('hidden', 'flex');
+            lucide.createIcons(); if(modal) modal.classList.replace('hidden', 'flex');
         };
 
-        document.getElementById('supportForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const type = document.getElementById('supportType').value, msg = document.getElementById('supportMessage').value, orderId = document.getElementById('supportOrderId').value;
-            if (type === 'refund' && !orderId) return window.showToast("Selecione um pedido.", "error");
-            const btn = document.getElementById('btnSubmitSupport'); btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A enviar...`; lucide.createIcons({root: btn});
-            try {
-                await addDoc(collection(db, "support_tickets"), { userId: currentUser.uid, userName: userData.name, userEmail: currentUser.email, type: type, orderId: type === 'refund' ? orderId : null, message: msg, status: 'open', createdAt: serverTimestamp() });
-                window.closeModals(); e.target.reset(); window.showToast("Enviado com sucesso!", "success");
-            } catch (err) { window.showToast("Erro.", "error"); btn.disabled = false; btn.textContent = "Enviar para Equipa"; }
-        });
+        const supportForm = document.getElementById('supportForm');
+        if(supportForm) {
+            supportForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const type = document.getElementById('supportType').value, msg = document.getElementById('supportMessage').value, orderId = document.getElementById('supportOrderId').value;
+                if (type === 'refund' && !orderId) return window.showToast("Selecione um pedido.", "error");
+                const btn = document.getElementById('btnSubmitSupport'); btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A enviar...`; lucide.createIcons({root: btn});
+                try {
+                    await addDoc(collection(db, "support_tickets"), { userId: currentUser.uid, userName: userData.name, userEmail: currentUser.email, type: type, orderId: type === 'refund' ? orderId : null, message: msg, status: 'open', createdAt: serverTimestamp() });
+                    window.closeModals(); e.target.reset(); window.showToast("Enviado com sucesso!", "success");
+                } catch (err) { window.showToast("Erro.", "error"); btn.disabled = false; btn.textContent = "Enviar para Equipa"; }
+            });
+        }
 
         window.logout = async () => { if(confirm('Sair da conta?')) { await signOut(auth); window.location.href = 'login.html'; } };
     </script>
