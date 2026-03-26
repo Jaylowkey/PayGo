@@ -14,37 +14,125 @@
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'], display: ['"Outfit"', 'sans-serif'], mono: ['"Fira Code"', 'monospace'] },
-                    colors: { brand: { 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb' }, success: { 400: '#4ade80', 500: '#22c55e' }, warning: { 400: '#fbbf24', 500: '#f59e0b' }, danger: { 400: '#f87171', 500: '#ef4444' }, vip: { 400: '#c084fc', 500: '#a855f7', 600: '#9333ea' } }
+                    fontFamily: { 
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'], 
+                        display: ['"Outfit"', 'sans-serif'], 
+                        mono: ['"Fira Code"', 'monospace'] 
+                    },
+                    colors: { 
+                        brand: { 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb' }, 
+                        success: { 400: '#4ade80', 500: '#22c55e' }, 
+                        warning: { 400: '#fbbf24', 500: '#f59e0b' }, 
+                        danger: { 400: '#f87171', 500: '#ef4444' }, 
+                        vip: { 400: '#c084fc', 500: '#a855f7', 600: '#9333ea' } 
+                    }
                 }
             }
         };
     </script>
     
     <style>
-        body { background-color: #0f172a; color: #f8fafc; }
-        ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-        .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
-        .glass-nav { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.08); }
-        .glass-card { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.3s ease; }
+        body { 
+            background-color: #0f172a; 
+            color: #f8fafc; 
+        }
         
-        .btn-epic { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; border-radius: 0.75rem; }
-        .btn-epic:active:not(:disabled) { transform: scale(0.96); }
-        .btn-epic:disabled { opacity: 0.65; cursor: not-allowed; }
+        ::-webkit-scrollbar { 
+            width: 6px; 
+        } 
         
-        select option { background-color: #0f172a; color: #f8fafc; }
+        ::-webkit-scrollbar-thumb { 
+            background: #334155; 
+            border-radius: 10px; 
+        }
         
-        #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-        .toast { pointer-events: auto; background: rgba(15, 23, 42, 0.95); border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 12px; display: flex; gap: 12px; transform: translateX(120%); transition: transform 0.4s ease; opacity: 0; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        .toast.show { transform: translateX(0); opacity: 1; }
+        .bg-grid { 
+            background-size: 40px 40px; 
+            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); 
+        }
+        
+        .glass-nav { 
+            background: rgba(15, 23, 42, 0.85); 
+            backdrop-filter: blur(16px); 
+            border-bottom: 1px solid rgba(255,255,255,0.08); 
+        }
+        
+        .glass-card { 
+            background: rgba(30, 41, 59, 0.4); 
+            backdrop-filter: blur(12px); 
+            border: 1px solid rgba(255, 255, 255, 0.05); 
+            transition: all 0.3s ease; 
+        }
+        
+        .btn-epic { 
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+            position: relative; 
+            overflow: hidden; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 8px; 
+            font-weight: 700; 
+            border-radius: 0.75rem; 
+        }
+        
+        .btn-epic:active:not(:disabled) { 
+            transform: scale(0.96); 
+        }
+        
+        .btn-epic:disabled { 
+            opacity: 0.65; 
+            cursor: not-allowed; 
+        }
+        
+        select option { 
+            background-color: #0f172a; 
+            color: #f8fafc; 
+        }
+        
+        #toastContainer { 
+            position: fixed; 
+            top: 24px; 
+            right: 24px; 
+            z-index: 9999; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+            pointer-events: none; 
+        }
+        
+        .toast { 
+            pointer-events: auto; 
+            background: rgba(15, 23, 42, 0.95); 
+            border-left: 4px solid #3b82f6; 
+            padding: 16px 20px; 
+            border-radius: 12px; 
+            display: flex; 
+            gap: 12px; 
+            transform: translateX(120%); 
+            transition: transform 0.4s ease; 
+            opacity: 0; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5); 
+        }
+        
+        .toast.show { 
+            transform: translateX(0); 
+            opacity: 1; 
+        }
 
         /* Cartão Realista */
         .realistic-card {
             background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
             box-shadow: -10px 10px 30px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.1);
         }
+        
         .realistic-card::before {
-            content: ''; position: absolute; top: -50%; right: -20%; width: 200%; height: 200%;
+            content: ''; 
+            position: absolute; 
+            top: -50%; 
+            right: -20%; 
+            width: 200%; 
+            height: 200%;
             background: radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 60%);
             pointer-events: none;
         }
@@ -59,7 +147,9 @@
     <header class="fixed w-full z-50 glass-nav">
         <div class="container mx-auto px-6 h-20 flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <div class="bg-gradient-to-tr from-brand-500 to-brand-400 p-2.5 rounded-xl text-white shadow-lg"><i data-lucide="zap" class="w-5 h-5"></i></div>
+                <div class="bg-gradient-to-tr from-brand-500 to-brand-400 p-2.5 rounded-xl text-white shadow-lg">
+                    <i data-lucide="zap" class="w-5 h-5"></i>
+                </div>
                 <span class="text-2xl font-display font-bold text-white">PayGo</span>
             </div>
             <div class="flex items-center gap-4">
@@ -68,8 +158,12 @@
                     <p class="text-xs font-medium" id="userBadge"><span class="text-brand-400">Cliente Standard</span></p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <a href="index.html" class="bg-slate-800 hover:bg-brand-500/20 text-slate-400 hover:text-brand-400 rounded-xl p-2.5 transition-colors" title="Página Inicial"><i data-lucide="home" class="w-5 h-5"></i></a>
-                    <button onclick="window.logout()" class="bg-slate-800 hover:bg-danger-500/20 text-slate-400 hover:text-danger-400 rounded-xl p-2.5 transition-colors" title="Terminar Sessão"><i data-lucide="power" class="w-5 h-5"></i></button>
+                    <a href="index.html" class="bg-slate-800 hover:bg-brand-500/20 text-slate-400 hover:text-brand-400 rounded-xl p-2.5 transition-colors" title="Página Inicial">
+                        <i data-lucide="home" class="w-5 h-5"></i>
+                    </a>
+                    <button onclick="window.logout()" class="bg-slate-800 hover:bg-danger-500/20 text-slate-400 hover:text-danger-400 rounded-xl p-2.5 transition-colors" title="Terminar Sessão">
+                        <i data-lucide="power" class="w-5 h-5"></i>
+                    </button>
                 </div>
             </div>
         </div>
@@ -80,7 +174,9 @@
             
             <div class="lg:col-span-1 space-y-6">
                 <div class="glass-card rounded-2xl p-6 relative overflow-hidden shadow-2xl border-t-4 border-t-brand-500" id="walletCard">
-                    <div class="absolute -right-6 -top-6 opacity-10"><i data-lucide="wallet" class="w-32 h-32"></i></div>
+                    <div class="absolute -right-6 -top-6 opacity-10">
+                        <i data-lucide="wallet" class="w-32 h-32"></i>
+                    </div>
                     <div class="relative z-10">
                         <h2 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-2">
                             <i data-lucide="shield-check" class="w-4 h-4 text-success-400"></i> Carteira PayGo
@@ -105,7 +201,9 @@
 
                 <div class="glass-card rounded-2xl p-6 border border-slate-800 relative overflow-hidden group">
                     <div class="absolute right-0 top-0 w-24 h-24 bg-vip-500/10 rounded-full blur-2xl group-hover:bg-vip-500/20 transition"></div>
-                    <h3 class="text-xs font-bold text-vip-400 uppercase tracking-widest mb-2 flex items-center gap-2"><i data-lucide="crown" class="w-4 h-4"></i> Plano PayGo VIP</h3>
+                    <h3 class="text-xs font-bold text-vip-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                        <i data-lucide="crown" class="w-4 h-4"></i> Plano PayGo VIP
+                    </h3>
                     <p class="text-sm text-slate-400 mb-4" id="vipStatusText">Isenção da Taxa de Serviço em todos os pagamentos e prioridade no processamento.</p>
                     <button onclick="window.openVipModal()" id="btnOpenVip" class="w-full py-3 rounded-xl bg-gradient-to-r from-vip-600 to-brand-600 hover:from-vip-500 hover:to-brand-500 text-white font-bold text-sm shadow-[0_0_15px_rgba(168,85,247,0.3)] transition transform hover:scale-[1.02]">
                         Gerir Assinatura
@@ -113,7 +211,9 @@
                 </div>
 
                 <div class="glass-card rounded-2xl p-6 border border-brand-500/20 relative overflow-hidden bg-brand-500/5">
-                    <div class="absolute -right-4 -bottom-4 text-brand-500/20"><i data-lucide="gift" class="w-24 h-24"></i></div>
+                    <div class="absolute -right-4 -bottom-4 text-brand-500/20">
+                        <i data-lucide="gift" class="w-24 h-24"></i>
+                    </div>
                     <div class="relative z-10">
                         <h3 class="text-sm font-display font-bold text-white mb-2 flex items-center gap-2">
                             <i data-lucide="share-2" class="w-4 h-4 text-brand-400"></i> Sugira e Ganhe Bónus
@@ -126,7 +226,9 @@
                 </div>
 
                 <div class="glass-card rounded-2xl p-5 border border-slate-800">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2"><i data-lucide="life-buoy" class="w-4 h-4 text-brand-400"></i> Centro de Apoio</h3>
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <i data-lucide="life-buoy" class="w-4 h-4 text-brand-400"></i> Centro de Apoio
+                    </h3>
                     <div class="space-y-2">
                         <button onclick="window.openSupportModal('message')" class="w-full flex items-center justify-between p-3 rounded-xl bg-slate-800/50 hover:bg-slate-700 transition-colors border border-transparent hover:border-slate-600 group">
                             <div class="flex items-center gap-3">
@@ -223,12 +325,16 @@
                 </div>
 
                 <div class="glass-card rounded-2xl p-6 md:p-8 relative overflow-hidden">
-                    <h2 class="text-2xl font-display font-bold text-white mb-2 flex items-center gap-3 relative z-10"><i data-lucide="bot" class="w-8 h-8 text-brand-500"></i> Orçamentador de Pagamentos</h2>
+                    <h2 class="text-2xl font-display font-bold text-white mb-2 flex items-center gap-3 relative z-10">
+                        <i data-lucide="bot" class="w-8 h-8 text-brand-500"></i> Orçamentador de Pagamentos
+                    </h2>
                     <p class="text-slate-400 text-sm mb-6 relative z-10">Pague qualquer site internacional com o seu saldo PayGo.</p>
 
                     <form id="orderForm" class="space-y-6 relative z-10">
                         <div class="p-5 border border-slate-700/50 rounded-xl bg-slate-900/30">
-                            <h3 class="text-sm font-bold text-brand-400 mb-4 flex items-center gap-2"><i data-lucide="shopping-bag" class="w-4 h-4"></i> 1. O que deseja pagar?</h3>
+                            <h3 class="text-sm font-bold text-brand-400 mb-4 flex items-center gap-2">
+                                <i data-lucide="shopping-bag" class="w-4 h-4"></i> 1. O que deseja pagar?
+                            </h3>
                             <div class="space-y-4">
                                 <div>
                                     <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Categoria de Pagamento</label>
@@ -275,8 +381,14 @@
                         <div id="physicalFields" class="p-5 border border-slate-700/50 rounded-xl bg-slate-900/30">
                             <h3 class="text-sm font-bold text-success-400 mb-4 flex items-center gap-2"><i data-lucide="map-pin" class="w-4 h-4"></i> 2. Endereço de Despacho</h3>
                             <div class="grid md:grid-cols-2 gap-4 mb-4">
-                                <div><label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Nome Completo</label><input type="text" id="shipName" required placeholder="Nome para Alfândega" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white physical-req"></div>
-                                <div><label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Telefone</label><input type="text" id="shipPhone" required placeholder="Ex: +258 84..." class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white physical-req"></div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Nome Completo</label>
+                                    <input type="text" id="shipName" required placeholder="Nome para Alfândega" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white physical-req">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Telefone</label>
+                                    <input type="text" id="shipPhone" required placeholder="Ex: +258 84..." class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white physical-req">
+                                </div>
                             </div>
                             <div class="grid md:grid-cols-2 gap-4 mb-4">
                                 <div>
@@ -288,9 +400,15 @@
                                         <option value="Nampula" data-zip="3100">Nampula</option>
                                     </select>
                                 </div>
-                                <div><label class="block text-xs font-bold text-brand-400 uppercase tracking-widest mb-2">Código Postal</label><input type="text" id="shipZip" required readonly placeholder="0000" class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-brand-400 font-mono font-bold cursor-not-allowed physical-req"></div>
+                                <div>
+                                    <label class="block text-xs font-bold text-brand-400 uppercase tracking-widest mb-2">Código Postal</label>
+                                    <input type="text" id="shipZip" required readonly placeholder="0000" class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-brand-400 font-mono font-bold cursor-not-allowed physical-req">
+                                </div>
                             </div>
-                            <div><label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Morada</label><input type="text" id="shipAddress" required placeholder="Ex: Bairro Central..." class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white physical-req"></div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Morada</label>
+                                <input type="text" id="shipAddress" required placeholder="Ex: Bairro Central..." class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white physical-req">
+                            </div>
                         </div>
 
                         <div class="bg-slate-900 rounded-xl p-5 border border-brand-500/20">
@@ -298,11 +416,21 @@
                                 <span>Conversão Base (<span id="calcRate">85</span> MT):</span>
                                 <span class="font-mono text-white" id="calcBase">0.00 MT</span>
                             </div>
-                            <div class="flex justify-between items-center text-sm text-slate-400 pb-3 border-b border-white/5 mb-3"><span>Taxa de Serviço:</span><span class="font-mono font-bold text-slate-300" id="calcFee">0.00 MT</span></div>
-                            <div class="flex justify-between items-end"><span class="text-xs font-bold text-slate-500 uppercase tracking-widest">Total a Debitar:</span><span class="text-2xl font-display font-black text-white" id="calcTotal">0.00 MT</span></div>
+                            <div class="flex justify-between items-center text-sm text-slate-400 pb-3 border-b border-white/5 mb-3">
+                                <span>Taxa de Serviço:</span>
+                                <span class="font-mono font-bold text-slate-300" id="calcFee">0.00 MT</span>
+                            </div>
+                            <div class="flex justify-between items-end">
+                                <span class="text-xs font-bold text-slate-500 uppercase tracking-widest">Total a Debitar:</span>
+                                <span class="text-2xl font-display font-black text-white" id="calcTotal">0.00 MT</span>
+                            </div>
                             
-                            <div id="balanceWarning" class="hidden mt-4 bg-warning-500/10 border border-warning-500/20 rounded-lg p-3"><p class="text-xs text-warning-300 font-medium">Saldo insuficiente. Recarregue a carteira.</p></div>
-                            <div id="successReady" class="hidden mt-4 bg-success-500/10 border border-success-500/20 rounded-lg p-3"><p class="text-xs text-success-300 font-medium">Saldo suficiente! Pronto para liquidar.</p></div>
+                            <div id="balanceWarning" class="hidden mt-4 bg-warning-500/10 border border-warning-500/20 rounded-lg p-3">
+                                <p class="text-xs text-warning-300 font-medium">Saldo insuficiente. Recarregue a carteira.</p>
+                            </div>
+                            <div id="successReady" class="hidden mt-4 bg-success-500/10 border border-success-500/20 rounded-lg p-3">
+                                <p class="text-xs text-success-300 font-medium">Saldo suficiente! Pronto para liquidar.</p>
+                            </div>
                         </div>
 
                         <button type="submit" id="btnSubmitOrder" disabled class="btn-epic w-full py-4 bg-success-500 hover:bg-success-600 text-white transition-all shadow-[0_0_15px_rgba(34,197,94,0.3)] disabled:bg-slate-800 disabled:text-slate-500 disabled:shadow-none">
@@ -358,9 +486,10 @@
             </form>
         </div>
     </div>
+
     <div id="transferModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative">
-            <button onclick="window.closeModals()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <button type="button" onclick="window.closeModals()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
             <div class="p-6 pb-0 mb-6">
                 <h3 class="text-xl font-display font-bold text-white mb-2">Transferir Saldo</h3>
                 <p class="text-sm text-slate-400">Envie dinheiro para outro utilizador PayGo instantaneamente.</p>
@@ -381,11 +510,11 @@
 
     <div id="vipModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
         <div class="bg-slate-900 border border-vip-500/50 rounded-2xl w-full max-w-lg overflow-hidden shadow-[0_0_50px_rgba(168,85,247,0.2)] relative">
-            <button onclick="window.closeModals()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <button type="button" onclick="window.closeModals()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
             <div class="p-8 text-center bg-gradient-to-b from-vip-900/40 to-transparent">
                 <i data-lucide="crown" class="w-16 h-16 text-vip-400 mx-auto mb-4"></i>
                 <h3 class="text-3xl font-display font-bold text-white mb-2">PayGo <span class="text-vip-400">VIP</span></h3>
-                <p class="text-sm text-slate-400" id="vipModalSubtitle">Isenção total da taxa de serviço em todos os pagamentos.</p>
+                <p class="text-sm text-slate-400" id="vipModalSubtitle">Isenção total da taxa de serviço em todos os seus pagamentos.</p>
             </div>
             <div class="p-6 pt-0 space-y-4" id="vipPlansContainer">
                 <div id="vipCurrentStatusBox" class="hidden bg-vip-900/30 border border-vip-500/30 rounded-xl p-4 text-center mb-4">
@@ -412,7 +541,7 @@
                         <p class="font-display font-black text-xl text-vip-400">12.600 MT</p>
                     </div>
                 </label>
-                <button onclick="window.processVip()" id="btnBuyVip" class="btn-epic w-full py-4 mt-4 bg-vip-600 hover:bg-vip-500 text-white shadow-[0_0_20px_rgba(168,85,247,0.4)]">
+                <button type="button" onclick="window.processVip()" id="btnBuyVip" class="btn-epic w-full py-4 mt-4 bg-vip-600 hover:bg-vip-500 text-white shadow-[0_0_20px_rgba(168,85,247,0.4)]">
                     Confirmar Pagamento VIP
                 </button>
             </div>
@@ -420,7 +549,7 @@
     </div>
     <div id="vcModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
         <div class="bg-slate-900 border border-brand-500/30 rounded-2xl w-full max-w-md overflow-hidden shadow-[0_0_30px_rgba(59,130,246,0.2)] relative">
-            <button onclick="window.closeModals()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <button type="button" onclick="window.closeModals()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
             <div class="p-6 pb-0 mb-6">
                 <h3 class="text-xl font-display font-bold text-white mb-2" id="vcModalTitle">Vincular Cartão Virtual</h3>
                 <p class="text-sm text-slate-400" id="vcModalDesc">Introduza os dados do seu cartão RedotPay ou Visa/Mastercard.</p>
@@ -472,7 +601,7 @@
 
     <div id="vcTopUpModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl relative">
-            <button onclick="window.closeModals()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <button type="button" onclick="window.closeModals()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
             <div class="p-6 pb-0 mb-6 text-center">
                 <div class="w-12 h-12 bg-success-500/20 text-success-400 rounded-full flex items-center justify-center mx-auto mb-4"><i data-lucide="zap" class="w-6 h-6"></i></div>
                 <h3 class="text-xl font-display font-bold text-white mb-2">Recarregar Cartão</h3>
@@ -508,7 +637,7 @@
 
     <div id="supportModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative">
-            <button onclick="window.closeModals()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <button type="button" onclick="window.closeModals()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
             <div class="p-6 pb-0 mb-6">
                 <h3 class="text-xl font-display font-bold text-white mb-2 flex items-center gap-2" id="supportTitle">
                     <i data-lucide="message-square" class="w-5 h-5 text-brand-400" id="supportIcon"></i> <span id="supportTitleText">Enviar Mensagem</span>
@@ -538,7 +667,7 @@
         </div>
     </div>
 
-  <script type="module">
+    <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, getDocs, collection, query, where, limit, addDoc, updateDoc, serverTimestamp, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -575,7 +704,7 @@
                     el.disabled = false;
                 } else {
                     el.removeAttribute('required');
-                    el.disabled = true; // Desabilita para não ir no post
+                    el.disabled = true; // Desabilita para não prender a validação do formulário
                 }
             });
         };
@@ -709,7 +838,7 @@
         });
 
         // =====================================
-        // ORÇAMENTADOR CAMALEÃO (CORRIGIDO E SEGURO)
+        // ORÇAMENTADOR CAMALEÃO E PREPARAÇÃO
         // =====================================
         const orderCategory = document.getElementById('orderCategory');
         if(orderCategory) {
@@ -801,11 +930,13 @@
             }
         }
 
-        // Apenas UMA instância deste event listener!
+        // =====================================
+        // PROCESSAR PAGAMENTO (SEGURO E ÚNICO)
+        // =====================================
         const orderForm = document.getElementById('orderForm');
         if(orderForm) {
             orderForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
+                e.preventDefault(); // Impede o Recarregamento Imediato da Página
                 
                 const btn = document.getElementById('btnSubmitOrder'); 
                 btn.disabled = true; 
@@ -815,7 +946,7 @@
                 const safeTotal = Number(currentCalculatedTotal.toFixed(2));
                 const userBal = parseFloat(userData?.walletBalance) || 0;
 
-                // Tripla Confirmação de Saldo (Para evitar burlas de inspecionar elemento)
+                // Dupla Confirmação de Saldo
                 if(safeTotal > userBal || safeTotal <= 0) {
                     window.showToast("Operação bloqueada: Saldo insuficiente ou valor inválido.", "error");
                     btn.disabled = true; 
@@ -847,7 +978,7 @@
                         payloadData.digitalData = { accountOrId: document.getElementById('digitalAccount').value }; 
                     }
 
-                    // Transações Duplas (Garante que se falhar uma, a outra não avança)
+                    // Gravar na DB
                     await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: increment(-safeTotal) });
                     await addDoc(collection(db, "orders"), payloadData);
                     await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: safeTotal, description: `Pedido ${orderId}`, reference: orderId, createdAt: new Date().toISOString() });
@@ -897,7 +1028,7 @@
         };
 
         // =====================================
-        // GESTÃO DE DEPÓSITOS (TOP-UP)
+        // GESTÃO DE DEPÓSITOS (TOP-UP COM PAYSUITE)
         // =====================================
         const topUpForm = document.getElementById('topUpForm');
         if (topUpForm) {
@@ -919,25 +1050,52 @@
                 }
 
                 try {
-                    await addDoc(collection(db, "support_tickets"), {
-                        userId: currentUser.uid,
-                        userName: userData.name,
-                        userEmail: currentUser.email,
-                        type: 'deposit_request',
-                        amount: amount,
-                        paymentMethod: method,
-                        message: `O cliente solicitou um depósito de ${formatMZN(amount)} MT via ${method.toUpperCase()}. Verifique a conta.`,
-                        status: 'open',
-                        createdAt: serverTimestamp()
-                    });
+                    if (method === 'bank') {
+                        await addDoc(collection(db, "support_tickets"), {
+                            userId: currentUser.uid,
+                            userName: userData.name,
+                            userEmail: currentUser.email,
+                            type: 'deposit_request',
+                            amount: amount,
+                            paymentMethod: method,
+                            message: `Depósito Bancário de ${formatMZN(amount)} MT. Verifique o extrato e credite.`,
+                            status: 'open',
+                            createdAt: serverTimestamp()
+                        });
 
-                    window.closeModals();
-                    e.target.reset();
-                    window.showToast(`Pedido de depósito enviado! O Admin irá creditar os ${formatMZN(amount)} MT após confirmar a transferência.`, "success");
-                    
+                        window.closeModals(); e.target.reset();
+                        window.showToast(`Pedido de depósito enviado! O Admin irá creditar o valor após confirmar o banco.`, "success");
+                    } else {
+                        // PAYSUITE API FETCH AQUI
+                        window.showToast("A conectar à rede PaySuite...", "info");
+                        
+                        const response = await fetch('/api/paysuite-topup', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                userId: currentUser.uid,
+                                userEmail: currentUser.email,
+                                userName: userData.name,
+                                userPhone: userData.phone || '',
+                                amount: amount,
+                                channel: method 
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if (!response.ok) throw new Error(data.message || "Erro na comunicação com a PaySuite");
+
+                        if (data.paymentUrl) {
+                            window.location.href = data.paymentUrl;
+                        } else {
+                            window.closeModals(); e.target.reset();
+                            window.showToast("Por favor, verifique o seu telemóvel para colocar o PIN!", "success");
+                        }
+                    }
                 } catch (err) {
                     console.error("Erro no depósito:", err);
-                    window.showToast("Falha técnica ao enviar pedido.", "error");
+                    window.showToast(err.message || "Falha técnica ao iniciar pagamento.", "error");
                 } finally {
                     btn.disabled = false;
                     btn.innerHTML = "Enviar Pedido de Depósito";
@@ -945,8 +1103,17 @@
             });
         }
 
+        // Transferência
+        const transferForm = document.getElementById('transferForm');
+        if(transferForm) {
+            transferForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                window.showToast("Funcionalidade de transferência P2P em desenvolvimento.", "info");
+            });
+        }
+
         // =====================================
-        // CARTÃO VIRTUAL E SUPORTE
+        // CARTÃO VIRTUAL (VINCULAR E RECARGA)
         // =====================================
         window.openVirtualCardModal = (type) => {
             window.closeModals(); const modal = document.getElementById('vcModal'); if(modal) modal.classList.replace('hidden', 'flex');
@@ -1054,6 +1221,9 @@
             });
         }
 
+        // =====================================
+        // SUPORTE / TICKETS
+        // =====================================
         window.openSupportModal = async (type) => {
             window.closeModals(); const modal = document.getElementById('supportModal'); document.getElementById('supportType').value = type;
             const selectCont = document.getElementById('orderSelectContainer');
