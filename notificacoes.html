@@ -7,7 +7,7 @@
     <meta name="theme-color" content="#0f172a">
     <meta name="robots" content="noindex, nofollow">
     
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -41,16 +41,8 @@
         .glass-nav { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.08); z-index: 50; }
         .glass-card { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.3s ease; }
         
-        .notification-unread {
-            background: linear-gradient(to right, rgba(59, 130, 246, 0.05), rgba(30, 41, 59, 0.4));
-            border-left: 4px solid #3b82f6;
-        }
-        
-        .notification-read {
-            background: rgba(30, 41, 59, 0.2);
-            border-left: 4px solid transparent;
-            opacity: 0.8;
-        }
+        .notification-unread { background: linear-gradient(to right, rgba(59, 130, 246, 0.05), rgba(30, 41, 59, 0.4)); border-left: 4px solid #3b82f6; }
+        .notification-read { background: rgba(30, 41, 59, 0.2); border-left: 4px solid transparent; opacity: 0.8; }
 
         #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
         
@@ -85,7 +77,7 @@
 
     <main class="pt-28 pb-20 relative z-10 container mx-auto px-4 md:px-6 max-w-4xl min-h-screen">
         
-        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 relative z-10">
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6 relative z-10">
             <div>
                 <h1 class="text-3xl md:text-4xl font-display font-extrabold text-white tracking-tight">Centro de Alertas</h1>
                 <p class="text-slate-400 mt-2 text-sm">Acompanhe todas as atualizações da sua conta e pagamentos.</p>
@@ -93,6 +85,13 @@
             <button onclick="window.markAllAsRead()" id="btnMarkAll" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-5 py-2.5 rounded-xl text-sm font-bold transition-colors border border-slate-700 hover:border-slate-500 flex items-center justify-center gap-2 shadow-sm disabled:opacity-50">
                 <i data-lucide="check-check" class="w-4 h-4"></i> Marcar todas como lidas
             </button>
+        </div>
+
+        <div class="glass-card rounded-2xl p-4 mb-6 border border-brand-500/30 bg-brand-900/10 relative z-10">
+            <h3 class="text-xs font-bold text-brand-400 uppercase tracking-widest mb-2 flex items-center gap-2"><i data-lucide="activity" class="w-4 h-4"></i> Raio-X do Sistema (Debug)</h3>
+            <div id="debugBox" class="font-mono text-[10px] text-slate-300 space-y-1">
+                <p>> A iniciar sincronização com o cofre 'paygodb'...</p>
+            </div>
         </div>
 
         <div class="glass-card rounded-3xl border border-slate-800 overflow-hidden shadow-2xl relative z-10">
@@ -105,17 +104,10 @@
                         <div class="h-3 skeleton w-2/3"></div>
                     </div>
                 </div>
-                <div class="p-6 flex gap-4">
-                    <div class="w-12 h-12 rounded-full skeleton shrink-0"></div>
-                    <div class="w-full space-y-3">
-                        <div class="h-4 skeleton w-1/4"></div>
-                        <div class="h-3 skeleton w-1/2"></div>
-                    </div>
-                </div>
             </div>
 
             <div id="notificationsList" class="divide-y divide-white/5 hidden">
-                </div>
+            </div>
 
             <div id="emptyState" class="hidden p-16 text-center">
                 <div class="w-20 h-20 bg-slate-800/50 rounded-full flex items-center justify-center mx-auto mb-6 border border-slate-700/50">
@@ -127,13 +119,12 @@
             
         </div>
     </main>
-<script type="module">
+
+    <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        // 🚀 Removido o 'orderBy' dos imports, já não precisamos dele!
         import { getFirestore, collection, query, where, onSnapshot, doc, updateDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // 🔥 AS TUAS CHAVES
         const firebaseConfig = { 
             apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8", 
             authDomain: "paygo-14311.firebaseapp.com", 
@@ -151,8 +142,13 @@
         let unreadDocs = []; 
 
         // =====================================
-        // 🛠️ FUNÇÕES UTILITÁRIAS
+        // 🛠️ FUNÇÃO DE RAIO-X E UTILS
         // =====================================
+        const logDebug = (msg) => {
+            const box = document.getElementById('debugBox');
+            if (box) box.innerHTML += `<p>> ${msg}</p>`;
+        };
+
         window.showToast = function(msg, type = 'success') {
             const container = document.getElementById('toastContainer');
             if(!container) return;
@@ -184,104 +180,108 @@
             }
         };
 
-        // =====================================
-        // 📡 OUVINTE EM TEMPO REAL (ON SNAPSHOT)
-        // =====================================
-        onAuthStateChanged(auth, (user) => {
-            if (!user) { window.location.href = 'login.html'; return; }
-            currentUser = user;
-
-            // 🚀 CORREÇÃO TÁTICA: Pedimos apenas os dados do utilizador (Firebase aprova isto imediatamente sem exigir Índices Compostos)
-            const q = query(collection(db, "notifications"), where("userId", "==", user.uid));
-            
-            onSnapshot(q, (snapshot) => {
-                const listEl = document.getElementById('notificationsList');
-                const emptyEl = document.getElementById('emptyState');
-                const loadingEl = document.getElementById('loadingState');
-                const btnMarkAll = document.getElementById('btnMarkAll');
-
-                loadingEl.classList.add('hidden');
-                unreadDocs = [];
-
-                if (snapshot.empty) {
-                    listEl.classList.add('hidden');
-                    emptyEl.classList.remove('hidden');
-                    btnMarkAll.disabled = true;
-                    return;
-                }
-
-                listEl.classList.remove('hidden');
-                emptyEl.classList.add('hidden');
-                
-                // 1. Descarregamos tudo para o JavaScript
-                let notifsArray = [];
-                snapshot.forEach(docSnap => {
-                    notifsArray.push({ id: docSnap.id, ref: docSnap.ref, ...docSnap.data() });
-                });
-
-                // 2. ORDENAÇÃO LOCAL: O Javascript organiza as datas, poupando-nos os bloqueios do Firebase!
-                notifsArray.sort((a, b) => {
-                    const tA = a.createdAt?.seconds || a.createdAt?.toMillis?.() || 0;
-                    const tB = b.createdAt?.seconds || b.createdAt?.toMillis?.() || 0;
-                    return tB - tA; // Do mais recente para o mais antigo
-                });
-
-                let html = '';
-                notifsArray.forEach(data => {
-                    const isRead = data.read === true;
-                    if (!isRead) unreadDocs.push(data.ref);
-
-                    const style = getNotificationStyle(data.type);
-                    const readClass = isRead ? 'notification-read' : 'notification-unread';
-                    const cursorClass = isRead ? '' : 'cursor-pointer hover:bg-slate-800/40 transition-colors';
-                    const onclickAction = !isRead ? `onclick="window.markAsRead('${data.id}')"` : '';
-
-                    html += `
-                        <div class="p-6 flex flex-col sm:flex-row gap-4 sm:items-start relative ${readClass} ${cursorClass}" ${onclickAction}>
-                            ${!isRead ? `<div class="absolute top-6 right-6 w-2 h-2 bg-brand-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.8)] animate-pulse"></div>` : ''}
-                            
-                            <div class="w-12 h-12 rounded-full flex items-center justify-center shrink-0 border ${style.bg} ${style.border}">
-                                <i data-lucide="${style.icon}" class="w-5 h-5 ${style.color}"></i>
-                            </div>
-                            
-                            <div class="flex-1 pr-6">
-                                <h4 class="text-base font-bold text-white mb-1 leading-tight">${escapeHTML(data.title)}</h4>
-                                <p class="text-sm text-slate-400 leading-relaxed mb-2">${escapeHTML(data.message)}</p>
-                                <p class="text-[10px] uppercase tracking-widest font-bold text-slate-500">${formatDate(data.createdAt)}</p>
-                            </div>
-                        </div>
-                    `;
-                });
-
-                listEl.innerHTML = html;
-                btnMarkAll.disabled = unreadDocs.length === 0;
-                lucide.createIcons();
-            }, (error) => {
-                console.error("Erro ao escutar notificações:", error);
-                window.showToast("Falha técnica ao carregar notificações.", "error");
-            });
-        });
-
-        // 🛡️ Prevenção extra
         const escapeHTML = (str) => {
             if (!str) return '';
             return String(str).replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
         };
 
         // =====================================
+        // 📡 OUVINTE EM TEMPO REAL 
+        // =====================================
+        onAuthStateChanged(auth, (user) => {
+            if (!user) { window.location.href = 'login.html'; return; }
+            currentUser = user;
+            
+            logDebug(`Identidade confirmada! O teu UID é: <span class="text-brand-400">${user.uid}</span>`);
+            logDebug(`A preparar a pesquisa na coleção 'notifications'...`);
+
+            try {
+                const q = query(collection(db, "notifications"), where("userId", "==", user.uid));
+                
+                onSnapshot(q, (snapshot) => {
+                    logDebug(`⚡ SINAL RECEBIDO! O Firebase encontrou <span class="text-success-400 text-lg">${snapshot.size}</span> notificações para ti.`);
+
+                    const listEl = document.getElementById('notificationsList');
+                    const emptyEl = document.getElementById('emptyState');
+                    const loadingEl = document.getElementById('loadingState');
+                    const btnMarkAll = document.getElementById('btnMarkAll');
+
+                    loadingEl.classList.add('hidden');
+                    unreadDocs = [];
+
+                    if (snapshot.empty) {
+                        logDebug(`⚠️ A tua caixa está vazia. Isto significa que o Admin AINDA NÃO gravou o alerta com o teu UID!`);
+                        listEl.classList.add('hidden');
+                        emptyEl.classList.remove('hidden');
+                        btnMarkAll.disabled = true;
+                        return;
+                    }
+
+                    listEl.classList.remove('hidden');
+                    emptyEl.classList.add('hidden');
+                    
+                    let notifsArray = [];
+                    snapshot.forEach(docSnap => {
+                        notifsArray.push({ id: docSnap.id, ref: docSnap.ref, ...docSnap.data() });
+                    });
+
+                    notifsArray.sort((a, b) => {
+                        const tA = a.createdAt?.seconds || a.createdAt?.toMillis?.() || 0;
+                        const tB = b.createdAt?.seconds || b.createdAt?.toMillis?.() || 0;
+                        return tB - tA; 
+                    });
+
+                    let html = '';
+                    notifsArray.forEach(data => {
+                        const isRead = data.read === true;
+                        if (!isRead) unreadDocs.push(data.ref);
+
+                        const style = getNotificationStyle(data.type);
+                        const readClass = isRead ? 'notification-read' : 'notification-unread';
+                        const cursorClass = isRead ? '' : 'cursor-pointer hover:bg-slate-800/40 transition-colors';
+                        const onclickAction = !isRead ? `onclick="window.markAsRead('${data.id}')"` : '';
+
+                        html += `
+                            <div class="p-6 flex flex-col sm:flex-row gap-4 sm:items-start relative ${readClass} ${cursorClass}" ${onclickAction}>
+                                ${!isRead ? `<div class="absolute top-6 right-6 w-2 h-2 bg-brand-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.8)] animate-pulse"></div>` : ''}
+                                
+                                <div class="w-12 h-12 rounded-full flex items-center justify-center shrink-0 border ${style.bg} ${style.border}">
+                                    <i data-lucide="${style.icon}" class="w-5 h-5 ${style.color}"></i>
+                                </div>
+                                
+                                <div class="flex-1 pr-6">
+                                    <h4 class="text-base font-bold text-white mb-1 leading-tight">${escapeHTML(data.title)}</h4>
+                                    <p class="text-sm text-slate-400 leading-relaxed mb-2">${escapeHTML(data.message)}</p>
+                                    <p class="text-[10px] uppercase tracking-widest font-bold text-slate-500">${formatDate(data.createdAt)}</p>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    listEl.innerHTML = html;
+                    btnMarkAll.disabled = unreadDocs.length === 0;
+                    lucide.createIcons();
+                }, (error) => {
+                    logDebug(`<span class="text-danger-400">ERRO GRAVE FIREBASE: ${error.message}</span>`);
+                    window.showToast("Falha técnica de permissões.", "error");
+                });
+            } catch (e) {
+                logDebug(`<span class="text-danger-400">ERRO JS: ${e.message}</span>`);
+            }
+        });
+
+        // =====================================
         // 🎯 AÇÕES DE LEITURA E LOGOUT
         // =====================================
         window.markAsRead = async (id) => {
-            try {
-                await updateDoc(doc(db, "notifications", id), { read: true });
-            } catch(e) { console.error("Erro ao marcar como lida:", e); }
+            try { await updateDoc(doc(db, "notifications", id), { read: true }); } 
+            catch(e) { console.error("Erro:", e); }
         };
 
         window.markAllAsRead = async () => {
             if (unreadDocs.length === 0) return;
             const btn = document.getElementById('btnMarkAll');
-            btn.disabled = true;
-            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Atualizando...`;
+            btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Atualizando...`;
             lucide.createIcons({root: btn});
 
             try {
@@ -289,10 +289,8 @@
                 unreadDocs.forEach(ref => { batch.update(ref, { read: true }); });
                 await batch.commit();
                 window.showToast("Todas as notificações marcadas como lidas!", "success");
-            } catch(e) {
-                console.error("Erro no batch:", e);
-                window.showToast("Falha ao atualizar dados.", "error");
-            } finally {
+            } catch(e) { window.showToast("Falha ao atualizar.", "error"); } 
+            finally {
                 btn.innerHTML = `<i data-lucide="check-check" class="w-4 h-4"></i> Marcar todas como lidas`;
                 lucide.createIcons({root: btn});
             }
@@ -300,8 +298,7 @@
 
         window.logout = async () => {
             if(confirm('Tem a certeza que deseja sair?')) { 
-                await signOut(auth); 
-                window.location.href = 'login.html'; 
+                await signOut(auth); window.location.href = 'login.html'; 
             }
         };
     </script>
