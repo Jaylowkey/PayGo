@@ -271,20 +271,29 @@
     </div>
   </div>
 
-  <script type="module">
+<script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, deleteDoc, serverTimestamp, increment, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    const firebaseConfig = { apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8", authDomain: "paygo-14311.firebaseapp.com", projectId: "paygo-14311", storageBucket: "paygo-14311.firebasestorage.app", messagingSenderId: "208360646277", appId: "1:208360646277:web:aecc57cc0077ae48a52bec" };
+    const firebaseConfig = { 
+        apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8", 
+        authDomain: "paygo-14311.firebaseapp.com", 
+        projectId: "paygo-14311", 
+        storageBucket: "paygo-14311.firebasestorage.app", 
+        messagingSenderId: "208360646277", 
+        appId: "1:208360646277:web:aecc57cc0077ae48a52bec" 
+    };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    // 👇 A GARANTIA DO COFRE ÚNICO
     const db = getFirestore(app, "paygodb");
 
     lucide.createIcons();
     let allUsers = [];
     let currentViewedUserId = null;
+    let loggedInAdminId = null;
 
     const fallbackTimer = setTimeout(() => { document.getElementById('sysLoader').style.display = 'none'; }, 3000);
 
@@ -293,6 +302,7 @@
       try {
         const userDoc = await getDoc(doc(db, "users", user.uid));
         if (userDoc.exists() && (userDoc.data().role === 'admin' || userDoc.data().role === 'superadmin')) {
+          loggedInAdminId = user.uid;
           document.getElementById('adminName').textContent = userDoc.data().name || 'Admin';
           await window.loadUsersDatabase();
           setInterval(() => window.renderTable(allUsers), 30000); 
@@ -309,7 +319,42 @@
     });
 
     const formatMZN = (val) => new Intl.NumberFormat('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val);
+    
+    // 🛡️ VACINA ANTI-XSS
+    const escapeHTML = (str) => {
+        if (!str) return '';
+        return String(str).replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+    };
 
+    // ==========================================
+    // 🔔 TOAST NOTIFICATIONS E AUDITORIA
+    // ==========================================
+    function showToast(msg, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const t = document.createElement('div');
+      const borderColor = type === 'error' ? 'border-danger-500' : (type === 'warning' ? 'border-warning-500' : 'border-brand-500');
+      const icon = type === 'error' ? 'alert-octagon text-danger-400' : (type === 'warning' ? 'alert-triangle text-warning-400' : 'check-check text-brand-400');
+      
+      t.className = `toast border-l-4 ${borderColor} flex items-center gap-3`;
+      t.innerHTML = `<i data-lucide="${icon.split(' ')[0]}" class="w-5 h-5 ${icon.split(' ')[1]} flex-shrink-0"></i><span class="text-sm font-bold text-white">${escapeHTML(msg)}</span>`;
+      container.appendChild(t);
+      if(typeof lucide !== 'undefined') lucide.createIcons({ root: t });
+      
+      requestAnimationFrame(() => t.classList.add('show'));
+      setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 5000);
+    }
+
+    async function sendHybridNotification(userId, subject, message, type = 'deposit') {
+        try {
+            await addDoc(collection(db, "notifications"), {
+                userId: userId, title: subject, message: message, type: type, read: false, createdAt: serverTimestamp()
+            });
+        } catch (error) { console.error("Falha ao notificar o cliente:", error); }
+    }
+
+    // ==========================================
+    // 👥 EXTRAÇÃO DE BASE DE CLIENTES
+    // ==========================================
     window.loadUsersDatabase = async function() {
       try {
         const usersRef = collection(db, "users");
@@ -321,7 +366,6 @@
         snap.forEach(doc => {
             const data = doc.data();
             if(data.role !== 'admin' && data.role !== 'superadmin') {
-                // Recuperar Saldo também!
                 allUsers.push({ id: doc.id, walletBalance: data.walletBalance || 0, ...data });
                 if(data.status === 'active') active++;
                 if(data.status === 'banned' || data.status === 'blocked') banned++;
@@ -344,30 +388,13 @@
       }
     };
 
-    function timeAgo(date) {
-        const seconds = Math.floor((new Date() - date) / 1000);
-        if (seconds < 300) return '🟢 Online Agora'; 
-        let interval = seconds / 31536000;
-        if (interval > 1) return Math.floor(interval) + " anos atrás";
-        interval = seconds / 2592000;
-        if (interval > 1) return Math.floor(interval) + " meses atrás";
-        interval = seconds / 86400;
-        if (interval >= 1 && interval < 2) return "Ontem";
-        if (interval > 1) return Math.floor(interval) + " dias atrás";
-        interval = seconds / 3600;
-        if (interval > 1) return "Há " + Math.floor(interval) + " horas";
-        interval = seconds / 60;
-        if (interval > 1) return "Há " + Math.floor(interval) + " minutos";
-        return "Há instantes";
-    }
-
     window.renderTable = function(usersToRender) {
         const tbody = document.getElementById('usersTableBody');
         let onlineCount = 0;
         
         if(usersToRender.length === 0) {
             tbody.innerHTML = `<tr><td colspan="5" class="text-center py-10 text-slate-500"><i data-lucide="user-x" class="w-8 h-8 mx-auto mb-3 opacity-30"></i>Nenhum cliente encontrado.</td></tr>`;
-            lucide.createIcons();
+            if(typeof lucide !== 'undefined') lucide.createIcons();
             return;
         }
 
@@ -380,14 +407,14 @@
             const statusText = u.status === 'active' ? 'Ativo' : (u.status === 'banned' ? 'Banido' : 'Bloqueado');
             const createdStr = u.createdAt?.toDate ? u.createdAt.toDate().toISOString() : '';
 
-            let actionBtns = `<button onclick="window.viewClientModal('${u.id}', '${u.name || 'Cliente'}', '${u.email}', '${u.phone || ''}', '${createdStr}', ${u.walletBalance})" class="action-btn bg-slate-800 text-slate-300 hover:bg-brand-600 hover:text-white mr-2" title="Gerir Conta"><i data-lucide="settings-2" class="w-4 h-4"></i> Gerir</button>`;
+            let actionBtns = `<button onclick="window.viewClientModal('${u.id}', '${escapeHTML(u.name || 'Cliente')}', '${escapeHTML(u.email)}', '${escapeHTML(u.phone || '')}', '${createdStr}', ${u.walletBalance})" class="action-btn bg-slate-800 text-slate-300 hover:bg-brand-600 hover:text-white mr-2" title="Gerir Conta"><i data-lucide="settings-2" class="w-4 h-4"></i> Gerir</button>`;
 
             if(u.status === 'active') {
                 actionBtns += `<button onclick="window.changeStatus('${u.id}', 'blocked')" class="action-btn block" title="Suspender"><i data-lucide="lock" class="w-4 h-4"></i></button>`;
             } else {
                 actionBtns += `<button onclick="window.changeStatus('${u.id}', 'active')" class="action-btn activate" title="Restaurar"><i data-lucide="unlock" class="w-4 h-4"></i></button>`;
             }
-            actionBtns += `<button onclick="window.deleteUserRecord('${u.id}', '${u.name || u.email}')" class="action-btn delete ml-2 !border-danger-500 !text-danger-500" title="Apagar Ficha"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
+            actionBtns += `<button onclick="window.deleteUserRecord('${u.id}', '${escapeHTML(u.name || u.email)}')" class="action-btn delete ml-2 !border-danger-500 !text-danger-500" title="Apagar Ficha"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
 
             return `
             <tr class="hover:bg-slate-800/40 transition-colors">
@@ -398,14 +425,14 @@
                             ${isOnline && u.status === 'active' ? '<div class="absolute -bottom-1 -right-1 online-ping"><span class="ping-bg"></span><span class="ping-core"></span></div>' : ''}
                         </div>
                         <div>
-                            <span class="font-bold text-white block text-sm">${u.name || 'Cliente Oculto'}</span>
+                            <span class="font-bold text-white block text-sm">${escapeHTML(u.name || 'Cliente Oculto')}</span>
                             <span class="text-[10px] text-slate-500 font-mono">ID: ${u.id.substring(0,8)}...</span>
                         </div>
                     </div>
                 </td>
                 <td class="py-4 px-6">
-                    <div class="text-sm text-slate-300 font-mono mb-1"><i data-lucide="mail" class="w-3 h-3 inline text-slate-500 mr-1"></i> ${u.email}</div>
-                    <div class="text-xs text-slate-400 font-mono"><i data-lucide="phone" class="w-3 h-3 inline text-slate-500 mr-1"></i> ${u.phone || 'N/A'}</div>
+                    <div class="text-sm text-slate-300 font-mono mb-1"><i data-lucide="mail" class="w-3 h-3 inline text-slate-500 mr-1"></i> ${escapeHTML(u.email)}</div>
+                    <div class="text-xs text-slate-400 font-mono"><i data-lucide="phone" class="w-3 h-3 inline text-slate-500 mr-1"></i> ${escapeHTML(u.phone || 'N/A')}</div>
                 </td>
                 <td class="py-4 px-6 text-right">
                     <span class="font-bold font-mono text-brand-400 bg-brand-500/10 px-2 py-1 rounded border border-brand-500/20">${formatMZN(u.walletBalance)}</span>
@@ -418,7 +445,7 @@
         }).join('');
         
         document.getElementById('kpiOnline').textContent = onlineCount;
-        lucide.createIcons();
+        if(typeof lucide !== 'undefined') lucide.createIcons();
     };
 
     window.filterTable = function() {
@@ -475,7 +502,7 @@
     };
 
     // ==========================================
-    // GESTÃO DO MODAL DE CLIENTE (CARTEIRA E HISTÓRICO)
+    // 🔍 GESTÃO DO MODAL DE CLIENTE (CORRIGIDO)
     // ==========================================
     window.viewClientModal = async function(userId, name, email, phone, createdIso, walletBalance) {
         currentViewedUserId = userId;
@@ -496,10 +523,10 @@
         setTimeout(() => modal.classList.add('active'), 10);
         
         timeline.innerHTML = `<div class="text-center py-8 text-slate-500"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto mb-2 text-brand-500"></i><p>A extrair faturas...</p></div>`;
-        lucide.createIcons();
+        if(typeof lucide !== 'undefined') lucide.createIcons();
 
         try {
-            const q = query(collection(db, "orders"), where("email", "==", email));
+            const q = query(collection(db, "orders"), where("userId", "==", userId)); // Mudámos para userId para ser à prova de falhas
             const snap = await getDocs(q);
             
             let totalGasto = 0; let totalPedidos = 0;
@@ -508,7 +535,7 @@
             snap.forEach(d => {
                 ordersData.push(d.data());
                 totalPedidos++;
-                if(d.data().status === 'completed' || d.data().isPaid) totalGasto += (d.data().total || 0);
+                if(d.data().status === 'completed' || d.data().isPaid) totalGasto += (Number(d.data().total) || 0);
             });
 
             document.getElementById('modalClientOrdersCount').textContent = `${totalPedidos} Faturas`;
@@ -516,10 +543,11 @@
 
             if(ordersData.length === 0) {
                 timeline.innerHTML = `<div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl text-center"><i data-lucide="package-x" class="w-8 h-8 text-slate-600 mx-auto mb-2"></i><p class="text-slate-400">O cliente não tem faturas ativas.</p></div>`;
-                lucide.createIcons(); return;
+                if(typeof lucide !== 'undefined') lucide.createIcons(); 
+                return;
             }
 
-            ordersData.sort((a,b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
+            ordersData.sort((a,b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
 
             ordersData.forEach(o => {
                 const isPaid = o.status === 'completed' || o.isPaid;
@@ -529,7 +557,7 @@
                 const dataFormat = o.createdAt?.toDate ? o.createdAt.toDate().toLocaleDateString('pt-MZ') : '-';
 
                 ordersHtml += `
-                <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex items-center justify-between hover:border-slate-600 transition-colors">
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex items-center justify-between hover:border-slate-600 transition-colors mb-2">
                     <div class="flex items-center gap-4">
                         <div class="w-10 h-10 rounded-lg bg-${statusBg} flex items-center justify-center border border-${statusColor}/20">
                             <i data-lucide="${statusIcon}" class="w-5 h-5 text-${statusColor}"></i>
@@ -545,8 +573,14 @@
                     </div>
                 </div>`;
             });
-            timeline.innerHTML = ordersHtml; lucide.createIcons();
-        } catch(error) { timeline.innerHTML = `<p class="text-danger-400 text-center py-4">Erro ao extrair faturas.</p>`; }
+            
+            timeline.innerHTML = ordersHtml; 
+            if(typeof lucide !== 'undefined') lucide.createIcons();
+            
+        } catch(error) { 
+            console.error(error);
+            timeline.innerHTML = `<p class="text-danger-400 text-center py-4">Erro ao extrair faturas do cofre.</p>`; 
+        }
     };
 
     window.closeClientModal = function() {
@@ -556,12 +590,12 @@
     };
 
     // ==========================================
-    // 💰 APROVAR DEPÓSITOS & AJUSTES MANUAIS DA CARTEIRA
+    // 💰 APROVAR DEPÓSITOS & AJUSTES MANUAIS (BLINDADO)
     // ==========================================
     window.adjustWalletBalance = async (action) => {
         if (!currentViewedUserId) return;
 
-        const actionName = action === 'add' ? 'adicionar (Aprovar Depósito Bancário)' : 'remover (Acerto Contabilístico)';
+        const actionName = action === 'add' ? 'adicionar (Aprovar Depósito)' : 'remover (Acerto Contabilístico)';
         const amountStr = prompt(`💵 Digite o valor a ${actionName} em Meticais:`);
         
         if (!amountStr) return;
@@ -577,14 +611,14 @@
         try {
             const val = action === 'add' ? amount : -amount;
             const txType = action === 'add' ? 'credit' : 'debit';
-            const txDesc = action === 'add' ? 'Depósito Aprovado (Admin)' : 'Ajuste de Saldo Administrativo';
+            const txDesc = action === 'add' ? 'Depósito Aprovado Manualmente' : 'Ajuste de Saldo Administrativo';
 
             // 1. Atualizar Saldo do Cliente
             await updateDoc(doc(db, "users", currentViewedUserId), {
                 walletBalance: increment(val)
             });
 
-            // 2. Gerar Recibo na Coleção de Extratos (Para o cliente ver no histórico)
+            // 2. Gerar Recibo no Extrato
             await addDoc(collection(db, "wallet_transactions"), {
                 userId: currentViewedUserId,
                 type: txType,
@@ -594,9 +628,20 @@
                 createdAt: new Date().toISOString()
             });
 
+            // 3. Notificar o Cliente In-App e Log de Auditoria
+            if (action === 'add') {
+                await sendHybridNotification(currentViewedUserId, "Fundos Adicionados 💰", `O seu saldo foi carregado com ${amount} MT pela equipa PayGo.`, 'deposit');
+            } else {
+                await sendHybridNotification(currentViewedUserId, "Ajuste de Carteira ⚠️", `Houve um ajuste administrativo na sua carteira de -${amount} MT.`, 'alert');
+            }
+            
+            await addDoc(collection(db, "admin_audit_logs"), {
+                adminId: loggedInAdminId, action: 'WALLET_ADJUSTMENT', details: { userId: currentViewedUserId, type: action, amount: amount }, createdAt: serverTimestamp()
+            });
+
             showToast(action === 'add' ? 'Fundos injetados com sucesso!' : 'Fundos removidos com sucesso.', 'success');
             
-            // Fecha e recarrega dados para ver o novo saldo
+            // 4. Fechar modal e recarregar painel para refletir o novo saldo
             window.closeClientModal();
             await window.loadUsersDatabase();
 
@@ -606,17 +651,10 @@
         }
     };
 
+    // ==========================================
+    // 📱 UX E FECHO GERAL
+    // ==========================================
     window.logout = async function() { await signOut(auth); window.location.href = '../login.html'; };
-    
-    function showToast(msg, type = 'success') {
-      const container = document.getElementById('toastContainer');
-      const t = document.createElement('div');
-      t.className = `toast border-l-4 ${type==='error'?'border-danger-500':(type==='warning'?'border-yellow-500':'border-brand-500')}`;
-      t.innerHTML = `<span class="text-sm font-bold text-white">${msg}</span>`;
-      container.appendChild(t);
-      requestAnimationFrame(() => t.classList.add('show'));
-      setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 5000);
-    }
 
     const mobileMenuBtn = document.getElementById('mobileMenuBtn');
     const sidebar = document.getElementById('sidebar');
@@ -636,6 +674,6 @@
     if(mobileMenuBtn) mobileMenuBtn.addEventListener('click', toggleMobileSidebar);
     if(closeSidebarBtn) closeSidebarBtn.addEventListener('click', toggleMobileSidebar);
     if(sidebarOverlay) sidebarOverlay.addEventListener('click', toggleMobileSidebar);
-  </script>
+</script>
 </body>
 </html>
