@@ -127,12 +127,13 @@
             
         </div>
     </main>
-    <script type="module">
+<script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, query, where, orderBy, onSnapshot, doc, updateDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        // 🚀 Removido o 'orderBy' dos imports, já não precisamos dele!
+        import { getFirestore, collection, query, where, onSnapshot, doc, updateDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // 🔥 AS TUAS CHAVES (Mantém intactas)
+        // 🔥 AS TUAS CHAVES
         const firebaseConfig = { 
             apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8", 
             authDomain: "paygo-14311.firebaseapp.com", 
@@ -147,7 +148,7 @@
         lucide.createIcons();
 
         let currentUser = null;
-        let unreadDocs = []; // Guarda as referências para marcar todas como lidas de uma vez
+        let unreadDocs = []; 
 
         // =====================================
         // 🛠️ FUNÇÕES UTILITÁRIAS
@@ -167,11 +168,10 @@
 
         const formatDate = (timestamp) => {
             if(!timestamp) return 'Agora mesmo';
-            const date = timestamp.toDate();
+            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
             return date.toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
         };
 
-        // Estilização dinâmica por tipo de alerta
         const getNotificationStyle = (type) => {
             switch(type) {
                 case 'deposit': return { icon: 'wallet', color: 'text-success-400', bg: 'bg-success-500/20', border: 'border-success-500/30' };
@@ -179,6 +179,7 @@
                 case 'alert': return { icon: 'alert-triangle', color: 'text-warning-400', bg: 'bg-warning-500/20', border: 'border-warning-500/30' };
                 case 'error': return { icon: 'x-octagon', color: 'text-danger-400', bg: 'bg-danger-500/20', border: 'border-danger-500/30' };
                 case 'vip': return { icon: 'crown', color: 'text-vip-400', bg: 'bg-vip-500/20', border: 'border-vip-500/30' };
+                case 'message': return { icon: 'message-square', color: 'text-brand-400', bg: 'bg-brand-500/20', border: 'border-brand-500/30' };
                 default: return { icon: 'bell', color: 'text-slate-400', bg: 'bg-slate-800', border: 'border-slate-700' };
             }
         };
@@ -190,8 +191,8 @@
             if (!user) { window.location.href = 'login.html'; return; }
             currentUser = user;
 
-            // Fica à escuta da coleção 'notifications' do cliente específico, ordenadas da mais recente para a mais antiga
-            const q = query(collection(db, "notifications"), where("userId", "==", user.uid), orderBy("createdAt", "desc"));
+            // 🚀 CORREÇÃO TÁTICA: Pedimos apenas os dados do utilizador (Firebase aprova isto imediatamente sem exigir Índices Compostos)
+            const q = query(collection(db, "notifications"), where("userId", "==", user.uid));
             
             onSnapshot(q, (snapshot) => {
                 const listEl = document.getElementById('notificationsList');
@@ -199,7 +200,6 @@
                 const loadingEl = document.getElementById('loadingState');
                 const btnMarkAll = document.getElementById('btnMarkAll');
 
-                // Esconde o Skeleton Loader
                 loadingEl.classList.add('hidden');
                 unreadDocs = [];
 
@@ -213,18 +213,28 @@
                 listEl.classList.remove('hidden');
                 emptyEl.classList.add('hidden');
                 
-                let html = '';
+                // 1. Descarregamos tudo para o JavaScript
+                let notifsArray = [];
                 snapshot.forEach(docSnap => {
-                    const data = docSnap.data();
-                    const id = docSnap.id;
+                    notifsArray.push({ id: docSnap.id, ref: docSnap.ref, ...docSnap.data() });
+                });
+
+                // 2. ORDENAÇÃO LOCAL: O Javascript organiza as datas, poupando-nos os bloqueios do Firebase!
+                notifsArray.sort((a, b) => {
+                    const tA = a.createdAt?.seconds || a.createdAt?.toMillis?.() || 0;
+                    const tB = b.createdAt?.seconds || b.createdAt?.toMillis?.() || 0;
+                    return tB - tA; // Do mais recente para o mais antigo
+                });
+
+                let html = '';
+                notifsArray.forEach(data => {
                     const isRead = data.read === true;
-                    
-                    if (!isRead) unreadDocs.push(docSnap.ref);
+                    if (!isRead) unreadDocs.push(data.ref);
 
                     const style = getNotificationStyle(data.type);
                     const readClass = isRead ? 'notification-read' : 'notification-unread';
                     const cursorClass = isRead ? '' : 'cursor-pointer hover:bg-slate-800/40 transition-colors';
-                    const onclickAction = !isRead ? `onclick="window.markAsRead('${id}')"` : '';
+                    const onclickAction = !isRead ? `onclick="window.markAsRead('${data.id}')"` : '';
 
                     html += `
                         <div class="p-6 flex flex-col sm:flex-row gap-4 sm:items-start relative ${readClass} ${cursorClass}" ${onclickAction}>
@@ -235,8 +245,8 @@
                             </div>
                             
                             <div class="flex-1 pr-6">
-                                <h4 class="text-base font-bold text-white mb-1 leading-tight">${data.title}</h4>
-                                <p class="text-sm text-slate-400 leading-relaxed mb-2">${data.message}</p>
+                                <h4 class="text-base font-bold text-white mb-1 leading-tight">${escapeHTML(data.title)}</h4>
+                                <p class="text-sm text-slate-400 leading-relaxed mb-2">${escapeHTML(data.message)}</p>
                                 <p class="text-[10px] uppercase tracking-widest font-bold text-slate-500">${formatDate(data.createdAt)}</p>
                             </div>
                         </div>
@@ -251,6 +261,12 @@
                 window.showToast("Falha técnica ao carregar notificações.", "error");
             });
         });
+
+        // 🛡️ Prevenção extra
+        const escapeHTML = (str) => {
+            if (!str) return '';
+            return String(str).replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+        };
 
         // =====================================
         // 🎯 AÇÕES DE LEITURA E LOGOUT
@@ -269,11 +285,8 @@
             lucide.createIcons({root: btn});
 
             try {
-                // writeBatch permite atualizar centenas de docs de uma só vez numa única transação à DB
                 const batch = writeBatch(db);
-                unreadDocs.forEach(ref => {
-                    batch.update(ref, { read: true });
-                });
+                unreadDocs.forEach(ref => { batch.update(ref, { read: true }); });
                 await batch.commit();
                 window.showToast("Todas as notificações marcadas como lidas!", "success");
             } catch(e) {
