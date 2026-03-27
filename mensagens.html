@@ -107,7 +107,7 @@
                         </div>
                         <div>
                             <h3 class="font-bold text-white leading-tight">Equipa PayGo</h3>
-                            <p class="text-[11px] text-success-400 font-bold uppercase tracking-widest flex items-center gap-1" id="chatTicketStatus">
+                            <p class="text-[11px] text-success-400 font-bold uppercase tracking-widest flex items-center gap-1">
                                 <span class="w-2 h-2 rounded-full bg-success-500 animate-pulse"></span> Suporte Oficial
                             </p>
                         </div>
@@ -131,7 +131,7 @@
                         </div>
 
                         <div class="flex-1 bg-slate-950 border border-slate-700 rounded-xl relative focus-within:border-brand-500 transition-colors">
-                            <textarea id="replyMessage" rows="1" class="w-full bg-transparent text-white px-4 py-3 outline-none resize-none text-sm max-h-32 min-h-[48px] chat-scroll" placeholder="Escreva a sua mensagem..." oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea>
+                            <textarea id="replyMessage" rows="1" class="w-full bg-transparent text-white px-4 py-3 outline-none resize-none text-sm max-h-32 min-h-[48px] chat-scroll" placeholder="Escreva a sua mensagem... (Pressione Enter para enviar)" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea>
                         </div>
 
                         <button type="submit" id="btnSendReply" class="w-12 h-12 rounded-xl bg-brand-600 hover:bg-brand-500 flex items-center justify-center text-white transition shadow-lg shrink-0">
@@ -147,8 +147,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        // 🚀 Nota tática: O cliente vai organizar as datas localmente no JS para evitar bloqueios do Firebase!
-        import { getFirestore, collection, query, where, onSnapshot, doc, updateDoc, addDoc, serverTimestamp, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, query, where, onSnapshot, doc, updateDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
         const firebaseConfig = {
@@ -197,7 +196,7 @@
             loadMyTickets();
         });
 
-        // 📥 CARREGAR OS TICKETS DO CLIENTE
+        // 📥 CARREGAR OS TICKETS
         function loadMyTickets() {
             const q = query(collection(db, "support_tickets"), where("userId", "==", currentUser.uid));
             
@@ -207,7 +206,6 @@
                     myTickets.push({ id: docSnap.id, ...docSnap.data() });
                 });
 
-                // Ordenação Local para evitar erros de índice no Firebase!
                 myTickets.sort((a, b) => {
                     const tA = a.updatedAt?.seconds || a.createdAt?.seconds || 0;
                     const tB = b.updatedAt?.seconds || b.createdAt?.seconds || 0;
@@ -238,7 +236,6 @@
                 const dateStr = ticket.createdAt?.toDate ? ticket.createdAt.toDate().toLocaleDateString('pt-MZ') : 'Recente';
                 const isActive = activeTicketId === ticket.id ? 'active' : '';
                 
-                // Status visual
                 let statusDot = '';
                 if(ticket.status === 'open') statusDot = '<div class="w-2 h-2 rounded-full bg-warning-500 shadow-[0_0_8px_rgba(245,158,11,0.8)]" title="Pendente"></div>';
                 else if (ticket.status === 'in_progress') statusDot = '<div class="w-2 h-2 rounded-full bg-brand-500 shadow-[0_0_8px_rgba(59,130,246,0.8)] animate-pulse" title="Em Análise"></div>';
@@ -272,7 +269,6 @@
         window.selectTicket = async (id) => {
             activeTicketId = id;
             
-            // Lógica Mobile
             document.getElementById('ticketSidebar').classList.add('hidden', 'md:flex');
             const chatArea = document.getElementById('chatArea');
             chatArea.classList.remove('hidden'); chatArea.classList.add('flex');
@@ -291,14 +287,12 @@
 
             if (unsubscribeMessages) unsubscribeMessages();
             
-            // 🚀 Aqui o cliente carrega AS MENSAGENS, ordenando-as sem precisar de índice porque não usa 'where' misturado!
             const msgRef = collection(db, "support_tickets", id, "messages");
             unsubscribeMessages = onSnapshot(msgRef, (snap) => {
                 const historyEl = document.getElementById('messageHistory');
                 if (!historyEl) return;
                 historyEl.innerHTML = '';
                 
-                // Mensagem Principal do Cliente
                 const initialTime = ticket.createdAt?.toDate ? ticket.createdAt.toDate().toLocaleTimeString('pt-MZ', {hour: '2-digit', minute:'2-digit'}) : '';
                 historyEl.innerHTML += `
                     <div class="flex flex-col msg-client max-w-[85%] p-3 text-sm shadow-md">
@@ -308,11 +302,11 @@
 
                 let msgsArray = [];
                 snap.forEach(docMsg => msgsArray.push(docMsg.data()));
-                msgsArray.sort((a,b) => (a.createdAt?.seconds||0) - (b.createdAt?.seconds||0)); // Ordena localmente a ordem de conversa
+                msgsArray.sort((a,b) => (a.createdAt?.seconds||0) - (b.createdAt?.seconds||0));
 
                 msgsArray.forEach(m => {
                     const time = m.createdAt?.toDate ? m.createdAt.toDate().toLocaleTimeString('pt-MZ', {hour: '2-digit', minute:'2-digit'}) : '';
-                    const isClient = m.sender !== 'admin'; // Cliente enviou = msg-client (azul à direita). Admin = msg-admin (cinza à esquerda)
+                    const isClient = m.sender === currentUser.uid; 
                     const cssClass = isClient ? 'msg-client' : 'msg-admin';
                     
                     let attachHtml = '';
@@ -357,6 +351,14 @@
             }
         };
 
+        // 🚀 O ATALHO DE "ENTER" PARA O TEXTAREA
+        document.getElementById('replyMessage')?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault(); // Impede de dar um salto de linha
+                document.getElementById('replyForm')?.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+            }
+        });
+
         // 📤 ENVIAR RESPOSTA (CLIENTE -> ADMIN)
         document.getElementById('replyForm')?.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -380,12 +382,16 @@
 
                 // Cliente escreve na subcoleção e o Admin lê
                 await addDoc(collection(db, "support_tickets", activeTicketId, "messages"), {
-                    sender: currentUser.uid, text: text, attachmentUrl: attachmentUrl, createdAt: serverTimestamp()
+                    sender: currentUser.uid, 
+                    text: text, 
+                    attachmentUrl: attachmentUrl, 
+                    createdAt: serverTimestamp()
                 });
 
                 // Atualizamos o ticket para o topo da fila do Admin
                 await updateDoc(doc(db, "support_tickets", activeTicketId), {
-                    status: 'open', updatedAt: serverTimestamp() // Volta a ficar 'open' para o Admin ver
+                    status: 'open', 
+                    updatedAt: serverTimestamp()
                 });
 
                 input.value = ''; input.style.height = ''; selectedFile = null;
@@ -393,8 +399,13 @@
                 document.getElementById('fileBadge')?.classList.add('hidden');
                 document.getElementById('fileNameDisplay')?.classList.add('hidden');
 
-            } catch (err) { showToast("Falha técnica ao enviar.", "error"); } 
-            finally { btn.disabled = false; btn.innerHTML = originalBtn; lucide.createIcons({root: btn}); }
+            } catch (err) { 
+                console.error("Erro Firebase:", err);
+                showToast("Falha técnica ao enviar. Verifique a consola.", "error"); 
+            } 
+            finally { 
+                btn.disabled = false; btn.innerHTML = originalBtn; lucide.createIcons({root: btn}); 
+            }
         });
 
     </script>
