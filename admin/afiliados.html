@@ -305,7 +305,7 @@
 
         </div>
     </main>
-    <script type="module">
+   <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, serverTimestamp, increment, addDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -420,26 +420,15 @@
         // ==========================================
         async function sendHybridNotification(userId, userEmail, subject, type, message, inAppType = 'alert') {
             try {
-                // 1. Notificação In-App (No Sino do Cliente)
                 if (userId) {
                     await addDoc(collection(db, "notifications"), {
-                        userId: userId,
-                        title: subject,
-                        message: message,
-                        type: inAppType,
-                        read: false,
-                        createdAt: serverTimestamp()
+                        userId: userId, title: subject, message: message, type: inAppType, read: false, createdAt: serverTimestamp()
                     });
                 }
-                // 2. Notificação por Email (Resend API)
                 if (userEmail) {
                     fetch('/api/send-email', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            to: userEmail, subject: subject, template: type,
-                            type: 'transactional', variables: { message: message }
-                        })
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ to: userEmail, subject: subject, template: type, type: 'transactional', variables: { message: message } })
                     }).catch(e => console.warn("Email silencioso:", e));
                 }
             } catch (error) { console.error("Falha ao notificar:", error); }
@@ -448,10 +437,7 @@
         async function logAdminAction(action, details) {
             try {
                 await addDoc(collection(db, "admin_audit_logs"), {
-                    adminId: loggedInAdminId,
-                    action: action,
-                    details: details,
-                    createdAt: serverTimestamp()
+                    adminId: loggedInAdminId, action: action, details: details, createdAt: serverTimestamp()
                 });
             } catch(e) { console.warn("Log não gravado."); }
         }
@@ -471,23 +457,20 @@
                     const w = doc.data();
                     html += `
                     <tr class="hover:bg-slate-800/40 transition">
-                        <td class="py-4 px-4">
-                            <span class="font-bold text-white block bg-slate-800/50 px-2 py-1 rounded w-max border border-slate-700">${escapeHTML(w.affiliateCode || 'N/A')}</span>
-                        </td>
+                        <td class="py-4 px-4"><span class="font-bold text-white block bg-slate-800/50 px-2 py-1 rounded w-max border border-slate-700">${escapeHTML(w.affiliateCode || 'N/A')}</span></td>
                         <td class="py-4 px-4 font-mono text-brand-300 text-xs">${escapeHTML(w.method?.toUpperCase())} - ${escapeHTML(w.phone)}</td>
                         <td class="py-4 px-4 font-black text-success-400 font-display text-lg">${formatMZN(w.amount)} MT</td>
                         <td class="py-4 px-4 text-right whitespace-nowrap">
-                            <button id="btn-pay-${doc.id}" onclick="window.processWithdrawal('${doc.id}', '${w.userId}', ${w.amount}, true)" class="btn-action btn-approve mr-2" title="Marcar como Pago">
-                                <i data-lucide="check" class="w-4 h-4"></i> Pago
-                            </button>
-                            <button id="btn-rej-wd-${doc.id}" onclick="window.processWithdrawal('${doc.id}', '${w.userId}', ${w.amount}, false)" class="btn-action btn-reject" title="Devolver Fundos">
-                                <i data-lucide="x" class="w-4 h-4"></i> Rejeitar
-                            </button>
+                            <button id="btn-pay-${doc.id}" onclick="window.processWithdrawal('${doc.id}', '${w.userId}', ${w.amount}, true)" class="btn-action btn-approve mr-2" title="Marcar como Pago"><i data-lucide="check" class="w-4 h-4"></i> Pago</button>
+                            <button id="btn-rej-wd-${doc.id}" onclick="window.processWithdrawal('${doc.id}', '${w.userId}', ${w.amount}, false)" class="btn-action btn-reject" title="Devolver Fundos"><i data-lucide="x" class="w-4 h-4"></i> Rejeitar</button>
                         </td>
                     </tr>`;
                 });
 
+                // ✅ CORREÇÃO AQUI: Atualiza os dados e remove a classe Skeleton
                 setSafeText('kpiPendingWithdrawals', pendingCount);
+                const kpiPendEl = document.getElementById('kpiPendingWithdrawals');
+                if(kpiPendEl) kpiPendEl.classList.remove('skeleton');
                 
                 if(pendingCount === 0) {
                     setSafeHTML('withdrawalsTableBody', `<tr><td colspan="4" class="text-center py-10 text-slate-500"><i data-lucide="check-circle" class="w-8 h-8 mx-auto mb-3 text-success-500/50"></i>Nenhum saque pendente. Bom trabalho!</td></tr>`);
@@ -498,10 +481,7 @@
         }
 
         window.processWithdrawal = async function(id, userId, amount, isApproved) {
-            const actionMsg = isApproved 
-                ? `Confirma que já transferiu ${amount} MT para o parceiro?` 
-                : `Deseja REJEITAR este saque de ${amount} MT? O valor será devolvido à conta do parceiro.`;
-                
+            const actionMsg = isApproved ? `Confirma que já transferiu ${amount} MT para o parceiro?` : `Deseja REJEITAR este saque de ${amount} MT? O valor será devolvido à conta do parceiro.`;
             if(!confirm(actionMsg)) return;
             
             const btn = document.getElementById(isApproved ? `btn-pay-${id}` : `btn-rej-wd-${id}`);
@@ -592,7 +572,7 @@
         };
 
         // ==========================================
-        // 3. REDE DE AFILIADOS GLOBAL (ATIVOS/BLOQUEADOS)
+        // 3. REDE DE AFILIADOS GLOBAL E MÉTRICAS
         // ==========================================
         async function loadAllAffiliates() {
             try {
@@ -635,8 +615,14 @@
                     </tr>`;
                 });
 
+                // ✅ CORREÇÃO AQUI: Injeta os dados e remove a classe skeleton
                 setSafeText('kpiTotalActive', activeCount);
                 setSafeText('kpiTotalEarnings', formatMZN(globalEarnings) + ' MT');
+                
+                const kpiActEl = document.getElementById('kpiTotalActive');
+                const kpiEarnEl = document.getElementById('kpiTotalEarnings');
+                if(kpiActEl) kpiActEl.classList.remove('skeleton');
+                if(kpiEarnEl) kpiEarnEl.classList.remove('skeleton');
 
                 if(html === '') {
                     setSafeHTML('activeTableBody', `<tr><td colspan="4" class="text-center py-10 text-slate-500"><i data-lucide="network" class="w-8 h-8 mx-auto mb-3 opacity-30 text-brand-500"></i>Nenhum parceiro na rede.</td></tr>`);
@@ -670,12 +656,12 @@
                 sendHybridNotification(id, email, alertSubj, 'affiliate-status', alertMsg, isCurrentlyActive ? 'error' : 'success');
                 logAdminAction('STATUS_AFILIADO_ALTERADO', `Afiliado ${email} -> ${newStatus}`);
 
-                window.showToast('Ação concluída.', 'success');
+                window.showToast('Ação concluída com sucesso.', 'success');
                 await window.loadAllData();
             } catch(e) { window.showToast('Falha técnica.', 'error'); await window.loadAllData(); }
         }
 
-        // Revogar Definitivamente
+        // Revogar Permanentemente
         window.revokeAffiliate = async function(id, email, name) {
             if(!confirm(`PERIGO: Deseja remover todas as permissões de afiliado a ${name}? Ele será rebaixado a cliente normal.`)) return;
             
@@ -685,7 +671,7 @@
             try {
                 await updateDoc(doc(db, "users", id), {
                     role: 'user',
-                    status: 'active',
+                    status: 'active', // Volta a ser cliente ativo normal
                     affiliateCodeActive: false,
                     updatedAt: serverTimestamp()
                 });
@@ -693,11 +679,10 @@
                 sendHybridNotification(id, email, '⚠️ Fim do Programa de Parceiros', 'affiliate-revoked', `Infelizmente, a sua conta foi removida do programa de Parceiros PayGo. A sua conta normal de cliente continua ativa.`, 'error');
                 logAdminAction('AFILIADO_REVOGADO', `Parceiro expulso: ${email}`);
 
-                window.showToast('Privilégios revogados com sucesso.', 'success');
+                window.showToast('Privilégios revogados. Utilizador voltou a cliente normal.', 'success');
                 await window.loadAllData();
-            } catch(e) { window.showToast('Erro ao revogar.', 'error'); await window.loadAllData(); }
+            } catch(e) { window.showToast('Falha técnica ao tentar revogar acessos.', 'error'); await window.loadAllData(); }
         };
-
     </script>
 </body>
 </html>
