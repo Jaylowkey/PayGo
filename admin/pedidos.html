@@ -308,30 +308,30 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app, "paygodb");
+const db = getFirestore(app, "paygodb"); 
 const auth = getAuth(app);
 
 let orders = [];
+let rawOrders = [];
+let rawTopups = [];
 let currentFilteredOrders = [];
 let currentOrderId = null;
 let ordersUnsubscribe = null;
+let topupsUnsubscribe = null;
 let loggedInAdminId = null;
 let loggedInAdminName = null;
 
 // ==========================================
-// 🔔 RENDERIZAÇÃO DE ÍCONES (COM ATRASO PARA DOM)
+// 🔔 RENDERIZAÇÃO E TOASTS
 // ==========================================
 window.renderIcons = () => {
     setTimeout(() => {
         if (typeof lucide !== 'undefined') {
             try { lucide.createIcons(); } catch(e) { console.error('Erro nos ícones:', e); }
         }
-    }, 50); // Timeout milimétrico para dar tempo ao DOM de carregar as tags injetadas
+    }, 50); 
 };
 
-// ==========================================
-// 🔔 TOAST NOTIFICATIONS PREMIUM
-// ==========================================
 window.showToast = (message, type = 'success') => {
     const container = document.getElementById('toastContainer');
     if (!container) return;
@@ -372,15 +372,18 @@ function getRelativeDateLabel(date) {
     return date.toLocaleDateString('pt-MZ');
 }
 
+const escapeHTML = (str) => {
+    if (!str) return '';
+    return String(str).replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+};
+
 // ==========================================
-// 📧 API RESEND & AUDITORIA DE ADMINS
+// 📧 API RESEND E LOGS
 // ==========================================
 async function sendNotificationEmail(order, actionType) {
     try {
-        let payloadAction = "";
-        if (actionType === 'paid') payloadAction = "payment_confirmed";
-        else if (actionType === 'completed') payloadAction = "order_completed";
-        else return;
+        let payloadAction = actionType === 'paid' ? "payment_confirmed" : (actionType === 'completed' ? "order_completed" : "");
+        if (!payloadAction) return;
 
         await fetch('/api/notify-order', {
             method: 'POST',
@@ -388,63 +391,44 @@ async function sendNotificationEmail(order, actionType) {
             body: JSON.stringify({ orderData: order, action: payloadAction, sendEmail: true, sendLark: false })
         });
         showToast('Notificação oficial disparada para o cliente.', 'info');
-    } catch (error) {
-        console.error('Erro de envio:', error);
-    }
+    } catch (error) { console.error('Erro de envio:', error); }
 }
 
 async function logAdminAction(actionCode, targetId, previousData, newData) {
     if(!loggedInAdminId) return; 
-    
     try {
         await fetch('/api/log-action', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                adminId: loggedInAdminId,
-                adminName: loggedInAdminName,
-                action: actionCode,
-                targetId: targetId,
-                targetType: 'order',
-                previousData: previousData,
-                newData: newData
-            })
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ adminId: loggedInAdminId, adminName: loggedInAdminName, action: actionCode, targetId: targetId, targetType: 'order', previousData: previousData, newData: newData })
         });
-    } catch (err) {
-        console.warn("Auditoria não conseguiu registar no servidor", err);
-    }
+    } catch (err) { console.warn("Auditoria falhou", err); }
 }
 
 // ==========================================
-// 📦 BASE DE DADOS (SYNC REAL-TIME) E RADAR AUTOMÁTICO
+// 📦 MOTOR HÍBRIDO (ORDERS + TOPUPS)
 // ==========================================
+function mergeAndRender() {
+    orders = [...rawOrders, ...rawTopups].sort((a, b) => b.createdAt - a.createdAt);
+    window.renderOrders();
+    
+    if (currentOrderId && document.getElementById('orderModal').classList.contains('active')) {
+        window.openModal(currentOrderId, true); 
+    }
+}
+
 function loadOrdersRealTime() {
-    const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
-    let isFirstLoad = true;
+    const qOrders = query(collection(db, "orders"), orderBy("createdAt", "desc"));
+    const qTopups = query(collection(db, "topups"), orderBy("createdAt", "desc"));
 
-    ordersUnsubscribe = onSnapshot(q, (snapshot) => {
-        if (!isFirstLoad) {
-            snapshot.docChanges().forEach((change) => {
-                if (change.type === "modified") {
-                    const newData = change.doc.data();
-                    const oldOrder = orders.find(o => o.id === change.doc.id);
-                    
-                    if (oldOrder && !oldOrder.isPaid && newData.isPaid) {
-                        const fatura = newData.orderId || `ORD-${change.doc.id.slice(0, 8)}`;
-                        showToast(`💰 ALERTA DE RECEITA: Pagamento da fatura ${fatura} confirmado!`, 'success');
-                    }
-                }
-            });
-        }
-
-        orders = snapshot.docs.map(doc => {
+    ordersUnsubscribe = onSnapshot(qOrders, (snapshot) => {
+        rawOrders = snapshot.docs.map(doc => {
             const data = doc.data();
             return {
                 id: doc.id,
                 orderId: data.orderId || `ORD-${doc.id.slice(0, 8)}`,
                 name: data.name || 'Sem Nome',
                 email: data.email || 'N/A',
-                category: data.category || 'physical', // physical, digital, game
+                category: data.category || 'physical',
                 shipping: data.shipping || null,
                 digitalData: data.digitalData || null,
                 whatsapp: data.whatsapp || 'N/A',
@@ -461,27 +445,49 @@ function loadOrdersRealTime() {
                 userId: data.userId || null,
                 commissionProcessed: data.commissionProcessed || false,
                 adminNotes: data.adminNotes || [], 
-                createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : new Date()),
-                paysuitePaymentId: data.paysuitePaymentId || null
+                createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
+                paysuitePaymentId: data.paysuitePaymentId || null,
+                isTopup: false
             };
         });
+        mergeAndRender();
+    }, (err) => { console.error("Erro ao ler Orders:", err); showToast('Acesso Restrito ao Servidor.', 'error'); });
 
-        window.renderOrders();
-        
-        if (currentOrderId && document.getElementById('orderModal').classList.contains('active')) {
-            window.openModal(currentOrderId, true); 
-        }
-        
-        isFirstLoad = false;
-
-    }, (error) => {
-        console.error('Erro de permissão/real-time:', error);
-        showToast('Acesso Restrito ao Servidor de Dados.', 'error');
-    });
+    topupsUnsubscribe = onSnapshot(qTopups, (snapshot) => {
+        rawTopups = snapshot.docs.map(doc => {
+            const data = doc.data();
+            const isCompleted = data.status === 'completed';
+            const isFailed = data.status === 'failed' || data.status === 'cancelled';
+            return {
+                id: doc.id,
+                orderId: data.topupId || `TOP-${doc.id.slice(0, 8)}`,
+                name: 'Carregamento de Carteira', 
+                email: `Via ${String(data.method).toUpperCase()}`,
+                category: 'topup',
+                shipping: null, digitalData: null, whatsapp: 'N/A', type: 'topup',
+                usd: 0,
+                total: Number(data.amount) || 0,
+                tax: 0,
+                status: isCompleted ? 'completed' : (isFailed ? 'cancelled' : 'pending'),
+                trackingCode: '',
+                isPaid: isCompleted,
+                paymentMethod: data.method || 'mpesa',
+                detail: `Depósito de ${data.amount} MT na Carteira PayGo do Cliente.`,
+                referredBy: null,
+                userId: data.userId || null,
+                commissionProcessed: true, 
+                adminNotes: [], 
+                createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
+                paysuitePaymentId: data.paysuiteId || null,
+                isTopup: true
+            };
+        });
+        mergeAndRender();
+    }, (err) => console.error("Erro ao ler TopUps:", err));
 }
 
 // ==========================================
-// 🎨 RENDERIZAÇÃO DA TABELA
+// 🎨 RENDERIZAÇÃO DA TABELA MESTRA
 // ==========================================
 window.renderOrders = function() {
     const table = document.getElementById('ordersTable');
@@ -492,7 +498,7 @@ window.renderOrders = function() {
     const paymentFilter = document.getElementById('paymentFilter')?.value || 'all';
 
     currentFilteredOrders = orders.filter(order => {
-        const matchSearch = order.name.toLowerCase().includes(search) || order.orderId.toLowerCase().includes(search) || order.email.toLowerCase().includes(search) || order.whatsapp.includes(search);
+        const matchSearch = order.name.toLowerCase().includes(search) || order.orderId.toLowerCase().includes(search) || order.email.toLowerCase().includes(search);
         const matchStatus = statusFilter === 'all' || order.status === statusFilter;
         let matchPayment = true;
         if (paymentFilter === 'paid') matchPayment = order.isPaid === true;
@@ -501,10 +507,10 @@ window.renderOrders = function() {
     });
 
     const countEl = document.getElementById('ordersCount');
-    if (countEl) countEl.textContent = `${currentFilteredOrders.length} Resultados da Auditoria`;
+    if (countEl) countEl.textContent = `${currentFilteredOrders.length} Operações Encontradas`;
 
     if (currentFilteredOrders.length === 0) {
-        table.innerHTML = `<tr><td colspan="5" class="text-center py-16 text-slate-500"><i data-lucide="search-x" class="w-12 h-12 mx-auto mb-4 opacity-30 text-slate-400"></i><p class="font-bold text-lg">Sem Registos</p><p class="text-sm mt-1">Altere o filtro de segurança para encontrar a transação.</p></td></tr>`;
+        table.innerHTML = `<tr><td colspan="5" class="text-center py-16 text-slate-500"><i data-lucide="search-x" class="w-12 h-12 mx-auto mb-4 opacity-30 text-slate-400"></i><p class="font-bold text-lg">Sem Registos</p></td></tr>`;
         window.renderIcons();
         return;
     }
@@ -537,23 +543,24 @@ window.renderOrders = function() {
         let catIcon = 'package'; let catLabel = 'Físico';
         if(order.category === 'digital') { catIcon = 'laptop'; catLabel = 'Digital'; }
         if(order.category === 'game') { catIcon = 'gamepad-2'; catLabel = 'Jogo'; }
+        if(order.isTopup) { catIcon = 'wallet'; catLabel = 'Depósito'; }
 
         const notesIcon = order.adminNotes && order.adminNotes.length > 0 
-            ? `<span class="ml-2 text-warning-500" title="Contém Notas Secretas"><i data-lucide="sticky-note" class="w-3 h-3 inline"></i></span>` : '';
+            ? `<span class="ml-2 text-warning-500" title="Contém Notas"><i data-lucide="sticky-note" class="w-3 h-3 inline"></i></span>` : '';
 
         htmlContent += `
         <tr class="hover:bg-slate-800/60 transition-colors group border-b border-white/5 last:border-0 cursor-pointer h-[72px]" onclick="window.openModal('${order.id}')" role="button" tabindex="0">
             <td class="px-6 py-4">
-                <div class="text-sm font-mono font-bold text-brand-400 bg-brand-900/20 inline-block px-2 py-0.5 rounded border border-brand-500/20">${order.orderId}</div>
+                <div class="text-sm font-mono font-bold ${order.isTopup ? 'text-success-400 bg-success-900/20 border-success-500/20' : 'text-brand-400 bg-brand-900/20 border-brand-500/20'} inline-block px-2 py-0.5 rounded border">${order.orderId}</div>
                 <div class="text-[11px] font-bold text-slate-500 mt-1 uppercase tracking-widest"><i data-lucide="clock" class="w-3 h-3 inline pb-0.5"></i> ${timeStr} ${notesIcon}</div>
             </td>
             <td class="px-6 py-4">
-                <div class="text-sm font-bold text-white group-hover:text-brand-300 transition-colors truncate max-w-[200px]">${order.name}</div>
-                <div class="text-xs text-slate-500 font-mono mt-0.5 truncate max-w-[200px]">${order.email}</div>
+                <div class="text-sm font-bold text-white group-hover:text-brand-300 transition-colors truncate max-w-[200px]">${escapeHTML(order.name)}</div>
+                <div class="text-xs text-slate-500 font-mono mt-0.5 truncate max-w-[200px]">${escapeHTML(order.email)}</div>
             </td>
             <td class="px-6 py-4">
                 <div class="flex items-center gap-2 mb-1">
-                    <i data-lucide="${catIcon}" class="w-4 h-4 text-brand-400"></i>
+                    <i data-lucide="${catIcon}" class="w-4 h-4 ${order.isTopup ? 'text-success-400' : 'text-brand-400'}"></i>
                     <span class="text-xs font-bold text-slate-300">${catLabel}</span>
                 </div>
                 <span class="text-sm font-black text-slate-400 font-mono">${formatValue(order.usd, 'usd')}</span>
@@ -579,7 +586,7 @@ window.renderOrders = function() {
 };
 
 // ==========================================
-// 📝 ADICIONAR NOTA SECRETA DA EQUIPA
+// 📝 ADICIONAR NOTA SECRETA
 // ==========================================
 window.addInternalNote = async (orderId) => {
     const input = document.getElementById('newNoteInput');
@@ -588,178 +595,146 @@ window.addInternalNote = async (orderId) => {
     
     input.disabled = true;
     const originalPh = input.placeholder;
-    input.placeholder = "A gravar e a criptografar nota...";
+    input.placeholder = "A gravar...";
     
     try {
-        const noteObj = {
-            text: text,
-            author: loggedInAdminName || 'Equipa PayGo',
-            date: new Date().toISOString()
-        };
-        
-        await updateDoc(doc(db, "orders", orderId), {
-            adminNotes: arrayUnion(noteObj),
-            updatedAt: serverTimestamp()
-        });
-
+        const noteObj = { text: text, author: loggedInAdminName || 'Equipa', date: new Date().toISOString() };
+        await updateDoc(doc(db, "orders", orderId), { adminNotes: arrayUnion(noteObj), updatedAt: serverTimestamp() });
         await logAdminAction('ADD_INTERNAL_NOTE', orderId, null, { noteAdded: text });
-        showToast('Nota confidencial guardada no dossier.', 'success');
-        
-    } catch(e) {
-        console.error(e);
-        showToast('Acesso negado ao tentar guardar a nota.', 'error');
-        input.disabled = false;
-        input.placeholder = originalPh;
-    }
+        showToast('Nota confidencial guardada.', 'success');
+    } catch(e) { showToast('Acesso negado.', 'error'); input.disabled = false; input.placeholder = originalPh; }
 };
 
 // ==========================================
-// 🔍 ECRÃ DE DOSSIER (MODAL CAMALEÃO COM POST-ITS E DELETES)
+// 🔍 ECRÃ DE DOSSIER (MODAL CAMALEÃO)
 // ==========================================
 window.openModal = (orderId, isSilentUpdate = false) => {
     const order = orders.find(o => o.id === orderId);
     if (!order) return;
 
     currentOrderId = orderId;
-    const methodColor = (order.paymentMethod === 'mpesa' || order.paymentMethod === 'e-mola') ? 'brand' : 'warning';
+    const methodColor = (order.paymentMethod === 'mpesa' || order.paymentMethod === 'e-mola') ? 'brand' : (order.isTopup ? 'success' : 'warning');
     const methodName = order.paymentMethod ? order.paymentMethod.toUpperCase() : 'CARTEIRA (WALLET)';
     
     let trackRefHtml = order.paysuitePaymentId ? 
-        `<div class="flex justify-between items-center mt-3 pt-3 border-t border-white/5"><p class="text-[10px] font-bold text-slate-500 uppercase">Referência Externa</p><p class="font-mono text-xs text-brand-300 bg-brand-500/10 px-2 py-1 rounded border border-brand-500/20">${order.paysuitePaymentId}</p></div>` : '';
+        `<div class="flex justify-between items-center mt-3 pt-3 border-t border-white/5"><p class="text-[10px] font-bold text-slate-500 uppercase">Ref Externa</p><p class="font-mono text-xs text-brand-300 bg-brand-500/10 px-2 py-1 rounded border border-brand-500/20">${order.paysuitePaymentId}</p></div>` : '';
 
-    let notesHtml = '';
-    if (order.adminNotes && order.adminNotes.length > 0) {
-        notesHtml = order.adminNotes.map(n => `
-            <div class="bg-warning-900/10 p-3 rounded-xl border border-warning-500/20 mb-2 relative overflow-hidden group">
-                <div class="absolute left-0 top-0 h-full w-1 bg-warning-500"></div>
-                <div class="flex justify-between items-center mb-1">
-                    <span class="text-[10px] font-black text-warning-400 uppercase tracking-widest pl-2"><i data-lucide="user" class="w-3 h-3 inline pb-0.5"></i> ${n.author}</span>
-                    <span class="text-[9px] font-mono text-slate-500">${new Date(n.date).toLocaleString('pt-MZ', { day: '2-digit', month: 'short', hour:'2-digit', minute:'2-digit'})}</span>
-                </div>
-                <p class="text-sm text-slate-300 pl-2 leading-relaxed font-medium">${n.text}</p>
-            </div>
-        `).join('');
-    } else {
-        notesHtml = `<div class="text-center py-6 text-slate-600"><i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-50"></i><p class="text-xs font-medium">O cofre confidencial deste pedido está vazio.</p></div>`;
-    }
-
-    // 🦎 Lógica do Camaleão: Mostrar o que interessa (Físico vs Digital)
     let dynamicDataHtml = '';
-    if (order.category === 'physical' || !order.category) {
+    let topupProtectionHtml = '';
+    
+    if (order.isTopup) {
+        dynamicDataHtml = `
+            <div class="bg-success-900/20 p-5 rounded-2xl border border-success-500/30 shadow-inner">
+                <h3 class="text-xs font-black text-success-400 uppercase tracking-widest border-b border-success-500/20 pb-3 mb-3 flex items-center gap-2"><i data-lucide="wallet" class="w-4 h-4"></i> Transação de TopUp</h3>
+                <p class="text-sm text-slate-300">Este registo representa uma injeção de saldo diretamente na carteira do cliente.</p>
+            </div>`;
+            
+        topupProtectionHtml = `
+            <div class="bg-danger-500/10 border border-danger-500/30 p-4 rounded-xl mt-4 flex gap-3">
+                <i data-lucide="shield-alert" class="text-danger-400 w-5 h-5 shrink-0"></i>
+                <p class="text-xs text-danger-200"><b>Acesso Bloqueado:</b> O estado financeiro dos depósitos de carteira é gerido pela PaySuite. Ação manual bloqueada.</p>
+            </div>`;
+    } else if (order.category === 'physical' || !order.category) {
         const ship = order.shipping || {};
         dynamicDataHtml = `
             <div class="bg-brand-900/20 p-5 rounded-2xl border border-brand-500/30 shadow-inner">
-                <h3 class="text-xs font-black text-brand-400 uppercase tracking-widest border-b border-brand-500/20 pb-3 mb-3 flex items-center gap-2"><i data-lucide="truck" class="w-4 h-4"></i> Dados de Despacho Logístico</h3>
+                <h3 class="text-xs font-black text-brand-400 uppercase tracking-widest border-b border-brand-500/20 pb-3 mb-3 flex items-center gap-2"><i data-lucide="truck" class="w-4 h-4"></i> Dados de Despacho</h3>
                 <div class="grid grid-cols-2 gap-4 text-sm">
-                    <div><p class="text-[10px] text-slate-500 uppercase">Nome Recetor</p><p class="text-white font-bold">${ship.shipName || order.name}</p></div>
-                    <div><p class="text-[10px] text-slate-500 uppercase">Telefone</p><p class="text-white font-bold">${ship.shipPhone || 'N/A'}</p></div>
-                    <div><p class="text-[10px] text-slate-500 uppercase">Província / Cidade</p><p class="text-white">${ship.shipCity || 'N/A'}</p></div>
-                    <div><p class="text-[10px] text-brand-400 uppercase font-bold">Código Postal (ZIP)</p><p class="text-brand-300 font-mono font-bold text-lg">${ship.shipZip || 'N/A'}</p></div>
-                    <div class="col-span-2"><p class="text-[10px] text-slate-500 uppercase">Morada Completa</p><p class="text-white bg-slate-950 p-3 rounded-xl border border-slate-800">${ship.shipAddress || 'N/A'}</p></div>
+                    <div><p class="text-[10px] text-slate-500 uppercase">Recetor</p><p class="text-white font-bold">${escapeHTML(ship.shipName || order.name)}</p></div>
+                    <div><p class="text-[10px] text-slate-500 uppercase">Tel</p><p class="text-white font-bold">${escapeHTML(ship.shipPhone || 'N/A')}</p></div>
+                    <div class="col-span-2"><p class="text-[10px] text-slate-500 uppercase">Morada Completa</p><p class="text-white bg-slate-950 p-3 rounded-xl border border-slate-800">${escapeHTML(ship.shipAddress || 'N/A')}</p></div>
                 </div>
-            </div>
-        `;
-        document.getElementById('trackingContainer').classList.remove('hidden');
+            </div>`;
     } else {
         const digital = order.digitalData || {};
         dynamicDataHtml = `
             <div class="bg-vip-900/20 p-5 rounded-2xl border border-vip-500/30 shadow-inner">
-                <h3 class="text-xs font-black text-vip-400 uppercase tracking-widest border-b border-vip-500/20 pb-3 mb-3 flex items-center gap-2"><i data-lucide="gamepad-2" class="w-4 h-4"></i> Credenciais da Conta / Jogo</h3>
+                <h3 class="text-xs font-black text-vip-400 uppercase tracking-widest border-b border-vip-500/20 pb-3 mb-3 flex items-center gap-2"><i data-lucide="gamepad-2" class="w-4 h-4"></i> Credenciais Conta/Jogo</h3>
                 <div>
-                    <p class="text-[10px] text-slate-500 uppercase mb-1">Player ID / E-mail da Conta</p>
-                    <p class="text-white font-mono font-bold text-2xl bg-slate-950 p-4 rounded-xl border border-slate-800 select-all">${digital.accountOrId || 'N/A'}</p>
+                    <p class="text-[10px] text-slate-500 uppercase mb-1">Player ID / E-mail</p>
+                    <p class="text-white font-mono font-bold text-2xl bg-slate-950 p-4 rounded-xl border border-slate-800 select-all">${escapeHTML(digital.accountOrId || 'N/A')}</p>
                 </div>
-            </div>
-        `;
-        document.getElementById('trackingContainer').classList.add('hidden');
+            </div>`;
     }
 
     const urlStr = order.detail ? order.detail.split(' | ')[0] : '#';
-    const detStr = order.detail ? order.detail.split(' | ')[1] : 'Sem observações do cliente.';
+    const detStr = order.detail ? order.detail.split(' | ')[1] : 'Nenhum detalhe adicional.';
 
     document.getElementById('modalContent').innerHTML = `
         <div class="bg-slate-950 p-6 rounded-2xl flex justify-between items-center border border-slate-800 shadow-[inset_0_2px_15px_rgba(0,0,0,0.5)]">
             <div>
                 <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 flex items-center gap-1"><i data-lucide="fingerprint" class="w-3 h-3"></i> Fatura Oficial (ID)</p>
-                <p class="font-mono font-black text-brand-400 text-2xl tracking-tight">${order.orderId}</p>
-            </div>
-            <div class="text-right">
-                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 flex items-center justify-end gap-1"><i data-lucide="calendar-clock" class="w-3 h-3"></i> Registo de Servidor</p>
-                <p class="font-bold text-white text-sm bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">${order.createdAt.toLocaleString('pt-MZ')}</p>
+                <p class="font-mono font-black ${order.isTopup ? 'text-success-400' : 'text-brand-400'} text-2xl tracking-tight">${order.orderId}</p>
             </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
             <div class="bg-slate-900/50 p-6 rounded-2xl border border-white/5 flex flex-col gap-4">
-                <h3 class="text-xs font-black text-brand-400 uppercase tracking-widest border-b border-white/10 pb-3 flex items-center gap-2"><i data-lucide="user-circle" class="w-4 h-4"></i> Identidade do Comprador</h3>
-                <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nome Registado</p><p class="font-bold text-white text-base">${order.name}</p></div>
-                <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Correio Eletrónico</p><p class="font-medium text-slate-300 font-mono text-sm">${order.email}</p></div>
+                <h3 class="text-xs font-black ${order.isTopup ? 'text-success-400' : 'text-brand-400'} uppercase tracking-widest border-b border-white/10 pb-3 flex items-center gap-2"><i data-lucide="user-circle" class="w-4 h-4"></i> Identidade do Pagador</h3>
+                <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nome Registado</p><p class="font-bold text-white text-base">${escapeHTML(order.name)}</p></div>
+                <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Correio/Ref</p><p class="font-medium text-slate-300 font-mono text-sm">${escapeHTML(order.email)}</p></div>
             </div>
 
-            <div class="bg-slate-900 p-6 rounded-2xl border border-brand-500/20 shadow-[0_10px_30px_rgba(37,99,235,0.05)] relative overflow-hidden">
-                <div class="absolute top-0 right-0 w-32 h-32 bg-brand-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
-                <h3 class="text-xs font-black text-brand-400 uppercase tracking-widest border-b border-white/10 pb-3 flex items-center gap-2 relative z-10"><i data-lucide="calculator" class="w-4 h-4"></i> Extrato de Liquidação</h3>
+            <div class="bg-slate-900 p-6 rounded-2xl border border-${order.isTopup ? 'success' : 'brand'}-500/20 shadow-lg relative overflow-hidden">
+                <h3 class="text-xs font-black ${order.isTopup ? 'text-success-400' : 'text-brand-400'} uppercase tracking-widest border-b border-white/10 pb-3 flex items-center gap-2 relative z-10"><i data-lucide="calculator" class="w-4 h-4"></i> Extrato</h3>
                 <div class="space-y-3 relative z-10 mt-4">
-                    <div class="flex justify-between items-center"><p class="text-xs font-bold text-slate-400">Conversão de Divisa (USD)</p><p class="font-mono font-bold text-slate-200 bg-slate-800 px-2 py-1 rounded">${formatValue(order.usd, 'usd')}</p></div>
-                    <div class="flex justify-between items-center"><p class="text-xs font-bold text-slate-400">Taxa do Serviço PayGo</p><p class="font-mono font-bold text-slate-300">${formatValue(order.tax, 'currency')}</p></div>
-                    <div class="flex justify-between items-center"><p class="text-xs font-bold text-slate-400">Canal Pagamento</p><p class="text-[10px] font-black text-${methodColor}-400 bg-${methodColor}-500/20 px-2.5 py-1 rounded border border-${methodColor}-500/30 uppercase tracking-widest shadow-sm">${methodName}</p></div>
-                    ${trackRefHtml}
+                    ${!order.isTopup ? `<div class="flex justify-between items-center"><p class="text-xs font-bold text-slate-400">Conversão (USD)</p><p class="font-mono font-bold text-slate-200 bg-slate-800 px-2 py-1 rounded">${formatValue(order.usd, 'usd')}</p></div>` : ''}
+                    <div class="flex justify-between items-center"><p class="text-xs font-bold text-slate-400">Canal</p><p class="text-[10px] font-black text-${methodColor}-400 bg-${methodColor}-500/20 px-2.5 py-1 rounded border border-${methodColor}-500/30 uppercase tracking-widest shadow-sm">${methodName}</p></div>
                     <div class="flex justify-between pt-4 border-t border-white/10 mt-2 items-end"><p class="text-xs font-black text-white uppercase tracking-widest mb-1">TOTAL PAGO</p><p class="font-black text-3xl text-success-400 tracking-tight">${formatValue(order.total, 'currency')}</p></div>
                 </div>
             </div>
         </div>
 
         ${dynamicDataHtml}
+        
+        ${!order.isTopup ? `
+        <div class="bg-slate-800/80 rounded-2xl p-6 border border-slate-700 shadow-inner mt-2">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5"><i data-lucide="shopping-cart" class="w-3 h-3"></i> Resumo da Compra</p>
+            <a href="${urlStr}" target="_blank" class="text-brand-400 font-medium hover:underline break-all block mb-4 bg-slate-950 p-3 rounded-xl border border-slate-800"><i data-lucide="external-link" class="w-3 h-3 inline"></i> ${urlStr}</a>
+        </div>` : ''}
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-2">
-            <div class="bg-slate-800/80 rounded-2xl p-6 border border-slate-700 shadow-inner flex flex-col">
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5"><i data-lucide="shopping-cart" class="w-3 h-3"></i> O que o cliente quer comprar</p>
-                <a href="${urlStr}" target="_blank" class="text-brand-400 font-medium hover:underline break-all block mb-4 bg-slate-950 p-3 rounded-xl border border-slate-800"><i data-lucide="external-link" class="w-3 h-3 inline"></i> ${urlStr}</a>
-                <div class="bg-slate-950 p-4 rounded-xl font-mono text-sm text-brand-200 break-words leading-relaxed border border-white/5 whitespace-pre-wrap flex-1">${detStr}</div>
-            </div>
+        ${topupProtectionHtml}
 
-            <div class="bg-slate-900 rounded-2xl p-6 border border-warning-500/20 shadow-[0_10px_30px_rgba(245,158,11,0.05)] relative overflow-hidden flex flex-col">
-                <div class="absolute top-0 right-0 w-32 h-32 bg-warning-500/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
-                <h3 class="text-xs font-black text-warning-400 uppercase tracking-widest border-b border-white/5 pb-3 flex items-center gap-2 relative z-10"><i data-lucide="sticky-note" class="w-4 h-4"></i> Notas Secretas da Equipa</h3>
-                
-                <div class="flex-1 overflow-y-auto pr-2 mt-4 relative z-10 mb-4 space-y-2 notes-scrollbar max-h-[160px]">
-                    ${notesHtml}
-                </div>
-
-                <div class="relative z-10 flex gap-2 shrink-0">
-                    <input type="text" id="newNoteInput" placeholder="Afixar nota confidencial..." class="flex-1 bg-slate-950 border border-slate-700 text-white text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-warning-500 focus:ring-1 focus:ring-warning-500/50 transition-all placeholder-slate-600 shadow-inner" onkeydown="if(event.key==='Enter') window.addInternalNote('${order.id}')">
-                    <button onclick="window.addInternalNote('${order.id}')" class="bg-warning-500/10 text-warning-400 hover:bg-warning-500 hover:text-slate-900 border border-warning-500/30 px-5 py-3 rounded-xl text-sm font-black transition-all shadow-lg active:scale-95 flex items-center justify-center">
-                        <i data-lucide="send" class="w-4 h-4"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-sm mt-2">
+        ${!order.isTopup ? `
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-sm mt-4">
             <div class="flex-1 w-full">
-                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-1"><i data-lucide="shield-check" class="w-3 h-3"></i> Ferramenta de Auditoria de Recebimento</p>
+                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-1"><i data-lucide="shield-check" class="w-3 h-3"></i> Auditoria de Recebimento</p>
                 <button onclick="window.togglePaymentStatus('${order.id}', ${order.isPaid})" class="w-full sm:w-auto px-6 py-3.5 rounded-xl font-bold text-sm transition-all shadow-lg flex items-center justify-center gap-2 ${order.isPaid ? 'bg-success-600 hover:bg-success-500 text-white shadow-success-500/20' : 'bg-slate-950 border border-danger-500 text-danger-400 hover:bg-danger-500 hover:text-white'}">
                     <i data-lucide="${order.isPaid ? 'check-circle' : 'alert-octagon'}" class="w-4 h-4"></i>
-                    ${order.isPaid ? '✅ DINHEIRO CONFIRMADO NA CONTA' : '⚠️ MARCAR PAGAMENTO MANUALMENTE'}
+                    ${order.isPaid ? '✅ DINHEIRO CONFIRMADO' : '⚠️ MARCAR PAGAMENTO MANUAL'}
                 </button>
             </div>
-            <div class="w-full sm:w-auto border-t border-slate-700 sm:border-0 pt-4 sm:pt-0">
-                 <button onclick="window.deleteSingleOrder('${order.id}')" class="w-full sm:w-auto px-5 py-3.5 bg-danger-500/10 hover:bg-danger-500 hover:text-white text-danger-400 border border-danger-500/30 rounded-xl text-sm font-bold transition flex items-center justify-center gap-2">
-                    <i data-lucide="trash-2" class="w-4 h-4"></i> Destruir Encomenda
-                </button>
-            </div>
+        </div>` : ''}
+        
+        <div class="mt-4 pt-4 border-t border-slate-800 text-right">
+             <button onclick="window.deleteSingleOrder('${order.id}', ${order.isTopup})" class="px-5 py-3 bg-danger-500/10 hover:bg-danger-500 hover:text-white text-danger-400 border border-danger-500/30 rounded-xl text-sm font-bold transition flex items-center justify-center gap-2 inline-flex ml-auto">
+                <i data-lucide="trash-2" class="w-4 h-4"></i> Destruir Registo
+            </button>
         </div>
     `;
 
-    document.getElementById('statusSelect').value = order.status;
-    document.getElementById('trackingInput').value = order.trackingCode || '';
+    const statusSelect = document.getElementById('statusSelect');
+    const trackingInput = document.getElementById('trackingInput');
+    const updateStatusBtn = document.getElementById('updateStatusBtn');
+    
+    if (order.isTopup) {
+        if(statusSelect) statusSelect.disabled = true;
+        if(trackingInput) trackingInput.parentElement.parentElement.classList.add('hidden');
+        if(updateStatusBtn) updateStatusBtn.disabled = true;
+    } else {
+        if(statusSelect) { statusSelect.disabled = false; statusSelect.value = order.status; }
+        if(trackingInput) {
+            if(order.category === 'physical' || !order.category) trackingInput.parentElement.parentElement.classList.remove('hidden');
+            trackingInput.value = order.trackingCode || '';
+        }
+        if(updateStatusBtn) updateStatusBtn.disabled = false;
+    }
 
     if (!isSilentUpdate) {
         const modal = document.getElementById('orderModal');
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
     }
-    
     window.renderIcons();
 };
 
@@ -770,14 +745,15 @@ window.closeModal = () => {
 };
 
 // ==========================================
-// 💾 AÇÕES DE GESTÃO DO MODAL (STATUS, APAGAR, PAGO, CPA)
+// 💾 AÇÕES DE GESTÃO DO MODAL
 // ==========================================
 window.saveOrderStatus = async () => {
     if (!currentOrderId) return;
+    const order = orders.find(o => o.id === currentOrderId);
+    if(order.isTopup) return;
 
     const newStatus = document.getElementById('statusSelect').value;
     const newTracking = document.getElementById('trackingInput').value.trim();
-    const order = orders.find(o => o.id === currentOrderId);
     const oldStatus = order?.status;
 
     const btn = document.getElementById('updateStatusBtn');
@@ -785,146 +761,64 @@ window.saveOrderStatus = async () => {
 
     btn.disabled = true;
     btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A Sincronizar DB...`;
-    window.renderIcons();
 
     try {
-        await updateDoc(doc(db, "orders", currentOrderId), {
-            status: newStatus,
-            trackingCode: newTracking || null,
-            updatedAt: serverTimestamp()
-        });
-
-        await logAdminAction('UPDATE_ORDER_STATUS', currentOrderId, { status: oldStatus }, { status: newStatus });
-
-        if (newStatus === 'completed' && order?.referredBy && !order?.commissionProcessed) {
-            await processAffiliateCPA(order);
-            await updateDoc(doc(db, "orders", currentOrderId), { commissionProcessed: true });
-        }
-
+        await updateDoc(doc(db, "orders", currentOrderId), { status: newStatus, trackingCode: newTracking || null, updatedAt: serverTimestamp() });
         showToast('Nova etapa logística gravada na Cloud.', 'success');
-
-        if (newStatus === 'completed' && oldStatus !== 'completed') {
-            await sendNotificationEmail(order, 'completed');
-        }
-
         window.closeModal();
-    } catch (error) {
-        console.error('Erro ao atualizar status:', error);
-        showToast('Erro interno de permissões.', 'error');
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-        window.renderIcons();
-    }
+    } catch (error) { showToast('Erro interno de permissões.', 'error'); } 
+    finally { btn.disabled = false; btn.innerHTML = originalText; window.renderIcons(); }
 };
-
-async function processAffiliateCPA(order) {
-    try {
-        const q = query(collection(db, "users"), where("affiliateCode", "==", order.referredBy), where("role", "==", "affiliate"));
-        const snap = await getDocs(q);
-        if(snap.empty) return;
-
-        const refDoc = snap.docs[0];
-        const refData = refDoc.data();
-
-        const commissionValue = order.tax * (refData.approvedReferrals >= 10 ? 0.05 : 0.03);
-
-        await updateDoc(doc(db, "users", refDoc.id), {
-            affiliateEarnings: increment(commissionValue),
-            approvedReferrals: increment(1)
-        });
-
-        console.log(`Comissão de ${commissionValue} creditada!`);
-    } catch(e) {
-        console.error("Falha ao distribuir comissões", e);
-    }
-}
 
 window.togglePaymentStatus = async (orderId, isCurrentlyPaid) => {
     const newStatus = !isCurrentlyPaid;
     const order = orders.find(o => o.id === orderId);
+    if(order.isTopup) return;
+
     try {
         await updateDoc(doc(db, "orders", orderId), { isPaid: newStatus });
-        await logAdminAction('TOGGLE_PAYMENT_STATUS', orderId, { isPaid: isCurrentlyPaid }, { isPaid: newStatus });
-
         showToast(newStatus ? 'Validado como PAGO!' : 'Assinatura Financeira Removida.', 'success');
-
-        if (newStatus === true) {
-            showToast('Servidor de Emails ativado (Envio Silencioso).', 'info');
-            await sendNotificationEmail(order, 'paid');
-        }
         window.closeModal();
-    } catch (e) {
-        console.error('Erro ao atualizar pagamento:', e);
-        showToast('Falha técnica.', 'error');
-    }
+    } catch (e) { showToast('Falha técnica.', 'error'); }
 };
 
-window.deleteSingleOrder = async (orderId) => {
-    const confirm1 = confirm(`⚠️ PERIGO EXTREMO ⚠️\n\nTem a certeza absoluta que deseja APAGAR PERMANENTEMENTE a conta deste pedido?`);
-    if(!confirm1) return;
-
+window.deleteSingleOrder = async (orderId, isTopup) => {
+    if(!confirm(`⚠️ PERIGO EXTREMO ⚠️\n\nTem a certeza que deseja apagar este registo?`)) return;
     try {
-        await logAdminAction('DELETE_ORDER', orderId, { order_id: orderId }, null);
-        await deleteDoc(doc(db, "orders", orderId));
-        showToast(`O documento foi eliminado e vaporizado do sistema.`, 'success');
+        const collectionTarget = isTopup ? "topups" : "orders";
+        await deleteDoc(doc(db, collectionTarget, orderId));
+        showToast(`O documento foi vaporizado da Base de Dados.`, 'success');
         window.closeModal();
-    } catch(error) {
-        console.error(error);
-        showToast('Falha técnica ao tentar eliminar o documento da Base de Dados.', 'error');
-    }
+    } catch(error) { showToast('Falha técnica ao tentar eliminar o documento.', 'error'); }
 };
 
 window.clearHistory = async () => {
-    if (currentFilteredOrders.length === 0) return showToast('Aviso: O seu ecrã não possui pedidos visíveis para purgar.', 'warning');
-
+    if (currentFilteredOrders.length === 0) return showToast('Sem pedidos visíveis para purgar.', 'warning');
     const qty = currentFilteredOrders.length;
-    if (!confirm(`⚠️ ALERTA VERMELHO ⚠️\n\nIsto irá varrer da base de dados TODOS os ${qty} pedidos que você filtrou no ecrã. Não há volta a dar.\nProceder com a purga tática?`)) return;
+    if (!confirm(`⚠️ ALERTA VERMELHO ⚠️\n\nIsto irá varrer TODOS os ${qty} pedidos no ecrã.\nProceder?`)) return;
 
     showToast('A preparar injeção de eliminação em massa...', 'info');
-
     try {
-        await logAdminAction('BULK_DELETE_ORDERS', 'multiple', null, { deletedCount: qty });
-
         const batch = writeBatch(db);
-        currentFilteredOrders.forEach(order => {
-            batch.delete(doc(db, "orders", order.id));
-        });
+        currentFilteredOrders.forEach(order => { const col = order.isTopup ? "topups" : "orders"; batch.delete(doc(db, col, order.id)); });
         await batch.commit();
         showToast(`Operação Global: ${qty} Documentos Destruídos.`, 'success');
-    } catch (e) {
-        console.error('Erro em batch delete:', e);
-        showToast('O servidor bloqueou a execução em massa (Limites).', 'error');
-    }
+    } catch (e) { showToast('O servidor bloqueou a execução em massa (Limites).', 'error'); }
 };
 
 window.exportToCSV = () => {
-    if (currentFilteredOrders.length === 0) { showToast('Dados insuficientes para gerar relatório Contabilístico.', 'warning'); return; }
-
-    logAdminAction('EXPORT_CSV', 'all', null, { exportedCount: currentFilteredOrders.length });
-
-    let csvContent = "ID de Transacao,Data Servidor,Hora Servidor,Entidade Cliente,Email Contacto,Categoria,Verificacao Dinheiro,Total Faturado (MT),Etapa Logistica,Resumo Tecnico (Produto)\n";
+    if (currentFilteredOrders.length === 0) return showToast('Dados insuficientes para gerar relatório.', 'warning');
+    let csvContent = "ID,Data,Hora,Cliente,Email,Categoria,Total(MT),Status\n";
 
     currentFilteredOrders.forEach(order => {
-        const dateStr = order.createdAt.toLocaleDateString('pt-MZ');
-        const timeStr = order.createdAt.toLocaleTimeString('pt-MZ');
-        const name = `"${order.name.replace(/"/g, '""')}"`;
-        const detail = `"${order.detail.replace(/"/g, '""')}"`;
-        const payStatus = order.isPaid ? 'Dinheiro Confirmado' : 'Divida Pendente';
-        const category = order.category === 'digital' ? 'Digital' : (order.category === 'game' ? 'Jogo' : 'Físico');
-        
-        csvContent += `${order.orderId},${dateStr},${timeStr},${name},${order.email},${category},${payStatus},${order.total},${order.status},${detail}\n`;
+        csvContent += `${order.orderId},${order.createdAt.toLocaleDateString('pt-MZ')},${order.createdAt.toLocaleTimeString('pt-MZ')},"${order.name}","${order.email}",${order.category},${order.total},${order.status}\n`;
     });
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `Auditoria_PayGo_Pedidos_${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    showToast('O Livro de Registos (Excel) foi descarregado.', 'success');
+    link.download = `PayGo_Relatorio_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
 };
 
 // ==========================================
@@ -949,53 +843,31 @@ mobileMenuBtn.addEventListener('click', toggleMobileSidebar);
 closeSidebarBtn.addEventListener('click', toggleMobileSidebar);
 sidebarOverlay.addEventListener('click', toggleMobileSidebar);
 
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && document.getElementById('orderModal').classList.contains('active')) {
-        window.closeModal();
-    }
-});
-
-window.logout = async function() { 
-    if (confirm('Encerrar sessão de forma segura?')) {
-        await signOut(auth); window.location.href = '../login.html'; 
-    }
-};
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && document.getElementById('orderModal').classList.contains('active')) window.closeModal(); });
+window.logout = async function() { if (confirm('Encerrar sessão de forma segura?')) { await signOut(auth); window.location.href = '../login.html'; } };
 
 // ==========================================
-// 🚀 INICIALIZAÇÃO E SESSÃO
+// 🚀 INICIALIZAÇÃO
 // ==========================================
-const fallbackTimer = setTimeout(() => { document.getElementById('sysLoader').style.display = 'none'; }, 3000);
-
 onAuthStateChanged(auth, async (user) => {
     if (!user) { window.location.href = '../login.html'; return; }
-    
     try {
         const userDoc = await getDoc(doc(db, "users", user.uid));
         if (userDoc.exists() && (userDoc.data().role === 'admin' || userDoc.data().role === 'superadmin')) {
-            const data = userDoc.data();
             loggedInAdminId = user.uid;
-            loggedInAdminName = data.name || 'Admin Oculto';
+            loggedInAdminName = userDoc.data().name || 'Admin';
             document.getElementById('adminName').textContent = loggedInAdminName;
-            
-            loadOrdersRealTime();
-        } else {
-            window.location.href = '../index.html';
-        }
-    } catch (error) {
-        console.error('Erro na ligação:', error);
-        showToast("Erro de ligação à rede segura.", "error");
-    } finally {
-        clearTimeout(fallbackTimer);
-        const ldr = document.getElementById('sysLoader');
-        if(ldr) {
-            ldr.style.opacity = '0';
-            setTimeout(() => ldr.style.display = 'none', 500);
-        }
-    }
+            loadDataRealTime(); // Inicia motor Híbrido
+        } else { window.location.href = '../index.html'; }
+    } catch (error) { showToast("Erro de ligação à rede segura.", "error"); } 
+    finally { document.getElementById('sysLoader').style.display = 'none'; }
 });
 
 document.addEventListener('DOMContentLoaded', () => { window.renderIcons(); });
-window.addEventListener('beforeunload', () => { if (ordersUnsubscribe) ordersUnsubscribe(); });
+window.addEventListener('beforeunload', () => { 
+    if (ordersUnsubscribe) ordersUnsubscribe(); 
+    if (topupsUnsubscribe) topupsUnsubscribe(); 
+});
 </script>
 </body>
 </html>
