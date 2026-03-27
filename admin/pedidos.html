@@ -292,7 +292,6 @@ select, input { background-color: rgba(15, 23, 42, 0.5) !important; color: white
         </div>
     </div>
 </div>
-
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -364,6 +363,7 @@ function formatValue(value, type = 'currency') {
 }
 
 function getRelativeDateLabel(date) {
+    if (!date) return 'Desconhecido';
     const today = new Date();
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
@@ -378,7 +378,7 @@ const escapeHTML = (str) => {
 };
 
 // ==========================================
-// 📧 API RESEND E LOGS
+// 📧 API RESEND E LOGS DE AUDITORIA
 // ==========================================
 async function sendNotificationEmail(order, actionType) {
     try {
@@ -416,7 +416,7 @@ function mergeAndRender() {
     }
 }
 
-function loadOrdersRealTime() {
+function loadDataRealTime() {
     const qOrders = query(collection(db, "orders"), orderBy("createdAt", "desc"));
     const qTopups = query(collection(db, "topups"), orderBy("createdAt", "desc"));
 
@@ -445,7 +445,7 @@ function loadOrdersRealTime() {
                 userId: data.userId || null,
                 commissionProcessed: data.commissionProcessed || false,
                 adminNotes: data.adminNotes || [], 
-                createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
+                createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(), // Proteção contra datas nulas
                 paysuitePaymentId: data.paysuitePaymentId || null,
                 isTopup: false
             };
@@ -472,7 +472,7 @@ function loadOrdersRealTime() {
                 trackingCode: '',
                 isPaid: isCompleted,
                 paymentMethod: data.method || 'mpesa',
-                detail: `Depósito de ${data.amount} MT na Carteira PayGo do Cliente.`,
+                detail: `Depósito de ${data.amount} MT na Carteira PayGo.`,
                 referredBy: null,
                 userId: data.userId || null,
                 commissionProcessed: true, 
@@ -546,7 +546,7 @@ window.renderOrders = function() {
         if(order.isTopup) { catIcon = 'wallet'; catLabel = 'Depósito'; }
 
         const notesIcon = order.adminNotes && order.adminNotes.length > 0 
-            ? `<span class="ml-2 text-warning-500" title="Contém Notas"><i data-lucide="sticky-note" class="w-3 h-3 inline"></i></span>` : '';
+            ? `<span class="ml-2 text-warning-500" title="Contém Notas Secretas"><i data-lucide="sticky-note" class="w-3 h-3 inline"></i></span>` : '';
 
         htmlContent += `
         <tr class="hover:bg-slate-800/60 transition-colors group border-b border-white/5 last:border-0 cursor-pointer h-[72px]" onclick="window.openModal('${order.id}')" role="button" tabindex="0">
@@ -602,7 +602,11 @@ window.addInternalNote = async (orderId) => {
         await updateDoc(doc(db, "orders", orderId), { adminNotes: arrayUnion(noteObj), updatedAt: serverTimestamp() });
         await logAdminAction('ADD_INTERNAL_NOTE', orderId, null, { noteAdded: text });
         showToast('Nota confidencial guardada.', 'success');
-    } catch(e) { showToast('Acesso negado.', 'error'); input.disabled = false; input.placeholder = originalPh; }
+    } catch(e) { 
+        showToast('Acesso negado.', 'error'); 
+        input.disabled = false; 
+        input.placeholder = originalPh; 
+    }
 };
 
 // ==========================================
@@ -617,7 +621,23 @@ window.openModal = (orderId, isSilentUpdate = false) => {
     const methodName = order.paymentMethod ? order.paymentMethod.toUpperCase() : 'CARTEIRA (WALLET)';
     
     let trackRefHtml = order.paysuitePaymentId ? 
-        `<div class="flex justify-between items-center mt-3 pt-3 border-t border-white/5"><p class="text-[10px] font-bold text-slate-500 uppercase">Ref Externa</p><p class="font-mono text-xs text-brand-300 bg-brand-500/10 px-2 py-1 rounded border border-brand-500/20">${order.paysuitePaymentId}</p></div>` : '';
+        `<div class="flex justify-between items-center mt-3 pt-3 border-t border-white/5"><p class="text-[10px] font-bold text-slate-500 uppercase">Referência Externa</p><p class="font-mono text-xs text-brand-300 bg-brand-500/10 px-2 py-1 rounded border border-brand-500/20">${order.paysuitePaymentId}</p></div>` : '';
+
+    let notesHtml = '';
+    if (order.adminNotes && order.adminNotes.length > 0) {
+        notesHtml = order.adminNotes.map(n => `
+            <div class="bg-warning-900/10 p-3 rounded-xl border border-warning-500/20 mb-2 relative overflow-hidden group">
+                <div class="absolute left-0 top-0 h-full w-1 bg-warning-500"></div>
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-[10px] font-black text-warning-400 uppercase tracking-widest pl-2"><i data-lucide="user" class="w-3 h-3 inline pb-0.5"></i> ${n.author}</span>
+                    <span class="text-[9px] font-mono text-slate-500">${new Date(n.date).toLocaleString('pt-MZ', { day: '2-digit', month: 'short', hour:'2-digit', minute:'2-digit'})}</span>
+                </div>
+                <p class="text-sm text-slate-300 pl-2 leading-relaxed font-medium">${n.text}</p>
+            </div>
+        `).join('');
+    } else {
+        notesHtml = `<div class="text-center py-6 text-slate-600"><i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-50"></i><p class="text-xs font-medium">O cofre confidencial deste pedido está vazio.</p></div>`;
+    }
 
     let dynamicDataHtml = '';
     let topupProtectionHtml = '';
@@ -626,13 +646,13 @@ window.openModal = (orderId, isSilentUpdate = false) => {
         dynamicDataHtml = `
             <div class="bg-success-900/20 p-5 rounded-2xl border border-success-500/30 shadow-inner">
                 <h3 class="text-xs font-black text-success-400 uppercase tracking-widest border-b border-success-500/20 pb-3 mb-3 flex items-center gap-2"><i data-lucide="wallet" class="w-4 h-4"></i> Transação de TopUp</h3>
-                <p class="text-sm text-slate-300">Este registo representa uma injeção de saldo diretamente na carteira do cliente.</p>
+                <p class="text-sm text-slate-300">Este registo representa uma injeção de saldo diretamente na carteira do cliente. As faturas de depósito não exigem despacho físico ou digital.</p>
             </div>`;
             
         topupProtectionHtml = `
             <div class="bg-danger-500/10 border border-danger-500/30 p-4 rounded-xl mt-4 flex gap-3">
                 <i data-lucide="shield-alert" class="text-danger-400 w-5 h-5 shrink-0"></i>
-                <p class="text-xs text-danger-200"><b>Acesso Bloqueado:</b> O estado financeiro dos depósitos de carteira é gerido pela PaySuite. Ação manual bloqueada.</p>
+                <p class="text-xs text-danger-200"><b>Acesso Bloqueado:</b> O estado financeiro dos depósitos de carteira é gerido exclusivamente pelos Webhooks da PaySuite para evitar fraude e injeção falsa de dinheiro no sistema.</p>
             </div>`;
     } else if (order.category === 'physical' || !order.category) {
         const ship = order.shipping || {};
@@ -666,6 +686,10 @@ window.openModal = (orderId, isSilentUpdate = false) => {
                 <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 flex items-center gap-1"><i data-lucide="fingerprint" class="w-3 h-3"></i> Fatura Oficial (ID)</p>
                 <p class="font-mono font-black ${order.isTopup ? 'text-success-400' : 'text-brand-400'} text-2xl tracking-tight">${order.orderId}</p>
             </div>
+            <div class="text-right">
+                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 flex items-center justify-end gap-1"><i data-lucide="calendar-clock" class="w-3 h-3"></i> Registo de Servidor</p>
+                <p class="font-bold text-white text-sm bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">${order.createdAt.toLocaleString('pt-MZ')}</p>
+            </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
@@ -676,10 +700,13 @@ window.openModal = (orderId, isSilentUpdate = false) => {
             </div>
 
             <div class="bg-slate-900 p-6 rounded-2xl border border-${order.isTopup ? 'success' : 'brand'}-500/20 shadow-lg relative overflow-hidden">
-                <h3 class="text-xs font-black ${order.isTopup ? 'text-success-400' : 'text-brand-400'} uppercase tracking-widest border-b border-white/10 pb-3 flex items-center gap-2 relative z-10"><i data-lucide="calculator" class="w-4 h-4"></i> Extrato</h3>
+                <div class="absolute top-0 right-0 w-32 h-32 bg-${order.isTopup ? 'success' : 'brand'}-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
+                <h3 class="text-xs font-black ${order.isTopup ? 'text-success-400' : 'text-brand-400'} uppercase tracking-widest border-b border-white/10 pb-3 flex items-center gap-2 relative z-10"><i data-lucide="calculator" class="w-4 h-4"></i> Extrato de Liquidação</h3>
                 <div class="space-y-3 relative z-10 mt-4">
-                    ${!order.isTopup ? `<div class="flex justify-between items-center"><p class="text-xs font-bold text-slate-400">Conversão (USD)</p><p class="font-mono font-bold text-slate-200 bg-slate-800 px-2 py-1 rounded">${formatValue(order.usd, 'usd')}</p></div>` : ''}
-                    <div class="flex justify-between items-center"><p class="text-xs font-bold text-slate-400">Canal</p><p class="text-[10px] font-black text-${methodColor}-400 bg-${methodColor}-500/20 px-2.5 py-1 rounded border border-${methodColor}-500/30 uppercase tracking-widest shadow-sm">${methodName}</p></div>
+                    ${!order.isTopup ? `<div class="flex justify-between items-center"><p class="text-xs font-bold text-slate-400">Conversão (USD)</p><p class="font-mono font-bold text-slate-200 bg-slate-800 px-2 py-1 rounded">${formatValue(order.usd, 'usd')}</p></div>
+                    <div class="flex justify-between items-center"><p class="text-xs font-bold text-slate-400">Taxa do Serviço PayGo</p><p class="font-mono font-bold text-slate-300">${formatValue(order.tax, 'currency')}</p></div>` : ''}
+                    <div class="flex justify-between items-center"><p class="text-xs font-bold text-slate-400">Canal Pagamento</p><p class="text-[10px] font-black text-${methodColor}-400 bg-${methodColor}-500/20 px-2.5 py-1 rounded border border-${methodColor}-500/30 uppercase tracking-widest shadow-sm">${methodName}</p></div>
+                    ${trackRefHtml}
                     <div class="flex justify-between pt-4 border-t border-white/10 mt-2 items-end"><p class="text-xs font-black text-white uppercase tracking-widest mb-1">TOTAL PAGO</p><p class="font-black text-3xl text-success-400 tracking-tight">${formatValue(order.total, 'currency')}</p></div>
                 </div>
             </div>
@@ -691,7 +718,24 @@ window.openModal = (orderId, isSilentUpdate = false) => {
         <div class="bg-slate-800/80 rounded-2xl p-6 border border-slate-700 shadow-inner mt-2">
             <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5"><i data-lucide="shopping-cart" class="w-3 h-3"></i> Resumo da Compra</p>
             <a href="${urlStr}" target="_blank" class="text-brand-400 font-medium hover:underline break-all block mb-4 bg-slate-950 p-3 rounded-xl border border-slate-800"><i data-lucide="external-link" class="w-3 h-3 inline"></i> ${urlStr}</a>
+            <div class="bg-slate-950 p-4 rounded-xl font-mono text-sm text-brand-200 break-words leading-relaxed border border-white/5 whitespace-pre-wrap flex-1">${escapeHTML(detStr)}</div>
         </div>` : ''}
+
+        <div class="bg-slate-900 rounded-2xl p-6 border border-warning-500/20 shadow-[0_10px_30px_rgba(245,158,11,0.05)] relative overflow-hidden flex flex-col mt-4">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-warning-500/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+            <h3 class="text-xs font-black text-warning-400 uppercase tracking-widest border-b border-white/5 pb-3 flex items-center gap-2 relative z-10"><i data-lucide="sticky-note" class="w-4 h-4"></i> Notas Secretas da Equipa</h3>
+            
+            <div class="flex-1 overflow-y-auto pr-2 mt-4 relative z-10 mb-4 space-y-2 notes-scrollbar max-h-[160px]">
+                ${notesHtml}
+            </div>
+
+            <div class="relative z-10 flex gap-2 shrink-0">
+                <input type="text" id="newNoteInput" placeholder="Afixar nota confidencial..." class="flex-1 bg-slate-950 border border-slate-700 text-white text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-warning-500 focus:ring-1 focus:ring-warning-500/50 transition-all placeholder-slate-600 shadow-inner" onkeydown="if(event.key==='Enter') window.addInternalNote('${order.id}')">
+                <button onclick="window.addInternalNote('${order.id}')" class="bg-warning-500/10 text-warning-400 hover:bg-warning-500 hover:text-slate-900 border border-warning-500/30 px-5 py-3 rounded-xl text-sm font-black transition-all shadow-lg active:scale-95 flex items-center justify-center">
+                    <i data-lucide="send" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
 
         ${topupProtectionHtml}
 
@@ -701,7 +745,7 @@ window.openModal = (orderId, isSilentUpdate = false) => {
                 <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-1"><i data-lucide="shield-check" class="w-3 h-3"></i> Auditoria de Recebimento</p>
                 <button onclick="window.togglePaymentStatus('${order.id}', ${order.isPaid})" class="w-full sm:w-auto px-6 py-3.5 rounded-xl font-bold text-sm transition-all shadow-lg flex items-center justify-center gap-2 ${order.isPaid ? 'bg-success-600 hover:bg-success-500 text-white shadow-success-500/20' : 'bg-slate-950 border border-danger-500 text-danger-400 hover:bg-danger-500 hover:text-white'}">
                     <i data-lucide="${order.isPaid ? 'check-circle' : 'alert-octagon'}" class="w-4 h-4"></i>
-                    ${order.isPaid ? '✅ DINHEIRO CONFIRMADO' : '⚠️ MARCAR PAGAMENTO MANUAL'}
+                    ${order.isPaid ? '✅ DINHEIRO CONFIRMADO NA CONTA' : '⚠️ MARCAR PAGAMENTO MANUALMENTE'}
                 </button>
             </div>
         </div>` : ''}
@@ -745,7 +789,7 @@ window.closeModal = () => {
 };
 
 // ==========================================
-// 💾 AÇÕES DE GESTÃO DO MODAL
+// 💾 AÇÕES DE GESTÃO DO MODAL E AFILIADOS (CPA)
 // ==========================================
 window.saveOrderStatus = async () => {
     if (!currentOrderId) return;
@@ -764,11 +808,45 @@ window.saveOrderStatus = async () => {
 
     try {
         await updateDoc(doc(db, "orders", currentOrderId), { status: newStatus, trackingCode: newTracking || null, updatedAt: serverTimestamp() });
+        
+        await logAdminAction('UPDATE_ORDER_STATUS', currentOrderId, { status: oldStatus }, { status: newStatus });
+
+        // 💰 MOTOR CPA (Distribuição de Comissões)
+        if (newStatus === 'completed' && order?.referredBy && !order?.commissionProcessed) {
+            await processAffiliateCPA(order);
+            await updateDoc(doc(db, "orders", currentOrderId), { commissionProcessed: true });
+        }
+
         showToast('Nova etapa logística gravada na Cloud.', 'success');
+
+        if (newStatus === 'completed' && oldStatus !== 'completed') {
+            await sendNotificationEmail(order, 'completed');
+        }
+
         window.closeModal();
     } catch (error) { showToast('Erro interno de permissões.', 'error'); } 
     finally { btn.disabled = false; btn.innerHTML = originalText; window.renderIcons(); }
 };
+
+async function processAffiliateCPA(order) {
+    try {
+        const q = query(collection(db, "users"), where("affiliateCode", "==", order.referredBy), where("role", "==", "affiliate"));
+        const snap = await getDocs(q);
+        if(snap.empty) return;
+
+        const refDoc = snap.docs[0];
+        const refData = refDoc.data();
+
+        // CPA Matemático (3% para < 10 referidos, 5% para >= 10)
+        const commissionValue = order.tax * (refData.approvedReferrals >= 10 ? 0.05 : 0.03);
+
+        await updateDoc(doc(db, "users", refDoc.id), {
+            affiliateEarnings: increment(commissionValue),
+            approvedReferrals: increment(1)
+        });
+
+    } catch(e) { console.error("Falha ao distribuir comissões", e); }
+}
 
 window.togglePaymentStatus = async (orderId, isCurrentlyPaid) => {
     const newStatus = !isCurrentlyPaid;
@@ -777,7 +855,14 @@ window.togglePaymentStatus = async (orderId, isCurrentlyPaid) => {
 
     try {
         await updateDoc(doc(db, "orders", orderId), { isPaid: newStatus });
+        await logAdminAction('TOGGLE_PAYMENT_STATUS', orderId, { isPaid: isCurrentlyPaid }, { isPaid: newStatus });
+
         showToast(newStatus ? 'Validado como PAGO!' : 'Assinatura Financeira Removida.', 'success');
+
+        if (newStatus === true) {
+            showToast('Servidor de Emails ativado.', 'info');
+            await sendNotificationEmail(order, 'paid');
+        }
         window.closeModal();
     } catch (e) { showToast('Falha técnica.', 'error'); }
 };
@@ -785,6 +870,7 @@ window.togglePaymentStatus = async (orderId, isCurrentlyPaid) => {
 window.deleteSingleOrder = async (orderId, isTopup) => {
     if(!confirm(`⚠️ PERIGO EXTREMO ⚠️\n\nTem a certeza que deseja apagar este registo?`)) return;
     try {
+        await logAdminAction('DELETE_ORDER', orderId, { order_id: orderId }, null);
         const collectionTarget = isTopup ? "topups" : "orders";
         await deleteDoc(doc(db, collectionTarget, orderId));
         showToast(`O documento foi vaporizado da Base de Dados.`, 'success');
@@ -799,6 +885,7 @@ window.clearHistory = async () => {
 
     showToast('A preparar injeção de eliminação em massa...', 'info');
     try {
+        await logAdminAction('BULK_DELETE_ORDERS', 'multiple', null, { deletedCount: qty });
         const batch = writeBatch(db);
         currentFilteredOrders.forEach(order => { const col = order.isTopup ? "topups" : "orders"; batch.delete(doc(db, col, order.id)); });
         await batch.commit();
@@ -808,6 +895,9 @@ window.clearHistory = async () => {
 
 window.exportToCSV = () => {
     if (currentFilteredOrders.length === 0) return showToast('Dados insuficientes para gerar relatório.', 'warning');
+    
+    logAdminAction('EXPORT_CSV', 'all', null, { exportedCount: currentFilteredOrders.length });
+    
     let csvContent = "ID,Data,Hora,Cliente,Email,Categoria,Total(MT),Status\n";
 
     currentFilteredOrders.forEach(order => {
@@ -849,6 +939,8 @@ window.logout = async function() { if (confirm('Encerrar sessão de forma segura
 // ==========================================
 // 🚀 INICIALIZAÇÃO
 // ==========================================
+const fallbackTimer = setTimeout(() => { document.getElementById('sysLoader').style.display = 'none'; }, 3000);
+
 onAuthStateChanged(auth, async (user) => {
     if (!user) { window.location.href = '../login.html'; return; }
     try {
@@ -857,10 +949,17 @@ onAuthStateChanged(auth, async (user) => {
             loggedInAdminId = user.uid;
             loggedInAdminName = userDoc.data().name || 'Admin';
             document.getElementById('adminName').textContent = loggedInAdminName;
-            loadDataRealTime(); // Inicia motor Híbrido
+            loadDataRealTime(); 
         } else { window.location.href = '../index.html'; }
-    } catch (error) { showToast("Erro de ligação à rede segura.", "error"); } 
-    finally { document.getElementById('sysLoader').style.display = 'none'; }
+    } catch (error) { 
+        alert("ALERTA DE SISTEMA: " + error.message);
+        console.error("ERRO CRÍTICO:", error);
+        showToast("Erro de ligação à rede segura.", "error"); 
+    } 
+    finally { 
+        clearTimeout(fallbackTimer);
+        document.getElementById('sysLoader').style.display = 'none'; 
+    }
 });
 
 document.addEventListener('DOMContentLoaded', () => { window.renderIcons(); });
