@@ -370,7 +370,7 @@
             </form>
         </div>
     </div>
-    <script type="module">
+<script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, getDocs, collection, query, orderBy, limit, where, updateDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -391,12 +391,10 @@
 
         let loggedInAdminId = null;
 
-        // 🛡️ VACINA ANTI-XSS E PREVENÇÃO DE ERROS NULOS
+        // 🛡️ VACINA ANTI-XSS
         const escapeHTML = (str) => {
             if (!str) return '';
-            return String(str).replace(/[&<>'"]/g, tag => ({
-                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
-            }[tag] || tag));
+            return String(str).replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
         };
 
         const setSafeText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
@@ -438,13 +436,12 @@
             try {
                 const userDoc = await getDoc(doc(db, "users", user.uid));
                 if (!userDoc.exists() || (userDoc.data().role !== 'admin' && userDoc.data().role !== 'superadmin')) {
-                    window.location.href = '../dashboard.html'; return; // Expulsa não-admins
+                    window.location.href = '../dashboard.html'; return; 
                 }
                 
                 const userData = userDoc.data();
                 loggedInAdminId = user.uid;
                 
-                // Injeção segura 
                 setSafeText('userName', userData.name || 'Equipa PayGo');
                 setSafeText('userEmail', userData.email || '');
                 setSafeText('userInitial', (userData.name || 'P').charAt(0).toUpperCase());
@@ -463,25 +460,51 @@
         });
 
         // ==========================================
-        // 📊 EXTRAÇÃO GLOBAL DE DADOS (DASHBOARD)
+        // 📊 EXTRAÇÃO GLOBAL DE DADOS (HÍBRIDA)
         // ==========================================
         window.fetchDashboardData = async () => {
             try {
-                // 1. DADOS DE ENCOMENDAS E RECEITA
+                // 1. DADOS DE ENCOMENDAS, TOPUPS E RECEITA
                 const ordersSnap = await getDocs(collection(db, "orders"));
+                const topupsSnap = await getDocs(collection(db, "topups"));
+                
                 let totalOrders = 0, pendingOrders = 0, completedOrders = 0, totalRevenue = 0;
-                let allOrders = [];
+                let allOperations = [];
 
+                // 1A. Mapear Compras Normais
                 ordersSnap.forEach(doc => {
                     const data = doc.data();
-                    allOrders.push({ id: doc.id, ...data });
+                    allOperations.push({ id: doc.id, isTopup: false, ...data });
                     totalOrders++;
                     
                     if (data.status === 'pending' || data.status === 'processing' || data.status === 'shipped') pendingOrders++;
                     if (data.status === 'completed') {
                         completedOrders++;
-                        totalRevenue += (Number(data.total) || 0);
+                        totalRevenue += (Number(data.total) || 0); // Soma à faturação bruta
                     }
+                });
+
+                // 1B. Mapear Depósitos (TopUps)
+                topupsSnap.forEach(doc => {
+                    const data = doc.data();
+                    const isCompleted = data.status === 'completed';
+                    const isFailed = data.status === 'failed' || data.status === 'cancelled';
+                    
+                    allOperations.push({
+                        id: doc.id,
+                        isTopup: true,
+                        orderId: data.topupId || `TOP-${doc.id.slice(0, 8)}`,
+                        name: 'Depósito na Carteira',
+                        total: Number(data.amount) || 0,
+                        status: isCompleted ? 'completed' : (isFailed ? 'cancelled' : 'pending'),
+                        isPaid: isCompleted,
+                        createdAt: data.createdAt
+                    });
+                    
+                    totalOrders++;
+                    if (!isCompleted && !isFailed) pendingOrders++;
+                    if (isCompleted) completedOrders++;
+                    // Não somamos TopUps à "Faturação Bruta", pois é só saldo não gasto.
                 });
 
                 // Remover skeletons
@@ -495,13 +518,13 @@
                 setSafeText('statCompleted', completedOrders);
                 setSafeText('statRevenue', formatValue(totalRevenue, 'currency'));
 
-                // Render Top 10 Recentes
-                allOrders.sort((a, b) => {
-                    const timeA = a.createdAt?.seconds || 0;
-                    const timeB = b.createdAt?.seconds || 0;
+                // Render Top 10 Recentes Híbrido
+                allOperations.sort((a, b) => {
+                    const timeA = a.createdAt?.seconds || a.createdAt?.toMillis?.() || 0;
+                    const timeB = b.createdAt?.seconds || b.createdAt?.toMillis?.() || 0;
                     return timeB - timeA;
                 });
-                renderRecentOrders(allOrders.slice(0, 10));
+                renderRecentOrders(allOperations.slice(0, 10));
 
                 // 2. DADOS DE REDE DE AFILIADOS
                 const affiliatesSnap = await getDocs(query(collection(db, "users"), where("role", "==", "affiliate")));
@@ -525,15 +548,13 @@
 
                 // 3. CARTÕES VIRTUAIS (PEDIDOS PENDENTES)
                 const vcSnap = await getDocs(query(collection(db, "vc_requests"), orderBy("createdAt", "desc")));
-                let pendingVcCount = 0;
                 let vcHtml = '';
                 
                 vcSnap.forEach(docSnap => {
                     const vc = { id: docSnap.id, ...docSnap.data() };
                     const isPending = vc.status === 'pending';
-                    if(isPending) pendingVcCount++;
                     
-                    const dateStr = vc.createdAt?.toDate ? vc.createdAt.toDate().toLocaleDateString('pt-MZ', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'}) : 'Recente';
+                    const dateStr = vc.createdAt?.toDate ? vc.createdAt.toDate().toLocaleDateString('pt-MZ', {day:'2-digit', month:'short'}) : 'Recente';
                     
                     const statusBadge = isPending 
                         ? `<span class="px-2 py-1 rounded bg-warning-500/20 text-warning-400 text-[9px] font-bold uppercase tracking-widest border border-warning-500/30">⏳ Pendente</span>`
@@ -558,7 +579,7 @@
                 
                 setSafeHTML('tableVcRequests', vcHtml || `<tr><td colspan="4" class="text-center py-8 text-slate-500 text-xs">Sem pedidos de cartão na fila.</td></tr>`);
 
-                // 4. SUBSCRIÇÕES VIP (Corrigido o Timestamp de Entrada)
+                // 4. SUBSCRIÇÕES VIP
                 const vipSnap = await getDocs(query(collection(db, "vip_subscriptions"), orderBy("createdAt", "desc"), limit(20)));
                 let vipHtml = '';
                 
@@ -591,18 +612,18 @@
             }
         };
 
-        function renderRecentOrders(orders) {
+        function renderRecentOrders(operations) {
             const table = document.getElementById('ordersTable');
             if (!table) return;
 
-            if (orders.length === 0) {
+            if (operations.length === 0) {
                 table.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-500"><i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>Nenhuma operação recente.</td></tr>`;
                 return;
             }
 
             let html = '';
-            orders.forEach(order => {
-                const payStatus = order.isPaid 
+            operations.forEach(op => {
+                const payStatus = op.isPaid 
                     ? '<span class="text-[10px] font-black text-success-400">PAGO</span>' 
                     : '<span class="text-[10px] font-black text-danger-400">DÍVIDA</span>';
                 
@@ -612,18 +633,20 @@
                     'shipped': '<span class="px-2 py-1 rounded bg-brand-500/20 text-brand-400 text-[9px] font-bold uppercase tracking-widest border border-brand-500/30">Enviado</span>',
                     'completed': '<span class="px-2 py-1 rounded bg-success-500/20 text-success-400 text-[9px] font-bold uppercase tracking-widest border border-success-500/30">Concluído</span>',
                     'cancelled': '<span class="px-2 py-1 rounded bg-danger-500/20 text-danger-400 text-[9px] font-bold uppercase tracking-widest border border-danger-500/30">Cancelado</span>'
-                }[order.status] || `<span class="px-2 py-1 rounded bg-slate-800 text-slate-300 text-[9px] font-bold uppercase tracking-widest border border-slate-700">${order.status}</span>`;
+                }[op.status] || `<span class="px-2 py-1 rounded bg-slate-800 text-slate-300 text-[9px] font-bold uppercase tracking-widest border border-slate-700">${op.status}</span>`;
+
+                const badgeColor = op.isTopup ? 'success' : 'brand';
 
                 html += `
-                    <tr class="hover:bg-slate-800/40 transition">
+                    <tr class="hover:bg-slate-800/40 transition cursor-pointer" onclick="window.location.href='pedidos.html'">
                         <td class="px-6 py-4">
-                            <span class="text-xs font-mono font-bold text-brand-400 bg-brand-900/20 border border-brand-500/20 px-2 py-1 rounded">${order.orderId}</span>
+                            <span class="text-xs font-mono font-bold text-${badgeColor}-400 bg-${badgeColor}-900/20 border border-${badgeColor}-500/20 px-2 py-1 rounded">${op.orderId}</span>
                         </td>
                         <td class="px-6 py-4">
-                            <div class="text-sm font-bold text-white truncate max-w-[120px]" title="${escapeHTML(order.name)}">${escapeHTML(order.name)}</div>
+                            <div class="text-sm font-bold text-white truncate max-w-[120px]" title="${escapeHTML(op.name)}">${escapeHTML(op.name)}</div>
                         </td>
                         <td class="px-6 py-4">
-                            <div class="text-sm font-black text-white font-mono">${formatValue(order.total, 'currency')}</div>
+                            <div class="text-sm font-black text-white font-mono">${formatValue(op.total, 'currency')}</div>
                             ${payStatus}
                         </td>
                         <td class="px-6 py-4 text-center">${logStatus}</td>
@@ -634,7 +657,7 @@
         }
 
         // ==========================================
-        // 💳 APROVAÇÃO E EMISSÃO DE CARTÃO VIRTUAL (BLINDADO)
+        // 💳 APROVAÇÃO E EMISSÃO DE CARTÃO VIRTUAL
         // ==========================================
         window.openVcApproveModal = (reqId, userId, userName) => {
             setSafeValue('vcApproveReqId', reqId);
@@ -659,7 +682,6 @@
             }
         };
 
-        // Formatação Automática dos Inputs do Cartão
         const inputNum = document.getElementById('vcApproveNumber');
         if(inputNum) inputNum.addEventListener('input', e => e.target.value = e.target.value.replace(/[^\d]/g, '').replace(/(.{4})/g, '$1 ').trim());
         
@@ -675,13 +697,11 @@
                 const userId = document.getElementById('vcApproveUserId').value;
                 
                 if (!reqId || !userId) {
-                    window.showToast("Dados do pedido em falta. Atualize a página.", "error");
-                    return;
+                    window.showToast("Dados do pedido em falta.", "error"); return;
                 }
 
                 const btn = document.getElementById('btnSubmitApproveVc');
-                btn.disabled = true; 
-                btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A Injetar Cartão...`;
+                btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A Injetar...`;
                 if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
                 
                 const vcData = { 
@@ -693,41 +713,18 @@
                 };
 
                 try {
-                    // 1. Injetar o Cartão na conta do Cliente
-                    await updateDoc(doc(db, "users", userId), { 
-                        virtualCard: vcData, 
-                        vcBalance: 0,
-                        vcRequestPending: false
-                    });
+                    await updateDoc(doc(db, "users", userId), { virtualCard: vcData, vcBalance: 0, vcRequestPending: false });
+                    await updateDoc(doc(db, "vc_requests", reqId), { status: 'completed', approvedAt: serverTimestamp() });
+                    await addDoc(collection(db, "notifications"), { userId: userId, title: "Cartão Emitido 💳", message: "O seu cartão virtual RedotPay foi criado!", type: "deposit", read: false, createdAt: serverTimestamp() });
 
-                    // 2. Marcar o Pedido de Cartão como Emitido/Concluído
-                    await updateDoc(doc(db, "vc_requests", reqId), {
-                        status: 'completed',
-                        approvedAt: serverTimestamp()
-                    });
-
-                    // 3. Notificar o cliente
-                    await addDoc(collection(db, "notifications"), {
-                        userId: userId,
-                        title: "Cartão Virtual Emitido 💳",
-                        message: "O seu cartão virtual RedotPay foi criado e já está disponível no seu painel!",
-                        type: "deposit",
-                        read: false,
-                        createdAt: serverTimestamp()
-                    });
-
-                    window.showToast("Cartão entregue com sucesso! O cliente foi notificado.", "success");
+                    window.showToast("Cartão entregue com sucesso!", "success");
                     window.closeVcModal();
-                    
-                    // Recarregar os dados na tabela em tempo real sem refresh
                     await window.fetchDashboardData(); 
                     
                 } catch (err) {
-                    console.error(err);
-                    window.showToast("Falha ao entregar o cartão. Verifique as permissões.", "error");
+                    window.showToast("Falha ao entregar o cartão.", "error");
                 } finally {
-                    btn.disabled = false; 
-                    btn.innerHTML = `<i data-lucide="send" class="w-4 h-4"></i> Entregar Cartão`;
+                    btn.disabled = false; btn.innerHTML = `<i data-lucide="send" class="w-4 h-4"></i> Entregar Cartão`;
                     if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
                 }
             });
