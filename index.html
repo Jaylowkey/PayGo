@@ -10,6 +10,11 @@
     <meta name="robots" content="index, follow">
     <meta name="theme-color" content="#0f172a">
 
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: 'unsafe-inline' 'unsafe-eval'; img-src 'self' data: https:; font-src 'self' https: data:;">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="dns-prefetch" href="https://unpkg.com">
@@ -576,7 +581,7 @@
               <div class="calc-input-group relative rounded-xl border border-slate-200 transition-all bg-slate-50/30 hover:bg-white group">
                 <label for="userUSD" class="absolute top-2 left-9 text-[9px] font-bold text-slate-400 uppercase tracking-widest group-focus-within:text-brand-500 transition-colors">Valor em USD</label>
                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-800 font-display font-bold text-lg group-focus-within:text-brand-500 transition-colors" aria-hidden="true">$</span>
-                <input type="number" id="userUSD" name="usd" step="0.01" min="0.01" required oninput="window.calculate()" class="w-full pl-8 pr-3 pt-5 pb-2.5 bg-transparent outline-none text-lg font-bold text-slate-900 placeholder-slate-300" placeholder="0.00" aria-required="true">
+                <input type="number" id="userUSD" name="usd" step="0.01" min="0.01" required class="w-full pl-8 pr-3 pt-5 pb-2.5 bg-transparent outline-none text-lg font-bold text-slate-900 placeholder-slate-300" placeholder="0.00" aria-required="true">
               </div>
 
               <div>
@@ -922,6 +927,15 @@ let isFirstPurchaseEligible = false;
 let firstPurchaseFree = true;
 let isUserVip = false;
 
+// 🛡️ Prevenção Anti-Spam (Debounce) para cálculos no input
+let calcTimeout;
+
+// 🛡️ Sanitização Anti-XSS básica
+const sanitizeInput = (str) => {
+    if (typeof str !== 'string') return '';
+    return str.replace(/[<>]/g, '').trim(); 
+};
+
 // ========================================================================
 // 💰 FETCH DYNAMIC EXCHANGE RATE FROM FIREBASE
 // ========================================================================
@@ -944,18 +958,23 @@ async function fetchSystemSettings() {
             window.calculate(); 
         }
     } catch (e) {
-        console.warn("Usando definições de sistema base", e);
+        console.warn("Usando definições de sistema base");
     }
 }
 
 // ========================================================================
-// 🛒 GESTÃO DA CARRINHA (CART)
+// 🛒 GESTÃO DA CARRINHA (CART) - Blindado contra Injeção 🛡️
 // ========================================================================
 function updateCartBadge() {
-    const cart = JSON.parse(localStorage.getItem('paygo_cart') || '[]');
-    const count = cart.length;
-    const deskBadge = document.getElementById('cartCountBadgeDesk');
-    if (deskBadge) { deskBadge.textContent = count; deskBadge.classList.add('animate-bounce'); setTimeout(() => deskBadge.classList.remove('animate-bounce'), 1000); }
+    try {
+        const cart = JSON.parse(localStorage.getItem('paygo_cart') || '[]');
+        const count = cart.length;
+        const deskBadge = document.getElementById('cartCountBadgeDesk');
+        if (deskBadge) { deskBadge.textContent = count; deskBadge.classList.add('animate-bounce'); setTimeout(() => deskBadge.classList.remove('animate-bounce'), 1000); }
+    } catch (e) {
+        // Se alguém corromper o localStorage, resetamos
+        localStorage.setItem('paygo_cart', '[]'); 
+    }
 }
 
 window.addToCart = function() {
@@ -966,8 +985,8 @@ window.addToCart = function() {
     }
     
     const usd = parseFloat(document.getElementById('userUSD').value) || 0;
-    const detail = document.getElementById('userLink').value.trim();
-    const type = document.getElementById('serviceType').value;
+    const detail = sanitizeInput(document.getElementById('userLink').value);
+    const type = sanitizeInput(document.getElementById('serviceType').value);
     
     if (type === 'compra' && !detail) {
         document.getElementById('userLink').classList.add('ring-2', 'ring-danger-500');
@@ -986,49 +1005,65 @@ window.addToCart = function() {
         return showToast('Insira um valor válido.', 'error');
     }
 
-    const cart = JSON.parse(localStorage.getItem('paygo_cart') || '[]');
-    cart.push({ id: 'ITEM-' + Date.now().toString().slice(-6), usd: usd, detail: detail, type: type, addedAt: new Date().toISOString() });
-    localStorage.setItem('paygo_cart', JSON.stringify(cart));
-    
-    updateCartBadge();
-    showToast('Produto adicionado à Carrinha! 🛒', 'success');
-    
-    document.getElementById('userLink').value = '';
-    document.getElementById('userUSD').value = '';
-    window.calculate();
+    try {
+        const cart = JSON.parse(localStorage.getItem('paygo_cart') || '[]');
+        cart.push({ id: 'ITEM-' + Date.now().toString().slice(-6), usd: usd, detail: detail, type: type, addedAt: new Date().toISOString() });
+        localStorage.setItem('paygo_cart', JSON.stringify(cart));
+        
+        updateCartBadge();
+        showToast('Produto adicionado à Carrinha! 🛒', 'success');
+        
+        document.getElementById('userLink').value = '';
+        document.getElementById('userUSD').value = '';
+        window.calculate();
+    } catch (e) {
+        showToast('Erro ao guardar na carrinha. O seu browser pode estar bloqueado.', 'error');
+    }
 };
 
 // ========================================================================
-// 💳 PAGAMENTO DIRETO (BLINDADO E CONECTADO À PAYSUITE)
+// 💳 PAGAMENTO DIRETO (BLINDADO DUPLO) 🛡️
 // ========================================================================
+let isPaymentProcessing = false;
+
 window.processDirectPayment = async function() {
+    if (isPaymentProcessing) return;
+
     if (!currentUserData || !currentFirebaseUser) {
         showToast('A redirecionar para o login...', 'info');
         setTimeout(() => window.location.href = 'login.html', 800);
         return;
     }
+
+    const checkEmail = (currentUserData.email || '').toLowerCase();
+    if (checkEmail.includes('guest')) {
+        showToast("⚠️ Acesso restrito. Inicie sessão com uma conta válida.", "error");
+        setTimeout(() => { window.location.href = 'login.html'; }, 2000);
+        return; 
+    }
     
     const usd = parseFloat(document.getElementById('userUSD').value) || 0;
-    const detail = document.getElementById('userLink').value.trim();
-    const serviceType = document.getElementById('serviceType').value;
+    const detail = sanitizeInput(document.getElementById('userLink').value);
+    const serviceType = sanitizeInput(document.getElementById('serviceType').value);
     const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'wallet';
     
     if (!detail || usd <= 0) return showToast('Preencha o link e o valor do produto antes de pagar.', 'error');
 
+    isPaymentProcessing = true;
     const btn = document.getElementById('payNowBtn');
     const origHtml = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Processando...`;
     if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
 
-    // 🛡️ CÁLCULO SEGURO DAS TAXAS (Ignora a checkbox se o utilizador estiver a mentir)
+    // 🛡️ CÁLCULO SEGURO E VERIFICAÇÃO FINAL
     const converted = usd * BINANCE_RATE;
     let tax = 0;
     
     if (isUserVip) {
-        tax = 0; // VIPs não pagam taxa
+        tax = 0;
     } else if (usd <= 5 && isFirstPurchaseEligible && firstPurchaseFree) {
-        tax = 0; // Primeira compra válida
+        tax = 0;
     } else {
         if (usd <= 20) tax = sysTax1;
         else if (usd <= 50) tax = sysTax2;
@@ -1038,7 +1073,7 @@ window.processDirectPayment = async function() {
 
     const totalFinal = Number((converted + tax).toFixed(2));
     const orderId = 'PG-' + Date.now().toString().slice(-6).toUpperCase();
-    const affiliateRef = localStorage.getItem('paygo_affiliate_ref') || null;
+    const affiliateRef = sanitizeInput(localStorage.getItem('paygo_affiliate_ref') || null);
 
     const currentOrderData = {
         orderId: orderId,
@@ -1055,20 +1090,21 @@ window.processDirectPayment = async function() {
         isPaid: false,
         paymentMethod: paymentMethod,
         category: serviceType === 'jogo' ? 'game' : 'physical',
-        isFirstPurchase: (tax === 0 && !isUserVip), // Só marca como 1ª compra se realmente teve isenção
+        isFirstPurchase: (tax === 0 && !isUserVip), 
         referredBy: affiliateRef,
         createdAt: window.PayGoDB.serverTimestamp(),
         source: 'direct-checkout'
     };
 
     try {
-        // 🔥 LÓGICA PARA PAGAMENTO COM A CARTEIRA PAYGO
         if (paymentMethod === 'wallet') {
-            const currentBalance = parseFloat(currentUserData.walletBalance) || 0;
+            // Busca o saldo real neste milissegundo no servidor
+            const freshUserDoc = await getDoc(doc(db, "users", currentFirebaseUser.uid));
+            const freshBalance = parseFloat(freshUserDoc.data().walletBalance) || 0;
             
-            if (currentBalance < totalFinal) {
-                showToast(`Saldo insuficiente. O seu saldo é ${formatMZN(currentBalance)}. Deposite primeiro.`, 'error');
-                btn.disabled = false; btn.innerHTML = origHtml; 
+            if (freshBalance < totalFinal) {
+                showToast(`Saldo insuficiente na DB. Deposita primeiro.`, 'error');
+                isPaymentProcessing = false; btn.disabled = false; btn.innerHTML = origHtml; 
                 if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
                 setTimeout(() => window.location.href = 'dashboard.html', 3000);
                 return;
@@ -1081,10 +1117,8 @@ window.processDirectPayment = async function() {
             
             await addDoc(collection(db, "orders"), currentOrderData);
             await addDoc(collection(db, "wallet_transactions"), {
-                userId: currentFirebaseUser.uid,
-                type: 'debit', amount: totalFinal,
-                description: `Compra Rápida via Site: ${orderId}`,
-                reference: orderId, createdAt: new Date().toISOString()
+                userId: currentFirebaseUser.uid, type: 'debit', amount: totalFinal,
+                description: `Compra Rápida via Site: ${orderId}`, reference: orderId, createdAt: new Date().toISOString()
             });
 
             showToast('Pagamento efetuado com sucesso via Carteira PayGo! 🎉', 'success');
@@ -1092,7 +1126,6 @@ window.processDirectPayment = async function() {
             return;
         }
 
-        // LÓGICA PARA M-PESA, E-MOLA, BANCO (PAYSUITE)
         await addDoc(collection(db, "orders"), currentOrderData);
         showToast('A contactar a plataforma de pagamento...', 'success');
 
@@ -1114,11 +1147,11 @@ window.processDirectPayment = async function() {
 
         let result;
         try { result = await response.json(); } catch(e) {
-            if (response.status === 503) throw new Error('A PaySuite está em manutenção. Use a sua Carteira PayGo ou o WhatsApp.');
+            if (response.status === 503) throw new Error('A PaySuite está em manutenção. Use a Carteira.');
             throw new Error('Erro na comunicação com a API.');
         }
 
-        if (!response.ok || !result.success) throw new Error(result.error || result.message || 'Transação não iniciada. Tente o WhatsApp.');
+        if (!response.ok || !result.success) throw new Error(result.error || result.message || 'Transação não iniciada.');
 
         if (result.data && result.data.checkoutUrl) {
             setTimeout(() => { window.location.href = result.data.checkoutUrl; }, 800);
@@ -1128,44 +1161,56 @@ window.processDirectPayment = async function() {
 
     } catch (err) {
         showToast(err.message || 'Falha ao iniciar pagamento.', 'error');
-        btn.disabled = false; btn.innerHTML = origHtml; 
+        isPaymentProcessing = false; btn.disabled = false; btn.innerHTML = origHtml; 
         if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
     }
 };
 
 // ========================================================================
-// 🚀 ENVIAR PEDIDO VIA WHATSAPP (COM ADD TO CART AUTO E CALCULO SEGURO)
+// 🚀 ENVIAR PEDIDO VIA WHATSAPP (SEGURO E BLINDADO)
 // ========================================================================
 document.getElementById('paygoForm').addEventListener('submit', async function(e) {
     e.preventDefault();
+    if (isPaymentProcessing) return;
+
     if (!currentUserData) { showToast('A redirecionar para o login...', 'info'); setTimeout(() => window.location.href = 'login.html', 800); return; }
     
+    const checkEmail = (currentUserData.email || '').toLowerCase();
+    if (checkEmail.includes('guest')) {
+        showToast("⚠️ Acesso restrito. Inicie sessão com uma conta válida.", "error");
+        setTimeout(() => { window.location.href = 'login.html'; }, 2000);
+        return; 
+    }
+    
+    isPaymentProcessing = true;
     const btn = document.getElementById('submitBtn');
     const originalContent = btn.innerHTML;
     btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Processando...`; 
     if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
 
     const formData = {
-        name: document.getElementById('userName').value.trim(),
-        whatsapp: document.getElementById('userWhatsApp').value.trim(),
-        email: document.getElementById('userEmail').value.trim(),
+        name: sanitizeInput(document.getElementById('userName').value),
+        whatsapp: sanitizeInput(document.getElementById('userWhatsApp').value),
+        email: sanitizeInput(document.getElementById('userEmail').value),
         usd: parseFloat(document.getElementById('userUSD').value) || 0,
-        type: document.getElementById('serviceType').value,
-        detail: document.getElementById('userLink').value.trim(),
-        paymentMethod: document.querySelector('input[name="paymentMethod"]:checked')?.value || 'mpesa'
+        type: sanitizeInput(document.getElementById('serviceType').value),
+        detail: sanitizeInput(document.getElementById('userLink').value),
+        paymentMethod: sanitizeInput(document.querySelector('input[name="paymentMethod"]:checked')?.value || 'mpesa')
     };
 
     if (!formData.detail || formData.usd <= 0) {
-        btn.disabled = false; btn.innerHTML = originalContent; if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
+        isPaymentProcessing = false; btn.disabled = false; btn.innerHTML = originalContent; if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
         return showToast('Preencha os dados da encomenda primeiro.', 'error');
     }
 
-    const cart = JSON.parse(localStorage.getItem('paygo_cart') || '[]');
-    cart.push({ id: 'ITEM-' + Date.now().toString().slice(-6), usd: formData.usd, detail: formData.detail, type: formData.type, addedAt: new Date().toISOString() });
-    localStorage.setItem('paygo_cart', JSON.stringify(cart));
-    updateCartBadge(); 
+    try {
+        const cart = JSON.parse(localStorage.getItem('paygo_cart') || '[]');
+        cart.push({ id: 'ITEM-' + Date.now().toString().slice(-6), usd: formData.usd, detail: formData.detail, type: formData.type, addedAt: new Date().toISOString() });
+        localStorage.setItem('paygo_cart', JSON.stringify(cart));
+        updateCartBadge(); 
+    } catch(e) {}
 
-    // 🛡️ CÁLCULO SEGURO (Ignorando a checkbox se não tiver direito)
+    // 🛡️ CÁLCULO SEGURO
     const converted = formData.usd * BINANCE_RATE;
     let tax = 0;
     let isFreeTaxUsed = false;
@@ -1184,7 +1229,7 @@ document.getElementById('paygoForm').addEventListener('submit', async function(e
     
     const totalFinal = Number((converted + tax).toFixed(2));
     const orderId = 'PG-' + Date.now().toString().slice(-6).toUpperCase();
-    const affiliateRef = localStorage.getItem('paygo_affiliate_ref') || null;
+    const affiliateRef = sanitizeInput(localStorage.getItem('paygo_affiliate_ref') || null);
 
     const orderData = {
         orderId: orderId, name: formData.name, whatsapp: formData.whatsapp, email: formData.email, usd: formData.usd, detail: formData.detail,
@@ -1199,7 +1244,7 @@ document.getElementById('paygoForm').addEventListener('submit', async function(e
         fetch('/api/notify-order', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ orderData: orderData, action: 'new_order', sendEmail: true, sendLark: true })
-        }).catch(e => console.warn('Silencioso:', e));
+        }).catch(e => {});
 
         showToast(`✅ Pedido guardado! Redirecionando para o WhatsApp...`, 'success', 4000);
         
@@ -1219,6 +1264,7 @@ document.getElementById('paygoForm').addEventListener('submit', async function(e
     } catch (error) {
         showToast('Erro ao processar o seu pedido localmente.', 'error');
     } finally {
+        isPaymentProcessing = false;
         btn.disabled = false; btn.innerHTML = originalContent; if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
     }
 });
@@ -1272,7 +1318,7 @@ onAuthStateChanged(auth, async (user) => {
                 if(document.getElementById('userEmail')) document.getElementById('userEmail').value = currentUserData.email;
                 if(document.getElementById('userWhatsApp')) document.getElementById('userWhatsApp').value = currentUserData.phone || '258000000000';
                 
-                window.calculate(); // Atualiza a calculadora com o estado VIP/1ª Compra
+                window.calculate(); 
                 lucide.createIcons();
             }
         } catch (e) { console.error('Erro Auth:', e); }
@@ -1318,7 +1364,7 @@ window.copyToClipboard = function(text) {
 };
 
 window.trackOrderAction = async function() {
-    const idInput = document.getElementById('trackOrderId').value.trim().toUpperCase();
+    const idInput = sanitizeInput(document.getElementById('trackOrderId').value.trim().toUpperCase());
     const resultDiv = document.getElementById('trackResult');
     if(!idInput) return showToast('Insira um código de pedido válido.', 'error');
     
@@ -1356,10 +1402,10 @@ window.trackOrderAction = async function() {
             <div class="mt-4 p-4 bg-brand-50 border border-brand-200 rounded-xl">
                 <p class="text-[10px] font-bold text-brand-600 uppercase tracking-widest mb-2 flex items-center gap-1"><i data-lucide="plane" class="w-3 h-3"></i> Rastreio Internacional</p>
                 <div class="flex items-center justify-between bg-white p-3 rounded-lg border border-brand-100 mb-3 shadow-sm">
-                    <span class="font-mono font-bold text-slate-800 tracking-wider">${order.trackingCode}</span>
-                    <button onclick="window.copyToClipboard('${order.trackingCode}')" class="text-slate-400 hover:text-brand-600 transition"><i data-lucide="copy" class="w-5 h-5"></i></button>
+                    <span class="font-mono font-bold text-slate-800 tracking-wider">${escapeHTML(order.trackingCode)}</span>
+                    <button onclick="window.copyToClipboard('${escapeHTML(order.trackingCode)}')" class="text-slate-400 hover:text-brand-600 transition"><i data-lucide="copy" class="w-5 h-5"></i></button>
                 </div>
-                <a href="https://global.cainiao.com/detail.htm?mailNo=${order.trackingCode}" target="_blank" class="w-full flex justify-center items-center gap-2 bg-brand-600 text-white py-3 rounded-xl text-sm font-bold hover:bg-brand-700 transition shadow-md">
+                <a href="https://global.cainiao.com/detail.htm?mailNo=${encodeURIComponent(order.trackingCode)}" target="_blank" class="w-full flex justify-center items-center gap-2 bg-brand-600 text-white py-3 rounded-xl text-sm font-bold hover:bg-brand-700 transition shadow-md">
                     <i data-lucide="external-link" class="w-4 h-4"></i> Rastrear no Cainiao
                 </a>
             </div>
@@ -1371,7 +1417,7 @@ window.trackOrderAction = async function() {
                 <div class="flex justify-between items-start border-b border-slate-200 pb-3">
                     <div>
                         <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Código do Pedido</p>
-                        <p class="font-mono font-bold text-slate-800 text-lg">${order.orderId}</p>
+                        <p class="font-mono font-bold text-slate-800 text-lg">${escapeHTML(order.orderId)}</p>
                     </div>
                     <div class="text-right">
                         <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Data</p>
@@ -1416,44 +1462,49 @@ window.updatePaymentMethod = function() {
     });
 };
 
+// ========================================================================
+// 🔢 FUNÇÃO DE CÁLCULO (ANTI-SPAM APLICADO)
+// ========================================================================
 window.calculate = function() {
-    const userUsdElem = document.getElementById('userUSD');
-    const usd = parseFloat(userUsdElem ? userUsdElem.value : 0) || 0;
-    
-    // A checkbox só dita se for Visitante. Se tiver login, ignoramos a checkbox e usamos as variáveis de segurança.
-    const chkElem = document.getElementById('chkFirstPurchase');
-    const isCheckboxChecked = chkElem ? chkElem.checked : false;
-    
-    const converted = usd * BINANCE_RATE;
-    let tax = 0;
-    const badge = document.getElementById('tax-discount-badge');
-    
-    if (usd > 0) {
-        if (isUserVip) {
-            tax = 0;
-            if(badge) { badge.classList.remove('hidden'); badge.textContent = "VIP GRÁTIS"; }
-        } else if (usd <= 5 && ((currentUserData && isFirstPurchaseEligible && firstPurchaseFree) || (!currentUserData && isCheckboxChecked))) {
-            tax = 0;
-            if(badge) { badge.classList.remove('hidden'); badge.textContent = "1ª COMPRA GRÁTIS"; }
+    clearTimeout(calcTimeout);
+    calcTimeout = setTimeout(() => {
+        const userUsdElem = document.getElementById('userUSD');
+        const usd = parseFloat(userUsdElem ? userUsdElem.value : 0) || 0;
+        
+        const chkElem = document.getElementById('chkFirstPurchase');
+        const isCheckboxChecked = chkElem ? chkElem.checked : false;
+        
+        const converted = usd * BINANCE_RATE;
+        let tax = 0;
+        const badge = document.getElementById('tax-discount-badge');
+        
+        if (usd > 0) {
+            if (isUserVip) {
+                tax = 0;
+                if(badge) { badge.classList.remove('hidden'); badge.textContent = "VIP GRÁTIS"; }
+            } else if (usd <= 5 && ((currentUserData && isFirstPurchaseEligible && firstPurchaseFree) || (!currentUserData && isCheckboxChecked))) {
+                tax = 0;
+                if(badge) { badge.classList.remove('hidden'); badge.textContent = "1ª COMPRA GRÁTIS"; }
+            } else {
+                if(badge) badge.classList.add('hidden');
+                if (usd <= 20) tax = sysTax1;
+                else if (usd <= 50) tax = sysTax2;
+                else if (usd <= 100) tax = sysTax3;
+                else tax = converted * 0.07;
+            }
         } else {
             if(badge) badge.classList.add('hidden');
-            if (usd <= 20) tax = sysTax1;
-            else if (usd <= 50) tax = sysTax2;
-            else if (usd <= 100) tax = sysTax3;
-            else tax = converted * 0.07;
         }
-    } else {
-        if(badge) badge.classList.add('hidden');
-    }
-    
-    const total = converted + tax;
-    
-    if(document.getElementById('receipt-converted')) document.getElementById('receipt-converted').textContent = `${converted.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`;
-    if(document.getElementById('receipt-tax')) document.getElementById('receipt-tax').textContent = `${tax.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`;
-    
-    const totalRounded = Math.floor(total);
-    const cents = Math.round((total % 1) * 100).toString().padStart(2, '0');
-    if(document.getElementById('receipt-total')) document.getElementById('receipt-total').innerHTML = `${totalRounded.toLocaleString('pt-MZ')}<span class="text-lg text-slate-400 font-normal">.${cents} MT</span>`;
+        
+        const total = converted + tax;
+        
+        if(document.getElementById('receipt-converted')) document.getElementById('receipt-converted').textContent = `${converted.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`;
+        if(document.getElementById('receipt-tax')) document.getElementById('receipt-tax').textContent = `${tax.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`;
+        
+        const totalRounded = Math.floor(total);
+        const cents = Math.round((total % 1) * 100).toString().padStart(2, '0');
+        if(document.getElementById('receipt-total')) document.getElementById('receipt-total').innerHTML = `${totalRounded.toLocaleString('pt-MZ')}<span class="text-lg text-slate-400 font-normal">.${cents} MT</span>`;
+    }, 150); // Debounce de 150ms
 };
 
 // ========================================================================
@@ -1520,7 +1571,7 @@ function showToast(message, type = 'default', duration = 4000) {
   const colors = { success: 'text-green-500', error: 'text-red-500', warning: 'text-amber-500', info: 'text-blue-500', default: 'text-blue-500' };
   toast.innerHTML = `
     <i data-lucide="${icons[type] || icons.default}" class="${colors[type] || colors.default} w-5 h-5 flex-shrink-0" aria-hidden="true"></i>
-    <span class="text-sm font-medium text-slate-700">${message}</span>
+    <span class="text-sm font-medium text-slate-700">${escapeHTML(message)}</span>
     <button class="ml-auto text-slate-400 hover:text-slate-600 transition focus:outline-none" onclick="this.parentElement.remove()" aria-label="Fechar notificação">
     <i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>
     </button>
