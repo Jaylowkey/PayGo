@@ -70,7 +70,10 @@
             </div>
             <div class="flex items-center gap-4">
                 <div class="text-right hidden sm:block">
-                    <p class="text-sm font-bold text-white" id="userName">A carregar...</p>
+                    <div class="flex items-center justify-end gap-2">
+                        <p class="text-sm font-bold text-white" id="userName">A carregar...</p>
+                        <button onclick="window.openProfileModal()" class="text-brand-400 hover:text-white transition-colors" title="Editar Perfil"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
+                    </div>
                     <p class="text-xs font-medium" id="userBadge"><span class="text-brand-400">Cliente Standard</span></p>
                 </div>
                 <div class="flex items-center gap-2">
@@ -265,16 +268,24 @@
                             <div class="grid md:grid-cols-2 gap-4 mb-4">
                                 <div>
                                     <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Província / Cidade</label>
-                                    <select id="shipCity" required class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white physical-req">
+                                    <select id="shipCity" required class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white physical-req appearance-none">
                                         <option value="" disabled selected>Selecione a Província</option>
                                         <option value="Maputo (Cidade)" data-zip="1100">Maputo (Cidade)</option>
+                                        <option value="Maputo (Província)" data-zip="1101">Maputo (Província)</option>
+                                        <option value="Gaza" data-zip="1200">Gaza (Xai-Xai)</option>
+                                        <option value="Inhambane" data-zip="1300">Inhambane</option>
                                         <option value="Sofala" data-zip="2100">Sofala (Beira)</option>
+                                        <option value="Manica" data-zip="2200">Manica (Chimoio)</option>
+                                        <option value="Zambézia" data-zip="2300">Zambézia (Quelimane)</option>
+                                        <option value="Tete" data-zip="2400">Tete</option>
                                         <option value="Nampula" data-zip="3100">Nampula</option>
+                                        <option value="Cabo Delgado" data-zip="3200">Cabo Delgado (Pemba)</option>
+                                        <option value="Niassa" data-zip="3300">Niassa (Lichinga)</option>
                                     </select>
                                 </div>
                                 <div><label class="block text-xs font-bold text-brand-400 uppercase tracking-widest mb-2">Código Postal</label><input type="text" id="shipZip" required readonly placeholder="0000" class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-brand-400 font-mono font-bold cursor-not-allowed physical-req"></div>
                             </div>
-                            <div><label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Morada</label><input type="text" id="shipAddress" required placeholder="Ex: Bairro Central..." class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white physical-req"></div>
+                            <div><label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Morada Detalhada</label><input type="text" id="shipAddress" required placeholder="Ex: Bairro Central, Rua..." class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white physical-req"></div>
                         </div>
 
                         <div class="bg-slate-900 rounded-xl p-5 border border-brand-500/20">
@@ -302,6 +313,35 @@
             </div>
         </div>
     </main>
+
+    <div id="profileModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl relative">
+            <button type="button" onclick="window.closeModals()" class="absolute top-5 right-5 text-slate-400 hover:text-white focus:outline-none"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <div class="p-6 pb-0 mb-6">
+                <h3 class="text-xl font-display font-bold text-white mb-2 flex items-center gap-2"><i data-lucide="user-cog" class="w-5 h-5 text-brand-400"></i> Autogestão de Perfil</h3>
+                <p class="text-sm text-slate-400">Atualize os seus dados pessoais rapidamente sem contactar o suporte.</p>
+            </div>
+            <form id="profileForm" onsubmit="event.preventDefault(); window.updateProfile();" class="p-6 pt-0 space-y-5">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Nome Completo</label>
+                    <div class="relative">
+                        <i data-lucide="user" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
+                        <input type="text" id="profileName" required class="w-full pl-11 pr-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white transition-all shadow-inner">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Telefone / WhatsApp</label>
+                    <div class="relative">
+                        <i data-lucide="phone" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
+                        <input type="text" id="profilePhone" required class="w-full pl-11 pr-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white transition-all shadow-inner">
+                    </div>
+                </div>
+                <button type="submit" id="btnUpdateProfile" class="btn-epic w-full py-4 bg-brand-600 hover:bg-brand-500 text-white shadow-[0_0_20px_rgba(37,99,235,0.3)] disabled:bg-slate-800 disabled:text-slate-500">
+                    Guardar Alterações
+                </button>
+            </form>
+        </div>
+    </div>
 
     <div id="topUpModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl relative">
@@ -431,7 +471,6 @@
                 <h3 class="text-xl font-display font-bold text-white mb-2" id="vcModalTitle">Vincular Cartão Virtual</h3>
                 <p class="text-sm text-slate-400" id="vcModalDesc">Introduza os dados do seu cartão RedotPay ou Visa/Mastercard.</p>
             </div>
-            
             <form id="vcAddForm" onsubmit="event.preventDefault(); window.processVcAdd();" class="p-6 pt-0 space-y-4">
                 <div>
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Número do Cartão</label>
@@ -461,7 +500,6 @@
                     Vincular Cartão
                 </button>
             </form>
-
             <form id="vcRequestForm" onsubmit="event.preventDefault(); window.processVcRequest();" class="p-6 pt-0 space-y-4 hidden">
                 <div class="bg-brand-500/10 border border-brand-500/30 p-5 rounded-2xl mb-4">
                     <p class="text-sm text-slate-300 leading-relaxed">A nossa equipa irá analisar o pedido e gerar um Cartão Virtual exclusivo em seu nome.<br><br> <strong class="text-brand-400">A taxa de emissão é de 1.000 MT</strong> (será debitada da sua carteira).</p>
@@ -624,6 +662,7 @@
                 if (userDoc.exists()) {
                     userData = userDoc.data();
                     setSafeText('userName', userData.name || 'Cliente');
+                    setSafeText('headerUserName', userData.name || 'Cliente');
                     setSafeText('walletBalance', formatMZN(parseFloat(userData.walletBalance) || 0));
                     setSafeText('vcNameDisplay', userData.name ? userData.name.toUpperCase() : 'CLIENTE PAYGO');
                     setSafeValue('shipName', userData.name || ''); setSafeValue('shipPhone', userData.phone || '');
@@ -747,7 +786,6 @@
             const origText = btn.innerHTML;
             btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Processando...`; lucide.createIcons({root: btn});
 
-            // 🛑 Muro de Fogo Frontend Anti-Guest
             const checkEmail = (currentUser?.email || '').toLowerCase();
             if (!currentUser || checkEmail.includes('guest')) {
                 try {
@@ -815,7 +853,6 @@
             const origText = btn.innerHTML;
             btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A preparar Pagamento...`; lucide.createIcons({root: btn});
 
-            // 🛑 Muro de Fogo Frontend Anti-Guest
             const checkEmail = (currentUser?.email || '').toLowerCase();
             if (!currentUser || checkEmail.includes('guest')) {
                 try {
@@ -889,7 +926,7 @@
             }
 
             try {
-                // Obter saldo em tempo real antes de enviar para a API (Previne requests falsos ao backend)
+                // Obter saldo em tempo real antes de enviar para a API
                 const freshUserDoc = await getDoc(doc(db, "users", currentUser.uid));
                 const freshBalance = parseFloat(freshUserDoc.data().walletBalance) || 0;
 
@@ -1085,8 +1122,49 @@
             }
         };
 
+        // ⚙️ MOTOR SELF-SERVICE: PERFIL
+        window.openProfileModal = () => {
+            window.closeModals();
+            document.getElementById('profileName').value = userData?.name || '';
+            document.getElementById('profilePhone').value = userData?.phone || '';
+            const modal = document.getElementById('profileModal');
+            if(modal) modal.classList.replace('hidden', 'flex');
+        };
+
+        window.updateProfile = async () => {
+            if (isProcessing) return;
+            isProcessing = true;
+            
+            const btn = document.getElementById('btnUpdateProfile');
+            const origText = btn.innerHTML;
+            btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A atualizar...`; lucide.createIcons({root: btn});
+
+            const newName = document.getElementById('profileName').value.trim();
+            const newPhone = document.getElementById('profilePhone').value.trim();
+
+            try {
+                await updateDoc(doc(db, "users", currentUser.uid), {
+                    name: newName,
+                    phone: newPhone,
+                    updatedAt: serverTimestamp()
+                });
+                
+                userData.name = newName;
+                userData.phone = newPhone;
+                setSafeText('userName', newName);
+                setSafeText('headerUserName', newName);
+                
+                window.closeModals();
+                window.showToast("Perfil atualizado com sucesso!", "success");
+            } catch (err) {
+                window.showToast("Erro ao atualizar o perfil.", "error");
+            } finally {
+                isProcessing = false; btn.disabled = false; btn.innerHTML = origText;
+            }
+        };
+
         window.openVcTopUpModal = () => { window.closeModals(); const el = document.getElementById('vcTopUpModal'); if(el) el.classList.replace('hidden', 'flex'); };
-        window.closeModals = function() { ['topUpModal', 'transferModal', 'vipModal', 'vcModal', 'vcTopUpModal', 'supportModal'].forEach(id => { const el = document.getElementById(id); if(el) { el.classList.remove('flex'); el.classList.add('hidden'); } }); };
+        window.closeModals = function() { ['topUpModal', 'transferModal', 'vipModal', 'vcModal', 'vcTopUpModal', 'supportModal', 'profileModal'].forEach(id => { const el = document.getElementById(id); if(el) { el.classList.remove('flex'); el.classList.add('hidden'); } }); };
         window.openTopUpModal = () => { window.closeModals(); const el = document.getElementById('topUpModal'); if(el) el.classList.replace('hidden', 'flex'); };
         window.openTransferModal = () => { window.closeModals(); const el = document.getElementById('transferModal'); if(el) el.classList.replace('hidden', 'flex'); };
         window.openVipModal = () => { window.closeModals(); const el = document.getElementById('vipModal'); if(el) el.classList.replace('hidden', 'flex'); };
