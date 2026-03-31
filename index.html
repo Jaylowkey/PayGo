@@ -927,10 +927,11 @@ let isFirstPurchaseEligible = false;
 let firstPurchaseFree = true;
 let isUserVip = false;
 
-// 🛡️ Prevenção Anti-Spam (Debounce) para cálculos no input
+// 🛡️ Prevenção Anti-Spam (Debounce)
 let calcTimeout;
+let isPaymentProcessing = false; // Bloqueio de Duplo Clique Global
 
-// 🛡️ Sanitização Anti-XSS básica
+// 🛡️ Sanitização Anti-XSS rigorosa
 const sanitizeInput = (str) => {
     if (typeof str !== 'string') return '';
     return str.replace(/[<>]/g, '').trim(); 
@@ -950,15 +951,14 @@ async function fetchSystemSettings() {
             sysTax3 = parseFloat(data.tax3) || 600;
             firstPurchaseFree = data.firstPurchaseFree !== false;
 
-            const rateDisplays = document.querySelectorAll('#exchangeRateDisplay');
-            rateDisplays.forEach(el => el.textContent = `${BINANCE_RATE.toFixed(2)} MT`);
+            document.querySelectorAll('#exchangeRateDisplay').forEach(el => el.textContent = `${BINANCE_RATE.toFixed(2)} MT`);
             const receiptExchange = document.getElementById('receipt-exchange');
             if (receiptExchange) receiptExchange.textContent = `${BINANCE_RATE.toFixed(2)} MT/$`;
             
             window.calculate(); 
         }
     } catch (e) {
-        console.warn("Usando definições de sistema base");
+        console.warn("Usando definições de sistema base", e);
     }
 }
 
@@ -972,7 +972,6 @@ function updateCartBadge() {
         const deskBadge = document.getElementById('cartCountBadgeDesk');
         if (deskBadge) { deskBadge.textContent = count; deskBadge.classList.add('animate-bounce'); setTimeout(() => deskBadge.classList.remove('animate-bounce'), 1000); }
     } catch (e) {
-        // Se alguém corromper o localStorage, resetamos
         localStorage.setItem('paygo_cart', '[]'); 
     }
 }
@@ -1017,95 +1016,100 @@ window.addToCart = function() {
         document.getElementById('userUSD').value = '';
         window.calculate();
     } catch (e) {
-        showToast('Erro ao guardar na carrinha. O seu browser pode estar bloqueado.', 'error');
+        showToast('Erro ao guardar na carrinha.', 'error');
     }
 };
 
 // ========================================================================
-// 💳 PAGAMENTO DIRETO (BLINDADO DUPLO) 🛡️
+// 💳 PAGAMENTO DIRETO (BLINDADO ABSOLUTO) 🛡️
 // ========================================================================
-let isPaymentProcessing = false;
-
 window.processDirectPayment = async function() {
     if (isPaymentProcessing) return;
 
-    if (!currentUserData || !currentFirebaseUser) {
-        showToast('A redirecionar para o login...', 'info');
-        setTimeout(() => window.location.href = 'login.html', 800);
-        return;
-    }
-
-    const checkEmail = (currentUserData.email || '').toLowerCase();
-    if (checkEmail.includes('guest')) {
-        showToast("⚠️ Acesso restrito. Inicie sessão com uma conta válida.", "error");
-        setTimeout(() => { window.location.href = 'login.html'; }, 2000);
-        return; 
-    }
-    
-    const usd = parseFloat(document.getElementById('userUSD').value) || 0;
-    const detail = sanitizeInput(document.getElementById('userLink').value);
-    const serviceType = sanitizeInput(document.getElementById('serviceType').value);
-    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'wallet';
-    
-    if (!detail || usd <= 0) return showToast('Preencha o link e o valor do produto antes de pagar.', 'error');
-
-    isPaymentProcessing = true;
-    const btn = document.getElementById('payNowBtn');
-    const origHtml = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Processando...`;
-    if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
-
-    // 🛡️ CÁLCULO SEGURO E VERIFICAÇÃO FINAL
-    const converted = usd * BINANCE_RATE;
-    let tax = 0;
-    
-    if (isUserVip) {
-        tax = 0;
-    } else if (usd <= 5 && isFirstPurchaseEligible && firstPurchaseFree) {
-        tax = 0;
-    } else {
-        if (usd <= 20) tax = sysTax1;
-        else if (usd <= 50) tax = sysTax2;
-        else if (usd <= 100) tax = sysTax3;
-        else tax = converted * 0.07;
-    }
-
-    const totalFinal = Number((converted + tax).toFixed(2));
-    const orderId = 'PG-' + Date.now().toString().slice(-6).toUpperCase();
-    const affiliateRef = sanitizeInput(localStorage.getItem('paygo_affiliate_ref') || null);
-
-    const currentOrderData = {
-        orderId: orderId,
-        userId: currentFirebaseUser.uid,
-        name: currentUserData.name || 'Cliente',
-        whatsapp: currentUserData.phone || '258000000000',
-        email: currentUserData.email,
-        usd: usd,
-        detail: detail,
-        tax: tax,
-        total: totalFinal,
-        exchangeRate: BINANCE_RATE,
-        status: 'pending',
-        isPaid: false,
-        paymentMethod: paymentMethod,
-        category: serviceType === 'jogo' ? 'game' : 'physical',
-        isFirstPurchase: (tax === 0 && !isUserVip), 
-        referredBy: affiliateRef,
-        createdAt: window.PayGoDB.serverTimestamp(),
-        source: 'direct-checkout'
-    };
+    let btn = document.getElementById('payNowBtn');
+    let origHtml = btn ? btn.innerHTML : 'Pagar Logo';
 
     try {
+        if (!currentUserData || !currentFirebaseUser) {
+            showToast('Sessão expirada. A redirecionar para o login...', 'info');
+            setTimeout(() => window.location.href = 'login.html', 800);
+            return;
+        }
+
+        const checkEmail = (currentUserData.email || '').toLowerCase();
+        if (checkEmail.includes('guest')) {
+            showToast("⚠️ Acesso restrito. Inicie sessão com uma conta válida.", "error");
+            setTimeout(() => { window.location.href = 'login.html'; }, 2000);
+            return; 
+        }
+        
+        const usd = parseFloat(document.getElementById('userUSD').value) || 0;
+        const detail = sanitizeInput(document.getElementById('userLink').value);
+        const serviceType = sanitizeInput(document.getElementById('serviceType').value);
+        const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'wallet';
+        
+        if (!detail || usd <= 0) {
+            showToast('Preencha o link e o valor do produto antes de pagar.', 'error');
+            return;
+        }
+
+        isPaymentProcessing = true;
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Processando...`;
+            if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
+        }
+
+        // 🛡️ CÁLCULO SEGURO DAS TAXAS
+        const converted = usd * BINANCE_RATE;
+        let tax = 0;
+        
+        if (isUserVip) {
+            tax = 0;
+        } else if (usd <= 5 && isFirstPurchaseEligible && firstPurchaseFree) {
+            tax = 0;
+        } else {
+            if (usd <= 20) tax = sysTax1;
+            else if (usd <= 50) tax = sysTax2;
+            else if (usd <= 100) tax = sysTax3;
+            else tax = converted * 0.07;
+        }
+
+        const totalFinal = Number((converted + tax).toFixed(2));
+        const orderId = 'PG-' + Date.now().toString().slice(-6).toUpperCase();
+        const affiliateRef = sanitizeInput(localStorage.getItem('paygo_affiliate_ref') || null);
+        const safeEmail = currentUserData.email || document.getElementById('userEmail')?.value || 'cliente@paygo.co.mz';
+
+        const currentOrderData = {
+            orderId: orderId,
+            userId: currentFirebaseUser.uid,
+            name: currentUserData.name || 'Cliente PayGo',
+            whatsapp: currentUserData.phone || '258000000000',
+            email: safeEmail,
+            usd: usd,
+            detail: detail,
+            tax: tax,
+            total: totalFinal,
+            exchangeRate: BINANCE_RATE,
+            status: 'pending',
+            isPaid: false,
+            paymentMethod: paymentMethod,
+            category: serviceType === 'jogo' ? 'game' : 'physical',
+            isFirstPurchase: (tax === 0 && !isUserVip), 
+            referredBy: affiliateRef,
+            createdAt: window.PayGoDB.serverTimestamp(),
+            source: 'direct-checkout'
+        };
+
+        // 🟢 VIA CARTEIRA (WALLET)
         if (paymentMethod === 'wallet') {
-            // Busca o saldo real neste milissegundo no servidor
             const freshUserDoc = await getDoc(doc(db, "users", currentFirebaseUser.uid));
-            const freshBalance = parseFloat(freshUserDoc.data().walletBalance) || 0;
+            const freshBalance = parseFloat(freshUserDoc.data()?.walletBalance) || 0;
             
             if (freshBalance < totalFinal) {
-                showToast(`Saldo insuficiente na DB. Deposita primeiro.`, 'error');
-                isPaymentProcessing = false; btn.disabled = false; btn.innerHTML = origHtml; 
-                if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
+                showToast(`Saldo insuficiente. O seu saldo é ${formatMZN(freshBalance)}. Deposite primeiro.`, 'error');
+                isPaymentProcessing = false; 
+                if(btn) { btn.disabled = false; btn.innerHTML = origHtml; if(typeof lucide !== 'undefined') lucide.createIcons({root: btn}); }
                 setTimeout(() => window.location.href = 'dashboard.html', 3000);
                 return;
             }
@@ -1118,16 +1122,17 @@ window.processDirectPayment = async function() {
             await addDoc(collection(db, "orders"), currentOrderData);
             await addDoc(collection(db, "wallet_transactions"), {
                 userId: currentFirebaseUser.uid, type: 'debit', amount: totalFinal,
-                description: `Compra Rápida via Site: ${orderId}`, reference: orderId, createdAt: new Date().toISOString()
+                description: `Compra via Site: ${orderId}`, reference: orderId, createdAt: new Date().toISOString()
             });
 
-            showToast('Pagamento efetuado com sucesso via Carteira PayGo! 🎉', 'success');
+            showToast('Pagamento efetuado com sucesso via Carteira! 🎉', 'success');
             setTimeout(() => window.location.href = 'historico.html', 2000);
             return;
         }
 
+        // 🟢 VIA PAYSUITE (M-PESA / E-MOLA / BANCO)
         await addDoc(collection(db, "orders"), currentOrderData);
-        showToast('A contactar a plataforma de pagamento...', 'success');
+        showToast('A contactar a plataforma de pagamento seguro...', 'info');
 
         const cleanPhone = currentOrderData.whatsapp.replace(/\D/g, '');
 
@@ -1146,126 +1151,137 @@ window.processDirectPayment = async function() {
         });
 
         let result;
-        try { result = await response.json(); } catch(e) {
-            if (response.status === 503) throw new Error('A PaySuite está em manutenção. Use a Carteira.');
-            throw new Error('Erro na comunicação com a API.');
+        try { 
+            result = await response.json(); 
+        } catch(e) {
+            throw new Error('Erro na comunicação com a API. Verifique a internet.');
         }
 
-        if (!response.ok || !result.success) throw new Error(result.error || result.message || 'Transação não iniciada.');
+        if (!response.ok || !result.success) {
+            throw new Error(result.error || result.message || 'A plataforma rejeitou a transação.');
+        }
 
         if (result.data && result.data.checkoutUrl) {
-            setTimeout(() => { window.location.href = result.data.checkoutUrl; }, 800);
+            window.location.href = result.data.checkoutUrl;
         } else {
-            throw new Error("Não foi possível gerar a página de pagamento seguro.");
+            throw new Error("Não foi possível gerar o link de pagamento seguro.");
         }
 
     } catch (err) {
-        showToast(err.message || 'Falha ao iniciar pagamento.', 'error');
-        isPaymentProcessing = false; btn.disabled = false; btn.innerHTML = origHtml; 
-        if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
+        console.error("ERRO NO PAGAMENTO:", err);
+        showToast(err.message || 'Falha ao iniciar pagamento. Tente novamente.', 'error');
+        isPaymentProcessing = false; 
+        if (btn) { btn.disabled = false; btn.innerHTML = origHtml; if(typeof lucide !== 'undefined') lucide.createIcons({root: btn}); }
     }
 };
 
 // ========================================================================
-// 🚀 ENVIAR PEDIDO VIA WHATSAPP (SEGURO E BLINDADO)
+// 🚀 ENVIAR PEDIDO VIA WHATSAPP (COM ADD TO CART AUTO)
 // ========================================================================
 document.getElementById('paygoForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     if (isPaymentProcessing) return;
 
-    if (!currentUserData) { showToast('A redirecionar para o login...', 'info'); setTimeout(() => window.location.href = 'login.html', 800); return; }
-    
-    const checkEmail = (currentUserData.email || '').toLowerCase();
-    if (checkEmail.includes('guest')) {
-        showToast("⚠️ Acesso restrito. Inicie sessão com uma conta válida.", "error");
-        setTimeout(() => { window.location.href = 'login.html'; }, 2000);
-        return; 
-    }
-    
-    isPaymentProcessing = true;
-    const btn = document.getElementById('submitBtn');
-    const originalContent = btn.innerHTML;
-    btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Processando...`; 
-    if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
-
-    const formData = {
-        name: sanitizeInput(document.getElementById('userName').value),
-        whatsapp: sanitizeInput(document.getElementById('userWhatsApp').value),
-        email: sanitizeInput(document.getElementById('userEmail').value),
-        usd: parseFloat(document.getElementById('userUSD').value) || 0,
-        type: sanitizeInput(document.getElementById('serviceType').value),
-        detail: sanitizeInput(document.getElementById('userLink').value),
-        paymentMethod: sanitizeInput(document.querySelector('input[name="paymentMethod"]:checked')?.value || 'mpesa')
-    };
-
-    if (!formData.detail || formData.usd <= 0) {
-        isPaymentProcessing = false; btn.disabled = false; btn.innerHTML = originalContent; if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
-        return showToast('Preencha os dados da encomenda primeiro.', 'error');
-    }
+    let btn = document.getElementById('submitBtn');
+    let originalContent = btn ? btn.innerHTML : 'WhatsApp';
 
     try {
-        const cart = JSON.parse(localStorage.getItem('paygo_cart') || '[]');
-        cart.push({ id: 'ITEM-' + Date.now().toString().slice(-6), usd: formData.usd, detail: formData.detail, type: formData.type, addedAt: new Date().toISOString() });
-        localStorage.setItem('paygo_cart', JSON.stringify(cart));
-        updateCartBadge(); 
-    } catch(e) {}
+        if (!currentUserData || !currentFirebaseUser) { 
+            showToast('A redirecionar para o login...', 'info'); 
+            setTimeout(() => window.location.href = 'login.html', 800); 
+            return; 
+        }
+        
+        const checkEmail = (currentUserData.email || '').toLowerCase();
+        if (checkEmail.includes('guest')) {
+            showToast("⚠️ Acesso restrito. Inicie sessão com uma conta válida.", "error");
+            setTimeout(() => { window.location.href = 'login.html'; }, 2000);
+            return; 
+        }
+        
+        const usd = parseFloat(document.getElementById('userUSD').value) || 0;
+        const detail = sanitizeInput(document.getElementById('userLink').value);
+        const serviceType = sanitizeInput(document.getElementById('serviceType').value);
+        const paymentMethod = sanitizeInput(document.querySelector('input[name="paymentMethod"]:checked')?.value || 'mpesa');
 
-    // 🛡️ CÁLCULO SEGURO
-    const converted = formData.usd * BINANCE_RATE;
-    let tax = 0;
-    let isFreeTaxUsed = false;
-    
-    if (isUserVip) {
-        tax = 0;
-    } else if (formData.usd <= 5 && isFirstPurchaseEligible && firstPurchaseFree) {
-        tax = 0;
-        isFreeTaxUsed = true;
-    } else {
-        if (formData.usd <= 20) tax = sysTax1;
-        else if (formData.usd <= 50) tax = sysTax2;
-        else if (formData.usd <= 100) tax = sysTax3;
-        else tax = converted * 0.07;
-    }
-    
-    const totalFinal = Number((converted + tax).toFixed(2));
-    const orderId = 'PG-' + Date.now().toString().slice(-6).toUpperCase();
-    const affiliateRef = sanitizeInput(localStorage.getItem('paygo_affiliate_ref') || null);
+        if (!detail || usd <= 0) {
+            return showToast('Preencha os dados da encomenda primeiro.', 'error');
+        }
 
-    const orderData = {
-        orderId: orderId, name: formData.name, whatsapp: formData.whatsapp, email: formData.email, usd: formData.usd, detail: formData.detail,
-        tax: tax, total: totalFinal, exchangeRate: BINANCE_RATE, status: 'pending', isPaid: false, userId: currentFirebaseUser.uid,
-        category: formData.type === 'jogo' ? 'game' : 'physical', paymentMethod: formData.paymentMethod,
-        isFirstPurchase: isFreeTaxUsed, referredBy: affiliateRef, createdAt: window.PayGoDB.serverTimestamp()
-    };
+        isPaymentProcessing = true;
+        if (btn) {
+            btn.disabled = true; 
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Processando...`; 
+            if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
+        }
 
-    try {
-        await window.PayGoDB.addDoc(window.PayGoDB.collection(window.PayGoDB.db, "orders"), orderData);
+        try {
+            const cart = JSON.parse(localStorage.getItem('paygo_cart') || '[]');
+            cart.push({ id: 'ITEM-' + Date.now().toString().slice(-6), usd: usd, detail: detail, type: serviceType, addedAt: new Date().toISOString() });
+            localStorage.setItem('paygo_cart', JSON.stringify(cart));
+            updateCartBadge(); 
+        } catch(e) {}
+
+        // 🛡️ CÁLCULO SEGURO
+        const converted = usd * BINANCE_RATE;
+        let tax = 0;
+        let isFreeTaxUsed = false;
+        
+        if (isUserVip) {
+            tax = 0;
+        } else if (usd <= 5 && isFirstPurchaseEligible && firstPurchaseFree) {
+            tax = 0;
+            isFreeTaxUsed = true;
+        } else {
+            if (usd <= 20) tax = sysTax1;
+            else if (usd <= 50) tax = sysTax2;
+            else if (usd <= 100) tax = sysTax3;
+            else tax = converted * 0.07;
+        }
+        
+        const totalFinal = Number((converted + tax).toFixed(2));
+        const orderId = 'PG-' + Date.now().toString().slice(-6).toUpperCase();
+        const affiliateRef = sanitizeInput(localStorage.getItem('paygo_affiliate_ref') || null);
+        const safeEmail = currentUserData.email || document.getElementById('userEmail')?.value || 'cliente@paygo.co.mz';
+
+        const orderData = {
+            orderId: orderId, name: sanitizeInput(document.getElementById('userName')?.value), 
+            whatsapp: sanitizeInput(document.getElementById('userWhatsApp')?.value), 
+            email: safeEmail, usd: usd, detail: detail,
+            tax: tax, total: totalFinal, exchangeRate: BINANCE_RATE, status: 'pending', isPaid: false, userId: currentFirebaseUser.uid,
+            category: serviceType === 'jogo' ? 'game' : 'physical', paymentMethod: paymentMethod,
+            isFirstPurchase: isFreeTaxUsed, referredBy: affiliateRef, createdAt: window.PayGoDB.serverTimestamp()
+        };
+
+        await addDoc(collection(db, "orders"), orderData);
         
         fetch('/api/notify-order', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ orderData: orderData, action: 'new_order', sendEmail: true, sendLark: true })
-        }).catch(e => {});
+        }).catch(e => console.warn('Notificação falhou em silêncio.'));
 
         showToast(`✅ Pedido guardado! Redirecionando para o WhatsApp...`, 'success', 4000);
         
-        const tipoServico = formData.type === 'compra' ? 'Produto Internacional' : 'Jogo / Recarga';
-        const metodoPgto = formData.paymentMethod === 'wallet' ? 'CARTEIRA PAYGO' : formData.paymentMethod.toUpperCase();
+        const tipoServico = serviceType === 'compra' ? 'Produto Internacional' : 'Jogo / Recarga';
+        const metodoPgto = paymentMethod === 'wallet' ? 'CARTEIRA PAYGO' : paymentMethod.toUpperCase();
         let bonusTxt = '';
         if (isUserVip) bonusTxt = ' (Isento VIP 👑)';
         else if (isFreeTaxUsed) bonusTxt = ' (1ª Compra Grátis 🎁)';
 
-        const msg = `*NOVO PEDIDO PAYGO* 🛒\n--------------------------------------\n*🆔 Ref:* #${orderId}\n*👤 Cliente:* ${formData.name}\n*📱 Contacto:* ${formData.whatsapp}\n*📧 Email:* ${formData.email}\n\n*🛍️ DADOS DO SERVIÇO*\n*Categoria:* ${tipoServico}\n*Detalhe/Link:* ${formData.detail}\n*Valor em Dólar:* $${formData.usd.toFixed(2)} USD\n\n*💰 RESUMO FINANCEIRO*\n*Câmbio Base:* ${BINANCE_RATE.toFixed(2)} MT\n*Taxa PayGo:* ${tax.toFixed(2)} MT${bonusTxt}\n*TOTAL A PAGAR:* ${totalFinal.toFixed(2)} MT\n\n*💳 MÉTODO DE PAGAMENTO*\n${metodoPgto}\n\n_Aguardando instruções da equipa..._`;
+        const msg = `*NOVO PEDIDO PAYGO* 🛒\n--------------------------------------\n*🆔 Ref:* #${orderId}\n*👤 Cliente:* ${orderData.name}\n*📱 Contacto:* ${orderData.whatsapp}\n*📧 Email:* ${orderData.email}\n\n*🛍️ DADOS DO SERVIÇO*\n*Categoria:* ${tipoServico}\n*Detalhe/Link:* ${orderData.detail}\n*Valor em Dólar:* $${orderData.usd.toFixed(2)} USD\n\n*💰 RESUMO FINANCEIRO*\n*Câmbio Base:* ${BINANCE_RATE.toFixed(2)} MT\n*Taxa PayGo:* ${tax.toFixed(2)} MT${bonusTxt}\n*TOTAL A PAGAR:* ${totalFinal.toFixed(2)} MT\n\n*💳 MÉTODO DE PAGAMENTO*\n${metodoPgto}\n\n_Aguardando instruções da equipa..._`;
 
         setTimeout(() => {
             window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
             document.getElementById('userLink').value = ''; document.getElementById('userUSD').value = ''; window.calculate();
+            isPaymentProcessing = false;
+            if (btn) { btn.disabled = false; btn.innerHTML = originalContent; if(typeof lucide !== 'undefined') lucide.createIcons({root: btn}); }
         }, 1500);
 
     } catch (error) {
-        showToast('Erro ao processar o seu pedido localmente.', 'error');
-    } finally {
+        console.error("ERRO NO WHATSAPP:", error);
+        showToast('Erro técnico ao processar o seu pedido.', 'error');
         isPaymentProcessing = false;
-        btn.disabled = false; btn.innerHTML = originalContent; if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
+        if (btn) { btn.disabled = false; btn.innerHTML = originalContent; if(typeof lucide !== 'undefined') lucide.createIcons({root: btn}); }
     }
 });
 
@@ -1315,7 +1331,7 @@ onAuthStateChanged(auth, async (user) => {
                 }
 
                 if(document.getElementById('userName')) document.getElementById('userName').value = userName;
-                if(document.getElementById('userEmail')) document.getElementById('userEmail').value = currentUserData.email;
+                if(document.getElementById('userEmail')) document.getElementById('userEmail').value = currentUserData.email || 'cliente@paygo.co.mz';
                 if(document.getElementById('userWhatsApp')) document.getElementById('userWhatsApp').value = currentUserData.phone || '258000000000';
                 
                 window.calculate(); 
@@ -1462,9 +1478,6 @@ window.updatePaymentMethod = function() {
     });
 };
 
-// ========================================================================
-// 🔢 FUNÇÃO DE CÁLCULO (ANTI-SPAM APLICADO)
-// ========================================================================
 window.calculate = function() {
     clearTimeout(calcTimeout);
     calcTimeout = setTimeout(() => {
@@ -1504,7 +1517,7 @@ window.calculate = function() {
         const totalRounded = Math.floor(total);
         const cents = Math.round((total % 1) * 100).toString().padStart(2, '0');
         if(document.getElementById('receipt-total')) document.getElementById('receipt-total').innerHTML = `${totalRounded.toLocaleString('pt-MZ')}<span class="text-lg text-slate-400 font-normal">.${cents} MT</span>`;
-    }, 150); // Debounce de 150ms
+    }, 150); 
 };
 
 // ========================================================================
@@ -1543,8 +1556,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const refCode = urlParams.get('ref');
     if (refCode) {
         if(document.getElementById('redirectLoader')) document.getElementById('redirectLoader').classList.remove('hidden');
-        localStorage.setItem('paygo_affiliate_ref', refCode);
-        setTimeout(() => { window.location.href = `register.html?ref=${refCode}`; }, 1500); 
+        localStorage.setItem('paygo_affiliate_ref', sanitizeInput(refCode));
+        setTimeout(() => { window.location.href = `register.html?ref=${sanitizeInput(refCode)}`; }, 1500); 
     }
 
     const cookieConsent = document.getElementById("cookieConsent");
