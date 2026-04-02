@@ -880,8 +880,9 @@ const FIREBASE_CONFIG = {
 
 const WHATSAPP_NUMBER = '258837522255'; 
 
+// 🚀 IMPORTAÇÕES COMPLETAS E CORRIGIDAS (INCLUI LIMIT)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc, query, where, getDocs, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc, query, where, getDocs, updateDoc, increment, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const app = initializeApp(FIREBASE_CONFIG);
@@ -898,14 +899,40 @@ let isFirstPurchaseEligible = false;
 let firstPurchaseFree = true;
 let isUserVip = false;
 
-// 🛡️ Prevenção Anti-Spam (Debounce)
+// 🛡️ Prevenção Anti-Spam (Debounce) e Global
 let calcTimeout;
-let isPaymentProcessing = false; // Bloqueio de Duplo Clique Global
+let isPaymentProcessing = false;
 
-// 🛡️ Sanitização Anti-XSS rigorosa
+// 🛡️ SANITIZAÇÃO GLOBAL (CORRIGE O ERRO: escapeHTML is not defined)
+window.escapeHTML = (str) => {
+    if (!str) return '';
+    return String(str).replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+};
+
 const sanitizeInput = (str) => {
     if (typeof str !== 'string') return '';
     return str.replace(/[<>]/g, '').trim(); 
+};
+
+// 📢 TOASTS GLOBALIZADOS (CORRIGIDO PARA USAR WINDOW.ESCAPEHTML)
+window.showToast = function(message, type = 'default', duration = 4000) {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  const icons = { success: 'check-circle', error: 'alert-circle', warning: 'alert-triangle', info: 'info' };
+  const colors = { success: 'text-green-500', error: 'text-red-500', warning: 'text-amber-500', info: 'text-blue-500', default: 'text-blue-500' };
+  toast.innerHTML = `
+    <i data-lucide="${icons[type] || icons.default}" class="${colors[type] || colors.default} w-5 h-5 flex-shrink-0" aria-hidden="true"></i>
+    <span class="text-sm font-medium text-slate-700">${window.escapeHTML(message)}</span>
+    <button class="ml-auto text-slate-400 hover:text-slate-600 transition focus:outline-none" onclick="this.parentElement.remove()" aria-label="Fechar notificação">
+    <i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>
+    </button>
+  `;
+  container.appendChild(toast);
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+  requestAnimationFrame(() => toast.classList.add('show'));
+  setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, duration);
 };
 
 // ========================================================================
@@ -934,7 +961,7 @@ async function fetchSystemSettings() {
 }
 
 // ========================================================================
-// 🛒 GESTÃO DA CARRINHA (CART) - Blindado contra Injeção 🛡️
+// 🛒 GESTÃO DA CARRINHA (CART)
 // ========================================================================
 function updateCartBadge() {
     try {
@@ -949,7 +976,7 @@ function updateCartBadge() {
 
 window.addToCart = function() {
     if (!currentUserData) {
-        showToast('A redirecionar para o login...', 'info');
+        window.showToast('A redirecionar para o login...', 'info');
         setTimeout(() => window.location.href = 'login.html', 800);
         return;
     }
@@ -961,18 +988,18 @@ window.addToCart = function() {
     if (type === 'compra' && !detail) {
         document.getElementById('userLink').classList.add('ring-2', 'ring-danger-500');
         setTimeout(() => document.getElementById('userLink').classList.remove('ring-2', 'ring-danger-500'), 2000);
-        return showToast('Insira um link de produto válido.', 'error');
+        return window.showToast('Insira um link de produto válido.', 'error');
     }
     if (type === 'jogo' && !detail) {
         document.getElementById('userLink').classList.add('ring-2', 'ring-danger-500');
         setTimeout(() => document.getElementById('userLink').classList.remove('ring-2', 'ring-danger-500'), 2000);
-        return showToast('Insira o ID ou Email da conta.', 'error');
+        return window.showToast('Insira o ID ou Email da conta.', 'error');
     }
     
     if (usd <= 0) {
         document.getElementById('userUSD').classList.add('ring-2', 'ring-danger-500');
         setTimeout(() => document.getElementById('userUSD').classList.remove('ring-2', 'ring-danger-500'), 2000);
-        return showToast('Insira um valor válido.', 'error');
+        return window.showToast('Insira um valor válido.', 'error');
     }
 
     try {
@@ -981,18 +1008,18 @@ window.addToCart = function() {
         localStorage.setItem('paygo_cart', JSON.stringify(cart));
         
         updateCartBadge();
-        showToast('Produto adicionado à Carrinha! 🛒', 'success');
+        window.showToast('Produto adicionado à Carrinha! 🛒', 'success');
         
         document.getElementById('userLink').value = '';
         document.getElementById('userUSD').value = '';
         window.calculate();
     } catch (e) {
-        showToast('Erro ao guardar na carrinha.', 'error');
+        window.showToast('Erro ao guardar na carrinha.', 'error');
     }
 };
 
 // ========================================================================
-// 💳 PAGAMENTO DIRETO (BLINDADO ABSOLUTO) 🛡️
+// 💳 PAGAMENTO DIRETO (CARTEIRA) 🛡️
 // ========================================================================
 window.processDirectPayment = async function() {
     if (isPaymentProcessing) return;
@@ -1002,14 +1029,14 @@ window.processDirectPayment = async function() {
 
     try {
         if (!currentUserData || !currentFirebaseUser) {
-            showToast('Sessão expirada. A redirecionar para o login...', 'info');
+            window.showToast('Sessão expirada. A redirecionar para o login...', 'info');
             setTimeout(() => window.location.href = 'login.html', 800);
             return;
         }
 
         const checkEmail = (currentUserData.email || '').toLowerCase();
         if (checkEmail.includes('guest')) {
-            showToast("⚠️ Acesso restrito. Inicie sessão com uma conta válida.", "error");
+            window.showToast("⚠️ Acesso restrito. Inicie sessão com uma conta válida.", "error");
             setTimeout(() => { window.location.href = 'login.html'; }, 2000);
             return; 
         }
@@ -1017,10 +1044,10 @@ window.processDirectPayment = async function() {
         const usd = parseFloat(document.getElementById('userUSD').value) || 0;
         const detail = sanitizeInput(document.getElementById('userLink').value);
         const serviceType = sanitizeInput(document.getElementById('serviceType').value);
-        const paymentMethod = 'wallet'; // FORÇADO A SER CARTEIRA
+        const paymentMethod = 'wallet'; 
         
         if (!detail || usd <= 0) {
-            showToast('Preencha o link e o valor do produto antes de pagar.', 'error');
+            window.showToast('Preencha o link e o valor do produto antes de pagar.', 'error');
             return;
         }
 
@@ -1031,7 +1058,6 @@ window.processDirectPayment = async function() {
             if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
         }
 
-        // 🛡️ CÁLCULO SEGURO DAS TAXAS
         const converted = usd * BINANCE_RATE;
         let tax = 0;
         
@@ -1062,7 +1088,7 @@ window.processDirectPayment = async function() {
             tax: tax,
             total: totalFinal,
             exchangeRate: BINANCE_RATE,
-            status: 'processing', // Já vai como PAGO E A PROCESSAR
+            status: 'processing',
             isPaid: true,
             paymentMethod: paymentMethod,
             category: serviceType === 'jogo' ? 'game' : 'physical',
@@ -1072,12 +1098,11 @@ window.processDirectPayment = async function() {
             source: 'direct-checkout'
         };
 
-        // 🟢 VIA CARTEIRA (WALLET) EXCLUSIVAMENTE
         const freshUserDoc = await getDoc(doc(db, "users", currentFirebaseUser.uid));
         const freshBalance = parseFloat(freshUserDoc.data()?.walletBalance) || 0;
         
         if (freshBalance < totalFinal) {
-            showToast(`Saldo insuficiente (${formatMZN(freshBalance)} MT). A redirecionar para recarga...`, 'error');
+            window.showToast(`Saldo insuficiente (${formatMZN(freshBalance)} MT). A redirecionar para recarga...`, 'error');
             isPaymentProcessing = false; 
             if(btn) { btn.disabled = false; btn.innerHTML = origHtml; if(typeof lucide !== 'undefined') lucide.createIcons({root: btn}); }
             setTimeout(() => window.location.href = 'dashboard.html', 2000);
@@ -1092,12 +1117,12 @@ window.processDirectPayment = async function() {
             description: `Compra via Site: ${orderId}`, reference: orderId, createdAt: new Date().toISOString()
         });
 
-        showToast('Pagamento efetuado com sucesso via Carteira! 🎉', 'success');
+        window.showToast('Pagamento efetuado com sucesso via Carteira! 🎉', 'success');
         setTimeout(() => window.location.href = 'historico.html', 2000);
 
     } catch (err) {
         console.error("ERRO NO PAGAMENTO:", err);
-        showToast(err.message || 'Falha ao iniciar pagamento. Tente novamente.', 'error');
+        window.showToast(err.message || 'Falha ao iniciar pagamento. Tente novamente.', 'error');
         isPaymentProcessing = false; 
         if (btn) { btn.disabled = false; btn.innerHTML = origHtml; if(typeof lucide !== 'undefined') lucide.createIcons({root: btn}); }
     }
@@ -1115,14 +1140,14 @@ document.getElementById('paygoForm').addEventListener('submit', async function(e
 
     try {
         if (!currentUserData || !currentFirebaseUser) { 
-            showToast('A redirecionar para o login...', 'info'); 
+            window.showToast('A redirecionar para o login...', 'info'); 
             setTimeout(() => window.location.href = 'login.html', 800); 
             return; 
         }
         
         const checkEmail = (currentUserData.email || '').toLowerCase();
         if (checkEmail.includes('guest')) {
-            showToast("⚠️ Acesso restrito. Inicie sessão com uma conta válida.", "error");
+            window.showToast("⚠️ Acesso restrito. Inicie sessão com uma conta válida.", "error");
             setTimeout(() => { window.location.href = 'login.html'; }, 2000);
             return; 
         }
@@ -1132,7 +1157,7 @@ document.getElementById('paygoForm').addEventListener('submit', async function(e
         const serviceType = sanitizeInput(document.getElementById('serviceType').value);
 
         if (!detail || usd <= 0) {
-            return showToast('Preencha os dados da encomenda primeiro.', 'error');
+            return window.showToast('Preencha os dados da encomenda primeiro.', 'error');
         }
 
         isPaymentProcessing = true;
@@ -1149,7 +1174,6 @@ document.getElementById('paygoForm').addEventListener('submit', async function(e
             updateCartBadge(); 
         } catch(e) {}
 
-        // 🛡️ CÁLCULO SEGURO
         const converted = usd * BINANCE_RATE;
         let tax = 0;
         let isFreeTaxUsed = false;
@@ -1171,12 +1195,11 @@ document.getElementById('paygoForm').addEventListener('submit', async function(e
         const affiliateRef = sanitizeInput(localStorage.getItem('paygo_affiliate_ref') || null);
         const safeEmail = currentUserData.email || document.getElementById('userEmail')?.value || 'cliente@paygo.co.mz';
 
-        // 🟢 FORÇAR PAGAMENTO DA CARTEIRA PRIMEIRO
         const freshUserDoc = await getDoc(doc(db, "users", currentFirebaseUser.uid));
         const freshBalance = parseFloat(freshUserDoc.data()?.walletBalance) || 0;
         
         if (freshBalance < totalFinal) {
-            showToast(`Saldo insuficiente (${formatMZN(freshBalance)} MT). A redirecionar para recarga...`, 'error');
+            window.showToast(`Saldo insuficiente (${formatMZN(freshBalance)} MT). A redirecionar para recarga...`, 'error');
             isPaymentProcessing = false; 
             if(btn) { btn.disabled = false; btn.innerHTML = originalContent; if(typeof lucide !== 'undefined') lucide.createIcons({root: btn}); }
             setTimeout(() => window.location.href = 'dashboard.html', 2000);
@@ -1205,7 +1228,7 @@ document.getElementById('paygoForm').addEventListener('submit', async function(e
             body: JSON.stringify({ orderData: orderData, action: 'new_order', sendEmail: true, sendLark: true })
         }).catch(e => console.warn('Notificação falhou em silêncio.'));
 
-        showToast(`✅ Pagamento efetuado! Redirecionando para o WhatsApp...`, 'success', 4000);
+        window.showToast(`✅ Pagamento efetuado! Redirecionando para o WhatsApp...`, 'success', 4000);
         
         const tipoServico = serviceType === 'compra' ? 'Produto Internacional' : 'Jogo / Recarga';
         const metodoPgto = 'CARTEIRA PAYGO';
@@ -1224,14 +1247,14 @@ document.getElementById('paygoForm').addEventListener('submit', async function(e
 
     } catch (error) {
         console.error("ERRO NO WHATSAPP:", error);
-        showToast('Erro técnico ao processar o seu pedido.', 'error');
+        window.showToast('Erro técnico ao processar o seu pedido.', 'error');
         isPaymentProcessing = false;
         if (btn) { btn.disabled = false; btn.innerHTML = originalContent; if(typeof lucide !== 'undefined') lucide.createIcons({root: btn}); }
     }
 });
 
 // ========================================================================
-// 🔐 AUTENTICAÇÃO E CONTROLO DE HEADER
+// 🔐 AUTENTICAÇÃO E CONTROLO DE HEADER (CORRIGIDO LIMIT)
 // ========================================================================
 function formatMZN(val) { return new Intl.NumberFormat('pt-MZ', { minimumFractionDigits: 2 }).format(val || 0); }
 
@@ -1270,7 +1293,6 @@ onAuthStateChanged(auth, async (user) => {
                     if(document.getElementById('mobileAdminLink')) document.getElementById('mobileAdminLink').classList.remove('hidden');
                 }
 
-                // VERIFICAÇÃO VIP E PRIMEIRA COMPRA
                 if (currentUserData.isVip && currentUserData.vipExpiry && currentUserData.vipExpiry.toDate() > new Date()) {
                     isUserVip = true;
                     if(document.getElementById('userBadge')) document.getElementById('userBadge').innerHTML = `<span class="text-vip-400 flex items-center gap-1"><i data-lucide="crown" class="w-3 h-3"></i> VIP</span>`;
@@ -1308,7 +1330,7 @@ window.logoutFromHeader = async function() {
     if (confirm('Sair da conta? A sua carrinha será guardada localmente.')) {
         try {
             await signOut(auth);
-            showToast('✅ Logout realizado com sucesso!', 'success');
+            window.showToast('✅ Logout realizado com sucesso!', 'success');
             setTimeout(() => { window.location.reload(); }, 1000);
         } catch (error) {}
     }
@@ -1330,13 +1352,13 @@ window.closeTrackingModal = function() {
 };
 
 window.copyToClipboard = function(text) {
-    navigator.clipboard.writeText(text).then(() => showToast('Código copiado!', 'success'));
+    navigator.clipboard.writeText(text).then(() => window.showToast('Código copiado!', 'success'));
 };
 
 window.trackOrderAction = async function() {
     const idInput = sanitizeInput(document.getElementById('trackOrderId').value.trim().toUpperCase());
     const resultDiv = document.getElementById('trackResult');
-    if(!idInput) return showToast('Insira um código de pedido válido.', 'error');
+    if(!idInput) return window.showToast('Insira um código de pedido válido.', 'error');
     
     resultDiv.classList.remove('hidden');
     resultDiv.innerHTML = '<div class="flex flex-col items-center"><i data-lucide="loader-2" class="animate-spin w-8 h-8 text-brand-500 mb-2"></i><p class="text-sm font-medium text-slate-500">A buscar informações...</p></div>';
@@ -1372,8 +1394,8 @@ window.trackOrderAction = async function() {
             <div class="mt-4 p-4 bg-brand-50 border border-brand-200 rounded-xl">
                 <p class="text-[10px] font-bold text-brand-600 uppercase tracking-widest mb-2 flex items-center gap-1"><i data-lucide="plane" class="w-3 h-3"></i> Rastreio Internacional</p>
                 <div class="flex items-center justify-between bg-white p-3 rounded-lg border border-brand-100 mb-3 shadow-sm">
-                    <span class="font-mono font-bold text-slate-800 tracking-wider">${escapeHTML(order.trackingCode)}</span>
-                    <button onclick="window.copyToClipboard('${escapeHTML(order.trackingCode)}')" class="text-slate-400 hover:text-brand-600 transition"><i data-lucide="copy" class="w-5 h-5"></i></button>
+                    <span class="font-mono font-bold text-slate-800 tracking-wider">${window.escapeHTML(order.trackingCode)}</span>
+                    <button onclick="window.copyToClipboard('${window.escapeHTML(order.trackingCode)}')" class="text-slate-400 hover:text-brand-600 transition"><i data-lucide="copy" class="w-5 h-5"></i></button>
                 </div>
                 <a href="https://global.cainiao.com/detail.htm?mailNo=${encodeURIComponent(order.trackingCode)}" target="_blank" class="w-full flex justify-center items-center gap-2 bg-brand-600 text-white py-3 rounded-xl text-sm font-bold hover:bg-brand-700 transition shadow-md">
                     <i data-lucide="external-link" class="w-4 h-4"></i> Rastrear no Cainiao
@@ -1387,7 +1409,7 @@ window.trackOrderAction = async function() {
                 <div class="flex justify-between items-start border-b border-slate-200 pb-3">
                     <div>
                         <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Código do Pedido</p>
-                        <p class="font-mono font-bold text-slate-800 text-lg">${escapeHTML(order.orderId)}</p>
+                        <p class="font-mono font-bold text-slate-800 text-lg">${window.escapeHTML(order.orderId)}</p>
                     </div>
                     <div class="text-right">
                         <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Data</p>
@@ -1523,27 +1545,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if(btnAccept) btnAccept.addEventListener("click", () => closeAndSave('all'));
     if(btnReject) btnReject.addEventListener("click", () => closeAndSave('essential'));
 });
-
-// Toasts base
-function showToast(message, type = 'default', duration = 4000) {
-  const container = document.getElementById('toast-container');
-  if (!container) return;
-  const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
-  const icons = { success: 'check-circle', error: 'alert-circle', warning: 'alert-triangle', info: 'info' };
-  const colors = { success: 'text-green-500', error: 'text-red-500', warning: 'text-amber-500', info: 'text-blue-500', default: 'text-blue-500' };
-  toast.innerHTML = `
-    <i data-lucide="${icons[type] || icons.default}" class="${colors[type] || colors.default} w-5 h-5 flex-shrink-0" aria-hidden="true"></i>
-    <span class="text-sm font-medium text-slate-700">${escapeHTML(message)}</span>
-    <button class="ml-auto text-slate-400 hover:text-slate-600 transition focus:outline-none" onclick="this.parentElement.remove()" aria-label="Fechar notificação">
-    <i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>
-    </button>
-  `;
-  container.appendChild(toast);
-  if (typeof lucide !== 'undefined') lucide.createIcons();
-  requestAnimationFrame(() => toast.classList.add('show'));
-  setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, duration);
-}
 </script>
 </body>
 </html>
