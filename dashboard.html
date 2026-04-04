@@ -586,7 +586,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, getDocs, collection, query, where, limit, addDoc, updateDoc, serverTimestamp, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, getDocs, collection, query, where, limit, addDoc, updateDoc, serverTimestamp, increment, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         // 🔥 CHAVES DA FIREBASE
         const firebaseConfig = { 
@@ -608,6 +608,7 @@
         let currentCalculatedTotal = 0, currentCalculatedTax = 0;
         let rawVcNumber = ''; let rawVcCvc = ''; let isCardRevealed = false;
         let isProcessing = false; // 🛑 Proteção Anti-Duplo Clique
+        let walletUnsubscribe = null; // Listener de tempo real para o saldo
 
         // 🛡️ UTILS BASE
         const formatMZN = (val) => new Intl.NumberFormat('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val);
@@ -637,14 +638,14 @@
         }
 
         // =====================================
-        // CARREGAR DADOS (SESSÃO)
+        // CARREGAR DADOS EM TEMPO REAL (SESSÃO + OUVINTE DO SALDO)
         // =====================================
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = 'login.html'; return; }
             currentUser = user;
 
             try {
-                // Settings do Câmbio
+                // Settings do Câmbio (Carrega 1 vez)
                 const sysDoc = await getDoc(doc(db, "settings", "global"));
                 if (sysDoc.exists()) {
                     const sysData = sysDoc.data();
@@ -657,58 +658,69 @@
                 setSafeText('infoTax1', sysTax1); setSafeText('infoTax3', sysTax3);
                 setSafeText('topUpRateDisplay', sysExchangeRate);
 
-                // Perfil do Cliente
-                const userDoc = await getDoc(doc(db, "users", user.uid));
-                if (userDoc.exists()) {
-                    userData = userDoc.data();
-                    setSafeText('userName', userData.name || 'Cliente');
-                    setSafeText('headerUserName', userData.name || 'Cliente');
-                    setSafeText('walletBalance', formatMZN(parseFloat(userData.walletBalance) || 0));
-                    setSafeText('vcNameDisplay', userData.name ? userData.name.toUpperCase() : 'CLIENTE PAYGO');
-                    setSafeValue('shipName', userData.name || ''); setSafeValue('shipPhone', userData.phone || '');
-
-                    // VIP
-                    if (userData.isVip && userData.vipExpiry && userData.vipExpiry.toDate() > new Date()) {
-                        isUserVip = true;
-                        setSafeHTML('userBadge', `<span class="text-vip-400 flex items-center gap-1"><i data-lucide="crown" class="w-3 h-3"></i> VIP</span>`);
-                        const orb = document.getElementById('glowOrb'); if(orb) orb.classList.replace('bg-brand-600/10', 'bg-vip-600/20');
-                        const card = document.getElementById('walletCard'); if(card) card.classList.replace('border-t-brand-500', 'border-t-vip-500');
+                // Listener EM TEMPO REAL para a carteira (O Reembolso do Admin entra aqui direto)
+                walletUnsubscribe = onSnapshot(doc(db, "users", user.uid), async (userDoc) => {
+                    if (userDoc.exists()) {
+                        userData = userDoc.data();
                         
-                        const vipBox = document.getElementById('vipCurrentStatusBox'); if(vipBox) vipBox.classList.remove('hidden');
-                        const planName = userData.vipPlan === 'anual' ? 'Anual' : 'Mensal';
-                        setSafeText('vipCurrentStatusText', `O seu Plano VIP ${planName} está ativo.`);
+                        // Atualiza a Carteira Visual
+                        const currentWalletBalance = parseFloat(userData.walletBalance) || 0;
+                        setSafeText('walletBalance', formatMZN(currentWalletBalance));
+                        
+                        // Atualiza Dados Pessoais (se mudarem)
+                        setSafeText('userName', userData.name || 'Cliente');
+                        setSafeText('headerUserName', userData.name || 'Cliente');
+                        setSafeText('vcNameDisplay', userData.name ? userData.name.toUpperCase() : 'CLIENTE PAYGO');
+                        setSafeValue('shipName', userData.name || ''); setSafeValue('shipPhone', userData.phone || '');
 
-                        if (userData.vipPlan === 'anual') {
-                            const optM = document.getElementById('vipOptionMensal'); if(optM) optM.classList.add('hidden');
-                            const optA = document.getElementById('vipOptionAnual'); if(optA) optA.classList.add('hidden');
-                            const btnBuy = document.getElementById('btnBuyVip'); if(btnBuy) btnBuy.classList.add('hidden');
-                        } else {
-                            const optM = document.getElementById('vipOptionMensal'); if(optM) optM.classList.add('hidden');
-                            const btnBuy = document.getElementById('btnBuyVip'); if(btnBuy) btnBuy.innerHTML = 'Upgrade para Anual (12.600 MT)';
-                            document.querySelector('input[value="anual"]').checked = true;
+                        // Processamento VIP
+                        if (userData.isVip && userData.vipExpiry && userData.vipExpiry.toDate() > new Date()) {
+                            isUserVip = true;
+                            setSafeHTML('userBadge', `<span class="text-vip-400 flex items-center gap-1"><i data-lucide="crown" class="w-3 h-3"></i> VIP</span>`);
+                            const orb = document.getElementById('glowOrb'); if(orb) orb.classList.replace('bg-brand-600/10', 'bg-vip-600/20');
+                            const card = document.getElementById('walletCard'); if(card) card.classList.replace('border-t-brand-500', 'border-t-vip-500');
+                            
+                            const vipBox = document.getElementById('vipCurrentStatusBox'); if(vipBox) vipBox.classList.remove('hidden');
+                            const planName = userData.vipPlan === 'anual' ? 'Anual' : 'Mensal';
+                            setSafeText('vipCurrentStatusText', `O seu Plano VIP ${planName} está ativo.`);
+
+                            if (userData.vipPlan === 'anual') {
+                                const optM = document.getElementById('vipOptionMensal'); if(optM) optM.classList.add('hidden');
+                                const optA = document.getElementById('vipOptionAnual'); if(optA) optA.classList.add('hidden');
+                                const btnBuy = document.getElementById('btnBuyVip'); if(btnBuy) btnBuy.classList.add('hidden');
+                            } else {
+                                const optM = document.getElementById('vipOptionMensal'); if(optM) optM.classList.add('hidden');
+                                const btnBuy = document.getElementById('btnBuyVip'); if(btnBuy) btnBuy.innerHTML = 'Upgrade para Anual (12.600 MT)';
+                                document.querySelector('input[value="anual"]').checked = true;
+                            }
+                        } else if (firstPurchaseFree) {
+                            // Verifica se é a 1ª compra apenas se não for VIP
+                            const ordersSnap = await getDocs(query(collection(db, "orders"), where("userId", "==", user.uid), limit(1)));
+                            isFirstPurchaseEligible = ordersSnap.empty; 
                         }
-                    } else if (firstPurchaseFree) {
-                        const ordersSnap = await getDocs(query(collection(db, "orders"), where("userId", "==", user.uid), limit(1)));
-                        isFirstPurchaseEligible = ordersSnap.empty; 
-                    }
 
-                    // Cartão Virtual
-                    if (userData.virtualCard) {
-                        rawVcNumber = userData.virtualCard.number || ''; rawVcCvc = userData.virtualCard.cvc || '***';
-                        setSafeText('vcNumber', `**** **** **** ${rawVcNumber.slice(-4)}`);
-                        setSafeText('vcExpiry', userData.virtualCard.expiry);
-                        setSafeText('vcBalanceDisplay', `$${formatUSD(userData.vcBalance || 0)}`);
-                        const btnReveal = document.getElementById('btnRevealCard'); if (btnReveal) btnReveal.classList.remove('hidden');
-                        if(userData.virtualCard.destination) setSafeValue('vcTopUpDestination', userData.virtualCard.destination);
-                        setSafeHTML('vcStatusText', `<span class="text-success-400 font-bold flex items-center gap-1.5 justify-center md:justify-start mb-2"><i data-lucide="check-circle" class="w-4 h-4"></i> Cartão Vinculado</span> Controle o saldo e recarregue quando quiser.`);
-                        setSafeHTML('vcActionButtons', `<button onclick="window.openVcTopUpModal()" class="flex-1 py-3.5 bg-success-600 hover:bg-success-500 text-white rounded-xl font-bold text-sm transition shadow-[0_0_20px_rgba(34,197,94,0.3)] flex items-center justify-center gap-2 active:scale-95"><i data-lucide="zap" class="w-4 h-4"></i> Recarregar ($)</button> <button onclick="window.unlinkVirtualCard()" class="py-3.5 px-5 bg-slate-800 hover:bg-danger-900/50 text-slate-400 hover:text-danger-400 border border-slate-700 hover:border-danger-500/50 rounded-xl font-bold transition flex items-center justify-center gap-2 active:scale-95" title="Remover Cartão"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`);
-                    } else if (userData.vcRequestPending) {
-                        setSafeHTML('vcStatusText', `<span class="text-warning-400 font-bold flex items-center gap-1.5 justify-center md:justify-start mb-2"><i data-lucide="clock" class="w-4 h-4"></i> Aguardando Emissão</span> O Admin está a gerar o seu cartão.`);
-                        setSafeHTML('vcActionButtons', `<button disabled class="w-full py-3.5 bg-slate-800 text-slate-500 border border-slate-700 rounded-xl font-bold text-sm cursor-not-allowed flex items-center justify-center gap-2"><i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Em Processamento</button>`);
+                        // Processamento Cartão Virtual
+                        if (userData.virtualCard) {
+                            rawVcNumber = userData.virtualCard.number || ''; rawVcCvc = userData.virtualCard.cvc || '***';
+                            setSafeText('vcNumber', `**** **** **** ${rawVcNumber.slice(-4)}`);
+                            setSafeText('vcExpiry', userData.virtualCard.expiry);
+                            setSafeText('vcBalanceDisplay', `$${formatUSD(userData.vcBalance || 0)}`);
+                            const btnReveal = document.getElementById('btnRevealCard'); if (btnReveal) btnReveal.classList.remove('hidden');
+                            if(userData.virtualCard.destination) setSafeValue('vcTopUpDestination', userData.virtualCard.destination);
+                            setSafeHTML('vcStatusText', `<span class="text-success-400 font-bold flex items-center gap-1.5 justify-center md:justify-start mb-2"><i data-lucide="check-circle" class="w-4 h-4"></i> Cartão Vinculado</span> Controle o saldo e recarregue quando quiser.`);
+                            setSafeHTML('vcActionButtons', `<button onclick="window.openVcTopUpModal()" class="flex-1 py-3.5 bg-success-600 hover:bg-success-500 text-white rounded-xl font-bold text-sm transition shadow-[0_0_20px_rgba(34,197,94,0.3)] flex items-center justify-center gap-2 active:scale-95"><i data-lucide="zap" class="w-4 h-4"></i> Recarregar ($)</button> <button onclick="window.unlinkVirtualCard()" class="py-3.5 px-5 bg-slate-800 hover:bg-danger-900/50 text-slate-400 hover:text-danger-400 border border-slate-700 hover:border-danger-500/50 rounded-xl font-bold transition flex items-center justify-center gap-2 active:scale-95" title="Remover Cartão"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`);
+                        } else if (userData.vcRequestPending) {
+                            setSafeHTML('vcStatusText', `<span class="text-warning-400 font-bold flex items-center gap-1.5 justify-center md:justify-start mb-2"><i data-lucide="clock" class="w-4 h-4"></i> Aguardando Emissão</span> O Admin está a gerar o seu cartão.`);
+                            setSafeHTML('vcActionButtons', `<button disabled class="w-full py-3.5 bg-slate-800 text-slate-500 border border-slate-700 rounded-xl font-bold text-sm cursor-not-allowed flex items-center justify-center gap-2"><i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Em Processamento</button>`);
+                        }
+                        
+                        lucide.createIcons();
+                        // Re-calcula o orçamento atual com base no novo saldo que possa ter chegado (Refunds, etc)
+                        const currentUsdInput = parseFloat(document.getElementById('productUsd').value) || 0;
+                        if(currentUsdInput > 0) updateCalculator(currentUsdInput);
                     }
-                    
-                    lucide.createIcons();
-                }
+                });
+
             } catch (error) { window.showToast("Falha ao carregar dados do cofre.", "error"); }
         });
 
@@ -769,14 +781,14 @@
             setSafeText('calcBase', `${formatMZN(baseMZN)} MT`); setSafeText('calcFee', `${formatMZN(appliedTax)} MT`); setSafeText('calcTotal', `${formatMZN(currentCalculatedTotal)} MT`);
 
             const safeTotal = Number(currentCalculatedTotal.toFixed(2));
-            const userBal = parseFloat(userData?.walletBalance) || 0;
+            const userBal = parseFloat(userData?.walletBalance) || 0; // Usando walletBalance!
             
             if (safeTotal > userBal) { if(btnSub) btnSub.disabled = true; if(succ) succ.classList.add('hidden'); if(warn) warn.classList.remove('hidden'); } 
             else { if(btnSub) btnSub.disabled = false; if(warn) warn.classList.add('hidden'); if(succ) succ.classList.remove('hidden'); }
         }
 
         // =====================================
-        // 🔒 1. PROCESSAMENTO DE ORDENS (BLINDADO CONTRA RACE CONDITION & GUESTS)
+        // 🔒 1. PROCESSAMENTO DE ORDENS (BLINDADO)
         // =====================================
         window.processOrder = async () => {
             if (isProcessing) return;
@@ -799,7 +811,7 @@
             }
 
             try {
-                // Obter o saldo atualizado DIRETAMENTE do banco de dados (Evita "Double Spend")
+                // Obter o saldo atualizado DIRETAMENTE do banco de dados para evitar "Double Spend"
                 const freshUserDoc = await getDoc(doc(db, "users", currentUser.uid));
                 const freshBalance = parseFloat(freshUserDoc.data().walletBalance) || 0;
                 const safeTotal = Number(currentCalculatedTotal.toFixed(2));
@@ -822,15 +834,13 @@
                 if (cat === 'physical') { payloadData.shipping = { shipName: document.getElementById('shipName').value, shipZip: document.getElementById('shipZip').value, shipAddress: document.getElementById('shipAddress').value, shipCity: document.getElementById('shipCity').value, shipPhone: document.getElementById('shipPhone').value }; } 
                 else { payloadData.digitalData = { accountOrId: document.getElementById('digitalAccount').value }; }
 
-                // Debita o saldo e grava a encomenda
+                // Usa increment para que a dedução seja calculada de forma atómica pelo motor da Firebase
                 await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: increment(-safeTotal) });
                 await addDoc(collection(db, "orders"), payloadData);
                 await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: safeTotal, description: `Pedido ${orderId}`, reference: orderId, createdAt: new Date().toISOString() });
 
-                // Atualiza visualmente
-                userData.walletBalance = freshBalance - safeTotal; 
-                setSafeText('walletBalance', formatMZN(userData.walletBalance));
-                
+                // O listener em tempo real de "users" irá atualizar o ecrã automaticamente, 
+                // mas resertamos o form para fechar a operação
                 document.getElementById('orderForm').reset(); updateCalculator(0); 
                 window.showToast("Pagamento processado com sucesso!", "success");
             } catch (err) { 
@@ -843,7 +853,7 @@
         };
 
         // =====================================
-        // 🔒 2. DEPOSITAR NA CARTEIRA (ANTI-GUEST APLICADO)
+        // 🔒 2. DEPOSITAR NA CARTEIRA
         // =====================================
         window.processTopUp = async () => {
             if (isProcessing) return;
@@ -907,7 +917,7 @@
         };
 
         // =====================================
-        // 🔒 3. TRANSFERÊNCIA P2P (BLINDADO CONTRA RACE CONDITION)
+        // 🔒 3. TRANSFERÊNCIA P2P
         // =====================================
         window.processTransfer = async () => { 
             if (isProcessing) return;
@@ -926,7 +936,7 @@
             }
 
             try {
-                // Obter saldo em tempo real antes de enviar para a API
+                // Obter saldo em tempo real 
                 const freshUserDoc = await getDoc(doc(db, "users", currentUser.uid));
                 const freshBalance = parseFloat(freshUserDoc.data().walletBalance) || 0;
 
@@ -941,17 +951,15 @@
                 if (!response.ok) throw new Error(data.error || "Erro na transferência.");
 
                 window.closeModals(); document.getElementById('transferForm').reset();
-                window.showToast(`Transferência de ${formatMZN(amount)} MT concluída com sucesso!`, "success");
+                window.showToast(`Transferência de ${formatMZN(amount)} MT concluída!`, "success");
                 
-                userData.walletBalance = freshBalance - amount; 
-                setSafeText('walletBalance', formatMZN(userData.walletBalance));
-                
+                // (O decremento ocorre no backend /p2p-transfer e o nosso onSnapshot atualiza a UI)
             } catch (err) { window.showToast(err.message, "error"); } 
             finally { isProcessing = false; btn.disabled = false; btn.innerHTML = origText; }
         };
 
         // =====================================
-        // 🔒 4. VIP E CARTÃO VIRTUAL (RACE CONDITION PROTECTED)
+        // 🔒 4. VIP E CARTÃO VIRTUAL
         // =====================================
         window.processVip = async () => {
             if (isProcessing) return;
@@ -1035,16 +1043,13 @@
             try {
                 const freshUserDoc = await getDoc(doc(db, "users", currentUser.uid));
                 const freshBalance = parseFloat(freshUserDoc.data().walletBalance) || 0;
-                if (freshBalance < mznCost) throw new Error(`Saldo insuficiente.`);
+                if (freshBalance < mznCost) throw new Error(`Saldo insuficiente na sua carteira. Deposita fundos primeiro.`);
 
                 await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: increment(-mznCost) });
                 await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: mznCost, description: `Recarga VC ($${usdAmount})`, reference: 'VC-TOPUP', createdAt: new Date().toISOString() });
                 await addDoc(collection(db, "support_tickets"), { userId: currentUser.uid, type: 'vc_topup', usdAmount: usdAmount, mznCost: mznCost, userName: userData.name, userEmail: currentUser.email, destination: destination, message: `Recarga VC: $${usdAmount} para o destino: ${destination}`, status: 'open', createdAt: serverTimestamp() });
                 
-                window.closeModals(); window.showToast("Pedido de recarga enviado com sucesso à Equipa!", "success");
-                
-                userData.walletBalance = freshBalance - mznCost; 
-                setSafeText('walletBalance', formatMZN(userData.walletBalance)); 
+                window.closeModals(); window.showToast("Pedido de recarga de cartão enviado à Equipa!", "success");
                 document.getElementById('vcTopUpForm').reset();
             } catch (err) { 
                 window.showToast(err.message || "Erro na transação.", "error"); 
@@ -1170,6 +1175,11 @@
         window.openVipModal = () => { window.closeModals(); const el = document.getElementById('vipModal'); if(el) el.classList.replace('hidden', 'flex'); };
         
         window.logoutFromHeader = window.logout = async () => { if(confirm('Sair da conta?')) { await signOut(auth); window.location.href = 'login.html'; } };
+        
+        // Remove os listeners ao fechar
+        window.addEventListener('beforeunload', () => { 
+            if (walletUnsubscribe) walletUnsubscribe(); 
+        });
     </script>
 </body>
 </html>
