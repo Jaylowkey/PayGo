@@ -6,7 +6,6 @@
 <title>Todos os Pedidos | Gestão PayGo</title>
 <meta name="theme-color" content="#0f172a">
 <meta name="robots" content="noindex, nofollow">
-<meta name="description" content="Gestão completa de pedidos PayGo - Admin Panel">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -290,7 +289,7 @@ select, input, textarea { background-color: rgba(15, 23, 42, 0.5) !important; co
                 
                 <label class="block text-[10px] font-black text-danger-400 uppercase tracking-widest mb-2 ml-1 flex items-center gap-1"><i data-lucide="paperclip" class="w-3 h-3"></i> Anexar Prova (Opcional - Imagem/PDF)</label>
                 <input type="file" id="refundMediaInput" accept="image/*,application/pdf" class="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-danger-500/20 file:text-danger-400 hover:file:bg-danger-500/30 cursor-pointer bg-slate-900 border border-danger-500/30 rounded-xl p-2 transition-all">
-                <p class="text-[10px] text-danger-400/80 mt-2 font-bold flex items-center gap-1"><i data-lucide="info" class="w-3 h-3"></i> O valor exacto pago será creditado na carteira (balance) do cliente.</p>
+                <p class="text-[10px] text-danger-400/80 mt-2 font-bold flex items-center gap-1"><i data-lucide="info" class="w-3 h-3"></i> O valor exacto pago será devolvido à Carteira PayGo do cliente.</p>
             </div>
             
             <div class="flex flex-col sm:flex-row items-end justify-end mt-2 gap-3" id="modalActionButtons">
@@ -302,7 +301,6 @@ select, input, textarea { background-color: rgba(15, 23, 42, 0.5) !important; co
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-// Adicionado getDocs, addDoc e Storage para suportar carregamentos, refunds à carteira e cache de nomes
 import { getFirestore, collection, doc, updateDoc, onSnapshot, query, orderBy, getDoc, serverTimestamp, writeBatch, increment, deleteDoc, getDocs, where, arrayUnion, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
@@ -388,19 +386,23 @@ const escapeHTML = (str) => {
     return String(str).replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
 };
 
-// Async fetch para procurar nomes de clientes em Topups onde o nome não foi salvo no documento
+// CACHE: Recuperar o nome perdido de quem fez TopUp
 const resolveUserName = async (userId) => {
-    if (!userId) return 'Cliente Não Identificado';
-    if (userCache[userId]) return userCache[userId].name;
+    if (!userId) return;
+    if (userCache[userId]) return;
     try {
         const userDoc = await getDoc(doc(db, "users", userId));
         if(userDoc.exists()) {
             userCache[userId] = { name: userDoc.data().name || userDoc.data().email || 'Cliente Sem Nome' };
-            window.renderOrders(); // Re-renderiza a tabela assim que encontra o nome
-            return userCache[userId].name;
+            
+            // Força a atualização no array bruto para corrigir o estado "Processando..."
+            const topupIndex = rawTopups.findIndex(t => t.userId === userId);
+            if(topupIndex > -1) {
+                rawTopups[topupIndex].name = userCache[userId].name;
+                mergeAndRender();
+            }
         }
-    } catch(e) {}
-    return `Cliente (ID: ${userId.substring(0,6)})`;
+    } catch(e) { console.error("Falha a buscar nome do utilizador:", e); }
 };
 
 // ==========================================
@@ -486,11 +488,15 @@ function loadDataRealTime() {
             const isCompleted = data.status === 'completed';
             const isFailed = data.status === 'failed' || data.status === 'cancelled';
             
-            // Lógica de resolução de nome do TopUp
+            // Logica de Leitura Dinâmica de Nomes (Cache Seguro)
             let resolvedName = data.userName || data.name || data.customerName;
             if (!resolvedName && data.userId) {
-                resolvedName = userCache[data.userId]?.name || `A carregar identificação...`;
-                if(!userCache[data.userId]) resolveUserName(data.userId); // Dispara cache
+                if (userCache[data.userId]) {
+                    resolvedName = userCache[data.userId].name;
+                } else {
+                    resolvedName = 'A carregar identificação...';
+                    resolveUserName(data.userId); // Vai à base de dados procurar o nome
+                }
             } else if (!resolvedName) {
                 resolvedName = 'Cliente Não Identificado';
             }
@@ -513,7 +519,7 @@ function loadDataRealTime() {
                 referredBy: null,
                 userId: data.userId || null,
                 commissionProcessed: true, 
-                refundProcessed: true, // Topups normais não são pedidos a reembolsar
+                refundProcessed: true, 
                 adminNotes: data.adminNotes || [], 
                 createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
                 paysuitePaymentId: data.paysuiteId || null,
@@ -582,7 +588,7 @@ window.renderOrders = function() {
         if(order.category === 'digital') { catIcon = 'laptop'; catLabel = 'Digital'; }
         if(order.category === 'game') { catIcon = 'gamepad-2'; catLabel = 'Jogo'; }
         if(order.isTopup) { catIcon = 'wallet'; catLabel = 'Depósito'; }
-        if(order.orderId.startsWith('REF-')) { catIcon = 'corner-up-left'; catLabel = 'Reembolso'; }
+        if(order.orderId.startsWith('REF-')) { catIcon = 'corner-up-left'; catLabel = 'Reembolso Carteira'; }
 
         const notesIcon = order.adminNotes && order.adminNotes.length > 0 
             ? `<span class="ml-2 text-warning-500" title="Contém Notas Secretas"><i data-lucide="sticky-note" class="w-3 h-3 inline"></i></span>` : '';
@@ -666,10 +672,11 @@ window.requestExtraFunds = async (orderId) => {
             updatedAt: serverTimestamp()
         });
 
+        // Backend Call (Requer que a tua API /api/notify-order esteja preparada)
         await fetch('/api/notify-order', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ orderData: order, action: "insufficient_funds", extraAmount: amount, reason: reason, sendEmail: true })
-        }).catch(e => console.warn("API de email não configurada totalmente, mas nota salva."));
+        }).catch(e => console.warn("Aviso: Falha ao invocar servidor de emails, mas nota salva."));
 
         showToast(`Solicitação de ${amount} MT enviada e registada!`, 'success');
         window.closeModal();
@@ -692,11 +699,11 @@ window.openModal = (orderId, isSilentUpdate = false) => {
     let trackRefHtml = order.paysuitePaymentId ? 
         `<div class="flex justify-between items-center mt-3 pt-3 border-t border-white/5"><p class="text-[10px] font-bold text-slate-500 uppercase">Referência Externa</p><p class="font-mono text-xs text-brand-300 bg-brand-500/10 px-2 py-1 rounded border border-brand-500/20">${order.paysuitePaymentId}</p></div>` : '';
 
-    // Renderização Inteligente das Notas (Extraindo links de anexos)
     let notesHtml = '';
     if (order.adminNotes && order.adminNotes.length > 0) {
         notesHtml = order.adminNotes.map(n => {
-            const formattedText = n.text.replace(/ \| Anexo: (https?:\/\/[^\s]+)/g, ' <br><a href="$1" target="_blank" class="text-brand-400 text-[10px] mt-1.5 inline-flex items-center gap-1 hover:underline bg-slate-900 px-2 py-1 rounded"><i data-lucide="external-link" class="w-3 h-3"></i> Ver Anexo/Prova Logística</a>');
+            // Converte links de anexo em botões clicáveis automaticamente
+            const formattedText = n.text.replace(/ \| Anexo: (https?:\/\/[^\s]+)/g, ' <br><a href="$1" target="_blank" class="text-brand-400 text-[10px] mt-1.5 inline-flex items-center gap-1 hover:underline bg-slate-900 px-2 py-1 rounded border border-brand-500/20"><i data-lucide="external-link" class="w-3 h-3"></i> Ver Anexo/Prova Logística</a>');
             return `
             <div class="bg-warning-900/10 p-3 rounded-xl border border-warning-500/20 mb-2 relative overflow-hidden group">
                 <div class="absolute left-0 top-0 h-full w-1 bg-warning-500"></div>
@@ -914,7 +921,7 @@ window.saveOrderStatus = async () => {
         }
 
         if (order.refundProcessed) {
-            showToast('Alerta: Este pedido já foi reembolsado anteriormente.', 'warning');
+            showToast('Alerta: Este pedido já foi reembolsado na carteira anteriormente.', 'warning');
             return;
         }
 
@@ -931,14 +938,14 @@ window.saveOrderStatus = async () => {
                 mediaUrl = await getDownloadURL(snapshot.ref);
             } catch(err) {
                 console.error(err);
-                showToast('Erro ao enviar ficheiro. Tente sem o anexo ou verifique o tamanho.', 'error');
+                showToast('Erro ao enviar ficheiro. Tente sem anexo ou verifique o tamanho.', 'error');
                 btn.disabled = false;
                 btn.innerHTML = originalText;
                 return;
             }
         }
 
-        btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A processar Reembolso...`;
+        btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A processar Reembolso Seguro...`;
         
         let textWithMedia = `REEMBOLSO EMITIDO: ${refundReasonText}`;
         if(mediaUrl) textWithMedia += ` | Anexo: ${mediaUrl}`;
@@ -974,25 +981,30 @@ window.saveOrderStatus = async () => {
         if (newStatus === 'refunded' && !order.refundProcessed && order.userId) {
             const refundAmount = Number(order.total) || 0;
             if (refundAmount > 0) {
-                // Injeta saldo de volta no utilizador
-                await updateDoc(doc(db, "users", order.userId), {
-                    balance: increment(refundAmount)
-                });
+                const userRef = doc(db, "users", order.userId);
+                const uSnap = await getDoc(userRef);
                 
-                // Regista a transação na coleção de Topups para histórico visual
-                await addDoc(collection(db, "topups"), {
-                    userId: order.userId,
-                    userName: order.name,
-                    userEmail: order.email,
-                    amount: refundAmount,
-                    method: 'refund',
-                    status: 'completed',
-                    topupId: `REF-${order.orderId || order.id.substring(0,6)}`,
-                    createdAt: serverTimestamp(),
-                    detail: `Reembolso automático. Fatura original: ${order.orderId}. Motivo: ${refundReasonText}`
-                });
-                
-                showToast(`Reembolso de ${formatValue(refundAmount, 'currency')} injetado na carteira do cliente.`, 'success');
+                // Proteção: Só injeta o dinheiro se a carteira do cliente realmente existir na DB
+                if(uSnap.exists()) {
+                    await updateDoc(userRef, { balance: increment(refundAmount) });
+                    
+                    // Regista o movimento financeiro visualmente como Topup (Recibo)
+                    await addDoc(collection(db, "topups"), {
+                        userId: order.userId,
+                        userName: order.name,
+                        userEmail: order.email,
+                        amount: refundAmount,
+                        method: 'refund',
+                        status: 'completed',
+                        topupId: `REF-${order.orderId || order.id.substring(0,6)}`,
+                        createdAt: serverTimestamp(),
+                        detail: `Reembolso automático. Fatura original: ${order.orderId}. Motivo: ${refundReasonText}`
+                    });
+                    
+                    showToast(`Reembolso de ${formatValue(refundAmount, 'currency')} injetado na carteira do cliente com sucesso.`, 'success');
+                } else {
+                    showToast(`Atenção: A conta do cliente já não existe na Base de Dados. O saldo não pôde ser injetado.`, 'error');
+                }
             }
         }
 
