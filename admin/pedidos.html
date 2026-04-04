@@ -286,7 +286,11 @@ select, input, textarea { background-color: rgba(15, 23, 42, 0.5) !important; co
 
             <div id="refundReasonContainer" class="hidden mt-2 bg-danger-500/10 border border-danger-500/30 p-4 rounded-xl">
                 <label class="block text-[10px] font-black text-danger-400 uppercase tracking-widest mb-2 ml-1">Motivo do Reembolso (Será enviado ao Cliente)</label>
-                <textarea id="refundReasonInput" placeholder="Escreva o motivo oficial (Ex: Fornecedor sem stock, etc)..." class="w-full p-3 bg-slate-900 border border-danger-500/50 rounded-xl text-white text-sm focus:outline-none focus:border-danger-500 placeholder-slate-500 min-h-[80px]"></textarea>
+                <textarea id="refundReasonInput" placeholder="Escreva o motivo oficial (Ex: Fornecedor sem stock)..." class="w-full p-3 bg-slate-900 border border-danger-500/50 rounded-xl text-white text-sm focus:outline-none focus:border-danger-500 placeholder-slate-500 min-h-[80px] mb-3"></textarea>
+                
+                <label class="block text-[10px] font-black text-danger-400 uppercase tracking-widest mb-2 ml-1 flex items-center gap-1"><i data-lucide="paperclip" class="w-3 h-3"></i> Anexar Prova (Opcional - Imagem/PDF)</label>
+                <input type="file" id="refundMediaInput" accept="image/*,application/pdf" class="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-danger-500/20 file:text-danger-400 hover:file:bg-danger-500/30 cursor-pointer bg-slate-900 border border-danger-500/30 rounded-xl p-2 transition-all">
+                <p class="text-[10px] text-danger-400/80 mt-2 font-bold flex items-center gap-1"><i data-lucide="info" class="w-3 h-3"></i> O valor exacto pago será creditado na carteira (balance) do cliente.</p>
             </div>
             
             <div class="flex flex-col sm:flex-row items-end justify-end mt-2 gap-3" id="modalActionButtons">
@@ -294,10 +298,13 @@ select, input, textarea { background-color: rgba(15, 23, 42, 0.5) !important; co
         </div>
     </div>
 </div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, collection, doc, updateDoc, onSnapshot, query, orderBy, getDoc, serverTimestamp, writeBatch, increment, deleteDoc, getDocs, where, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+// Adicionado getDocs, addDoc e Storage para suportar carregamentos, refunds à carteira e cache de nomes
+import { getFirestore, collection, doc, updateDoc, onSnapshot, query, orderBy, getDoc, serverTimestamp, writeBatch, increment, deleteDoc, getDocs, where, arrayUnion, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
@@ -311,6 +318,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app, "paygodb"); 
 const auth = getAuth(app);
+const storage = getStorage(app);
 
 let orders = [];
 let rawOrders = [];
@@ -321,6 +329,7 @@ let ordersUnsubscribe = null;
 let topupsUnsubscribe = null;
 let loggedInAdminId = null;
 let loggedInAdminName = null;
+const userCache = {}; // Cache inteligente para resolver nomes de topups em falta
 
 // ==========================================
 // 🔔 RENDERIZAÇÃO E TOASTS
@@ -377,6 +386,21 @@ function getRelativeDateLabel(date) {
 const escapeHTML = (str) => {
     if (!str) return '';
     return String(str).replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+};
+
+// Async fetch para procurar nomes de clientes em Topups onde o nome não foi salvo no documento
+const resolveUserName = async (userId) => {
+    if (!userId) return 'Cliente Não Identificado';
+    if (userCache[userId]) return userCache[userId].name;
+    try {
+        const userDoc = await getDoc(doc(db, "users", userId));
+        if(userDoc.exists()) {
+            userCache[userId] = { name: userDoc.data().name || userDoc.data().email || 'Cliente Sem Nome' };
+            window.renderOrders(); // Re-renderiza a tabela assim que encontra o nome
+            return userCache[userId].name;
+        }
+    } catch(e) {}
+    return `Cliente (ID: ${userId.substring(0,6)})`;
 };
 
 // ==========================================
@@ -446,6 +470,7 @@ function loadDataRealTime() {
                 referredBy: data.referredBy || null,
                 userId: data.userId || null,
                 commissionProcessed: data.commissionProcessed || false,
+                refundProcessed: data.refundProcessed || false,
                 adminNotes: data.adminNotes || [], 
                 createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
                 paysuitePaymentId: data.paysuitePaymentId || null,
@@ -460,11 +485,20 @@ function loadDataRealTime() {
             const data = doc.data();
             const isCompleted = data.status === 'completed';
             const isFailed = data.status === 'failed' || data.status === 'cancelled';
+            
+            // Lógica de resolução de nome do TopUp
+            let resolvedName = data.userName || data.name || data.customerName;
+            if (!resolvedName && data.userId) {
+                resolvedName = userCache[data.userId]?.name || `A carregar identificação...`;
+                if(!userCache[data.userId]) resolveUserName(data.userId); // Dispara cache
+            } else if (!resolvedName) {
+                resolvedName = 'Cliente Não Identificado';
+            }
+
             return {
                 id: doc.id,
                 orderId: data.topupId || `TOP-${doc.id.slice(0, 8)}`,
-                // 💡 CORREÇÃO: Mostra o nome real do cliente que carregou a carteira
-                name: data.userName || data.name || data.customerName || 'Cliente (Carteira)', 
+                name: resolvedName, 
                 email: data.userEmail || data.email || `Via ${String(data.method).toUpperCase()}`,
                 category: 'Carregamento de Saldo',
                 shipping: null, digitalData: null, whatsapp: 'N/A', type: 'topup',
@@ -475,10 +509,11 @@ function loadDataRealTime() {
                 trackingCode: '',
                 isPaid: isCompleted,
                 paymentMethod: data.method || 'mpesa',
-                detail: `Depósito de ${data.amount} MT na Carteira PayGo.`,
+                detail: data.detail || `Depósito de ${data.amount} MT na Carteira PayGo.`,
                 referredBy: null,
                 userId: data.userId || null,
                 commissionProcessed: true, 
+                refundProcessed: true, // Topups normais não são pedidos a reembolsar
                 adminNotes: data.adminNotes || [], 
                 createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
                 paysuitePaymentId: data.paysuiteId || null,
@@ -547,6 +582,7 @@ window.renderOrders = function() {
         if(order.category === 'digital') { catIcon = 'laptop'; catLabel = 'Digital'; }
         if(order.category === 'game') { catIcon = 'gamepad-2'; catLabel = 'Jogo'; }
         if(order.isTopup) { catIcon = 'wallet'; catLabel = 'Depósito'; }
+        if(order.orderId.startsWith('REF-')) { catIcon = 'corner-up-left'; catLabel = 'Reembolso'; }
 
         const notesIcon = order.adminNotes && order.adminNotes.length > 0 
             ? `<span class="ml-2 text-warning-500" title="Contém Notas Secretas"><i data-lucide="sticky-note" class="w-3 h-3 inline"></i></span>` : '';
@@ -630,7 +666,6 @@ window.requestExtraFunds = async (orderId) => {
             updatedAt: serverTimestamp()
         });
 
-        // Simulação de disparo de notificação (Substitui com a tua rota de API real)
         await fetch('/api/notify-order', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ orderData: order, action: "insufficient_funds", extraAmount: amount, reason: reason, sendEmail: true })
@@ -657,18 +692,22 @@ window.openModal = (orderId, isSilentUpdate = false) => {
     let trackRefHtml = order.paysuitePaymentId ? 
         `<div class="flex justify-between items-center mt-3 pt-3 border-t border-white/5"><p class="text-[10px] font-bold text-slate-500 uppercase">Referência Externa</p><p class="font-mono text-xs text-brand-300 bg-brand-500/10 px-2 py-1 rounded border border-brand-500/20">${order.paysuitePaymentId}</p></div>` : '';
 
+    // Renderização Inteligente das Notas (Extraindo links de anexos)
     let notesHtml = '';
     if (order.adminNotes && order.adminNotes.length > 0) {
-        notesHtml = order.adminNotes.map(n => `
+        notesHtml = order.adminNotes.map(n => {
+            const formattedText = n.text.replace(/ \| Anexo: (https?:\/\/[^\s]+)/g, ' <br><a href="$1" target="_blank" class="text-brand-400 text-[10px] mt-1.5 inline-flex items-center gap-1 hover:underline bg-slate-900 px-2 py-1 rounded"><i data-lucide="external-link" class="w-3 h-3"></i> Ver Anexo/Prova Logística</a>');
+            return `
             <div class="bg-warning-900/10 p-3 rounded-xl border border-warning-500/20 mb-2 relative overflow-hidden group">
                 <div class="absolute left-0 top-0 h-full w-1 bg-warning-500"></div>
                 <div class="flex justify-between items-center mb-1">
                     <span class="text-[10px] font-black text-warning-400 uppercase tracking-widest pl-2"><i data-lucide="user" class="w-3 h-3 inline pb-0.5"></i> ${n.author}</span>
                     <span class="text-[9px] font-mono text-slate-500">${new Date(n.date).toLocaleString('pt-MZ', { day: '2-digit', month: 'short', hour:'2-digit', minute:'2-digit'})}</span>
                 </div>
-                <p class="text-sm text-slate-300 pl-2 leading-relaxed font-medium">${n.text}</p>
+                <p class="text-sm text-slate-300 pl-2 leading-relaxed font-medium break-words">${formattedText}</p>
             </div>
-        `).join('');
+            `;
+        }).join('');
     } else {
         notesHtml = `<div class="text-center py-6 text-slate-600"><i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-50"></i><p class="text-xs font-medium">O cofre confidencial deste pedido está vazio.</p></div>`;
     }
@@ -795,7 +834,6 @@ window.openModal = (orderId, isSilentUpdate = false) => {
     const trackingInput = document.getElementById('trackingInput');
     const updateStatusBtn = document.getElementById('updateStatusBtn');
     
-    // Configurar Comportamento Inicial do Select Logístico
     if (order.isTopup) {
         if(statusSelect) statusSelect.disabled = true;
         if(trackingInput) trackingInput.parentElement.parentElement.classList.add('hidden');
@@ -805,7 +843,6 @@ window.openModal = (orderId, isSilentUpdate = false) => {
             statusSelect.disabled = false; 
             statusSelect.value = order.status; 
             
-            // Lógica para mostrar textarea de Reembolso
             statusSelect.onchange = (e) => {
                 const refundDiv = document.getElementById('refundReasonContainer');
                 if (refundDiv) {
@@ -813,7 +850,7 @@ window.openModal = (orderId, isSilentUpdate = false) => {
                     else refundDiv.classList.add('hidden');
                 }
             };
-            statusSelect.dispatchEvent(new Event('change')); // Trigger imediato
+            statusSelect.dispatchEvent(new Event('change')); 
         }
         if(trackingInput) {
             if(order.category === 'physical' || !order.category) trackingInput.parentElement.parentElement.classList.remove('hidden');
@@ -822,7 +859,6 @@ window.openModal = (orderId, isSilentUpdate = false) => {
         if(updateStatusBtn) updateStatusBtn.disabled = false;
     }
 
-    // Injeção Dinâmica dos Botões de Ação Final
     const modalActionButtons = document.getElementById('modalActionButtons');
     if(modalActionButtons) {
         modalActionButtons.innerHTML = `
@@ -851,7 +887,7 @@ window.closeModal = () => {
 };
 
 // ==========================================
-// 💾 AÇÕES DE GESTÃO DO MODAL E AFILIADOS (CPA)
+// 💾 AÇÕES DE GESTÃO DO MODAL E REEMBOLSOS
 // ==========================================
 window.saveOrderStatus = async () => {
     if (!currentOrderId) return;
@@ -864,30 +900,66 @@ window.saveOrderStatus = async () => {
     
     let refundReasonText = '';
     let refundNoteObj = null;
+    let mediaUrl = null;
 
-    // Verificação Estrita se for Reembolso
+    const btn = document.getElementById('updateStatusBtn');
+    const originalText = btn.innerHTML;
+
+    // 🔴 FLUXO DE REEMBOLSO + STORAGE + WALLET
     if (newStatus === 'refunded') {
         refundReasonText = document.getElementById('refundReasonInput').value.trim();
         if (!refundReasonText) {
             showToast('Obrigatório preencher o motivo do reembolso!', 'error');
             return;
         }
+
+        if (order.refundProcessed) {
+            showToast('Alerta: Este pedido já foi reembolsado anteriormente.', 'warning');
+            return;
+        }
+
+        btn.disabled = true;
+        
+        // 1. Processar Ficheiro Multimédia (Imagem/PDF)
+        const mediaInput = document.getElementById('refundMediaInput');
+        if (mediaInput && mediaInput.files && mediaInput.files[0]) {
+            const file = mediaInput.files[0];
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A carregar anexo para a Cloud...`;
+            try {
+                const storageRef = ref(storage, `refunds_media/${order.id}_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '')}`);
+                const snapshot = await uploadBytesResumable(storageRef, file);
+                mediaUrl = await getDownloadURL(snapshot.ref);
+            } catch(err) {
+                console.error(err);
+                showToast('Erro ao enviar ficheiro. Tente sem o anexo ou verifique o tamanho.', 'error');
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                return;
+            }
+        }
+
+        btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A processar Reembolso...`;
+        
+        let textWithMedia = `REEMBOLSO EMITIDO: ${refundReasonText}`;
+        if(mediaUrl) textWithMedia += ` | Anexo: ${mediaUrl}`;
+
         refundNoteObj = { 
-            text: `REEMBOLSO EMITIDO: ${refundReasonText}`, 
+            text: textWithMedia, 
             author: loggedInAdminName || 'Sistema', 
             date: new Date().toISOString() 
         };
+    } else {
+        btn.disabled = true;
+        btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A Sincronizar DB...`;
     }
-
-    const btn = document.getElementById('updateStatusBtn');
-    const originalText = btn.innerHTML;
-
-    btn.disabled = true;
-    btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A Sincronizar DB...`;
 
     try {
         const updateData = { status: newStatus, trackingCode: newTracking || null, updatedAt: serverTimestamp() };
-        if (refundNoteObj) updateData.adminNotes = arrayUnion(refundNoteObj);
+        
+        if (refundNoteObj) {
+            updateData.adminNotes = arrayUnion(refundNoteObj);
+            updateData.refundProcessed = true; // Trava de segurança contra duplo reembolso
+        }
 
         await updateDoc(doc(db, "orders", currentOrderId), updateData);
         await logAdminAction('UPDATE_ORDER_STATUS', currentOrderId, { status: oldStatus }, { status: newStatus });
@@ -898,6 +970,32 @@ window.saveOrderStatus = async () => {
             await updateDoc(doc(db, "orders", currentOrderId), { commissionProcessed: true });
         }
 
+        // 🔄 MOTOR DE DEVOLUÇÃO À CARTEIRA (WALLET REFUND)
+        if (newStatus === 'refunded' && !order.refundProcessed && order.userId) {
+            const refundAmount = Number(order.total) || 0;
+            if (refundAmount > 0) {
+                // Injeta saldo de volta no utilizador
+                await updateDoc(doc(db, "users", order.userId), {
+                    balance: increment(refundAmount)
+                });
+                
+                // Regista a transação na coleção de Topups para histórico visual
+                await addDoc(collection(db, "topups"), {
+                    userId: order.userId,
+                    userName: order.name,
+                    userEmail: order.email,
+                    amount: refundAmount,
+                    method: 'refund',
+                    status: 'completed',
+                    topupId: `REF-${order.orderId || order.id.substring(0,6)}`,
+                    createdAt: serverTimestamp(),
+                    detail: `Reembolso automático. Fatura original: ${order.orderId}. Motivo: ${refundReasonText}`
+                });
+                
+                showToast(`Reembolso de ${formatValue(refundAmount, 'currency')} injetado na carteira do cliente.`, 'success');
+            }
+        }
+
         showToast('Nova etapa logística gravada na Cloud.', 'success');
 
         // Notificações Email via Webhook
@@ -906,14 +1004,19 @@ window.saveOrderStatus = async () => {
         } else if (newStatus === 'refunded' && oldStatus !== 'refunded') {
             await fetch('/api/notify-order', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ orderData: order, action: "order_refunded", reason: refundReasonText, sendEmail: true })
+                body: JSON.stringify({ orderData: order, action: "order_refunded", reason: refundReasonText, mediaUrl: mediaUrl, sendEmail: true })
             }).catch(() => console.warn("API de notificação indisponível, mas refund salvo."));
-            showToast('Alerta de reembolso enviado ao cliente.', 'info');
         }
 
         window.closeModal();
-    } catch (error) { showToast('Erro interno de permissões.', 'error'); } 
-    finally { btn.disabled = false; btn.innerHTML = originalText; window.renderIcons(); }
+    } catch (error) { 
+        showToast('Erro interno de permissões.', 'error'); 
+    } 
+    finally { 
+        btn.disabled = false; 
+        btn.innerHTML = originalText; 
+        window.renderIcons(); 
+    }
 };
 
 async function processAffiliateCPA(order) {
