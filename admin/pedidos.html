@@ -78,7 +78,7 @@ body { background-color: #020617; color: #f8fafc; overflow-x: hidden; -webkit-fo
 .notes-scrollbar::-webkit-scrollbar-thumb { background: rgba(245, 158, 11, 0.3); border-radius: 10px; }
 .notes-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(245, 158, 11, 0.5); }
 
-select, input { background-color: rgba(15, 23, 42, 0.5) !important; color: white !important; color-scheme: dark; }
+select, input, textarea { background-color: rgba(15, 23, 42, 0.5) !important; color: white !important; color-scheme: dark; }
 @media (max-width: 768px) { .glass-card { border-radius: 1.5rem; } }
 </style>
 </head>
@@ -283,12 +283,14 @@ select, input { background-color: rgba(15, 23, 42, 0.5) !important; color: white
                     </div>
                 </div>
             </div>
-            
-            <div class="flex items-end justify-end mt-2">
-                <button id="updateStatusBtn" onclick="window.saveOrderStatus()" class="btn-action w-full md:w-auto px-8 py-3.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(37,99,235,0.4)] border border-brand-500">
-                    <i data-lucide="save" class="w-4 h-4"></i> <span>Salvar Decisão</span>
-                </button>
+
+            <div id="refundReasonContainer" class="hidden mt-2 bg-danger-500/10 border border-danger-500/30 p-4 rounded-xl">
+                <label class="block text-[10px] font-black text-danger-400 uppercase tracking-widest mb-2 ml-1">Motivo do Reembolso (Será enviado ao Cliente)</label>
+                <textarea id="refundReasonInput" placeholder="Escreva o motivo oficial (Ex: Fornecedor sem stock, etc)..." class="w-full p-3 bg-slate-900 border border-danger-500/50 rounded-xl text-white text-sm focus:outline-none focus:border-danger-500 placeholder-slate-500 min-h-[80px]"></textarea>
             </div>
+            
+            <div class="flex flex-col sm:flex-row items-end justify-end mt-2 gap-3" id="modalActionButtons">
+                </div>
         </div>
     </div>
 </div>
@@ -445,7 +447,7 @@ function loadDataRealTime() {
                 userId: data.userId || null,
                 commissionProcessed: data.commissionProcessed || false,
                 adminNotes: data.adminNotes || [], 
-                createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(), // Proteção contra datas nulas
+                createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
                 paysuitePaymentId: data.paysuitePaymentId || null,
                 isTopup: false
             };
@@ -461,9 +463,10 @@ function loadDataRealTime() {
             return {
                 id: doc.id,
                 orderId: data.topupId || `TOP-${doc.id.slice(0, 8)}`,
-                name: 'Carregamento de Carteira', 
-                email: `Via ${String(data.method).toUpperCase()}`,
-                category: 'topup',
+                // 💡 CORREÇÃO: Mostra o nome real do cliente que carregou a carteira
+                name: data.userName || data.name || data.customerName || 'Cliente (Carteira)', 
+                email: data.userEmail || data.email || `Via ${String(data.method).toUpperCase()}`,
+                category: 'Carregamento de Saldo',
                 shipping: null, digitalData: null, whatsapp: 'N/A', type: 'topup',
                 usd: 0,
                 total: Number(data.amount) || 0,
@@ -476,7 +479,7 @@ function loadDataRealTime() {
                 referredBy: null,
                 userId: data.userId || null,
                 commissionProcessed: true, 
-                adminNotes: [], 
+                adminNotes: data.adminNotes || [], 
                 createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
                 paysuitePaymentId: data.paysuiteId || null,
                 isTopup: true
@@ -563,7 +566,7 @@ window.renderOrders = function() {
                     <i data-lucide="${catIcon}" class="w-4 h-4 ${order.isTopup ? 'text-success-400' : 'text-brand-400'}"></i>
                     <span class="text-xs font-bold text-slate-300">${catLabel}</span>
                 </div>
-                <span class="text-sm font-black text-slate-400 font-mono">${formatValue(order.usd, 'usd')}</span>
+                ${!order.isTopup ? `<span class="text-sm font-black text-slate-400 font-mono">${formatValue(order.usd, 'usd')}</span>` : `<span class="text-[10px] text-slate-500 font-mono uppercase tracking-widest">Saldo Interno</span>`}
             </td>
             <td class="px-6 py-4 text-sm font-black text-white font-mono tracking-tight">
                 <div class="flex flex-col gap-1 items-start">
@@ -586,7 +589,7 @@ window.renderOrders = function() {
 };
 
 // ==========================================
-// 📝 ADICIONAR NOTA SECRETA
+// 📝 ADICIONAR NOTA SECRETA E FUNDOS
 // ==========================================
 window.addInternalNote = async (orderId) => {
     const input = document.getElementById('newNoteInput');
@@ -599,13 +602,44 @@ window.addInternalNote = async (orderId) => {
     
     try {
         const noteObj = { text: text, author: loggedInAdminName || 'Equipa', date: new Date().toISOString() };
-        await updateDoc(doc(db, "orders", orderId), { adminNotes: arrayUnion(noteObj), updatedAt: serverTimestamp() });
+        const collectionTarget = orders.find(o => o.id === orderId)?.isTopup ? "topups" : "orders";
+        await updateDoc(doc(db, collectionTarget, orderId), { adminNotes: arrayUnion(noteObj), updatedAt: serverTimestamp() });
         await logAdminAction('ADD_INTERNAL_NOTE', orderId, null, { noteAdded: text });
         showToast('Nota confidencial guardada.', 'success');
     } catch(e) { 
         showToast('Acesso negado.', 'error'); 
         input.disabled = false; 
         input.placeholder = originalPh; 
+    }
+};
+
+window.requestExtraFunds = async (orderId) => {
+    const amount = prompt("Indique o valor em FALTA (MT) que o cliente deve pagar:");
+    if (!amount || isNaN(amount) || Number(amount) <= 0) return;
+    
+    const reason = prompt("Qual o motivo? (Ex: Subida do câmbio, taxa extra de envio, etc)");
+    if (!reason) return;
+
+    const order = orders.find(o => o.id === orderId);
+    const noteText = `ALERTA DE FUNDOS: Solicitado ${amount} MT adicionais ao cliente. Motivo: ${reason}`;
+    
+    try {
+        const noteObj = { text: noteText, author: loggedInAdminName || 'Sistema', date: new Date().toISOString() };
+        await updateDoc(doc(db, order.isTopup ? "topups" : "orders", orderId), {
+            adminNotes: arrayUnion(noteObj),
+            updatedAt: serverTimestamp()
+        });
+
+        // Simulação de disparo de notificação (Substitui com a tua rota de API real)
+        await fetch('/api/notify-order', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderData: order, action: "insufficient_funds", extraAmount: amount, reason: reason, sendEmail: true })
+        }).catch(e => console.warn("API de email não configurada totalmente, mas nota salva."));
+
+        showToast(`Solicitação de ${amount} MT enviada e registada!`, 'success');
+        window.closeModal();
+    } catch (e) {
+        showToast('Falha técnica ao solicitar fundos.', 'error');
     }
 };
 
@@ -761,17 +795,45 @@ window.openModal = (orderId, isSilentUpdate = false) => {
     const trackingInput = document.getElementById('trackingInput');
     const updateStatusBtn = document.getElementById('updateStatusBtn');
     
+    // Configurar Comportamento Inicial do Select Logístico
     if (order.isTopup) {
         if(statusSelect) statusSelect.disabled = true;
         if(trackingInput) trackingInput.parentElement.parentElement.classList.add('hidden');
         if(updateStatusBtn) updateStatusBtn.disabled = true;
     } else {
-        if(statusSelect) { statusSelect.disabled = false; statusSelect.value = order.status; }
+        if(statusSelect) { 
+            statusSelect.disabled = false; 
+            statusSelect.value = order.status; 
+            
+            // Lógica para mostrar textarea de Reembolso
+            statusSelect.onchange = (e) => {
+                const refundDiv = document.getElementById('refundReasonContainer');
+                if (refundDiv) {
+                    if(e.target.value === 'refunded') refundDiv.classList.remove('hidden');
+                    else refundDiv.classList.add('hidden');
+                }
+            };
+            statusSelect.dispatchEvent(new Event('change')); // Trigger imediato
+        }
         if(trackingInput) {
             if(order.category === 'physical' || !order.category) trackingInput.parentElement.parentElement.classList.remove('hidden');
             trackingInput.value = order.trackingCode || '';
         }
         if(updateStatusBtn) updateStatusBtn.disabled = false;
+    }
+
+    // Injeção Dinâmica dos Botões de Ação Final
+    const modalActionButtons = document.getElementById('modalActionButtons');
+    if(modalActionButtons) {
+        modalActionButtons.innerHTML = `
+            ${!order.isTopup && order.status !== 'completed' && order.status !== 'refunded' ? `
+            <button onclick="window.requestExtraFunds('${order.id}')" class="btn-action w-full md:w-auto px-6 py-3.5 bg-warning-500/10 hover:bg-warning-500 hover:text-slate-900 text-warning-500 rounded-xl font-bold transition-all flex items-center justify-center gap-2 border border-warning-500/30 mb-2 sm:mb-0">
+                <i data-lucide="hand-coins" class="w-4 h-4"></i> <span>Falta Dinheiro (+ Valor)</span>
+            </button>` : ''}
+            <button id="updateStatusBtn" onclick="window.saveOrderStatus()" class="btn-action w-full md:w-auto px-8 py-3.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(37,99,235,0.4)] border border-brand-500">
+                <i data-lucide="save" class="w-4 h-4"></i> <span>Salvar Decisão</span>
+            </button>
+        `;
     }
 
     if (!isSilentUpdate) {
@@ -799,6 +861,23 @@ window.saveOrderStatus = async () => {
     const newStatus = document.getElementById('statusSelect').value;
     const newTracking = document.getElementById('trackingInput').value.trim();
     const oldStatus = order?.status;
+    
+    let refundReasonText = '';
+    let refundNoteObj = null;
+
+    // Verificação Estrita se for Reembolso
+    if (newStatus === 'refunded') {
+        refundReasonText = document.getElementById('refundReasonInput').value.trim();
+        if (!refundReasonText) {
+            showToast('Obrigatório preencher o motivo do reembolso!', 'error');
+            return;
+        }
+        refundNoteObj = { 
+            text: `REEMBOLSO EMITIDO: ${refundReasonText}`, 
+            author: loggedInAdminName || 'Sistema', 
+            date: new Date().toISOString() 
+        };
+    }
 
     const btn = document.getElementById('updateStatusBtn');
     const originalText = btn.innerHTML;
@@ -807,8 +886,10 @@ window.saveOrderStatus = async () => {
     btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A Sincronizar DB...`;
 
     try {
-        await updateDoc(doc(db, "orders", currentOrderId), { status: newStatus, trackingCode: newTracking || null, updatedAt: serverTimestamp() });
-        
+        const updateData = { status: newStatus, trackingCode: newTracking || null, updatedAt: serverTimestamp() };
+        if (refundNoteObj) updateData.adminNotes = arrayUnion(refundNoteObj);
+
+        await updateDoc(doc(db, "orders", currentOrderId), updateData);
         await logAdminAction('UPDATE_ORDER_STATUS', currentOrderId, { status: oldStatus }, { status: newStatus });
 
         // 💰 MOTOR CPA (Distribuição de Comissões)
@@ -819,8 +900,15 @@ window.saveOrderStatus = async () => {
 
         showToast('Nova etapa logística gravada na Cloud.', 'success');
 
+        // Notificações Email via Webhook
         if (newStatus === 'completed' && oldStatus !== 'completed') {
             await sendNotificationEmail(order, 'completed');
+        } else if (newStatus === 'refunded' && oldStatus !== 'refunded') {
+            await fetch('/api/notify-order', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderData: order, action: "order_refunded", reason: refundReasonText, sendEmail: true })
+            }).catch(() => console.warn("API de notificação indisponível, mas refund salvo."));
+            showToast('Alerta de reembolso enviado ao cliente.', 'info');
         }
 
         window.closeModal();
