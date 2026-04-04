@@ -977,7 +977,7 @@ window.saveOrderStatus = async () => {
             await updateDoc(doc(db, "orders", currentOrderId), { commissionProcessed: true });
         }
 
-        // 🔄 MOTOR DE DEVOLUÇÃO À CARTEIRA (WALLET REFUND)
+// 🔄 MOTOR DE DEVOLUÇÃO À CARTEIRA (WALLET REFUND)
         if (newStatus === 'refunded' && !order.refundProcessed && order.userId) {
             const refundAmount = Number(order.total) || 0;
             if (refundAmount > 0) {
@@ -986,7 +986,8 @@ window.saveOrderStatus = async () => {
                 
                 // Proteção: Só injeta o dinheiro se a carteira do cliente realmente existir na DB
                 if(uSnap.exists()) {
-                    await updateDoc(userRef, { balance: increment(refundAmount) });
+                    // AQUI ESTAVA O ERRO! Alterado de 'balance' para 'walletBalance'
+                    await updateDoc(userRef, { walletBalance: increment(refundAmount) });
                     
                     // Regista o movimento financeiro visualmente como Topup (Recibo)
                     await addDoc(collection(db, "topups"), {
