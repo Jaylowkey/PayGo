@@ -1,6 +1,7 @@
 import { Resend } from 'resend';
 
-// Inicializar Resend apenas se a chave existir
+// Inicializar Resend com Log de Segurança para a Vercel
+console.log("CHAVE RESEND DETETADA:", process.env.RESEND_API_KEY ? "SIM ✅" : "NÃO ❌");
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 // Configurações Globais
@@ -22,7 +23,7 @@ export default async function handler(req, res) {
     const LARK_WEBHOOK_URL = process.env.LARK_WEBHOOK_URL;
 
     // ========================================================================
-    // 🔄 ROTA 1: FORMATO ANTIGO "WEBHOOK-LARK" (Alertas do Sistema)
+    // 🔄 ROTA 1: FORMATO ANTIGO "WEBHOOK-LARK" (Alertas de Sistema Interno)
     // ========================================================================
     if (body.type && body.data) {
       const { type, data } = body;
@@ -103,7 +104,7 @@ export default async function handler(req, res) {
     } else if (action === 'order_refunded') {
       emailSubject = `🟣 Reembolso Emitido - Pedido ${orderId} - PayGo`;
       emailHTML = generateRefundHTML(orderData, reason, mediaUrl);
-      emailText = `REEMBOLSO EMITIDO - PAYGO\n\nOlá ${orderData.name},\nO valor de ${orderData.total} MT foi reembolsado na sua Carteira PayGo.\n\nMotivo: ${reason}\n\nAceda à sua conta para utilizar o saldo.`;
+      emailText = `REEMBOLSO EMITIDO - PAYGO\n\nOlá ${orderData.name},\nO valor de ${orderData.total || orderData.amount} MT foi reembolsado na sua Carteira PayGo.\n\nMotivo: ${reason}\n\nAceda à sua conta para utilizar o saldo.`;
       larkTemplate = "purple"; larkTitle = "🟣 REEMBOLSO EMITIDO";
 
     } else if (action === 'insufficient_funds') {
@@ -119,17 +120,31 @@ export default async function handler(req, res) {
       emailText = generateOrderConfirmationText(orderData);
     }
 
-    // 2. ENVIAR EMAIL AO CLIENTE (Resend)
-    if (sendEmail && orderData.email && resend) {
+    // 2. ENVIAR EMAIL AO CLIENTE (Resend com proteção contra e-mails inválidos)
+    if (sendEmail && orderData.email && orderData.email.includes('@') && resend) {
+      console.log(`A tentar enviar email dinâmico (${action}) para: ${orderData.email}`);
       try {
         const { data, error } = await resend.emails.send({
-          from: FROM_EMAIL, to: [orderData.email], subject: emailSubject, html: emailHTML, text: emailText,
-          headers: { 'X-Priority': action === 'new_order' ? '3' : '1', 'X-Mailer': 'PayGo Notification Service' }
+          from: FROM_EMAIL, 
+          to: [orderData.email], 
+          subject: emailSubject, 
+          html: emailHTML, 
+          text: emailText
         });
 
-        if (error) results.email = { success: false, error: error.message };
-        else results.email = { success: true, data: { id: data?.id } };
-      } catch (err) { results.email = { success: false, error: err.message }; }
+        if (error) {
+            console.error("❌ ERRO RESEND:", error);
+            results.email = { success: false, error: error.message };
+        } else {
+            console.log("✅ EMAIL ENVIADO COM SUCESSO. ID:", data?.id);
+            results.email = { success: true, data: { id: data?.id } };
+        }
+      } catch (err) { 
+          console.error("❌ FALHA CRÍTICA NO ENVIO DE EMAIL:", err);
+          results.email = { success: false, error: err.message }; 
+      }
+    } else {
+        console.warn(`⚠️ AVISO: Email ignorado. Resend Key: ${!!resend} | Email válido: ${!!(orderData.email && orderData.email.includes('@'))}`);
     }
 
     // 3. ENVIAR NOTIFICAÇÃO LARK PARA ADMIN
@@ -138,7 +153,7 @@ export default async function handler(req, res) {
         const larkFields = [
           { is_short: true, text: { tag: "lark_md", content: `**ID:**\n#${orderId}` }},
           { is_short: true, text: { tag: "lark_md", content: `**Cliente:**\n${orderData.name || 'N/A'}` }},
-          { is_short: true, text: { tag: "lark_md", content: `**Total:**\n${orderData.total} MT` }},
+          { is_short: true, text: { tag: "lark_md", content: `**Total:**\n${orderData.total || orderData.amount} MT` }},
           { is_short: true, text: { tag: "lark_md", content: `**Método:**\n${(orderData.paymentMethod || 'N/A').toUpperCase()}` }}
         ];
 
@@ -276,7 +291,7 @@ function generatePaymentSuccessHTML(order) {
 </html>`;
 }
 
-// 3. TEMPLATE: REEMBOLSO EMITIDO (NOVO)
+// 3. TEMPLATE: REEMBOLSO EMITIDO
 function generateRefundHTML(order, reason, mediaUrl) {
   const totalFormatted = Number(order.total || order.amount).toLocaleString('pt-MZ', { minimumFractionDigits: 2 });
   const mediaBtn = mediaUrl ? `<div style="text-align: center; margin-top: 20px;"><a href="${mediaUrl}" target="_blank" style="background-color: #e2e8f0; color: #475569; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 600;">📎 Ver Documento/Prova</a></div>` : '';
@@ -319,7 +334,7 @@ function generateRefundHTML(order, reason, mediaUrl) {
 </html>`;
 }
 
-// 4. TEMPLATE: FUNDOS INSUFICIENTES (NOVO)
+// 4. TEMPLATE: FUNDOS INSUFICIENTES
 function generateInsufficientFundsHTML(order, extraAmount, reason) {
   return `
 <!DOCTYPE html>
