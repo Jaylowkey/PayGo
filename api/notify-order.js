@@ -82,25 +82,49 @@ export default async function handler(req, res) {
     }
 
     // ========================================================================
-    // 🔄 ROTA 2: FORMATO "NOTIFY-ORDER" (Emails p/ Cliente + Lark)
+    // 🔄 ROTA 2: FORMATO "NOTIFY-ORDER" (Emails p/ Cliente + Lark Dinâmico)
     // ========================================================================
-    const { orderData, sendEmail = true, sendLark = true, action = 'new_order' } = body;
+    const { orderData, sendEmail = true, sendLark = true, action = 'new_order', reason, extraAmount, mediaUrl } = body;
     if (!orderData) return res.status(400).json({ error: 'Payload não reconhecido.' });
 
     const results = { email: null, lark: null };
-    const isPaymentConfirmed = action === 'payment_confirmed';
-    const orderId = orderData.orderId || 'N/A';
+    const orderId = orderData.orderId || orderData.topupId || 'N/A';
 
-    // 1. ENVIAR EMAIL AO CLIENTE (Resend)
+    // 1. MOTOR DE TEMPLATES DINÂMICOS (Baseado na Action)
+    let emailSubject, emailHTML, emailText;
+    let larkTemplate = "blue", larkTitle = "🛒 Novo Pedido PayGo";
+
+    if (action === 'payment_confirmed') {
+      emailSubject = `✅ Pagamento Recebido - Pedido ${orderId} - PayGo`;
+      emailHTML = generatePaymentSuccessHTML(orderData);
+      emailText = generatePaymentSuccessText(orderData);
+      larkTemplate = "green"; larkTitle = "✅ PAGAMENTO RECEBIDO";
+
+    } else if (action === 'order_refunded') {
+      emailSubject = `🟣 Reembolso Emitido - Pedido ${orderId} - PayGo`;
+      emailHTML = generateRefundHTML(orderData, reason, mediaUrl);
+      emailText = `REEMBOLSO EMITIDO - PAYGO\n\nOlá ${orderData.name},\nO valor de ${orderData.total} MT foi reembolsado na sua Carteira PayGo.\n\nMotivo: ${reason}\n\nAceda à sua conta para utilizar o saldo.`;
+      larkTemplate = "purple"; larkTitle = "🟣 REEMBOLSO EMITIDO";
+
+    } else if (action === 'insufficient_funds') {
+      emailSubject = `⚠️ Ação Necessária: Ajuste de Valor - Pedido ${orderId}`;
+      emailHTML = generateInsufficientFundsHTML(orderData, extraAmount, reason);
+      emailText = `ATENÇÃO: FALTA DE FUNDOS - PAYGO\n\nOlá ${orderData.name},\nFalta o valor de ${extraAmount} MT para processar o seu pedido #${orderId}.\n\nMotivo: ${reason}\n\nPor favor, recarregue a sua carteira o mais rápido possível.`;
+      larkTemplate = "orange"; larkTitle = "⚠️ ALERTA: FALTA DE FUNDOS";
+
+    } else {
+      // Default: new_order
+      emailSubject = `🛒 Pedido ${orderId} Registado - PayGo`;
+      emailHTML = generateOrderConfirmationHTML(orderData);
+      emailText = generateOrderConfirmationText(orderData);
+    }
+
+    // 2. ENVIAR EMAIL AO CLIENTE (Resend)
     if (sendEmail && orderData.email && resend) {
       try {
-        const emailSubject = isPaymentConfirmed ? `✅ Pagamento Recebido - Pedido ${orderId} - PayGo` : `🛒 Pedido ${orderId} Registado - PayGo`;
-        const emailHTML = isPaymentConfirmed ? generatePaymentSuccessHTML(orderData) : generateOrderConfirmationHTML(orderData);
-        const emailText = isPaymentConfirmed ? generatePaymentSuccessText(orderData) : generateOrderConfirmationText(orderData);
-
         const { data, error } = await resend.emails.send({
           from: FROM_EMAIL, to: [orderData.email], subject: emailSubject, html: emailHTML, text: emailText,
-          headers: { 'X-Priority': '3', 'X-Mailer': 'PayGo Notification Service' }
+          headers: { 'X-Priority': action === 'new_order' ? '3' : '1', 'X-Mailer': 'PayGo Notification Service' }
         });
 
         if (error) results.email = { success: false, error: error.message };
@@ -108,23 +132,19 @@ export default async function handler(req, res) {
       } catch (err) { results.email = { success: false, error: err.message }; }
     }
 
-    // 2. ENVIAR NOTIFICAÇÃO LARK PARA ADMIN
+    // 3. ENVIAR NOTIFICAÇÃO LARK PARA ADMIN
     if (sendLark && LARK_WEBHOOK_URL) {
       try {
-        const larkTemplate = isPaymentConfirmed ? "green" : "blue";
-        const larkTitle = isPaymentConfirmed ? "✅ PAGAMENTO RECEBIDO" : "🛒 Novo Pedido PayGo";
-        
         const larkFields = [
           { is_short: true, text: { tag: "lark_md", content: `**ID:**\n#${orderId}` }},
           { is_short: true, text: { tag: "lark_md", content: `**Cliente:**\n${orderData.name || 'N/A'}` }},
           { is_short: true, text: { tag: "lark_md", content: `**Total:**\n${orderData.total} MT` }},
-          { is_short: true, text: { tag: "lark_md", content: `**Método:**\n${(orderData.paymentMethod || 'N/A').toUpperCase()}` }},
-          { is_short: false, text: { tag: "lark_md", content: `**WhatsApp:**\n${orderData.whatsapp || 'N/A'}` }},
+          { is_short: true, text: { tag: "lark_md", content: `**Método:**\n${(orderData.paymentMethod || 'N/A').toUpperCase()}` }}
         ];
 
-        if (isPaymentConfirmed && orderData.paysuitePaymentId) {
-          larkFields.push({ is_short: false, text: { tag: "lark_md", content: `**Ref PaySuite:**\n${orderData.paysuitePaymentId}` } });
-        }
+        if (reason) larkFields.push({ is_short: false, text: { tag: "lark_md", content: `**Motivo / Nota:**\n${reason}` }});
+        if (extraAmount) larkFields.push({ is_short: false, text: { tag: "lark_md", content: `**Valor em Falta:**\n${extraAmount} MT` }});
+        if (orderData.paysuitePaymentId) larkFields.push({ is_short: false, text: { tag: "lark_md", content: `**Ref PaySuite:**\n${orderData.paysuitePaymentId}` }});
 
         const detailPreview = (orderData.detail || '').substring(0, 150);
         larkFields.push({ is_short: false, text: { tag: "lark_md", content: `**Detalhe:**\n${detailPreview}${detailPreview.length >= 150 ? '...' : ''}` } });
@@ -161,27 +181,27 @@ export default async function handler(req, res) {
 }
 
 // ============================================================================
-// 🛠️ FUNÇÕES AUXILIARES E TEMPLATES
+// 🛠️ FUNÇÕES AUXILIARES E TEMPLATES HTML
 // ============================================================================
 
 function getWhatsAppLink(order) {
   const isTransfer = order.paymentMethod?.includes('transferencia') || order.paymentMethod === 'bank';
-  const actionText = isTransfer ? "enviar o comprovativo do meu pagamento" : "finalizar o meu pedido";
-  const msg = `*OLÁ PAYGO!* 👋\n\nGostaria de ${actionText}.\n\n*DADOS DO PEDIDO:*\n🆔 ID: #${order.orderId}\n👤 Cliente: ${order.name}\n💰 Valor: ${order.total} MT\n💳 Método: ${(order.paymentMethod || 'N/A').toUpperCase()}\n\n_Aguardo instruções._`;
+  const actionText = isTransfer ? "enviar o comprovativo do meu pagamento" : "falar sobre o meu pedido";
+  const msg = `*OLÁ PAYGO!* 👋\n\nGostaria de ${actionText}.\n\n*DADOS DO PEDIDO:*\n🆔 ID: #${order.orderId || order.topupId}\n👤 Cliente: ${order.name}\n💰 Valor: ${order.total || order.amount} MT\n\n_Aguardo instruções._`;
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
 }
 
+// 1. TEMPLATE: PEDIDO NOVO
 function generateOrderConfirmationHTML(order) {
   const waLink = getWhatsAppLink(order);
   const isBank = order.paymentMethod?.includes('transferencia') || order.paymentMethod === 'bank';
-  const totalFormatted = Number(order.total).toLocaleString('pt-MZ', { minimumFractionDigits: 2 });
+  const totalFormatted = Number(order.total || order.amount).toLocaleString('pt-MZ', { minimumFractionDigits: 2 });
 
   return `
 <!DOCTYPE html>
 <html lang="pt-MZ">
 <head>
   <meta charset="UTF-8">
-  <title>Pedido ${order.orderId} - PayGo</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8fafc; margin: 0; padding: 20px; color: #1e293b; }
     .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.1); }
@@ -198,14 +218,14 @@ function generateOrderConfirmationHTML(order) {
     <div class="header"><h1 style="margin:0;">🛒 Pedido Registado!</h1></div>
     <div class="content">
       <p>Olá, <strong>${order.name || 'Cliente'}</strong>.</p>
-      <p>O seu pedido <strong>#${order.orderId}</strong> foi recebido com sucesso e está na nossa fila.</p>
+      <p>O seu pedido <strong>#${order.orderId || order.topupId}</strong> foi recebido com sucesso e está na nossa fila.</p>
       <div class="summary">
-        <h3 style="margin-top: 0; color: #334155;">💰 Resumo do Pedido</h3>
+        <h3 style="margin-top: 0; color: #334155;">💰 Resumo da Operação</h3>
         <p><strong>Total a Pagar:</strong> ${totalFormatted} MT</p>
         <p><strong>Método:</strong> ${(order.paymentMethod || 'N/A').toUpperCase()}</p>
       </div>
       ${isBank ? `<div class="alert"><p>⚠️ <strong>Atenção:</strong> Como escolheu Banco, por favor envie o comprovativo no WhatsApp abaixo.</p></div>` 
-               : `<p style="text-align: center; color: #64748b;">🔔 Receberá em breve o pedido de PIN no seu telemóvel.</p>`}
+               : `<p style="text-align: center; color: #64748b;">🔔 Se aplicável, receberá em breve o pedido de PIN no seu telemóvel.</p>`}
       <div style="text-align: center; margin-top: 30px;">
         <a href="${waLink}" class="btn" target="_blank">💬 Falar no WhatsApp</a>
       </div>
@@ -216,17 +236,17 @@ function generateOrderConfirmationHTML(order) {
 </html>`;
 }
 
+// 2. TEMPLATE: PAGAMENTO RECEBIDO
 function generatePaymentSuccessHTML(order) {
-  const totalFormatted = Number(order.total).toLocaleString('pt-MZ', { minimumFractionDigits: 2 });
+  const totalFormatted = Number(order.total || order.amount).toLocaleString('pt-MZ', { minimumFractionDigits: 2 });
   return `
 <!DOCTYPE html>
 <html lang="pt-MZ">
 <head>
   <meta charset="UTF-8">
-  <title>Pagamento Confirmado - PayGo</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8fafc; margin: 0; padding: 20px; color: #1e293b; }
-    .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; border-top: 6px solid #22c55e; }
+    .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; border-top: 6px solid #22c55e; box-shadow: 0 4px 24px rgba(0,0,0,0.1); }
     .header { padding: 32px 24px; text-align: center; color: #16a34a; }
     .content { padding: 0 24px 32px; }
     .success-box { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 20px; border-radius: 12px; margin: 20px 0; text-align: center; color: #166534; font-weight: 500; }
@@ -241,13 +261,98 @@ function generatePaymentSuccessHTML(order) {
     <div class="content">
       <p>Olá, <strong>${order.name || 'Cliente'}</strong>.</p>
       <div class="success-box"><p>🎉 O seu pagamento de <strong>${totalFormatted} MT</strong> foi confirmado!</p></div>
-      <p style="color: #475569;">O seu pedido está agora <strong>em processamento</strong>. A nossa equipa irá efetuar a transação.</p>
+      <p style="color: #475569;">O seu pedido está agora <strong>em processamento</strong>.</p>
       <div class="summary">
-        <p><strong>ID do Pedido:</strong> #${order.orderId}</p>
+        <p><strong>ID da Operação:</strong> #${order.orderId || order.topupId}</p>
         <p><strong>Status:</strong> 🔄 Em Processamento</p>
       </div>
       <div style="text-align: center; margin-top: 30px;">
-        <a href="https://wa.me/${WHATSAPP_NUMBER}" class="btn" target="_blank">📊 Acompanhar no WhatsApp</a>
+        <a href="${SITE_URL}/dashboard.html" class="btn" target="_blank">Aceder à Minha Conta</a>
+      </div>
+    </div>
+    <div class="footer"><strong>PayGo Moçambique</strong><br>Suporte: contact@paygo.co.mz</div>
+  </div>
+</body>
+</html>`;
+}
+
+// 3. TEMPLATE: REEMBOLSO EMITIDO (NOVO)
+function generateRefundHTML(order, reason, mediaUrl) {
+  const totalFormatted = Number(order.total || order.amount).toLocaleString('pt-MZ', { minimumFractionDigits: 2 });
+  const mediaBtn = mediaUrl ? `<div style="text-align: center; margin-top: 20px;"><a href="${mediaUrl}" target="_blank" style="background-color: #e2e8f0; color: #475569; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 600;">📎 Ver Documento/Prova</a></div>` : '';
+  
+  return `
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8fafc; margin: 0; padding: 20px; color: #1e293b; }
+    .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; border-top: 6px solid #a855f7; box-shadow: 0 4px 24px rgba(0,0,0,0.1); }
+    .header { padding: 32px 24px; text-align: center; color: #9333ea; }
+    .content { padding: 0 24px 32px; }
+    .refund-box { background: #faf5ff; border: 1px solid #e9d5ff; padding: 20px; border-radius: 12px; margin: 20px 0; text-align: center; color: #7e22ce; font-weight: 500; }
+    .reason-box { background: #f8fafc; border-left: 4px solid #a855f7; padding: 15px; border-radius: 4px; margin: 20px 0; color: #334155; font-size: 14px; line-height: 1.5; }
+    .btn { background-color: #9333ea; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 12px; font-weight: 600; display: inline-block; }
+    .footer { background-color: #f8fafc; padding: 24px; text-align: center; color: #64748b; font-size: 12px; border-top: 1px solid #e2e8f0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header"><h1 style="margin:0;">🟣 Reembolso Emitido</h1></div>
+    <div class="content">
+      <p>Olá, <strong>${order.name || 'Cliente'}</strong>.</p>
+      <div class="refund-box"><p>O valor de <strong>${totalFormatted} MT</strong> referente ao pedido #${order.orderId || order.topupId} foi integralmente devolvido à sua Carteira PayGo.</p></div>
+      <p style="color: #475569; font-weight: bold; margin-bottom: 5px;">Motivo do Cancelamento/Reembolso:</p>
+      <div class="reason-box">
+        ${reason || 'O fornecedor cancelou a encomenda ou o produto encontra-se esgotado.'}
+      </div>
+      ${mediaBtn}
+      <p style="margin-top: 30px; font-size: 14px;">Pode utilizar este saldo imediatamente para efetuar novas compras ou solicitar a transferência.</p>
+      <div style="text-align: center; margin-top: 30px;">
+        <a href="${SITE_URL}/dashboard.html" class="btn" target="_blank">Aceder à Minha Carteira</a>
+      </div>
+    </div>
+    <div class="footer"><strong>PayGo Moçambique</strong><br>Suporte: contact@paygo.co.mz</div>
+  </div>
+</body>
+</html>`;
+}
+
+// 4. TEMPLATE: FUNDOS INSUFICIENTES (NOVO)
+function generateInsufficientFundsHTML(order, extraAmount, reason) {
+  return `
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8fafc; margin: 0; padding: 20px; color: #1e293b; }
+    .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; border-top: 6px solid #f59e0b; box-shadow: 0 4px 24px rgba(0,0,0,0.1); }
+    .header { padding: 32px 24px; text-align: center; color: #d97706; }
+    .content { padding: 0 24px 32px; }
+    .alert-box { background: #fffbeb; border: 1px solid #fde68a; padding: 20px; border-radius: 12px; margin: 20px 0; text-align: center; color: #b45309; font-weight: 500; font-size: 18px; }
+    .reason-box { background: #f8fafc; border-left: 4px solid #f59e0b; padding: 15px; border-radius: 4px; margin: 20px 0; color: #334155; font-size: 14px; line-height: 1.5; }
+    .btn { background-color: #f59e0b; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 12px; font-weight: 600; display: inline-block; }
+    .footer { background-color: #f8fafc; padding: 24px; text-align: center; color: #64748b; font-size: 12px; border-top: 1px solid #e2e8f0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header"><h1 style="margin:0;">⚠️ Ação Necessária no seu Pedido</h1></div>
+    <div class="content">
+      <p>Olá, <strong>${order.name || 'Cliente'}</strong>.</p>
+      <p>A nossa equipa estava a processar o seu pedido <strong>#${order.orderId || order.topupId}</strong>, mas houve uma alteração de custos.</p>
+      <div class="alert-box">
+        Falta o valor de <strong>${Number(extraAmount).toLocaleString('pt-MZ', {minimumFractionDigits:2})} MT</strong> para concluirmos a operação.
+      </div>
+      <p style="color: #475569; font-weight: bold; margin-bottom: 5px;">Justificação da Equipa:</p>
+      <div class="reason-box">
+        ${reason || 'Houve uma subida no câmbio ou taxa extra de transporte não prevista.'}
+      </div>
+      <p style="margin-top: 30px; font-size: 14px;">Por favor, aceda à sua conta e efetue um depósito ("Recarregar Carteira") com este valor exato. Assim que o saldo estiver disponível, nós debitamos a diferença e finalizamos a compra.</p>
+      <div style="text-align: center; margin-top: 30px;">
+        <a href="${SITE_URL}/dashboard.html" class="btn" target="_blank">Depositar Fundos na Conta</a>
       </div>
     </div>
     <div class="footer"><strong>PayGo Moçambique</strong><br>Suporte: contact@paygo.co.mz</div>
@@ -257,12 +362,12 @@ function generatePaymentSuccessHTML(order) {
 }
 
 function generateOrderConfirmationText(order) {
-  const totalFormatted = Number(order.total).toLocaleString('pt-MZ', { minimumFractionDigits: 2 });
+  const totalFormatted = Number(order.total || order.amount).toLocaleString('pt-MZ', { minimumFractionDigits: 2 });
   const isBank = order.paymentMethod?.includes('transferencia') || order.paymentMethod === 'bank';
-  return `PEDIDO REGISTADO - PAYGO\n\nOlá ${order.name || 'Cliente'},\nO pedido #${order.orderId} foi registado.\n\n💰 Total: ${totalFormatted} MT\n💳 Método: ${(order.paymentMethod || 'N/A').toUpperCase()}\n\n${isBank ? '⚠️ Envie o comprovativo para o WhatsApp.' : '🔔 Aguarde o pedido de PIN.'}\n\nWhatsApp: +258 87 100 2255`;
+  return `PEDIDO REGISTADO - PAYGO\n\nOlá ${order.name || 'Cliente'},\nO pedido #${order.orderId || order.topupId} foi registado.\n\n💰 Total: ${totalFormatted} MT\n💳 Método: ${(order.paymentMethod || 'N/A').toUpperCase()}\n\n${isBank ? '⚠️ Envie o comprovativo para o WhatsApp.' : '🔔 Aguarde o processamento.'}\n\nWhatsApp: +258 87 100 2255`;
 }
 
 function generatePaymentSuccessText(order) {
-  const totalFormatted = Number(order.total).toLocaleString('pt-MZ', { minimumFractionDigits: 2 });
-  return `PAGAMENTO CONFIRMADO - PAYGO ✅\n\nOlá ${order.name || 'Cliente'},\nRecebemos o pagamento de ${totalFormatted} MT para o pedido #${order.orderId}.\n\n🔄 O seu pedido está EM PROCESSAMENTO.\n\nWhatsApp: +258 87 100 2255`;
+  const totalFormatted = Number(order.total || order.amount).toLocaleString('pt-MZ', { minimumFractionDigits: 2 });
+  return `PAGAMENTO CONFIRMADO - PAYGO ✅\n\nOlá ${order.name || 'Cliente'},\nRecebemos o pagamento de ${totalFormatted} MT para o pedido #${order.orderId || order.topupId}.\n\n🔄 O seu pedido está EM PROCESSAMENTO.\n\nWhatsApp: +258 87 100 2255`;
 }
