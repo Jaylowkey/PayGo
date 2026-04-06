@@ -25,17 +25,17 @@ export default async function handler(req, res) {
     // Removemos os traços da referência para garantir compatibilidade máxima com a PaySuite
     const cleanReference = orderId.replace(/[^a-zA-Z0-9]/g, '');
 
-    // ✅ 4. O PAYLOAD CIRÚRGICO (Exatamente como a documentação exige, sem invenções!)
+    // ✅ 4. O PAYLOAD CIRÚRGICO
     const paysuitePayload = {
       amount: parseFloat(amount),
       method: cleanMethod,
       reference: cleanReference, 
       description: description || `Pedido PayGo #${orderId}`,
-      callback_url: 'https://www.paygo.co.mz/api/paysuite-webhook', // 👈 O ÁRBITRO FINAL
-      return_url: 'https://www.paygo.co.mz/index.html' // Para onde o cliente volta após pagar
+      callback_url: 'https://www.paygo.co.mz/api/paysuite-webhook',
+      return_url: 'https://www.paygo.co.mz/index.html'
     };
 
-    console.log('💳 [paysuite-payment] Iniciando pagamento rigoroso:', paysuitePayload);
+    console.log(`💳 [paysuite-payment] Iniciando pagamento (${cleanMethod}):`, paysuitePayload);
 
     // ✅ 5. Chamar a API Oficial da PaySuite
     const response = await fetch('https://paysuite.tech/api/v1/payments', {
@@ -45,15 +45,30 @@ export default async function handler(req, res) {
         'Accept': 'application/json',
         'Authorization': `Bearer ${process.env.PAYSUITE_API_KEY}` 
       },
-      body: JSON.stringify(paysuitePayload),
       signal: AbortSignal.timeout(30000)
     });
 
-    const result = await response.json();
+    // 🛡️ BLINDAGEM ANTI-CRASH: Ler como texto primeiro!
+    const textResponse = await response.text();
+    let result;
 
-    // ✅ 6. Lidar com Erros
+    try {
+      result = JSON.parse(textResponse);
+    } catch (parseError) {
+      // Se entrar aqui, a PaySuite devolveu HTML (Servidor em baixo / Manutenção)
+      console.error('❌ ERRO FATAL DA PAYSUITE: O servidor devolveu HTML em vez de JSON.');
+      console.error(`Status HTTP: ${response.status}`);
+      console.error('Resposta (Truncada):', textResponse.substring(0, 300));
+      
+      return res.status(502).json({ 
+        success: false, 
+        error: `O serviço ${cleanMethod.toUpperCase()} na PaySuite está temporariamente indisponível. Tente novamente mais tarde.` 
+      });
+    }
+
+    // ✅ 6. Lidar com Erros Limpos (JSON)
     if (!response.ok || result.status === 'error') {
-      console.error('❌ Erro da API PaySuite:', result);
+      console.error('❌ Erro da API PaySuite (JSON):', result);
       return res.status(400).json({ 
         success: false, 
         error: result.message || 'O servidor da PaySuite rejeitou o pagamento.' 
@@ -69,7 +84,7 @@ export default async function handler(req, res) {
         paymentId: result.data?.id,
         status: result.data?.status,
         reference: result.data?.reference,
-        checkoutUrl: result.data?.checkout_url, // 👈 O CLIENTE TEM DE SER REDIRECIONADO PARA AQUI!
+        checkoutUrl: result.data?.checkout_url,
         method: cleanMethod,
         amount: result.data?.amount
       },
@@ -77,7 +92,7 @@ export default async function handler(req, res) {
     });
 
   } catch (err) {
-    console.error('❌ Erro Crítico:', err);
-    return res.status(500).json({ success: false, error: 'Erro interno do servidor' });
+    console.error('❌ Erro Crítico Interno:', err);
+    return res.status(500).json({ success: false, error: 'Ocorreu um erro ao processar o seu pedido na PayGo.' });
   }
 }
