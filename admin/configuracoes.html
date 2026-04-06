@@ -6,136 +6,266 @@
   <title>Configurações de Sistema | PayGo Admin</title>
   <meta name="theme-color" content="#0f172a">
   <meta name="robots" content="noindex, nofollow">
-  
+  <meta name="description" content="Painel de configuração global do sistema PayGo">
+
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.tailwindcss.com"></script>
-  
+
   <script>
     tailwind.config = {
       theme: {
         extend: {
-          fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'], display: ['"Outfit"', 'sans-serif'], mono: ['"Fira Code"', 'monospace'] },
-          colors: { brand: { 50: '#eff6ff', 500: '#3b82f6', 600: '#2563eb', 950: '#0f172a' }, success: { 400: '#4ade80', 500: '#22c55e' }, danger: { 400: '#f87171', 500: '#ef4444' }, warning: { 500: '#f59e0b' } }
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            display: ['"Outfit"', 'sans-serif'],
+            mono: ['"Fira Code"', 'monospace']
+          },
+          colors: {
+            brand: { 50: '#eff6ff', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 950: '#0f172a' },
+            success: { 400: '#4ade80', 500: '#22c55e' },
+            danger: { 400: '#f87171', 500: '#ef4444' },
+            warning: { 400: '#fbbf24', 500: '#f59e0b' },
+            slatex: { 850: '#172033' }
+          },
+          animation: {
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'fade-in': 'fadeIn 0.3s ease-out'
+          },
+          keyframes: {
+            fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } }
+          }
         }
       }
     };
   </script>
-  
+
   <style>
+    :root { color-scheme: dark; }
     body { background-color: #0f172a; color: #f8fafc; overflow-x: hidden; }
-    ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    ::-webkit-scrollbar-track { background: transparent; }
     .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
     .glass-nav { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.08); }
     .glass-card { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.3s ease; }
-    .glass-card:hover { border-color: rgba(59, 130, 246, 0.3); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5); }
+    .glass-card:hover { border-color: rgba(59, 130, 246, 0.25); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.45); }
+    .sidebar-link { transition: all 0.25s ease; }
     .sidebar-link.active { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-left: 3px solid #60a5fa; font-weight: 700; }
-    
-    /* Toggle Switch Moderno */
-    .toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+    .toggle-switch { position: relative; display: inline-block; width: 46px; height: 24px; }
     .toggle-switch input { opacity: 0; width: 0; height: 0; }
-    .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .4s; border-radius: 34px; }
-    .toggle-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s cubic-bezier(0.4, 0.0, 0.2, 1); border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+    .toggle-slider { position: absolute; cursor: pointer; inset: 0; background-color: #334155; transition: .35s; border-radius: 999px; }
+    .toggle-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .35s cubic-bezier(0.4, 0.0, 0.2, 1); border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
     input:checked + .toggle-slider { background-color: #3b82f6; }
-    input:checked + .toggle-slider:before { transform: translateX(20px); }
-    
-    /* Input Effects */
+    input:checked + .toggle-slider:before { transform: translateX(22px); }
     .input-group:focus-within label { color: #60a5fa; }
-    
-    /* Toasts */
-    #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-    .toast { pointer-events: auto; background: rgba(15, 23, 42, 0.95); border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 12px; display: flex; gap: 12px; transform: translateX(120%); transition: transform 0.4s ease; opacity: 0; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+    .status-pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; border: 1px solid rgba(255,255,255,0.08); white-space: nowrap; }
+    .status-pill.ok { background: rgba(34,197,94,0.12); color: #4ade80; border-color: rgba(34,197,94,0.25); }
+    .status-pill.warn { background: rgba(245,158,11,0.12); color: #fbbf24; border-color: rgba(245,158,11,0.25); }
+    .status-pill.off { background: rgba(239,68,68,0.12); color: #f87171; border-color: rgba(239,68,68,0.25); }
+    .hint-box { background: rgba(15, 23, 42, 0.55); border: 1px solid rgba(255,255,255,0.06); }
+    #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; max-width: min(92vw, 420px); }
+    .toast { pointer-events: auto; background: rgba(15, 23, 42, 0.95); border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 12px; display: flex; gap: 12px; align-items: flex-start; transform: translateX(120%); transition: transform 0.4s ease, opacity 0.4s ease; opacity: 0; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border-top: 1px solid rgba(255,255,255,0.04); border-right: 1px solid rgba(255,255,255,0.04); border-bottom: 1px solid rgba(255,255,255,0.04); }
     .toast.show { transform: translateX(0); opacity: 1; }
     .toast.error { border-left-color: #ef4444; }
     .toast.success { border-left-color: #22c55e; }
     .toast.warning { border-left-color: #f59e0b; }
+    .toast.info { border-left-color: #3b82f6; }
+    .soft-input { background: #0f172a; border: 1px solid #334155; color: white; border-radius: 14px; transition: .25s ease; outline: none; }
+    .soft-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 1px rgba(59,130,246,.35); }
+    .soft-panel { background: rgba(15,23,42,.55); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; }
+    .sticky-bottom-bar { background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(16px); border-top: 1px solid rgba(255,255,255,0.07); }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
+    @media (max-width: 768px) { .glass-card { border-radius: 1rem; } .toast { max-width: calc(100vw - 48px); } }
+    :focus-visible { outline: 2px solid #3b82f6; outline-offset: 2px; border-radius: 4px; }
   </style>
 </head>
 <body class="selection:bg-brand-500 selection:text-white">
-
+  
+  <!-- Loader -->
   <div id="sysLoader" class="fixed inset-0 bg-slate-950 z-[200] flex flex-col items-center justify-center transition-opacity duration-500">
     <div class="w-16 h-16 border-4 border-slate-800 border-t-brand-500 rounded-full animate-spin mb-4"></div>
     <h2 class="text-white text-xl font-bold font-display">PayGo OS</h2>
     <p class="text-slate-400 text-sm mt-1">A carregar núcleo do sistema...</p>
   </div>
 
+  <!-- Background Effects -->
   <div class="fixed inset-0 bg-grid opacity-20 pointer-events-none z-0"></div>
   <div class="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[500px] bg-brand-600/10 rounded-full mix-blend-screen blur-[120px] pointer-events-none z-0"></div>
+  
+  <!-- Toast Container -->
   <div id="toastContainer"></div>
 
+  <!-- Header -->
   <header class="fixed w-full z-50 glass-nav">
     <div class="container mx-auto px-6 h-20 flex justify-between items-center">
       <div class="flex items-center gap-3">
-        <button id="mobileMenuBtn" class="lg:hidden text-slate-400 hover:text-white p-2 -ml-2 transition-colors"><i data-lucide="menu" class="w-6 h-6"></i></button>
-        <div class="bg-gradient-to-tr from-brand-500 to-brand-400 p-2.5 rounded-xl text-white shadow-lg"><i data-lucide="zap" class="w-5 h-5"></i></div>
+        <button id="mobileMenuBtn" class="lg:hidden text-slate-400 hover:text-white p-2 -ml-2 transition-colors" type="button" aria-label="Abrir menu">
+          <i data-lucide="menu" class="w-6 h-6"></i>
+        </button>
+        <div class="bg-gradient-to-tr from-brand-500 to-brand-400 p-2.5 rounded-xl text-white shadow-lg">
+          <i data-lucide="zap" class="w-5 h-5"></i>
+        </div>
         <div class="hidden sm:block">
-            <span class="text-2xl font-display font-bold text-white">PayGo</span>
-            <span class="text-[10px] text-brand-400 ml-2 px-2 py-0.5 bg-brand-500/20 border border-brand-500/30 rounded-full font-black uppercase tracking-widest">Settings</span>
+          <span class="text-2xl font-display font-bold text-white">PayGo</span>
+          <span class="text-[10px] text-brand-400 ml-2 px-2 py-0.5 bg-brand-500/20 border border-brand-500/30 rounded-full font-black uppercase tracking-widest">Settings</span>
         </div>
       </div>
-      
       <div class="flex items-center gap-4">
         <div class="hidden md:flex flex-col text-right">
           <span id="adminName" class="text-sm font-bold text-white">Admin</span>
-          <span class="text-[10px] text-slate-400 uppercase tracking-widest">Painel de Controlo</span>
+          <span id="adminRoleLabel" class="text-[10px] text-slate-400 uppercase tracking-widest">Painel de Controlo</span>
         </div>
-        <button onclick="window.logout()" class="bg-slate-800 hover:bg-danger-500/20 text-slate-400 hover:text-danger-400 rounded-xl p-2.5 transition-colors" title="Terminar Sessão"><i data-lucide="power" class="w-5 h-5"></i></button>
+        <button id="logoutBtn" class="bg-slate-800 hover:bg-danger-500/20 text-slate-400 hover:text-danger-400 rounded-xl p-2.5 transition-colors" title="Terminar Sessão" type="button" aria-label="Terminar sessão">
+          <i data-lucide="power" class="w-5 h-5"></i>
+        </button>
       </div>
     </div>
   </header>
 
+  <!-- Sidebar Overlay -->
   <div id="sidebarOverlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-40 hidden lg:hidden opacity-0 transition-opacity"></div>
 
+  <!-- Main Content -->
   <div class="pt-28 pb-32 relative z-10 container mx-auto px-6 grid lg:grid-cols-4 gap-6">
     
+    <!-- Sidebar -->
     <div id="sidebar" class="lg:col-span-1 fixed lg:static top-0 left-0 h-full lg:h-auto w-72 lg:w-auto bg-slate-900 lg:bg-transparent z-50 lg:z-auto p-6 lg:p-0 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 border-r border-slate-800 lg:border-none">
       <div class="glass-card rounded-2xl p-0 lg:p-6 sticky top-28 border-none lg:border-solid bg-transparent lg:bg-[rgba(30,41,59,0.4)]">
-        
         <div class="flex justify-between items-center mb-6 lg:hidden">
-            <span class="text-xl font-display font-bold text-white">PayGo Admin</span>
-            <button id="closeSidebarBtn" class="text-slate-400 hover:text-white p-2"><i data-lucide="x" class="w-6 h-6"></i></button>
+          <span class="text-xl font-display font-bold text-white">PayGo Admin</span>
+          <button id="closeSidebarBtn" class="text-slate-400 hover:text-white p-2" type="button" aria-label="Fechar menu">
+            <i data-lucide="x" class="w-6 h-6"></i>
+          </button>
         </div>
-
         <nav class="space-y-2">
           <a href="dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
-            <i data-lucide="layout-dashboard" class="w-5 h-5"></i> <span class="text-sm font-medium">Visão Central</span>
+            <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+            <span class="text-sm font-medium">Visão Central</span>
           </a>
           <a href="pedidos.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
-            <i data-lucide="shopping-bag" class="w-5 h-5"></i> <span class="text-sm font-medium">Pedidos</span>
+            <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+            <span class="text-sm font-medium">Pedidos</span>
           </a>
           <a href="clientes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
-            <i data-lucide="users" class="w-5 h-5"></i> <span class="text-sm font-medium">Clientes</span>
+            <i data-lucide="users" class="w-5 h-5"></i>
+            <span class="text-sm font-medium">Clientes</span>
           </a>
           <a href="afiliados.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
-            <i data-lucide="network" class="w-5 h-5"></i> <span class="text-sm font-medium">Afiliados</span>
+            <i data-lucide="network" class="w-5 h-5"></i>
+            <span class="text-sm font-medium">Afiliados</span>
           </a>
           <a href="gerar-fatura.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
-            <i data-lucide="file-check-2" class="w-5 h-5 text-brand-400"></i> <span class="text-sm font-medium">Gerar Faturas</span>
+            <i data-lucide="file-check-2" class="w-5 h-5 text-brand-400"></i>
+            <span class="text-sm font-medium">Gerar Faturas</span>
           </a>
-          
           <div class="pt-4 mt-4 border-t border-slate-700/50"></div>
-          
           <a href="admin.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
-            <i data-lucide="shield" class="w-5 h-5"></i> <span class="text-sm font-medium">Gestão de Equipa</span>
+            <i data-lucide="shield" class="w-5 h-5"></i>
+            <span class="text-sm font-medium">Gestão de Equipa</span>
           </a>
           <a href="configuracoes.html" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-xl text-white">
-            <i data-lucide="settings" class="w-5 h-5"></i> <span class="text-sm font-medium">Configurações</span>
+            <i data-lucide="settings" class="w-5 h-5"></i>
+            <span class="text-sm font-medium">Configurações</span>
           </a>
         </nav>
       </div>
     </div>
 
+    <!-- Main Panel -->
     <div class="lg:col-span-3 space-y-6">
       
+      <!-- Header -->
       <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 class="text-3xl font-display font-extrabold text-white tracking-tight">Parametrização do Sistema</h1>
-          <p class="text-slate-400 text-sm mt-1">Altere o comportamento do site público, taxas de serviço e integrações (API).</p>
+          <p class="text-slate-400 text-sm mt-1">Altere o comportamento do site público, taxas de serviço e integrações.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <span id="settingsStatusPill" class="status-pill warn">
+            <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i>
+            A validar
+          </span>
         </div>
       </div>
-      
+
+      <!-- System Status Cards -->
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div class="glass-card rounded-2xl border border-white/5 p-6 shadow-lg">
+          <h2 class="text-lg font-bold text-white mb-5 flex items-center gap-3">
+            <div class="p-2 bg-brand-500/20 rounded-lg text-brand-400">
+              <i data-lucide="activity" class="w-5 h-5"></i>
+            </div>
+            Estado do Sistema
+          </h2>
+          <div class="space-y-3">
+            <div class="soft-panel p-4 flex items-center justify-between gap-3">
+              <div>
+                <p class="font-bold text-white text-sm">Configurações carregadas</p>
+                <p class="text-xs text-slate-400">Documento global do sistema</p>
+              </div>
+              <span id="docStateBadge" class="status-pill warn">A validar</span>
+            </div>
+            <div class="soft-panel p-4 flex items-center justify-between gap-3">
+              <div>
+                <p class="font-bold text-white text-sm">Resend API</p>
+                <p class="text-xs text-slate-400">Chave e remetente configurados</p>
+              </div>
+              <span id="resendStateBadge" class="status-pill off">Em falta</span>
+            </div>
+            <div class="soft-panel p-4 flex items-center justify-between gap-3">
+              <div>
+                <p class="font-bold text-white text-sm">Webhook Lark</p>
+                <p class="text-xs text-slate-400">Notificações internas</p>
+              </div>
+              <span id="larkStateBadge" class="status-pill off">Em falta</span>
+            </div>
+            <div class="soft-panel p-4 flex items-center justify-between gap-3">
+              <div>
+                <p class="font-bold text-white text-sm">Motor de afiliados</p>
+                <p class="text-xs text-slate-400">Comissão e prefixo</p>
+              </div>
+              <span id="affiliateStateBadge" class="status-pill ok">Ativo</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="glass-card rounded-2xl border border-white/5 p-6 shadow-lg xl:col-span-2">
+          <h2 class="text-lg font-bold text-white mb-5 flex items-center gap-3">
+            <div class="p-2 bg-warning-500/20 rounded-lg text-warning-400">
+              <i data-lucide="sparkles" class="w-5 h-5"></i>
+            </div>
+            Ações Rápidas
+          </h2>
+          <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <button id="prefillBtn" type="button" class="px-4 py-4 rounded-xl bg-slate-900 border border-slate-700 hover:border-brand-500 text-white font-bold text-sm transition flex items-center justify-center gap-2">
+              <i data-lucide="wand-sparkles" class="w-4 h-4"></i>
+              Pré-configurar
+            </button>
+            <button id="clearSensitiveBtn" type="button" class="px-4 py-4 rounded-xl bg-slate-900 border border-slate-700 hover:border-warning-500 text-white font-bold text-sm transition flex items-center justify-center gap-2">
+              <i data-lucide="eraser" class="w-4 h-4"></i>
+              Limpar chaves
+            </button>
+            <button id="testConfigBtn" type="button" class="px-4 py-4 rounded-xl bg-slate-900 border border-slate-700 hover:border-success-500 text-white font-bold text-sm transition flex items-center justify-center gap-2">
+              <i data-lucide="flask-conical" class="w-4 h-4"></i>
+              Testar config
+            </button>
+            <button id="copySummaryBtn" type="button" class="px-4 py-4 rounded-xl bg-slate-900 border border-slate-700 hover:border-brand-500 text-white font-bold text-sm transition flex items-center justify-center gap-2">
+              <i data-lucide="clipboard-list" class="w-4 h-4"></i>
+              Resumo
+            </button>
+          </div>
+          <div class="hint-box mt-4 rounded-2xl p-4">
+            <p class="text-sm text-slate-300 leading-6">Este painel controla o comportamento global do PayGo. Alterações aqui afetam taxas, integrações e comunicações automáticas do sistema.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings Form -->
       <form id="settingsForm" class="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8">
         
+        <!-- Global Settings -->
         <div class="glass-card rounded-2xl border border-white/5 p-6 md:p-8 shadow-lg">
           <h2 class="text-lg font-bold text-white mb-6 flex items-center gap-3 pb-4 border-b border-white/10">
             <div class="p-2 bg-brand-500/20 rounded-lg text-brand-400"><i data-lucide="globe" class="w-5 h-5"></i></div>
@@ -146,150 +276,190 @@
               <label class="block text-sm font-bold text-slate-300 mb-2 transition-colors">Taxa de Câmbio (1 USD → MT)</label>
               <div class="relative flex items-center">
                 <span class="absolute left-4 text-slate-400 font-bold">$</span>
-                <input type="number" id="exchangeRate" value="88.00" step="0.01" min="1" class="w-full pl-9 pr-24 py-3 border border-slate-700 bg-slate-900 rounded-xl text-white focus:outline-none focus:border-brand-500 transition font-mono text-lg font-semibold">
+                <input type="number" id="exchangeRate" value="88.00" step="0.01" min="1" class="soft-input w-full pl-9 pr-24 py-3 font-mono text-lg font-semibold">
                 <span class="absolute right-4 text-xs font-bold text-brand-400 bg-brand-900/30 border border-brand-500/30 px-2 py-1 rounded uppercase tracking-widest pointer-events-none">Base Câmbio</span>
               </div>
             </div>
-            
             <div class="input-group">
               <label class="block text-sm font-bold text-slate-300 mb-2 transition-colors">Emails Notificados (Equipa)</label>
-              <textarea id="adminEmails" rows="2" class="w-full px-4 py-3 border border-slate-700 bg-slate-900 text-white rounded-xl focus:outline-none focus:border-brand-500 transition font-mono text-sm" placeholder="admin@paygo.co.mz"></textarea>
+              <textarea id="adminEmails" rows="3" class="soft-input w-full px-4 py-3 font-mono text-sm resize-y" placeholder="admin@paygo.co.mz, ops@paygo.co.mz"></textarea>
+              <p class="text-xs text-slate-500 mt-2">Separe múltiplos emails por vírgula.</p>
             </div>
-            
             <div class="input-group">
               <label class="block text-sm font-bold text-slate-300 mb-2 transition-colors">WhatsApp de Suporte Técnico</label>
               <div class="relative flex items-center">
                 <span class="absolute left-4 text-green-400"><i data-lucide="message-circle" class="w-5 h-5"></i></span>
-                <input type="tel" id="whatsappNumber" value="258877522255" class="w-full pl-12 pr-4 py-3 border border-slate-700 bg-slate-900 text-white rounded-xl focus:outline-none focus:border-green-500 transition font-mono">
+                <input type="tel" id="whatsappNumber" value="258877522255" class="soft-input w-full pl-12 pr-4 py-3 font-mono">
               </div>
+            </div>
+            <div class="soft-panel p-4">
+              <p class="text-sm font-bold text-white mb-3">Modo promocional</p>
+              <label class="flex items-center gap-4 cursor-pointer">
+                <span class="toggle-switch flex-shrink-0">
+                  <input type="checkbox" id="firstPurchaseFree" checked>
+                  <span class="toggle-slider"></span>
+                </span>
+                <div>
+                  <p class="font-bold text-success-400">Primeira compra grátis</p>
+                  <p class="text-xs text-slate-400 mt-1">Isenta a taxa de serviço para novos clientes em compras elegíveis.</p>
+                </div>
+              </label>
             </div>
           </div>
         </div>
 
+        <!-- Financial Engine -->
         <div class="glass-card rounded-2xl border border-white/5 p-6 md:p-8 shadow-lg">
           <h2 class="text-lg font-bold text-white mb-6 flex items-center gap-3 pb-4 border-b border-white/10">
             <div class="p-2 bg-amber-500/20 rounded-lg text-amber-400"><i data-lucide="calculator" class="w-5 h-5"></i></div>
             Motor Financeiro (Taxas de Serviço)
           </h2>
           <div class="space-y-4">
-            <div class="flex items-center justify-between p-4 bg-slate-900/50 rounded-xl border border-slate-800">
-              <div><p class="font-bold text-white">Até $20 USD</p><p class="text-[10px] text-slate-500 uppercase tracking-widest">Taxa fixa</p></div>
+            <div class="flex items-center justify-between p-4 bg-slate-900/50 rounded-xl border border-slate-800 gap-4">
+              <div>
+                <p class="font-bold text-white">Até $20 USD</p>
+                <p class="text-[10px] text-slate-500 uppercase tracking-widest">Taxa fixa</p>
+              </div>
               <div class="relative">
-                <input type="number" id="tax1" value="150" class="w-28 px-4 py-2 border border-slate-700 rounded-lg text-right text-white focus:outline-none focus:border-brand-500 transition font-mono font-bold bg-slate-800">
+                <input type="number" id="tax1" value="150" class="soft-input w-28 px-4 py-2 text-right font-mono font-bold">
                 <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold pointer-events-none">MT</span>
               </div>
             </div>
-            <div class="flex items-center justify-between p-4 bg-slate-900/50 rounded-xl border border-slate-800">
-              <div><p class="font-bold text-white">$21 - $50 USD</p><p class="text-[10px] text-slate-500 uppercase tracking-widest">Taxa fixa</p></div>
+            <div class="flex items-center justify-between p-4 bg-slate-900/50 rounded-xl border border-slate-800 gap-4">
+              <div>
+                <p class="font-bold text-white">$21 - $50 USD</p>
+                <p class="text-[10px] text-slate-500 uppercase tracking-widest">Taxa fixa</p>
+              </div>
               <div class="relative">
-                <input type="number" id="tax2" value="250" class="w-28 px-4 py-2 border border-slate-700 rounded-lg text-right text-white focus:outline-none focus:border-brand-500 transition font-mono font-bold bg-slate-800">
+                <input type="number" id="tax2" value="250" class="soft-input w-28 px-4 py-2 text-right font-mono font-bold">
                 <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold pointer-events-none">MT</span>
               </div>
             </div>
-            <div class="flex items-center justify-between p-4 bg-slate-900/50 rounded-xl border border-slate-800">
-              <div><p class="font-bold text-white">$51 - $100 USD</p><p class="text-[10px] text-slate-500 uppercase tracking-widest">Taxa fixa</p></div>
+            <div class="flex items-center justify-between p-4 bg-slate-900/50 rounded-xl border border-slate-800 gap-4">
+              <div>
+                <p class="font-bold text-white">$51 - $100 USD</p>
+                <p class="text-[10px] text-slate-500 uppercase tracking-widest">Taxa fixa</p>
+              </div>
               <div class="relative">
-                <input type="number" id="tax3" value="600" class="w-28 px-4 py-2 border border-slate-700 rounded-lg text-right text-white focus:outline-none focus:border-brand-500 transition font-mono font-bold bg-slate-800">
+                <input type="number" id="tax3" value="600" class="soft-input w-28 px-4 py-2 text-right font-mono font-bold">
                 <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold pointer-events-none">MT</span>
               </div>
             </div>
-            <div class="flex items-center justify-between p-4 bg-brand-900/20 rounded-xl border border-brand-500/30">
-              <div><p class="font-bold text-brand-400">Acima de $100 USD</p><p class="text-[10px] text-slate-400 uppercase tracking-widest">Taxa percentual</p></div>
+            <div class="flex items-center justify-between p-4 bg-brand-900/20 rounded-xl border border-brand-500/30 gap-4">
+              <div>
+                <p class="font-bold text-brand-400">Acima de $100 USD</p>
+                <p class="text-[10px] text-slate-400 uppercase tracking-widest">Taxa percentual</p>
+              </div>
               <div class="flex items-center gap-2">
-                <input type="number" id="taxPercent" value="7" step="0.1" class="w-20 px-3 py-2 border border-brand-700 bg-brand-900/50 rounded-lg text-right text-brand-300 focus:outline-none focus:border-brand-400 transition font-mono font-bold">
+                <input type="number" id="taxPercent" value="7" step="0.1" class="soft-input w-20 px-3 py-2 text-right font-mono font-bold text-center">
                 <span class="text-brand-400 font-bold">%</span>
               </div>
             </div>
-            
-            <label class="flex items-center gap-4 p-5 bg-success-900/10 rounded-xl cursor-pointer border border-success-500/20 mt-4 transition-colors hover:bg-success-900/20">
-              <label class="toggle-switch flex-shrink-0">
-                <input type="checkbox" id="firstPurchaseFree" checked>
-                <span class="toggle-slider"></span>
-              </label>
-              <div>
-                <p class="font-bold text-success-400 flex items-center gap-2">Bónus: Primeira Compra Grátis</p>
-                <p class="text-xs text-slate-400 mt-1">Isenta taxa de serviço (lucro) para compras até $5 na 1ª compra do cliente novo.</p>
+            <div class="soft-panel p-4">
+              <p class="text-sm font-bold text-white mb-2">Pré-visualização</p>
+              <div class="grid grid-cols-2 gap-3 text-sm">
+                <div class="bg-slate-900/60 rounded-xl p-3 border border-slate-800">
+                  <p class="text-slate-400 text-xs uppercase tracking-widest">Compra $10</p>
+                  <p id="previewTax10" class="text-white font-bold mt-1">150 MT</p>
+                </div>
+                <div class="bg-slate-900/60 rounded-xl p-3 border border-slate-800">
+                  <p class="text-slate-400 text-xs uppercase tracking-widest">Compra $120</p>
+                  <p id="previewTax120" class="text-white font-bold mt-1">739.20 MT</p>
+                </div>
               </div>
-            </label>
+            </div>
           </div>
         </div>
 
+        <!-- Integrations -->
         <div class="glass-card rounded-2xl border border-white/5 p-6 md:p-8 xl:col-span-2 shadow-lg">
           <h2 class="text-lg font-bold text-white mb-6 flex items-center gap-3 pb-4 border-b border-white/10">
             <div class="p-2 bg-purple-500/20 rounded-lg text-purple-400"><i data-lucide="webhook" class="w-5 h-5"></i></div>
             Integrações, APIs e Webhooks
           </h2>
-          
           <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div class="space-y-6">
-              <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2"><i data-lucide="mail" class="w-4 h-4"></i> Servidor SMTP (Resend)</h3>
+              <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                <i data-lucide="mail" class="w-4 h-4"></i>
+                Servidor SMTP (Resend)
+              </h3>
               <div class="input-group">
                 <label class="block text-sm font-bold text-slate-300 mb-2">API Key do Resend</label>
                 <div class="relative">
                   <i data-lucide="key" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
-                  <input type="password" id="resendApiKey" placeholder="re_xxxxxxxxxxxxxxxxxxxxxxxx" class="w-full pl-10 pr-12 py-3 border border-slate-700 bg-slate-900 text-white rounded-xl focus:outline-none focus:border-brand-500 transition font-mono text-sm">
-                  <button type="button" onclick="window.togglePwd('resendApiKey')" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"><i data-lucide="eye" id="icon-resendApiKey" class="w-4 h-4"></i></button>
+                  <input type="password" id="resendApiKey" placeholder="re_xxxxxxxxxxxxxxxxxxxxxxxx" class="soft-input w-full pl-10 pr-12 py-3 font-mono text-sm">
+                  <button type="button" data-toggle-password="resendApiKey" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white">
+                    <i data-lucide="eye" id="icon-resendApiKey" class="w-4 h-4"></i>
+                  </button>
                 </div>
               </div>
               <div class="grid grid-cols-2 gap-4">
                 <div class="input-group">
                   <label class="block text-sm font-bold text-slate-300 mb-2">Email Sistema</label>
-                  <input type="email" id="senderEmail" value="noreply@paygo.co.mz" class="w-full px-4 py-3 border border-slate-700 bg-slate-900 text-white rounded-xl focus:outline-none focus:border-brand-500 transition font-mono text-sm">
+                  <input type="email" id="senderEmail" value="noreply@paygo.co.mz" class="soft-input w-full px-4 py-3 font-mono text-sm">
                 </div>
                 <div class="input-group">
                   <label class="block text-sm font-bold text-slate-300 mb-2">Nome Remetente</label>
-                  <input type="text" id="senderName" value="PayGo Moçambique" class="w-full px-4 py-3 border border-slate-700 bg-slate-900 text-white rounded-xl focus:outline-none focus:border-brand-500 transition text-sm">
+                  <input type="text" id="senderName" value="PayGo Moçambique" class="soft-input w-full px-4 py-3 text-sm">
                 </div>
               </div>
             </div>
-            
             <div class="space-y-6">
-              <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2"><i data-lucide="bell-ring" class="w-4 h-4"></i> Notificações Admin (Lark)</h3>
+              <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                <i data-lucide="bell-ring" class="w-4 h-4"></i>
+                Notificações Admin (Lark)
+              </h3>
               <div class="input-group">
                 <label class="block text-sm font-bold text-slate-300 mb-2">URL do Webhook do Lark</label>
                 <div class="relative">
                   <i data-lucide="link" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
-                  <input type="url" id="larkWebhook" placeholder="https://open.larksuite.com/open-apis/..." class="w-full pl-10 pr-4 py-3 border border-slate-700 bg-slate-900 text-white rounded-xl focus:outline-none focus:border-brand-500 transition font-mono text-sm">
+                  <input type="url" id="larkWebhook" placeholder="https://open.larksuite.com/open-apis/..." class="soft-input w-full pl-10 pr-4 py-3 font-mono text-sm">
                 </div>
-                <p class="text-xs text-slate-500 mt-2">Dispara alertas no grupo interno sempre que houver um novo evento na plataforma.</p>
+                <p class="text-xs text-slate-500 mt-2">Alertas internos para novos eventos da plataforma.</p>
               </div>
-
-              <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 mt-6"><i data-lucide="network" class="w-4 h-4"></i> Programa de Afiliados</h3>
+              <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 mt-6">
+                <i data-lucide="network" class="w-4 h-4"></i>
+                Programa de Afiliados
+              </h3>
               <div class="grid grid-cols-2 gap-4">
                 <div class="input-group">
                   <label class="block text-sm font-bold text-slate-300 mb-2">Comissão Base (%)</label>
                   <div class="relative">
-                    <input type="number" id="affiliateCommission" value="3" step="0.1" class="w-full pl-4 pr-10 py-3 border border-slate-700 bg-slate-900 text-white rounded-xl focus:outline-none focus:border-brand-500 transition font-mono font-bold text-center">
+                    <input type="number" id="affiliateCommission" value="3" step="0.1" class="soft-input w-full pl-4 pr-10 py-3 font-mono font-bold text-center">
                     <span class="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-slate-500">%</span>
                   </div>
                 </div>
                 <div class="input-group">
                   <label class="block text-sm font-bold text-slate-300 mb-2">Prefixo Link</label>
-                  <input type="text" id="affiliatePrefix" value="AFF" class="w-full px-4 py-3 border border-slate-700 bg-slate-900 text-white rounded-xl focus:outline-none focus:border-brand-500 transition font-mono font-bold text-center uppercase tracking-widest">
+                  <input type="text" id="affiliatePrefix" value="AFF" class="soft-input w-full px-4 py-3 font-mono font-bold text-center uppercase tracking-widest">
                 </div>
               </div>
             </div>
           </div>
         </div>
-
       </form>
     </div>
   </div>
 
-  <div class="fixed bottom-0 left-0 md:left-72 right-0 bg-slate-900/90 backdrop-blur-xl border-t border-slate-800 p-4 z-40 shadow-[0_-10px_30px_rgba(0,0,0,0.5)] flex justify-end gap-3 transition-transform">
+  <!-- Sticky Bottom Bar -->
+  <div class="fixed bottom-0 left-0 md:left-72 right-0 sticky-bottom-bar p-4 z-40 shadow-[0_-10px_30px_rgba(0,0,0,0.5)] flex justify-end gap-3 transition-transform">
     <button type="button" id="resetBtn" class="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition flex items-center gap-2 text-sm border border-slate-700 w-full sm:w-auto justify-center">
-      <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Restaurar Servidor
+      <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+      Restaurar Servidor
     </button>
     <button type="button" id="saveConfigBtn" class="px-8 py-3 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-bold transition flex items-center gap-2 shadow-lg shadow-brand-500/20 w-full sm:w-auto justify-center">
-      <i data-lucide="save" class="w-5 h-5"></i> Guardar Alterações
+      <i data-lucide="save" class="w-5 h-5"></i>
+      Guardar Alterações
     </button>
   </div>
 
+  <!-- JavaScript -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+    // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
       authDomain: "paygo-14311.firebaseapp.com",
@@ -302,198 +472,404 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app, "paygodb");
-    
-    // Defaults do Sistema se a BD estiver vazia
+
+    // Default Settings
     const DEFAULT_SETTINGS = {
       exchangeRate: 88.00,
       adminEmails: 'admin@paygo.co.mz',
       whatsappNumber: '258877522255',
-      tax1: 150, tax2: 250, tax3: 600, taxPercent: 7,
+      tax1: 150,
+      tax2: 250,
+      tax3: 600,
+      taxPercent: 7,
       firstPurchaseFree: true,
-      resendApiKey: '', senderEmail: 'noreply@paygo.co.mz', senderName: 'PayGo Moçambique',
+      resendApiKey: '',
+      senderEmail: 'noreply@paygo.co.mz',
+      senderName: 'PayGo Moçambique',
       larkWebhook: '',
-      affiliateCommission: 3, affiliatePrefix: 'AFF'
+      affiliateCommission: 3,
+      affiliatePrefix: 'AFF',
+      updatedAt: serverTimestamp()
     };
 
+    // State
+    const state = {
+      loadedSettings: { ...DEFAULT_SETTINGS },
+      currentSettings: { ...DEFAULT_SETTINGS },
+      hasLoadedFromDb: false,
+      currentAdminId: null,
+      currentAdminRole: null,
+      isSaving: false
+    };
+
+    // Element References
+    const els = {
+      sysLoader: document.getElementById('sysLoader'),
+      adminName: document.getElementById('adminName'),
+      adminRoleLabel: document.getElementById('adminRoleLabel'),
+      mobileMenuBtn: document.getElementById('mobileMenuBtn'),
+      sidebar: document.getElementById('sidebar'),
+      sidebarOverlay: document.getElementById('sidebarOverlay'),
+      closeSidebarBtn: document.getElementById('closeSidebarBtn'),
+      saveConfigBtn: document.getElementById('saveConfigBtn'),
+      resetBtn: document.getElementById('resetBtn'),
+      toastContainer: document.getElementById('toastContainer'),
+      settingsStatusPill: document.getElementById('settingsStatusPill'),
+      docStateBadge: document.getElementById('docStateBadge'),
+      resendStateBadge: document.getElementById('resendStateBadge'),
+      larkStateBadge: document.getElementById('larkStateBadge'),
+      affiliateStateBadge: document.getElementById('affiliateStateBadge'),
+      logoutBtn: document.getElementById('logoutBtn'),
+      prefillBtn: document.getElementById('prefillBtn'),
+      clearSensitiveBtn: document.getElementById('clearSensitiveBtn'),
+      testConfigBtn: document.getElementById('testConfigBtn'),
+      copySummaryBtn: document.getElementById('copySummaryBtn'),
+      exchangeRate: document.getElementById('exchangeRate'),
+      adminEmails: document.getElementById('adminEmails'),
+      whatsappNumber: document.getElementById('whatsappNumber'),
+      tax1: document.getElementById('tax1'),
+      tax2: document.getElementById('tax2'),
+      tax3: document.getElementById('tax3'),
+      taxPercent: document.getElementById('taxPercent'),
+      firstPurchaseFree: document.getElementById('firstPurchaseFree'),
+      resendApiKey: document.getElementById('resendApiKey'),
+      senderEmail: document.getElementById('senderEmail'),
+      senderName: document.getElementById('senderName'),
+      larkWebhook: document.getElementById('larkWebhook'),
+      affiliateCommission: document.getElementById('affiliateCommission'),
+      affiliatePrefix: document.getElementById('affiliatePrefix'),
+      previewTax10: document.getElementById('previewTax10'),
+      previewTax120: document.getElementById('previewTax120')
+    };
+
+    // Initialize
     lucide.createIcons();
+    const fallbackTimer = setTimeout(() => { if (els.sysLoader) els.sysLoader.style.display = 'none'; }, 5000);
+    init();
 
-    // Utilitários UI
-    window.togglePwd = function(id) {
-        const input = document.getElementById(id);
-        const icon = document.getElementById(`icon-${id}`);
-        if (input.type === 'password') { input.type = 'text'; icon.setAttribute('data-lucide', 'eye-off'); } 
-        else { input.type = 'password'; icon.setAttribute('data-lucide', 'eye'); }
-        lucide.createIcons();
-    };
+    function init() {
+      bindEvents();
+      authGuard();
+      refreshPreview();
+      updateStatusBadges(DEFAULT_SETTINGS, false);
+    }
 
-    // Navegação Mobile
-    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-    const sidebar = document.getElementById('sidebar');
-    const sidebarOverlay = document.getElementById('sidebarOverlay');
-    const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+    function bindEvents() {
+      els.mobileMenuBtn?.addEventListener('click', toggleSidebar);
+      els.closeSidebarBtn?.addEventListener('click', toggleSidebar);
+      els.sidebarOverlay?.addEventListener('click', toggleSidebar);
+      els.saveConfigBtn?.addEventListener('click', handleSaveSettings);
+      els.resetBtn?.addEventListener('click', handleResetSettings);
+      els.logoutBtn?.addEventListener('click', logout);
+      els.prefillBtn?.addEventListener('click', prefillRecommendedSettings);
+      els.clearSensitiveBtn?.addEventListener('click', clearSensitiveFields);
+      els.testConfigBtn?.addEventListener('click', testCurrentConfiguration);
+      els.copySummaryBtn?.addEventListener('click', copyConfigurationSummary);
+      document.querySelectorAll('[data-toggle-password]').forEach((btn) => {
+        btn.addEventListener('click', () => togglePwd(btn.dataset.togglePassword));
+      });
+      [els.exchangeRate, els.adminEmails, els.whatsappNumber, els.tax1, els.tax2, els.tax3, els.taxPercent, els.firstPurchaseFree, els.resendApiKey, els.senderEmail, els.senderName, els.larkWebhook, els.affiliateCommission, els.affiliatePrefix].forEach((el) => {
+        if (!el) return;
+        const eventName = el.type === 'checkbox' ? 'change' : 'input';
+        el.addEventListener(eventName, () => { refreshPreview(); updateDerivedStatuses(); });
+      });
+    }
 
     function toggleSidebar() {
-      sidebar.classList.toggle('-translate-x-full');
-      if(sidebarOverlay.classList.contains('hidden')) {
-        sidebarOverlay.classList.remove('hidden');
-        setTimeout(() => sidebarOverlay.classList.remove('opacity-0'), 10);
+      els.sidebar.classList.toggle('-translate-x-full');
+      if (els.sidebarOverlay.classList.contains('hidden')) {
+        els.sidebarOverlay.classList.remove('hidden');
+        setTimeout(() => els.sidebarOverlay.classList.remove('opacity-0'), 10);
+        document.body.style.overflow = 'hidden';
       } else {
-        sidebarOverlay.classList.add('opacity-0');
-        setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
+        els.sidebarOverlay.classList.add('opacity-0');
+        setTimeout(() => els.sidebarOverlay.classList.add('hidden'), 300);
+        document.body.style.overflow = '';
       }
     }
-    mobileMenuBtn?.addEventListener('click', toggleSidebar);
-    closeSidebarBtn?.addEventListener('click', toggleSidebar);
-    sidebarOverlay?.addEventListener('click', toggleSidebar);
 
-    // Sistema de Proteção Baseado em Sessão
-    const fallbackTimer = setTimeout(() => { 
-        const sysL = document.getElementById('sysLoader');
-        if(sysL) sysL.style.display = 'none'; 
-    }, 3000);
-
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) { window.location.href = '../login.html'; return; }
-      try {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists() && (userDoc.data().role === 'admin' || userDoc.data().role === 'superadmin')) {
-          
-          const adminNameEl = document.getElementById('adminName');
-          if (adminNameEl) {
-              adminNameEl.textContent = userDoc.data().name || 'Admin';
+    function authGuard() {
+      onAuthStateChanged(auth, async (user) => {
+        if (!user) { window.location.href = '../login.html'; return; }
+        try {
+          const userDoc = await getDoc(doc(db, "users", user.uid));
+          if (!userDoc.exists() || (userDoc.data().role !== 'admin' && userDoc.data().role !== 'superadmin')) {
+            showToast('Acesso restrito a administradores.', 'error');
+            setTimeout(() => { window.location.href = '../dashboard.html'; }, 1500);
+            return;
           }
-          
-          await loadSettingsFromDB();
-        } else {
-          window.location.href = '../index.html';
+          state.currentAdminId = user.uid;
+          state.currentAdminRole = userDoc.data().role;
+          if (els.adminName) els.adminName.textContent = userDoc.data().name || 'Admin';
+          if (els.adminRoleLabel) els.adminRoleLabel.textContent = userDoc.data().role === 'superadmin' ? 'Super Admin' : 'Admin';
+          await loadSettingsFromFirestore();
+        } catch (error) {
+          console.error('Erro na verificação:', error);
+          showToast('Erro ao carregar perfil.', 'error');
+        } finally {
+          clearTimeout(fallbackTimer);
+          if (els.sysLoader) {
+            els.sysLoader.style.opacity = '0';
+            setTimeout(() => els.sysLoader.style.display = 'none', 500);
+          }
         }
-      } catch (error) {
-        console.error("🔥 Erro de Base de Dados / Autenticação:", error);
-        showToast("Erro na ligação à BD. Verifique a consola.", "error");
-      } finally {
-        clearTimeout(fallbackTimer);
-        const sysLoader = document.getElementById('sysLoader');
-        if (sysLoader) {
-            sysLoader.style.opacity = '0';
-            setTimeout(() => sysLoader.style.display = 'none', 500);
-        }
-      }
-    });
+      });
+    }
 
-    // ==========================================
-    // LÓGICA DE DADOS (CARREGAR E GRAVAR)
-    // ==========================================
-    async function loadSettingsFromDB() {
+    async function loadSettingsFromFirestore() {
       try {
-        const settingsRef = doc(db, "settings", "global");
-        const settingsSnap = await getDoc(settingsRef);
-        let settings = DEFAULT_SETTINGS;
-        
-        if (settingsSnap.exists()) {
-          settings = { ...DEFAULT_SETTINGS, ...settingsSnap.data() };
+        const docSnap = await getDoc(doc(db, "settings", "global"));
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          state.loadedSettings = { ...DEFAULT_SETTINGS, ...data };
+          state.currentSettings = { ...state.loadedSettings };
+          populateForm(state.loadedSettings);
+          updateStatusBadges(state.loadedSettings, true);
+          state.hasLoadedFromDb = true;
+          showToast('Configurações carregadas da base de dados.', 'success');
+        } else {
+          await setDoc(doc(db, "settings", "global"), DEFAULT_SETTINGS);
+          state.loadedSettings = { ...DEFAULT_SETTINGS };
+          state.currentSettings = { ...DEFAULT_SETTINGS };
+          populateForm(DEFAULT_SETTINGS);
+          updateStatusBadges(DEFAULT_SETTINGS, true);
+          state.hasLoadedFromDb = true;
+          showToast('Documento de configurações criado com valores padrão.', 'info');
         }
-        populateForm(settings);
       } catch (error) {
-        console.error("Erro a carregar configurações:", error);
+        console.error('Erro ao carregar configurações:', error);
+        showToast('Não foi possível carregar as configurações. Usando valores padrão.', 'warning');
         populateForm(DEFAULT_SETTINGS);
-        showToast('Ligação instável. A mostrar valores padrão.', 'warning');
+        updateStatusBadges(DEFAULT_SETTINGS, false);
       }
     }
 
-    // Injeção de dados segura (Não falha se um input for alterado no HTML)
     function populateForm(settings) {
-      const getEl = (id) => document.getElementById(id);
-      
-      if(getEl('exchangeRate')) getEl('exchangeRate').value = settings.exchangeRate;
-      if(getEl('adminEmails')) getEl('adminEmails').value = settings.adminEmails || '';
-      if(getEl('whatsappNumber')) getEl('whatsappNumber').value = settings.whatsappNumber || '';
-      if(getEl('tax1')) getEl('tax1').value = settings.tax1;
-      if(getEl('tax2')) getEl('tax2').value = settings.tax2;
-      if(getEl('tax3')) getEl('tax3').value = settings.tax3;
-      if(getEl('taxPercent')) getEl('taxPercent').value = settings.taxPercent;
-      if(getEl('firstPurchaseFree')) getEl('firstPurchaseFree').checked = settings.firstPurchaseFree;
-      if(getEl('resendApiKey')) getEl('resendApiKey').value = settings.resendApiKey || '';
-      if(getEl('senderEmail')) getEl('senderEmail').value = settings.senderEmail || '';
-      if(getEl('senderName')) getEl('senderName').value = settings.senderName || '';
-      if(getEl('larkWebhook')) getEl('larkWebhook').value = settings.larkWebhook || '';
-      if(getEl('affiliateCommission')) getEl('affiliateCommission').value = settings.affiliateCommission;
-      if(getEl('affiliatePrefix')) getEl('affiliatePrefix').value = settings.affiliatePrefix || 'AFF';
+      if (els.exchangeRate) els.exchangeRate.value = settings.exchangeRate ?? 88.00;
+      if (els.adminEmails) els.adminEmails.value = settings.adminEmails ?? '';
+      if (els.whatsappNumber) els.whatsappNumber.value = settings.whatsappNumber ?? '';
+      if (els.tax1) els.tax1.value = settings.tax1 ?? 150;
+      if (els.tax2) els.tax2.value = settings.tax2 ?? 250;
+      if (els.tax3) els.tax3.value = settings.tax3 ?? 600;
+      if (els.taxPercent) els.taxPercent.value = settings.taxPercent ?? 7;
+      if (els.firstPurchaseFree) els.firstPurchaseFree.checked = settings.firstPurchaseFree ?? true;
+      if (els.resendApiKey) els.resendApiKey.value = settings.resendApiKey ?? '';
+      if (els.senderEmail) els.senderEmail.value = settings.senderEmail ?? 'noreply@paygo.co.mz';
+      if (els.senderName) els.senderName.value = settings.senderName ?? 'PayGo Moçambique';
+      if (els.larkWebhook) els.larkWebhook.value = settings.larkWebhook ?? '';
+      if (els.affiliateCommission) els.affiliateCommission.value = settings.affiliateCommission ?? 3;
+      if (els.affiliatePrefix) els.affiliatePrefix.value = settings.affiliatePrefix ?? 'AFF';
+      refreshPreview();
     }
 
-    // Mudança de Type "submit" num Formulario para EventListener direto no Botão para evitar Reload da Página
-    document.getElementById('saveConfigBtn').addEventListener('click', async (e) => {
-      e.preventDefault();
-      const btn = document.getElementById('saveConfigBtn');
-      const originalHTML = btn.innerHTML;
-      
+    function collectFormValues() {
+      return {
+        exchangeRate: parseFloat(els.exchangeRate?.value) || 88.00,
+        adminEmails: els.adminEmails?.value.trim() || '',
+        whatsappNumber: els.whatsappNumber?.value.trim() || '',
+        tax1: parseInt(els.tax1?.value) || 150,
+        tax2: parseInt(els.tax2?.value) || 250,
+        tax3: parseInt(els.tax3?.value) || 600,
+        taxPercent: parseFloat(els.taxPercent?.value) || 7,
+        firstPurchaseFree: els.firstPurchaseFree?.checked ?? true,
+        resendApiKey: els.resendApiKey?.value.trim() || '',
+        senderEmail: els.senderEmail?.value.trim() || 'noreply@paygo.co.mz',
+        senderName: els.senderName?.value.trim() || 'PayGo Moçambique',
+        larkWebhook: els.larkWebhook?.value.trim() || '',
+        affiliateCommission: parseFloat(els.affiliateCommission?.value) || 3,
+        affiliatePrefix: (els.affiliatePrefix?.value.trim() || 'AFF').toUpperCase(),
+        updatedAt: serverTimestamp(),
+        updatedBy: state.currentAdminId
+      };
+    }
+
+    async function handleSaveSettings(e) {
+      e?.preventDefault();
+      if (state.isSaving) return;
+      state.isSaving = true;
+      const btn = els.saveConfigBtn;
+      const originalHtml = btn.innerHTML;
       btn.disabled = true;
-      btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A injetar na BD...`;
-      lucide.createIcons({root: btn});
-      
-      const getEl = (id) => document.getElementById(id);
-
+      btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A guardar...`;
+      lucide.createIcons({ root: btn });
       try {
-        const settings = {
-          exchangeRate: parseFloat(getEl('exchangeRate').value) || DEFAULT_SETTINGS.exchangeRate,
-          adminEmails: getEl('adminEmails').value.trim(),
-          whatsappNumber: getEl('whatsappNumber').value.trim(),
-          tax1: parseInt(getEl('tax1').value) || DEFAULT_SETTINGS.tax1,
-          tax2: parseInt(getEl('tax2').value) || DEFAULT_SETTINGS.tax2,
-          tax3: parseInt(getEl('tax3').value) || DEFAULT_SETTINGS.tax3,
-          taxPercent: parseFloat(getEl('taxPercent').value) || DEFAULT_SETTINGS.taxPercent,
-          firstPurchaseFree: getEl('firstPurchaseFree').checked,
-          resendApiKey: getEl('resendApiKey').value.trim(),
-          senderEmail: getEl('senderEmail').value.trim(),
-          senderName: getEl('senderName').value.trim(),
-          larkWebhook: getEl('larkWebhook').value.trim(),
-          affiliateCommission: parseFloat(getEl('affiliateCommission').value) || DEFAULT_SETTINGS.affiliateCommission,
-          affiliatePrefix: getEl('affiliatePrefix').value.trim().toUpperCase(),
-          updatedAt: serverTimestamp(),
-          updatedBy: auth.currentUser?.uid
-        };
-        
-        // Escrever (com merge automático e criação caso não exista)
-        await setDoc(doc(db, "settings", "global"), settings, { merge: true });
-        
-        showToast('Sistema atualizado! Novas regras ativas globalmente.', 'success');
-        
+        const newSettings = collectFormValues();
+        await setDoc(doc(db, "settings", "global"), newSettings, { merge: true });
+        state.loadedSettings = { ...newSettings };
+        state.currentSettings = { ...newSettings };
+        updateStatusBadges(newSettings, true);
+        showToast('✅ Configurações guardadas com sucesso!', 'success', 5000);
       } catch (error) {
-        console.error("Erro a guardar configurações:", error);
-        if (error.message.includes("Missing or insufficient permissions")) {
-            showToast('Erro: Não tem permissão para editar configurações.', 'error');
-        } else {
-            showToast('Falha na injeção de dados. Verifique a consola.', 'error');
-        }
+        console.error('Erro ao guardar:', error);
+        showToast('❌ Erro ao guardar configurações. Tente novamente.', 'error');
       } finally {
+        state.isSaving = false;
         btn.disabled = false;
-        btn.innerHTML = originalHTML;
-        lucide.createIcons({root: btn});
+        btn.innerHTML = originalHtml;
+        lucide.createIcons({ root: btn });
       }
-    });
-
-    document.getElementById('resetBtn').addEventListener('click', () => {
-      if (confirm('Atenção: Deseja descartar todas as alterações não guardadas e repor os valores do servidor?')) {
-        loadSettingsFromDB();
-        showToast('Painel restaurado com os valores do servidor.', 'info');
-      }
-    });
-
-    // Helpers
-    window.logout = async function() { 
-      if(confirm('Encerrar gestão do sistema?')) {
-        await signOut(auth); window.location.href = '../login.html'; 
-      }
-    };
-    
-    function showToast(msg, type = 'success') {
-      const container = document.getElementById('toastContainer');
-      const t = document.createElement('div');
-      t.className = `toast border-l-4 ${type==='error'?'border-danger-500':(type==='warning'?'border-yellow-500':'border-brand-500')}`;
-      t.innerHTML = `<span class="text-sm font-bold text-white">${msg}</span>`;
-      container.appendChild(t);
-      requestAnimationFrame(() => t.classList.add('show'));
-      setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 5000);
     }
+
+    function handleResetSettings() {
+      if (!confirm('⚠️ Restaurar para valores padrão do servidor?\n\nIsto irá sobrescrever todas as alterações não guardadas.')) return;
+      populateForm(state.loadedSettings);
+      refreshPreview();
+      showToast('Valores restaurados para a última versão guardada.', 'info');
+    }
+
+    async function logout() {
+      if (!confirm('Terminar sessão?')) return;
+      try {
+        await signOut(auth);
+        showToast('Sessão terminada com sucesso.', 'success');
+        setTimeout(() => { window.location.href = '../login.html'; }, 1000);
+      } catch (error) {
+        console.error('Erro no logout:', error);
+        showToast('Erro ao terminar sessão.', 'error');
+      }
+    }
+
+    function showToast(message, type = 'success', duration = 4000) {
+      if (!els.toastContainer) return;
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.setAttribute('role', 'alert');
+      toast.setAttribute('aria-live', 'assertive');
+      const icons = { success: 'check-circle', error: 'alert-circle', warning: 'alert-triangle', info: 'info' };
+      toast.innerHTML = `<i data-lucide="${icons[type] || icons.success}" class="w-5 h-5 flex-shrink-0"></i><span class="text-sm font-bold text-white">${message}</span>`;
+      els.toastContainer.appendChild(toast);
+      if (typeof lucide !== 'undefined') { try { lucide.createIcons({ root: toast }); } catch(e) {} }
+      requestAnimationFrame(() => toast.classList.add('show'));
+      setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, duration);
+    }
+
+    function refreshPreview() {
+      const tax1 = parseInt(els.tax1?.value) || 150;
+      const taxPercent = parseFloat(els.taxPercent?.value) || 7;
+      if (els.previewTax10) els.previewTax10.textContent = `${tax1} MT`;
+      if (els.previewTax120) {
+        const rate = parseFloat(els.exchangeRate?.value) || 88;
+        const calc = (120 * rate) * (taxPercent / 100);
+        els.previewTax120.textContent = `${calc.toLocaleString('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MT`;
+      }
+    }
+
+    function updateStatusBadges(settings, loaded) {
+      if (els.docStateBadge) els.docStateBadge.textContent = loaded ? 'Carregado' : 'Padrão';
+      if (els.docStateBadge) els.docStateBadge.className = `status-pill ${loaded ? 'ok' : 'warn'}`;
+      if (els.resendStateBadge) {
+        const hasKey = settings?.resendApiKey?.length > 10;
+        const hasEmail = settings?.senderEmail?.includes('@');
+        els.resendStateBadge.textContent = (hasKey && hasEmail) ? 'Configurado' : 'Em falta';
+        els.resendStateBadge.className = `status-pill ${hasKey && hasEmail ? 'ok' : 'off'}`;
+      }
+      if (els.larkStateBadge) {
+        const hasUrl = settings?.larkWebhook?.startsWith('https://');
+        els.larkStateBadge.textContent = hasUrl ? 'Ativo' : 'Em falta';
+        els.larkStateBadge.className = `status-pill ${hasUrl ? 'ok' : 'off'}`;
+      }
+      if (els.affiliateStateBadge) {
+        const hasCommission = settings?.affiliateCommission > 0;
+        const hasPrefix = settings?.affiliatePrefix?.length >= 3;
+        els.affiliateStateBadge.textContent = (hasCommission && hasPrefix) ? 'Ativo' : 'Incompleto';
+        els.affiliateStateBadge.className = `status-pill ${hasCommission && hasPrefix ? 'ok' : 'warn'}`;
+      }
+      if (els.settingsStatusPill) {
+        const allOk = els.resendStateBadge?.classList.contains('ok') && els.larkStateBadge?.classList.contains('ok');
+        els.settingsStatusPill.textContent = allOk ? 'Pronto' : 'A validar';
+        els.settingsStatusPill.className = `status-pill ${allOk ? 'ok' : 'warn'}`;
+      }
+    }
+
+    function updateDerivedStatuses() {
+      const settings = collectFormValues();
+      updateStatusBadges(settings, state.hasLoadedFromDb);
+    }
+
+    function prefillRecommendedSettings() {
+      if (!confirm('Aplicar valores recomendados para Moçambique?\n\nIsto irá substituir os valores atuais não guardados.')) return;
+      const recommended = {
+        exchangeRate: 88.00,
+        adminEmails: 'admin@paygo.co.mz, suporte@paygo.co.mz',
+        whatsappNumber: '258837522255',
+        tax1: 150, tax2: 250, tax3: 600, taxPercent: 7,
+        firstPurchaseFree: true,
+        senderEmail: 'noreply@paygo.co.mz',
+        senderName: 'PayGo Moçambique',
+        affiliateCommission: 3,
+        affiliatePrefix: 'AFF'
+      };
+      populateForm(recommended);
+      showToast('Valores recomendados aplicados. Clique em "Guardar" para persistir.', 'info');
+    }
+
+    function clearSensitiveFields() {
+      if (!confirm('Limpar chaves de API e webhooks sensíveis?\n\nEsta ação não pode ser desfeita sem recarregar.')) return;
+      if (els.resendApiKey) els.resendApiKey.value = '';
+      if (els.larkWebhook) els.larkWebhook.value = '';
+      showToast('Chaves sensíveis limpas da interface.', 'warning');
+      updateDerivedStatuses();
+    }
+
+    function testCurrentConfiguration() {
+      const settings = collectFormValues();
+      let report = '🔍 Relatório de Configuração\n\n';
+      report += `✅ Câmbio: ${settings.exchangeRate} MT/USD\n`;
+      report += `✅ Taxas: $≤20=${settings.tax1}MT | $21-50=${settings.tax2}MT | $51-100=${settings.tax3}MT | >$100=${settings.taxPercent}%\n`;
+      report += `✅ Promoção 1ª compra: ${settings.firstPurchaseFree ? 'Ativa' : 'Inativa'}\n`;
+      report += `📧 Resend: ${settings.resendApiKey ? '✅ Configurado' : '❌ Em falta'}\n`;
+      report += `🔔 Lark: ${settings.larkWebhook ? '✅ Configurado' : '❌ Em falta'}\n`;
+      report += `🤝 Afiliados: ${settings.affiliatePrefix}-${settings.affiliateCommission}%\n`;
+      report += `\n📋 Emails: ${settings.adminEmails || 'Nenhum'}`;
+      navigator.clipboard.writeText(report).then(() => {
+        showToast('Relatório copiado para a área de transferência!', 'success');
+      }).catch(() => {
+        alert(report);
+      });
+    }
+
+    function copyConfigurationSummary() {
+      const settings = collectFormValues();
+      const summary = {
+        exchangeRate: settings.exchangeRate,
+        fees: { tier1: settings.tax1, tier2: settings.tax2, tier3: settings.tax3, percent: settings.taxPercent },
+        promo: { firstPurchaseFree: settings.firstPurchaseFree },
+        integrations: { resend: !!settings.resendApiKey, lark: !!settings.larkWebhook },
+        affiliates: { prefix: settings.affiliatePrefix, commission: settings.affiliateCommission }
+      };
+      navigator.clipboard.writeText(JSON.stringify(summary, null, 2)).then(() => {
+        showToast('Resumo JSON copiado!', 'success');
+      }).catch(() => {
+        showToast('Erro ao copiar. Verifique permissões.', 'error');
+      });
+    }
+
+    function togglePwd(inputId) {
+      const input = document.getElementById(inputId);
+      const icon = document.getElementById(`icon-${inputId}`);
+      if (!input || !icon) return;
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.setAttribute('data-lucide', 'eye-off');
+      } else {
+        input.type = 'password';
+        icon.setAttribute('data-lucide', 'eye');
+      }
+      lucide.createIcons();
+    }
+
+    // Expose for debugging
+    window.PayGoSettings = {
+      state: () => ({ ...state }),
+      collectFormValues,
+      showToast,
+      refreshPreview
+    };
+
+    // Cleanup
+    window.addEventListener('beforeunload', () => {
+      // Any cleanup if needed
+    });
   </script>
 </body>
 </html>
