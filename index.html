@@ -880,7 +880,6 @@ const FIREBASE_CONFIG = {
 
 const WHATSAPP_NUMBER = '258837522255'; 
 
-// 🚀 IMPORTAÇÕES COMPLETAS E CORRIGIDAS (INCLUI LIMIT)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc, query, where, getDocs, updateDoc, increment, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -899,14 +898,12 @@ let isFirstPurchaseEligible = false;
 let firstPurchaseFree = true;
 let isUserVip = false;
 
-// 🛡️ Prevenção Anti-Spam (Debounce) e Global
 let calcTimeout;
 let isPaymentProcessing = false;
 
-// 🛡️ SANITIZAÇÃO GLOBAL (CORRIGE O ERRO: escapeHTML is not defined)
 window.escapeHTML = (str) => {
     if (!str) return '';
-    return String(str).replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+    return String(str).replace(/[&<>'"]/g, tag => ({ '&': '&', '<': '<', '>': '>', "'": '&#39;', '"': '&quot;' }[tag] || tag));
 };
 
 const sanitizeInput = (str) => {
@@ -914,7 +911,6 @@ const sanitizeInput = (str) => {
     return str.replace(/[<>]/g, '').trim(); 
 };
 
-// 📢 TOASTS GLOBALIZADOS (CORRIGIDO PARA USAR WINDOW.ESCAPEHTML)
 window.showToast = function(message, type = 'default', duration = 4000) {
   const container = document.getElementById('toast-container');
   if (!container) return;
@@ -936,13 +932,20 @@ window.showToast = function(message, type = 'default', duration = 4000) {
 };
 
 // ========================================================================
-// 💰 FETCH DYNAMIC EXCHANGE RATE FROM FIREBASE
+// 💰 FETCH DYNAMIC EXCHANGE RATE & MAINTENANCE FROM FIREBASE
 // ========================================================================
 async function fetchSystemSettings() {
     try {
         const snap = await getDoc(doc(db, "settings", "global"));
         if (snap.exists()) {
             const data = snap.data();
+            
+            // 🛑 TRANCA DE MANUTENÇÃO GLOBAL 🛑
+            if (data.isMaintenanceMode === true) {
+                window.location.href = "manutencao.html";
+                return; // Impede o resto da página de carregar
+            }
+
             BINANCE_RATE = parseFloat(data.exchangeRate) || 85.00;
             sysTax1 = parseFloat(data.tax1) || 150;
             sysTax2 = parseFloat(data.tax2) || 250;
@@ -1018,9 +1021,6 @@ window.addToCart = function() {
     }
 };
 
-// ========================================================================
-// 💳 PAGAMENTO DIRETO (CARTEIRA) 🛡️
-// ========================================================================
 window.processDirectPayment = async function() {
     if (isPaymentProcessing) return;
 
@@ -1128,9 +1128,6 @@ window.processDirectPayment = async function() {
     }
 };
 
-// ========================================================================
-// 🚀 ENVIAR PEDIDO VIA WHATSAPP (COM DEDUÇÃO FORÇADA)
-// ========================================================================
 document.getElementById('paygoForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     if (isPaymentProcessing) return;
@@ -1253,9 +1250,6 @@ document.getElementById('paygoForm').addEventListener('submit', async function(e
     }
 });
 
-// ========================================================================
-// 🔐 AUTENTICAÇÃO E CONTROLO DE HEADER (CORRIGIDO LIMIT)
-// ========================================================================
 function formatMZN(val) { return new Intl.NumberFormat('pt-MZ', { minimumFractionDigits: 2 }).format(val || 0); }
 
 onAuthStateChanged(auth, async (user) => {
@@ -1336,9 +1330,6 @@ window.logoutFromHeader = async function() {
     }
 };
 
-// ========================================================================
-// 🔔 RASTREIO E UX UTILS
-// ========================================================================
 window.openTrackingModal = function() {
     document.getElementById('trackingModal').classList.add('active');
     if(document.getElementById('trackResult')) document.getElementById('trackResult').classList.add('hidden');
@@ -1447,9 +1438,7 @@ window.toggleServiceType = function(type) {
     document.getElementById('userLink').placeholder = isCompra ? "https://pt.aliexpress.com/item..." : "Ex: UID do FreeFire...";
 };
 
-window.updatePaymentMethod = function() {
-    // Agora o Método é sempre Wallet, sem necessidade de atualizar outras UI
-};
+window.updatePaymentMethod = function() {};
 
 window.calculate = function() {
     clearTimeout(calcTimeout);
