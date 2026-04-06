@@ -637,21 +637,29 @@
             setTimeout(() => { t.classList.add('opacity-0', 'translate-x-8'); setTimeout(() => t.remove(), 400); }, 4000);
         }
 
-        // =====================================
-        // CARREGAR DADOS EM TEMPO REAL (SESSÃO + OUVINTE DO SALDO)
-        // =====================================
-        onAuthStateChanged(auth, async (user) => {
-            if (!user) { window.location.href = 'login.html'; return; }
-            currentUser = user;
-
-            try {
-                // Settings do Câmbio (Carrega 1 vez)
-                const sysDoc = await getDoc(doc(db, "settings", "global"));
-                if (sysDoc.exists()) {
-                    const sysData = sysDoc.data();
-                    sysExchangeRate = parseFloat(sysData.exchangeRate) || 85;
-                    sysTax1 = parseFloat(sysData.tax1) || 150; sysTax2 = parseFloat(sysData.tax2) || 250; sysTax3 = parseFloat(sysData.tax3) || 600;
-                    firstPurchaseFree = sysData.firstPurchaseFree !== false;
+            // =====================================
+            // CARREGAR DADOS EM TEMPO REAL (SESSÃO + OUVINTE DO SALDO)
+            // =====================================
+            onAuthStateChanged(auth, async (user) => {
+                if (!user) { window.location.href = 'login.html'; return; }
+                currentUser = user;
+            
+                try {
+                    // Settings do Câmbio (Carrega 1 vez)
+                    const sysDoc = await getDoc(doc(db, "settings", "global"));
+                    
+                    // 🛑 A TRANCA DE MANUTENÇÃO ENTRA AQUI 🛑
+                    if (sysDoc.exists() && sysDoc.data().isMaintenanceMode === true) {
+                        window.location.href = "manutencao.html";
+                        return; // Impede o resto do código de correr e os dados de carregarem
+                    }
+            
+                    // Se passar a tranca (não estiver em manutenção), continua a carregar normal:
+                    if (sysDoc.exists()) {
+                        const sysData = sysDoc.data();
+                        sysExchangeRate = parseFloat(sysData.exchangeRate) || 85;
+                        sysTax1 = parseFloat(sysData.tax1) || 150; sysTax2 = parseFloat(sysData.tax2) || 250; sysTax3 = parseFloat(sysData.tax3) || 600;
+                                firstPurchaseFree = sysData.firstPurchaseFree !== false;
                 }
                 
                 setSafeText('currentRate', `${sysExchangeRate} MT`); setSafeText('calcRate', sysExchangeRate);
