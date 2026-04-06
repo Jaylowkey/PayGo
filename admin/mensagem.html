@@ -8,21 +8,29 @@
     <meta name="theme-color" content="#0f172a">
     <meta name="robots" content="noindex, nofollow">
     
+    <!-- 🔐 Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://unpkg.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://storage.googleapis.com https://paygo.co.mz; img-src 'self' data: https: blob:; media-src 'self' https://assets.mixkit.co;">
+    
     <!-- PWA -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="/icons/icon-192.png">
     <link rel="manifest" href="/manifest.json">
     
-    <!-- ✅ URLs 100% LIMPAS - SEM ESPAÇOS -->
+    <!-- Preconnect para performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://www.gstatic.com">
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     
+    <!-- Tailwind Config -->
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     fontFamily: { 
@@ -31,34 +39,58 @@
                         mono: ['"Fira Code"', 'monospace'] 
                     },
                     colors: { 
-                        brand: { 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8' }, 
-                        success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' }, 
-                        warning: { 400: '#fbbf24', 500: '#f59e0b' }, 
-                        danger: { 400: '#f87171', 500: '#ef4444' } 
+                        brand: { 50: '#eff6ff', 100: '#dbeafe', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 900: '#1e3a8a' }, 
+                        success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a', 900: '#14532d' }, 
+                        warning: { 400: '#fbbf24', 500: '#f59e0b', 600: '#d97706', 900: '#78350f' }, 
+                        danger: { 400: '#f87171', 500: '#ef4444', 600: '#dc2626', 900: '#7f1d1d' },
+                        slate: { 850: '#151e32', 900: '#0f172a', 950: '#020617' }
                     },
                     animation: {
                         'fade-in': 'fadeIn 0.3s ease-out',
                         'slide-up': 'slideUp 0.4s ease-out',
-                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'typing': 'typingBounce 1.4s infinite ease-in-out'
                     },
                     keyframes: {
                         fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
-                        slideUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } }
-                    }
+                        slideUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+                        typingBounce: {
+                            '0%, 80%, 100%': { transform: 'scale(0.8)', opacity: '0.5' },
+                            '40%': { transform: 'scale(1.2)', opacity: '1' }
+                        }
+                    },
+                    backdropBlur: { xs: '2px' }
                 }
             }
         };
     </script>
     
     <style>
-        /* Base */
-        body { background-color: #0f172a; color: #f8fafc; overflow: hidden; }
-        ::-webkit-scrollbar { width: 6px; }
+        /* ===== BASE & RESET ===== */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+        body { 
+            background-color: #0f172a; 
+            color: #f8fafc; 
+            font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overflow: hidden;
+            line-height: 1.5;
+        }
+        
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; transition: background 0.2s; }
+        ::-webkit-scrollbar-thumb { 
+            background: #334155; 
+            border-radius: 10px;
+            border: 2px solid transparent;
+            background-clip: content-box;
+        }
         ::-webkit-scrollbar-thumb:hover { background: #475569; }
         
-        /* Background Effects */
+        /* ===== BACKGROUND ===== */
         .bg-grid { 
             background-size: 40px 40px; 
             background-image: 
@@ -66,7 +98,7 @@
                 linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); 
         }
         
-        /* Glass Effects */
+        /* ===== GLASSMORPHISM ===== */
         .glass-nav { 
             background: rgba(15, 23, 42, 0.85); 
             backdrop-filter: blur(16px) saturate(180%); 
@@ -77,9 +109,14 @@
             backdrop-filter: blur(12px); 
             border: 1px solid rgba(255, 255, 255, 0.05); 
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .glass-card:hover {
+            border-color: rgba(59, 130, 246, 0.3);
+            box-shadow: 0 8px 32px rgba(37, 99, 235, 0.15);
         }
         
-        /* Chat Scroll */
+        /* ===== CHAT SCROLL ===== */
         .chat-scroll { 
             overflow-y: auto; 
             scroll-behavior: smooth; 
@@ -87,24 +124,38 @@
         .chat-scroll::-webkit-scrollbar { width: 4px; }
         .chat-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
         
-        /* Ticket Items */
+        /* ===== TICKET ITEMS ===== */
         .ticket-item { 
             transition: all 0.2s ease; 
             border-left: 3px solid transparent;
+            position: relative;
         }
-        .ticket-item:hover { background: rgba(59, 130, 246, 0.05); }
+        .ticket-item:hover { background: rgba(59, 130, 246, 0.05); transform: translateX(2px); }
         .ticket-item.active { 
             background: rgba(59, 130, 246, 0.15); 
             border-left-color: #3b82f6; 
         }
+        .ticket-item.unread::after {
+            content: '';
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 8px;
+            height: 8px;
+            background: #3b82f6;
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(59,130,246,0.8);
+        }
         
-        /* Message Bubbles */
+        /* ===== MESSAGE BUBBLES ===== */
         .msg-admin { 
             background: linear-gradient(135deg, #2563eb, #3b82f6); 
             color: white; 
             border-radius: 16px 16px 4px 16px; 
             align-self: flex-end; 
             box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+            max-width: 85%;
         }
         .msg-client { 
             background: #1e293b; 
@@ -112,42 +163,50 @@
             border-radius: 16px 16px 16px 4px; 
             align-self: flex-start; 
             border: 1px solid rgba(255,255,255,0.05);
+            max-width: 85%;
         }
+        .msg-meta {
+            font-size: 10px;
+            opacity: 0.7;
+            margin-top: 4px;
+            align-self: flex-end;
+        }
+        .msg-admin .msg-meta { color: #bfdbfe; }
+        .msg-client .msg-meta { color: #94a3b8; }
         
-        /* Typing Indicator */
+        /* ===== TYPING INDICATOR ===== */
         .typing-indicator {
             display: flex;
             align-items: center;
             gap: 4px;
-            padding: 8px 12px;
+            padding: 12px 16px;
             background: #1e293b;
             border-radius: 16px;
             width: fit-content;
+            border: 1px solid rgba(255,255,255,0.05);
         }
         .typing-dot {
             width: 6px;
             height: 6px;
             background: #94a3b8;
             border-radius: 50%;
-            animation: typingBounce 1.4s infinite ease-in-out;
+            animation: typing 1.4s infinite ease-in-out;
         }
         .typing-dot:nth-child(1) { animation-delay: -0.32s; }
         .typing-dot:nth-child(2) { animation-delay: -0.16s; }
-        @keyframes typingBounce {
-            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
-            40% { transform: scale(1.2); opacity: 1; }
-        }
+        .typing-dot:nth-child(3) { animation-delay: 0s; }
         
-        /* Toast Notifications */
+        /* ===== TOAST NOTIFICATIONS ===== */
         #toastContainer { 
             position: fixed; 
             top: 24px; 
             right: 24px; 
-            z-index: 9999; 
+            z-index: 99999; 
             display: flex; 
             flex-direction: column; 
-            gap: 10px; 
+            gap: 12px; 
             pointer-events: none; 
+            max-width: 400px;
         }
         .toast { 
             pointer-events: auto; 
@@ -157,28 +216,115 @@
             padding: 16px 20px; 
             border-radius: 12px; 
             display: flex; 
-            align-items: center; 
+            align-items: flex-start; 
             gap: 12px; 
-            transform: translateX(120%); 
+            transform: translateX(150%); 
             transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.3s ease; 
             opacity: 0; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            max-width: 350px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.05);
         }
         .toast.show { transform: translateX(0); opacity: 1; }
+        .toast.hiding { opacity: 0; transform: translateX(150%); }
         .toast.error { border-left-color: #ef4444; }
         .toast.success { border-left-color: #22c55e; }
         .toast.warning { border-left-color: #f59e0b; }
         .toast.info { border-left-color: #3b82f6; }
         
-        /* Accessibility */
+        /* ===== STATUS BADGES ===== */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border: 1px solid;
+        }
+        .status-badge.open { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.3); }
+        .status-badge.in_progress { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3); }
+        .status-badge.closed { background: rgba(34, 197, 94, 0.15); color: #4ade80; border-color: rgba(34, 197, 94, 0.3); }
+        
+        /* ===== TYPE BADGES ===== */
+        .type-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border: 1px solid;
+        }
+        .type-badge.refund { background: rgba(239, 68, 68, 0.15); color: #f87171; border-color: rgba(239, 68, 68, 0.3); }
+        .type-badge.vc_topup { background: rgba(34, 197, 94, 0.15); color: #4ade80; border-color: rgba(34, 197, 94, 0.3); }
+        .type-badge.support { background: rgba(100, 116, 139, 0.15); color: #94a3b8; border-color: rgba(100, 116, 139, 0.3); }
+        
+        /* ===== CONNECTION STATUS ===== */
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            background: rgba(34, 197, 94, 0.1);
+            color: #4ade80;
+        }
+        .connection-status.offline {
+            background: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+        }
+        .connection-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 2s infinite;
+        }
+        
+        /* ===== QUICK REPLIES ===== */
+        .quick-reply {
+            padding: 6px 12px;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 20px;
+            font-size: 12px;
+            color: #93c5fd;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        .quick-reply:hover {
+            background: rgba(59, 130, 246, 0.2);
+            color: #fff;
+            border-color: #3b82f6;
+        }
+        
+        /* ===== ACCESSIBILITY ===== */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
         :focus-visible {
             outline: 2px solid #3b82f6;
             outline-offset: 2px;
             border-radius: 4px;
         }
         
-        /* Reduced Motion */
+        /* ===== REDUCED MOTION ===== */
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after {
                 animation-duration: 0.01ms !important;
@@ -186,86 +332,213 @@
             }
         }
         
-        /* Mobile */
+        /* ===== MOBILE ===== */
         @media (max-width: 768px) {
             .glass-card { border-radius: 1rem; }
             .toast { max-width: calc(100vw - 48px); }
+            .msg-admin, .msg-client { max-width: 90%; }
         }
         
-        /* Button Micro-interactions */
+        /* ===== BUTTON MICRO-INTERACTIONS ===== */
         .btn-hover {
             transition: all 0.2s ease;
             cursor: pointer;
+            will-change: transform;
         }
-        .btn-hover:active { transform: scale(0.98); }
+        .btn-hover:active:not(:disabled) { transform: scale(0.98); }
         .btn-hover:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        
+        /* ===== MESSAGE FORMATTING ===== */
+        .msg-content {
+            line-height: 1.5;
+        }
+        .msg-content strong { font-weight: 600; }
+        .msg-content em { font-style: italic; }
+        .msg-content code {
+            background: rgba(0,0,0,0.2);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9em;
+        }
+        .msg-content a {
+            color: #93c5fd;
+            text-decoration: none;
+            border-bottom: 1px dashed rgba(147, 197, 253, 0.5);
+        }
+        .msg-content a:hover {
+            color: #fff;
+            border-bottom-style: solid;
+        }
+        
+        /* ===== EMOJI PICKER ===== */
+        .emoji-picker {
+            position: absolute;
+            bottom: 100%;
+            right: 0;
+            background: #1e293b;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 8px;
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 4px;
+            z-index: 50;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+        .emoji-btn {
+            padding: 4px;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: background 0.15s;
+        }
+        .emoji-btn:hover { background: rgba(255,255,255,0.1); }
     </style>
 </head>
 <body class="selection:bg-brand-500 selection:text-white flex flex-col h-screen relative">
 
-    <!-- Audio Notification -->
-    <audio id="notifSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="none"></audio>
+    <!-- Audio Notification (user interaction required) -->
+    <audio id="notifSound" preload="none">
+        <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
+    </audio>
 
     <!-- Background Effects -->
-    <div class="fixed inset-0 bg-grid opacity-20 pointer-events-none z-0"></div>
-    <div class="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[500px] bg-brand-600/10 rounded-full mix-blend-screen blur-[120px] pointer-events-none z-0"></div>
+    <div class="fixed inset-0 bg-grid opacity-20 pointer-events-none z-0" aria-hidden="true"></div>
+    <div class="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[500px] bg-brand-600/10 rounded-full mix-blend-screen blur-[120px] pointer-events-none z-0 animate-pulse-slow" aria-hidden="true"></div>
     
     <!-- Toast Container -->
-    <div id="toastContainer" role="region" aria-label="Notificações"></div>
+    <div id="toastContainer" role="region" aria-label="Notificações do sistema" aria-live="polite"></div>
+
+    <!-- Connection Status Bar -->
+    <div id="connectionStatus" class="fixed top-0 left-0 right-0 z-[60] bg-slate-900/95 backdrop-blur border-b border-slate-700/50 py-1.5 px-4 flex items-center justify-center gap-2 text-xs transition-all" role="status" aria-live="polite">
+        <span class="connection-dot" aria-hidden="true"></span>
+        <span id="connectionText">Conectado</span>
+        <button onclick="window.checkConnection()" class="text-brand-400 hover:text-brand-300 ml-2 underline" aria-label="Verificar conexão">Reconectar</button>
+    </div>
 
     <!-- Header -->
-    <header class="w-full z-50 glass-nav shrink-0" role="banner">
-        <div class="container mx-auto px-6 h-16 flex justify-between items-center">
-            <div class="flex items-center gap-4">
+    <header class="w-full z-50 glass-nav shrink-0 pt-8" role="banner">
+        <div class="container mx-auto px-4 sm:px-6 h-16 flex justify-between items-center">
+            <div class="flex items-center gap-3 sm:gap-4">
                 <a href="../dashboard.html" class="text-slate-400 hover:text-white transition p-2 rounded-lg hover:bg-white/10" title="Voltar ao Dashboard" aria-label="Voltar ao dashboard">
-                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                    <i data-lucide="arrow-left" class="w-5 h-5" aria-hidden="true"></i>
                 </a>
-                <div class="bg-brand-500/20 text-brand-400 p-2 rounded-lg" aria-hidden="true">
-                    <i data-lucide="message-square" class="w-4 h-4"></i>
+                <div class="bg-brand-500/20 text-brand-400 p-2 rounded-lg hidden sm:flex" aria-hidden="true">
+                    <i data-lucide="message-square" class="w-4 h-4" aria-hidden="true"></i>
                 </div>
-                <span class="text-xl font-display font-bold text-white">Central de Mensagens</span>
+                <div>
+                    <span class="text-lg sm:text-xl font-display font-bold text-white">Central de Mensagens</span>
+                    <p class="text-[10px] text-slate-500 hidden sm:block">Suporte PayGo • Tempo real</p>
+                </div>
             </div>
-            <div class="flex items-center gap-3">
-                <button class="relative p-2 text-slate-400 hover:text-white transition rounded-lg hover:bg-white/10" aria-label="Notificações">
-                    <i data-lucide="bell" class="w-5 h-5"></i>
+            <div class="flex items-center gap-2 sm:gap-3">
+                <!-- Bulk Actions (Desktop) -->
+                <div class="hidden md:flex items-center gap-1 mr-2" id="bulkActions" role="group" aria-label="Ações em massa">
+                    <button onclick="window.bulkClose()" class="p-2 text-slate-400 hover:text-success-400 transition rounded-lg hover:bg-white/10 disabled:opacity-30" title="Fechar selecionados" aria-label="Fechar tickets selecionados" disabled>
+                        <i data-lucide="check-circle" class="w-4 h-4" aria-hidden="true"></i>
+                    </button>
+                    <button onclick="window.bulkAssign()" class="p-2 text-slate-400 hover:text-brand-400 transition rounded-lg hover:bg-white/10 disabled:opacity-30" title="Atribuir a mim" aria-label="Atribuir tickets a mim" disabled>
+                        <i data-lucide="user-check" class="w-4 h-4" aria-hidden="true"></i>
+                    </button>
+                </div>
+                
+                <!-- Notifications -->
+                <button class="relative p-2 text-slate-400 hover:text-white transition rounded-lg hover:bg-white/10" aria-label="Notificações" aria-haspopup="true">
+                    <i data-lucide="bell" class="w-5 h-5" aria-hidden="true"></i>
                     <span class="absolute -top-1 -right-1 flex h-3 w-3">
                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-danger-400 opacity-75"></span>
                         <span class="relative inline-flex rounded-full h-3 w-3 bg-danger-500 border-2 border-[#0f172a] text-[8px] flex items-center justify-center font-bold" id="unreadBadge" aria-live="polite">0</span>
                     </span>
                 </button>
-                <div class="w-px h-6 bg-slate-700 mx-2" aria-hidden="true"></div>
-                <span class="text-sm font-bold text-slate-300" id="adminNameDisplay">Admin PayGo</span>
+                
+                <div class="w-px h-6 bg-slate-700 mx-1 sm:mx-2" aria-hidden="true"></div>
+                
+                <!-- Admin Info -->
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center text-white font-bold text-sm shadow-sm" id="adminAvatar" aria-hidden="true">A</div>
+                    <span class="text-sm font-bold text-slate-300 hidden sm:inline" id="adminNameDisplay">Admin</span>
+                </div>
             </div>
         </div>
     </header>
 
     <!-- Main Content -->
-    <main class="flex-1 container mx-auto px-2 sm:px-6 py-6 relative z-10 flex overflow-hidden">
+    <main class="flex-1 container mx-auto px-2 sm:px-6 py-4 relative z-10 flex overflow-hidden">
         
         <div class="flex w-full h-full glass-card rounded-2xl overflow-hidden shadow-2xl">
             
             <!-- Sidebar: Ticket List -->
             <div class="w-full md:w-1/3 flex flex-col border-r border-slate-700/50 bg-slate-900/50 shrink-0" role="navigation" aria-label="Lista de tickets">
-                <div class="p-4 border-b border-slate-700/50 space-y-3 shrink-0">
+                
+                <!-- Search & Filters -->
+                <div class="p-3 sm:p-4 border-b border-slate-700/50 space-y-3 shrink-0">
                     <div class="relative">
                         <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" aria-hidden="true"></i>
-                        <input type="text" id="searchInput" placeholder="Procurar cliente ou pedido..." class="w-full pl-9 pr-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-sm text-white focus:border-brand-500 outline-none transition" aria-label="Pesquisar tickets">
+                        <input 
+                            type="text" 
+                            id="searchInput" 
+                            placeholder="Procurar cliente, pedido ou mensagem..." 
+                            class="w-full pl-9 pr-4 py-2.5 bg-slate-950 border border-slate-700 rounded-lg text-sm text-white focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition placeholder-slate-500"
+                            aria-label="Pesquisar tickets"
+                            autocomplete="off"
+                        >
                     </div>
+                    
                     <div class="flex gap-2" role="tablist" aria-label="Filtros de tickets">
-                        <button onclick="window.filterTickets('all')" class="flex-1 py-1.5 text-[10px] font-bold uppercase tracking-widest bg-brand-500/20 text-brand-400 rounded border border-brand-500/30 transition hover:bg-brand-500/30" id="filter-all" role="tab" aria-selected="true">Todos</button>
-                        <button onclick="window.filterTickets('open')" class="flex-1 py-1.5 text-[10px] font-bold uppercase tracking-widest bg-slate-800 text-slate-400 rounded border border-slate-700 transition hover:bg-slate-700" id="filter-open" role="tab" aria-selected="false">Abertos</button>
+                        <button 
+                            onclick="window.filterTickets('all')" 
+                            class="flex-1 py-1.5 text-[10px] font-bold uppercase tracking-widest bg-brand-500/20 text-brand-400 rounded border border-brand-500/30 transition hover:bg-brand-500/30 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                            id="filter-all" 
+                            role="tab" 
+                            aria-selected="true"
+                            type="button"
+                        >Todos</button>
+                        <button 
+                            onclick="window.filterTickets('open')" 
+                            class="flex-1 py-1.5 text-[10px] font-bold uppercase tracking-widest bg-slate-800 text-slate-400 rounded border border-slate-700 transition hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                            id="filter-open" 
+                            role="tab" 
+                            aria-selected="false"
+                            type="button"
+                        >Abertos</button>
+                        <button 
+                            onclick="window.filterTickets('mine')" 
+                            class="flex-1 py-1.5 text-[10px] font-bold uppercase tracking-widest bg-slate-800 text-slate-400 rounded border border-slate-700 transition hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                            id="filter-mine" 
+                            role="tab" 
+                            aria-selected="false"
+                            type="button"
+                        >Meus</button>
                     </div>
                 </div>
 
-                <div class="flex-1 chat-scroll" id="ticketList" role="list">
+                <!-- Ticket List -->
+                <div class="flex-1 chat-scroll" id="ticketList" role="list" aria-label="Tickets de suporte">
                     <!-- Loading Skeleton -->
-                    <div class="p-4 flex items-center gap-3 animate-pulse" aria-hidden="true">
-                        <div class="w-10 h-10 bg-slate-800 rounded-full"></div>
-                        <div class="flex-1 space-y-2">
-                            <div class="h-3 bg-slate-800 rounded w-3/4"></div>
-                            <div class="h-2 bg-slate-800 rounded w-1/2"></div>
+                    <div class="p-4 space-y-3" aria-hidden="true">
+                        <div class="flex items-center gap-3 animate-pulse">
+                            <div class="w-10 h-10 bg-slate-800 rounded-full"></div>
+                            <div class="flex-1 space-y-2">
+                                <div class="h-3 bg-slate-800 rounded w-3/4"></div>
+                                <div class="h-2 bg-slate-800 rounded w-1/2"></div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 animate-pulse" style="animation-delay: 0.1s">
+                            <div class="w-10 h-10 bg-slate-800 rounded-full"></div>
+                            <div class="flex-1 space-y-2">
+                                <div class="h-3 bg-slate-800 rounded w-2/3"></div>
+                                <div class="h-2 bg-slate-800 rounded w-1/3"></div>
+                            </div>
                         </div>
                     </div>
+                </div>
+                
+                <!-- Pagination / Load More -->
+                <div class="p-3 border-t border-slate-700/50 text-center shrink-0">
+                    <button id="loadMoreBtn" onclick="window.loadMoreTickets()" class="text-xs text-brand-400 hover:text-brand-300 font-medium transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                        Carregar mais...
+                    </button>
                 </div>
             </div>
 
@@ -279,25 +552,35 @@
                     </div>
                     <h3 class="text-xl font-bold text-white mb-2">Caixa de Entrada Segura</h3>
                     <p class="text-slate-500 text-sm max-w-sm">Selecione uma conversa ao lado para responder a pedidos de reembolso, suporte ou recargas de Cartão Virtual.</p>
+                    <div class="mt-6 flex gap-2 flex-wrap justify-center">
+                        <span class="type-badge support">Suporte Geral</span>
+                        <span class="type-badge refund">Reembolsos</span>
+                        <span class="type-badge vc_topup">Recargas VC</span>
+                    </div>
                 </div>
 
                 <!-- Chat Header -->
-                <div class="p-4 border-b border-slate-800 bg-slate-900/80 flex justify-between items-center shrink-0">
-                    <div class="flex items-center gap-3">
+                <div class="p-3 sm:p-4 border-b border-slate-800 bg-slate-900/80 flex justify-between items-center shrink-0">
+                    <div class="flex items-center gap-3 min-w-0">
                         <button class="md:hidden text-slate-400 hover:text-white p-1 transition" onclick="window.closeMobileChat()" aria-label="Voltar à lista">
-                            <i data-lucide="chevron-left" class="w-6 h-6"></i>
+                            <i data-lucide="chevron-left" class="w-6 h-6" aria-hidden="true"></i>
                         </button>
-                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center text-white font-bold text-lg shadow-sm" id="chatAvatar" aria-hidden="true">C</div>
-                        <div>
-                            <h3 class="font-bold text-white leading-tight" id="chatClientName">Nome do Cliente</h3>
-                            <p class="text-[11px] text-slate-400 font-mono" id="chatClientEmail">cliente@email.com</p>
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center text-white font-bold text-lg shadow-sm shrink-0" id="chatAvatar" aria-hidden="true">C</div>
+                        <div class="min-w-0">
+                            <h3 class="font-bold text-white leading-tight truncate" id="chatClientName">Nome do Cliente</h3>
+                            <p class="text-[11px] text-slate-400 font-mono truncate" id="chatClientEmail">cliente@email.com</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-2 sm:gap-3">
                         <div id="chatTicketTypeContainer">
-                            <span id="chatTicketType" class="px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-widest bg-slate-800 text-slate-300 border border-slate-700">TICKET</span>
+                            <span id="chatTicketType" class="type-badge support">SUPORTE</span>
                         </div>
-                        <select id="ticketStatusSelect" onchange="window.updateTicketStatus(this.value)" class="bg-slate-950 border border-slate-700 text-xs sm:text-sm text-white rounded-lg px-2 sm:px-3 py-1.5 focus:border-brand-500 outline-none cursor-pointer" aria-label="Alterar status do ticket">
+                        <select 
+                            id="ticketStatusSelect" 
+                            onchange="window.updateTicketStatus(this.value)" 
+                            class="bg-slate-950 border border-slate-700 text-xs sm:text-sm text-white rounded-lg px-2 sm:px-3 py-1.5 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none cursor-pointer hover:bg-slate-900 transition"
+                            aria-label="Alterar status do ticket"
+                        >
                             <option value="open">🟢 Pendente</option>
                             <option value="in_progress">🟡 Em Análise</option>
                             <option value="closed">🔴 Concluído</option>
@@ -310,62 +593,183 @@
                 </div>
 
                 <!-- Message History -->
-                <div class="flex-1 chat-scroll p-4 md:p-6 space-y-4 flex flex-col" id="messageHistory" role="log" aria-live="polite" aria-label="Histórico de mensagens">
-                    <!-- Messages will be injected here -->
+                <div class="flex-1 chat-scroll p-3 sm:p-4 md:p-6 space-y-4 flex flex-col" id="messageHistory" role="log" aria-live="polite" aria-label="Histórico de mensagens">
+                    <!-- Messages injected dynamically -->
+                </div>
+
+                <!-- Typing Indicator (hidden by default) -->
+                <div id="typingIndicator" class="px-4 sm:px-6 pb-2 hidden" role="status" aria-live="polite">
+                    <div class="typing-indicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <span class="text-[10px] text-slate-400 ml-2">Cliente está a escrever...</span>
+                    </div>
+                </div>
+
+                <!-- Quick Replies -->
+                <div id="quickReplies" class="px-4 sm:px-6 py-2 flex gap-2 overflow-x-auto shrink-0" role="group" aria-label="Respostas rápidas">
+                    <button class="quick-reply" onclick="window.insertQuickReply('Olá! Como posso ajudar hoje?')">👋 Saudação</button>
+                    <button class="quick-reply" onclick="window.insertQuickReply('O seu pedido está em processamento. Enviaremos atualização em breve.')">⏳ Em processamento</button>
+                    <button class="quick-reply" onclick="window.insertQuickReply('Para reembolsos, por favor envie o comprovativo de pagamento.')">💰 Reembolso</button>
+                    <button class="quick-reply" onclick="window.insertQuickReply('O seu cartão virtual foi emitido com sucesso! Verifique a sua conta.')">💳 Cartão emitido</button>
+                    <button class="quick-reply" onclick="window.insertQuickReply('Agradecemos o seu contacto. A equipa PayGo responderá em breve.')">✅ Confirmado</button>
                 </div>
 
                 <!-- Message Input -->
-                <div class="p-4 bg-slate-900 border-t border-slate-800 shrink-0">
+                <div class="p-3 sm:p-4 bg-slate-900 border-t border-slate-800 shrink-0">
                     <form id="replyForm" class="flex items-end gap-2 relative" novalidate>
                         
                         <!-- File Upload -->
                         <div class="relative shrink-0">
-                            <input type="file" id="fileUpload" class="hidden" accept="image/*, .pdf, .doc, .docx" onchange="window.handleFileSelect(event)" aria-label="Anexar ficheiro">
-                            <button type="button" onclick="document.getElementById('fileUpload').click()" class="w-12 h-12 rounded-xl bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-brand-400 transition" title="Anexar Comprovativo ou Imagem" aria-label="Anexar ficheiro">
-                                <i data-lucide="paperclip" class="w-5 h-5"></i>
+                            <input 
+                                type="file" 
+                                id="fileUpload" 
+                                class="hidden" 
+                                accept="image/*, .pdf, .doc, .docx, .txt" 
+                                onchange="window.handleFileSelect(event)"
+                                aria-label="Anexar ficheiro"
+                            >
+                            <button 
+                                type="button" 
+                                onclick="document.getElementById('fileUpload').click()" 
+                                class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-brand-400 transition disabled:opacity-50"
+                                title="Anexar Comprovativo ou Imagem" 
+                                aria-label="Anexar ficheiro"
+                            >
+                                <i data-lucide="paperclip" class="w-5 h-5" aria-hidden="true"></i>
                             </button>
-                            <div id="fileBadge" class="absolute -top-2 -right-2 w-4 h-4 bg-success-500 rounded-full hidden border-2 border-slate-900" aria-hidden="true"></div>
+                            <div id="fileBadge" class="absolute -top-1 -right-1 w-4 h-4 bg-success-500 rounded-full hidden border-2 border-slate-900" aria-hidden="true"></div>
                         </div>
 
+                        <!-- Emoji Picker Toggle -->
+                        <button 
+                            type="button"
+                            onclick="window.toggleEmojiPicker()"
+                            class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-yellow-400 transition"
+                            title="Inserir emoji"
+                            aria-label="Inserir emoji"
+                            aria-expanded="false"
+                            aria-controls="emojiPicker"
+                        >
+                            <i data-lucide="smile" class="w-5 h-5" aria-hidden="true"></i>
+                        </button>
+
                         <!-- Text Input -->
-                        <div class="flex-1 bg-slate-950 border border-slate-700 rounded-xl relative focus-within:border-brand-500 transition-colors">
-                            <textarea id="replyMessage" rows="1" class="w-full bg-transparent text-white px-4 py-3 outline-none resize-none text-sm max-h-32 min-h-[48px] chat-scroll" placeholder="Escreva a sua resposta ou envie um comprovativo..." oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'" aria-label="Mensagem"></textarea>
+                        <div class="flex-1 bg-slate-950 border border-slate-700 rounded-xl relative focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500 transition-colors">
+                            <textarea 
+                                id="replyMessage" 
+                                rows="1" 
+                                class="w-full bg-transparent text-white px-4 py-3 outline-none resize-none text-sm max-h-32 min-h-[48px] chat-scroll placeholder-slate-500"
+                                placeholder="Escreva a sua resposta... (Ctrl+Enter para enviar)"
+                                oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"
+                                aria-label="Mensagem"
+                                aria-multiline="true"
+                            ></textarea>
+                            
+                            <!-- Emoji Picker (hidden by default) -->
+                            <div id="emojiPicker" class="emoji-picker hidden" role="dialog" aria-label="Selecionar emoji">
+                                <!-- Emojis injected by JS -->
+                            </div>
                         </div>
 
                         <!-- Send Button -->
-                        <button type="submit" id="btnSendReply" class="w-12 h-12 rounded-xl bg-brand-600 hover:bg-brand-500 flex items-center justify-center text-white transition shadow-lg shrink-0" aria-label="Enviar mensagem">
-                            <i data-lucide="send" class="w-5 h-5 ml-1"></i>
+                        <button 
+                            type="submit" 
+                            id="btnSendReply" 
+                            class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-brand-600 hover:bg-brand-500 disabled:bg-slate-700 disabled:cursor-not-allowed flex items-center justify-center text-white transition shadow-lg shrink-0"
+                            aria-label="Enviar mensagem"
+                        >
+                            <i data-lucide="send" class="w-5 h-5 ml-0.5" aria-hidden="true"></i>
                         </button>
                     </form>
-                    <div id="fileNameDisplay" class="text-[10px] text-brand-400 mt-2 font-mono hidden truncate px-1" aria-live="polite">Ficheiro selecionado</div>
+                    
+                    <!-- File Info -->
+                    <div id="fileNameDisplay" class="text-[10px] text-brand-400 mt-2 font-mono hidden truncate px-1 flex items-center gap-2" aria-live="polite">
+                        <i data-lucide="file" class="w-3 h-3" aria-hidden="true"></i>
+                        <span id="fileNameText"></span>
+                        <button onclick="window.clearFile()" class="text-slate-500 hover:text-danger-400" aria-label="Remover ficheiro">
+                            <i data-lucide="x" class="w-3 h-3" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Formatting Help -->
+                    <p class="text-[9px] text-slate-500 mt-2">
+                        <strong>Formatação:</strong> **negrito**, *itálico*, `código` • 
+                        <strong>Atalhos:</strong> Ctrl+Enter enviar • Esc fechar
+                    </p>
                 </div>
 
             </div>
         </div>
     </main>
 
-<script type="module">
+    <!-- Keyboard Shortcuts Modal (hidden by default) -->
+    <div id="shortcutsModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="shortcutsTitle">
+        <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onclick="window.closeShortcutsModal()"></div>
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-md w-full relative z-10 shadow-2xl">
+            <button onclick="window.closeShortcutsModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1" aria-label="Fechar">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <h3 id="shortcutsTitle" class="text-lg font-bold text-white mb-4">⌨️ Atalhos de Teclado</h3>
+            <div class="space-y-3 text-sm">
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-400">Enviar mensagem</span>
+                    <kbd class="px-2 py-1 bg-slate-800 rounded text-xs font-mono">Ctrl + Enter</kbd>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-400">Fechar chat mobile</span>
+                    <kbd class="px-2 py-1 bg-slate-800 rounded text-xs font-mono">Esc</kbd>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-400">Nova linha</span>
+                    <kbd class="px-2 py-1 bg-slate-800 rounded text-xs font-mono">Shift + Enter</kbd>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-400">Pesquisar tickets</span>
+                    <kbd class="px-2 py-1 bg-slate-800 rounded text-xs font-mono">Ctrl + K</kbd>
+                </div>
+            </div>
+            <button onclick="window.closeShortcutsModal()" class="mt-6 w-full py-2 bg-brand-600 hover:bg-brand-500 rounded-lg text-white font-medium transition">
+                Entendido
+            </button>
+        </div>
+    </div>
+
+    <!-- ===== JAVASCRIPT MODULE ===== -->
+    <script type="module">
+        // ==========================================
+        // 🔐 IMPORTS FIREBASE
+        // ==========================================
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, collection, query, orderBy, onSnapshot, updateDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, collection, query, orderBy, onSnapshot, updateDoc, addDoc, serverTimestamp, where, limit, startAfter } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
         // ==========================================
-        // 🔐 CONFIGURAÇÃO FIREBASE
+        // ⚙️ CONFIGURAÇÃO FIREBASE (usar env vars em produção)
         // ==========================================
         const firebaseConfig = {
-            apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
-            authDomain: "paygo-14311.firebaseapp.com",
-            projectId: "paygo-14311",
-            storageBucket: "paygo-14311.firebasestorage.app",
-            messagingSenderId: "208360646277",
-            appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
+            apiKey: import.meta?.env?.VITE_FIREBASE_API_KEY || "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
+            authDomain: import.meta?.env?.VITE_FIREBASE_AUTH_DOMAIN || "paygo-14311.firebaseapp.com",
+            projectId: import.meta?.env?.VITE_FIREBASE_PROJECT_ID || "paygo-14311",
+            storageBucket: import.meta?.env?.VITE_FIREBASE_STORAGE_BUCKET || "paygo-14311.firebasestorage.app",
+            messagingSenderId: import.meta?.env?.VITE_FIREBASE_MESSAGING_SENDER_ID || "208360646277",
+            appId: import.meta?.env?.VITE_FIREBASE_APP_ID || "1:208360646277:web:aecc57cc0077ae48a52bec"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app, "paygodb"); // Base de dados unificada
-        const storage = getStorage(app);
+        // Inicialização com tratamento de erro
+        let app, auth, db, storage;
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app, "paygodb");
+            storage = getStorage(app);
+        } catch (error) {
+            console.error("❌ Erro ao inicializar Firebase:", error);
+            document.getElementById('connectionStatus').className = 'fixed top-0 left-0 right-0 z-[60] bg-danger-900/95 backdrop-blur border-b border-danger-700 py-1.5 px-4 flex items-center justify-center gap-2 text-xs';
+            document.getElementById('connectionText').textContent = 'Erro de conexão';
+        }
 
         if (typeof lucide !== 'undefined') lucide.createIcons();
 
@@ -378,290 +782,600 @@
         let currentFilter = 'all';
         let initialLoad = true;
         let unsubscribeMessages = null;
+        let unsubscribeTickets = null;
         let selectedFile = null;
+        let isOnline = navigator.onLine;
+        let lastVisibleDoc = null;
+        const TICKETS_PER_PAGE = 20;
         const notifSound = document.getElementById('notifSound');
+        const EMOJIS = ['👋','✅','⏳','💰','💳','🔔','⚠️','🎉','🙏','📦','🔄','❓'];
 
         // ==========================================
-        // 🛡️ SEGURANÇA E TOASTS
+        // 🛡️ UTILITÁRIOS DE SEGURANÇA
         // ==========================================
+        
+        /**
+         * Sanitiza string contra XSS - ESCAPE COMPLETO
+         */
         const escapeHTML = (str) => {
-            if (!str) return '';
-            const div = document.createElement('div');
-            div.textContent = str;
-            return div.innerHTML;
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/[&<>'"]/g, tag => ({
+                    '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+                }[tag] || tag));
         };
 
-        window.showToast = function(msg, type = 'success', duration = 4000) {
+        /**
+         * Sanitiza HTML permitindo apenas tags seguras para mensagens
+         */
+        const sanitizeMessage = (html) => {
+            const temp = document.createElement('div');
+            temp.innerHTML = html;
+            
+            // Remover scripts e event handlers
+            const scripts = temp.querySelectorAll('script, *[on*], iframe, object, embed');
+            scripts.forEach(el => el.remove());
+            
+            // Permitir apenas formatação básica
+            const allowedTags = ['strong', 'em', 'code', 'br', 'a'];
+            const allElements = temp.querySelectorAll('*');
+            allElements.forEach(el => {
+                if (!allowedTags.includes(el.tagName.toLowerCase())) {
+                    el.replaceWith(...el.childNodes);
+                }
+            });
+            
+            // Sanitizar links
+            const links = temp.querySelectorAll('a');
+            links.forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && !href.startsWith('https://paygo.co.mz') && !href.startsWith('#')) {
+                    link.setAttribute('rel', 'noopener noreferrer');
+                    link.setAttribute('target', '_blank');
+                }
+            });
+            
+            return temp.innerHTML;
+        };
+
+        /**
+         * Define texto com segurança
+         */
+        const setSafeText = (id, text) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = text ?? '';
+        };
+
+        /**
+         * Define HTML sanitizado
+         */
+        const setSafeHTML = (id, html) => {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = sanitizeMessage(html);
+        };
+
+        // ==========================================
+        // 🔔 SISTEMA DE NOTIFICAÇÕES (TOAST)
+        // ==========================================
+        
+        window.showToast = (message, type = 'success', duration = 4000) => {
             const container = document.getElementById('toastContainer');
             if (!container) return;
             
             const toast = document.createElement('div');
-            const bg = type === 'error' ? 'bg-danger-500/95 border-danger-400' : 
-                      type === 'info' ? 'bg-slate-800/95 border-brand-400' : 
-                      type === 'warning' ? 'bg-warning-500/95 border-warning-400' : 
-                      'bg-slate-900/95 border-brand-500';
-            
-            const icon = type === 'error' ? 'alert-octagon text-danger-400' : 
-                        type === 'info' ? 'bell text-brand-400' : 
-                        type === 'warning' ? 'alert-triangle text-warning-400' : 
-                        'check-check text-brand-400';
-            
             toast.className = `toast ${type}`;
-            toast.innerHTML = `<i data-lucide="${icon.split(' ')[0]}" class="w-5 h-5 ${icon.split(' ')[1]}"></i> <span class="text-sm font-bold text-white">${msg}</span>`;
+            toast.setAttribute('role', 'alert');
+            
+            const icons = {
+                success: { name: 'check-circle', color: 'text-success-400' },
+                error: { name: 'alert-circle', color: 'text-danger-400' },
+                warning: { name: 'alert-triangle', color: 'text-warning-400' },
+                info: { name: 'bell', color: 'text-brand-400' }
+            };
+            const icon = icons[type] || icons.info;
+            
+            toast.innerHTML = `
+                <i data-lucide="${icon.name}" class="w-5 h-5 flex-shrink-0 ${icon.color}" aria-hidden="true"></i>
+                <span class="flex-1 text-sm font-medium text-white">${escapeHTML(message)}</span>
+                <button onclick="this.closest('.toast').remove()" class="text-slate-400 hover:text-white p-1 transition" aria-label="Fechar">
+                    <i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>
+                </button>
+            `;
             
             container.appendChild(toast);
-            if (typeof lucide !== 'undefined') { try { lucide.createIcons({ root: toast }); } catch(e) {} }
             
-            requestAnimationFrame(() => { toast.classList.remove('translate-x-full', 'opacity-0'); });
-            setTimeout(() => { toast.classList.add('opacity-0', 'translate-x-8'); setTimeout(() => toast.remove(), 400); }, duration);
+            // Atualizar ícones
+            if (typeof lucide !== 'undefined') lucide.createIcons({ root: toast });
+            
+            // Animação de entrada
+            requestAnimationFrame(() => toast.classList.add('show'));
+            
+            // Auto-remover
+            const timeoutId = setTimeout(() => {
+                toast.classList.add('hiding');
+                setTimeout(() => toast.remove(), 400);
+            }, duration);
+            
+            // Permitir remover manualmente
+            toast.addEventListener('click', (e) => {
+                if (e.target.closest('button')) return;
+                clearTimeout(timeoutId);
+                toast.classList.add('hiding');
+                setTimeout(() => toast.remove(), 400);
+            });
         };
+
+        // ==========================================
+        // 📡 CONEXÃO & OFFLINE
+        // ==========================================
+        
+        const updateConnectionStatus = () => {
+            const statusEl = document.getElementById('connectionStatus');
+            const textEl = document.getElementById('connectionText');
+            const dotEl = statusEl?.querySelector('.connection-dot');
+            
+            if (isOnline) {
+                statusEl?.classList.remove('offline', 'bg-danger-900/95', 'border-danger-700');
+                statusEl?.classList.add('bg-slate-900/95', 'border-slate-700/50');
+                textEl.textContent = 'Conectado';
+                dotEl?.classList.remove('bg-danger-400');
+                dotEl?.classList.add('bg-success-400');
+            } else {
+                statusEl?.classList.add('offline', 'bg-danger-900/95', 'border-danger-700');
+                statusEl?.classList.remove('bg-slate-900/95', 'border-slate-700/50');
+                textEl.textContent = 'Offline - Alterações serão sincronizadas';
+                dotEl?.classList.remove('bg-success-400');
+                dotEl?.classList.add('bg-danger-400');
+            }
+        };
+        
+        window.checkConnection = () => {
+            if (navigator.onLine) {
+                isOnline = true;
+                updateConnectionStatus();
+                showToast('Conexão restaurada', 'success', 2000);
+                if (currentAdmin) loadTickets();
+            } else {
+                showToast('Sem conexão. Verifique sua internet.', 'error');
+            }
+        };
+        
+        window.addEventListener('online', () => { isOnline = true; updateConnectionStatus(); });
+        window.addEventListener('offline', () => { isOnline = false; updateConnectionStatus(); });
 
         // ==========================================
         // 🔐 AUTENTICAÇÃO
         // ==========================================
-        onAuthStateChanged(auth, async (user) => {
-            if (!user) { window.location.href = '../login.html'; return; }
-            
-            try {
-                const userDoc = await getDoc(doc(db, "users", user.uid));
-                if (!userDoc.exists() || (userDoc.data().role !== 'admin' && userDoc.data().role !== 'superadmin')) {
-                    showToast('Acesso restrito a administradores.', 'error');
-                    setTimeout(() => { window.location.href = '../dashboard.html'; }, 1500);
-                    return;
+        
+        const initAuth = async () => {
+            onAuthStateChanged(auth, async (user) => {
+                if (!user) { 
+                    window.location.href = '../login.html'; 
+                    return; 
                 }
                 
-                currentAdmin = user;
-                document.getElementById('adminNameDisplay').textContent = userDoc.data().name || 'Admin PayGo';
-                loadTickets();
-                
-            } catch (error) { 
-                console.error("Erro de Auth:", error); 
-                showToast('Erro ao carregar perfil.', 'error');
-            }
-        });
+                try {
+                    const userDoc = await getDoc(doc(db, "users", user.uid));
+                    if (!userDoc.exists() || !['admin', 'superadmin'].includes(userDoc.data().role)) {
+                        showToast('Acesso restrito a administradores.', 'error');
+                        setTimeout(() => { window.location.href = '../dashboard.html'; }, 1500);
+                        return;
+                    }
+                    
+                    currentAdmin = user;
+                    const userData = userDoc.data();
+                    
+                    // Atualizar UI
+                    setSafeText('adminNameDisplay', userData.name || 'Admin PayGo');
+                    setSafeText('adminAvatar', (userData.name || 'A').charAt(0).toUpperCase());
+                    
+                    // Iniciar listeners
+                    loadTickets();
+                    updateConnectionStatus();
+                    
+                } catch (error) { 
+                    console.error("Erro de Auth:", error); 
+                    showToast('Erro ao carregar perfil.', 'error');
+                }
+            });
+        };
 
         // ==========================================
         // 📥 CARREGAR TICKETS EM TEMPO REAL
         // ==========================================
-        function loadTickets() {
-            const q = query(collection(db, "support_tickets"), orderBy("createdAt", "desc"));
+        
+        window.loadTickets = async (loadMore = false) => {
+            if (!isOnline) {
+                showToast('Sem conexão. Tente novamente.', 'warning');
+                return;
+            }
             
-            onSnapshot(q, (snapshot) => {
-                let unreadCount = 0;
-                let hasNewTicket = false;
-                allTickets = [];
-
-                snapshot.forEach((docSnap) => {
-                    const ticket = { id: docSnap.id, ...docSnap.data() };
-                    allTickets.push(ticket);
-                    if (ticket.status === 'open') unreadCount++;
-                });
-
-                snapshot.docChanges().forEach((change) => {
-                    if (change.type === "added" && !initialLoad) { hasNewTicket = true; }
-                });
-
-                if (hasNewTicket) {
-                    try { notifSound.currentTime = 0; notifSound.play().catch(e=>{}); } catch(e) {}
-                    showToast("🔔 Nova mensagem recebida!", "info");
-                }
-
-                document.getElementById('unreadBadge').textContent = unreadCount;
-                renderTicketList();
-                initialLoad = false;
+            try {
+                let q;
+                const baseQuery = query(collection(db, "support_tickets"), orderBy("createdAt", "desc"));
                 
-                if (activeTicketId) {
-                    const updatedActive = allTickets.find(t => t.id === activeTicketId);
-                    if (updatedActive && updatedActive.status !== document.getElementById('ticketStatusSelect').value) {
-                        document.getElementById('ticketStatusSelect').value = updatedActive.status;
-                    }
+                if (loadMore && lastVisibleDoc) {
+                    q = query(baseQuery, startAfter(lastVisibleDoc), limit(TICKETS_PER_PAGE));
+                } else {
+                    q = query(baseQuery, limit(TICKETS_PER_PAGE));
                 }
-            }, (error) => { showToast('Erro ao conectar ao servidor.', 'error'); });
-        }
+                
+                // Limpar listener anterior
+                if (unsubscribeTickets) unsubscribeTickets();
+                
+                unsubscribeTickets = onSnapshot(q, (snapshot) => {
+                    let unreadCount = 0;
+                    let hasNewTicket = false;
+                    
+                    // Processar documentos
+                    snapshot.forEach((docSnap) => {
+                        const ticket = { id: docSnap.id, ...docSnap.data() };
+                        
+                        // Adicionar apenas se não existir (para evitar duplicatas no loadMore)
+                        if (!loadMore || !allTickets.find(t => t.id === ticket.id)) {
+                            allTickets.push(ticket);
+                        }
+                        
+                        if (ticket.status === 'open') unreadCount++;
+                    });
+                    
+                    // Detectar novos tickets
+                    snapshot.docChanges().forEach((change) => {
+                        if (change.type === "added" && !initialLoad) { 
+                            hasNewTicket = true; 
+                        }
+                    });
+                    
+                    // Notificação sonora para novos tickets
+                    if (hasNewTicket && document.visibilityState === 'visible') {
+                        try { 
+                            notifSound.currentTime = 0; 
+                            notifSound.play().catch(() => {}); 
+                        } catch(e) {}
+                        showToast("🔔 Nova mensagem recebida!", "info", 3000);
+                    }
+                    
+                    // Atualizar badge
+                    document.getElementById('unreadBadge').textContent = unreadCount;
+                    
+                    // Renderizar lista
+                    renderTicketList();
+                    
+                    // Guardar último documento para paginação
+                    if (!loadMore && snapshot.docs.length > 0) {
+                        lastVisibleDoc = snapshot.docs[snapshot.docs.length - 1];
+                    }
+                    
+                    // Atualizar botão load more
+                    const loadMoreBtn = document.getElementById('loadMoreBtn');
+                    if (loadMoreBtn) {
+                        loadMoreBtn.disabled = snapshot.docs.length < TICKETS_PER_PAGE;
+                    }
+                    
+                    initialLoad = false;
+                    
+                    // Refresh do ticket ativo se existir
+                    if (activeTicketId) {
+                        const updatedActive = allTickets.find(t => t.id === activeTicketId);
+                        if (updatedActive) {
+                            const statusSelect = document.getElementById('ticketStatusSelect');
+                            if (statusSelect && statusSelect.value !== updatedActive.status) {
+                                statusSelect.value = updatedActive.status;
+                            }
+                        }
+                    }
+                    
+                }, (error) => { 
+                    console.error("Erro no listener de tickets:", error);
+                    showToast('Erro ao conectar ao servidor.', 'error');
+                });
+                
+            } catch (error) {
+                console.error("Erro ao carregar tickets:", error);
+                showToast('Falha ao carregar tickets.', 'error');
+            }
+        };
+        
+        window.loadMoreTickets = () => {
+            loadTickets(true);
+        };
 
         // ==========================================
         // 📋 RENDERIZAR LISTA DE TICKETS
         // ==========================================
+        
         window.filterTickets = (type) => {
             currentFilter = type;
-            ['all', 'open'].forEach(f => {
+            
+            // Atualizar UI dos filtros
+            ['all', 'open', 'mine'].forEach(f => {
                 const btn = document.getElementById(`filter-${f}`);
-                if (f === type) {
-                    btn.classList.remove('bg-slate-800', 'text-slate-400');
-                    btn.classList.add('bg-brand-500/20', 'text-brand-400');
-                } else {
-                    btn.classList.remove('bg-brand-500/20', 'text-brand-400');
-                    btn.classList.add('bg-slate-800', 'text-slate-400');
+                if (btn) {
+                    if (f === type) {
+                        btn.classList.remove('bg-slate-800', 'text-slate-400');
+                        btn.classList.add('bg-brand-500/20', 'text-brand-400');
+                        btn.setAttribute('aria-selected', 'true');
+                    } else {
+                        btn.classList.remove('bg-brand-500/20', 'text-brand-400');
+                        btn.classList.add('bg-slate-800', 'text-slate-400');
+                        btn.setAttribute('aria-selected', 'false');
+                    }
                 }
             });
+            
             renderTicketList();
         };
-
-        document.getElementById('searchInput')?.addEventListener('input', () => renderTicketList());
-
+        
+        // Search com debounce
+        let searchTimeout;
+        document.getElementById('searchInput')?.addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => renderTicketList(), 300);
+        });
+        
         function renderTicketList() {
             const listEl = document.getElementById('ticketList');
-            const search = document.getElementById('searchInput')?.value.toLowerCase() || '';
-            listEl.innerHTML = '';
-
+            const search = document.getElementById('searchInput')?.value.toLowerCase().trim() || '';
+            
+            if (!listEl) return;
+            
+            // Filtrar tickets
             let filtered = allTickets.filter(t => {
+                // Filtro por status
                 if (currentFilter === 'open' && t.status !== 'open') return false;
+                if (currentFilter === 'mine' && t.assignedTo !== currentAdmin?.uid) return false;
+                
+                // Filtro por pesquisa
                 if (search) {
-                    const searchable = [t.userName, t.userEmail, t.orderId, t.message, t.type].filter(Boolean).join(' ').toLowerCase();
+                    const searchable = [t.userName, t.userEmail, t.orderId, t.message, t.type, t.ticketId]
+                        .filter(Boolean)
+                        .join(' ')
+                        .toLowerCase();
                     if (!searchable.includes(search)) return false;
                 }
                 return true;
             });
-
+            
+            // Ordenar por data (mais recente primeiro)
+            filtered.sort((a, b) => {
+                const timeA = a.createdAt?.seconds || a.createdAt?.toMillis?.() || 0;
+                const timeB = b.createdAt?.seconds || b.createdAt?.toMillis?.() || 0;
+                return timeB - timeA;
+            });
+            
+            // Estado vazio
             if (filtered.length === 0) {
-                listEl.innerHTML = `<div class="p-6 text-center text-slate-500 text-sm flex flex-col items-center gap-2"><i data-lucide="inbox" class="w-8 h-8 opacity-30"></i><span>Nenhum ticket encontrado</span></div>`;
-                if (typeof lucide !== 'undefined') lucide.createIcons({root: listEl}); return;
+                listEl.innerHTML = `
+                    <div class="p-6 text-center text-slate-500 text-sm flex flex-col items-center gap-3">
+                        <i data-lucide="inbox" class="w-10 h-10 opacity-30" aria-hidden="true"></i>
+                        <span>Nenhum ticket encontrado</span>
+                        ${search ? `<button onclick="document.getElementById('searchInput').value=''; renderTicketList();" class="text-brand-400 hover:text-brand-300 text-xs underline">Limpar pesquisa</button>` : ''}
+                    </div>
+                `;
+                if (typeof lucide !== 'undefined') lucide.createIcons({root: listEl});
+                return;
             }
-
+            
+            // Renderizar itens
+            listEl.innerHTML = '';
+            
             filtered.forEach(ticket => {
-                const dateStr = ticket.createdAt?.toDate ? ticket.createdAt.toDate().toLocaleDateString('pt-MZ') : 'Recente';
+                const dateStr = ticket.createdAt?.toDate 
+                    ? ticket.createdAt.toDate().toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short' }) 
+                    : 'Recente';
+                    
                 const initial = escapeHTML(ticket.userName || 'C').charAt(0).toUpperCase();
                 const isActive = activeTicketId === ticket.id ? 'active' : '';
-                const isUnread = ticket.status === 'open' ? '<div class="w-2 h-2 rounded-full bg-brand-500 absolute right-4 top-4 shadow-[0_0_8px_rgba(59,130,246,0.8)]"></div>' : '';
+                const isUnread = ticket.status === 'open' ? 'unread' : '';
+                const isMine = ticket.assignedTo === currentAdmin?.uid;
 
+                // Badge de tipo
                 let typeBadge = '';
-                if (ticket.type === 'refund') typeBadge = `<span class="text-[8px] px-1.5 py-0.5 rounded bg-danger-500/20 text-danger-400 border border-danger-500/30">REEMBOLSO</span>`;
-                else if (ticket.type === 'vc_topup') typeBadge = `<span class="text-[8px] px-1.5 py-0.5 rounded bg-success-500/20 text-success-400 border border-success-500/30">RECARGA VC</span>`;
-                else typeBadge = `<span class="text-[8px] px-1.5 py-0.5 rounded bg-slate-700 text-slate-300 border border-slate-600">MENSAGEM</span>`;
+                if (ticket.type === 'refund') {
+                    typeBadge = `<span class="type-badge refund">REEMBOLSO</span>`;
+                } else if (ticket.type === 'vc_topup') {
+                    typeBadge = `<span class="type-badge vc_topup">RECARGA VC</span>`;
+                } else {
+                    typeBadge = `<span class="type-badge support">SUPORTE</span>`;
+                }
+                
+                // Badge de atribuição
+                const assignBadge = isMine ? `<span class="text-[8px] px-1.5 py-0.5 rounded bg-brand-500/20 text-brand-400 border border-brand-500/30">MEU</span>` : '';
 
                 const div = document.createElement('div');
-                div.className = `ticket-item p-4 border-b border-slate-800/50 cursor-pointer hover:bg-slate-800/30 transition relative flex gap-3 ${isActive}`;
+                div.className = `ticket-item p-3 sm:p-4 border-b border-slate-800/50 cursor-pointer hover:bg-slate-800/30 transition relative flex gap-3 ${isActive} ${isUnread}`;
+                div.setAttribute('role', 'listitem');
+                div.setAttribute('tabindex', '0');
+                div.setAttribute('aria-label', `Ticket de ${ticket.userName}: ${ticket.message?.substring(0, 50)}`);
                 div.onclick = () => selectTicket(ticket.id);
+                div.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectTicket(ticket.id); }};
                 
                 div.innerHTML = `
-                    ${isUnread}
-                    <div class="w-10 h-10 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center font-bold shrink-0 border border-slate-700">${initial}</div>
+                    ${isUnread ? '<div class="w-2 h-2 rounded-full bg-brand-500 absolute right-4 top-4 shadow-[0_0_8px_rgba(59,130,246,0.8)]" aria-hidden="true"></div>' : ''}
+                    <div class="w-10 h-10 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center font-bold shrink-0 border border-slate-700" aria-hidden="true">${initial}</div>
                     <div class="flex-1 min-w-0">
-                        <div class="flex justify-between items-start mb-1">
+                        <div class="flex justify-between items-start mb-1 gap-2">
                             <h4 class="text-sm font-bold text-white truncate pr-4">${escapeHTML(ticket.userName || 'Cliente')}</h4>
-                            <span class="text-[9px] text-slate-500 whitespace-nowrap">${dateStr}</span>
+                            <span class="text-[9px] text-slate-500 whitespace-nowrap shrink-0">${dateStr}</span>
                         </div>
-                        <div class="flex items-center gap-2 mb-1">
+                        <div class="flex items-center gap-2 mb-1 flex-wrap">
                             ${typeBadge}
+                            ${assignBadge}
                             <span class="text-xs text-slate-400 truncate">${ticket.orderId ? '#' + escapeHTML(ticket.orderId) : ''}</span>
                         </div>
-                        <p class="text-xs text-slate-500 truncate pr-2">${escapeHTML(ticket.message?.substring(0, 50) || 'Sem mensagem')}${(ticket.message?.length || 0) > 50 ? '...' : ''}</p>
+                        <p class="text-xs text-slate-500 truncate pr-2">${escapeHTML(ticket.message?.substring(0, 40) || 'Sem mensagem')}${(ticket.message?.length || 0) > 40 ? '...' : ''}</p>
                     </div>
                 `;
                 listEl.appendChild(div);
             });
+            
             if (typeof lucide !== 'undefined') lucide.createIcons({root: listEl});
         }
 
         // ==========================================
         // 💬 ABRIR E GERIR O CHAT ATIVO
         // ==========================================
+        
         window.selectTicket = async (id) => {
             activeTicketId = id;
-            renderTicketList();
+            renderTicketList(); // Atualizar highlight
 
             const ticket = allTickets.find(t => t.id === id);
             if (!ticket) return;
 
+            // Mostrar área de chat
             document.getElementById('emptyChatState')?.classList.add('hidden');
             const chatArea = document.getElementById('chatArea');
-            chatArea?.classList.remove('hidden'); chatArea?.classList.add('flex');
+            if (chatArea) {
+                chatArea.classList.remove('hidden');
+                chatArea.classList.add('flex');
+            }
 
-            document.getElementById('chatAvatar').textContent = escapeHTML(ticket.userName || 'C').charAt(0).toUpperCase();
-            document.getElementById('chatClientName').textContent = escapeHTML(ticket.userName || 'Cliente');
-            document.getElementById('chatClientEmail').textContent = escapeHTML(ticket.userEmail || '');
+            // Atualizar header do chat
+            setSafeText('chatAvatar', escapeHTML(ticket.userName || 'C').charAt(0).toUpperCase());
+            setSafeText('chatClientName', ticket.userName || 'Cliente');
+            setSafeText('chatClientEmail', ticket.userEmail || '');
             document.getElementById('ticketStatusSelect').value = ticket.status || 'open';
 
+            // Context box baseado no tipo de ticket
             const ctxBox = document.getElementById('chatContextBox');
             const mainBadge = document.getElementById('chatTicketType');
-            ctxBox?.classList.remove('hidden');
             
-            if (ticket.type === 'refund') {
-                mainBadge.className = "px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-widest bg-danger-500/20 text-danger-400 border border-danger-500/30";
-                mainBadge.textContent = "REEMBOLSO";
-                ctxBox.innerHTML = `<span class="text-danger-400 font-bold">Pedido de Cancelamento:</span> Referente à Ordem <b>#${escapeHTML(ticket.orderId)}</b>.`;
-                ctxBox.className = "bg-danger-900/10 p-3 border-b border-danger-500/20 text-xs shrink-0";
-            } else if (ticket.type === 'vc_topup') {
-                mainBadge.className = "px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-widest bg-success-500/20 text-success-400 border border-success-500/30";
-                mainBadge.textContent = "RECARGA VC";
-                const formatMZN = (val) => new Intl.NumberFormat('pt-MZ', { minimumFractionDigits: 2 }).format(val);
-                ctxBox.innerHTML = `<span class="text-success-400 font-bold">Recarga de Cartão:</span> Cliente pagou ${formatMZN(ticket.mznCost || 0)} MT para <b>$${ticket.usdAmount || 0}</b>. <br/>💳 Destino: <b class="font-mono bg-slate-950 px-1 py-0.5 rounded text-white">${escapeHTML(ticket.destination || '')}</b>`;
-                ctxBox.className = "bg-success-900/10 p-3 border-b border-success-500/20 text-xs shrink-0";
-            } else {
-                mainBadge.className = "px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-widest bg-slate-800 text-slate-300 border border-slate-700";
-                mainBadge.textContent = "SUPORTE";
-                ctxBox.innerHTML = `<span class="text-brand-400 font-bold">Mensagem de Suporte Geral</span>`;
-                ctxBox.className = "bg-slate-900/50 p-3 border-b border-slate-800 text-xs shrink-0";
+            if (ctxBox && mainBadge) {
+                ctxBox.classList.remove('hidden');
+                
+                if (ticket.type === 'refund') {
+                    mainBadge.className = "type-badge refund";
+                    mainBadge.textContent = "REEMBOLSO";
+                    ctxBox.innerHTML = `<span class="text-danger-400 font-bold">Pedido de Cancelamento:</span> Referente à Ordem <b>#${escapeHTML(ticket.orderId)}</b>.`;
+                    ctxBox.className = "bg-danger-900/10 p-3 border-b border-danger-500/20 text-xs shrink-0";
+                } else if (ticket.type === 'vc_topup') {
+                    mainBadge.className = "type-badge vc_topup";
+                    mainBadge.textContent = "RECARGA VC";
+                    const formatMZN = (val) => new Intl.NumberFormat('pt-MZ', { minimumFractionDigits: 2 }).format(val);
+                    ctxBox.innerHTML = `<span class="text-success-400 font-bold">Recarga de Cartão:</span> Cliente pagou ${formatMZN(ticket.mznCost || 0)} MT para <b>$${ticket.usdAmount || 0}</b>. <br/>💳 Destino: <b class="font-mono bg-slate-950 px-1 py-0.5 rounded text-white">${escapeHTML(ticket.destination || '')}</b>`;
+                    ctxBox.className = "bg-success-900/10 p-3 border-b border-success-500/20 text-xs shrink-0";
+                } else {
+                    mainBadge.className = "type-badge support";
+                    mainBadge.textContent = "SUPORTE";
+                    ctxBox.innerHTML = `<span class="text-brand-400 font-bold">Mensagem de Suporte Geral</span>`;
+                    ctxBox.className = "bg-slate-900/50 p-3 border-b border-slate-800 text-xs shrink-0";
+                }
             }
 
-            if (ticket.status === 'open') {
-                try { await updateDoc(doc(db, "support_tickets", id), { status: 'in_progress', updatedAt: serverTimestamp() }); } catch (e) {}
+            // Marcar como "em progresso" se estiver aberto e for o primeiro acesso do admin
+            if (ticket.status === 'open' && !ticket.assignedTo) {
+                try { 
+                    await updateDoc(doc(db, "support_tickets", id), { 
+                        status: 'in_progress', 
+                        assignedTo: currentAdmin?.uid,
+                        updatedAt: serverTimestamp() 
+                    }); 
+                } catch (e) { console.warn("Erro ao atualizar ticket:", e); }
             }
 
+            // Limpar listener anterior de mensagens
             if (unsubscribeMessages) unsubscribeMessages();
             
-            const msgQ = query(collection(db, "support_tickets", id, "messages"), orderBy("createdAt", "asc"));
+            // Listener em tempo real para mensagens
+            const msgQ = query(
+                collection(db, "support_tickets", id, "messages"), 
+                orderBy("createdAt", "asc")
+            );
+            
             unsubscribeMessages = onSnapshot(msgQ, (snap) => {
                 const historyEl = document.getElementById('messageHistory');
                 if (!historyEl) return;
+                
                 historyEl.innerHTML = '';
                 
-                const initialTime = ticket.createdAt?.toDate ? ticket.createdAt.toDate().toLocaleTimeString('pt-MZ', {hour: '2-digit', minute:'2-digit'}) : '';
+                // Mensagem inicial do ticket
+                const initialTime = ticket.createdAt?.toDate 
+                    ? ticket.createdAt.toDate().toLocaleTimeString('pt-MZ', {hour: '2-digit', minute:'2-digit'}) 
+                    : '';
+                    
                 historyEl.innerHTML += `
-                    <div class="flex flex-col msg-client max-w-[85%] p-3 text-sm shadow-md">
-                        <p class="whitespace-pre-wrap leading-relaxed">${escapeHTML(ticket.message || '')}</p>
-                        <span class="text-[9px] text-slate-400 self-end mt-1 opacity-70">${initialTime}</span>
+                    <div class="flex flex-col msg-client max-w-[85%] p-3 sm:p-4 text-sm shadow-md animate-fade-in">
+                        <p class="whitespace-pre-wrap leading-relaxed msg-content">${escapeHTML(ticket.message || '')}</p>
+                        <span class="msg-meta">${initialTime}</span>
                     </div>`;
 
+                // Mensagens subsequentes
                 snap.forEach(docMsg => {
                     const m = docMsg.data();
-                    const time = m.createdAt?.toDate ? m.createdAt.toDate().toLocaleTimeString('pt-MZ', {hour: '2-digit', minute:'2-digit'}) : '';
+                    const time = m.createdAt?.toDate 
+                        ? m.createdAt.toDate().toLocaleTimeString('pt-MZ', {hour: '2-digit', minute:'2-digit'}) 
+                        : '';
                     const isAdmin = m.sender === 'admin';
                     const cssClass = isAdmin ? 'msg-admin' : 'msg-client';
                     
+                    // Renderizar anexo se existir
                     let attachHtml = '';
                     if (m.attachmentUrl) {
                         const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(m.attachmentUrl);
-                        attachHtml = isImage 
-                            ? `<img src="${m.attachmentUrl}" alt="Anexo" class="max-w-full rounded-lg mt-2 border border-white/10" loading="lazy">`
-                            : `<a href="${m.attachmentUrl}" target="_blank" class="block mb-2 mt-1 px-3 py-2 bg-black/20 rounded-lg text-xs font-bold hover:bg-black/30 transition flex items-center gap-2"><i data-lucide="paperclip" class="w-3 h-3"></i> Ver Anexo</a>`;
+                        if (isImage) {
+                            attachHtml = `<img src="${m.attachmentUrl}" alt="Anexo" class="max-w-full rounded-lg mt-2 border border-white/10" loading="lazy" onerror="this.style.display='none'">`;
+                        } else {
+                            attachHtml = `<a href="${m.attachmentUrl}" target="_blank" rel="noopener noreferrer" class="block mb-2 mt-1 px-3 py-2 bg-black/20 rounded-lg text-xs font-bold hover:bg-black/30 transition flex items-center gap-2"><i data-lucide="paperclip" class="w-3 h-3"></i> Ver Anexo</a>`;
+                        }
                     }
 
                     historyEl.innerHTML += `
-                        <div class="flex flex-col ${cssClass} max-w-[85%] p-3 text-sm shadow-md">
+                        <div class="flex flex-col ${cssClass} max-w-[85%] p-3 sm:p-4 text-sm shadow-md animate-fade-in">
                             ${attachHtml}
-                            <p class="whitespace-pre-wrap leading-relaxed">${escapeHTML(m.text || '')}</p>
-                            <span class="text-[9px] ${isAdmin ? 'text-blue-200' : 'text-slate-400'} self-end mt-1 opacity-70">${time}</span>
+                            <p class="whitespace-pre-wrap leading-relaxed msg-content">${escapeHTML(m.text || '')}</p>
+                            <span class="msg-meta">${time}</span>
                         </div>`;
                 });
                 
+                // Atualizar ícones e scroll para o fim
                 if (typeof lucide !== 'undefined') lucide.createIcons({root: historyEl});
-                setTimeout(() => { if (historyEl) historyEl.scrollTop = historyEl.scrollHeight; }, 50);
+                setTimeout(() => { 
+                    if (historyEl) historyEl.scrollTop = historyEl.scrollHeight; 
+                }, 100);
             });
+            
+            // Scroll para mobile
+            if (window.innerWidth < 768) {
+                chatArea?.scrollIntoView({ behavior: 'smooth' });
+            }
         };
-
+        
         window.closeMobileChat = () => {
-            document.getElementById('chatArea')?.classList.add('hidden');
-            document.getElementById('chatArea')?.classList.remove('flex');
-            activeTicketId = null; renderTicketList();
+            const chatArea = document.getElementById('chatArea');
+            if (chatArea) {
+                chatArea.classList.add('hidden');
+                chatArea.classList.remove('flex');
+            }
+            activeTicketId = null;
+            renderTicketList();
         };
 
         // ==========================================
-        // 🟢 ATUALIZAR STATUS DO TICKET (+ NOTIFICAR CLIENTE)
+        // 🟢 ATUALIZAR STATUS DO TICKET
         // ==========================================
+        
         window.updateTicketStatus = async (newStatus) => {
-            if (!activeTicketId) return;
+            if (!activeTicketId || !isOnline) return;
+            
             const ticket = allTickets.find(t => t.id === activeTicketId);
             if (!ticket) return;
 
             try {
                 await updateDoc(doc(db, "support_tickets", activeTicketId), { 
-                    status: newStatus, updatedAt: serverTimestamp() 
+                    status: newStatus, 
+                    updatedAt: serverTimestamp() 
                 });
-                const statusText = newStatus === 'closed' ? 'Fechado' : newStatus === 'in_progress' ? 'Em Análise' : 'Pendente';
-                showToast(`Status atualizado: ${statusText}`, 'success');
+                
+                const statusText = {
+                    'closed': 'Fechado',
+                    'in_progress': 'Em Análise', 
+                    'open': 'Pendente'
+                }[newStatus] || newStatus;
+                
+                showToast(`Status atualizado: ${statusText}`, 'success', 2000);
 
-                // 🌟 A PONTE DE COMUNICAÇÃO: Notificar cliente da mudança
+                // Notificar cliente da mudança de status
                 if (ticket.userId) {
                     await addDoc(collection(db, "notifications"), {
                         userId: ticket.userId,
@@ -669,102 +1383,380 @@
                         message: `O seu ticket de suporte passou para o estado: ${statusText}.`,
                         type: "alert",
                         read: false,
-                        createdAt: serverTimestamp()
+                        createdAt: serverTimestamp(),
+                        ticketId: activeTicketId
                     });
                 }
-            } catch (e) { showToast("Erro ao atualizar status.", "error"); }
+                
+                // Atualizar lista local
+                const idx = allTickets.findIndex(t => t.id === activeTicketId);
+                if (idx !== -1) allTickets[idx].status = newStatus;
+                renderTicketList();
+                
+            } catch (e) { 
+                console.error("Erro ao atualizar status:", e);
+                showToast("Erro ao atualizar status.", "error"); 
+            }
         };
 
         // ==========================================
         // 📎 UPLOAD DE FICHEIRO
         // ==========================================
+        
         window.handleFileSelect = (e) => {
             selectedFile = e.target.files?.[0];
+            
             if (selectedFile) {
-                if (selectedFile.size > 10 * 1024 * 1024) {
-                    showToast('Ficheiro muito grande. Máximo 10MB.', 'warning');
-                    e.target.value = ''; selectedFile = null; return;
+                // Validar tipo e tamanho
+                const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
+                const maxSize = 10 * 1024 * 1024; // 10MB
+                
+                if (!allowedTypes.includes(selectedFile.type)) {
+                    showToast('Tipo de ficheiro não suportado.', 'warning');
+                    e.target.value = '';
+                    selectedFile = null;
+                    return;
                 }
+                
+                if (selectedFile.size > maxSize) {
+                    showToast('Ficheiro muito grande. Máximo 10MB.', 'warning');
+                    e.target.value = '';
+                    selectedFile = null;
+                    return;
+                }
+                
+                // Mostrar UI do ficheiro
                 document.getElementById('fileBadge')?.classList.remove('hidden');
                 document.getElementById('fileNameDisplay')?.classList.remove('hidden');
-                document.getElementById('fileNameDisplay').textContent = `📎 ${selectedFile.name}`;
+                document.getElementById('fileNameText').textContent = selectedFile.name;
+                
             } else {
-                document.getElementById('fileBadge')?.classList.add('hidden');
-                document.getElementById('fileNameDisplay')?.classList.add('hidden');
+                clearFile();
             }
+        };
+        
+        window.clearFile = () => {
+            selectedFile = null;
+            document.getElementById('fileUpload').value = '';
+            document.getElementById('fileBadge')?.classList.add('hidden');
+            document.getElementById('fileNameDisplay')?.classList.add('hidden');
         };
 
         // ==========================================
-        // 📤 ENVIAR RESPOSTA (+ NOTIFICAR CLIENTE)
+        // 📤 ENVIAR RESPOSTA
         // ==========================================
+        
         document.getElementById('replyForm')?.addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (!activeTicketId) return;
+            if (!activeTicketId || !isOnline) return;
 
             const ticket = allTickets.find(t => t.id === activeTicketId);
             if (!ticket) return;
 
             const input = document.getElementById('replyMessage');
             const text = input.value.trim();
-            if (!text && !selectedFile) return;
+            
+            if (!text && !selectedFile) {
+                showToast('Escreva uma mensagem ou anexe um ficheiro.', 'warning');
+                return;
+            }
 
             const btn = document.getElementById('btnSendReply');
             const originalBtn = btn.innerHTML;
-            btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>`; 
+            
+            // Loading state
+            btn.disabled = true; 
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>`; 
             if (typeof lucide !== 'undefined') lucide.createIcons({root: btn});
 
             try {
                 let attachmentUrl = null;
 
+                // Upload de ficheiro se existir
                 if (selectedFile) {
-                    const fileRef = ref(storage, `ticket_attachments/${activeTicketId}/${Date.now()}_${selectedFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`);
+                    const safeFileName = selectedFile.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+                    const fileRef = ref(storage, `ticket_attachments/${activeTicketId}/${Date.now()}_${safeFileName}`);
                     await uploadBytes(fileRef, selectedFile);
                     attachmentUrl = await getDownloadURL(fileRef);
                 }
 
-                // 1. Gravar Mensagem na Base de Dados
+                // 1. Gravar mensagem na subcoleção
                 await addDoc(collection(db, "support_tickets", activeTicketId, "messages"), {
-                    sender: 'admin', text: text, attachmentUrl: attachmentUrl,
-                    createdAt: serverTimestamp(), adminId: currentAdmin?.uid
+                    sender: 'admin', 
+                    text: text, 
+                    attachmentUrl: attachmentUrl,
+                    createdAt: serverTimestamp(), 
+                    adminId: currentAdmin?.uid,
+                    adminName: currentAdmin?.displayName || 'Admin'
                 });
 
-                // 2. Atualizar estado do ticket para Em Progresso (se o Admin respondeu, está ativo)
+                // 2. Atualizar metadata do ticket
                 await updateDoc(doc(db, "support_tickets", activeTicketId), {
-                    updatedAt: serverTimestamp(), status: document.getElementById('ticketStatusSelect').value
+                    updatedAt: serverTimestamp(),
+                    lastAdminReply: serverTimestamp()
                 });
 
-                // 🌟 A PONTE DE COMUNICAÇÃO: Disparar notificação para o Sino do Cliente
+                // 3. Notificar cliente
                 if (ticket.userId) {
                     await addDoc(collection(db, "notifications"), {
                         userId: ticket.userId,
                         title: "Nova Mensagem de Suporte 💬",
-                        message: "A Equipa PayGo respondeu ao seu ticket de suporte. Vá à central de mensagens para ler.",
-                        type: "message", // Aciona o sino normal no lado do cliente
+                        message: "A Equipa PayGo respondeu ao seu ticket de suporte.",
+                        type: "message",
                         read: false,
-                        createdAt: serverTimestamp()
+                        createdAt: serverTimestamp(),
+                        ticketId: activeTicketId
                     });
                 }
 
-                // Limpar campos
-                input.value = ''; input.style.height = ''; selectedFile = null;
-                document.getElementById('fileUpload').value = '';
-                document.getElementById('fileBadge')?.classList.add('hidden');
-                document.getElementById('fileNameDisplay')?.classList.add('hidden');
+                // Limpar form
+                input.value = ''; 
+                input.style.height = ''; 
+                clearFile();
 
-            } catch (err) { showToast("Erro ao enviar mensagem.", "error"); } 
-            finally { btn.disabled = false; btn.innerHTML = originalBtn; if (typeof lucide !== 'undefined') lucide.createIcons({root: btn}); }
+                // Focar input para próxima mensagem
+                input.focus();
+                
+            } catch (err) { 
+                console.error("Erro ao enviar:", err);
+                showToast("Erro ao enviar mensagem.", "error"); 
+            } finally { 
+                btn.disabled = false; 
+                btn.innerHTML = originalBtn; 
+                if (typeof lucide !== 'undefined') lucide.createIcons({root: btn}); 
+            }
+        });
+
+        // ==========================================
+        // 💬 FUNCIONALIDADES DO CHAT
+        // ==========================================
+        
+        // Respostas rápidas
+        window.insertQuickReply = (text) => {
+            const input = document.getElementById('replyMessage');
+            if (input) {
+                input.value = text;
+                input.style.height = '';
+                input.style.height = input.scrollHeight + 'px';
+                input.focus();
+            }
+        };
+        
+        // Emoji picker
+        window.toggleEmojiPicker = () => {
+            const picker = document.getElementById('emojiPicker');
+            const btn = document.querySelector('[aria-controls="emojiPicker"]');
+            
+            if (!picker) return;
+            
+            const isVisible = !picker.classList.contains('hidden');
+            
+            if (isVisible) {
+                picker.classList.add('hidden');
+                btn?.setAttribute('aria-expanded', 'false');
+            } else {
+                // Gerar emojis se não existir
+                if (!picker.querySelector('.emoji-btn')) {
+                    picker.innerHTML = EMOJIS.map(emoji => 
+                        `<button type="button" class="emoji-btn" onclick="window.insertEmoji('${emoji}')" aria-label="Inserir ${emoji}">${emoji}</button>`
+                    ).join('');
+                }
+                picker.classList.remove('hidden');
+                btn?.setAttribute('aria-expanded', 'true');
+            }
+        };
+        
+        window.insertEmoji = (emoji) => {
+            const input = document.getElementById('replyMessage');
+            if (input) {
+                const start = input.selectionStart;
+                const end = input.selectionEnd;
+                const value = input.value;
+                input.value = value.substring(0, start) + emoji + value.substring(end);
+                input.style.height = '';
+                input.style.height = input.scrollHeight + 'px';
+                input.focus();
+                input.setSelectionRange(start + emoji.length, start + emoji.length);
+            }
+            // Fechar picker após seleção
+            document.getElementById('emojiPicker')?.classList.add('hidden');
+        };
+        
+        // Fechar emoji picker ao clicar fora
+        document.addEventListener('click', (e) => {
+            const picker = document.getElementById('emojiPicker');
+            const btn = document.querySelector('[aria-controls="emojiPicker"]');
+            if (picker && !picker.classList.contains('hidden') && 
+                !picker.contains(e.target) && !btn?.contains(e.target)) {
+                picker.classList.add('hidden');
+                btn?.setAttribute('aria-expanded', 'false');
+            }
         });
 
         // ==========================================
         // ⌨️ ATALHOS DE TECLADO
         // ==========================================
+        
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') window.closeMobileChat();
-            if (e.key === 'Enter' && e.ctrlKey && !e.shiftKey) { e.preventDefault(); document.getElementById('replyForm')?.requestSubmit(); }
+            // Ctrl+K: Focar pesquisa
+            if (e.ctrlKey && e.key === 'k') {
+                e.preventDefault();
+                document.getElementById('searchInput')?.focus();
+            }
+            
+            // Ctrl+Enter: Enviar mensagem
+            if (e.ctrlKey && e.key === 'Enter' && !e.shiftKey) {
+                const activeEl = document.activeElement;
+                if (activeEl?.id === 'replyMessage') {
+                    e.preventDefault();
+                    document.getElementById('replyForm')?.requestSubmit();
+                }
+            }
+            
+            // Esc: Fechar modais/chat mobile
+            if (e.key === 'Escape') {
+                window.closeMobileChat();
+                window.closeShortcutsModal();
+                document.getElementById('emojiPicker')?.classList.add('hidden');
+            }
+            
+            // ?: Mostrar atalhos
+            if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                window.openShortcutsModal();
+            }
         });
+        
+        // Modal de atalhos
+        window.openShortcutsModal = () => {
+            const modal = document.getElementById('shortcutsModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                document.body.style.overflow = 'hidden';
+            }
+        };
+        
+        window.closeShortcutsModal = () => {
+            const modal = document.getElementById('shortcutsModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                document.body.style.overflow = '';
+            }
+        };
 
-        window.addEventListener('beforeunload', () => { if (unsubscribeMessages) unsubscribeMessages(); });
+        // ==========================================
+        // 🧹 BULK ACTIONS (Ações em massa)
+        // ==========================================
+        
+        window.bulkClose = async () => {
+            if (!confirm('Fechar todos os tickets abertos visíveis?')) return;
+            
+            const openTickets = allTickets.filter(t => t.status === 'open');
+            if (openTickets.length === 0) {
+                showToast('Nenhum ticket aberto para fechar.', 'info');
+                return;
+            }
+            
+            showToast(`A fechar ${openTickets.length} tickets...`, 'info', 2000);
+            
+            for (const ticket of openTickets) {
+                try {
+                    await updateDoc(doc(db, "support_tickets", ticket.id), {
+                        status: 'closed',
+                        updatedAt: serverTimestamp()
+                    });
+                    // Notificar cliente
+                    if (ticket.userId) {
+                        await addDoc(collection(db, "notifications"), {
+                            userId: ticket.userId,
+                            title: "Ticket Fechado ✅",
+                            message: "O seu ticket de suporte foi concluído.",
+                            type: "alert",
+                            read: false,
+                            createdAt: serverTimestamp()
+                        });
+                    }
+                } catch (e) {
+                    console.warn(`Erro ao fechar ticket ${ticket.id}:`, e);
+                }
+            }
+            
+            showToast('Tickets fechados com sucesso!', 'success');
+        };
+        
+        window.bulkAssign = async () => {
+            const openTickets = allTickets.filter(t => t.status === 'open' && !t.assignedTo);
+            if (openTickets.length === 0) {
+                showToast('Nenhum ticket não atribuído.', 'info');
+                return;
+            }
+            
+            for (const ticket of openTickets) {
+                try {
+                    await updateDoc(doc(db, "support_tickets", ticket.id), {
+                        assignedTo: currentAdmin?.uid,
+                        status: 'in_progress',
+                        updatedAt: serverTimestamp()
+                    });
+                } catch (e) {
+                    console.warn(`Erro ao atribuir ticket ${ticket.id}:`, e);
+                }
+            }
+            
+            showToast(`${openTickets.length} tickets atribuídos a si.`, 'success');
+            renderTicketList();
+        };
 
+        // ==========================================
+        // 🎯 INICIALIZAÇÃO
+        // ==========================================
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            // Iniciar auth
+            if (app && auth && db) {
+                initAuth();
+            } else {
+                showToast('Erro ao inicializar sistema.', 'error');
+            }
+            
+            // Atualizar ícones Lucide
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+            
+            // Prevenir paste de senhas em campos de mensagem
+            document.getElementById('replyMessage')?.addEventListener('paste', (e) => {
+                // Permitir paste normal para texto, mas logar para auditoria
+                console.log('Paste detectado no chat');
+            });
+        });
+        
+        // Cleanup on unload
+        window.addEventListener('beforeunload', () => {
+            if (unsubscribeMessages) unsubscribeMessages();
+            if (unsubscribeTickets) unsubscribeTickets();
+        });
+        
+        // Expor funções globais necessárias
+        window.selectTicket = selectTicket;
+        window.closeMobileChat = closeMobileChat;
+        window.updateTicketStatus = updateTicketStatus;
+        window.filterTickets = filterTickets;
+        window.renderTicketList = renderTicketList;
+        window.handleFileSelect = handleFileSelect;
+        window.clearFile = clearFile;
+        window.insertQuickReply = insertQuickReply;
+        window.toggleEmojiPicker = toggleEmojiPicker;
+        window.insertEmoji = insertEmoji;
+        window.openShortcutsModal = openShortcutsModal;
+        window.closeShortcutsModal = closeShortcutsModal;
+        window.bulkClose = bulkClose;
+        window.bulkAssign = bulkAssign;
+        window.loadMoreTickets = loadMoreTickets;
+        window.checkConnection = checkConnection;
+        
     </script>
 </body>
 </html>
