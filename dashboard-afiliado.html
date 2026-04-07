@@ -548,26 +548,32 @@
             });
         }
 
-        // 📊 LER REDE DE INDICADOS (OTIMIZADO COM FIRESTORE QUERY)
+// 📊 LER REDE DE INDICADOS (VIA VERCEL API) 🚀
         async function fetchReferralsAndCalculate() {
             const container = document.getElementById('referralsBody');
             const skeletonRow = `<tr><td class="px-8 py-5"><div class="skeleton h-4 w-24 rounded"></div></td><td class="px-8 py-5"><div class="skeleton h-4 w-32 rounded"></div></td><td class="px-8 py-5"><div class="skeleton h-6 w-20 mx-auto rounded-full"></div></td><td class="px-8 py-5 text-right"><div class="skeleton h-4 w-24 ml-auto rounded"></div></td></tr>`;
             container.innerHTML = skeletonRow + skeletonRow + skeletonRow;
 
             try {
-                // 🛑 CORREÇÃO: Usar a Firestore nativa para encontrar os referidos em vez da API (que não estava configurada)
-                const q = query(collection(db, "users"), where("referredBy", "==", currentUserData.affiliateCode));
-                const snap = await getDocs(q);
-                
-                rawReferralsList = [];
-                snap.forEach(doc => {
-                    rawReferralsList.push(doc.data());
+                // 🛑 A SOLUÇÃO: Chamar a API da Vercel (que tem a Chave Mestra) em vez do Firestore nativo
+                const response = await fetch('/api/get-referrals', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ affiliateCode: currentUserData.affiliateCode })
                 });
+
+                if(!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.error || "Acesso negado na API da Vercel");
+                }
+
+                const data = await response.json();
+                rawReferralsList = data.referrals || [];
 
                 // Ordenar do mais recente para o mais antigo
                 rawReferralsList.sort((a,b) => {
-                    const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : 0;
-                    const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : 0;
+                    const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                    const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
                     return dateB - dateA;
                 });
 
@@ -575,7 +581,7 @@
                 const vendasFeitas = currentUserData.approvedReferrals || 0;
                 const saldoDisponivel = currentUserData.affiliateEarnings || 0;
 
-                // UI Updates (Remover Skeletons)
+                // UI Updates
                 const tierBadge = document.getElementById('tierBadge');
                 if (vendasFeitas >= 10) {
                     tierBadge.textContent = "TIER: PRO 5%";
@@ -616,7 +622,7 @@
                         ? `<span class="text-success-600 dark:text-success-400 font-black"><i data-lucide="check" class="w-4 h-4 inline pb-0.5"></i> Venda Concluída</span>`
                         : `<span class="text-slate-400 text-xs italic">Aguardando 1ª Compra</span>`;
                     
-                    const dStr = invitedUser.createdAt?.toDate ? invitedUser.createdAt.toDate().toLocaleDateString('pt-MZ') : 'N/A';
+                    const dStr = invitedUser.createdAt ? new Date(invitedUser.createdAt).toLocaleDateString('pt-MZ') : 'N/A';
                     
                     const row = document.createElement('tr');
                     row.className = "hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors";
@@ -633,7 +639,7 @@
                 lucide.createIcons();
             } catch (err) {
                 console.error("Erro ao ler indicados:", err);
-                container.innerHTML = `<tr><td colspan="4" class="px-8 py-6 text-center text-danger-500 font-bold">Falha ao ler a base de dados de rede.</td></tr>`;
+                container.innerHTML = `<tr><td colspan="4" class="px-8 py-6 text-center text-danger-500 font-bold">Falha ao ler a base de dados de rede: ${err.message}</td></tr>`;
             }
         }
 
