@@ -606,11 +606,12 @@
             } catch(e) { window.showToast('Erro ao atualizar a base de dados.', 'error'); await window.loadAllData(); }
         };
 
-        // ==========================================
-        // 2. GESTÃO DE CANDIDATURAS PENDENTES
+// ==========================================
+        // 2. GESTÃO DE CANDIDATURAS PENDENTES (CORRIGIDO)
         // ==========================================
         async function loadPendingAffiliates() {
             try {
+                // Vai buscar todos os utilizadores que estão com status pendente de aprovação
                 const q = query(collection(db, "users"), where("status", "==", "pending"), limit(50));
                 const snap = await getDocs(q);
                 let html = '';
@@ -618,30 +619,28 @@
 
                 snap.forEach(d => { 
                     const u = d.data();
-                    if(u.role === 'affiliate' || u.affiliateCode) {
-                        count++;
-                        
-                        // Gerar Iniciais para Avatar
-                        const initials = (u.name || 'D').substring(0, 2).toUpperCase();
-                        
-                        html += `
-                        <tr class="hover:bg-slate-800/40 transition">
-                            <td class="py-4 px-4">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center font-bold text-white border border-white/10 shadow-inner">${initials}</div>
-                                    <div>
-                                        <div class="font-bold text-white text-sm">${escapeHTML(u.name || 'Desconhecido')}</div>
-                                        <div class="text-xs text-slate-400 mt-0.5">${escapeHTML(u.email)}</div>
-                                    </div>
+                    count++; // 🛑 CORREÇÃO: Removemos o IF bloqueante. Se está 'pending', entra na lista.
+                    
+                    // Gerar Iniciais para Avatar
+                    const initials = (u.name || 'U').substring(0, 2).toUpperCase();
+                    
+                    html += `
+                    <tr class="hover:bg-slate-800/40 transition">
+                        <td class="py-4 px-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center font-bold text-white border border-white/10 shadow-inner">${initials}</div>
+                                <div>
+                                    <div class="font-bold text-white text-sm">${escapeHTML(u.name || 'Desconhecido')}</div>
+                                    <div class="text-xs text-slate-400 mt-0.5">${escapeHTML(u.email)}</div>
                                 </div>
-                            </td>
-                            <td class="py-4 px-4 text-xs font-bold text-slate-400 uppercase tracking-widest"><i data-lucide="calendar" class="w-3 h-3 inline mr-1 opacity-50"></i> ${u.createdAt?.toDate ? u.createdAt.toDate().toLocaleDateString('pt-MZ') : '-'}</td>
-                            <td class="py-4 px-4 text-right whitespace-nowrap">
-                                <button id="btn-apr-${d.id}" onclick="window.decideAffiliate('${d.id}', '${u.email}', '${escapeHTML(u.name)}', true)" class="btn-action btn-approve mr-2"><i data-lucide="check" class="w-4 h-4"></i> Aprovar</button>
-                                <button id="btn-rej-${d.id}" onclick="window.decideAffiliate('${d.id}', '${u.email}', '${escapeHTML(u.name)}', false)" class="btn-action btn-reject"><i data-lucide="x" class="w-4 h-4"></i> Rejeitar</button>
-                            </td>
-                        </tr>`;
-                    }
+                            </div>
+                        </td>
+                        <td class="py-4 px-4 text-xs font-bold text-slate-400 uppercase tracking-widest"><i data-lucide="calendar" class="w-3 h-3 inline mr-1 opacity-50"></i> ${u.createdAt?.toDate ? u.createdAt.toDate().toLocaleDateString('pt-MZ') : '-'}</td>
+                        <td class="py-4 px-4 text-right whitespace-nowrap">
+                            <button id="btn-apr-${d.id}" onclick="window.decideAffiliate('${d.id}', '${u.email}', '${escapeHTML(u.name)}', true)" class="btn-action btn-approve mr-2"><i data-lucide="check" class="w-4 h-4"></i> Aprovar</button>
+                            <button id="btn-rej-${d.id}" onclick="window.decideAffiliate('${d.id}', '${u.email}', '${escapeHTML(u.name)}', false)" class="btn-action btn-reject"><i data-lucide="x" class="w-4 h-4"></i> Rejeitar</button>
+                        </td>
+                    </tr>`;
                 });
 
                 if(count === 0) {
