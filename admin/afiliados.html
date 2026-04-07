@@ -87,7 +87,6 @@
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #475569; }
 
-        /* Scrollbar custom para modais */
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
 
@@ -116,7 +115,7 @@
     <div id="toastContainer"></div>
 
     <div id="confirmModal" class="fixed inset-0 z-[9999] hidden items-center justify-center backdrop-blur-sm bg-slate-950/80 opacity-0 transition-opacity duration-300 p-4">
-        <div class="bg-slate-900 border border-white/10 p-6 md:p-8 rounded-[2rem] shadow-2xl max-w-md w-full transform scale-95 transition-transform duration-300" id="confirmModalContent">
+        <div class="bg-slate-900 border border-white/10 p-6 md:p-8 rounded-[2rem] shadow-2xl max-w-md w-full mx-4 transform scale-95 transition-transform duration-300" id="confirmModalContent">
             <div class="flex items-center justify-center w-16 h-16 rounded-2xl mb-6 mx-auto" id="confirmModalIconContainer">
                 <i data-lucide="alert-triangle" class="w-8 h-8" id="confirmModalIcon"></i>
             </div>
@@ -449,19 +448,17 @@
             }, 300);
         };
 
-       // 👁️ ABRIR FICHA DE CANDIDATO (MODAL ATUALIZADO COM OS TEUS CAMPOS)
+        // 👁️ ABRIR FICHA DE CANDIDATO (MODAL ATUALIZADO)
         window.showCandidateDetails = (id) => {
             const u = window.pendingUsersData[id];
             if(!u) return;
 
-            // Mapeamento exato dos teus campos da Firebase
             const phone = escapeHTML(u.phone || 'Não fornecido');
             const motivation = escapeHTML(u.whyAffiliate || 'O candidato não detalhou a sua motivação.');
             const promoMethod = escapeHTML(u.promoMethod || 'N/A');
             const expectedRef = escapeHTML(u.expectedReferrals || 'N/A');
             const socialLinks = escapeHTML(u.socialMediaLinks || 'Sem links fornecidos');
 
-            // Renderizar links de forma segura (se for um URL, torna-o clicável)
             const linkHtml = socialLinks.startsWith('http') 
                 ? `<a href="${socialLinks}" target="_blank" class="text-brand-400 hover:text-brand-300 hover:underline break-all"><i data-lucide="external-link" class="w-3 h-3 inline mr-1"></i>${socialLinks}</a>`
                 : `<span class="text-slate-300">${socialLinks}</span>`;
@@ -705,11 +702,12 @@
         };
 
         // ==========================================
-        // 2. GESTÃO DE CANDIDATURAS PENDENTES
+        // 2. GESTÃO DE CANDIDATURAS PENDENTES (🚨 A CORREÇÃO MÁGICA 🚨)
         // ==========================================
         async function loadPendingAffiliates() {
             try {
-                const q = query(collection(db, "users"), where("status", "==", "pending"), limit(50));
+                // 🛑 A PESQUISA ESTAVA ERRADA! Passa a ser "affiliateStatus" em vez de "status"
+                const q = query(collection(db, "users"), where("affiliateStatus", "==", "pending"), limit(50));
                 const snap = await getDocs(q);
                 let html = '';
                 let count = 0;
@@ -758,7 +756,8 @@
 
             try {
                 await updateDoc(doc(db, "users", id), {
-                    status: 'active',
+                    status: 'active', // Mantém a conta como utilizador ativo da plataforma
+                    affiliateStatus: isApproved ? 'approved' : 'rejected', // 🛑 ESTADO CERTO! Remove dos pendentes.
                     role: isApproved ? 'affiliate' : 'user',
                     affiliateCodeActive: isApproved,
                     updatedAt: serverTimestamp()
@@ -789,7 +788,7 @@
 
                 snap.forEach(d => {
                     const u = d.data();
-                    if(u.status === 'pending') return;
+                    if(u.affiliateStatus === 'pending') return; // Segurança extra
                     
                     if(u.status === 'active') activeCount++;
                     globalEarnings += (Number(u.affiliateEarnings) || 0);
@@ -889,6 +888,7 @@
                 await updateDoc(doc(db, "users", id), {
                     role: 'user',
                     status: 'active', // Fica como cliente ativo
+                    affiliateStatus: null, // Limpa o rasto
                     affiliateCodeActive: false,
                     updatedAt: serverTimestamp()
                 });
