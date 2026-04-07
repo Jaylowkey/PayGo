@@ -87,6 +87,10 @@
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #475569; }
 
+        /* Scrollbar custom para modais */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
+
         #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
         .toast-item { pointer-events: auto; display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-radius: 14px; color: white; font-weight: 600; font-size: 14px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); transform: translateX(120%); transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); border-left: 4px solid; background: rgba(15,23,42,0.95); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); }
         .toast-item.show { transform: translateX(0); }
@@ -111,8 +115,8 @@
 
     <div id="toastContainer"></div>
 
-    <div id="confirmModal" class="fixed inset-0 z-[9999] hidden items-center justify-center backdrop-blur-sm bg-slate-950/80 opacity-0 transition-opacity duration-300">
-        <div class="bg-slate-900 border border-white/10 p-6 md:p-8 rounded-[2rem] shadow-2xl max-w-md w-full mx-4 transform scale-95 transition-transform duration-300" id="confirmModalContent">
+    <div id="confirmModal" class="fixed inset-0 z-[9999] hidden items-center justify-center backdrop-blur-sm bg-slate-950/80 opacity-0 transition-opacity duration-300 p-4">
+        <div class="bg-slate-900 border border-white/10 p-6 md:p-8 rounded-[2rem] shadow-2xl max-w-md w-full transform scale-95 transition-transform duration-300" id="confirmModalContent">
             <div class="flex items-center justify-center w-16 h-16 rounded-2xl mb-6 mx-auto" id="confirmModalIconContainer">
                 <i data-lucide="alert-triangle" class="w-8 h-8" id="confirmModalIcon"></i>
             </div>
@@ -122,6 +126,21 @@
                 <button onclick="window.closeConfirmModal(false)" class="flex-1 px-4 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-colors text-sm">Cancelar</button>
                 <button id="confirmModalBtn" onclick="window.closeConfirmModal(true)" class="flex-1 px-4 py-3 text-white rounded-xl font-bold transition-colors shadow-lg text-sm flex items-center justify-center gap-2">Confirmar</button>
             </div>
+        </div>
+    </div>
+
+    <div id="detailsModal" class="fixed inset-0 z-[10000] hidden items-center justify-center backdrop-blur-sm bg-slate-950/80 opacity-0 transition-opacity duration-300 p-4">
+        <div class="bg-slate-900 border border-white/10 p-6 md:p-8 rounded-[2rem] shadow-2xl max-w-lg w-full transform scale-95 transition-transform duration-300" id="detailsModalContent">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-display font-bold text-white flex items-center gap-2"><i data-lucide="file-search" class="w-6 h-6 text-brand-400"></i> Análise de Candidato</h3>
+                <button onclick="window.closeDetailsModal()" class="text-slate-400 hover:text-white transition-colors bg-white/5 p-2 rounded-lg"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            
+            <div id="detailsModalBody" class="space-y-3 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                </div>
+            
+            <div class="mt-6 pt-6 border-t border-white/10 flex gap-3 w-full" id="detailsModalActions">
+                </div>
         </div>
     </div>
 
@@ -284,11 +303,11 @@
                             <tr>
                                 <th class="px-6 py-4 font-bold">Nome / Email</th>
                                 <th class="px-6 py-4 font-bold">Data de Registo</th>
-                                <th class="px-6 py-4 font-bold text-right">Decisão</th>
+                                <th class="px-6 py-4 font-bold text-right">Análise & Decisão</th>
                             </tr>
                         </thead>
                         <tbody id="pendingTableBody" class="divide-y divide-white/5 bg-slate-900/30">
-                           <tr><td class="py-6 px-6"><div class="skeleton-text w-32 h-4 mb-2"></div><br><div class="skeleton-text w-48 h-3"></div></td><td><div class="skeleton-text w-20 h-4"></div></td><td class="text-right"><div class="skeleton-text w-40 h-8"></div></td></tr>
+                           <tr><td class="py-6 px-6"><div class="skeleton-text w-32 h-4 mb-2"></div><br><div class="skeleton-text w-48 h-3"></div></td><td><div class="skeleton-text w-20 h-4"></div></td><td class="text-right"><div class="skeleton-text w-32 h-8"></div></td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -344,7 +363,8 @@
         const db = getFirestore(app, "paygodb");
 
         let loggedInAdminId = null;
-        let resolveConfirm = null; // Para o Modal de Confirmação customizado
+        let resolveConfirm = null; 
+        window.pendingUsersData = {}; // Cache para o Modal de Ficha
 
         // 🛡️ UTILITÁRIOS DE SEGURANÇA E FORMATAÇÃO
         const escapeHTML = (str) => {
@@ -375,7 +395,7 @@
             setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 4000);
         };
 
-        // 🛑 MODAL DE CONFIRMAÇÃO CUSTOMIZADO (Substitui window.confirm)
+        // 🛑 MODAL DE CONFIRMAÇÃO CUSTOMIZADO
         window.confirmAction = (title, message, confirmText = 'Confirmar', type = 'warning') => {
             return new Promise((resolve) => {
                 const modal = document.getElementById('confirmModal');
@@ -388,7 +408,6 @@
                 document.getElementById('confirmModalMessage').textContent = message;
                 btn.textContent = confirmText;
                 
-                // Estilização baseada no tipo de ação
                 if(type === 'danger') {
                     btn.className = 'flex-1 px-4 py-3 bg-danger-600 hover:bg-danger-500 text-white rounded-xl font-bold transition-colors shadow-[0_0_15px_rgba(239,68,68,0.3)] text-sm';
                     iconContainer.className = 'flex items-center justify-center w-16 h-16 rounded-2xl mb-6 mx-auto bg-danger-500/20 border border-danger-500/30 text-danger-500';
@@ -408,7 +427,6 @@
                 resolveConfirm = resolve;
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
-                // Pequeno delay para a animação CSS pegar
                 setTimeout(() => {
                     modal.classList.remove('opacity-0');
                     content.classList.remove('scale-95');
@@ -419,10 +437,8 @@
         window.closeConfirmModal = (result) => {
             const modal = document.getElementById('confirmModal');
             const content = document.getElementById('confirmModalContent');
-            
             modal.classList.add('opacity-0');
             content.classList.add('scale-95');
-            
             setTimeout(() => {
                 modal.classList.add('hidden');
                 modal.classList.remove('flex');
@@ -430,6 +446,61 @@
                     resolveConfirm(result);
                     resolveConfirm = null;
                 }
+            }, 300);
+        };
+
+        // 👁️ ABRIR FICHA DE CANDIDATO (MODAL)
+        window.showCandidateDetails = (id) => {
+            const u = window.pendingUsersData[id];
+            if(!u) return;
+
+            const phone = escapeHTML(u.phone || 'Não fornecido no registo');
+            const motivation = escapeHTML(u.motivation || u.message || u.strategy || 'O candidato não forneceu detalhes adicionais sobre a sua estratégia promocional.');
+
+            const html = `
+                <div class="bg-slate-800/50 p-4 rounded-xl border border-white/5">
+                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2">Dados de Contacto</p>
+                    <p class="text-white font-medium mb-1"><i data-lucide="user" class="w-4 h-4 inline mr-2 text-slate-400"></i> ${escapeHTML(u.name || 'N/A')}</p>
+                    <p class="text-white font-medium mb-1"><i data-lucide="mail" class="w-4 h-4 inline mr-2 text-slate-400"></i> ${escapeHTML(u.email || 'N/A')}</p>
+                    <p class="text-brand-400 font-mono text-sm mt-2"><i data-lucide="phone" class="w-4 h-4 inline mr-2 text-brand-400"></i> ${phone}</p>
+                </div>
+                <div class="bg-slate-800/50 p-4 rounded-xl border border-white/5 mt-3">
+                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-3">Estratégia / Motivação</p>
+                    <p class="text-slate-300 text-sm leading-relaxed border-l-2 border-brand-500 pl-3 italic">"${motivation}"</p>
+                </div>
+            `;
+
+            document.getElementById('detailsModalBody').innerHTML = html;
+            
+            document.getElementById('detailsModalActions').innerHTML = `
+                <button onclick="window.closeDetailsModal()" class="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-colors text-sm">Fechar</button>
+                <div class="flex gap-3 ml-auto">
+                    <button onclick="window.closeDetailsModal(); window.decideAffiliate('${id}', '${u.email}', '${escapeHTML(u.name)}', false)" class="px-4 py-3 bg-danger-500/10 hover:bg-danger-500 border border-danger-500/30 text-danger-400 hover:text-white rounded-xl font-bold transition-colors text-sm"><i data-lucide="x" class="w-4 h-4 inline mr-1"></i> Rejeitar</button>
+                    <button onclick="window.closeDetailsModal(); window.decideAffiliate('${id}', '${u.email}', '${escapeHTML(u.name)}', true)" class="px-4 py-3 bg-success-600 hover:bg-success-500 text-white rounded-xl font-bold transition-colors shadow-[0_0_15px_rgba(34,197,94,0.3)] text-sm"><i data-lucide="check" class="w-4 h-4 inline mr-1"></i> Aprovar Parceiro</button>
+                </div>
+            `;
+
+            const modal = document.getElementById('detailsModal');
+            const content = document.getElementById('detailsModalContent');
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+            }, 10);
+            
+            if(typeof lucide !== 'undefined') lucide.createIcons({root: modal});
+        };
+
+        window.closeDetailsModal = () => {
+            const modal = document.getElementById('detailsModal');
+            const content = document.getElementById('detailsModalContent');
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
             }, 300);
         };
 
@@ -513,11 +584,10 @@
                     });
                 }
                 if (userEmail) {
-                    // Substituir fetch com o endpoint correto do backend para envio de emails, ou manter o catch para não quebrar.
                     fetch('/api/send-email', {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ to: userEmail, subject: subject, template: type, type: 'transactional', variables: { message: message } })
-                    }).catch(e => console.log("Nota: Endpoint de Email local não configurado. Notificação in-app salva."));
+                    }).catch(e => console.log("Nota: Endpoint de Email local offline."));
                 }
             } catch (error) { console.error("Falha ao notificar:", error); }
         }
@@ -535,7 +605,6 @@
         // ==========================================
         async function loadWithdrawals() {
             try {
-                // Adicionado Limit(50) para proteção de custos Firestore
                 const q = query(collection(db, "withdrawals"), where("status", "==", "pending"), limit(50));
                 const snap = await getDocs(q);
                 let pendingCount = 0;
@@ -571,7 +640,7 @@
                 } else {
                     setSafeHTML('withdrawalsTableBody', html);
                 }
-            } catch(e) { window.showToast('Erro ao carregar saques. Verifique índices do Firestore.', 'error'); }
+            } catch(e) { window.showToast('Erro ao carregar saques.', 'error'); }
         }
 
         window.processWithdrawal = async function(id, userId, amount, isApproved) {
@@ -583,7 +652,7 @@
             if(!confirmed) return;
             
             const btn = document.getElementById(isApproved ? `btn-pay-${id}` : `btn-rej-wd-${id}`);
-            if(btn) { btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A processar...`; }
+            if(btn) { btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> ...`; }
 
             try {
                 const userDoc = await getDoc(doc(db, "users", userId));
@@ -606,22 +675,22 @@
             } catch(e) { window.showToast('Erro ao atualizar a base de dados.', 'error'); await window.loadAllData(); }
         };
 
-// ==========================================
-        // 2. GESTÃO DE CANDIDATURAS PENDENTES (CORRIGIDO)
+        // ==========================================
+        // 2. GESTÃO DE CANDIDATURAS PENDENTES
         // ==========================================
         async function loadPendingAffiliates() {
             try {
-                // Vai buscar todos os utilizadores que estão com status pendente de aprovação
                 const q = query(collection(db, "users"), where("status", "==", "pending"), limit(50));
                 const snap = await getDocs(q);
                 let html = '';
                 let count = 0;
+                window.pendingUsersData = {}; // Reset da cache
 
                 snap.forEach(d => { 
                     const u = d.data();
-                    count++; // 🛑 CORREÇÃO: Removemos o IF bloqueante. Se está 'pending', entra na lista.
+                    count++;
+                    window.pendingUsersData[d.id] = u;
                     
-                    // Gerar Iniciais para Avatar
                     const initials = (u.name || 'U').substring(0, 2).toUpperCase();
                     
                     html += `
@@ -637,8 +706,7 @@
                         </td>
                         <td class="py-4 px-4 text-xs font-bold text-slate-400 uppercase tracking-widest"><i data-lucide="calendar" class="w-3 h-3 inline mr-1 opacity-50"></i> ${u.createdAt?.toDate ? u.createdAt.toDate().toLocaleDateString('pt-MZ') : '-'}</td>
                         <td class="py-4 px-4 text-right whitespace-nowrap">
-                            <button id="btn-apr-${d.id}" onclick="window.decideAffiliate('${d.id}', '${u.email}', '${escapeHTML(u.name)}', true)" class="btn-action btn-approve mr-2"><i data-lucide="check" class="w-4 h-4"></i> Aprovar</button>
-                            <button id="btn-rej-${d.id}" onclick="window.decideAffiliate('${d.id}', '${u.email}', '${escapeHTML(u.name)}', false)" class="btn-action btn-reject"><i data-lucide="x" class="w-4 h-4"></i> Rejeitar</button>
+                            <button onclick="window.showCandidateDetails('${d.id}')" class="btn-action bg-slate-800 hover:bg-brand-600 text-white border border-white/10 transition-all"><i data-lucide="eye" class="w-4 h-4"></i> Analisar Ficha</button>
                         </td>
                     </tr>`;
                 });
@@ -658,11 +726,6 @@
             
             const confirmed = await window.confirmAction(title, msg, isApproved ? 'Sim, Aprovar' : 'Sim, Rejeitar', type);
             if(!confirmed) return;
-            
-            const btnA = document.getElementById(`btn-apr-${id}`);
-            const btnR = document.getElementById(`btn-rej-${id}`);
-            if(btnA) { btnA.disabled = true; btnA.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>`; }
-            if(btnR) { btnR.disabled = true; btnR.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>`; }
 
             try {
                 await updateDoc(doc(db, "users", id), {
@@ -689,7 +752,7 @@
         // ==========================================
         async function loadAllAffiliates() {
             try {
-                const q = query(collection(db, "users"), where("role", "==", "affiliate"), limit(200)); // Proteção de limit para evitar pulls gigantescos
+                const q = query(collection(db, "users"), where("role", "==", "affiliate"), limit(200)); 
                 const snap = await getDocs(q);
                 let html = '';
                 let activeCount = 0;
