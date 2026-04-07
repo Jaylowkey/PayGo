@@ -449,13 +449,22 @@
             }, 300);
         };
 
-        // 👁️ ABRIR FICHA DE CANDIDATO (MODAL)
+       // 👁️ ABRIR FICHA DE CANDIDATO (MODAL ATUALIZADO COM OS TEUS CAMPOS)
         window.showCandidateDetails = (id) => {
             const u = window.pendingUsersData[id];
             if(!u) return;
 
-            const phone = escapeHTML(u.phone || 'Não fornecido no registo');
-            const motivation = escapeHTML(u.motivation || u.message || u.strategy || 'O candidato não forneceu detalhes adicionais sobre a sua estratégia promocional.');
+            // Mapeamento exato dos teus campos da Firebase
+            const phone = escapeHTML(u.phone || 'Não fornecido');
+            const motivation = escapeHTML(u.whyAffiliate || 'O candidato não detalhou a sua motivação.');
+            const promoMethod = escapeHTML(u.promoMethod || 'N/A');
+            const expectedRef = escapeHTML(u.expectedReferrals || 'N/A');
+            const socialLinks = escapeHTML(u.socialMediaLinks || 'Sem links fornecidos');
+
+            // Renderizar links de forma segura (se for um URL, torna-o clicável)
+            const linkHtml = socialLinks.startsWith('http') 
+                ? `<a href="${socialLinks}" target="_blank" class="text-brand-400 hover:text-brand-300 hover:underline break-all"><i data-lucide="external-link" class="w-3 h-3 inline mr-1"></i>${socialLinks}</a>`
+                : `<span class="text-slate-300">${socialLinks}</span>`;
 
             const html = `
                 <div class="bg-slate-800/50 p-4 rounded-xl border border-white/5">
@@ -464,8 +473,28 @@
                     <p class="text-white font-medium mb-1"><i data-lucide="mail" class="w-4 h-4 inline mr-2 text-slate-400"></i> ${escapeHTML(u.email || 'N/A')}</p>
                     <p class="text-brand-400 font-mono text-sm mt-2"><i data-lucide="phone" class="w-4 h-4 inline mr-2 text-brand-400"></i> ${phone}</p>
                 </div>
+
+                <div class="bg-slate-800/50 p-4 rounded-xl border border-white/5 mt-3 space-y-3">
+                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Estratégia de Vendas</p>
+                    
+                    <div class="flex justify-between items-center border-b border-white/5 pb-2">
+                        <span class="text-xs text-slate-400">Canal Principal:</span>
+                        <span class="bg-slate-900 border border-white/10 text-white text-xs px-2 py-1 rounded font-mono uppercase">${promoMethod}</span>
+                    </div>
+                    
+                    <div class="flex justify-between items-center border-b border-white/5 pb-2">
+                        <span class="text-xs text-slate-400">Estimativa (Mês):</span>
+                        <span class="text-sm font-bold text-success-400">${expectedRef} indicações</span>
+                    </div>
+
+                    <div>
+                        <span class="text-xs text-slate-400 block mb-1">Link / Redes Sociais:</span>
+                        <div class="text-sm bg-slate-900/50 p-2 rounded border border-white/5">${linkHtml}</div>
+                    </div>
+                </div>
+
                 <div class="bg-slate-800/50 p-4 rounded-xl border border-white/5 mt-3">
-                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-3">Estratégia / Motivação</p>
+                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-3">Motivação ("Porquê ser parceiro?")</p>
                     <p class="text-slate-300 text-sm leading-relaxed border-l-2 border-brand-500 pl-3 italic">"${motivation}"</p>
                 </div>
             `;
