@@ -58,6 +58,26 @@ app.get("/api/health", (req, res) => res.json({ status: "PayGo Master API Online
 // 🔴 1. DELETE USER
 app.post("/api/delete-user", async (req, res) => {
     try {
+        // 🟤 6. PAYSUITE PAYMENT (Criar checkout)
+app.post("/api/paysuite-payment", async (req, res) => {
+    try {
+        // 🔴 KILL SWITCH MANUAL (BOTÃO DE PÂNICO)
+        // Muda para 'true' quando a PaySuite resolver o problema dos Payouts.
+        const PAYSUITE_ACTIVA = false; 
+
+        if (!PAYSUITE_ACTIVA) {
+            return res.status(503).json({ 
+                success: false, 
+                error: "⚠️ Os nossos pagamentos automáticos estão temporariamente em manutenção. Por favor, contacte o suporte via WhatsApp para pagar por transferência." 
+            });
+        }
+        // --------------------------------------------------------
+
+        const { orderId, amount, method, description } = req.body;
+        if (!orderId || !amount || !method) return res.status(400).json({ success: false, error: 'Faltam dados.' });
+        if (isNaN(amount) || amount < 1) return res.status(400).json({ success: false, error: 'Mínimo 1 MT' });
+
+        //...
         const { uid } = req.body;
         if (!uid) return res.status(400).json({ error: 'UID não fornecido' });
         try { await auth.deleteUser(uid); } catch (e) { console.warn('User não estava no Auth'); }
