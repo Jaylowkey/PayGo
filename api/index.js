@@ -49,35 +49,14 @@ const db = getFirestore("paygodb");
 const auth = getAuth();
 
 // ==========================================
-// 2. ROTAS DA PLATAFORMA (O TEU NOVO MEGAZORD)
+// 2. ROTAS DA PLATAFORMA (MEGAZORD)
 // ==========================================
 
-// Rota de Teste de Saúde
 app.get("/api/health", (req, res) => res.json({ status: "PayGo Master API Online 🚀" }));
 
 // 🔴 1. DELETE USER
 app.post("/api/delete-user", async (req, res) => {
     try {
-        // 🟤 6. PAYSUITE PAYMENT (Criar checkout)
-app.post("/api/paysuite-payment", async (req, res) => {
-    try {
-        // 🔴 KILL SWITCH MANUAL (BOTÃO DE PÂNICO)
-        // Muda para 'true' quando a PaySuite resolver o problema dos Payouts.
-        const PAYSUITE_ACTIVA = false; 
-
-        if (!PAYSUITE_ACTIVA) {
-            return res.status(503).json({ 
-                success: false, 
-                error: "⚠️ Os nossos pagamentos automáticos estão temporariamente em manutenção. Por favor, contacte o suporte via WhatsApp para pagar por transferência." 
-            });
-        }
-        // --------------------------------------------------------
-
-        const { orderId, amount, method, description } = req.body;
-        if (!orderId || !amount || !method) return res.status(400).json({ success: false, error: 'Faltam dados.' });
-        if (isNaN(amount) || amount < 1) return res.status(400).json({ success: false, error: 'Mínimo 1 MT' });
-
-        //...
         const { uid } = req.body;
         if (!uid) return res.status(400).json({ error: 'UID não fornecido' });
         try { await auth.deleteUser(uid); } catch (e) { console.warn('User não estava no Auth'); }
@@ -154,17 +133,10 @@ app.post("/api/notify-order", async (req, res) => {
         const body = req.body;
         const LARK_WEBHOOK_URL = process.env.LARK_WEBHOOK_URL;
 
-        // Formato Lark Interno
         if (body.type && body.data) {
-            // Lógica antiga do notify-order para notificações do sistema Lark
-            const { type, data } = body;
-            if (!LARK_WEBHOOK_URL) return res.status(500).json({ error: 'LARK não configurado' });
-            
-            // ... (Omiti o switch do Lark gigante aqui para não exceder limites de texto, mas a lógica de envio Lark está garantida no send-email abaixo que cobre os alertas)
-            return res.status(200).json({ success: true, message: "Use a rota /api/send-email para notificações." });
+            return res.status(200).json({ success: true, message: "Use a rota /api/send-email para notificações Lark antigas." });
         }
 
-        // Formato Cliente Dinâmico (Notificações de Pedido)
         const { orderData, sendEmail = true, sendLark = true, action = 'new_order', reason, extraAmount, mediaUrl } = body;
         if (!orderData) return res.status(400).json({ error: 'Payload não reconhecido.' });
 
@@ -239,6 +211,18 @@ app.post("/api/p2p-transfer", async (req, res) => {
 // 🟤 6. PAYSUITE PAYMENT (Criar checkout)
 app.post("/api/paysuite-payment", async (req, res) => {
     try {
+        // 🔴 KILL SWITCH MANUAL (BOTÃO DE PÂNICO)
+        // Muda para 'true' quando a PaySuite resolver o problema dos Payouts.
+        const PAYSUITE_ACTIVA = false; 
+
+        if (!PAYSUITE_ACTIVA) {
+            return res.status(503).json({ 
+                success: false, 
+                error: "⚠️ Os pagamentos automáticos estão temporariamente em manutenção preventiva. Por favor, escolha a opção de pagamento manual ou contacte o suporte." 
+            });
+        }
+        // --------------------------------------------------------
+
         const { orderId, amount, method, description } = req.body;
         if (!orderId || !amount || !method) return res.status(400).json({ success: false, error: 'Faltam dados.' });
         if (isNaN(amount) || amount < 1) return res.status(400).json({ success: false, error: 'Mínimo 1 MT' });
@@ -348,7 +332,6 @@ app.post("/api/send-email", async (req, res) => {
         
         // Disparar para o Lark se necessário
         if (sendLark && process.env.LARK_WEBHOOK_URL) {
-            // Lógica Lark simplificada para caber no monolito
             await fetch(process.env.LARK_WEBHOOK_URL, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ msg_type: "text", content: { text: `Alerta: ${template} para ${to}` } })
@@ -415,7 +398,7 @@ function getWhatsAppLink(orderId, name, total, method) {
     return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
 }
 
-// Para economizar espaço no ficheiro principal e não cortar o código, uso uma estrutura universal base.
+// HTML Base Simplificado
 function generateOrderConfirmationHTML(order) {
     const waLink = getWhatsAppLink(order.orderId, order.name, order.total, order.paymentMethod);
     return `<h2>🛒 Pedido Registado!</h2><p>Olá ${order.name}. Total: ${order.total} MT.</p><a href="${waLink}">WhatsApp</a>`;
