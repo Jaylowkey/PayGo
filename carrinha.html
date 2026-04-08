@@ -34,11 +34,16 @@ tailwind.config = {
       animation: { 
           'spin-slow': 'spin 3s linear infinite',
           'float': 'float 6s ease-in-out infinite',
+          'fade-in': 'fadeIn 0.4s ease-out forwards',
       },
       keyframes: {
           float: {
               '0%, 100%': { transform: 'translateY(0px)' },
               '50%': { transform: 'translateY(-10px)' }
+          },
+          fadeIn: {
+              '0%': { opacity: '0', transform: 'translateY(10px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' }
           }
       }
     }
@@ -251,11 +256,13 @@ html { scroll-behavior: smooth; }
                         </label>
                     </div>
                     
-                    <button id="btnCheckout" onclick="window.processCheckout()" class="w-full bg-gradient-to-r from-success-500 to-emerald-600 hover:from-success-400 hover:to-emerald-500 text-white py-4.5 rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-[0_10px_25px_rgba(34,197,94,0.3)] active:scale-95 text-lg group">
+                    <div id="checkoutAvisos"></div>
+
+                    <button id="btnCheckout" onclick="window.processCheckout()" class="w-full bg-gradient-to-r from-success-500 to-emerald-600 hover:from-success-400 hover:to-emerald-500 text-white py-4.5 rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-[0_10px_25px_rgba(34,197,94,0.3)] active:scale-95 text-lg group h-14">
                         <i data-lucide="lock" class="w-5 h-5 group-hover:-translate-y-0.5 transition-transform"></i> Pagar e Concluir
                     </button>
                     
-                    <p class="text-center text-[9px] uppercase tracking-widest text-slate-400 mt-4 flex items-center justify-center gap-1.5 font-bold">
+                    <p id="checkoutFooterNote" class="text-center text-[9px] uppercase tracking-widest text-slate-400 mt-4 flex items-center justify-center gap-1.5 font-bold">
                         <i data-lucide="shield-check" class="w-3.5 h-3.5 text-success-400"></i> Proteção Bancária PaySuite
                     </p>
                 </div>
@@ -290,6 +297,52 @@ document.addEventListener('DOMContentLoaded', () => {
     if(typeof lucide !== 'undefined') lucide.createIcons();
     if(typeof AOS !== 'undefined') AOS.init({ duration: 600, once: true });
 });
+
+// ==========================================
+// 🛡️ ARQUITETURA CIRCUIT BREAKER
+// ==========================================
+class CircuitBreaker {
+    constructor(requestFunction, options = {}) {
+        this.requestFunction = requestFunction;
+        this.state = 'CLOSED';
+        this.failureCount = 0;
+        this.failureThreshold = options.failureThreshold || 2;
+        this.resetTimeout = options.resetTimeout || 120000;
+        this.nextAttempt = Date.now();
+    }
+
+    async fire(...args) {
+        if (this.state === 'OPEN') {
+            if (Date.now() > this.nextAttempt) {
+                this.state = 'HALF_OPEN';
+            } else {
+                throw new Error("CIRCUITO_ABERTO");
+            }
+        }
+        try {
+            const response = await this.requestFunction(...args);
+            return this.success(response);
+        } catch (error) {
+            return this.fail(error);
+        }
+    }
+
+    success(response) {
+        this.failureCount = 0;
+        this.state = 'CLOSED';
+        return response;
+    }
+
+    fail(error) {
+        this.failureCount++;
+        if (this.failureCount >= this.failureThreshold && this.state !== 'OPEN') {
+            this.state = 'OPEN';
+            this.nextAttempt = Date.now() + this.resetTimeout;
+            console.warn("🚨 Gateway em Lockdown automático!");
+        }
+        throw error;
+    }
+}
 
 // ==========================================
 // 🔔 TOOLING: UI E TOASTS PREMIUM
@@ -426,7 +479,7 @@ window.removeFromCart = function(id) {
           localStorage.setItem('paygo_cart', JSON.stringify(cart));
           window.showToast('Produto removido da carrinha.', 'info');
           window.renderCart();
-      }, 400); // tempo para acabar a animação
+      }, 400);
   }
 };
 
@@ -460,6 +513,9 @@ window.updateTotals = function() {
   }
 
   const totalFinal = convertedMT + taxMT;
+  
+  // Guardamos o valor para o Checkout Global ter acesso
+  window.PAYGO_TOTAL_MZN = totalFinal;
 
   document.getElementById('summaryUsd').textContent = `$${totalUSD.toFixed(2)}`;
   document.getElementById('summaryConverted').textContent = `${convertedMT.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`;
@@ -468,7 +524,6 @@ window.updateTotals = function() {
   const totalRounded = Math.floor(totalFinal);
   const cents = Math.round((totalFinal % 1) * 100).toString().padStart(2, '0');
   
-  // Animação de contagem de números no Total
   const totalDisplay = document.getElementById('summaryTotal');
   totalDisplay.innerHTML = `${totalRounded.toLocaleString('pt-MZ')} <span class="text-xl text-slate-400 font-medium mb-1">.${cents} MT</span>`;
   totalDisplay.classList.add('scale-105', 'text-brand-300');
@@ -495,8 +550,37 @@ window.logoutFromHeader = async function() {
 };
 
 // ==========================================
-// 🚀 CHECKOUT PROCESS (COM WEBHOOK)
+// 🚀 CHECKOUT COM INTEGRAÇÃO DE ESCUDO
 // ==========================================
+
+// Função Base de Comunicação (isolada para o Circuit Breaker)
+async function chamarGatewayPagamento(dadosPayload) {
+    const response = await fetch('/api/paysuite-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dadosPayload)
+    });
+
+    const result = await response.json();
+
+    // Detetor do "Kill Switch" (Erro 503 devolvido pela Vercel)
+    if (response.status === 503 || result.error?.includes("manutenção preventiva")) {
+        throw new Error("MANUTENCAO_PAYSUITE");
+    }
+
+    if (!response.ok || !result.success) {
+        throw new Error(result.error || result.message || "A transação foi recusada pela operadora.");
+    }
+
+    return result;
+}
+
+// Inicializar o Escudo (Protege contra spam e falhas de rede)
+const gatewaySegura = new CircuitBreaker(chamarGatewayPagamento, {
+    failureThreshold: 2,
+    resetTimeout: 120000 
+});
+
 window.processCheckout = async function() {
   if (!currentUserData) {
       window.showToast('Sessão inválida. A redirecionar para Login.', 'error');
@@ -508,19 +592,21 @@ window.processCheckout = async function() {
   if (cart.length === 0) return window.showToast('Adicione produtos à carrinha primeiro!', 'warning');
 
   const btn = document.getElementById('btnCheckout');
+  const containerAvisos = document.getElementById('checkoutAvisos');
+  const footerNote = document.getElementById('checkoutFooterNote');
+  
   const originalHTML = btn.innerHTML;
   btn.disabled = true;
-  btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Preparando Segurança...`;
+  btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A preparar transação...`;
   if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
+  containerAvisos.innerHTML = ''; // Limpa avisos anteriores
 
   try {
       let totalUSD = 0;
       let linksArr = [];
-      
       cart.forEach((item, index) => {
           totalUSD += parseFloat(item.usd || 0);
-          const safeType = String(item.type || 'compra');
-          linksArr.push(`[Item ${index+1}] ${safeType.toUpperCase()}: ${String(item.detail || '')}`);
+          linksArr.push(`[Item ${index+1}] ${String(item.type || 'compra').toUpperCase()}: ${String(item.detail || '')}`);
       });
 
       const detailString = linksArr.join(" | ");
@@ -528,14 +614,12 @@ window.processCheckout = async function() {
       const paymentMethodNode = document.querySelector('input[name="paymentMethod"]:checked');
       const paymentMethod = paymentMethodNode ? paymentMethodNode.value : 'mpesa';
       
-      const converted = totalUSD * window.BINANCE_RATE;
-      const tax = (totalUSD <= 5 && isFirst) ? 0 : (totalUSD <= 20 ? 150 : (totalUSD <= 50 ? 250 : (totalUSD <= 100 ? 600 : converted * 0.07)));
-      const totalFinal = converted + tax;
+      const totalFinal = window.PAYGO_TOTAL_MZN || 0; // Usamos a variável global preenchida pelo updateTotals()
+      if (totalFinal < 1) throw new Error("Valor do carrinho inválido.");
+
       const orderId = 'PG-' + Date.now().toString().slice(-6).toUpperCase();
       const affiliateRef = localStorage.getItem('paygo_affiliate_ref') || null;
-      
-      const rawPhone = currentUserData.phone || currentUserData.whatsapp || '258000000000';
-      const userPhone = String(rawPhone);
+      const userPhone = String(currentUserData.phone || currentUserData.whatsapp || '258000000000');
 
       const orderData = {
           orderId: orderId,
@@ -544,7 +628,7 @@ window.processCheckout = async function() {
           whatsapp: userPhone,
           usd: totalUSD,
           detail: detailString,
-          tax: tax,
+          tax: totalFinal - (totalUSD * window.BINANCE_RATE),
           total: totalFinal,
           exchangeRate: window.BINANCE_RATE,
           status: 'pending',
@@ -557,66 +641,73 @@ window.processCheckout = async function() {
           source: 'carrinha'
       };
 
-      // 1. Gravar Firebase Firestore
+      // 1. Gravar a Intenção na Firebase
       await addDoc(collection(db, "orders"), orderData);
       
-      // 🔥 2. NOVIDADE: Disparar Email e Notificação Lark IMEDIATAMENTE (Assim como no simulador principal)
+      // 2. Notificação Paralela (Não bloqueante)
       fetch('/api/notify-order', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-              orderData: orderData,
-              action: 'new_order',
-              sendEmail: true,
-              sendLark: true
-          })
+          body: JSON.stringify({ orderData: orderData, action: 'new_order', sendEmail: true, sendLark: true })
       }).catch(e => console.warn('Falha silenciosa ao notificar:', e));
 
-      window.showToast('A redirecionar para a PaySuite...', 'info');
-
-      // 3. Contactar API da PaySuite
+      // 3. O DISPARO SEGURO ATRAVÉS DO CIRCUIT BREAKER
       const cleanPhone = userPhone.replace(/\D/g, '');
-      const response = await fetch('/api/paysuite-payment', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-              orderId: orderId,
-              amount: totalFinal,
-              currency: 'MZN',
-              phone: cleanPhone,
-              method: paymentMethod,
-              email: orderData.email,
-              name: orderData.name,
-              description: `Carrinha PayGo: ${cart.length} itens (Ref: #${orderId})`
-          })
-      });
+      const payloadParaVercel = {
+          orderId: orderId,
+          amount: totalFinal,
+          currency: 'MZN',
+          phone: cleanPhone,
+          method: paymentMethod,
+          email: orderData.email,
+          name: orderData.name,
+          description: `Carrinha PayGo: ${cart.length} itens (Ref: #${orderId})`
+      };
 
-      let result;
-      try {
-          result = await response.json();
-      } catch (jsonErr) {
-          throw new Error('A gateway de pagamento está em manutenção. Tente novamente mais tarde.');
-      }
+      const result = await gatewaySegura.fire(payloadParaVercel);
       
-      if (response.ok && result.success && result.data?.checkoutUrl) {
-          // Limpa a carrinha ANTES de sair da página
+      // Se sucesso, vamos para o Checkout da PaySuite
+      if (result.success && result.data?.checkoutUrl) {
           localStorage.removeItem('paygo_cart');
-          setTimeout(() => {
-              window.location.href = result.data.checkoutUrl;
-          }, 800);
-      } else {
-          throw new Error(result.error || result.message || 'A transação foi recusada pela operadora.');
+          window.location.href = result.data.checkoutUrl;
       }
 
   } catch (err) {
-      console.error("Erro Checkout: ", err);
-      let erroVisivel = err.message || 'Falha ao iniciar pagamento. Verifique a ligação.';
-      if(erroVisivel.includes("Missing or insufficient permissions")) erroVisivel = "O seu Perfil está incompleto (Falta Número/Email).";
+      console.error("Erro Checkout (Escudo):", err.message);
       
-      window.showToast(erroVisivel, 'error', 6000);
-      btn.disabled = false;
-      btn.innerHTML = originalHTML;
-      if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
+      // 🎯 A MAGIA DA GRACEFUL DEGRADATION
+      if (err.message === "MANUTENCAO_PAYSUITE" || err.message.startsWith("CIRCUITO_ABERTO")) {
+          // Esconde o botão e a nota
+          btn.style.display = 'none';
+          if (footerNote) footerNote.style.display = 'none';
+          
+          const numWhatsApp = "258871002255"; // O número que configuraste no Painel
+          const totalExibicao = document.getElementById('summaryConverted').textContent; // Só para efeitos visuais
+          const msg = `*OLÁ PAYGO!* 👋\n\nEstou a tentar finalizar uma encomenda na minha carrinha, mas o sistema automático está em manutenção.\n\nPodem ajudar-me a finalizar por transferência manual?`;
+          const linkWhatsApp = `https://wa.me/${numWhatsApp}?text=${encodeURIComponent(msg)}`;
+          
+          containerAvisos.innerHTML = `
+              <div class="bg-warning-500/10 border border-warning-500/30 text-warning-300 p-4 rounded-xl mb-4 animate-fade-in backdrop-blur-md">
+                  <p class="font-bold text-sm mb-1.5 flex items-center gap-1.5"><i data-lucide="alert-triangle" class="w-4 h-4"></i> Gateway Indisponível</p>
+                  <p class="text-xs leading-relaxed text-slate-300">Os nossos pagamentos automáticos estão em manutenção preventiva. Não se preocupe, o seu pedido foi guardado! Clique abaixo para finalizar via WhatsApp com a nossa equipa.</p>
+              </div>
+              <a href="${linkWhatsApp}" target="_blank" class="w-full h-14 bg-[#25D366] hover:bg-[#1fb355] text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-[0_10px_25px_rgba(37,211,102,0.3)] hover:-translate-y-0.5 animate-fade-in">
+                  <i data-lucide="message-circle" class="w-5 h-5"></i>
+                  Finalizar Encomenda no WhatsApp
+              </a>
+          `;
+          if(typeof lucide !== 'undefined') lucide.createIcons({root: containerAvisos});
+          
+      } else {
+          // Erro tradicional (ex: Saldo insuficiente ou limite da API)
+          let erroVisivel = err.message || 'Falha ao iniciar pagamento. Verifique a ligação.';
+          if(erroVisivel.includes("Missing or insufficient permissions")) erroVisivel = "O seu Perfil está incompleto (Falta Número/Email).";
+          
+          window.showToast(erroVisivel, 'error', 6000);
+          btn.disabled = false;
+          btn.innerHTML = originalHTML;
+          if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
+      }
   }
 };
 </script>
