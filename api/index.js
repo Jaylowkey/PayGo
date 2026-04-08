@@ -211,14 +211,15 @@ app.post("/api/p2p-transfer", async (req, res) => {
 // 🟤 6. PAYSUITE PAYMENT (Criar checkout)
 app.post("/api/paysuite-payment", async (req, res) => {
     try {
-        // 🔴 KILL SWITCH MANUAL (BOTÃO DE PÂNICO)
-        // Muda para 'true' quando a PaySuite resolver o problema dos Payouts.
-        const PAYSUITE_ACTIVA = false; 
+        // 🔴 LER O ESTADO DO BOTÃO DE PÂNICO DIRETAMENTE DA FIREBASE
+        const settingsDoc = await db.collection('settings').doc('global').get();
+        // Se a configuração não existir, assume que está ativa por segurança.
+        const PAYSUITE_ACTIVA = settingsDoc.exists ? (settingsDoc.data().paysuiteActive !== false) : true; 
 
         if (!PAYSUITE_ACTIVA) {
             return res.status(503).json({ 
                 success: false, 
-                error: "⚠️ Os pagamentos automáticos estão temporariamente em manutenção preventiva. Por favor, escolha a opção de pagamento manual ou contacte o suporte." 
+                error: "⚠️ Os pagamentos automáticos estão temporariamente em manutenção preventiva. Por favor, feche a sua encomenda através do nosso WhatsApp oficial." 
             });
         }
         // --------------------------------------------------------
