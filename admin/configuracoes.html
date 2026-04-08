@@ -192,7 +192,7 @@
           <div class="space-y-3">
             <div class="soft-panel p-4 flex items-center justify-between gap-3">
               <div>
-                <p class="font-bold text-white text-sm">Configurações carregadas</p>
+                <p class="font-bold text-white text-sm">Configurações</p>
                 <p class="text-xs text-slate-400">Documento global</p>
               </div>
               <span id="docStateBadge" class="status-pill warn">A validar</span>
@@ -213,8 +213,15 @@
             </div>
             <div class="soft-panel p-4 flex items-center justify-between gap-3">
               <div>
-                <p class="font-bold text-white text-sm">Modo de Manutenção</p>
-                <p class="text-xs text-slate-400">Estado da plataforma</p>
+                <p class="font-bold text-white text-sm">Afiliados</p>
+                <p class="text-xs text-slate-400">Status da comissão</p>
+              </div>
+              <span id="affiliateStateBadge" class="status-pill warn">A validar</span>
+            </div>
+            <div class="soft-panel p-4 flex items-center justify-between gap-3">
+              <div>
+                <p class="font-bold text-white text-sm">Acesso Público</p>
+                <p class="text-xs text-slate-400">Modo de Manutenção</p>
               </div>
               <span id="maintenanceStateBadge" class="status-pill ok">Ativo</span>
             </div>
@@ -296,7 +303,7 @@
 
             <div class="soft-panel p-4 border border-danger-500/30 bg-danger-900/10">
               <p class="text-sm font-bold text-white mb-3 flex items-center gap-2">
-                <i data-lucide="alert-triangle" class="w-4 h-4 text-danger-400"></i> Zona de Perigo
+                <i data-lucide="alert-triangle" class="w-4 h-4 text-danger-400"></i> Zona de Perigo (Lockdown)
               </p>
               <label class="flex items-center gap-4 cursor-pointer">
                 <span class="toggle-switch flex-shrink-0">
@@ -305,7 +312,7 @@
                 </span>
                 <div>
                   <p class="font-bold text-danger-400">Ativar Modo de Manutenção</p>
-                  <p class="text-xs text-slate-400 mt-1">Bloqueia o acesso público. Os clientes serão redirecionados para a página de Manutenção.</p>
+                  <p class="text-xs text-slate-400 mt-1">Bloqueia o acesso público. <b>Apenas o Super Admin poderá navegar.</b> Os restantes utilizadores (clientes e admins normais) serão redirecionados para a página de Manutenção.</p>
                 </div>
               </label>
             </div>
@@ -484,7 +491,7 @@
       tax3: 600,
       taxPercent: 7,
       firstPurchaseFree: true,
-      isMaintenanceMode: false, // 🛡️ NOVO GATILHO
+      isMaintenanceMode: false,
       resendApiKey: '',
       senderEmail: 'noreply@paygo.co.mz',
       senderName: 'PayGo Moçambique',
@@ -535,7 +542,7 @@
       tax3: document.getElementById('tax3'),
       taxPercent: document.getElementById('taxPercent'),
       firstPurchaseFree: document.getElementById('firstPurchaseFree'),
-      isMaintenanceMode: document.getElementById('isMaintenanceMode'), // 🛡️ NOVO GATILHO
+      isMaintenanceMode: document.getElementById('isMaintenanceMode'),
       resendApiKey: document.getElementById('resendApiKey'),
       senderEmail: document.getElementById('senderEmail'),
       senderName: document.getElementById('senderName'),
@@ -605,8 +612,16 @@
           }
           state.currentAdminId = user.uid;
           state.currentAdminRole = userDoc.data().role;
+          
           if (els.adminName) els.adminName.textContent = userDoc.data().name || 'Admin';
           if (els.adminRoleLabel) els.adminRoleLabel.textContent = userDoc.data().role === 'superadmin' ? 'Super Admin' : 'Admin';
+          
+          // Se não for Super Admin, avisa e bloqueia as definições de Manutenção
+          if (state.currentAdminRole !== 'superadmin' && els.isMaintenanceMode) {
+              els.isMaintenanceMode.disabled = true;
+              els.isMaintenanceMode.parentElement.classList.add('opacity-50', 'cursor-not-allowed');
+          }
+
           await loadSettingsFromFirestore();
         } catch (error) {
           console.error('Erro na verificação:', error);
@@ -692,6 +707,12 @@
 
     async function handleSaveSettings(e) {
       e?.preventDefault();
+      
+      // Validação Extra para Super Admin
+      if (els.isMaintenanceMode?.checked && state.currentAdminRole !== 'superadmin') {
+          return showToast('❌ Apenas o Super Admin pode ativar o Modo de Manutenção.', 'error');
+      }
+
       if (state.isSaving) return;
       state.isSaving = true;
       const btn = els.saveConfigBtn;
@@ -707,7 +728,7 @@
         updateStatusBadges(newSettings, true);
         
         if (newSettings.isMaintenanceMode) {
-          showToast('⚠️ MODO DE MANUTENÇÃO ATIVADO! A plataforma está fechada para clientes.', 'warning', 6000);
+          showToast('⚠️ MODO DE MANUTENÇÃO ATIVADO! Apenas o Super Admin pode aceder ao site.', 'warning', 6000);
         } else {
           showToast('✅ Configurações guardadas com sucesso!', 'success', 5000);
         }
@@ -767,12 +788,14 @@
     }
 
     function updateStatusBadges(settings, loaded) {
-      if (els.docStateBadge) els.docStateBadge.textContent = loaded ? 'Carregado' : 'Padrão';
-      if (els.docStateBadge) els.docStateBadge.className = `status-pill ${loaded ? 'ok' : 'warn'}`;
+      if (els.docStateBadge) {
+          els.docStateBadge.textContent = loaded ? 'Carregado' : 'Padrão';
+          els.docStateBadge.className = `status-pill ${loaded ? 'ok' : 'warn'}`;
+      }
       
       if (els.maintenanceStateBadge) {
         const isMaint = settings?.isMaintenanceMode;
-        els.maintenanceStateBadge.textContent = isMaint ? 'Em Manutenção' : 'Ativo';
+        els.maintenanceStateBadge.textContent = isMaint ? 'Em Manutenção' : 'Público';
         els.maintenanceStateBadge.className = `status-pill ${isMaint ? 'off' : 'ok'}`;
       }
 
@@ -879,15 +902,6 @@
       }
       lucide.createIcons();
     }
-
-    // Expose for debugging
-    window.PayGoSettings = {
-      state: () => ({ ...state }),
-      collectFormValues,
-      showToast,
-      refreshPreview
-    };
-
   </script>
 </body>
 </html>
