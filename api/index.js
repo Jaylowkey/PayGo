@@ -12,21 +12,16 @@ const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 // ==========================================
 const app = express();
 
-// O Express trata do CORS e do parsing de JSON automaticamente para todas as rotas!
 app.use(cors());
-// Limite aumentado para 10MB para suportar o envio de faturas PDF em Base64
 app.use(express.json({ limit: "10mb" })); 
 app.use(express.urlencoded({ extended: true }));
 
-// Variáveis Globais PayGo
 const WHATSAPP_NUMBER = "258871002255";
 const FROM_EMAIL = 'PayGo Moçambique <noreply@paygo.co.mz>';
 const SITE_URL = process.env.SITE_URL || 'https://paygo.co.mz';
 
-// Inicialização Resend
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
-// Inicialização Blindada Firebase Admin
 if (!getApps().length) {
     const envVar = process.env.FIREBASE_SERVICE_ACCOUNT;
     if (envVar) {
@@ -54,7 +49,6 @@ const auth = getAuth();
 
 app.get("/api/health", (req, res) => res.json({ status: "PayGo Master API Online 🚀" }));
 
-// 🔴 1. DELETE USER
 app.post("/api/delete-user", async (req, res) => {
     try {
         const { uid } = req.body;
@@ -67,7 +61,6 @@ app.post("/api/delete-user", async (req, res) => {
     }
 });
 
-// 🟢 2. GET REFERRALS
 app.post("/api/get-referrals", async (req, res) => {
     try {
         const { affiliateCode } = req.body;
@@ -98,7 +91,6 @@ app.post("/api/get-referrals", async (req, res) => {
     }
 });
 
-// 🔵 3. LOG ACTION (Auditoria)
 app.post("/api/log-action", async (req, res) => {
     const purificarDados = (obj) => {
         if (obj === undefined) return null;
@@ -127,7 +119,6 @@ app.post("/api/log-action", async (req, res) => {
     }
 });
 
-// 🟣 4. NOTIFY ORDER (Emails e Lark do Admin)
 app.post("/api/notify-order", async (req, res) => {
     try {
         const body = req.body;
@@ -170,7 +161,6 @@ app.post("/api/notify-order", async (req, res) => {
     }
 });
 
-// 🟠 5. P2P TRANSFER (Transferências entre utilizadores)
 app.post("/api/p2p-transfer", async (req, res) => {
     try {
         const { senderId, receiverEmail, amount } = req.body;
@@ -208,12 +198,10 @@ app.post("/api/p2p-transfer", async (req, res) => {
     }
 });
 
-// 🟤 6. PAYSUITE PAYMENT (Criar checkout)
+// 🟤 6. PAYSUITE PAYMENT (CRIAR CHECKOUT - COM AXIOS PARA PROTEÇÃO)
 app.post("/api/paysuite-payment", async (req, res) => {
     try {
-        // 🔴 LER O ESTADO DO BOTÃO DE PÂNICO DIRETAMENTE DA FIREBASE
         const settingsDoc = await db.collection('settings').doc('global').get();
-        // Se a configuração não existir, assume que está ativa por segurança.
         const PAYSUITE_ACTIVA = settingsDoc.exists ? (settingsDoc.data().paysuiteActive !== false) : true; 
 
         if (!PAYSUITE_ACTIVA) {
@@ -222,7 +210,6 @@ app.post("/api/paysuite-payment", async (req, res) => {
                 error: "⚠️ Os pagamentos automáticos estão temporariamente em manutenção preventiva. Por favor, feche a sua encomenda através do nosso WhatsApp oficial." 
             });
         }
-        // --------------------------------------------------------
 
         const { orderId, amount, method, description } = req.body;
         if (!orderId || !amount || !method) return res.status(400).json({ success: false, error: 'Faltam dados.' });
@@ -231,20 +218,24 @@ app.post("/api/paysuite-payment", async (req, res) => {
         const cleanMethod = (method === 'mpesa' || method === 'm-pesa') ? 'mpesa' : 'emola';
         const cleanReference = orderId.replace(/[^a-zA-Z0-9]/g, '');
 
-        const response = await fetch('https://paysuite.tech/api/v1/payments', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json', 'Accept': 'application/json',
-                'Authorization': `Bearer ${process.env.PAYSUITE_API_KEY}` 
-            },
-            body: JSON.stringify({
+        let response;
+        try {
+            response = await axios.post('https://paysuite.tech/api/v1/payments', {
                 amount: parseFloat(amount), method: cleanMethod, reference: cleanReference, 
                 description: description || `Pedido #${orderId}`, callback_url: `${SITE_URL}/api/paysuite-webhook`, return_url: `${SITE_URL}/index.html`
-            })
-        });
+            }, {
+                headers: {
+                    'Content-Type': 'application/json', 'Accept': 'application/json',
+                    'Authorization': `Bearer ${process.env.PAYSUITE_API_KEY}` 
+                }
+            });
+        } catch (apiError) {
+            console.error("❌ Recusa da PaySuite (Pagamento):", apiError.response?.data || apiError.message);
+            return res.status(400).json({ success: false, error: apiError.response?.data?.message || 'A Gateway de Pagamentos rejeitou a comunicação.' });
+        }
 
-        const result = await response.json();
-        if (!response.ok || result.status === 'error') throw new Error(result.message || 'Erro PaySuite');
+        const result = response.data;
+        if (result.status === 'error') throw new Error(result.message || 'Erro PaySuite');
 
         return res.status(200).json({
             success: true,
@@ -255,7 +246,7 @@ app.post("/api/paysuite-payment", async (req, res) => {
     }
 });
 
-// ⚫ 7. PAYSUITE WEBHOOK (Receber pagamentos da PaySuite)
+// ⚫ 7. PAYSUITE WEBHOOK (Receber pagamentos)
 app.post("/api/paysuite-webhook", async (req, res) => {
     try {
         let payload = req.body;
@@ -331,7 +322,6 @@ app.post("/api/send-email", async (req, res) => {
             });
         }
         
-        // Disparar para o Lark se necessário
         if (sendLark && process.env.LARK_WEBHOOK_URL) {
             await fetch(process.env.LARK_WEBHOOK_URL, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -344,7 +334,7 @@ app.post("/api/send-email", async (req, res) => {
     }
 });
 
-// 🟧 10. SEND WHATSAPP INVOICE (Evolution API)
+// 🟧 10. SEND WHATSAPP INVOICE
 app.post("/api/send-whatsapp-invoice", async (req, res) => {
     try {
         const { orderId, clientName, phone, pdfData } = req.body;
@@ -391,7 +381,7 @@ app.post("/api/verify-email", async (req, res) => {
 });
 
 // ==========================================
-// 💸 12. AUTOMATIZAÇÃO DE SAQUES (PAYSUITE PAYOUT B2C E MANUAL)
+// 💸 12. AUTOMATIZAÇÃO DE SAQUES (PAYSUITE PAYOUT B2C E MANUAL) - AXIOS BLINDADO
 // ==========================================
 app.post("/api/paysuite-payout", async (req, res) => {
     try {
@@ -429,32 +419,32 @@ app.post("/api/paysuite-payout", async (req, res) => {
 
         console.log(`🚀 Payout: ${finalAmount} MT para ${cleanPhone} (${method}) | Ref: ${refToPaysuite}`);
 
-        // 4. Contactar a PaySuite
-        const response = await fetch('https://paysuite.tech/api/v1/payouts', { 
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'Authorization': `Bearer ${process.env.PAYSUITE_API_KEY}` 
-            },
-            body: JSON.stringify({
+        // 4. Contactar a PaySuite COM AXIOS PARA PROTEÇÃO CONTRA ERROS HTML DA OPERADORA
+        let response;
+        try {
+            response = await axios.post('https://paysuite.tech/api/v1/payouts', {
                 amount: finalAmount,
                 phone: cleanPhone,
                 method: method,
                 reference: refToPaysuite,
                 description: `Payout B2C PayGo (Ref: ${refToPaysuite})`
-            })
-        });
-
-        const result = await response.json();
-
-        // 5. Tratamento de Erros da PaySuite
-        if (!response.ok || result.status === 'error') {
-            const errorMsg = result.message || "A operadora rejeitou a transferência. Verifique o seu saldo B2C.";
+            }, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Authorization': `Bearer ${process.env.PAYSUITE_API_KEY}` 
+                }
+            });
+        } catch (apiError) {
+            // O Axios bloqueia o erro 500 caso a PaySuite falhe e passa a culpa elegantemente para nós
+            console.error("❌ Recusa da PaySuite (Payout):", apiError.response?.data || apiError.message);
+            const errorMsg = apiError.response?.data?.message || "A operadora rejeitou a transferência. Verifique o seu saldo B2C.";
             return res.status(400).json({ success: false, error: errorMsg });
         }
 
-        // 6. Se for Afiliado, atualiza o documento do afiliado
+        const result = response.data;
+
+        // 5. Sucesso! Atualiza o documento do afiliado se aplicável
         if (wDocRef) {
             await wDocRef.update({
                 status: 'approved',
@@ -466,7 +456,7 @@ app.post("/api/paysuite-payout", async (req, res) => {
             });
         }
 
-        // 7. Auditoria (Fica registado que o Admin enviou dinheiro para si próprio)
+        // 6. Auditoria 
         await db.collection("admin_audit_logs").add({
             adminId: adminId,
             adminName: adminDoc.data().name || 'Admin',
@@ -498,7 +488,6 @@ function getWhatsAppLink(orderId, name, total, method) {
     return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
 }
 
-// HTML Base Simplificado
 function generateOrderConfirmationHTML(order) {
     const waLink = getWhatsAppLink(order.orderId, order.name, order.total, order.paymentMethod);
     return `<h2>🛒 Pedido Registado!</h2><p>Olá ${order.name}. Total: ${order.total} MT.</p><a href="${waLink}">WhatsApp</a>`;
