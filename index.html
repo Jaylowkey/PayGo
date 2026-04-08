@@ -868,74 +868,9 @@
     </div>
 </div>
 <script type="module">
-    // O "Guarda-Costas" do Modo de Manutenção
-async function verificarModoManutencao() {
-    try {
-        // 1. Lê as configurações globais
-        const settingsDoc = await getDoc(doc(db, "settings", "global"));
-        if (!settingsDoc.exists()) return;
-        
-        const isMaintenance = settingsDoc.data().isMaintenanceMode;
-        
-        if (isMaintenance) {
-            // Se estiver em manutenção, verifica quem é o utilizador
-            const user = auth.currentUser;
-            let podeEntrar = false;
-            
-            if (user) {
-                const userDoc = await getDoc(doc(db, "users", user.uid));
-                // O Super Admin é a única exceção (God Mode)
-                if (userDoc.exists() && userDoc.data().role === 'superadmin') {
-                    podeEntrar = true;
-                    console.log("God Mode ativado. Acesso permitido ao Super Admin.");
-                }
-            }
-
-            // Se não for Super Admin (ou se for um visitante anónimo)
-            if (!podeEntrar) {
-                // Redireciona para a página de aviso de manutenção
-                window.location.href = '/manutencao.html';
-            }
-        }
-    } catch (error) {
-        console.error("Falha ao verificar regras de manutenção:", error);
-    }
-}
-
-// Executar a verificação assim que a página carrega
-verificarModoManutencao();
-    import { CircuitBreaker } from './js/circuit-breaker.js';
-
-    // A tua função normal que chama a tua mega API da Vercel
-    async function chamarBackendVercel(dados) {
-        const res = await fetch('/api/paysuite-payment', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dados)
-        });
-        if (!res.ok) throw new Error("FALHA_API");
-        return await res.json();
-    }
-
-    // O Escudo
-    const pagamentoSeguro = new CircuitBreaker(chamarBackendVercel, {
-        serviceName: 'Gateway_Pagamentos',
-        failureThreshold: 3,
-        resetTimeout: 120000 // 2 minutos de bloqueio
-    });
-
-    // O botão de pagar
-    window.processarCompra = async () => {
-        try {
-            const resultado = await pagamentoSeguro.fire({ amount: 500, method: 'mpesa' });
-            // Sucesso!
-        } catch (erro) {
-            if (erro.message.startsWith("CIRCUITO_ABERTO")) {
-                alert("A nossa gateway está instável. Por segurança, bloqueámos novas tentativas por 2 minutos.");
-            }
-        }
-    };
-    
+// ==========================================
+// 🛡️ O GUARDA-COSTAS (Modo Manutenção)
+// ==========================================
 const FIREBASE_CONFIG = {
     apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
     authDomain: "paygo-14311.firebaseapp.com",
@@ -1010,8 +945,22 @@ async function fetchSystemSettings() {
             
             // 🛑 TRANCA DE MANUTENÇÃO GLOBAL 🛑
             if (data.isMaintenanceMode === true) {
-                window.location.href = "manutencao.html";
-                return; // Impede o resto da página de carregar
+                // Se estiver em manutenção, verifica quem é o utilizador
+                const user = auth.currentUser;
+                let podeEntrar = false;
+                
+                if (user) {
+                    const userDoc = await getDoc(doc(db, "users", user.uid));
+                    if (userDoc.exists() && userDoc.data().role === 'superadmin') {
+                        podeEntrar = true;
+                        console.log("God Mode ativado. Acesso permitido ao Super Admin.");
+                    }
+                }
+
+                if (!podeEntrar) {
+                    window.location.href = "manutencao.html";
+                    return; 
+                }
             }
 
             BINANCE_RATE = parseFloat(data.exchangeRate) || 85.00;
