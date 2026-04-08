@@ -391,6 +391,104 @@ app.post("/api/verify-email", async (req, res) => {
 });
 
 // ==========================================
+// 💸 12. AUTOMATIZAÇÃO DE SAQUES (PAYSUITE PAYOUT B2C)
+// ==========================================
+app.post("/api/paysuite-payout", async (req, res) => {
+    try {
+        // Recebemos os dados exatos que o Admin preencheu no modal (Número e Valor)
+        const { adminId, withdrawalId, targetPhone, targetAmount, targetMethod } = req.body;
+        
+        if (!adminId || !withdrawalId || !targetPhone || !targetAmount || !targetMethod) {
+            return res.status(400).json({ success: false, error: "Dados incompletos para processar o Payout." });
+        }
+
+        // 1. Segurança: Garantir que quem disparou a ação foi um Admin válido
+        const adminDoc = await db.collection("users").doc(adminId).get();
+        if (!adminDoc.exists || (adminDoc.data().role !== 'admin' && adminDoc.data().role !== 'superadmin')) {
+            return res.status(403).json({ success: false, error: "Acesso Negado. Privilégios insuficientes." });
+        }
+
+        // 2. Verificar o estado do Saque na Firebase
+        const wDocRef = db.collection("withdrawals").doc(withdrawalId);
+        const wDoc = await wDocRef.get();
+        
+        if (!wDoc.exists) {
+            return res.status(404).json({ success: false, error: "Registo de saque não encontrado na base de dados." });
+        }
+        
+        if (wDoc.data().status !== 'pending') {
+            return res.status(400).json({ success: false, error: "Este saque já foi processado, rejeitado ou está bloqueado." });
+        }
+
+        // 3. Limpar e preparar os dados para a PaySuite
+        const cleanPhone = targetPhone.replace(/\D/g, ''); // Ex: 841234567
+        const method = targetMethod.toLowerCase() === 'emola' ? 'emola' : 'mpesa';
+        const finalAmount = parseFloat(targetAmount);
+
+        console.log(`🚀 Iniciando Payout Automático: ${finalAmount} MT para ${cleanPhone} (${method}) | Ref: ${withdrawalId}`);
+
+        // 4. Contactar a PaySuite
+        const response = await fetch('https://paysuite.tech/api/v1/payouts', { 
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${process.env.PAYSUITE_API_KEY}` 
+            },
+            // Baseado na estrutura de devoluções deles
+            body: JSON.stringify({
+                amount: finalAmount,
+                phone: cleanPhone,
+                method: method,
+                reference: withdrawalId,
+                description: `Payout PayGo (Ref: ${withdrawalId})`
+            })
+        });
+
+        const result = await response.json();
+
+        // 5. Tratamento de Erros da PaySuite
+        if (!response.ok || result.status === 'error') {
+            // Muitas vezes o saldo da tua conta PaySuite pode não ser suficiente para cobrir o Payout
+            const errorMsg = result.message || "A operadora rejeitou a transferência. Verifique se tem saldo B2C suficiente na PaySuite.";
+            console.error("❌ Erro PaySuite Payout:", errorMsg, result);
+            return res.status(400).json({ success: false, error: errorMsg });
+        }
+
+        // 6. Sucesso! Atualiza a Base de Dados
+        await wDocRef.update({
+            status: 'approved',
+            paysuitePayoutId: result.data?.id || 'PROCESSADO',
+            amountPaid: finalAmount,
+            phonePaid: cleanPhone,
+            processedAt: FieldValue.serverTimestamp(),
+            processedBy: adminDoc.data().name || 'Admin'
+        });
+
+        // 7. Regista a ação na Auditoria do Admin (Obrigatório para segurança)
+        await db.collection("admin_audit_logs").add({
+            adminId: adminId,
+            adminName: adminDoc.data().name || 'Admin',
+            action: "PAYOUT_AUTOMATICO",
+            targetId: withdrawalId,
+            targetType: "withdrawal",
+            details: { 
+                previous: { status: 'pending', amount: wDoc.data().amount }, 
+                updated: { status: 'approved', amountPaid: finalAmount, phone: cleanPhone, method: method, paysuiteId: result.data?.id } 
+            },
+            ip: req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'Desconhecido',
+            createdAt: new Date().toISOString()
+        });
+
+        return res.status(200).json({ success: true, message: "Transferência executada com sucesso!" });
+
+    } catch (err) {
+        console.error("❌ Erro Crítico no Payout:", err.message);
+        return res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ==========================================
 // 3. FUNÇÕES AUXILIARES DE HTML
 // ==========================================
 function getWhatsAppLink(orderId, name, total, method) {
