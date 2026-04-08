@@ -669,36 +669,109 @@
             } catch(e) { window.showToast('Erro ao carregar saques.', 'error'); }
         }
 
+       // 1. A NOVA LÓGICA DO BOTÃO (Aprovar abre o Modal, Rejeitar devolve o dinheiro)
         window.processWithdrawal = async function(id, userId, amount, isApproved) {
-            const title = isApproved ? 'Confirmar Pagamento' : 'Rejeitar Pagamento';
-            const msg = isApproved ? `Confirma que já transferiu fisicamente ${amount} MT para o parceiro? O sistema será atualizado.` : `Deseja REJEITAR este saque de ${amount} MT? O valor será devolvido ao saldo do parceiro.`;
-            const type = isApproved ? 'success' : 'danger';
-            
-            const confirmed = await window.confirmAction(title, msg, isApproved ? 'Sim, já paguei' : 'Rejeitar Saque', type);
-            if(!confirmed) return;
-            
-            const btn = document.getElementById(isApproved ? `btn-pay-${id}` : `btn-rej-wd-${id}`);
-            if(btn) { btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> ...`; }
+            if (isApproved) {
+                // Em vez de disparar logo, vamos buscar os dados e abrir o Modal de edição
+                try {
+                    const wDoc = await getDoc(doc(db, "withdrawals", id));
+                    if(wDoc.exists()) {
+                        const data = wDoc.data();
+                        window.openPayoutModal(id, userId, data.phone, data.amount, data.method);
+                    }
+                } catch(e) { window.showToast('Erro ao ler dados do saque.', 'error'); }
+            } else {
+                // Lógica de Rejeição (mantém-se inalterada)
+                const confirmed = await window.confirmAction('Rejeitar Pagamento', `Deseja REJEITAR este saque de ${amount} MT? O valor será devolvido ao saldo do parceiro.`, 'Rejeitar Saque', 'danger');
+                if(!confirmed) return;
+                
+                const btn = document.getElementById(`btn-rej-wd-${id}`);
+                if(btn) { btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>`; }
+
+                try {
+                    const userDoc = await getDoc(doc(db, "users", userId));
+                    const userEmail = userDoc.exists() ? userDoc.data().email : null;
+
+                    await updateDoc(doc(db, "withdrawals", id), { status: 'rejected', processedAt: serverTimestamp() });
+                    await updateDoc(doc(db, "users", userId), { affiliateEarnings: increment(amount) });
+                    sendHybridNotification(userId, userEmail, '⚠️ Pedido de Saque Rejeitado', 'payout-rejected', `O seu pedido de saque de ${amount} MT foi rejeitado. Os fundos voltaram para a sua conta.`, 'error');
+                    logAdminAction('SAQUE_REJEITADO', `Saque ID: ${id} | Devolução de ${amount} MT`);
+                    
+                    window.showToast('Saque rejeitado e fundos devolvidos.', 'warning');
+                    await window.loadAllData();
+                } catch(e) { window.showToast('Erro crítico.', 'error'); }
+            }
+        };
+
+        // 2. FUNÇÕES DE CONTROLO DO MODAL
+        window.openPayoutModal = function(id, userId, phone, amount, method) {
+            document.getElementById('payoutWithdrawalId').value = id;
+            document.getElementById('payoutUserId').value = userId;
+            document.getElementById('payoutPhone').value = phone;
+            document.getElementById('payoutAmount').value = amount;
+            document.getElementById('payoutMethod').value = method || 'mpesa';
+
+            const modal = document.getElementById('payoutModal');
+            if(modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+            if(typeof lucide !== 'undefined') lucide.createIcons();
+        };
+
+        window.closePayoutModal = function() {
+            const modal = document.getElementById('payoutModal');
+            if(modal) { modal.classList.remove('flex'); modal.classList.add('hidden'); }
+        };
+
+        // 3. O DISPARO FINAL PARA A VERCEL
+        window.confirmAndSendPayout = async function() {
+            const btn = document.getElementById('btnSubmitPayout');
+            const origHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Transferindo...`;
+            if(typeof lucide !== 'undefined') lucide.createIcons({root:btn});
+
+            const id = document.getElementById('payoutWithdrawalId').value;
+            const userId = document.getElementById('payoutUserId').value;
+            const phone = document.getElementById('payoutPhone').value;
+            const amount = parseFloat(document.getElementById('payoutAmount').value);
+            const method = document.getElementById('payoutMethod').value;
 
             try {
                 const userDoc = await getDoc(doc(db, "users", userId));
                 const userEmail = userDoc.exists() ? userDoc.data().email : null;
 
-                if (isApproved) {
-                    await updateDoc(doc(db, "withdrawals", id), { status: 'approved', processedAt: serverTimestamp() });
-                    sendHybridNotification(userId, userEmail, '💸 O seu pagamento chegou!', 'payout-processed', `Acabámos de processar a transferência de ${amount} MT para si. Verifique a sua conta M-Pesa/e-Mola.`, 'deposit');
-                    logAdminAction('SAQUE_APROVADO', `Saque ID: ${id} | ${amount} MT para ${userEmail}`);
-                    window.showToast('Saque marcado como Pago com sucesso.', 'success');
-                } else {
-                    await updateDoc(doc(db, "withdrawals", id), { status: 'rejected', processedAt: serverTimestamp() });
-                    await updateDoc(doc(db, "users", userId), { affiliateEarnings: increment(amount) });
-                    sendHybridNotification(userId, userEmail, '⚠️ Pedido de Saque Rejeitado', 'payout-rejected', `O seu pedido de saque de ${amount} MT foi rejeitado. Os fundos voltaram para os seus ganhos acumulados. Se achar que é um erro, contacte-nos.`, 'error');
-                    logAdminAction('SAQUE_REJEITADO', `Saque ID: ${id} | Devolução de ${amount} MT para ${userEmail}`);
-                    window.showToast('Saque rejeitado e fundos devolvidos ao parceiro.', 'warning');
+                // Chamada à nova API dinâmica que criámos na Vercel
+                const response = await fetch('/api/paysuite-payout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        adminId: loggedInAdminId, // A variável global do teu painel
+                        withdrawalId: id,
+                        targetPhone: phone,
+                        targetAmount: amount,
+                        targetMethod: method
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    throw new Error(result.error || "A PaySuite recusou a transação de Payout.");
                 }
+
+                // Notificar Cliente
+                sendHybridNotification(userId, userEmail, '💸 O seu pagamento chegou!', 'payout-processed', `Acabámos de processar a transferência de ${amount} MT para a sua conta ${method.toUpperCase()}.`, 'deposit');
                 
-                await window.loadAllData();
-            } catch(e) { window.showToast('Erro ao atualizar a base de dados.', 'error'); await window.loadAllData(); }
+                window.showToast('Dinheiro transferido com sucesso!', 'success');
+                window.closePayoutModal();
+                await window.loadAllData(); // Recarrega a tabela para sumir o botão
+
+            } catch(e) {
+                window.showToast(e.message || 'Erro crítico no Payout.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
+                if(typeof lucide !== 'undefined') lucide.createIcons({root:btn});
+            }
         };
 
         // ==========================================
