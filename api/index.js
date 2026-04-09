@@ -41,7 +41,7 @@ app.use((req, res, next) => {
 });
 
 // Variáveis Globais PayGo
-const WHATSAPP_NUMBER = process.env.WHATSAPP_NUMBER || "258837522255";
+const WHATSAPP_NUMBER = process.env.WHATSAPP_NUMBER || "258871002255";
 const FROM_EMAIL = `PayGo Moçambique <${process.env.FROM_EMAIL || 'noreply@paygo.co.mz'}>`;
 const SITE_URL = process.env.SITE_URL || 'https://paygo.co.mz';
 
