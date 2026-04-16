@@ -1,22 +1,32 @@
 // ==========================================
-// 🚀 PAYGO MASTER API - ROTEADOR UNIFICADO (PRODUÇÃO)
+// 🚀 PAYGO MASTER API - ROTEADOR BLINDADO
 // ==========================================
 require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
-const { Resend } = require("resend");
 const { initializeApp, cert, getApps } = require('firebase-admin/app');
 const { getAuth } = require('firebase-admin/auth');
 const { getFirestore, FieldValue, Timestamp } = require('firebase-admin/firestore');
 
+// 🛡️ CARREGAMENTO SEGURO DO RESEND (Evita Crash 500 se o pacote não existir)
+let resend = null;
+try {
+  const { Resend } = require("resend");
+  if (process.env.RESEND_API_KEY) {
+    resend = new Resend(process.env.RESEND_API_KEY);
+  }
+} catch (e) {
+  console.warn("⚠️ Pacote 'resend' não instalado ou chave ausente. Emails desativados.");
+}
+
 // ==========================================
-// 1. CONFIGURAÇÕES GLOBAIS E SEGURANÇA
+// 1. CONFIGURAÇÕES GLOBAIS
 // ==========================================
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configuração Avançada de CORS com Intercetador Preflight
+// Configuração Avançada de CORS
 const corsOptions = {
   origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000', 'https://paygo.co.mz', 'https://www.paygo.co.mz', 'https://paygo-14311.web.app'],
   credentials: true,
@@ -25,17 +35,15 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // Proteção vital contra Erro 405
-
+app.options('*', cors(corsOptions)); // Intercetador obrigatório para Vercel
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
+// Headers de Segurança
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
-  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
   next();
 });
 
@@ -43,14 +51,8 @@ const WHATSAPP_NUMBER = process.env.WHATSAPP_NUMBER || "258871002255";
 const FROM_EMAIL = `PayGo Moçambique <${process.env.FROM_EMAIL || 'noreply@paygo.co.mz'}>`;
 const SITE_URL = process.env.SITE_URL || 'https://paygo.co.mz';
 
-let resend = null;
-if (process.env.RESEND_API_KEY) {
-  try { resend = new Resend(process.env.RESEND_API_KEY); } 
-  catch(e) { console.warn("⚠️ Falha ao inicializar Resend."); }
-}
-
 // ==========================================
-// 2. INICIALIZAÇÃO FIREBASE ADMIN SEGURA
+// 2. INICIALIZAÇÃO FIREBASE ADMIN
 // ==========================================
 let db = null;
 let auth = null;
@@ -58,28 +60,28 @@ let auth = null;
 try {
   if (!getApps().length) {
     const envVar = process.env.FIREBASE_SERVICE_ACCOUNT;
-    if (!envVar) throw new Error("FIREBASE_SERVICE_ACCOUNT em falta.");
-
-    let serviceAccount = JSON.parse(envVar);
-    if (serviceAccount.private_key) {
-      serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+    if (envVar) {
+      let serviceAccount = JSON.parse(envVar);
+      if (serviceAccount.private_key) {
+        serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+      }
+      initializeApp({ 
+        credential: cert(serviceAccount),
+        databaseURL: `https://${serviceAccount.project_id}.firebaseio.com`
+      });
+      console.log("✅ Firebase Admin inicializado com sucesso");
     }
-    
-    initializeApp({ 
-      credential: cert(serviceAccount),
-      databaseURL: `https://${serviceAccount.project_id}.firebaseio.com`
-    });
-    console.log("✅ Firebase Admin inicializado.");
   }
 
   const adminApp = getApps()[0];
-  // Fallback dinâmico para garantir que a Base de Dados é encontrada
-  try { db = getFirestore(adminApp, "paygodb"); } 
-  catch (e) { db = getFirestore(adminApp); }
+  try {
+    db = getFirestore(adminApp, "paygodb"); // Força a base de dados paygodb
+  } catch(e) {
+    db = getFirestore(adminApp); // Fallback
+  }
   auth = getAuth(adminApp);
-  
 } catch (firebaseError) {
-  console.error("❌ Falha crítica Firebase:", firebaseError.message);
+  console.error("❌ Falha na inicialização do Firebase:", firebaseError.message);
 }
 
 // ==========================================
@@ -87,8 +89,6 @@ try {
 // ==========================================
 const requireAdminAuth = async (req, res, next) => {
   try {
-    if (!db) return res.status(500).json({ error: 'Base de dados indisponível.' });
-    
     const authHeader = req.headers.authorization;
     if (!authHeader?.startsWith('Bearer ')) return res.status(401).json({ error: 'Token não fornecido' });
     
@@ -100,13 +100,13 @@ const requireAdminAuth = async (req, res, next) => {
     
     const userData = userDoc.data();
     if (userData.role !== 'admin' && userData.role !== 'superadmin') {
-      return res.status(403).json({ error: 'Acesso restrito' });
+      return res.status(403).json({ error: 'Acesso restrito a administradores' });
     }
     
     req.admin = { uid: decodedToken.uid, email: decodedToken.email, name: userData.name, role: userData.role };
     next();
   } catch (error) {
-    return res.status(401).json({ error: 'Token inválido/expirado' });
+    return res.status(401).json({ error: 'Token inválido' });
   }
 };
 
@@ -114,224 +114,94 @@ const requireAdminAuth = async (req, res, next) => {
 // 4. ROTAS DA API
 // ==========================================
 
+// 🔵 Health Check
 app.get("/api/health", (req, res) => {
-  res.status(200).json({ status: "PayGo Master API Online 🚀", environment: process.env.NODE_ENV || 'development' });
+  res.status(200).json({ status: "PayGo Master API Online 🚀", version: '1.2.0 (Blindada)' });
 });
 
-app.post("/api/delete-user", requireAdminAuth, async (req, res) => {
-  try {
-    const { uid, reason } = req.body;
-    if (!uid) return res.status(400).json({ error: 'UID obrigatório' });
-    
-    await db.collection('admin_audit_logs').add({ adminId: req.admin.uid, adminName: req.admin.name, action: 'DELETE_USER', targetId: uid, targetType: 'user', details: { reason: reason || 'Não especificado' }, ip: req.ip || '0.0.0.0', createdAt: Timestamp.now() });
-    
-    try { await auth.deleteUser(uid); } catch (e) { console.warn(`⚠️ Auth: ${e.message}`); }
-    await db.collection('users').doc(uid).delete();
-    
-    const batch = db.batch();
-    for (const coll of ['orders', 'wallet_transactions', 'withdrawals', 'support_tickets']) {
-      const snapshot = await db.collection(coll).where('userId', '==', uid).limit(100).get();
-      snapshot.forEach(doc => batch.delete(doc.ref));
-    }
-    if (batch._operations && batch._operations.length > 0) await batch.commit();
-    
-    return res.status(200).json({ success: true, message: 'Usuário apagado' });
-  } catch (error) {
-    return res.status(500).json({ error: 'Erro interno', details: error.message });
-  }
-});
-
-app.post("/api/get-referrals", requireAdminAuth, async (req, res) => {
-  try {
-    const { affiliateCode, limit = 100 } = req.body;
-    if (!affiliateCode) return res.status(400).json({ error: 'Código em falta' });
-    
-    const qUsers = await db.collection("users").where("referredBy", "==", affiliateCode).orderBy("createdAt", "desc").limit(limit).get();
-    const referrals = [];
-    
-    qUsers.forEach(doc => {
-      const data = doc.data();
-      let dateStr = null;
-      if (data.createdAt) dateStr = (data.createdAt instanceof Timestamp || typeof data.createdAt.toDate === 'function') ? data.createdAt.toDate().toISOString() : new Date(data.createdAt).toISOString();
-      referrals.push({ id: doc.id, name: data.name || 'Cliente PayGo', email: data.email || '', phone: data.phone || '', status: data.status || 'pending', emailVerified: data.emailVerified || false, firstPurchaseProcessed: data.firstPurchaseProcessed || false, totalPurchases: data.totalPurchases || 0, walletBalance: data.walletBalance || 0, createdAt: dateStr, lastLogin: data.lastLogin || null });
-    });
-    
-    return res.status(200).json({ success: true, count: referrals.length, referrals });
-  } catch (err) {
-    return res.status(500).json({ error: 'Erro ao carregar', details: err.message });
-  }
-});
-
-app.post("/api/log-action", requireAdminAuth, async (req, res) => {
-  try {
-    const { action, targetId, targetType, previousData, newData, reason } = req.body;
-    if (!action || !targetId) return res.status(400).json({ error: 'Dados obrigatórios em falta' });
-    
-    const sanitizeData = (obj) => {
-      if (obj === null || obj === undefined) return null;
-      if (typeof obj !== 'object') return obj;
-      const sensitive = ['password', 'token', 'apiKey', 'private_key', 'secret'];
-      const cleaned = {};
-      for (const [key, value] of Object.entries(obj)) {
-        if (sensitive.some(s => key.toLowerCase().includes(s))) cleaned[key] = '[REDACTED]';
-        else if (typeof value === 'object' && value !== null) cleaned[key] = sanitizeData(value);
-        else cleaned[key] = value;
-      }
-      return cleaned;
-    };
-
-    const logRef = await db.collection('admin_audit_logs').add({ adminId: req.admin.uid, adminName: req.admin.name || 'Admin', adminRole: req.admin.role, action: String(action), targetId: String(targetId), targetType: targetType ? String(targetType) : 'unknown', reason: reason || null, details: { previous: sanitizeData(previousData), updated: sanitizeData(newData) }, metadata: { ip: req.headers['x-forwarded-for']?.split(',')[0] || req.ip || '0.0.0.0', timestamp: new Date().toISOString() }, createdAt: Timestamp.now() });
-    
-    return res.status(200).json({ success: true, logId: logRef.id });
-  } catch (err) {
-    return res.status(500).json({ error: 'Falha de auditoria', details: err.message });
-  }
-});
-
-app.post("/api/notify-order", async (req, res) => {
-  try {
-    const body = req.body;
-    if (body.type && body.data) return res.status(200).json({ success: true, message: "Use /api/paysuite-webhook." });
-    const { orderData, sendEmail = true, sendLark = true, action = 'new_order', reason, extraAmount, mediaUrl } = body;
-    if (!orderData) return res.status(400).json({ error: 'Dados do pedido obrigatórios' });
-
-    const results = { email: null, lark: null };
-    const orderId = orderData.orderId || orderData.topupId || orderData.id || 'N/A';
-    const userEmail = orderData.email;
-
-    let emailSubject, emailHTML;
-    switch (action) {
-      case 'payment_confirmed': emailSubject = `✅ Pagamento Recebido - Pedido ${orderId} - PayGo`; emailHTML = generatePaymentSuccessHTML(orderData); break;
-      case 'order_refunded': emailSubject = `🟣 Reembolso Emitido - Pedido ${orderId} - PayGo`; emailHTML = generateRefundHTML(orderData, reason, mediaUrl); break;
-      case 'insufficient_funds': emailSubject = `⚠️ Ação Necessária - Pedido ${orderId}`; emailHTML = generateInsufficientFundsHTML(orderData, extraAmount, reason); break;
-      case 'order_completed': emailSubject = `🎉 Pedido Concluído - #${orderId} - PayGo`; emailHTML = generateOrderCompletedHTML(orderData); break;
-      default: emailSubject = `🛒 Pedido ${orderId} Registado - PayGo`; emailHTML = generateOrderConfirmationHTML(orderData);
-    }
-
-    if (sendEmail && userEmail && resend) {
-      try {
-        const { data, error } = await resend.emails.send({ from: FROM_EMAIL, to: [userEmail], subject: emailSubject, html: emailHTML, text: emailHTML.replace(/<[^>]*>/g, '') });
-        results.email = error ? { success: false, error: error.message } : { success: true, id: data?.id };
-      } catch (emailError) { results.email = { success: false, error: emailError.message }; }
-    }
-
-    if (sendLark && process.env.LARK_WEBHOOK_URL) {
-      try {
-        await fetch(process.env.LARK_WEBHOOK_URL, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ msg_type: "post", content: { post: { "pt-MZ": { title: `🔔 ${action === 'new_order' ? 'Novo Pedido' : 'Atualização'}: ${orderId}`, content: [[ { tag: "text", text: `Cliente: ${orderData.name}\n` }, { tag: "text", text: `Valor: ${orderData.total?.toFixed(2) || 'N/A'} MT\n` }, { tag: "a", text: "Ver no Painel", href: `${SITE_URL}/admin/pedidos.html?id=${orderId}` } ]] } } } })
-        });
-        results.lark = { success: true };
-      } catch (larkError) { results.lark = { success: false, error: larkError.message }; }
-    }
-    return res.status(200).json({ success: true, results });
-  } catch (err) {
-    return res.status(500).json({ error: 'Erro interno nas notificações', details: err.message });
-  }
-});
-
-app.post("/api/p2p-transfer", requireAdminAuth, async (req, res) => {
-  try {
-    if (!db) return res.status(500).json({ error: 'Base de dados offline' });
-    const { senderId, receiverEmail, amount, description } = req.body;
-    const transferAmount = parseFloat(amount);
-
-    if (!senderId || !receiverEmail) return res.status(400).json({ error: 'senderId e receiverEmail obrigatórios' });
-    if (isNaN(transferAmount) || transferAmount <= 0 || transferAmount > 50000) return res.status(400).json({ error: 'Valor inválido ou excede 50.000 MT' });
-
-    const usersRef = db.collection('users');
-    const receiverSnap = await usersRef.where('email', '==', receiverEmail.trim().toLowerCase()).limit(1).get();
-    if (receiverSnap.empty) return res.status(404).json({ error: 'Destinatário não encontrado' });
-    
-    const receiverDoc = receiverSnap.docs[0];
-    if (senderId === receiverDoc.id) return res.status(400).json({ error: 'Transação inválida' });
-
-    const senderRef = usersRef.doc(senderId);
-    const senderDoc = await senderRef.get();
-    if (!senderDoc.exists) return res.status(404).json({ error: 'Remetente não encontrado' });
-    
-    const senderBalance = parseFloat(senderDoc.data().walletBalance) || 0;
-    if (senderBalance < transferAmount) return res.status(400).json({ error: `Saldo insuficiente. Disponível: ${senderBalance.toFixed(2)} MT` });
-
-    const batch = db.batch();
-    const transactionId = `P2P-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
-    const agora = Timestamp.now();
-    
-    batch.update(senderRef, { walletBalance: FieldValue.increment(-transferAmount), updatedAt: agora });
-    batch.update(receiverDoc.ref, { walletBalance: FieldValue.increment(transferAmount), updatedAt: agora });
-    batch.set(db.collection('wallet_transactions').doc(), { userId: senderId, type: 'debit', amount: transferAmount, description: description || `P2P para ${receiverEmail}`, reference: transactionId, relatedUserId: receiverDoc.id, createdAt: agora, metadata: { type: 'p2p', direction: 'sent' } });
-    batch.set(db.collection('wallet_transactions').doc(), { userId: receiverDoc.id, type: 'credit', amount: transferAmount, description: description || `Recebido de ${senderDoc.data().email}`, reference: transactionId, relatedUserId: senderId, createdAt: agora, metadata: { type: 'p2p', direction: 'received' } });
-
-    await batch.commit();
-    await db.collection('admin_audit_logs').add({ adminId: req.admin.uid, adminName: req.admin.name, action: 'P2P_TRANSFER', targetId: transactionId, targetType: 'transaction', details: { from: senderId, to: receiverDoc.id, amount: transferAmount }, createdAt: agora });
-
-    return res.status(200).json({ success: true, transactionId, message: 'Sucesso' });
-  } catch (err) {
-    return res.status(500).json({ error: 'Erro no P2P', details: err.message });
-  }
-});
-
-// 🟤 PAYSUITE PAYMENT (BLINDADO CONTRA TIMEOUT DA VERCEL)
+// 🟤 PAYSUITE PAYMENT (Criar checkout B2B) - BLINDADO CONTRA ERRO 500
 app.post("/api/paysuite-payment", async (req, res) => {
   try {
+    // 1. Verificação de versão do Node (Evita Crash 500 por falta do Fetch)
     if (typeof fetch === 'undefined') {
-      return res.status(500).json({ success: false, error: "Servidor desatualizado (Requer Node 18+). Verifique a Vercel." });
+      return res.status(400).json({ success: false, error: "A versão Node.js na Vercel está desatualizada. Altere para 18.x nas definições." });
     }
 
+    // 2. Verificação de Chaves (Evita Crash 500 por Undefined)
+    if (!process.env.PAYSUITE_API_KEY) {
+      return res.status(400).json({ success: false, error: "Chave PAYSUITE_API_KEY não configurada na Vercel." });
+    }
+
+    // Verificar se PaySuite está ativa no Firestore
     let paysuiteActive = true;
     if (db) {
       try {
         const settingsDoc = await db.collection('settings').doc('global').get();
         if (settingsDoc.exists) paysuiteActive = settingsDoc.data().paysuiteActive !== false;
-      } catch (e) { console.warn('Aviso DB PaySuite:', e.message); }
+      } catch (e) {}
     }
 
     if (!paysuiteActive) {
-      return res.status(503).json({ success: false, error: "Pagamentos em manutenção.", fallback: `https://wa.me/${WHATSAPP_NUMBER}` });
+      return res.status(400).json({ success: false, error: "Os pagamentos automáticos estão temporariamente em manutenção." });
     }
 
     const { orderId, amount, method, description, phone, email, name } = req.body;
-    if (!orderId || !amount || !method) return res.status(400).json({ success: false, error: 'Dados incompletos' });
-    if (isNaN(amount) || amount < 1) return res.status(400).json({ success: false, error: 'Mínimo: 1 MT' });
+    
+    if (!orderId || !amount || !method) return res.status(400).json({ success: false, error: 'Dados da requisição incompletos.' });
+    if (isNaN(amount) || amount < 1) return res.status(400).json({ success: false, error: 'Valor mínimo: 1 MT' });
 
     const cleanMethod = ['mpesa', 'm-pesa'].includes(method.toLowerCase()) ? 'mpesa' : 'emola';
     const cleanReference = String(orderId).replace(/[^a-zA-Z0-9\-]/g, '').substring(0, 50);
 
     const paysuitePayload = {
-      amount: parseFloat(amount), method: cleanMethod, reference: cleanReference, description: description || `Pedido #${orderId}`, callback_url: `${SITE_URL}/api/paysuite-webhook`, return_url: `${SITE_URL}/index.html?payment=${cleanReference}`,
-      customer: { name: name || '', email: email || '', phone: phone ? phone.replace(/\D/g, '') : '' }
+      amount: parseFloat(amount),
+      method: cleanMethod,
+      reference: cleanReference,
+      description: description || `Pedido PayGo #${orderId}`,
+      callback_url: `${SITE_URL}/api/paysuite-webhook`,
+      return_url: `${SITE_URL}/index.html?payment=${cleanReference}`,
+      customer: {
+        name: name || 'Cliente',
+        email: email || 'cliente@paygo.co.mz',
+        phone: phone ? phone.replace(/\D/g, '') : '258840000000'
+      }
     };
 
-    // Timeout Seguro: Corta a execução aos 8 segundos antes que a Vercel mate o processo aos 10s (Gerando o Erro 500 HTML)
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000); 
-
-    let response;
-    try {
-      response = await fetch('https://paysuite.tech/api/v1/payments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'Authorization': `Bearer ${process.env.PAYSUITE_API_KEY}`, 'User-Agent': 'PayGo-API/1.0' },
-        body: JSON.stringify(paysuitePayload),
-        signal: controller.signal
-      });
-    } finally {
-      clearTimeout(timeout);
-    }
+    // Chamada à PaySuite (Sem AbortController para garantir compatibilidade)
+    const response = await fetch('https://paysuite.tech/api/v1/payments', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${process.env.PAYSUITE_API_KEY}`
+      },
+      body: JSON.stringify(paysuitePayload)
+    });
 
     const textData = await response.text();
     let result;
-    try { result = JSON.parse(textData); } 
-    catch (e) { return res.status(502).json({ success: false, error: "A operadora não devolveu dados válidos." }); }
+    
+    try {
+      result = JSON.parse(textData);
+    } catch (parseError) {
+      console.error("PaySuite Devolveu HTML Inválido:", textData);
+      return res.status(400).json({ success: false, error: "Gateway de pagamentos indisponível. A Operadora está offline." });
+    }
 
-    if (!response.ok || result.status === 'error') return res.status(400).json({ success: false, error: result.message || result.error || `A operadora recusou a comunicação.` });
+    if (!response.ok || result.status === 'error') {
+      return res.status(400).json({ success: false, error: result.message || result.error || "Operação recusada pela operadora." });
+    }
 
-    return res.status(200).json({ success: true, data: { paymentId: result.data?.id, checkoutUrl: result.data?.checkout_url, method: cleanMethod, reference: cleanReference } });
+    return res.status(200).json({
+      success: true,
+      data: { paymentId: result.data?.id, checkoutUrl: result.data?.checkout_url, method: cleanMethod },
+      message: 'Checkout criado'
+    });
 
   } catch (err) {
-    if (err.name === 'AbortError') return res.status(504).json({ success: false, error: "A operadora de pagamentos demorou a responder. Tente novamente." });
-    
-    // Tratamento de Erro Limpo (Converte erro de código em JSON legível)
-    return res.status(500).json({ success: false, error: `Erro Interno: ${err.message}` });
+    // Transforma erros do Vercel num Erro 400 legível para o Toast do Frontend
+    console.error("CRASH NO PAGAMENTO:", err);
+    return res.status(400).json({ success: false, error: `Falha no Servidor: ${err.message}` });
   }
 });
 
@@ -339,12 +209,12 @@ app.post("/api/paysuite-payment", async (req, res) => {
 app.post("/api/paysuite-webhook", async (req, res) => {
   try {
     let payload = req.body;
-    if (typeof payload === 'string') try { payload = JSON.parse(payload); } catch (e) {}
+    if (typeof payload === 'string') { try { payload = JSON.parse(payload); } catch (e) {} }
     
     const agora = Timestamp.now();
     await db?.collection('webhook_logs').add({ source: 'paysuite', event: payload?.event || 'unknown', reference: payload?.data?.reference || payload?.reference, status: payload?.status, rawPayload: payload, receivedAt: agora }).catch(()=>{});
 
-    if (!payload?.event) return res.status(200).json({ warning: 'Sem evento' });
+    if (!payload?.event) return res.status(200).json({ warning: 'Evento não especificado' });
 
     const isSuccess = ['payment.completed', 'payment.success', 'transaction.completed'].includes(payload.event);
     const isFailed = ['payment.failed', 'payment.cancelled', 'transaction.failed'].includes(payload.event);
@@ -356,34 +226,39 @@ app.post("/api/paysuite-webhook", async (req, res) => {
       if (ref.startsWith('PG') && !ref.startsWith('PG-')) ref = `PG-${ref.slice(2)}`;
       if (ref.startsWith('TOP') && !ref.startsWith('TOP-')) ref = `TOP-${ref.slice(3)}`;
     }
-    if (!ref) return res.status(200).json({ warning: 'Sem Referência' });
+    if (!ref) return res.status(200).json({ warning: 'Referência não encontrada' });
 
     if (ref.startsWith('TOP-')) {
       const snap = await db?.collection('topups').where('topupId', '==', ref).limit(1).get();
-      if (snap && !snap.empty) {
-        const doc = snap.docs[0];
-        if (isSuccess && doc.data().status !== 'completed') {
-          const amount = parseFloat(doc.data().amount) || 0;
-          await doc.ref.update({ status: 'completed', paidAt: agora, paysuitePaymentId: paymentData.id || payload.id, updatedAt: agora });
-          if (doc.data().userId && amount > 0) await db.collection('users').doc(doc.data().userId).update({ walletBalance: FieldValue.increment(amount), updatedAt: agora });
-        } else if (isFailed && doc.data().status === 'pending') {
-          await doc.ref.update({ status: 'failed', failedAt: agora, failureReason: paymentData.failure_reason || 'Falha', updatedAt: agora });
+      if (!snap || snap.empty) return res.status(200).json({ warning: `Top-up não encontrado` });
+      
+      const doc = snap.docs[0];
+      const currentStatus = doc.data().status;
+      
+      if (isSuccess && currentStatus !== 'completed') {
+        const amount = parseFloat(doc.data().amount) || 0;
+        await doc.ref.update({ status: 'completed', paidAt: agora, paysuitePaymentId: paymentData.id || payload.id, updatedAt: agora });
+        if (doc.data().userId && amount > 0) {
+          await db.collection('users').doc(doc.data().userId).update({ walletBalance: FieldValue.increment(amount), updatedAt: agora });
         }
+      } else if (isFailed && currentStatus === 'pending') {
+        await doc.ref.update({ status: 'failed', failedAt: agora, failureReason: paymentData.failure_reason || 'Falha no processamento', updatedAt: agora });
       }
-    } else if (ref.startsWith('PG-')) {
+    } 
+    else if (ref.startsWith('PG-')) {
       const snap = await db?.collection('orders').where('orderId', '==', ref).limit(1).get();
-      if (snap && !snap.empty) {
-        const doc = snap.docs[0];
-        if (isSuccess && !doc.data().isPaid) {
-          await doc.ref.update({ status: 'processing', isPaid: true, paidAt: agora, paysuitePaymentId: paymentData.id || payload.id, updatedAt: agora });
-        } else if (isFailed && doc.data().status === 'pending') {
-          await doc.ref.update({ status: 'payment_failed', failedAt: agora, failureReason: paymentData.failure_reason || 'Falha', updatedAt: agora });
-        }
+      if (!snap || snap.empty) return res.status(200).json({ warning: `Pedido não encontrado` });
+      
+      const doc = snap.docs[0];
+      if (isSuccess && !doc.data().isPaid) {
+        await doc.ref.update({ status: 'processing', isPaid: true, paidAt: agora, paysuitePaymentId: paymentData.id || payload.id, updatedAt: agora });
+      } else if (isFailed && doc.data().status === 'pending') {
+        await doc.ref.update({ status: 'payment_failed', failedAt: agora, failureReason: paymentData.failure_reason || 'Pagamento não confirmado', updatedAt: agora });
       }
     }
     return res.status(200).json({ success: true, processed: true });
   } catch (err) {
-    return res.status(200).json({ success: false, error: err.message, logged: true }); // Previne retries infinitos
+    return res.status(200).json({ success: false, error: err.message, logged: true });
   }
 });
 
@@ -391,129 +266,98 @@ app.post("/api/paysuite-webhook", async (req, res) => {
 app.post("/api/recover-password", async (req, res) => {
   try {
     const { email } = req.body;
-    if (!email) return res.status(400).json({ error: 'Email obrigatório' });
+    if (!email) return res.status(400).json({ error: 'Email válido é obrigatório' });
 
     const link = await auth.generatePasswordResetLink(email);
     const oobCode = new URL(link).searchParams.get('oobCode');
     const customResetLink = `${SITE_URL}/seguranca.html?mode=resetPassword&oobCode=${oobCode}`;
 
-    if (resend) await resend.emails.send({ from: FROM_EMAIL, to: [email], subject: '🔐 Redefinir Senha', html: `<p><a href="${customResetLink}">Redefinir Senha</a></p>` });
-    return res.status(200).json({ success: true, message: 'Instruções enviadas' });
+    if (resend) {
+      await resend.emails.send({
+        from: FROM_EMAIL, to: [email], subject: '🔐 Redefinir Senha - PayGo',
+        html: `<h2>🔐 Recuperação de Senha</h2><p><a href="${customResetLink}">Redefinir Senha</a></p>`
+      });
+    }
+    return res.status(200).json({ success: true, message: 'Enviado.' });
   } catch (error) {
     if (error.code === 'auth/user-not-found') return res.status(200).json({ success: true });
-    return res.status(500).json({ error: error.message });
+    return res.status(400).json({ error: error.message });
   }
 });
 
-// 🟨 SEND EMAIL
-app.post("/api/send-email", async (req, res) => {
+// 🟠 P2P TRANSFER
+app.post("/api/p2p-transfer", requireAdminAuth, async (req, res) => {
   try {
-    const { to, subject, template, variables } = req.body;
-    if (!to || !template) return res.status(400).json({ error: 'Faltam campos' });
+    const { senderId, receiverEmail, amount, description } = req.body;
+    const transferAmount = parseFloat(amount);
+
+    if (!senderId || !receiverEmail || isNaN(transferAmount) || transferAmount <= 0) {
+      return res.status(400).json({ error: 'Dados inválidos' });
+    }
+
+    const usersRef = db.collection('users');
+    const receiverSnap = await usersRef.where('email', '==', receiverEmail.trim().toLowerCase()).limit(1).get();
+    if (receiverSnap.empty) return res.status(404).json({ error: 'Usuário não encontrado' });
+
+    const receiverDoc = receiverSnap.docs[0];
+    if (senderId === receiverDoc.id) return res.status(400).json({ error: 'Ação inválida' });
+
+    const senderRef = usersRef.doc(senderId);
+    const senderDoc = await senderRef.get();
+    const senderBalance = parseFloat(senderDoc.data().walletBalance) || 0;
+    if (senderBalance < transferAmount) return res.status(400).json({ error: `Saldo insuficiente.` });
+
+    const batch = db.batch();
+    const transactionId = `P2P-${Date.now()}`;
+    const agora = Timestamp.now();
     
-    const validRecipients = (Array.isArray(to) ? to : [to]).filter(e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e));
-    if (validRecipients.length === 0) return res.status(400).json({ error: 'Sem emails válidos' });
+    batch.update(senderRef, { walletBalance: FieldValue.increment(-transferAmount), updatedAt: agora });
+    batch.update(receiverDoc.ref, { walletBalance: FieldValue.increment(transferAmount), updatedAt: agora });
+    batch.set(db.collection('wallet_transactions').doc(), { userId: senderId, type: 'debit', amount: transferAmount, description: description || `Transferência P2P`, reference: transactionId, relatedUserId: receiverDoc.id, createdAt: agora, metadata: { type: 'p2p', direction: 'sent' } });
+    batch.set(db.collection('wallet_transactions').doc(), { userId: receiverDoc.id, type: 'credit', amount: transferAmount, description: description || `Recebido de ${senderDoc.data().email}`, reference: transactionId, relatedUserId: senderId, createdAt: agora, metadata: { type: 'p2p', direction: 'received' } });
 
-    const html = generateEmailHTML(template, variables || {});
-    if (resend) await resend.emails.send({ from: FROM_EMAIL, to: validRecipients, subject: subject || "Notificação PayGo", html: html });
-    return res.status(200).json({ success: true, sent: validRecipients.length });
-  } catch (err) { return res.status(500).json({ error: err.message }); }
+    await batch.commit();
+    return res.status(200).json({ success: true, transactionId });
+  } catch (err) {
+    return res.status(400).json({ error: err.message });
+  }
 });
 
-// 🟧 SEND WHATSAPP INVOICE
-app.post("/api/send-whatsapp-invoice", async (req, res) => {
-  try {
-    const { orderId, clientName, phone, pdfData, message } = req.body;
-    if (!orderId || !phone || !pdfData) return res.status(400).json({ error: 'Dados incompletos' });
-
-    let cleanPhone = phone.replace(/\D/g, '');
-    if (cleanPhone.length === 9) cleanPhone = '258' + cleanPhone;
-    if (!cleanPhone.startsWith('258') || cleanPhone.length !== 12) return res.status(400).json({ error: 'Número inválido' });
-
-    const base64Pure = pdfData.match(/^application\/pdf;base64,(.+)$/) ? pdfData.match(/^application\/pdf;base64,(.+)$/)[1] : pdfData;
-    const messageText = message || `Olá *${clientName || 'Cliente'}*! ✅ Compra processada!\n📄 Segue a fatura #${orderId}.`;
-
-    if (!process.env.EVOLUTION_API_URL || !process.env.EVOLUTION_API_KEY) throw new Error('API não configurada');
-
-    const response = await fetch(`${process.env.EVOLUTION_API_URL}/message/sendMedia/${process.env.INSTANCE_NAME}`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': process.env.EVOLUTION_API_KEY },
-      body: JSON.stringify({ number: cleanPhone, options: { delay: 1200, presence: 'composing' }, mediaMessage: { mediatype: 'document', fileName: `Fatura_PayGo_${orderId}.pdf`, caption: messageText, media: base64Pure } }),
-      signal: AbortSignal.timeout(15000)
-    });
-
-    const result = await response.json();
-    if (!response.ok || result?.error) throw new Error(result?.message || result?.error);
-    return res.status(200).json({ success: true, messageId: result?.messageId });
-  } catch (error) { return res.status(500).json({ error: error.message }); }
-});
-
-// 🟩 VERIFY EMAIL
-app.post("/api/verify-email", async (req, res) => {
-  try {
-    const { email, name } = req.body;
-    if (!email) return res.status(400).json({ error: 'Email obrigatório' });
-
-    const link = await auth.generateEmailVerificationLink(email);
-    const oobCode = new URL(link).searchParams.get('oobCode');
-    if (resend) await resend.emails.send({ from: FROM_EMAIL, to: [email], subject: '⚡ Verifique seu Email - PayGo', html: `<p><a href="${SITE_URL}/seguranca.html?mode=verifyEmail&oobCode=${oobCode}">✅ Validar Conta</a></p>` });
-    return res.status(200).json({ success: true });
-  } catch (error) { return res.status(500).json({ error: error.message }); }
-});
-
-// 💸 PAYOUTS AUTOMATIZADOS (Admin Only) - COM BLINDAGEM TIMEOUT
+// 💸 PAYOUTS AUTOMATIZADOS
 app.post("/api/paysuite-payout", requireAdminAuth, async (req, res) => {
   try {
     const { withdrawalId, targetPhone, targetAmount, targetMethod, reason } = req.body;
-    if (!withdrawalId || !targetPhone || !targetAmount || !targetMethod) return res.status(400).json({ success: false, error: "Dados incompletos" });
+    if (!withdrawalId || !targetPhone || !targetAmount || !targetMethod) return res.status(400).json({ success: false, error: "Campos obrigatórios em falta" });
 
     const finalAmount = parseFloat(targetAmount);
-    if (isNaN(finalAmount) || finalAmount < 100 || finalAmount > 50000) return res.status(400).json({ success: false, error: "Valor fora do limite" });
-
-    let withdrawalData = null;
-    let previousDataLog = { status: 'pending', amount: finalAmount };
-    
-    if (withdrawalId !== "MANUAL_PAYOUT") {
-      const wDoc = await db.collection("withdrawals").doc(withdrawalId).get();
-      if (!wDoc.exists) return res.status(404).json({ success: false, error: "Saque não encontrado" });
-      withdrawalData = wDoc.data();
-      if (withdrawalData.status !== 'pending') return res.status(400).json({ success: false, error: `Saque em status: ${withdrawalData.status}` });
-      previousDataLog = { status: withdrawalData.status, amount: withdrawalData.amount };
-    }
+    if (isNaN(finalAmount) || finalAmount < 100) return res.status(400).json({ success: false, error: "Valor incorreto" });
 
     const cleanPhone = targetPhone.replace(/\D/g, '');
     const method = targetMethod.toLowerCase() === 'emola' ? 'emola' : 'mpesa';
-    const reference = withdrawalId === "MANUAL_PAYOUT" ? `MAN-${Date.now().toString().slice(-6)}` : withdrawalId;
+    const reference = withdrawalId === "MANUAL_PAYOUT" ? `MAN-${Date.now()}` : withdrawalId;
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000); // 8s Fail-safe Vercel
-
-    let response;
-    try {
-      response = await fetch('https://paysuite.tech/api/v1/payouts', {
-        method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'Authorization': `Bearer ${process.env.PAYSUITE_API_KEY}` },
-        body: JSON.stringify({ amount: finalAmount, phone: cleanPhone, method: method, reference: reference, description: reason || `Payout PayGo - Ref: ${reference}` }),
-        signal: controller.signal
-      });
-    } finally { clearTimeout(timeout); }
+    const response = await fetch('https://paysuite.tech/api/v1/payouts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'Authorization': `Bearer ${process.env.PAYSUITE_API_KEY}` },
+      body: JSON.stringify({ amount: finalAmount, phone: cleanPhone, method: method, reference: reference, description: reason || `Payout PayGo` })
+    });
 
     const textData = await response.text();
     let result;
-    try { result = JSON.parse(textData); } catch (e) { return res.status(502).json({ success: false, error: "Operadora indisponível." }); }
+    try { result = JSON.parse(textData); } 
+    catch (e) { return res.status(400).json({ success: false, error: "Gateway de payouts indisponível" }); }
 
     if (!response.ok || result?.status === 'error') {
-      if (withdrawalData && withdrawalId !== "MANUAL_PAYOUT") await db.collection("withdrawals").doc(withdrawalId).update({ status: 'failed', failureReason: result?.message || 'Falha operadora', updatedAt: Timestamp.now() });
-      return res.status(400).json({ success: false, error: result?.message || "Recusado." });
+      return res.status(400).json({ success: false, error: result?.message || "Recusado pela operadora" });
     }
 
-    if (withdrawalId !== "MANUAL_PAYOUT" && withdrawalData) {
-      await db.collection("withdrawals").doc(withdrawalId).update({ status: 'approved', paysuitePayoutId: result.data?.id || `PROC-${Date.now()}`, amountPaid: finalAmount, phonePaid: cleanPhone, methodPaid: method, processedAt: Timestamp.now(), processedBy: req.admin.uid, updatedAt: Timestamp.now() });
+    if (withdrawalId !== "MANUAL_PAYOUT") {
+      await db.collection("withdrawals").doc(withdrawalId).update({ status: 'approved', paysuitePayoutId: result.data?.id || `PROC`, amountPaid: finalAmount, phonePaid: cleanPhone, processedAt: Timestamp.now(), processedBy: req.admin.uid });
     }
-    await db.collection("admin_audit_logs").add({ adminId: req.admin.uid, adminName: req.admin.name, action: withdrawalId === "MANUAL_PAYOUT" ? "PAYOUT_MANUAL" : "PAYOUT_AFILIADO", targetId: reference, targetType: "payout", details: { previous: previousDataLog, updated: { status: 'approved', amountPaid: finalAmount, phone: cleanPhone, paysuiteId: result.data?.id } }, createdAt: Timestamp.now() });
 
-    return res.status(200).json({ success: true, message: "Sucesso!", payoutId: result.data?.id });
+    return res.status(200).json({ success: true, message: "Transferência executada!" });
   } catch (err) {
-    if (err.name === 'AbortError') return res.status(504).json({ success: false, error: "A operadora não respondeu a tempo." });
-    return res.status(500).json({ success: false, error: `Erro: ${err.message}` });
+    return res.status(400).json({ success: false, error: err.message });
   }
 });
 
@@ -525,234 +369,17 @@ app.get("/api/exchange-rate", async (req, res) => {
       const settingsDoc = await db.collection('settings').doc('global').get();
       if (settingsDoc.exists && settingsDoc.data().exchangeRate) rate = parseFloat(settingsDoc.data().exchangeRate);
     }
-    return res.status(200).json({ success: true, rate: rate });
-  } catch (err) { return res.status(200).json({ success: true, rate: 88.00 }); }
-});
-
-// 📦 TRACK ORDER
-app.post("/api/track-order", async (req, res) => {
-  try {
-    const { orderId } = req.body;
-    if (!orderId) return res.status(400).json({ error: 'orderId obrigatório' });
-    const snap = await db?.collection('orders').where('orderId', '==', orderId.toUpperCase()).limit(1).get();
-    if (!snap || snap.empty) return res.status(404).json({ error: 'Pedido não encontrado' });
-    const order = snap.docs[0].data();
-    return res.status(200).json({ success: true, order: { orderId: order.orderId, status: order.status, isPaid: order.isPaid, total: order.total, createdAt: order.createdAt?.toDate ? order.createdAt.toDate().toISOString() : order.createdAt } });
-  } catch (err) { return res.status(500).json({ error: err.message }); }
-});
-
-// ==========================================
-// 5. FUNÇÕES AUXILIARES DE HTML (TEMPLATES COMPLETAS E PROFISSIONAIS)
-// ==========================================
-function getWhatsAppLink(orderId, name, total, method) {
-  const WHATSAPP_NUMBER = process.env.WHATSAPP_NUMBER || "258871002255";
-  const isBankTransfer = String(method||'').toLowerCase().includes('transferencia') || String(method||'').toLowerCase().includes('bank');
-  const action = isBankTransfer ? 'enviar o comprovativo' : 'finalizar pedido';
-  
-  const msg = `*OLÁ PAYGO!* 👋\n\nGostaria de ${action}.\n\n📋 *Dados do Pedido:*\n• ID: #${orderId}\n• Cliente: ${name}\n• Valor: ${total?.toFixed(2) || 'N/A'} MT\n• Método: ${method || 'N/A'}\n\n_Aguardo instruções da equipa._`;
-  
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
-}
-
-function generateOrderConfirmationHTML(order) {
-  const SITE_URL = process.env.SITE_URL || 'https://paygo.co.mz';
-  const waLink = getWhatsAppLink(order.orderId, order.name, order.total, order.paymentMethod);
-  return `
-    <!DOCTYPE html>
-    <html>
-    <body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8fafc;">
-      <div style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-        <h2 style="color: #2563eb; margin-top: 0;">🛒 Pedido Registado!</h2>
-        <p>Olá <strong>${order.name}</strong>,</p>
-        <p>Seu pedido <strong>#${order.orderId}</strong> foi registrado com sucesso.</p>
-        
-        <div style="background: #f1f5f9; padding: 16px; border-radius: 8px; margin: 20px 0;">
-          <p style="margin: 4px 0;"><strong>💰 Total:</strong> ${order.total?.toFixed(2) || 'N/A'} MT</p>
-          <p style="margin: 4px 0;"><strong>💳 Método:</strong> ${order.paymentMethod || 'N/A'}</p>
-          <p style="margin: 4px 0;"><strong>📦 Tipo:</strong> ${order.category === 'game' ? 'Jogo/Serviço' : 'Produto Físico'}</p>
-        </div>
-        
-        <p>Para finalizar, clique no botão abaixo:</p>
-        <p style="text-align: center; margin: 24px 0;">
-          <a href="${waLink}" style="background: #25D366; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold;">
-            💬 Finalizar no WhatsApp
-          </a>
-        </p>
-        
-        <p style="font-size: 12px; color: #666; border-top: 1px solid #eee; padding-top: 16px;">
-          PayGo Moçambique • <a href="${SITE_URL}" style="color: #2563eb;">${SITE_URL}</a>
-        </p>
-      </div>
-    </body>
-    </html>
-  `;
-}
-
-function generatePaymentSuccessHTML(order) {
-  const WHATSAPP_NUMBER = process.env.WHATSAPP_NUMBER || "258871002255";
-  return `
-    <!DOCTYPE html>
-    <html>
-    <body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f0fdf4;">
-      <div style="background: white; padding: 24px; border-radius: 12px; border-left: 4px solid #22c55e;">
-        <h2 style="color: #16a34a; margin-top: 0;">✅ Pagamento Confirmado!</h2>
-        <p>Olá <strong>${order.name}</strong>,</p>
-        <p>Recebemos seu pagamento de <strong>${order.total?.toFixed(2) || 'N/A'} MT</strong> para o pedido <strong>#${order.orderId}</strong>.</p>
-        
-        <div style="background: #f0fdf4; padding: 16px; border-radius: 8px; margin: 20px 0; border: 1px solid #bbf7d0;">
-          <p style="margin: 4px 0; color: #166534;">🔄 Seu pedido está sendo processado.</p>
-          <p style="margin: 4px 0; color: #166534;">📧 Você receberá atualizações por email.</p>
-        </div>
-        
-        <p style="font-size: 12px; color: #666;">
-          Dúvidas? <a href="https://wa.me/${WHATSAPP_NUMBER}" style="color: #2563eb;">Fale conosco</a>
-        </p>
-      </div>
-    </body>
-    </html>
-  `;
-}
-
-function generateRefundHTML(order, reason) {
-  const SITE_URL = process.env.SITE_URL || 'https://paygo.co.mz';
-  return `
-    <!DOCTYPE html>
-    <html>
-    <body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <div style="background: white; padding: 24px; border-radius: 12px; border-left: 4px solid #a855f7;">
-        <h2 style="color: #9333ea; margin-top: 0;">🟣 Reembolso Processado</h2>
-        <p>Olá <strong>${order.name}</strong>,</p>
-        <p>O valor do pedido <strong>#${order.orderId}</strong> foi devolvido à sua carteira PayGo.</p>
-        
-        ${reason ? `<p style="background: #faf5ff; padding: 12px; border-radius: 6px; margin: 16px 0;"><strong>Motivo:</strong> ${reason}</p>` : ''}
-        
-        <p style="font-size: 12px; color: #666;">
-          O saldo já está disponível para uso. <a href="${SITE_URL}/dashboard.html" style="color: #9333ea;">Acessar carteira</a>
-        </p>
-      </div>
-    </body>
-    </html>
-  `;
-}
-
-function generateInsufficientFundsHTML(order, extra, reason) {
-  const WHATSAPP_NUMBER = process.env.WHATSAPP_NUMBER || "258871002255";
-  return `
-    <!DOCTYPE html>
-    <html>
-    <body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <div style="background: white; padding: 24px; border-radius: 12px; border-left: 4px solid #f59e0b;">
-        <h2 style="color: #d97706; margin-top: 0;">⚠️ Ação Necessária</h2>
-        <p>Olá <strong>${order.name}</strong>,</p>
-        <p>Seu pedido <strong>#${order.orderId}</strong> requer atenção:</p>
-        
-        <div style="background: #fffbeb; padding: 16px; border-radius: 8px; margin: 20px 0; border: 1px solid #fcd34d;">
-          <p style="margin: 4px 0;"><strong>💰 Valor pendente:</strong> ${extra?.toFixed(2) || 'N/A'} MT</p>
-          ${reason ? `<p style="margin: 4px 0;"><strong>📝 Motivo:</strong> ${reason}</p>` : ''}
-        </div>
-        
-        <p style="text-align: center; margin: 24px 0;">
-          <a href="https://wa.me/${WHATSAPP_NUMBER}" style="background: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold;">
-            💬 Resolver no WhatsApp
-          </a>
-        </p>
-      </div>
-    </body>
-    </html>
-  `;
-}
-
-function generateOrderCompletedHTML(order) {
-  const SITE_URL = process.env.SITE_URL || 'https://paygo.co.mz';
-  return `
-    <!DOCTYPE html>
-    <html>
-    <body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f0fdf4;">
-      <div style="background: white; padding: 24px; border-radius: 12px; border-left: 4px solid #22c55e;">
-        <h2 style="color: #16a34a; margin-top: 0;">🎉 Pedido Concluído!</h2>
-        <p>Olá <strong>${order.name}</strong>,</p>
-        <p>Seu pedido <strong>#${order.orderId}</strong> foi concluído com sucesso!</p>
-        
-        <div style="background: #f0fdf4; padding: 16px; border-radius: 8px; margin: 20px 0;">
-          <p style="margin: 4px 0;"><strong>✅ Status:</strong> Entregue/Ativado</p>
-          <p style="margin: 4px 0;"><strong>📧 Detalhes:</strong> Verifique seu email ou painel</p>
-        </div>
-        
-        <p style="text-align: center; margin: 24px 0;">
-          <a href="${SITE_URL}/dashboard.html" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold;">
-            📋 Ver Histórico
-          </a>
-        </p>
-      </div>
-    </body>
-    </html>
-  `;
-}
-
-function generateEmailHTML(template, vars) {
-  const SITE_URL = process.env.SITE_URL || 'https://paygo.co.mz';
-  
-  const templates = {
-    'order-completed': generateOrderCompletedHTML,
-    'payment-confirmed': generatePaymentSuccessHTML,
-    'welcome': (v) => `
-      <!DOCTYPE html>
-      <html>
-      <body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h2 style="color: #2563eb;">🚀 Bem-vindo à PayGo!</h2>
-        <p>Olá ${v.name || 'Cliente'},</p>
-        <p>A sua conta foi criada com sucesso. ${v.affiliate_code ? `O seu código de afiliado é: <strong>${v.affiliate_code}</strong>` : ''}</p>
-        <p style="margin-top: 20px;">
-          <a href="${SITE_URL}/dashboard.html" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block;">
-            Acessar ao Painel
-          </a>
-        </p>
-      </body>
-      </html>
-    `,
-    'password-reset': (v) => `
-      <!DOCTYPE html>
-      <html>
-      <body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h2 style="color: #2563eb;">🔐 Redefinir Senha</h2>
-        <p>Recebemos um pedido para alterar a sua senha. Se foi você, clique no botão abaixo:</p>
-        <p style="margin: 20px 0;">
-          <a href="${v.link}" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block;">
-            Redefinir Senha
-          </a>
-        </p>
-        <p style="font-size: 12px; color: #666;">Este link é válido por 1 hora.</p>
-      </body>
-      </html>
-    `
-  };
-  
-  const generator = templates[template];
-  if (generator) {
-    return generator(vars);
+    return res.status(200).json({ success: true, rate: rate, timestamp: new Date().toISOString() });
+  } catch (err) {
+    return res.status(200).json({ success: true, rate: 88.00 });
   }
-  
-  // Fallback genérico elegante
-  return `
-    <!DOCTYPE html>
-    <html>
-    <body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8fafc;">
-      <div style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-        <h2 style="color: #0f172a; margin-top: 0;">Notificação PayGo</h2>
-        <p style="color: #334155; line-height: 1.6;">${vars.message || 'Nova atualização na sua conta PayGo.'}</p>
-        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
-        <p style="font-size: 12px; color: #64748b;">Equipa PayGo Moçambique</p>
-      </div>
-    </body>
-    </html>
-  `;
-}
-// ==========================================
-// 6. INICIALIZAÇÃO DO SERVIDOR 
-// ==========================================
-// Proteção: A Vercel cuida do port binding dinamicamente. Executar app.listen força alocação estática e dá 500.
-if (process.env.NODE_ENV !== 'production') {
-  app.listen(PORT, () => console.log(`🚀 API Local na porta ${PORT}`));
+});
+
+// Evitar bloqueios caso tentem correr localmente sem crashar no Vercel (Não usar app.listen no Vercel)
+if (process.env.NODE_ENV === 'development') {
+  app.listen(PORT, () => {
+    console.log(`🚀 Ambiente Local na porta ${PORT}`);
+  });
 }
 
 module.exports = app;
