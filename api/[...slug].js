@@ -542,24 +542,211 @@ app.post("/api/track-order", async (req, res) => {
 });
 
 // ==========================================
-// 5. FUNÇÕES AUXILIARES DE HTML
+// 5. FUNÇÕES AUXILIARES DE HTML (TEMPLATES COMPLETAS E PROFISSIONAIS)
 // ==========================================
 function getWhatsAppLink(orderId, name, total, method) {
+  const WHATSAPP_NUMBER = process.env.WHATSAPP_NUMBER || "258871002255";
   const isBankTransfer = String(method||'').toLowerCase().includes('transferencia') || String(method||'').toLowerCase().includes('bank');
   const action = isBankTransfer ? 'enviar o comprovativo' : 'finalizar pedido';
-  const msg = `*OLÁ PAYGO!* 👋\n\nGostaria de ${action}.\n\n📋 *Dados do Pedido:*\n• ID: #${orderId}\n• Cliente: ${name}\n• Valor: ${total?.toFixed(2) || 'N/A'} MT\n• Método: ${method || 'N/A'}\n\n_Aguardo instruções._`;
+  
+  const msg = `*OLÁ PAYGO!* 👋\n\nGostaria de ${action}.\n\n📋 *Dados do Pedido:*\n• ID: #${orderId}\n• Cliente: ${name}\n• Valor: ${total?.toFixed(2) || 'N/A'} MT\n• Método: ${method || 'N/A'}\n\n_Aguardo instruções da equipa._`;
+  
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
 }
-function generateOrderConfirmationHTML(order) { return `<h2>🛒 Pedido #${order.orderId}</h2><p>Total: ${order.total} MT</p><a href="${getWhatsAppLink(order.orderId, order.name, order.total, order.paymentMethod)}">Finalizar no WhatsApp</a>`; }
-function generatePaymentSuccessHTML(order) { return `<h2>✅ Pagamento #${order.orderId}</h2><p>Confirmado: ${order.total} MT</p>`; }
-function generateRefundHTML(order, reason) { return `<h2>🟣 Reembolso #${order.orderId}</h2><p>Motivo: ${reason || 'N/A'}</p>`; }
-function generateInsufficientFundsHTML(order, extra, reason) { return `<h2>⚠️ Faltam ${extra} MT</h2><p>Motivo: ${reason}</p>`; }
-function generateOrderCompletedHTML(order) { return `<h2>🎉 Pedido Concluído! #${order.orderId}</h2>`; }
-function generateEmailHTML(template, vars) {
-  const templates = { 'order-completed': generateOrderCompletedHTML, 'payment-confirmed': generatePaymentSuccessHTML };
-  return templates[template] ? templates[template](vars) : `<h2>PayGo</h2><p>${vars.message || ''}</p>`;
+
+function generateOrderConfirmationHTML(order) {
+  const SITE_URL = process.env.SITE_URL || 'https://paygo.co.mz';
+  const waLink = getWhatsAppLink(order.orderId, order.name, order.total, order.paymentMethod);
+  return `
+    <!DOCTYPE html>
+    <html>
+    <body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8fafc;">
+      <div style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+        <h2 style="color: #2563eb; margin-top: 0;">🛒 Pedido Registado!</h2>
+        <p>Olá <strong>${order.name}</strong>,</p>
+        <p>Seu pedido <strong>#${order.orderId}</strong> foi registrado com sucesso.</p>
+        
+        <div style="background: #f1f5f9; padding: 16px; border-radius: 8px; margin: 20px 0;">
+          <p style="margin: 4px 0;"><strong>💰 Total:</strong> ${order.total?.toFixed(2) || 'N/A'} MT</p>
+          <p style="margin: 4px 0;"><strong>💳 Método:</strong> ${order.paymentMethod || 'N/A'}</p>
+          <p style="margin: 4px 0;"><strong>📦 Tipo:</strong> ${order.category === 'game' ? 'Jogo/Serviço' : 'Produto Físico'}</p>
+        </div>
+        
+        <p>Para finalizar, clique no botão abaixo:</p>
+        <p style="text-align: center; margin: 24px 0;">
+          <a href="${waLink}" style="background: #25D366; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold;">
+            💬 Finalizar no WhatsApp
+          </a>
+        </p>
+        
+        <p style="font-size: 12px; color: #666; border-top: 1px solid #eee; padding-top: 16px;">
+          PayGo Moçambique • <a href="${SITE_URL}" style="color: #2563eb;">${SITE_URL}</a>
+        </p>
+      </div>
+    </body>
+    </html>
+  `;
 }
 
+function generatePaymentSuccessHTML(order) {
+  const WHATSAPP_NUMBER = process.env.WHATSAPP_NUMBER || "258871002255";
+  return `
+    <!DOCTYPE html>
+    <html>
+    <body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f0fdf4;">
+      <div style="background: white; padding: 24px; border-radius: 12px; border-left: 4px solid #22c55e;">
+        <h2 style="color: #16a34a; margin-top: 0;">✅ Pagamento Confirmado!</h2>
+        <p>Olá <strong>${order.name}</strong>,</p>
+        <p>Recebemos seu pagamento de <strong>${order.total?.toFixed(2) || 'N/A'} MT</strong> para o pedido <strong>#${order.orderId}</strong>.</p>
+        
+        <div style="background: #f0fdf4; padding: 16px; border-radius: 8px; margin: 20px 0; border: 1px solid #bbf7d0;">
+          <p style="margin: 4px 0; color: #166534;">🔄 Seu pedido está sendo processado.</p>
+          <p style="margin: 4px 0; color: #166534;">📧 Você receberá atualizações por email.</p>
+        </div>
+        
+        <p style="font-size: 12px; color: #666;">
+          Dúvidas? <a href="https://wa.me/${WHATSAPP_NUMBER}" style="color: #2563eb;">Fale conosco</a>
+        </p>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+function generateRefundHTML(order, reason) {
+  const SITE_URL = process.env.SITE_URL || 'https://paygo.co.mz';
+  return `
+    <!DOCTYPE html>
+    <html>
+    <body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background: white; padding: 24px; border-radius: 12px; border-left: 4px solid #a855f7;">
+        <h2 style="color: #9333ea; margin-top: 0;">🟣 Reembolso Processado</h2>
+        <p>Olá <strong>${order.name}</strong>,</p>
+        <p>O valor do pedido <strong>#${order.orderId}</strong> foi devolvido à sua carteira PayGo.</p>
+        
+        ${reason ? `<p style="background: #faf5ff; padding: 12px; border-radius: 6px; margin: 16px 0;"><strong>Motivo:</strong> ${reason}</p>` : ''}
+        
+        <p style="font-size: 12px; color: #666;">
+          O saldo já está disponível para uso. <a href="${SITE_URL}/dashboard.html" style="color: #9333ea;">Acessar carteira</a>
+        </p>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+function generateInsufficientFundsHTML(order, extra, reason) {
+  const WHATSAPP_NUMBER = process.env.WHATSAPP_NUMBER || "258871002255";
+  return `
+    <!DOCTYPE html>
+    <html>
+    <body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background: white; padding: 24px; border-radius: 12px; border-left: 4px solid #f59e0b;">
+        <h2 style="color: #d97706; margin-top: 0;">⚠️ Ação Necessária</h2>
+        <p>Olá <strong>${order.name}</strong>,</p>
+        <p>Seu pedido <strong>#${order.orderId}</strong> requer atenção:</p>
+        
+        <div style="background: #fffbeb; padding: 16px; border-radius: 8px; margin: 20px 0; border: 1px solid #fcd34d;">
+          <p style="margin: 4px 0;"><strong>💰 Valor pendente:</strong> ${extra?.toFixed(2) || 'N/A'} MT</p>
+          ${reason ? `<p style="margin: 4px 0;"><strong>📝 Motivo:</strong> ${reason}</p>` : ''}
+        </div>
+        
+        <p style="text-align: center; margin: 24px 0;">
+          <a href="https://wa.me/${WHATSAPP_NUMBER}" style="background: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold;">
+            💬 Resolver no WhatsApp
+          </a>
+        </p>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+function generateOrderCompletedHTML(order) {
+  const SITE_URL = process.env.SITE_URL || 'https://paygo.co.mz';
+  return `
+    <!DOCTYPE html>
+    <html>
+    <body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f0fdf4;">
+      <div style="background: white; padding: 24px; border-radius: 12px; border-left: 4px solid #22c55e;">
+        <h2 style="color: #16a34a; margin-top: 0;">🎉 Pedido Concluído!</h2>
+        <p>Olá <strong>${order.name}</strong>,</p>
+        <p>Seu pedido <strong>#${order.orderId}</strong> foi concluído com sucesso!</p>
+        
+        <div style="background: #f0fdf4; padding: 16px; border-radius: 8px; margin: 20px 0;">
+          <p style="margin: 4px 0;"><strong>✅ Status:</strong> Entregue/Ativado</p>
+          <p style="margin: 4px 0;"><strong>📧 Detalhes:</strong> Verifique seu email ou painel</p>
+        </div>
+        
+        <p style="text-align: center; margin: 24px 0;">
+          <a href="${SITE_URL}/dashboard.html" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold;">
+            📋 Ver Histórico
+          </a>
+        </p>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+function generateEmailHTML(template, vars) {
+  const SITE_URL = process.env.SITE_URL || 'https://paygo.co.mz';
+  
+  const templates = {
+    'order-completed': generateOrderCompletedHTML,
+    'payment-confirmed': generatePaymentSuccessHTML,
+    'welcome': (v) => `
+      <!DOCTYPE html>
+      <html>
+      <body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #2563eb;">🚀 Bem-vindo à PayGo!</h2>
+        <p>Olá ${v.name || 'Cliente'},</p>
+        <p>A sua conta foi criada com sucesso. ${v.affiliate_code ? `O seu código de afiliado é: <strong>${v.affiliate_code}</strong>` : ''}</p>
+        <p style="margin-top: 20px;">
+          <a href="${SITE_URL}/dashboard.html" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block;">
+            Acessar ao Painel
+          </a>
+        </p>
+      </body>
+      </html>
+    `,
+    'password-reset': (v) => `
+      <!DOCTYPE html>
+      <html>
+      <body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #2563eb;">🔐 Redefinir Senha</h2>
+        <p>Recebemos um pedido para alterar a sua senha. Se foi você, clique no botão abaixo:</p>
+        <p style="margin: 20px 0;">
+          <a href="${v.link}" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block;">
+            Redefinir Senha
+          </a>
+        </p>
+        <p style="font-size: 12px; color: #666;">Este link é válido por 1 hora.</p>
+      </body>
+      </html>
+    `
+  };
+  
+  const generator = templates[template];
+  if (generator) {
+    return generator(vars);
+  }
+  
+  // Fallback genérico elegante
+  return `
+    <!DOCTYPE html>
+    <html>
+    <body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8fafc;">
+      <div style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+        <h2 style="color: #0f172a; margin-top: 0;">Notificação PayGo</h2>
+        <p style="color: #334155; line-height: 1.6;">${vars.message || 'Nova atualização na sua conta PayGo.'}</p>
+        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
+        <p style="font-size: 12px; color: #64748b;">Equipa PayGo Moçambique</p>
+      </div>
+    </body>
+    </html>
+  `;
+}
 // ==========================================
 // 6. INICIALIZAÇÃO DO SERVIDOR 
 // ==========================================
