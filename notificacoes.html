@@ -6,95 +6,246 @@
     <title>Notificações | PayGo Moçambique</title>
     <meta name="theme-color" content="#0f172a">
     <meta name="robots" content="noindex, nofollow">
-    
+
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: { 
-                        sans: ['"Plus Jakarta Sans"', 'sans-serif'], 
-                        display: ['"Outfit"', 'sans-serif'], 
-                        mono: ['"Fira Code"', 'monospace'] 
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        display: ['"Outfit"', 'sans-serif'],
+                        mono: ['"Fira Code"', 'monospace']
                     },
-                    colors: { 
-                        brand: { 50: '#eff6ff', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 900: '#1e3a8a', 950: '#0f172a' },
-                        success: { 400: '#4ade80', 500: '#22c55e', 900: '#14532d' }, 
-                        warning: { 400: '#fbbf24', 500: '#f59e0b', 900: '#78350f' }, 
-                        danger: { 400: '#f87171', 500: '#ef4444', 900: '#7f1d1d' }, 
-                        vip: { 400: '#c084fc', 500: '#a855f7', 600: '#9333ea' } 
+                    colors: {
+                        brand: { 50: '#eff6ff', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 900: '#1e3a8a', 950: '#0f172a' },
+                        success: { 400: '#4ade80', 500: '#22c55e', 900: '#14532d' },
+                        warning: { 400: '#fbbf24', 500: '#f59e0b', 900: '#78350f' },
+                        danger: { 400: '#f87171', 500: '#ef4444', 900: '#7f1d1d' },
+                        vip: { 400: '#c084fc', 500: '#a855f7', 600: '#9333ea' }
                     }
                 }
             }
         };
     </script>
-    
-    <style>
-        body { background-color: #0f172a; color: #f8fafc; -webkit-font-smoothing: antialiased; }
-        ::-webkit-scrollbar { width: 6px; } 
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-        
-        .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
-        .glass-nav { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.08); z-index: 50; }
-        .glass-card { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.3s ease; }
-        
-        .notification-unread { background: linear-gradient(to right, rgba(59, 130, 246, 0.05), rgba(30, 41, 59, 0.4)); border-left: 4px solid #3b82f6; }
-        .notification-read { background: rgba(30, 41, 59, 0.2); border-left: 4px solid transparent; opacity: 0.8; }
 
-        #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-        
-        .skeleton { background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; }
-        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+    <style>
+        body {
+            background:
+                radial-gradient(circle at top right, rgba(59, 130, 246, 0.14), transparent 28%),
+                radial-gradient(circle at bottom left, rgba(14, 165, 233, 0.08), transparent 25%),
+                #0f172a;
+            color: #f8fafc;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 999px; }
+
+        .bg-grid {
+            background-size: 40px 40px;
+            background-image:
+                linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+        }
+
+        .glass-nav {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            z-index: 50;
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.40);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            transition: all 0.25s ease;
+        }
+
+        .notification-unread {
+            background:
+                linear-gradient(90deg, rgba(59, 130, 246, 0.10), rgba(30, 41, 59, 0.40));
+            border-left: 4px solid #3b82f6;
+        }
+
+        .notification-read {
+            background: rgba(30, 41, 59, 0.22);
+            border-left: 4px solid transparent;
+            opacity: 0.86;
+        }
+
+        .notification-card:hover {
+            transform: translateY(-1px);
+            background: rgba(51, 65, 85, 0.34);
+        }
+
+        .filter-chip {
+            transition: all 0.2s ease;
+        }
+
+        .filter-chip.active {
+            background: rgba(59, 130, 246, 0.18);
+            color: #60a5fa;
+            border-color: rgba(59, 130, 246, 0.28);
+        }
+
+        #toastContainer {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .toast {
+            pointer-events: auto;
+            background: rgba(15, 23, 42, 0.96);
+            backdrop-filter: blur(14px);
+            border-left: 4px solid #3b82f6;
+            padding: 16px 18px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transform: translateX(120%);
+            transition: transform 0.4s ease, opacity 0.4s ease;
+            opacity: 0;
+            min-width: 260px;
+            max-width: 360px;
+            box-shadow: 0 16px 40px rgba(0,0,0,0.35);
+        }
+
+        .toast.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .toast.error { border-left-color: #ef4444; }
+
+        .skeleton {
+            background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 8px;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
     </style>
 </head>
 <body class="selection:bg-brand-500 selection:text-white">
 
     <div class="fixed inset-0 bg-grid opacity-20 pointer-events-none z-0"></div>
     <div class="fixed top-0 right-0 w-[500px] h-[500px] bg-brand-600/10 rounded-full mix-blend-screen blur-[120px] pointer-events-none z-0"></div>
+    <div class="fixed bottom-0 left-0 w-[460px] h-[460px] bg-cyan-500/5 rounded-full blur-[120px] pointer-events-none z-0"></div>
     <div id="toastContainer" role="region" aria-label="Notificações"></div>
 
     <header class="fixed w-full z-50 glass-nav">
         <div class="container mx-auto px-4 md:px-6 h-20 flex justify-between items-center">
-            <div class="flex items-center gap-4">
-                <a href="dashboard.html" class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-2.5 rounded-xl transition-colors border border-slate-700 hover:border-slate-500 flex items-center justify-center">
+            <div class="flex items-center gap-4 min-w-0">
+                <a href="dashboard.html" class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-2.5 rounded-xl transition-colors border border-slate-700 hover:border-slate-500 flex items-center justify-center shrink-0">
                     <i data-lucide="arrow-left" class="w-5 h-5"></i>
                 </a>
-                <span class="text-xl font-display font-bold text-white">Notificações</span>
-            </div>
-            
-            <div class="flex items-center gap-4">
-                <div class="flex items-center gap-2">
-                    <a href="dashboard.html" class="bg-slate-800 hover:bg-brand-500/20 text-slate-400 hover:text-brand-400 rounded-xl p-2.5 transition-colors border border-transparent hover:border-brand-500/30" title="Meu Painel">
-                        <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
-                    </a>
+
+                <div class="min-w-0">
+                    <p class="text-[10px] uppercase tracking-[0.20em] text-brand-400 font-bold">Alertas</p>
+                    <h1 class="text-xl font-display font-bold text-white truncate">Notificações</h1>
                 </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <a href="dashboard.html" class="bg-slate-800 hover:bg-brand-500/20 text-slate-400 hover:text-brand-400 rounded-xl p-2.5 transition-colors border border-transparent hover:border-brand-500/30" title="Meu Painel">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                </a>
             </div>
         </div>
     </header>
 
-    <main class="pt-28 pb-20 relative z-10 container mx-auto px-4 md:px-6 max-w-4xl min-h-screen">
-        
-        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6 relative z-10">
-            <div>
-                <h1 class="text-3xl md:text-4xl font-display font-extrabold text-white tracking-tight">Centro de Alertas</h1>
-                <p class="text-slate-400 mt-2 text-sm">Acompanhe todas as atualizações da sua conta e pagamentos.</p>
-            </div>
-            <button onclick="window.markAllAsRead()" id="btnMarkAll" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-5 py-2.5 rounded-xl text-sm font-bold transition-colors border border-slate-700 hover:border-slate-500 flex items-center justify-center gap-2 shadow-sm disabled:opacity-50">
-                <i data-lucide="check-check" class="w-4 h-4"></i> Marcar todas como lidas
-            </button>
-        </div>
+    <main class="pt-28 pb-20 relative z-10 container mx-auto px-4 md:px-6 max-w-5xl min-h-screen">
+        <!-- HERO -->
+        <section class="mb-6">
+            <div class="glass-card rounded-3xl p-6 md:p-8 overflow-hidden relative">
+                <div class="absolute inset-0 pointer-events-none bg-gradient-to-r from-brand-500/10 via-transparent to-cyan-400/5"></div>
 
-        <div class="glass-card rounded-3xl border border-slate-800 overflow-hidden shadow-2xl relative z-10">
-            
+                <div class="relative flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                    <div>
+                        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-400 text-[11px] font-bold uppercase tracking-[0.18em] mb-4">
+                            <i data-lucide="bell-ring" class="w-3.5 h-3.5"></i>
+                            Centro de Alertas
+                        </div>
+
+                        <h2 class="text-3xl md:text-4xl font-display font-extrabold text-white tracking-tight">
+                            Acompanhe tudo em tempo real
+                        </h2>
+                        <p class="text-slate-400 mt-3 text-sm md:text-base max-w-2xl leading-relaxed">
+                            Veja atualizações sobre depósitos, pedidos, mensagens, alertas da conta e mudanças importantes no seu perfil PayGo.
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 w-full lg:w-auto lg:min-w-[320px]">
+                        <div class="rounded-2xl bg-slate-900/70 border border-slate-800 p-4">
+                            <p class="text-[11px] uppercase tracking-widest text-slate-500 font-bold">Total</p>
+                            <p id="statTotal" class="text-2xl font-display font-extrabold text-white mt-2">—</p>
+                        </div>
+                        <div class="rounded-2xl bg-slate-900/70 border border-slate-800 p-4">
+                            <p class="text-[11px] uppercase tracking-widest text-slate-500 font-bold">Não lidas</p>
+                            <p id="statUnread" class="text-2xl font-display font-extrabold text-brand-400 mt-2">—</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TOPO DE CONTROLOS -->
+        <section class="mb-6 flex flex-col gap-4">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div class="flex flex-wrap items-center gap-2" id="filterBar">
+                    <button class="filter-chip active px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-slate-900 text-slate-300 border border-slate-700" data-filter="all">Todas</button>
+                    <button class="filter-chip px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-slate-900 text-slate-300 border border-slate-700" data-filter="unread">Não lidas</button>
+                    <button class="filter-chip px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-slate-900 text-slate-300 border border-slate-700" data-filter="deposit">Depósitos</button>
+                    <button class="filter-chip px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-slate-900 text-slate-300 border border-slate-700" data-filter="order_update">Pedidos</button>
+                    <button class="filter-chip px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-slate-900 text-slate-300 border border-slate-700" data-filter="message">Mensagens</button>
+                    <button class="filter-chip px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-slate-900 text-slate-300 border border-slate-700" data-filter="alert">Alertas</button>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <div class="relative">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                        <input
+                            id="searchInput"
+                            type="text"
+                            placeholder="Pesquisar notificação..."
+                            class="w-full sm:w-72 h-11 rounded-xl bg-slate-900/90 border border-slate-700 text-white text-sm pl-10 pr-4 outline-none focus:border-brand-500 transition"
+                        >
+                    </div>
+
+                    <button onclick="window.markAllAsRead()" id="btnMarkAll" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-5 py-2.5 rounded-xl text-sm font-bold transition-colors border border-slate-700 hover:border-slate-500 flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i data-lucide="check-check" class="w-4 h-4"></i>
+                        Marcar todas
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- LISTA -->
+        <section class="glass-card rounded-3xl border border-slate-800 overflow-hidden shadow-2xl relative z-10">
+
             <div id="loadingState" class="divide-y divide-white/5">
                 <div class="p-6 flex gap-4">
                     <div class="w-12 h-12 rounded-full skeleton shrink-0"></div>
                     <div class="w-full space-y-3">
                         <div class="h-4 skeleton w-1/3"></div>
                         <div class="h-3 skeleton w-2/3"></div>
+                        <div class="h-3 skeleton w-1/4"></div>
                     </div>
                 </div>
                 <div class="p-6 flex gap-4">
@@ -102,22 +253,29 @@
                     <div class="w-full space-y-3">
                         <div class="h-4 skeleton w-1/4"></div>
                         <div class="h-3 skeleton w-1/2"></div>
+                        <div class="h-3 skeleton w-1/5"></div>
+                    </div>
+                </div>
+                <div class="p-6 flex gap-4">
+                    <div class="w-12 h-12 rounded-full skeleton shrink-0"></div>
+                    <div class="w-full space-y-3">
+                        <div class="h-4 skeleton w-2/5"></div>
+                        <div class="h-3 skeleton w-3/4"></div>
+                        <div class="h-3 skeleton w-1/6"></div>
                     </div>
                 </div>
             </div>
 
-            <div id="notificationsList" class="divide-y divide-white/5 hidden">
-            </div>
+            <div id="notificationsList" class="divide-y divide-white/5 hidden"></div>
 
             <div id="emptyState" class="hidden p-16 text-center">
                 <div class="w-20 h-20 bg-slate-800/50 rounded-full flex items-center justify-center mx-auto mb-6 border border-slate-700/50">
                     <i data-lucide="bell-off" class="w-8 h-8 text-slate-500"></i>
                 </div>
-                <h3 class="text-xl font-display font-bold text-white mb-2">Tudo em dia!</h3>
-                <p class="text-slate-400 text-sm">Você não tem notificações novas no momento.</p>
+                <h3 class="text-xl font-display font-bold text-white mb-2">Tudo em dia</h3>
+                <p class="text-slate-400 text-sm">Você não tem notificações novas neste momento.</p>
             </div>
-            
-        </div>
+        </section>
     </main>
 
     <script type="module">
@@ -125,157 +283,242 @@
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, collection, query, where, onSnapshot, doc, updateDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const firebaseConfig = { 
-            apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8", 
-            authDomain: "paygo-14311.firebaseapp.com", 
-            projectId: "paygo-14311", 
-            storageBucket: "paygo-14311.firebasestorage.app", 
-            messagingSenderId: "208360646277", 
-            appId: "1:208360646277:web:aecc57cc0077ae48a52bec" 
+        const firebaseConfig = {
+            apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
+            authDomain: "paygo-14311.firebaseapp.com",
+            projectId: "paygo-14311",
+            storageBucket: "paygo-14311.firebasestorage.app",
+            messagingSenderId: "208360646277",
+            appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
         };
+
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app, "paygodb");
         lucide.createIcons();
 
         let currentUser = null;
-        let unreadDocs = []; 
+        let unreadDocs = [];
+        let allNotifications = [];
+        let activeFilter = 'all';
+        let activeSearch = '';
 
-        // =====================================
-        // 🛠️ FUNÇÕES DE UX E UTILIDADE
-        // =====================================
+        const listEl = document.getElementById('notificationsList');
+        const emptyEl = document.getElementById('emptyState');
+        const loadingEl = document.getElementById('loadingState');
+        const btnMarkAll = document.getElementById('btnMarkAll');
+        const statTotal = document.getElementById('statTotal');
+        const statUnread = document.getElementById('statUnread');
+        const searchInput = document.getElementById('searchInput');
+
         window.showToast = function(msg, type = 'success') {
             const container = document.getElementById('toastContainer');
-            if(!container) return;
+            if (!container) return;
+
             const t = document.createElement('div');
-            const bg = type === 'error' ? 'bg-danger-500/95 border-danger-400' : type === 'warning' ? 'bg-warning-500/95 border-warning-400' : 'bg-slate-900/95 border-brand-500';
-            const icon = type === 'error' ? 'alert-octagon text-danger-400' : type === 'warning' ? 'alert-triangle text-warning-400' : 'check-check text-brand-400';
-            t.className = `flex items-center gap-3 px-5 py-4 rounded-2xl shadow-2xl border ${bg} transform transition-all translate-x-full opacity-0`;
-            t.innerHTML = `<i data-lucide="${icon.split(' ')[0]}" class="w-5 h-5 ${icon.split(' ')[1]}"></i> <span class="text-sm font-bold text-white">${msg}</span>`;
-            container.appendChild(t); lucide.createIcons({ root: t });
-            requestAnimationFrame(() => { t.classList.remove('translate-x-full', 'opacity-0'); });
-            setTimeout(() => { t.classList.add('opacity-0', 'translate-x-8'); setTimeout(() => t.remove(), 400); }, 4000);
+            const icon = type === 'error' ? 'alert-octagon' : type === 'warning' ? 'alert-triangle' : 'check-check';
+
+            t.className = `toast ${type === 'error' ? 'error' : ''}`;
+            t.innerHTML = `
+                <i data-lucide="${icon}" class="w-5 h-5 ${type === 'error' ? 'text-danger-400' : type === 'warning' ? 'text-warning-400' : 'text-brand-400'}"></i>
+                <span class="text-sm font-bold text-white">${msg}</span>
+            `;
+
+            container.appendChild(t);
+            lucide.createIcons({ root: t });
+
+            requestAnimationFrame(() => t.classList.add('show'));
+            setTimeout(() => {
+                t.classList.remove('show');
+                setTimeout(() => t.remove(), 400);
+            }, 4000);
         };
 
         const formatDate = (timestamp) => {
-            if(!timestamp) return 'Agora mesmo';
+            if (!timestamp) return 'Agora mesmo';
             const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-            return date.toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
-        };
-
-        const getNotificationStyle = (type) => {
-            switch(type) {
-                case 'deposit': return { icon: 'wallet', color: 'text-success-400', bg: 'bg-success-500/20', border: 'border-success-500/30' };
-                case 'order_update': return { icon: 'package', color: 'text-brand-400', bg: 'bg-brand-500/20', border: 'border-brand-500/30' };
-                case 'alert': return { icon: 'alert-triangle', color: 'text-warning-400', bg: 'bg-warning-500/20', border: 'border-warning-500/30' };
-                case 'error': return { icon: 'x-octagon', color: 'text-danger-400', bg: 'bg-danger-500/20', border: 'border-danger-500/30' };
-                case 'vip': return { icon: 'crown', color: 'text-vip-400', bg: 'bg-vip-500/20', border: 'border-vip-500/30' };
-                case 'message': return { icon: 'message-square', color: 'text-brand-400', bg: 'bg-brand-500/20', border: 'border-brand-500/30' };
-                default: return { icon: 'bell', color: 'text-slate-400', bg: 'bg-slate-800', border: 'border-slate-700' };
-            }
+            return date.toLocaleDateString('pt-MZ', {
+                day: '2-digit',
+                month: 'short',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
         };
 
         const escapeHTML = (str) => {
             if (!str) return '';
-            return String(str).replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+            return String(str).replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                "'": '&#39;',
+                '"': '&quot;'
+            }[tag] || tag));
         };
 
-        // =====================================
-        // 🎯 LÓGICA DE CLIQUE (AÇÃO DA NOTIFICAÇÃO)
-        // =====================================
-        window.handleNotificationClick = async (id, isRead, type) => {
-            // Se for do tipo "mensagem", marca como lida e reencaminha para a página de chat
-            if (type === 'message') {
-                if (!isRead) {
-                    try { await updateDoc(doc(db, "notifications", id), { read: true }); } 
-                    catch(e) { console.error("Erro ao marcar:", e); }
-                }
-                window.location.href = 'mensagens.html';
-            } else {
-                // Notificações normais (depósito, etc) apenas marcam como lido se estiverem por ler
-                if (!isRead) {
-                    window.markAsRead(id);
-                }
+        const getNotificationStyle = (type) => {
+            switch(type) {
+                case 'deposit':
+                    return { icon: 'wallet', color: 'text-success-400', bg: 'bg-success-500/15', border: 'border-success-500/25', label: 'Depósito' };
+                case 'order_update':
+                    return { icon: 'package', color: 'text-brand-400', bg: 'bg-brand-500/15', border: 'border-brand-500/25', label: 'Pedido' };
+                case 'alert':
+                    return { icon: 'alert-triangle', color: 'text-warning-400', bg: 'bg-warning-500/15', border: 'border-warning-500/25', label: 'Alerta' };
+                case 'error':
+                    return { icon: 'x-octagon', color: 'text-danger-400', bg: 'bg-danger-500/15', border: 'border-danger-500/25', label: 'Erro' };
+                case 'vip':
+                    return { icon: 'crown', color: 'text-vip-400', bg: 'bg-vip-500/15', border: 'border-vip-500/25', label: 'VIP' };
+                case 'message':
+                    return { icon: 'message-square', color: 'text-brand-400', bg: 'bg-brand-500/15', border: 'border-brand-500/25', label: 'Mensagem' };
+                default:
+                    return { icon: 'bell', color: 'text-slate-400', bg: 'bg-slate-800', border: 'border-slate-700', label: 'Sistema' };
             }
         };
 
-        // =====================================
-        // 📡 OUVINTE EM TEMPO REAL 
-        // =====================================
+        function updateStats() {
+            statTotal.textContent = allNotifications.length;
+            statUnread.textContent = allNotifications.filter(n => !n.read).length;
+        }
+
+        function getFilteredNotifications() {
+            return allNotifications.filter(item => {
+                const matchesFilter =
+                    activeFilter === 'all'
+                        ? true
+                        : activeFilter === 'unread'
+                            ? !item.read
+                            : item.type === activeFilter;
+
+                const haystack = [
+                    item.title || '',
+                    item.message || '',
+                    item.type || ''
+                ].join(' ').toLowerCase();
+
+                const matchesSearch = !activeSearch || haystack.includes(activeSearch.toLowerCase());
+
+                return matchesFilter && matchesSearch;
+            });
+        }
+
+        function setActiveFilterButton() {
+            document.querySelectorAll('.filter-chip').forEach(btn => {
+                const isActive = btn.dataset.filter === activeFilter;
+                btn.classList.toggle('active', isActive);
+            });
+        }
+
+        function renderNotifications() {
+            loadingEl.classList.add('hidden');
+            unreadDocs = [];
+
+            const visibleNotifications = getFilteredNotifications();
+
+            if (allNotifications.length === 0 || visibleNotifications.length === 0) {
+                listEl.classList.add('hidden');
+                emptyEl.classList.remove('hidden');
+                btnMarkAll.disabled = allNotifications.filter(n => !n.read).length === 0;
+                return;
+            }
+
+            listEl.classList.remove('hidden');
+            emptyEl.classList.add('hidden');
+
+            let html = '';
+
+            visibleNotifications.forEach(data => {
+                const isRead = data.read === true;
+                if (!isRead) unreadDocs.push(data.ref);
+
+                const style = getNotificationStyle(data.type);
+                const readClass = isRead ? 'notification-read' : 'notification-unread';
+                const cursorClass = (!isRead || data.type === 'message') ? 'cursor-pointer' : 'cursor-default';
+
+                html += `
+                    <div class="notification-card p-5 sm:p-6 flex flex-col sm:flex-row gap-4 sm:items-start relative ${readClass} ${cursorClass}"
+                         onclick="window.handleNotificationClick('${data.id}', ${isRead}, '${data.type}')">
+
+                        ${!isRead ? `<div class="absolute top-5 right-5 w-2.5 h-2.5 bg-brand-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.9)] animate-pulse"></div>` : ''}
+
+                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border ${style.bg} ${style.border}">
+                            <i data-lucide="${style.icon}" class="w-5 h-5 ${style.color}"></i>
+                        </div>
+
+                        <div class="flex-1 min-w-0 pr-5 sm:pr-7">
+                            <div class="flex flex-wrap items-center gap-2 mb-2">
+                                <span class="text-[10px] uppercase tracking-[0.18em] font-bold px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800 text-slate-400">
+                                    ${style.label}
+                                </span>
+                                ${!isRead ? `<span class="text-[10px] uppercase tracking-[0.18em] font-bold px-2.5 py-1 rounded-full bg-brand-500/15 border border-brand-500/25 text-brand-400">Nova</span>` : ''}
+                            </div>
+
+                            <div class="flex justify-between items-start gap-3">
+                                <div class="min-w-0">
+                                    <h4 class="text-base sm:text-[17px] font-bold text-white leading-tight">${escapeHTML(data.title)}</h4>
+                                    <p class="text-sm text-slate-400 leading-relaxed mt-2">${escapeHTML(data.message)}</p>
+                                </div>
+                                ${data.type === 'message' ? `<i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 shrink-0 mt-1"></i>` : ''}
+                            </div>
+
+                            <div class="mt-4 flex flex-wrap items-center gap-3 text-[11px] uppercase tracking-widest font-bold text-slate-500">
+                                <span>${formatDate(data.createdAt)}</span>
+                                <span class="w-1 h-1 rounded-full bg-slate-700"></span>
+                                <span>${isRead ? 'Lida' : 'Por ler'}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            listEl.innerHTML = html;
+            btnMarkAll.disabled = allNotifications.filter(n => !n.read).length === 0;
+            lucide.createIcons({ root: listEl });
+        }
+
+        window.handleNotificationClick = async (id, isRead, type) => {
+            if (type === 'message') {
+                if (!isRead) {
+                    try {
+                        await updateDoc(doc(db, "notifications", id), { read: true });
+                    } catch (e) {
+                        console.error("Erro ao marcar:", e);
+                    }
+                }
+                window.location.href = 'mensagens.html';
+                return;
+            }
+
+            if (!isRead) {
+                window.markAsRead(id);
+            }
+        };
+
         onAuthStateChanged(auth, (user) => {
-            if (!user) { window.location.href = 'login.html'; return; }
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+
             currentUser = user;
 
             try {
                 const q = query(collection(db, "notifications"), where("userId", "==", user.uid));
-                
+
                 onSnapshot(q, (snapshot) => {
-                    const listEl = document.getElementById('notificationsList');
-                    const emptyEl = document.getElementById('emptyState');
-                    const loadingEl = document.getElementById('loadingState');
-                    const btnMarkAll = document.getElementById('btnMarkAll');
+                    allNotifications = [];
 
-                    loadingEl.classList.add('hidden');
-                    unreadDocs = [];
-
-                    if (snapshot.empty) {
-                        listEl.classList.add('hidden');
-                        emptyEl.classList.remove('hidden');
-                        btnMarkAll.disabled = true;
-                        return;
-                    }
-
-                    listEl.classList.remove('hidden');
-                    emptyEl.classList.add('hidden');
-                    
-                    let notifsArray = [];
                     snapshot.forEach(docSnap => {
-                        notifsArray.push({ id: docSnap.id, ref: docSnap.ref, ...docSnap.data() });
+                        allNotifications.push({ id: docSnap.id, ref: docSnap.ref, ...docSnap.data() });
                     });
 
-                    notifsArray.sort((a, b) => {
+                    allNotifications.sort((a, b) => {
                         const tA = a.createdAt?.seconds || a.createdAt?.toMillis?.() || 0;
                         const tB = b.createdAt?.seconds || b.createdAt?.toMillis?.() || 0;
-                        return tB - tA; 
+                        return tB - tA;
                     });
 
-                    let html = '';
-                    notifsArray.forEach(data => {
-                        const isRead = data.read === true;
-                        if (!isRead) unreadDocs.push(data.ref);
-
-                        const style = getNotificationStyle(data.type);
-                        const readClass = isRead ? 'notification-read' : 'notification-unread';
-                        
-                        // Diferente cursor de acordo com se é preciso clicar para ler ou para abrir o chat
-                        const cursorClass = (!isRead || data.type === 'message') ? 'cursor-pointer hover:bg-slate-800/40 transition-colors' : '';
-                        
-                        // Adicionada a função inteligente que decide o que fazer no clique
-                        const onclickAction = `onclick="window.handleNotificationClick('${data.id}', ${isRead}, '${data.type}')"`;
-
-                        html += `
-                            <div class="p-6 flex flex-col sm:flex-row gap-4 sm:items-start relative ${readClass} ${cursorClass}" ${onclickAction}>
-                                ${!isRead ? `<div class="absolute top-6 right-6 w-2 h-2 bg-brand-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.8)] animate-pulse"></div>` : ''}
-                                
-                                <div class="w-12 h-12 rounded-full flex items-center justify-center shrink-0 border ${style.bg} ${style.border}">
-                                    <i data-lucide="${style.icon}" class="w-5 h-5 ${style.color}"></i>
-                                </div>
-                                
-                                <div class="flex-1 pr-6">
-                                    <div class="flex justify-between items-start gap-2 mb-1">
-                                        <h4 class="text-base font-bold text-white leading-tight">${escapeHTML(data.title)}</h4>
-                                        ${data.type === 'message' ? '<i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 mt-0.5"></i>' : ''}
-                                    </div>
-                                    <p class="text-sm text-slate-400 leading-relaxed mb-2">${escapeHTML(data.message)}</p>
-                                    <p class="text-[10px] uppercase tracking-widest font-bold text-slate-500">${formatDate(data.createdAt)}</p>
-                                </div>
-                            </div>
-                        `;
-                    });
-
-                    listEl.innerHTML = html;
-                    btnMarkAll.disabled = unreadDocs.length === 0;
-                    lucide.createIcons();
+                    updateStats();
+                    renderNotifications();
                 }, (error) => {
                     console.error("Erro Firebase:", error);
                     window.showToast("Falha técnica ao carregar notificações.", "error");
@@ -285,37 +528,54 @@
             }
         });
 
-        // =====================================
-        // 🎯 AÇÕES DE LEITURA E LOGOUT
-        // =====================================
         window.markAsRead = async (id) => {
-            try { await updateDoc(doc(db, "notifications", id), { read: true }); } 
-            catch(e) { console.error("Erro:", e); }
+            try {
+                await updateDoc(doc(db, "notifications", id), { read: true });
+            } catch (e) {
+                console.error("Erro:", e);
+            }
         };
 
         window.markAllAsRead = async () => {
-            if (unreadDocs.length === 0) return;
-            const btn = document.getElementById('btnMarkAll');
-            btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Atualizando...`;
-            lucide.createIcons({root: btn});
+            const unread = allNotifications.filter(n => !n.read).map(n => n.ref);
+            if (unread.length === 0) return;
+
+            btnMarkAll.disabled = true;
+            btnMarkAll.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Atualizando...`;
+            lucide.createIcons({ root: btnMarkAll });
 
             try {
                 const batch = writeBatch(db);
-                unreadDocs.forEach(ref => { batch.update(ref, { read: true }); });
+                unread.forEach(ref => batch.update(ref, { read: true }));
                 await batch.commit();
                 window.showToast("Todas as notificações marcadas como lidas!", "success");
-            } catch(e) { window.showToast("Falha ao atualizar.", "error"); } 
-            finally {
-                btn.innerHTML = `<i data-lucide="check-check" class="w-4 h-4"></i> Marcar todas como lidas`;
-                lucide.createIcons({root: btn});
+            } catch (e) {
+                window.showToast("Falha ao atualizar.", "error");
+            } finally {
+                btnMarkAll.innerHTML = `<i data-lucide="check-check" class="w-4 h-4"></i> Marcar todas`;
+                lucide.createIcons({ root: btnMarkAll });
             }
         };
 
         window.logout = async () => {
-            if(confirm('Tem a certeza que deseja sair?')) { 
-                await signOut(auth); window.location.href = 'login.html'; 
+            if (confirm('Tem a certeza que deseja sair?')) {
+                await signOut(auth);
+                window.location.href = 'login.html';
             }
         };
+
+        searchInput?.addEventListener('input', (e) => {
+            activeSearch = e.target.value || '';
+            renderNotifications();
+        });
+
+        document.querySelectorAll('.filter-chip').forEach(btn => {
+            btn.addEventListener('click', () => {
+                activeFilter = btn.dataset.filter || 'all';
+                setActiveFilterButton();
+                renderNotifications();
+            });
+        });
     </script>
 </body>
 </html>
