@@ -35,9 +35,25 @@ function normalizeBody(req) {
 }
 
 function getRoute(req) {
-  const slug = req.query.slug;
-  if (Array.isArray(slug)) return slug.join('/');
-  return slug || '';
+  const slug = req.query?.slug;
+
+  if (Array.isArray(slug) && slug.length) {
+    return slug.join('/');
+  }
+
+  if (typeof slug === 'string' && slug.trim()) {
+    return slug.trim();
+  }
+
+  const rawUrl = req.url || '';
+  const path = rawUrl.split('?')[0];
+  const parts = path.split('/').filter(Boolean);
+
+  if (parts[0] === 'api' && parts.length > 1) {
+    return parts.slice(1).join('/');
+  }
+
+  return '';
 }
 
 function getFirebase() {
