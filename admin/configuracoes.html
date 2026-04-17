@@ -26,6 +26,7 @@
             success: { 400: '#4ade80', 500: '#22c55e' },
             danger: { 400: '#f87171', 500: '#ef4444' },
             warning: { 400: '#fbbf24', 500: '#f59e0b' },
+            purplex: { 400: '#c084fc', 500: '#a855f7' },
             slatex: { 850: '#172033' }
           },
           animation: {
@@ -33,7 +34,10 @@
             'fade-in': 'fadeIn 0.3s ease-out'
           },
           keyframes: {
-            fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } }
+            fadeIn: {
+              '0%': { opacity: '0', transform: 'translateY(6px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' }
+            }
           }
         }
       }
@@ -42,43 +46,249 @@
 
   <style>
     :root { color-scheme: dark; }
-    body { background-color: #0f172a; color: #f8fafc; overflow-x: hidden; }
+    body {
+      background:
+        radial-gradient(circle at top center, rgba(59,130,246,0.12), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(168,85,247,0.08), transparent 25%),
+        #0f172a;
+      color: #f8fafc;
+      overflow-x: hidden;
+    }
+
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
-    .glass-nav { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.08); }
-    .glass-card { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.3s ease; }
-    .glass-card:hover { border-color: rgba(59, 130, 246, 0.25); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.45); }
-    .sidebar-link { transition: all 0.25s ease; }
-    .sidebar-link.active { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-left: 3px solid #60a5fa; font-weight: 700; }
-    .toggle-switch { position: relative; display: inline-block; width: 46px; height: 24px; }
-    .toggle-switch input { opacity: 0; width: 0; height: 0; }
-    .toggle-slider { position: absolute; cursor: pointer; inset: 0; background-color: #334155; transition: .35s; border-radius: 999px; }
-    .toggle-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .35s cubic-bezier(0.4, 0.0, 0.2, 1); border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+
+    .bg-grid {
+      background-size: 40px 40px;
+      background-image:
+        linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    }
+
+    .glass-nav {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .glass-card {
+      background: rgba(30, 41, 59, 0.40);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: all 0.25s ease;
+    }
+
+    .glass-card:hover {
+      border-color: rgba(59,130,246,0.20);
+      box-shadow: 0 10px 30px -10px rgba(0,0,0,0.45);
+    }
+
+    .hero-card {
+      background:
+        linear-gradient(135deg, rgba(37,99,235,0.16), rgba(168,85,247,0.10)),
+        rgba(15,23,42,0.72);
+      border: 1px solid rgba(255,255,255,0.08);
+      backdrop-filter: blur(16px);
+    }
+
+    .sidebar-link {
+      transition: all 0.25s ease;
+    }
+
+    .sidebar-link.active {
+      background: rgba(59,130,246,0.15);
+      color: #60a5fa;
+      border-left: 3px solid #60a5fa;
+      font-weight: 700;
+    }
+
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 46px;
+      height: 24px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: #334155;
+      transition: .35s;
+      border-radius: 999px;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .35s cubic-bezier(0.4, 0.0, 0.2, 1);
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
     input:checked + .toggle-slider { background-color: #3b82f6; }
     input.toggle-danger:checked + .toggle-slider { background-color: #ef4444; }
     input:checked + .toggle-slider:before { transform: translateX(22px); }
-    .input-group:focus-within label { color: #60a5fa; }
-    .status-pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; border: 1px solid rgba(255,255,255,0.08); white-space: nowrap; }
-    .status-pill.ok { background: rgba(34,197,94,0.12); color: #4ade80; border-color: rgba(34,197,94,0.25); }
-    .status-pill.warn { background: rgba(245,158,11,0.12); color: #fbbf24; border-color: rgba(245,158,11,0.25); }
-    .status-pill.off { background: rgba(239,68,68,0.12); color: #f87171; border-color: rgba(239,68,68,0.25); }
-    .hint-box { background: rgba(15, 23, 42, 0.55); border: 1px solid rgba(255,255,255,0.06); }
-    #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; max-width: min(92vw, 420px); }
-    .toast { pointer-events: auto; background: rgba(15, 23, 42, 0.95); border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 12px; display: flex; gap: 12px; align-items: flex-start; transform: translateX(120%); transition: transform 0.4s ease, opacity 0.4s ease; opacity: 0; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border-top: 1px solid rgba(255,255,255,0.04); border-right: 1px solid rgba(255,255,255,0.04); border-bottom: 1px solid rgba(255,255,255,0.04); }
-    .toast.show { transform: translateX(0); opacity: 1; }
+
+    .input-group:focus-within label {
+      color: #60a5fa;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      border: 1px solid rgba(255,255,255,0.08);
+      white-space: nowrap;
+    }
+
+    .status-pill.ok {
+      background: rgba(34,197,94,0.12);
+      color: #4ade80;
+      border-color: rgba(34,197,94,0.25);
+    }
+
+    .status-pill.warn {
+      background: rgba(245,158,11,0.12);
+      color: #fbbf24;
+      border-color: rgba(245,158,11,0.25);
+    }
+
+    .status-pill.off {
+      background: rgba(239,68,68,0.12);
+      color: #f87171;
+      border-color: rgba(239,68,68,0.25);
+    }
+
+    .status-pill.info {
+      background: rgba(59,130,246,0.12);
+      color: #60a5fa;
+      border-color: rgba(59,130,246,0.25);
+    }
+
+    .hint-box {
+      background: rgba(15, 23, 42, 0.55);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    #toastContainer {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 99999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+      max-width: min(92vw, 420px);
+    }
+
+    .toast {
+      pointer-events: auto;
+      background: rgba(15, 23, 42, 0.96);
+      border-left: 4px solid #3b82f6;
+      padding: 16px 20px;
+      border-radius: 12px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      transform: translateX(120%);
+      transition: transform 0.4s ease, opacity 0.4s ease;
+      opacity: 0;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      border-top: 1px solid rgba(255,255,255,0.04);
+      border-right: 1px solid rgba(255,255,255,0.04);
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .toast.show {
+      transform: translateX(0);
+      opacity: 1;
+    }
+
     .toast.error { border-left-color: #ef4444; }
     .toast.success { border-left-color: #22c55e; }
     .toast.warning { border-left-color: #f59e0b; }
     .toast.info { border-left-color: #3b82f6; }
-    .soft-input { background: #0f172a; border: 1px solid #334155; color: white; border-radius: 14px; transition: .25s ease; outline: none; }
-    .soft-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 1px rgba(59,130,246,.35); }
-    .soft-panel { background: rgba(15,23,42,.55); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; }
-    .sticky-bottom-bar { background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(16px); border-top: 1px solid rgba(255,255,255,0.07); }
-    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
-    @media (max-width: 768px) { .glass-card { border-radius: 1rem; } .toast { max-width: calc(100vw - 48px); } }
-    :focus-visible { outline: 2px solid #3b82f6; outline-offset: 2px; border-radius: 4px; }
+
+    .soft-input {
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: white;
+      border-radius: 14px;
+      transition: .25s ease;
+      outline: none;
+    }
+
+    .soft-input:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 1px rgba(59,130,246,.35);
+    }
+
+    .soft-panel {
+      background: rgba(15,23,42,.55);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px;
+    }
+
+    .sticky-bottom-bar {
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(16px);
+      border-top: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .summary-card {
+      background: rgba(15,23,42,0.75);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .dirty-badge {
+      display: none;
+    }
+
+    .dirty .dirty-badge {
+      display: inline-flex;
+    }
+
+    .saving-ring {
+      box-shadow: 0 0 0 1px rgba(59,130,246,.35), 0 0 22px rgba(59,130,246,.20);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .glass-card { border-radius: 1rem; }
+      .toast { max-width: calc(100vw - 48px); }
+    }
+
+    :focus-visible {
+      outline: 2px solid #3b82f6;
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
   </style>
 </head>
 <body class="selection:bg-brand-500 selection:text-white">
@@ -91,6 +301,7 @@
 
   <div class="fixed inset-0 bg-grid opacity-20 pointer-events-none z-0"></div>
   <div class="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[500px] bg-brand-600/10 rounded-full mix-blend-screen blur-[120px] pointer-events-none z-0"></div>
+  <div class="fixed bottom-0 right-0 w-[380px] h-[380px] bg-purplex-500/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
   
   <div id="toastContainer"></div>
 
@@ -124,7 +335,7 @@
 
   <div class="pt-28 pb-32 relative z-10 container mx-auto px-6 grid lg:grid-cols-4 gap-6">
     
-    <div id="sidebar" class="lg:col-span-1 fixed lg:static top-0 left-0 h-full lg:h-auto w-72 lg:w-auto bg-slate-900 lg:bg-transparent z-50 lg:z-auto p-6 lg:p-0 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 border-r border-slate-800 lg:border-none">
+    <aside id="sidebar" class="lg:col-span-1 fixed lg:static top-0 left-0 h-full lg:h-auto w-72 lg:w-auto bg-slate-900 lg:bg-transparent z-50 lg:z-auto p-6 lg:p-0 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 border-r border-slate-800 lg:border-none">
       <div class="glass-card rounded-2xl p-0 lg:p-6 sticky top-28 border-none lg:border-solid bg-transparent lg:bg-[rgba(30,41,59,0.4)]">
         <div class="flex justify-between items-center mb-6 lg:hidden">
           <span class="text-xl font-display font-bold text-white">PayGo Admin</span>
@@ -164,24 +375,65 @@
           </a>
         </nav>
       </div>
-    </div>
+    </aside>
 
-    <div class="lg:col-span-3 space-y-6">
+    <main class="lg:col-span-3 space-y-6">
       
-      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+      <section class="hero-card rounded-3xl p-6 md:p-8 relative overflow-hidden animate-fade-in">
+        <div class="absolute inset-0 bg-gradient-to-r from-brand-500/10 via-transparent to-purplex-500/10 pointer-events-none"></div>
+        <div class="relative flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+          <div>
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-400 text-[11px] font-bold uppercase tracking-[0.16em] mb-4">
+              <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+              Painel seguro
+            </div>
+            <h1 class="text-3xl md:text-4xl font-display font-extrabold text-white tracking-tight">
+              Parametrização do Sistema
+            </h1>
+            <p class="text-slate-400 text-sm md:text-base mt-3 max-w-3xl">
+              Controle o comportamento global do PayGo, incluindo taxas, promoções, emails, afiliados,
+              modo de manutenção e gateway de pagamentos.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 w-full xl:w-auto xl:min-w-[520px]">
+            <div class="summary-card rounded-2xl p-4">
+              <p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Câmbio</p>
+              <p id="summaryExchange" class="text-2xl font-display font-extrabold text-white mt-2">88</p>
+            </div>
+            <div class="summary-card rounded-2xl p-4">
+              <p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Promoção</p>
+              <p id="summaryPromo" class="text-sm font-bold text-success-400 mt-3">Ativa</p>
+            </div>
+            <div class="summary-card rounded-2xl p-4">
+              <p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Gateway</p>
+              <p id="summaryGateway" class="text-sm font-bold text-warning-400 mt-3">Ativo</p>
+            </div>
+            <div class="summary-card rounded-2xl p-4">
+              <p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Modo</p>
+              <p id="summaryMode" class="text-sm font-bold text-success-400 mt-3">Público</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 class="text-3xl font-display font-extrabold text-white tracking-tight">Parametrização do Sistema</h1>
-          <p class="text-slate-400 text-sm mt-1">Altere o comportamento do site público, taxas de serviço e integrações.</p>
+          <p class="text-slate-400 text-sm">Ajuste as definições críticas com validação em tempo real.</p>
         </div>
         <div class="flex flex-wrap items-center gap-2">
           <span id="settingsStatusPill" class="status-pill warn">
             <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i>
             A validar
           </span>
+          <span id="unsavedBadge" class="status-pill info dirty-badge">
+            <i data-lucide="pen-line" class="w-3.5 h-3.5"></i>
+            Alterações pendentes
+          </span>
         </div>
       </div>
 
-      <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <section class="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div class="glass-card rounded-2xl border border-white/5 p-6 shadow-lg">
           <h2 class="text-lg font-bold text-white mb-5 flex items-center gap-3">
             <div class="p-2 bg-brand-500/20 rounded-lg text-brand-400">
@@ -223,7 +475,14 @@
                 <p class="font-bold text-white text-sm">Acesso Público</p>
                 <p class="text-xs text-slate-400">Modo de Manutenção</p>
               </div>
-              <span id="maintenanceStateBadge" class="status-pill ok">Ativo</span>
+              <span id="maintenanceStateBadge" class="status-pill ok">Público</span>
+            </div>
+            <div class="soft-panel p-4 flex items-center justify-between gap-3">
+              <div>
+                <p class="font-bold text-white text-sm">PaySuite</p>
+                <p class="text-xs text-slate-400">Gateway de pagamentos</p>
+              </div>
+              <span id="paysuiteStateBadge" class="status-pill warn">A validar</span>
             </div>
           </div>
         </div>
@@ -254,14 +513,17 @@
             </button>
           </div>
           <div class="hint-box mt-4 rounded-2xl p-4">
-            <p class="text-sm text-slate-300 leading-6">Este painel controla o comportamento global do PayGo. Alterações aqui afetam taxas, integrações e comunicações automáticas do sistema.</p>
+            <p class="text-sm text-slate-300 leading-6">
+              Este painel controla o comportamento global do PayGo. Alterações aqui afetam taxas, integrações,
+              comunicações automáticas e disponibilidade do serviço.
+            </p>
           </div>
         </div>
-      </div>
+      </section>
 
       <form id="settingsForm" class="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8">
         
-        <div class="glass-card rounded-2xl border border-white/5 p-6 md:p-8 shadow-lg">
+        <section class="glass-card rounded-2xl border border-white/5 p-6 md:p-8 shadow-lg">
           <h2 class="text-lg font-bold text-white mb-6 flex items-center gap-3 pb-4 border-b border-white/10">
             <div class="p-2 bg-brand-500/20 rounded-lg text-brand-400"><i data-lucide="globe" class="w-5 h-5"></i></div>
             Configurações Globais
@@ -275,11 +537,13 @@
                 <span class="absolute right-4 text-xs font-bold text-brand-400 bg-brand-900/30 border border-brand-500/30 px-2 py-1 rounded uppercase tracking-widest pointer-events-none">Base Câmbio</span>
               </div>
             </div>
+
             <div class="input-group">
               <label class="block text-sm font-bold text-slate-300 mb-2 transition-colors">Emails Notificados (Equipa)</label>
               <textarea id="adminEmails" rows="3" class="soft-input w-full px-4 py-3 font-mono text-sm resize-y" placeholder="admin@paygo.co.mz, ops@paygo.co.mz"></textarea>
               <p class="text-xs text-slate-500 mt-2">Separe múltiplos emails por vírgula.</p>
             </div>
+
             <div class="input-group">
               <label class="block text-sm font-bold text-slate-300 mb-2 transition-colors">WhatsApp de Suporte Técnico</label>
               <div class="relative flex items-center">
@@ -287,6 +551,7 @@
                 <input type="tel" id="whatsappNumber" value="258877522255" class="soft-input w-full pl-12 pr-4 py-3 font-mono">
               </div>
             </div>
+
             <div class="soft-panel p-4">
               <p class="text-sm font-bold text-white mb-3">Modo promocional</p>
               <label class="flex items-center gap-4 cursor-pointer">
@@ -303,7 +568,8 @@
 
             <div class="soft-panel p-4 border border-danger-500/30 bg-danger-900/10">
               <p class="text-sm font-bold text-white mb-3 flex items-center gap-2">
-                <i data-lucide="alert-triangle" class="w-4 h-4 text-danger-400"></i> Zona de Perigo (Lockdown)
+                <i data-lucide="alert-triangle" class="w-4 h-4 text-danger-400"></i>
+                Zona de Perigo (Lockdown)
               </p>
               <label class="flex items-center gap-4 cursor-pointer">
                 <span class="toggle-switch flex-shrink-0">
@@ -312,15 +578,14 @@
                 </span>
                 <div>
                   <p class="font-bold text-danger-400">Ativar Modo de Manutenção</p>
-                  <p class="text-xs text-slate-400 mt-1">Bloqueia o acesso público. <b>Apenas o Super Admin poderá navegar.</b> Os restantes utilizadores (clientes e admins normais) serão redirecionados para a página de Manutenção.</p>
+                  <p class="text-xs text-slate-400 mt-1">Bloqueia o acesso público. Apenas o Super Admin poderá navegar.</p>
                 </div>
               </label>
             </div>
-
           </div>
-        </div>
+        </section>
 
-        <div class="glass-card rounded-2xl border border-white/5 p-6 md:p-8 shadow-lg">
+        <section class="glass-card rounded-2xl border border-white/5 p-6 md:p-8 shadow-lg">
           <h2 class="text-lg font-bold text-white mb-6 flex items-center gap-3 pb-4 border-b border-white/10">
             <div class="p-2 bg-amber-500/20 rounded-lg text-amber-400"><i data-lucide="calculator" class="w-5 h-5"></i></div>
             Motor Financeiro (Taxas de Serviço)
@@ -336,6 +601,7 @@
                 <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold pointer-events-none">MT</span>
               </div>
             </div>
+
             <div class="flex items-center justify-between p-4 bg-slate-900/50 rounded-xl border border-slate-800 gap-4">
               <div>
                 <p class="font-bold text-white">$21 - $50 USD</p>
@@ -346,6 +612,7 @@
                 <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold pointer-events-none">MT</span>
               </div>
             </div>
+
             <div class="flex items-center justify-between p-4 bg-slate-900/50 rounded-xl border border-slate-800 gap-4">
               <div>
                 <p class="font-bold text-white">$51 - $100 USD</p>
@@ -356,6 +623,7 @@
                 <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold pointer-events-none">MT</span>
               </div>
             </div>
+
             <div class="flex items-center justify-between p-4 bg-brand-900/20 rounded-xl border border-brand-500/30 gap-4">
               <div>
                 <p class="font-bold text-brand-400">Acima de $100 USD</p>
@@ -366,6 +634,7 @@
                 <span class="text-brand-400 font-bold">%</span>
               </div>
             </div>
+
             <div class="soft-panel p-4">
               <p class="text-sm font-bold text-white mb-2">Pré-visualização</p>
               <div class="grid grid-cols-2 gap-3 text-sm">
@@ -380,15 +649,20 @@
               </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        <div class="glass-card rounded-2xl border border-white/5 p-6 md:p-8 xl:col-span-2 shadow-lg">
+        <section class="glass-card rounded-2xl border border-white/5 p-6 md:p-8 xl:col-span-2 shadow-lg">
           <h2 class="text-lg font-bold text-white mb-6 flex items-center gap-3 pb-4 border-b border-white/10">
-            <div class="p-2 bg-purple-500/20 rounded-lg text-purple-400"><i data-lucide="webhook" class="w-5 h-5"></i></div>
+            <div class="p-2 bg-purplex-500/20 rounded-lg text-purplex-400">
+              <i data-lucide="webhook" class="w-5 h-5"></i>
+            </div>
             Integrações, APIs e Webhooks
-             <div class="soft-panel p-4 border border-warning-500/30 bg-warning-900/10 mt-6">
+          </h2>
+
+          <div class="soft-panel p-4 border border-warning-500/30 bg-warning-900/10 mb-6">
             <p class="text-sm font-bold text-white mb-3 flex items-center gap-2">
-              <i data-lucide="power" class="w-4 h-4 text-warning-400"></i> Gateway de Pagamentos
+              <i data-lucide="power" class="w-4 h-4 text-warning-400"></i>
+              Gateway de Pagamentos
             </p>
             <label class="flex items-center gap-4 cursor-pointer">
               <span class="toggle-switch flex-shrink-0">
@@ -397,17 +671,21 @@
               </span>
               <div>
                 <p class="font-bold text-warning-400">Integração PaySuite Ativa</p>
-                <p class="text-xs text-slate-400 mt-1">Desligue se os Payouts da PaySuite estiverem com problemas. Os clientes verão um aviso elegante e serão orientados a pagar por transferência manual via WhatsApp.</p>
+                <p class="text-xs text-slate-400 mt-1">
+                  Desligue se os payouts da PaySuite estiverem com problemas. Os clientes verão um aviso elegante
+                  e serão orientados a pagar por transferência manual via WhatsApp.
+                </p>
               </div>
             </label>
-          </div> 
-           </h2>
+          </div>
+
           <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div class="space-y-6">
               <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
                 <i data-lucide="mail" class="w-4 h-4"></i>
                 Servidor SMTP (Resend)
               </h3>
+
               <div class="input-group">
                 <label class="block text-sm font-bold text-slate-300 mb-2">API Key do Resend</label>
                 <div class="relative">
@@ -418,7 +696,8 @@
                   </button>
                 </div>
               </div>
-              <div class="grid grid-cols-2 gap-4">
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="input-group">
                   <label class="block text-sm font-bold text-slate-300 mb-2">Email Sistema</label>
                   <input type="email" id="senderEmail" value="noreply@paygo.co.mz" class="soft-input w-full px-4 py-3 font-mono text-sm">
@@ -429,11 +708,13 @@
                 </div>
               </div>
             </div>
+
             <div class="space-y-6">
               <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
                 <i data-lucide="bell-ring" class="w-4 h-4"></i>
                 Notificações Admin (Lark)
               </h3>
+
               <div class="input-group">
                 <label class="block text-sm font-bold text-slate-300 mb-2">URL do Webhook do Lark</label>
                 <div class="relative">
@@ -442,11 +723,13 @@
                 </div>
                 <p class="text-xs text-slate-500 mt-2">Alertas internos para novos eventos da plataforma.</p>
               </div>
+
               <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 mt-6">
                 <i data-lucide="network" class="w-4 h-4"></i>
                 Programa de Afiliados
               </h3>
-              <div class="grid grid-cols-2 gap-4">
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="input-group">
                   <label class="block text-sm font-bold text-slate-300 mb-2">Comissão Base (%)</label>
                   <div class="relative">
@@ -461,20 +744,26 @@
               </div>
             </div>
           </div>
-        </div>
+        </section>
       </form>
-    </div>
+    </main>
   </div>
 
-  <div class="fixed bottom-0 left-0 md:left-72 right-0 sticky-bottom-bar p-4 z-40 shadow-[0_-10px_30px_rgba(0,0,0,0.5)] flex justify-end gap-3 transition-transform">
-    <button type="button" id="resetBtn" class="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition flex items-center gap-2 text-sm border border-slate-700 w-full sm:w-auto justify-center">
-      <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
-      Restaurar Servidor
-    </button>
-    <button type="button" id="saveConfigBtn" class="px-8 py-3 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-bold transition flex items-center gap-2 shadow-lg shadow-brand-500/20 w-full sm:w-auto justify-center">
-      <i data-lucide="save" class="w-5 h-5"></i>
-      Guardar Alterações
-    </button>
+  <div id="saveBar" class="fixed bottom-0 left-0 md:left-72 right-0 sticky-bottom-bar p-4 z-40 shadow-[0_-10px_30px_rgba(0,0,0,0.5)] flex flex-col sm:flex-row justify-between items-center gap-3 transition-transform">
+    <div class="text-xs text-slate-400 flex items-center gap-2">
+      <i data-lucide="clock-3" class="w-4 h-4"></i>
+      <span id="lastSavedLabel">Última sincronização: —</span>
+    </div>
+    <div class="flex justify-end gap-3 w-full sm:w-auto">
+      <button type="button" id="resetBtn" class="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition flex items-center gap-2 text-sm border border-slate-700 w-full sm:w-auto justify-center">
+        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+        Restaurar
+      </button>
+      <button type="button" id="saveConfigBtn" class="px-8 py-3 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-bold transition flex items-center gap-2 shadow-lg shadow-brand-500/20 w-full sm:w-auto justify-center">
+        <i data-lucide="save" class="w-5 h-5"></i>
+        Guardar Alterações
+      </button>
+    </div>
   </div>
 
   <script type="module">
@@ -482,7 +771,6 @@
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
       authDomain: "paygo-14311.firebaseapp.com",
@@ -496,7 +784,6 @@
     const auth = getAuth(app);
     const db = getFirestore(app, "paygodb");
 
-    // Default Settings
     const DEFAULT_SETTINGS = {
       exchangeRate: 88.00,
       adminEmails: 'admin@paygo.co.mz',
@@ -507,6 +794,7 @@
       taxPercent: 7,
       firstPurchaseFree: true,
       isMaintenanceMode: false,
+      paysuiteActive: true,
       resendApiKey: '',
       senderEmail: 'noreply@paygo.co.mz',
       senderName: 'PayGo Moçambique',
@@ -516,17 +804,16 @@
       updatedAt: serverTimestamp()
     };
 
-    // State
     const state = {
       loadedSettings: { ...DEFAULT_SETTINGS },
       currentSettings: { ...DEFAULT_SETTINGS },
       hasLoadedFromDb: false,
       currentAdminId: null,
       currentAdminRole: null,
-      isSaving: false
+      isSaving: false,
+      isDirty: false
     };
 
-    // Element References
     const els = {
       sysLoader: document.getElementById('sysLoader'),
       adminName: document.getElementById('adminName'),
@@ -544,6 +831,7 @@
       larkStateBadge: document.getElementById('larkStateBadge'),
       maintenanceStateBadge: document.getElementById('maintenanceStateBadge'),
       affiliateStateBadge: document.getElementById('affiliateStateBadge'),
+      paysuiteStateBadge: document.getElementById('paysuiteStateBadge'),
       logoutBtn: document.getElementById('logoutBtn'),
       prefillBtn: document.getElementById('prefillBtn'),
       clearSensitiveBtn: document.getElementById('clearSensitiveBtn'),
@@ -558,6 +846,7 @@
       taxPercent: document.getElementById('taxPercent'),
       firstPurchaseFree: document.getElementById('firstPurchaseFree'),
       isMaintenanceMode: document.getElementById('isMaintenanceMode'),
+      paysuiteActive: document.getElementById('paysuiteActive'),
       resendApiKey: document.getElementById('resendApiKey'),
       senderEmail: document.getElementById('senderEmail'),
       senderName: document.getElementById('senderName'),
@@ -565,10 +854,15 @@
       affiliateCommission: document.getElementById('affiliateCommission'),
       affiliatePrefix: document.getElementById('affiliatePrefix'),
       previewTax10: document.getElementById('previewTax10'),
-      previewTax120: document.getElementById('previewTax120')
+      previewTax120: document.getElementById('previewTax120'),
+      summaryExchange: document.getElementById('summaryExchange'),
+      summaryPromo: document.getElementById('summaryPromo'),
+      summaryGateway: document.getElementById('summaryGateway'),
+      summaryMode: document.getElementById('summaryMode'),
+      lastSavedLabel: document.getElementById('lastSavedLabel'),
+      unsavedBadge: document.getElementById('unsavedBadge')
     };
 
-    // Initialize
     lucide.createIcons();
     const fallbackTimer = setTimeout(() => { if (els.sysLoader) els.sysLoader.style.display = 'none'; }, 5000);
     init();
@@ -578,6 +872,8 @@
       authGuard();
       refreshPreview();
       updateStatusBadges(DEFAULT_SETTINGS, false);
+      updateTopSummary(DEFAULT_SETTINGS);
+      updateDirtyState(false);
     }
 
     function bindEvents() {
@@ -591,14 +887,25 @@
       els.clearSensitiveBtn?.addEventListener('click', clearSensitiveFields);
       els.testConfigBtn?.addEventListener('click', testCurrentConfiguration);
       els.copySummaryBtn?.addEventListener('click', copyConfigurationSummary);
+
       document.querySelectorAll('[data-toggle-password]').forEach((btn) => {
         btn.addEventListener('click', () => togglePwd(btn.dataset.togglePassword));
       });
       
-      [els.exchangeRate, els.adminEmails, els.whatsappNumber, els.tax1, els.tax2, els.tax3, els.taxPercent, els.firstPurchaseFree, els.isMaintenanceMode, els.resendApiKey, els.senderEmail, els.senderName, els.larkWebhook, els.affiliateCommission, els.affiliatePrefix].forEach((el) => {
+      [
+        els.exchangeRate, els.adminEmails, els.whatsappNumber,
+        els.tax1, els.tax2, els.tax3, els.taxPercent,
+        els.firstPurchaseFree, els.isMaintenanceMode, els.paysuiteActive,
+        els.resendApiKey, els.senderEmail, els.senderName,
+        els.larkWebhook, els.affiliateCommission, els.affiliatePrefix
+      ].forEach((el) => {
         if (!el) return;
         const eventName = el.type === 'checkbox' ? 'change' : 'input';
-        el.addEventListener(eventName, () => { refreshPreview(); updateDerivedStatuses(); });
+        el.addEventListener(eventName, () => {
+          refreshPreview();
+          updateDerivedStatuses();
+          updateDirtyState(true);
+        });
       });
     }
 
@@ -625,16 +932,16 @@
             setTimeout(() => { window.location.href = '../dashboard.html'; }, 1500);
             return;
           }
+
           state.currentAdminId = user.uid;
           state.currentAdminRole = userDoc.data().role;
           
           if (els.adminName) els.adminName.textContent = userDoc.data().name || 'Admin';
           if (els.adminRoleLabel) els.adminRoleLabel.textContent = userDoc.data().role === 'superadmin' ? 'Super Admin' : 'Admin';
           
-          // Se não for Super Admin, avisa e bloqueia as definições de Manutenção
           if (state.currentAdminRole !== 'superadmin' && els.isMaintenanceMode) {
-              els.isMaintenanceMode.disabled = true;
-              els.isMaintenanceMode.parentElement.classList.add('opacity-50', 'cursor-not-allowed');
+            els.isMaintenanceMode.disabled = true;
+            els.isMaintenanceMode.parentElement.classList.add('opacity-50', 'cursor-not-allowed');
           }
 
           await loadSettingsFromFirestore();
@@ -660,7 +967,10 @@
           state.currentSettings = { ...state.loadedSettings };
           populateForm(state.loadedSettings);
           updateStatusBadges(state.loadedSettings, true);
+          updateTopSummary(state.loadedSettings);
+          updateLastSaved(data?.updatedAt);
           state.hasLoadedFromDb = true;
+          updateDirtyState(false);
           showToast('Configurações carregadas da base de dados.', 'success');
         } else {
           await setDoc(doc(db, "settings", "global"), DEFAULT_SETTINGS);
@@ -668,7 +978,9 @@
           state.currentSettings = { ...DEFAULT_SETTINGS };
           populateForm(DEFAULT_SETTINGS);
           updateStatusBadges(DEFAULT_SETTINGS, true);
+          updateTopSummary(DEFAULT_SETTINGS);
           state.hasLoadedFromDb = true;
+          updateDirtyState(false);
           showToast('Documento de configurações criado com valores padrão.', 'info');
         }
       } catch (error) {
@@ -676,6 +988,7 @@
         showToast('Não foi possível carregar as configurações. Usando valores padrão.', 'warning');
         populateForm(DEFAULT_SETTINGS);
         updateStatusBadges(DEFAULT_SETTINGS, false);
+        updateTopSummary(DEFAULT_SETTINGS);
       }
     }
 
@@ -689,6 +1002,7 @@
       if (els.taxPercent) els.taxPercent.value = settings.taxPercent ?? 7;
       if (els.firstPurchaseFree) els.firstPurchaseFree.checked = settings.firstPurchaseFree ?? true;
       if (els.isMaintenanceMode) els.isMaintenanceMode.checked = settings.isMaintenanceMode ?? false;
+      if (els.paysuiteActive) els.paysuiteActive.checked = settings.paysuiteActive ?? true;
       if (els.resendApiKey) els.resendApiKey.value = settings.resendApiKey ?? '';
       if (els.senderEmail) els.senderEmail.value = settings.senderEmail ?? 'noreply@paygo.co.mz';
       if (els.senderName) els.senderName.value = settings.senderName ?? 'PayGo Moçambique';
@@ -702,13 +1016,14 @@
       return {
         exchangeRate: parseFloat(els.exchangeRate?.value) || 88.00,
         adminEmails: els.adminEmails?.value.trim() || '',
-        whatsappNumber: els.whatsappNumber?.value.trim() || '',
+        whatsappNumber: normalizePhone(els.whatsappNumber?.value.trim() || ''),
         tax1: parseInt(els.tax1?.value) || 150,
         tax2: parseInt(els.tax2?.value) || 250,
         tax3: parseInt(els.tax3?.value) || 600,
         taxPercent: parseFloat(els.taxPercent?.value) || 7,
         firstPurchaseFree: els.firstPurchaseFree?.checked ?? true,
         isMaintenanceMode: els.isMaintenanceMode?.checked ?? false,
+        paysuiteActive: els.paysuiteActive?.checked ?? true,
         resendApiKey: els.resendApiKey?.value.trim() || '',
         senderEmail: els.senderEmail?.value.trim() || 'noreply@paygo.co.mz',
         senderName: els.senderName?.value.trim() || 'PayGo Moçambique',
@@ -720,28 +1035,49 @@
       };
     }
 
+    function validateSettings(values) {
+      if (!(values.exchangeRate > 0)) return 'A taxa de câmbio deve ser maior que zero.';
+      if (!(values.tax1 >= 0 && values.tax2 >= 0 && values.tax3 >= 0 && values.taxPercent >= 0)) return 'As taxas não podem ser negativas.';
+      if (values.senderEmail && !values.senderEmail.includes('@')) return 'Email do sistema inválido.';
+      if (values.larkWebhook && !values.larkWebhook.startsWith('https://')) return 'O webhook do Lark deve começar com https://';
+      if (values.affiliatePrefix.length < 3) return 'O prefixo de afiliado deve ter pelo menos 3 caracteres.';
+      if (values.affiliateCommission <= 0) return 'A comissão de afiliado deve ser maior que zero.';
+      if (values.whatsappNumber && values.whatsappNumber.length < 8) return 'Número de WhatsApp inválido.';
+      return null;
+    }
+
     async function handleSaveSettings(e) {
       e?.preventDefault();
-      
-      // Validação Extra para Super Admin
+
       if (els.isMaintenanceMode?.checked && state.currentAdminRole !== 'superadmin') {
-          return showToast('❌ Apenas o Super Admin pode ativar o Modo de Manutenção.', 'error');
+        return showToast('❌ Apenas o Super Admin pode ativar o Modo de Manutenção.', 'error');
       }
 
       if (state.isSaving) return;
+
+      const newSettings = collectFormValues();
+      const validationError = validateSettings(newSettings);
+      if (validationError) {
+        return showToast(validationError, 'error');
+      }
+
       state.isSaving = true;
       const btn = els.saveConfigBtn;
       const originalHtml = btn.innerHTML;
       btn.disabled = true;
+      btn.classList.add('saving-ring');
       btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A guardar...`;
       lucide.createIcons({ root: btn });
+
       try {
-        const newSettings = collectFormValues();
         await setDoc(doc(db, "settings", "global"), newSettings, { merge: true });
         state.loadedSettings = { ...newSettings };
         state.currentSettings = { ...newSettings };
         updateStatusBadges(newSettings, true);
-        
+        updateTopSummary(newSettings);
+        updateLastSaved(new Date());
+        updateDirtyState(false);
+
         if (newSettings.isMaintenanceMode) {
           showToast('⚠️ MODO DE MANUTENÇÃO ATIVADO! Apenas o Super Admin pode aceder ao site.', 'warning', 6000);
         } else {
@@ -753,6 +1089,7 @@
       } finally {
         state.isSaving = false;
         btn.disabled = false;
+        btn.classList.remove('saving-ring');
         btn.innerHTML = originalHtml;
         lucide.createIcons({ root: btn });
       }
@@ -762,6 +1099,9 @@
       if (!confirm('⚠️ Restaurar para valores padrão do servidor?\n\nIsto irá sobrescrever todas as alterações não guardadas.')) return;
       populateForm(state.loadedSettings);
       refreshPreview();
+      updateStatusBadges(state.loadedSettings, state.hasLoadedFromDb);
+      updateTopSummary(state.loadedSettings);
+      updateDirtyState(false);
       showToast('Valores restaurados para a última versão guardada.', 'info');
     }
 
@@ -786,17 +1126,23 @@
       const icons = { success: 'check-circle', error: 'alert-circle', warning: 'alert-triangle', info: 'info' };
       toast.innerHTML = `<i data-lucide="${icons[type] || icons.success}" class="w-5 h-5 flex-shrink-0"></i><span class="text-sm font-bold text-white">${message}</span>`;
       els.toastContainer.appendChild(toast);
-      if (typeof lucide !== 'undefined') { try { lucide.createIcons({ root: toast }); } catch(e) {} }
+      if (typeof lucide !== 'undefined') {
+        try { lucide.createIcons({ root: toast }); } catch(e) {}
+      }
       requestAnimationFrame(() => toast.classList.add('show'));
-      setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, duration);
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 400);
+      }, duration);
     }
 
     function refreshPreview() {
       const tax1 = parseInt(els.tax1?.value) || 150;
       const taxPercent = parseFloat(els.taxPercent?.value) || 7;
+      const rate = parseFloat(els.exchangeRate?.value) || 88;
+
       if (els.previewTax10) els.previewTax10.textContent = `${tax1} MT`;
       if (els.previewTax120) {
-        const rate = parseFloat(els.exchangeRate?.value) || 88;
         const calc = (120 * rate) * (taxPercent / 100);
         els.previewTax120.textContent = `${calc.toLocaleString('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MT`;
       }
@@ -804,10 +1150,10 @@
 
     function updateStatusBadges(settings, loaded) {
       if (els.docStateBadge) {
-          els.docStateBadge.textContent = loaded ? 'Carregado' : 'Padrão';
-          els.docStateBadge.className = `status-pill ${loaded ? 'ok' : 'warn'}`;
+        els.docStateBadge.textContent = loaded ? 'Carregado' : 'Padrão';
+        els.docStateBadge.className = `status-pill ${loaded ? 'ok' : 'warn'}`;
       }
-      
+
       if (els.maintenanceStateBadge) {
         const isMaint = settings?.isMaintenanceMode;
         els.maintenanceStateBadge.textContent = isMaint ? 'Em Manutenção' : 'Público';
@@ -820,19 +1166,32 @@
         els.resendStateBadge.textContent = (hasKey && hasEmail) ? 'Configurado' : 'Em falta';
         els.resendStateBadge.className = `status-pill ${hasKey && hasEmail ? 'ok' : 'off'}`;
       }
+
       if (els.larkStateBadge) {
         const hasUrl = settings?.larkWebhook?.startsWith('https://');
         els.larkStateBadge.textContent = hasUrl ? 'Ativo' : 'Em falta';
         els.larkStateBadge.className = `status-pill ${hasUrl ? 'ok' : 'off'}`;
       }
+
       if (els.affiliateStateBadge) {
         const hasCommission = settings?.affiliateCommission > 0;
         const hasPrefix = settings?.affiliatePrefix?.length >= 3;
         els.affiliateStateBadge.textContent = (hasCommission && hasPrefix) ? 'Ativo' : 'Incompleto';
         els.affiliateStateBadge.className = `status-pill ${hasCommission && hasPrefix ? 'ok' : 'warn'}`;
       }
+
+      if (els.paysuiteStateBadge) {
+        const active = settings?.paysuiteActive !== false;
+        els.paysuiteStateBadge.textContent = active ? 'Ativo' : 'Fallback';
+        els.paysuiteStateBadge.className = `status-pill ${active ? 'ok' : 'warn'}`;
+      }
+
       if (els.settingsStatusPill) {
-        const allOk = els.resendStateBadge?.classList.contains('ok') && els.larkStateBadge?.classList.contains('ok');
+        const allOk =
+          els.resendStateBadge?.classList.contains('ok') &&
+          els.larkStateBadge?.classList.contains('ok') &&
+          els.paysuiteStateBadge?.classList.contains('ok');
+
         els.settingsStatusPill.textContent = allOk ? 'Pronto' : 'A validar';
         els.settingsStatusPill.className = `status-pill ${allOk ? 'ok' : 'warn'}`;
       }
@@ -841,6 +1200,64 @@
     function updateDerivedStatuses() {
       const settings = collectFormValues();
       updateStatusBadges(settings, state.hasLoadedFromDb);
+      updateTopSummary(settings);
+    }
+
+    function updateTopSummary(settings) {
+      if (els.summaryExchange) els.summaryExchange.textContent = `${Number(settings.exchangeRate || 88).toFixed(2)}`;
+      if (els.summaryPromo) {
+        els.summaryPromo.textContent = settings.firstPurchaseFree ? 'Ativa' : 'Inativa';
+        els.summaryPromo.className = `text-sm font-bold mt-3 ${settings.firstPurchaseFree ? 'text-success-400' : 'text-slate-400'}`;
+      }
+      if (els.summaryGateway) {
+        const active = settings.paysuiteActive !== false;
+        els.summaryGateway.textContent = active ? 'Ativo' : 'Fallback';
+        els.summaryGateway.className = `text-sm font-bold mt-3 ${active ? 'text-warning-400' : 'text-slate-400'}`;
+      }
+      if (els.summaryMode) {
+        const mode = settings.isMaintenanceMode ? 'Manutenção' : 'Público';
+        const modeClass = settings.isMaintenanceMode ? 'text-danger-400' : 'text-success-400';
+        els.summaryMode.textContent = mode;
+        els.summaryMode.className = `text-sm font-bold mt-3 ${modeClass}`;
+      }
+    }
+
+    function updateDirtyState(isDirty) {
+      state.isDirty = isDirty;
+      document.body.classList.toggle('dirty', isDirty);
+    }
+
+    function updateLastSaved(dateLike) {
+      if (!els.lastSavedLabel) return;
+
+      let date = null;
+      if (!dateLike) {
+        els.lastSavedLabel.textContent = 'Última sincronização: —';
+        return;
+      }
+
+      if (dateLike instanceof Date) {
+        date = dateLike;
+      } else if (dateLike?.toDate) {
+        date = dateLike.toDate();
+      }
+
+      if (!date) {
+        els.lastSavedLabel.textContent = 'Última sincronização: —';
+        return;
+      }
+
+      els.lastSavedLabel.textContent =
+        `Última sincronização: ${date.toLocaleDateString('pt-MZ', {
+          day: '2-digit',
+          month: 'short',
+          hour: '2-digit',
+          minute: '2-digit'
+        })}`;
+    }
+
+    function normalizePhone(raw) {
+      return String(raw || '').replace(/[^\d]/g, '');
     }
 
     function prefillRecommendedSettings() {
@@ -849,15 +1266,21 @@
         exchangeRate: 88.00,
         adminEmails: 'admin@paygo.co.mz, suporte@paygo.co.mz',
         whatsappNumber: '258837522255',
-        tax1: 150, tax2: 250, tax3: 600, taxPercent: 7,
+        tax1: 150,
+        tax2: 250,
+        tax3: 600,
+        taxPercent: 7,
         firstPurchaseFree: true,
         isMaintenanceMode: false,
+        paysuiteActive: true,
         senderEmail: 'noreply@paygo.co.mz',
         senderName: 'PayGo Moçambique',
         affiliateCommission: 3,
         affiliatePrefix: 'AFF'
       };
       populateForm(recommended);
+      updateDerivedStatuses();
+      updateDirtyState(true);
       showToast('Valores recomendados aplicados. Clique em "Guardar" para persistir.', 'info');
     }
 
@@ -865,8 +1288,9 @@
       if (!confirm('Limpar chaves de API e webhooks sensíveis?\n\nEsta ação não pode ser desfeita sem recarregar.')) return;
       if (els.resendApiKey) els.resendApiKey.value = '';
       if (els.larkWebhook) els.larkWebhook.value = '';
-      showToast('Chaves sensíveis limpas da interface.', 'warning');
       updateDerivedStatuses();
+      updateDirtyState(true);
+      showToast('Chaves sensíveis limpas da interface.', 'warning');
     }
 
     function testCurrentConfiguration() {
@@ -876,10 +1300,12 @@
       report += `✅ Taxas: $≤20=${settings.tax1}MT | $21-50=${settings.tax2}MT | $51-100=${settings.tax3}MT | >$100=${settings.taxPercent}%\n`;
       report += `✅ Promoção 1ª compra: ${settings.firstPurchaseFree ? 'Ativa' : 'Inativa'}\n`;
       report += `🚧 Manutenção: ${settings.isMaintenanceMode ? '🔴 ATIVA' : '🟢 Desligada'}\n`;
+      report += `💳 PaySuite: ${settings.paysuiteActive ? '✅ Ativa' : '⚠️ Fallback Manual'}\n`;
       report += `📧 Resend: ${settings.resendApiKey ? '✅ Configurado' : '❌ Em falta'}\n`;
       report += `🔔 Lark: ${settings.larkWebhook ? '✅ Configurado' : '❌ Em falta'}\n`;
       report += `🤝 Afiliados: ${settings.affiliatePrefix}-${settings.affiliateCommission}%\n`;
       report += `\n📋 Emails: ${settings.adminEmails || 'Nenhum'}`;
+
       navigator.clipboard.writeText(report).then(() => {
         showToast('Relatório copiado para a área de transferência!', 'success');
       }).catch(() => {
@@ -891,12 +1317,19 @@
       const settings = collectFormValues();
       const summary = {
         exchangeRate: settings.exchangeRate,
-        fees: { tier1: settings.tax1, tier2: settings.tax2, tier3: settings.tax3, percent: settings.taxPercent },
+        fees: {
+          tier1: settings.tax1,
+          tier2: settings.tax2,
+          tier3: settings.tax3,
+          percent: settings.taxPercent
+        },
         promo: { firstPurchaseFree: settings.firstPurchaseFree },
         system: { maintenance: settings.isMaintenanceMode },
+        gateway: { paysuiteActive: settings.paysuiteActive },
         integrations: { resend: !!settings.resendApiKey, lark: !!settings.larkWebhook },
         affiliates: { prefix: settings.affiliatePrefix, commission: settings.affiliateCommission }
       };
+
       navigator.clipboard.writeText(JSON.stringify(summary, null, 2)).then(() => {
         showToast('Resumo JSON copiado!', 'success');
       }).catch(() => {
@@ -908,6 +1341,7 @@
       const input = document.getElementById(inputId);
       const icon = document.getElementById(`icon-${inputId}`);
       if (!input || !icon) return;
+
       if (input.type === 'password') {
         input.type = 'text';
         icon.setAttribute('data-lucide', 'eye-off');
@@ -915,6 +1349,7 @@
         input.type = 'password';
         icon.setAttribute('data-lucide', 'eye');
       }
+
       lucide.createIcons();
     }
   </script>
