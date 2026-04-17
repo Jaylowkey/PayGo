@@ -5,79 +5,215 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meu Painel | PayGo Moçambique</title>
     <meta name="theme-color" content="#0f172a">
-    
+
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: 'unsafe-inline' 'unsafe-eval'; img-src 'self' data: https:; font-src 'self' https: data:; connect-src 'self' https: wss:;">
-    
+
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: { 
-                        sans: ['"Plus Jakarta Sans"', 'sans-serif'], 
-                        display: ['"Outfit"', 'sans-serif'], 
-                        mono: ['"Fira Code"', 'monospace'] 
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        display: ['"Outfit"', 'sans-serif'],
+                        mono: ['"Fira Code"', 'monospace']
                     },
-                    colors: { 
-                        brand: { 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb' }, 
-                        success: { 400: '#4ade80', 500: '#22c55e' }, 
-                        warning: { 400: '#fbbf24', 500: '#f59e0b' }, 
-                        danger: { 400: '#f87171', 500: '#ef4444' }, 
-                        vip: { 400: '#c084fc', 500: '#a855f7', 600: '#9333ea' } 
+                    colors: {
+                        brand: { 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8' },
+                        success: { 400: '#4ade80', 500: '#22c55e' },
+                        warning: { 400: '#fbbf24', 500: '#f59e0b' },
+                        danger: { 400: '#f87171', 500: '#ef4444' },
+                        vip: { 400: '#c084fc', 500: '#a855f7', 600: '#9333ea' }
                     }
                 }
             }
         };
     </script>
-    
-    <style>
-        body { background-color: #0f172a; color: #f8fafc; }
-        ::-webkit-scrollbar { width: 6px; } 
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-        
-        .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
-        .glass-nav { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.08); }
-        .glass-card { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.3s ease; }
-        
-        .btn-epic { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; border-radius: 0.75rem; }
-        .btn-epic:active:not(:disabled) { transform: scale(0.96); }
-        .btn-epic:disabled { opacity: 0.65; cursor: not-allowed; }
-        
-        select option { background-color: #0f172a; color: #f8fafc; }
-        
-        #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-        .toast { pointer-events: auto; background: rgba(15, 23, 42, 0.95); border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 12px; display: flex; gap: 12px; transform: translateX(120%); transition: transform 0.4s ease; opacity: 0; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        .toast.show { transform: translateX(0); opacity: 1; }
 
-        .realistic-card { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); box-shadow: -10px 10px 30px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.1); }
-        .realistic-card::before { content: ''; position: absolute; top: -50%; right: -20%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 60%); pointer-events: none; }
+    <style>
+        body {
+            background:
+                radial-gradient(circle at top left, rgba(59,130,246,0.14), transparent 30%),
+                radial-gradient(circle at bottom right, rgba(168,85,247,0.08), transparent 28%),
+                #0f172a;
+            color: #f8fafc;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 999px; }
+
+        .bg-grid {
+            background-size: 40px 40px;
+            background-image:
+                linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
+        }
+
+        .glass-nav {
+            background: rgba(15, 23, 42, 0.82);
+            backdrop-filter: blur(18px);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.40);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(255,255,255,0.06);
+            transition: all 0.25s ease;
+            box-shadow: 0 16px 50px rgba(0,0,0,0.25);
+        }
+
+        .glass-card:hover {
+            border-color: rgba(255,255,255,0.10);
+        }
+
+        .hero-card {
+            background:
+                linear-gradient(135deg, rgba(37,99,235,0.16), rgba(168,85,247,0.08)),
+                rgba(15,23,42,0.72);
+            border: 1px solid rgba(255,255,255,0.08);
+            backdrop-filter: blur(16px);
+        }
+
+        .btn-epic {
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-weight: 700;
+            border-radius: 0.95rem;
+        }
+
+        .btn-epic:active:not(:disabled) {
+            transform: scale(0.97);
+        }
+
+        .btn-epic:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
+        .stat-card {
+            background: rgba(15, 23, 42, 0.75);
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .realistic-card {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            box-shadow:
+                -10px 10px 30px rgba(0,0,0,0.5),
+                inset 0 0 0 1px rgba(255,255,255,0.10);
+        }
+
+        .realistic-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .section-label {
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            color: #64748b;
+        }
+
+        .toast-item {
+            pointer-events: auto;
+            background: rgba(15, 23, 42, 0.96);
+            border-left: 4px solid #3b82f6;
+            padding: 16px 18px;
+            border-radius: 14px;
+            display: flex;
+            gap: 12px;
+            transform: translateX(120%);
+            opacity: 0;
+            transition: all 0.35s ease;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+        }
+
+        .toast-item.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .toast-item.hiding {
+            transform: translateX(40px);
+            opacity: 0;
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 10px;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        #toastContainer {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        select option {
+            background: #0f172a;
+            color: #f8fafc;
+        }
     </style>
 </head>
 <body class="selection:bg-brand-500 selection:text-white">
 
     <div class="fixed inset-0 bg-grid opacity-20 pointer-events-none z-0"></div>
     <div class="fixed top-0 left-0 w-[500px] h-[500px] bg-brand-600/10 rounded-full mix-blend-screen blur-[120px] pointer-events-none z-0" id="glowOrb"></div>
+    <div class="fixed bottom-0 right-0 w-[420px] h-[420px] bg-vip-500/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
     <div id="toastContainer"></div>
 
+    <!-- HEADER -->
     <header class="fixed w-full z-50 glass-nav">
-        <div class="container mx-auto px-6 h-20 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="bg-gradient-to-tr from-brand-500 to-brand-400 p-2.5 rounded-xl text-white shadow-lg">
+        <div class="container mx-auto px-4 md:px-6 h-20 flex justify-between items-center">
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="bg-gradient-to-tr from-brand-500 to-brand-400 p-2.5 rounded-xl text-white shadow-lg shrink-0">
                     <i data-lucide="zap" class="w-5 h-5"></i>
                 </div>
-                <span class="text-2xl font-display font-bold text-white">PayGo</span>
+                <div class="min-w-0">
+                    <p class="text-[10px] uppercase tracking-[0.18em] text-brand-400 font-bold">Painel</p>
+                    <span class="text-2xl font-display font-bold text-white truncate">PayGo</span>
+                </div>
             </div>
+
             <div class="flex items-center gap-4">
                 <div class="text-right hidden sm:block">
                     <div class="flex items-center justify-end gap-2">
                         <p class="text-sm font-bold text-white" id="userName">A carregar...</p>
-                        <button onclick="window.openProfileModal()" class="text-brand-400 hover:text-white transition-colors" title="Editar Perfil"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
+                        <button onclick="window.openProfileModal()" class="text-brand-400 hover:text-white transition-colors" title="Editar Perfil">
+                            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                        </button>
                     </div>
                     <p class="text-xs font-medium" id="userBadge"><span class="text-brand-400">Cliente Standard</span></p>
                 </div>
+
                 <div class="flex items-center gap-2">
                     <a href="notificacoes.html" class="relative bg-slate-800 hover:bg-brand-500/20 text-slate-400 hover:text-brand-400 rounded-xl p-2.5 transition-colors border border-transparent hover:border-brand-500/30" title="Notificações">
                         <i data-lucide="bell" class="w-5 h-5"></i>
@@ -94,65 +230,142 @@
         </div>
     </header>
 
-    <main class="pt-28 pb-20 relative z-10 container mx-auto px-6 max-w-6xl">
+    <main class="pt-28 pb-20 relative z-10 container mx-auto px-4 md:px-6 max-w-7xl">
+
+        <!-- HERO -->
+        <section class="hero-card rounded-3xl p-6 md:p-8 mb-8 relative overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-r from-brand-500/10 via-transparent to-vip-500/10 pointer-events-none"></div>
+
+            <div class="relative flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                <div class="max-w-3xl">
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-400 text-[11px] font-bold uppercase tracking-[0.16em] mb-4">
+                        <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+                        Área Segura
+                    </div>
+
+                    <h1 class="text-3xl md:text-4xl font-display font-extrabold text-white tracking-tight">
+                        Controle os seus pagamentos globais num só lugar
+                    </h1>
+                    <p class="text-slate-400 mt-3 text-sm md:text-base max-w-2xl leading-relaxed">
+                        Gere a sua carteira, envie depósitos, acompanhe compras, use o seu cartão virtual e pague serviços internacionais com mais confiança.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full lg:w-auto lg:min-w-[520px]">
+                    <div class="stat-card rounded-2xl p-4">
+                        <p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Total</p>
+                        <p id="statTotal" class="text-2xl font-display font-extrabold text-white mt-2 skeleton">0</p>
+                    </div>
+                    <div class="stat-card rounded-2xl p-4">
+                        <p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Pendentes</p>
+                        <p id="statPending" class="text-2xl font-display font-extrabold text-warning-400 mt-2 skeleton">0</p>
+                    </div>
+                    <div class="stat-card rounded-2xl p-4">
+                        <p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Concluídas</p>
+                        <p id="statCompleted" class="text-2xl font-display font-extrabold text-success-400 mt-2 skeleton">0</p>
+                    </div>
+                    <div class="stat-card rounded-2xl p-4">
+                        <p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Volume</p>
+                        <p id="statRevenue" class="text-2xl font-display font-extrabold text-brand-400 mt-2 skeleton">0</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <div class="grid lg:grid-cols-3 gap-8">
-            
+            <!-- COLUNA ESQUERDA -->
             <div class="lg:col-span-1 space-y-6">
-                <div class="glass-card rounded-2xl p-6 relative overflow-hidden shadow-2xl border-t-4 border-t-brand-500" id="walletCard">
-                    <div class="absolute -right-6 -top-6 opacity-10"><i data-lucide="wallet" class="w-32 h-32"></i></div>
+
+                <!-- CARTEIRA -->
+                <div class="glass-card rounded-3xl p-6 relative overflow-hidden shadow-2xl border-t-4 border-t-brand-500" id="walletCard">
+                    <div class="absolute -right-6 -top-6 opacity-10">
+                        <i data-lucide="wallet" class="w-32 h-32"></i>
+                    </div>
                     <div class="relative z-10">
-                        <h2 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-2">
-                            <i data-lucide="shield-check" class="w-4 h-4 text-success-400"></i> Carteira PayGo
-                        </h2>
+                        <p class="section-label mb-2 flex items-center gap-2">
+                            <i data-lucide="shield-check" class="w-4 h-4 text-success-400"></i>
+                            Carteira PayGo
+                        </p>
+
                         <div class="mt-4 mb-6">
                             <span class="text-sm text-slate-400 font-medium align-top">MT</span>
                             <span class="text-4xl font-display font-black text-white" id="walletBalance">0.00</span>
                         </div>
-                        <div class="grid grid-cols-2 gap-2 mb-3">
+
+                        <div class="grid grid-cols-2 gap-3 mb-3">
                             <button onclick="window.openTopUpModal()" class="btn-epic py-3 bg-brand-600 hover:bg-brand-500 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)] text-sm">
-                                <i data-lucide="plus" class="w-4 h-4"></i> Depositar
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                                Depositar
                             </button>
                             <button onclick="window.openTransferModal()" class="btn-epic py-3 bg-slate-700 hover:bg-slate-600 text-white border border-slate-600 text-sm">
-                                <i data-lucide="send" class="w-4 h-4"></i> Transferir
+                                <i data-lucide="send" class="w-4 h-4"></i>
+                                Transferir
                             </button>
                         </div>
-                        <a href="historico.html" class="btn-epic w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-400 text-xs">
-                            <i data-lucide="history" class="w-4 h-4"></i> Meu Histórico / Extrato
+
+                        <a href="historico.html" class="btn-epic w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs">
+                            <i data-lucide="history" class="w-4 h-4"></i>
+                            Meu Histórico / Extrato
                         </a>
                     </div>
                 </div>
 
-                <div class="glass-card rounded-2xl p-6 border border-slate-800 relative overflow-hidden group">
+                <!-- VIP -->
+                <div class="glass-card rounded-3xl p-6 border border-slate-800 relative overflow-hidden group">
                     <div class="absolute right-0 top-0 w-24 h-24 bg-vip-500/10 rounded-full blur-2xl group-hover:bg-vip-500/20 transition"></div>
-                    <h3 class="text-xs font-bold text-vip-400 uppercase tracking-widest mb-2 flex items-center gap-2"><i data-lucide="crown" class="w-4 h-4"></i> Plano PayGo VIP</h3>
-                    <p class="text-sm text-slate-400 mb-4" id="vipStatusText">Isenção da Taxa de Serviço em todos os pagamentos e prioridade no processamento.</p>
+                    <p class="section-label mb-2 flex items-center gap-2 text-vip-400">
+                        <i data-lucide="crown" class="w-4 h-4"></i>
+                        Plano PayGo VIP
+                    </p>
+                    <p class="text-sm text-slate-400 mb-4" id="vipStatusText">
+                        Isenção da Taxa de Serviço em todos os pagamentos e prioridade no processamento.
+                    </p>
                     <button onclick="window.openVipModal()" id="btnOpenVip" class="w-full py-3 rounded-xl bg-gradient-to-r from-vip-600 to-brand-600 hover:from-vip-500 hover:to-brand-500 text-white font-bold text-sm shadow-[0_0_15px_rgba(168,85,247,0.3)] transition transform hover:scale-[1.02]">
                         Gerir Assinatura
                     </button>
                 </div>
 
-                <div class="glass-card rounded-2xl p-6 border border-brand-500/20 relative overflow-hidden bg-brand-500/5">
-                    <div class="absolute -right-4 -bottom-4 text-brand-500/20"><i data-lucide="gift" class="w-24 h-24"></i></div>
+                <!-- AFILIADOS -->
+                <div class="glass-card rounded-3xl p-6 border border-brand-500/20 relative overflow-hidden bg-brand-500/5">
+                    <div class="absolute -right-4 -bottom-4 text-brand-500/20">
+                        <i data-lucide="gift" class="w-24 h-24"></i>
+                    </div>
                     <div class="relative z-10">
-                        <h3 class="text-sm font-display font-bold text-white mb-2 flex items-center gap-2"><i data-lucide="share-2" class="w-4 h-4 text-brand-400"></i> Sugira e Ganhe Bónus</h3>
-                        <p class="text-xs text-slate-400 mb-4">Convide amigos a aderir à PayGo e ganhe fundos diretos na sua carteira para cada amigo que fizer a primeira compra.</p>
-                        <a href="afiliados.html" class="inline-flex items-center justify-center w-full py-2.5 bg-white text-slate-900 hover:bg-slate-200 rounded-xl font-bold text-xs transition">Gerar o meu Link</a>
+                        <h3 class="text-sm font-display font-bold text-white mb-2 flex items-center gap-2">
+                            <i data-lucide="share-2" class="w-4 h-4 text-brand-400"></i>
+                            Sugira e Ganhe Bónus
+                        </h3>
+                        <p class="text-xs text-slate-400 mb-4">
+                            Convide amigos a aderir à PayGo e ganhe fundos diretos na sua carteira para cada amigo que fizer a primeira compra.
+                        </p>
+                        <a href="afiliados.html" class="inline-flex items-center justify-center w-full py-2.5 bg-white text-slate-900 hover:bg-slate-200 rounded-xl font-bold text-xs transition">
+                            Gerar o meu Link
+                        </a>
                     </div>
                 </div>
 
-                <div class="glass-card rounded-2xl p-5 border border-slate-800">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2"><i data-lucide="life-buoy" class="w-4 h-4 text-brand-400"></i> Centro de Apoio</h3>
+                <!-- SUPORTE -->
+                <div class="glass-card rounded-3xl p-5 border border-slate-800">
+                    <p class="section-label mb-4 flex items-center gap-2">
+                        <i data-lucide="life-buoy" class="w-4 h-4 text-brand-400"></i>
+                        Centro de Apoio
+                    </p>
                     <div class="space-y-2">
                         <a href="mensagens.html" class="w-full flex items-center justify-between p-3 rounded-xl bg-slate-800/50 hover:bg-slate-700 transition-colors border border-transparent hover:border-slate-600 group">
                             <div class="flex items-center gap-3">
-                                <div class="bg-brand-500/20 text-brand-400 p-2 rounded-lg"><i data-lucide="message-square" class="w-4 h-4"></i></div>
+                                <div class="bg-brand-500/20 text-brand-400 p-2 rounded-lg">
+                                    <i data-lucide="message-square" class="w-4 h-4"></i>
+                                </div>
                                 <span class="text-sm text-slate-300 font-bold group-hover:text-white">Apoio (Chat c/ Equipa)</span>
                             </div>
                             <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 group-hover:text-white"></i>
                         </a>
+
                         <button onclick="window.openSupportModal('refund')" class="w-full flex items-center justify-between p-3 rounded-xl bg-slate-800/50 hover:bg-danger-900/30 transition-colors border border-transparent hover:border-danger-500/30 group">
                             <div class="flex items-center gap-3">
-                                <div class="bg-danger-500/20 text-danger-400 p-2 rounded-lg"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></div>
+                                <div class="bg-danger-500/20 text-danger-400 p-2 rounded-lg">
+                                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                                </div>
                                 <span class="text-sm text-slate-300 font-bold group-hover:text-danger-400">Cancelar / Reembolso</span>
                             </div>
                             <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 group-hover:text-danger-400"></i>
@@ -160,11 +373,15 @@
                     </div>
                 </div>
 
-                <div class="glass-card rounded-2xl p-5 border border-slate-800">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Informação do Sistema</h3>
+                <!-- SISTEMA -->
+                <div class="glass-card rounded-3xl p-5 border border-slate-800">
+                    <p class="section-label mb-4">Informação do Sistema</p>
                     <div class="space-y-3">
                         <div class="flex justify-between items-center pb-2 border-b border-white/5">
-                            <span class="text-sm text-slate-400 flex items-center gap-2"><i data-lucide="bar-chart-3" class="w-4 h-4"></i> Câmbio Atual (USD)</span>
+                            <span class="text-sm text-slate-400 flex items-center gap-2">
+                                <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+                                Câmbio Atual (USD)
+                            </span>
                             <span class="text-sm font-mono font-bold text-brand-400" id="currentRate">-- MT</span>
                         </div>
                         <div class="flex justify-between items-center text-xs text-slate-500">
@@ -175,49 +392,92 @@
                 </div>
             </div>
 
+            <!-- COLUNA DIREITA -->
             <div class="lg:col-span-2 space-y-6">
-                
-                <div class="glass-card rounded-2xl p-6 border border-brand-500/30 shadow-[0_0_30px_rgba(59,130,246,0.1)] relative overflow-hidden">
+
+                <!-- CARTÃO VIRTUAL -->
+                <div class="glass-card rounded-3xl p-6 md:p-8 border border-brand-500/20 shadow-[0_0_30px_rgba(59,130,246,0.08)] relative overflow-hidden">
                     <div class="flex flex-col md:flex-row gap-8 items-center">
                         <div class="realistic-card w-full md:w-80 h-48 rounded-2xl p-6 flex flex-col justify-between shrink-0 transform transition-transform hover:scale-[1.02] relative overflow-hidden group">
-                            <button onclick="window.toggleCardView()" class="absolute top-6 right-6 text-white/30 hover:text-white transition z-20 hidden" id="btnRevealCard" title="Mostrar/Ocultar Detalhes do Cartão"><i data-lucide="eye" id="vcEyeIcon" class="w-5 h-5"></i></button>
+                            <button onclick="window.toggleCardView()" class="absolute top-6 right-6 text-white/30 hover:text-white transition z-20 hidden" id="btnRevealCard" title="Mostrar/Ocultar Detalhes do Cartão">
+                                <i data-lucide="eye" id="vcEyeIcon" class="w-5 h-5"></i>
+                            </button>
+
                             <div class="flex justify-between items-start z-10">
                                 <div class="w-12 h-9 bg-gradient-to-br from-yellow-200 via-yellow-400 to-yellow-600 rounded-md shadow-sm relative overflow-hidden opacity-90 border border-yellow-300/50">
-                                    <div class="absolute top-0 left-0 w-full h-[40%] bg-white/20"></div><div class="w-full h-px bg-yellow-700/30 mt-3"></div><div class="w-full h-px bg-yellow-700/30 mt-2"></div>
+                                    <div class="absolute top-0 left-0 w-full h-[40%] bg-white/20"></div>
                                 </div>
                                 <div class="text-right pr-8">
                                     <p class="text-[10px] text-white/50 uppercase font-bold tracking-widest mb-0.5">Cartão PAYGO</p>
                                     <p class="text-xl font-display font-black text-white" id="vcBalanceDisplay"></p>
                                 </div>
                             </div>
-                            <div class="z-10 text-center mt-2"><p class="text-2xl font-mono font-bold tracking-[0.15em] text-white/95 drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)]" id="vcNumber">**** **** **** ****</p></div>
+
+                            <div class="z-10 text-center mt-2">
+                                <p class="text-2xl font-mono font-bold tracking-[0.15em] text-white/95 drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)]" id="vcNumber">**** **** **** ****</p>
+                            </div>
+
                             <div class="flex justify-between items-end z-10">
-                                <div class="flex flex-col"><p class="text-[8px] uppercase tracking-widest text-white/50 mb-0.5">Titular</p><p class="text-xs font-mono font-bold text-white tracking-widest uppercase" id="vcNameDisplay">CLIENTE PAYGO</p></div>
+                                <div class="flex flex-col">
+                                    <p class="text-[8px] uppercase tracking-widest text-white/50 mb-0.5">Titular</p>
+                                    <p class="text-xs font-mono font-bold text-white tracking-widest uppercase" id="vcNameDisplay">CLIENTE PAYGO</p>
+                                </div>
                                 <div class="flex gap-4 text-right">
-                                    <div><p class="text-[8px] uppercase tracking-widest text-white/50 mb-0.5">Validade</p><p class="text-xs font-mono font-bold text-white" id="vcExpiry">MM/AA</p></div>
-                                    <div><p class="text-[8px] uppercase tracking-widest text-white/50 mb-0.5">CVC</p><p class="text-xs font-mono font-bold text-white transition-all" id="vcCvc">***</p></div>
+                                    <div>
+                                        <p class="text-[8px] uppercase tracking-widest text-white/50 mb-0.5">Validade</p>
+                                        <p class="text-xs font-mono font-bold text-white" id="vcExpiry">MM/AA</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-[8px] uppercase tracking-widest text-white/50 mb-0.5">CVC</p>
+                                        <p class="text-xs font-mono font-bold text-white transition-all" id="vcCvc">***</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         <div class="flex-1 w-full text-center md:text-left">
-                            <h2 class="text-2xl font-display font-bold text-white mb-2 flex items-center justify-center md:justify-start gap-2"><i data-lucide="credit-card" class="w-6 h-6 text-brand-400"></i> O Meu Cartão</h2>
-                            <p class="text-sm text-slate-400 mb-6" id="vcStatusText">Adicione um Cartão Virtual Existente à sua conta ou solicite um novo exclusivo da PayGo para compras directas.</p>
+                            <p class="section-label mb-2 text-brand-400">Cartão Virtual</p>
+                            <h2 class="text-2xl font-display font-bold text-white mb-2 flex items-center justify-center md:justify-start gap-2">
+                                <i data-lucide="credit-card" class="w-6 h-6 text-brand-400"></i>
+                                O Meu Cartão
+                            </h2>
+                            <p class="text-sm text-slate-400 mb-6" id="vcStatusText">
+                                Adicione um Cartão Virtual existente à sua conta ou solicite um novo exclusivo da PayGo para compras directas.
+                            </p>
                             <div id="vcActionButtons" class="flex flex-col sm:flex-row gap-3">
-                                <button onclick="window.openVirtualCardModal('link')" class="flex-1 py-3 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-bold text-sm transition shadow-lg flex items-center justify-center gap-2"><i data-lucide="link" class="w-4 h-4"></i> Vincular Cartão</button>
-                                <button onclick="window.openVirtualCardModal('request')" class="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-white border border-slate-600 rounded-xl font-bold text-sm transition flex items-center justify-center gap-2"><i data-lucide="plus-circle" class="w-4 h-4"></i> Solicitar Novo</button>
+                                <button onclick="window.openVirtualCardModal('link')" class="flex-1 py-3 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-bold text-sm transition shadow-lg flex items-center justify-center gap-2">
+                                    <i data-lucide="link" class="w-4 h-4"></i>
+                                    Vincular Cartão
+                                </button>
+                                <button onclick="window.openVirtualCardModal('request')" class="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-white border border-slate-600 rounded-xl font-bold text-sm transition flex items-center justify-center gap-2">
+                                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                                    Solicitar Novo
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="glass-card rounded-2xl p-6 md:p-8 relative overflow-hidden">
-                    <h2 class="text-2xl font-display font-bold text-white mb-2 flex items-center gap-3 relative z-10"><i data-lucide="bot" class="w-8 h-8 text-brand-500"></i> Orçamentador de Pagamentos</h2>
-                    <p class="text-slate-400 text-sm mb-6 relative z-10">Pague qualquer site internacional com o seu saldo PayGo.</p>
+                <!-- ORÇAMENTADOR -->
+                <div class="glass-card rounded-3xl p-6 md:p-8 relative overflow-hidden">
+                    <div class="absolute right-0 top-0 w-40 h-40 bg-brand-500/5 rounded-full blur-3xl"></div>
+
+                    <p class="section-label mb-2 text-brand-400">Pagamentos Internacionais</p>
+                    <h2 class="text-2xl font-display font-bold text-white mb-2 flex items-center gap-3 relative z-10">
+                        <i data-lucide="bot" class="w-8 h-8 text-brand-500"></i>
+                        Orçamentador de Pagamentos
+                    </h2>
+                    <p class="text-slate-400 text-sm mb-6 relative z-10">
+                        Pague qualquer site internacional com o seu saldo PayGo.
+                    </p>
 
                     <form id="orderForm" onsubmit="event.preventDefault(); window.processOrder();" class="space-y-6 relative z-10">
-                        <div class="p-5 border border-slate-700/50 rounded-xl bg-slate-900/30">
-                            <h3 class="text-sm font-bold text-brand-400 mb-4 flex items-center gap-2"><i data-lucide="shopping-bag" class="w-4 h-4"></i> 1. O que deseja pagar?</h3>
+                        <div class="p-5 border border-slate-700/50 rounded-2xl bg-slate-900/30">
+                            <h3 class="text-sm font-bold text-brand-400 mb-4 flex items-center gap-2">
+                                <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+                                1. O que deseja pagar?
+                            </h3>
+
                             <div class="space-y-4">
                                 <div>
                                     <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Categoria de Pagamento</label>
@@ -230,10 +490,12 @@
                                         <i data-lucide="chevron-down" class="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"></i>
                                     </div>
                                 </div>
+
                                 <div>
                                     <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2" id="labelUrl">Link do Produto / Site</label>
                                     <input type="url" id="productUrl" required placeholder="https://..." class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 text-white transition">
                                 </div>
+
                                 <div class="grid md:grid-cols-2 gap-4">
                                     <div>
                                         <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Valor (USD $)</label>
@@ -242,6 +504,7 @@
                                             <input type="number" id="productUsd" required min="0.01" step="0.01" placeholder="0.00" class="w-full pl-12 pr-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 text-white font-mono transition">
                                         </div>
                                     </div>
+
                                     <div>
                                         <label class="block text-xs font-bold text-brand-400 uppercase tracking-widest mb-2">Valor convertido (MT)</label>
                                         <div class="relative">
@@ -250,10 +513,12 @@
                                         </div>
                                     </div>
                                 </div>
+
                                 <div id="digitalFields" class="hidden bg-slate-950 p-4 border border-brand-500/30 rounded-xl mt-4">
                                     <label class="block text-xs font-bold text-brand-400 uppercase tracking-widest mb-2" id="labelDigital">Player ID / E-mail da Conta</label>
                                     <input type="text" id="digitalAccount" placeholder="Insira o ID ou email para recarga" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white transition">
                                 </div>
+
                                 <div id="extraDetailsContainer">
                                     <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Observações / Detalhes (Opcional)</label>
                                     <input type="text" id="productDetails" placeholder="Tamanho, Cor, ou instrução especial" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 text-white transition">
@@ -261,12 +526,23 @@
                             </div>
                         </div>
 
-                        <div id="physicalFields" class="p-5 border border-slate-700/50 rounded-xl bg-slate-900/30">
-                            <h3 class="text-sm font-bold text-success-400 mb-4 flex items-center gap-2"><i data-lucide="map-pin" class="w-4 h-4"></i> 2. Endereço de Despacho</h3>
+                        <div id="physicalFields" class="p-5 border border-slate-700/50 rounded-2xl bg-slate-900/30">
+                            <h3 class="text-sm font-bold text-success-400 mb-4 flex items-center gap-2">
+                                <i data-lucide="map-pin" class="w-4 h-4"></i>
+                                2. Endereço de Despacho
+                            </h3>
+
                             <div class="grid md:grid-cols-2 gap-4 mb-4">
-                                <div><label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Nome Completo</label><input type="text" id="shipName" required placeholder="Nome para Alfândega" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white physical-req"></div>
-                                <div><label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Telefone</label><input type="text" id="shipPhone" required placeholder="Ex: +258 84..." class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white physical-req"></div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Nome Completo</label>
+                                    <input type="text" id="shipName" required placeholder="Nome para Alfândega" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white physical-req">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Telefone</label>
+                                    <input type="text" id="shipPhone" required placeholder="Ex: +258 84..." class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white physical-req">
+                                </div>
                             </div>
+
                             <div class="grid md:grid-cols-2 gap-4 mb-4">
                                 <div>
                                     <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Província / Cidade</label>
@@ -285,12 +561,19 @@
                                         <option value="Niassa" data-zip="3300">Niassa (Lichinga)</option>
                                     </select>
                                 </div>
-                                <div><label class="block text-xs font-bold text-brand-400 uppercase tracking-widest mb-2">Código Postal</label><input type="text" id="shipZip" required readonly placeholder="0000" class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-brand-400 font-mono font-bold cursor-not-allowed physical-req"></div>
+                                <div>
+                                    <label class="block text-xs font-bold text-brand-400 uppercase tracking-widest mb-2">Código Postal</label>
+                                    <input type="text" id="shipZip" required readonly placeholder="0000" class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-brand-400 font-mono font-bold cursor-not-allowed physical-req">
+                                </div>
                             </div>
-                            <div><label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Morada Detalhada</label><input type="text" id="shipAddress" required placeholder="Ex: Bairro Central, Rua..." class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white physical-req"></div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Morada Detalhada</label>
+                                <input type="text" id="shipAddress" required placeholder="Ex: Bairro Central, Rua..." class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white physical-req">
+                            </div>
                         </div>
 
-                        <div class="bg-slate-900 rounded-xl p-5 border border-brand-500/20">
+                        <div class="bg-slate-900 rounded-2xl p-5 border border-brand-500/20">
                             <div class="flex justify-between items-center text-sm text-slate-400 mb-2">
                                 <span>Conversão Base (<span id="calcRate">85</span> MT):</span>
                                 <span class="font-mono text-white" id="calcBase">0.00 MT</span>
@@ -303,18 +586,67 @@
                                 <span class="text-xs font-bold text-slate-500 uppercase tracking-widest">Total a Debitar:</span>
                                 <span class="text-2xl font-display font-black text-white" id="calcTotal">0.00 MT</span>
                             </div>
-                            <div id="balanceWarning" class="hidden mt-4 bg-warning-500/10 border border-warning-500/20 rounded-lg p-3"><p class="text-xs text-warning-300 font-medium">Saldo insuficiente. Recarregue a carteira.</p></div>
-                            <div id="successReady" class="hidden mt-4 bg-success-500/10 border border-success-500/20 rounded-lg p-3"><p class="text-xs text-success-300 font-medium">Saldo suficiente! Pronto para liquidar.</p></div>
+
+                            <div id="balanceWarning" class="hidden mt-4 bg-warning-500/10 border border-warning-500/20 rounded-lg p-3">
+                                <p class="text-xs text-warning-300 font-medium">Saldo insuficiente. Recarregue a carteira.</p>
+                            </div>
+
+                            <div id="successReady" class="hidden mt-4 bg-success-500/10 border border-success-500/20 rounded-lg p-3">
+                                <p class="text-xs text-success-300 font-medium">Saldo suficiente. Pronto para liquidar.</p>
+                            </div>
                         </div>
 
                         <button type="submit" id="btnSubmitOrder" disabled class="btn-epic w-full py-4 bg-success-500 hover:bg-success-600 text-white transition-all shadow-[0_0_15px_rgba(34,197,94,0.3)] disabled:bg-slate-800 disabled:text-slate-500 disabled:shadow-none">
-                            <i data-lucide="credit-card" class="w-5 h-5"></i> <span id="btnSubmitText">Autorizar Pagamento Seguro</span>
+                            <i data-lucide="credit-card" class="w-5 h-5"></i>
+                            <span id="btnSubmitText">Autorizar Pagamento Seguro</span>
                         </button>
                     </form>
                 </div>
+
+                <!-- OPERAÇÕES RECENTES -->
+                <div class="glass-card rounded-3xl p-6 md:p-8">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+                        <div>
+                            <p class="section-label mb-2">Atividade</p>
+                            <h2 class="text-2xl font-display font-bold text-white">Operações Recentes</h2>
+                            <p class="text-sm text-slate-400 mt-1">Pedidos e depósitos mais recentes da sua conta.</p>
+                        </div>
+
+                        <button id="btnRefresh" onclick="window.fetchDashboardData(true)" class="btn-epic px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm border border-slate-700">
+                            <i data-lucide="refresh-cw" class="w-4 h-4" id="refreshIcon"></i>
+                            Atualizar
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full min-w-[620px]">
+                            <thead>
+                                <tr class="text-left text-[11px] uppercase tracking-widest text-slate-500 border-b border-white/5">
+                                    <th class="py-3 pr-4">Referência</th>
+                                    <th class="py-3 pr-4">Descrição</th>
+                                    <th class="py-3 pr-4">Valor</th>
+                                    <th class="py-3 pr-4">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ordersTable" class="text-sm text-slate-300">
+                                <tr>
+                                    <td colspan="4" class="py-8 text-center text-slate-500">
+                                        <div class="flex flex-col items-center gap-3">
+                                            <div class="w-8 h-8 rounded-full border-2 border-slate-700 border-t-brand-500 animate-spin"></div>
+                                            <p>A carregar operações...</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
             </div>
         </div>
     </main>
+
+    <!-- MANTÉM AQUI TODOS OS TEUS MODAIS E O BLOCO <script type="module"> ORIGINAL -->
 
     <div id="profileModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl relative">
