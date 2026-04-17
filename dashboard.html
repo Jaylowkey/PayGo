@@ -998,11 +998,56 @@
             setTimeout(() => { t.classList.remove('show'); t.classList.add('hiding'); setTimeout(() => t.remove(), 400); }, 4000);
         }
 
-        const formatMZN = (val) => new Intl.NumberFormat('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val || 0);
-        const formatUSD = (val) => new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val || 0);
-        const formatDate = (timestamp) => { if (!timestamp) return '—'; try { const date = timestamp instanceof Date ? timestamp : timestamp?.toDate?.() || new Date(timestamp?.seconds * 1000); return date.toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch { return 'Data inválida'; } };
-        const formatRelativeTime = (timestamp) => { if (!timestamp) return ''; const date = timestamp instanceof Date ? timestamp : timestamp?.toDate?.() || new Date(timestamp?.seconds * 1000); const minutes = Math.floor((new Date() - date) / 60000); if (minutes < 1) return 'Agora'; if (minutes < 60) return `há ${minutes}m`; return formatDate(timestamp); };
-
+                    const formatMZN = (val) =>
+                new Intl.NumberFormat('pt-MZ', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }).format(Number(val || 0));
+            
+            const formatUSD = (val) =>
+                new Intl.NumberFormat('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }).format(Number(val || 0));
+            
+            const formatCurrency = (val, currency = 'MZN') => {
+                const num = Number(val || 0);
+            
+                if (currency === 'USD') {
+                    return new Intl.NumberFormat('en-US', {
+                        style: 'currency',
+                        currency: 'USD',
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    }).format(num);
+                }
+            
+                return new Intl.NumberFormat('pt-MZ', {
+                    style: 'currency',
+                    currency: 'MZN',
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }).format(num);
+            };
+            
+            const formatDate = (timestamp) => {
+                if (!timestamp) return '—';
+                try {
+                    const date = timestamp instanceof Date
+                        ? timestamp
+                        : timestamp?.toDate?.() || new Date(timestamp?.seconds * 1000);
+            
+                    return date.toLocaleDateString('pt-MZ', {
+                        day: '2-digit',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                } catch {
+                    return 'Data inválida';
+                }
+            };
+       
         // ==========================================
         // 4. AUTENTICAÇÃO E CARREGAMENTO
         // ==========================================
