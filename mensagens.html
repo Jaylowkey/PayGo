@@ -5,142 +5,418 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Central de Ajuda | PayGo</title>
     <meta name="theme-color" content="#0f172a">
-    
+
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'], display: ['"Outfit"', 'sans-serif'], mono: ['"Fira Code"', 'monospace'] },
-                    colors: { 
-                        brand: { 50: '#eff6ff', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 900: '#1e3a8a', 950: '#0f172a' },
-                        success: { 400: '#4ade80', 500: '#22c55e' }, warning: { 400: '#fbbf24', 500: '#f59e0b' }, danger: { 400: '#f87171', 500: '#ef4444' }
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        display: ['"Outfit"', 'sans-serif'],
+                        mono: ['"Fira Code"', 'monospace']
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a',
+                            950: '#0f172a'
+                        },
+                        success: { 400: '#4ade80', 500: '#22c55e' },
+                        warning: { 400: '#fbbf24', 500: '#f59e0b' },
+                        danger: { 400: '#f87171', 500: '#ef4444' }
                     }
                 }
             }
         };
     </script>
-    
+
     <style>
-        body { background-color: #0f172a; color: #f8fafc; overflow: hidden; }
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-        .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
-        .glass-nav { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.08); }
-        .glass-card { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); }
-        
-        .chat-scroll { overflow-y: auto; scroll-behavior: smooth; }
-        .ticket-item { transition: all 0.2s ease; border-left: 3px solid transparent; }
-        .ticket-item:hover { background: rgba(59, 130, 246, 0.05); }
-        .ticket-item.active { background: rgba(59, 130, 246, 0.15); border-left-color: #3b82f6; }
-        
-        .msg-client { background: linear-gradient(135deg, #2563eb, #3b82f6); color: white; border-radius: 16px 16px 4px 16px; align-self: flex-end; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
-        .msg-admin { background: #1e293b; color: #e2e8f0; border-radius: 16px 16px 16px 4px; align-self: flex-start; border: 1px solid rgba(255,255,255,0.05); }
-        
-        #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-        .toast { pointer-events: auto; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px); border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 12px; display: flex; align-items: center; gap: 12px; transform: translateX(120%); transition: transform 0.4s ease; opacity: 0; }
-        .toast.show { transform: translateX(0); opacity: 1; }
+        :root {
+            --bg-main: #020617;
+            --bg-panel: rgba(15, 23, 42, 0.72);
+            --bg-card: rgba(30, 41, 59, 0.55);
+            --border-soft: rgba(255,255,255,0.06);
+            --border-strong: rgba(255,255,255,0.10);
+        }
+
+        * { -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background:
+                radial-gradient(circle at top center, rgba(37, 99, 235, 0.16), transparent 35%),
+                radial-gradient(circle at bottom left, rgba(14, 165, 233, 0.08), transparent 30%),
+                #020617;
+            color: #f8fafc;
+            overflow: hidden;
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(100, 116, 139, 0.55);
+            border-radius: 999px;
+        }
+
+        .bg-grid {
+            background-size: 34px 34px;
+            background-image:
+                linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
+        }
+
+        .glass-nav {
+            background: rgba(2, 6, 23, 0.82);
+            backdrop-filter: blur(18px);
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+        }
+
+        .glass-shell {
+            background: rgba(2, 6, 23, 0.45);
+            backdrop-filter: blur(18px);
+            border: 1px solid rgba(255,255,255,0.06);
+            box-shadow:
+                0 24px 80px rgba(0,0,0,0.45),
+                inset 0 1px 0 rgba(255,255,255,0.02);
+        }
+
+        .glass-sub {
+            background: rgba(15, 23, 42, 0.76);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .chat-scroll {
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        .ticket-item {
+            transition: all 0.22s ease;
+            border-left: 3px solid transparent;
+            position: relative;
+        }
+
+        .ticket-item:hover {
+            background: rgba(59, 130, 246, 0.07);
+            transform: translateX(2px);
+        }
+
+        .ticket-item.active {
+            background: linear-gradient(90deg, rgba(59, 130, 246, 0.17), rgba(59, 130, 246, 0.05));
+            border-left-color: #3b82f6;
+        }
+
+        .ticket-item.active::after {
+            content: '';
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: #3b82f6;
+            transform: translateY(-50%);
+            box-shadow: 0 0 14px rgba(59,130,246,0.9);
+        }
+
+        .msg-wrap {
+            display: flex;
+            width: 100%;
+        }
+
+        .msg-client {
+            background: linear-gradient(135deg, #2563eb, #3b82f6);
+            color: white;
+            border-radius: 18px 18px 6px 18px;
+            align-self: flex-end;
+            box-shadow: 0 10px 30px rgba(37, 99, 235, 0.25);
+        }
+
+        .msg-admin {
+            background: rgba(30, 41, 59, 0.9);
+            color: #e2e8f0;
+            border-radius: 18px 18px 18px 6px;
+            align-self: flex-start;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .msg-bubble {
+            max-width: min(85%, 680px);
+            padding: 14px 14px 10px;
+            font-size: 14px;
+            line-height: 1.55;
+        }
+
+        .composer-shadow {
+            box-shadow: 0 -8px 30px rgba(0,0,0,0.24);
+        }
+
+        .floating-orb {
+            position: fixed;
+            inset: auto auto 4rem 50%;
+            width: 520px;
+            height: 420px;
+            border-radius: 9999px;
+            background: rgba(59, 130, 246, 0.08);
+            filter: blur(120px);
+            transform: translateX(-50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .skeleton {
+            position: relative;
+            overflow: hidden;
+            background: rgba(51, 65, 85, 0.55);
+        }
+
+        .skeleton::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            transform: translateX(-100%);
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+            animation: shimmer 1.3s infinite;
+        }
+
+        @keyframes shimmer {
+            100% { transform: translateX(100%); }
+        }
+
+        #toastContainer {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .toast {
+            pointer-events: auto;
+            background: rgba(15, 23, 42, 0.96);
+            backdrop-filter: blur(14px);
+            border-left: 4px solid #3b82f6;
+            padding: 16px 18px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transform: translateX(120%);
+            transition: transform 0.4s ease, opacity 0.4s ease;
+            opacity: 0;
+            min-width: 260px;
+            max-width: 360px;
+            box-shadow: 0 14px 40px rgba(0,0,0,0.35);
+        }
+
+        .toast.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
         .toast.error { border-left-color: #ef4444; }
+
+        @media (max-width: 767px) {
+            body { overflow: hidden; }
+            .mobile-hidden { display: none !important; }
+            .mobile-chat-open #ticketSidebar { display: none !important; }
+            .mobile-chat-open #chatArea { display: flex !important; }
+            #chatArea { display: none; }
+            .msg-bubble { max-width: 92%; }
+        }
     </style>
 </head>
 <body class="selection:bg-brand-500 selection:text-white flex flex-col h-screen relative">
 
     <div class="fixed inset-0 bg-grid opacity-20 pointer-events-none z-0"></div>
-    <div class="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[500px] bg-brand-600/10 rounded-full mix-blend-screen blur-[120px] pointer-events-none z-0"></div>
+    <div class="floating-orb"></div>
     <div id="toastContainer"></div>
 
     <header class="w-full z-50 glass-nav shrink-0">
         <div class="container mx-auto px-4 md:px-6 h-16 flex justify-between items-center">
-            <div class="flex items-center gap-4">
-                <a href="dashboard.html" class="text-slate-400 hover:text-white transition p-2 rounded-lg hover:bg-white/10" title="Voltar">
+            <div class="flex items-center gap-4 min-w-0">
+                <a href="dashboard.html" class="text-slate-400 hover:text-white transition p-2 rounded-xl hover:bg-white/10 shrink-0" title="Voltar">
                     <i data-lucide="arrow-left" class="w-5 h-5"></i>
                 </a>
-                <div class="bg-brand-500/20 text-brand-400 p-2 rounded-lg hidden sm:block">
-                    <i data-lucide="life-buoy" class="w-4 h-4"></i>
+
+                <div class="hidden sm:flex items-center justify-center w-10 h-10 rounded-xl bg-brand-500/15 text-brand-400 border border-brand-500/20 shrink-0">
+                    <i data-lucide="life-buoy" class="w-5 h-5"></i>
                 </div>
-                <span class="text-xl font-display font-bold text-white">Central de Ajuda</span>
+
+                <div class="min-w-0">
+                    <p class="text-[10px] uppercase tracking-[0.22em] text-brand-400 font-bold">Suporte</p>
+                    <h1 class="text-lg sm:text-xl font-display font-bold text-white truncate">Central de Ajuda</h1>
+                </div>
             </div>
-            <div class="flex items-center gap-3">
-                <a href="notificacoes.html" class="p-2 text-slate-400 hover:text-white transition rounded-lg hover:bg-white/10">
+
+            <div class="flex items-center gap-2 sm:gap-3">
+                <a href="notificacoes.html" class="p-2 text-slate-400 hover:text-white transition rounded-xl hover:bg-white/10" title="Notificações">
                     <i data-lucide="bell" class="w-5 h-5"></i>
+                </a>
+                <a href="dashboard.html" class="hidden sm:inline-flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 transition shadow-lg shadow-brand-900/30">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    Novo Pedido
                 </a>
             </div>
         </div>
     </header>
 
-    <main class="flex-1 container mx-auto px-2 sm:px-6 py-6 relative z-10 flex overflow-hidden">
-        <div class="flex w-full h-full glass-card rounded-2xl overflow-hidden shadow-2xl">
-            
-            <div class="w-full md:w-1/3 flex flex-col border-r border-slate-700/50 bg-slate-900/50 shrink-0" id="ticketSidebar">
-                <div class="p-4 border-b border-slate-700/50 flex justify-between items-center bg-slate-900/80">
-                    <h3 class="text-sm font-bold text-white uppercase tracking-widest">Meus Pedidos</h3>
-                    <button onclick="window.location.href='dashboard.html'" class="text-xs bg-brand-600 hover:bg-brand-500 text-white px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1">
-                        <i data-lucide="plus" class="w-3 h-3"></i> Novo
-                    </button>
+    <main class="flex-1 container mx-auto px-2 sm:px-6 py-4 sm:py-6 relative z-10 flex overflow-hidden">
+        <div class="flex w-full h-full glass-shell rounded-3xl overflow-hidden">
+
+            <!-- SIDEBAR -->
+            <aside class="w-full md:w-[370px] lg:w-[400px] flex flex-col border-r border-slate-800/70 bg-slate-950/30 shrink-0" id="ticketSidebar">
+                <div class="p-4 border-b border-slate-800/70 bg-slate-900/70">
+                    <div class="flex items-center justify-between gap-3 mb-3">
+                        <div>
+                            <h3 class="text-sm font-bold text-white uppercase tracking-[0.16em]">Meus Pedidos</h3>
+                            <p class="text-xs text-slate-500 mt-1">Acompanhe tickets, reembolsos e recargas.</p>
+                        </div>
+                        <button onclick="window.location.href='dashboard.html'" class="sm:hidden text-xs bg-brand-600 hover:bg-brand-500 text-white px-3 py-2 rounded-xl font-bold transition flex items-center gap-1.5">
+                            <i data-lucide="plus" class="w-3.5 h-3.5"></i> Novo
+                        </button>
+                    </div>
+
+                    <div class="relative">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                        <input
+                            id="ticketSearch"
+                            type="text"
+                            placeholder="Pesquisar por ID, tipo ou mensagem..."
+                            class="w-full h-11 rounded-xl bg-slate-950/80 border border-slate-800 text-white text-sm pl-10 pr-4 outline-none focus:border-brand-500 transition"
+                        >
+                    </div>
+                </div>
+
+                <div class="px-4 py-3 border-b border-slate-800/60 bg-slate-950/40 flex items-center gap-2 overflow-x-auto">
+                    <button class="filter-btn active px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-brand-500/20 text-brand-400 border border-brand-500/30 whitespace-nowrap" data-filter="all">Todos</button>
+                    <button class="filter-btn px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-slate-900 text-slate-300 border border-slate-700 whitespace-nowrap" data-filter="open">Abertos</button>
+                    <button class="filter-btn px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-slate-900 text-slate-300 border border-slate-700 whitespace-nowrap" data-filter="in_progress">Em análise</button>
+                    <button class="filter-btn px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-slate-900 text-slate-300 border border-slate-700 whitespace-nowrap" data-filter="closed">Fechados</button>
                 </div>
 
                 <div class="flex-1 chat-scroll" id="ticketList">
-                    <div class="p-8 text-center text-slate-500"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto"></i></div>
+                    <div class="p-4 space-y-3">
+                        <div class="glass-sub rounded-2xl p-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-full skeleton"></div>
+                                <div class="flex-1 space-y-2">
+                                    <div class="h-3 w-2/3 rounded skeleton"></div>
+                                    <div class="h-3 w-full rounded skeleton"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="glass-sub rounded-2xl p-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-full skeleton"></div>
+                                <div class="flex-1 space-y-2">
+                                    <div class="h-3 w-1/2 rounded skeleton"></div>
+                                    <div class="h-3 w-5/6 rounded skeleton"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="glass-sub rounded-2xl p-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-full skeleton"></div>
+                                <div class="flex-1 space-y-2">
+                                    <div class="h-3 w-3/4 rounded skeleton"></div>
+                                    <div class="h-3 w-4/6 rounded skeleton"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            </aside>
 
-            <div class="hidden md:flex flex-col flex-1 bg-slate-950 relative" id="chatArea">
-                
-                <div id="emptyChatState" class="absolute inset-0 flex flex-col items-center justify-center text-center p-6 z-20 bg-slate-950">
-                    <div class="w-20 h-20 bg-slate-900 rounded-full flex items-center justify-center mb-4 text-brand-500/50 shadow-inner">
+            <!-- CHAT -->
+            <section class="hidden md:flex flex-col flex-1 bg-slate-950/40 relative" id="chatArea">
+
+                <div id="emptyChatState" class="absolute inset-0 flex flex-col items-center justify-center text-center p-6 z-20 bg-slate-950/95">
+                    <div class="w-20 h-20 bg-slate-900 rounded-full flex items-center justify-center mb-4 text-brand-500/50 shadow-inner border border-slate-800">
                         <i data-lucide="messages-square" class="w-10 h-10"></i>
                     </div>
                     <h3 class="text-xl font-bold text-white mb-2">Selecione uma conversa</h3>
-                    <p class="text-slate-500 text-sm max-w-sm">Acompanhe os seus pedidos de suporte, reembolsos ou recargas de cartão virtual aqui.</p>
+                    <p class="text-slate-500 text-sm max-w-sm">
+                        Acompanhe os seus pedidos de suporte, reembolsos ou recargas de cartão virtual em tempo real.
+                    </p>
                 </div>
 
                 <div class="p-4 border-b border-slate-800 bg-slate-900/80 flex justify-between items-center shrink-0">
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-3 min-w-0">
                         <button class="md:hidden text-slate-400 hover:text-white p-1 transition" onclick="window.closeMobileChat()">
                             <i data-lucide="chevron-left" class="w-6 h-6"></i>
                         </button>
-                        <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-brand-400 font-bold border border-slate-700">
+                        <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-brand-400 font-bold border border-slate-700 shrink-0">
                             <i data-lucide="headphones" class="w-5 h-5"></i>
                         </div>
-                        <div>
-                            <h3 class="font-bold text-white leading-tight">Equipa PayGo</h3>
+                        <div class="min-w-0">
+                            <h3 class="font-bold text-white leading-tight truncate">Equipa PayGo</h3>
                             <p class="text-[11px] text-success-400 font-bold uppercase tracking-widest flex items-center gap-1">
-                                <span class="w-2 h-2 rounded-full bg-success-500 animate-pulse"></span> Suporte Oficial
+                                <span class="w-2 h-2 rounded-full bg-success-500 animate-pulse"></span>
+                                Suporte Oficial
                             </p>
                         </div>
                     </div>
-                    <div>
+
+                    <div class="flex items-center gap-2">
                         <span id="chatTicketType" class="px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-widest bg-slate-800 text-slate-300 border border-slate-700">TICKET</span>
                     </div>
                 </div>
 
-                <div class="flex-1 chat-scroll p-4 md:p-6 space-y-4 flex flex-col" id="messageHistory">
+                <div class="px-4 md:px-6 py-3 border-b border-slate-900/80 bg-slate-950/50 flex items-center justify-between gap-3 shrink-0">
+                    <div class="text-xs text-slate-500">
+                        <span class="text-slate-400 font-semibold">ID:</span>
+                        <span id="activeTicketIdLabel">—</span>
+                    </div>
+                    <div class="text-xs text-slate-500">
+                        <span class="text-slate-400 font-semibold">Status:</span>
+                        <span id="activeTicketStatusLabel">—</span>
+                    </div>
                 </div>
 
-                <div class="p-4 bg-slate-900 border-t border-slate-800 shrink-0">
+                <div class="flex-1 chat-scroll p-4 md:p-6 space-y-4 flex flex-col" id="messageHistory"></div>
+
+                <div class="p-4 bg-slate-900/92 border-t border-slate-800 shrink-0 composer-shadow">
                     <form id="replyForm" class="flex items-end gap-2 relative">
                         <div class="relative shrink-0">
-                            <input type="file" id="fileUpload" class="hidden" accept="image/*, .pdf, .doc, .docx" onchange="window.handleFileSelect(event)">
-                            <button type="button" onclick="document.getElementById('fileUpload').click()" class="w-12 h-12 rounded-xl bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-brand-400 transition">
+                            <input type="file" id="fileUpload" class="hidden" accept="image/*,.pdf,.doc,.docx" onchange="window.handleFileSelect(event)">
+                            <button type="button" onclick="document.getElementById('fileUpload').click()" class="w-12 h-12 rounded-xl bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-brand-400 transition border border-slate-700">
                                 <i data-lucide="paperclip" class="w-5 h-5"></i>
                             </button>
-                            <div id="fileBadge" class="absolute -top-2 -right-2 w-4 h-4 bg-success-500 rounded-full hidden border-2 border-slate-900"></div>
+                            <div id="fileBadge" class="absolute -top-1.5 -right-1.5 w-4 h-4 bg-success-500 rounded-full hidden border-2 border-slate-900"></div>
                         </div>
 
-                        <div class="flex-1 bg-slate-950 border border-slate-700 rounded-xl relative focus-within:border-brand-500 transition-colors">
-                            <textarea id="replyMessage" rows="1" class="w-full bg-transparent text-white px-4 py-3 outline-none resize-none text-sm max-h-32 min-h-[48px] chat-scroll" placeholder="Escreva a sua mensagem... (Pressione Enter para enviar)" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea>
+                        <div class="flex-1 bg-slate-950 border border-slate-700 rounded-2xl relative focus-within:border-brand-500 transition-colors overflow-hidden">
+                            <textarea
+                                id="replyMessage"
+                                rows="1"
+                                class="w-full bg-transparent text-white px-4 py-3 outline-none resize-none text-sm max-h-36 min-h-[52px] chat-scroll"
+                                placeholder="Escreva a sua mensagem... (Enter envia, Shift+Enter quebra linha)"
+                                oninput="this.style.height=''; this.style.height=this.scrollHeight + 'px'"
+                            ></textarea>
                         </div>
 
-                        <button type="submit" id="btnSendReply" class="w-12 h-12 rounded-xl bg-brand-600 hover:bg-brand-500 flex items-center justify-center text-white transition shadow-lg shrink-0">
-                            <i data-lucide="send" class="w-5 h-5 ml-1"></i>
+                        <button type="submit" id="btnSendReply" class="w-12 h-12 rounded-xl bg-brand-600 hover:bg-brand-500 flex items-center justify-center text-white transition shadow-lg shadow-brand-900/30 shrink-0 disabled:opacity-60 disabled:cursor-not-allowed">
+                            <i data-lucide="send" class="w-5 h-5 ml-0.5"></i>
                         </button>
                     </form>
-                    <div id="fileNameDisplay" class="text-[10px] text-brand-400 mt-2 font-mono hidden truncate px-1"></div>
+
+                    <div class="flex items-center justify-between gap-4 mt-2">
+                        <div id="fileNameDisplay" class="text-[11px] text-brand-400 font-mono hidden truncate px-1"></div>
+                        <div class="text-[10px] text-slate-500 hidden sm:block">Anexos até 5MB</div>
+                    </div>
                 </div>
-            </div>
+            </section>
         </div>
     </main>
 
@@ -168,38 +444,138 @@
 
         let currentUser = null;
         let myTickets = [];
+        let filteredTickets = [];
         let activeTicketId = null;
         let unsubscribeMessages = null;
         let selectedFile = null;
+        let activeFilter = 'all';
+        let activeSearch = '';
+
+        const ticketListEl = document.getElementById('ticketList');
+        const chatAreaEl = document.getElementById('chatArea');
+        const emptyChatStateEl = document.getElementById('emptyChatState');
+        const messageHistoryEl = document.getElementById('messageHistory');
+        const searchInputEl = document.getElementById('ticketSearch');
+        const activeTicketIdLabelEl = document.getElementById('activeTicketIdLabel');
+        const activeTicketStatusLabelEl = document.getElementById('activeTicketStatusLabel');
 
         const escapeHTML = (str) => {
             if (!str) return '';
-            return String(str).replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+            return String(str).replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                "'": '&#39;',
+                '"': '&quot;'
+            }[tag] || tag));
+        };
+
+        const formatDate = (ts) => {
+            if (!ts) return 'Recente';
+            try {
+                if (ts?.toDate) return ts.toDate().toLocaleDateString('pt-MZ');
+                return new Date(ts).toLocaleDateString('pt-MZ');
+            } catch {
+                return 'Recente';
+            }
+        };
+
+        const formatTime = (ts) => {
+            if (!ts) return '';
+            try {
+                if (ts?.toDate) return ts.toDate().toLocaleTimeString('pt-MZ', { hour: '2-digit', minute: '2-digit' });
+                return new Date(ts).toLocaleTimeString('pt-MZ', { hour: '2-digit', minute: '2-digit' });
+            } catch {
+                return '';
+            }
+        };
+
+        const statusMap = {
+            open: { label: 'Aberto', dot: 'bg-warning-500', glow: 'shadow-[0_0_8px_rgba(245,158,11,0.8)]' },
+            in_progress: { label: 'Em análise', dot: 'bg-brand-500', glow: 'shadow-[0_0_8px_rgba(59,130,246,0.8)] animate-pulse' },
+            closed: { label: 'Fechado', dot: 'bg-success-500', glow: '' }
         };
 
         window.showToast = function(msg, type = 'success') {
             const container = document.getElementById('toastContainer');
             if (!container) return;
+
             const t = document.createElement('div');
-            const borderColor = type === 'error' ? 'border-danger-500' : 'border-brand-500';
-            const icon = type === 'error' ? 'alert-octagon text-danger-400' : 'check-check text-brand-400';
-            t.className = `toast border-l-4 ${borderColor} bg-slate-900/95`;
-            t.innerHTML = `<i data-lucide="${icon.split(' ')[0]}" class="w-5 h-5 ${icon.split(' ')[1]}"></i> <span class="text-sm font-bold text-white">${escapeHTML(msg)}</span>`;
-            container.appendChild(t); lucide.createIcons({ root: t });
-            requestAnimationFrame(() => { t.classList.remove('translate-x-full', 'opacity-0'); });
-            setTimeout(() => { t.classList.add('opacity-0', 'translate-x-8'); setTimeout(() => t.remove(), 400); }, 4000);
+            const iconName = type === 'error' ? 'alert-octagon' : 'check-check';
+
+            t.className = `toast ${type === 'error' ? 'error' : ''}`;
+            t.innerHTML = `
+                <i data-lucide="${iconName}" class="w-5 h-5 ${type === 'error' ? 'text-danger-400' : 'text-brand-400'}"></i>
+                <span class="text-sm font-bold text-white">${escapeHTML(msg)}</span>
+            `;
+            container.appendChild(t);
+            lucide.createIcons({ root: t });
+
+            requestAnimationFrame(() => t.classList.add('show'));
+            setTimeout(() => {
+                t.classList.remove('show');
+                setTimeout(() => t.remove(), 400);
+            }, 4000);
         };
 
+        function setMobileChatState(open) {
+            if (window.innerWidth < 768) {
+                document.body.classList.toggle('mobile-chat-open', open);
+            }
+        }
+
+        function getTypeBadge(ticket) {
+            if (ticket.type === 'refund') {
+                return `<span class="text-[9px] px-2 py-0.5 rounded-full bg-danger-500/20 text-danger-400 border border-danger-500/30">REEMBOLSO</span>`;
+            }
+            if (ticket.type === 'vc_topup') {
+                return `<span class="text-[9px] px-2 py-0.5 rounded-full bg-success-500/20 text-success-400 border border-success-500/30">RECARGA VC</span>`;
+            }
+            return `<span class="text-[9px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">MENSAGEM</span>`;
+        }
+
+        function applyFilters() {
+            const query = activeSearch.trim().toLowerCase();
+
+            filteredTickets = myTickets.filter(ticket => {
+                const matchesStatus = activeFilter === 'all' ? true : (ticket.status || 'open') === activeFilter;
+
+                const haystack = [
+                    ticket.orderId || '',
+                    ticket.message || '',
+                    ticket.type || '',
+                    ticket.status || ''
+                ].join(' ').toLowerCase();
+
+                const matchesSearch = !query || haystack.includes(query);
+
+                return matchesStatus && matchesSearch;
+            });
+
+            renderTicketList();
+        }
+
+        function setActiveFilterButton() {
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                const isActive = btn.dataset.filter === activeFilter;
+                btn.className = isActive
+                    ? 'filter-btn active px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-brand-500/20 text-brand-400 border border-brand-500/30 whitespace-nowrap'
+                    : 'filter-btn px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-slate-900 text-slate-300 border border-slate-700 whitespace-nowrap';
+            });
+        }
+
         onAuthStateChanged(auth, async (user) => {
-            if (!user) { window.location.href = 'login.html'; return; }
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
             currentUser = user;
             loadMyTickets();
         });
 
-        // 📥 CARREGAR OS TICKETS
         function loadMyTickets() {
             const q = query(collection(db, "support_tickets"), where("userId", "==", currentUser.uid));
-            
+
             onSnapshot(q, (snapshot) => {
                 myTickets = [];
                 snapshot.forEach((docSnap) => {
@@ -209,139 +585,197 @@
                 myTickets.sort((a, b) => {
                     const tA = a.updatedAt?.seconds || a.createdAt?.seconds || 0;
                     const tB = b.updatedAt?.seconds || b.createdAt?.seconds || 0;
-                    return tB - tA; 
+                    return tB - tA;
                 });
 
-                renderTicketList();
-            }, (error) => {
+                applyFilters();
+
+                if (activeTicketId && !myTickets.some(t => t.id === activeTicketId)) {
+                    activeTicketId = null;
+                    resetChatArea();
+                }
+            }, () => {
                 showToast("Erro ao ligar ao centro de ajuda.", "error");
             });
         }
 
         function renderTicketList() {
-            const listEl = document.getElementById('ticketList');
-            listEl.innerHTML = '';
+            ticketListEl.innerHTML = '';
 
-            if (myTickets.length === 0) {
-                listEl.innerHTML = `
-                    <div class="p-6 text-center text-slate-500 text-sm flex flex-col items-center gap-2 mt-10">
-                        <i data-lucide="life-buoy" class="w-10 h-10 opacity-30 text-brand-500"></i>
-                        <span>Sem pedidos de ajuda.</span>
-                        <a href="dashboard.html" class="text-brand-400 hover:underline mt-2">Criar Novo Ticket</a>
-                    </div>`;
-                lucide.createIcons({root: listEl}); return;
-            }
-
-            myTickets.forEach(ticket => {
-                const dateStr = ticket.createdAt?.toDate ? ticket.createdAt.toDate().toLocaleDateString('pt-MZ') : 'Recente';
-                const isActive = activeTicketId === ticket.id ? 'active' : '';
-                
-                let statusDot = '';
-                if(ticket.status === 'open') statusDot = '<div class="w-2 h-2 rounded-full bg-warning-500 shadow-[0_0_8px_rgba(245,158,11,0.8)]" title="Pendente"></div>';
-                else if (ticket.status === 'in_progress') statusDot = '<div class="w-2 h-2 rounded-full bg-brand-500 shadow-[0_0_8px_rgba(59,130,246,0.8)] animate-pulse" title="Em Análise"></div>';
-                else statusDot = '<div class="w-2 h-2 rounded-full bg-success-500" title="Fechado"></div>';
-
-                let typeBadge = '';
-                if (ticket.type === 'refund') typeBadge = `<span class="text-[8px] px-1.5 py-0.5 rounded bg-danger-500/20 text-danger-400 border border-danger-500/30">REEMBOLSO</span>`;
-                else if (ticket.type === 'vc_topup') typeBadge = `<span class="text-[8px] px-1.5 py-0.5 rounded bg-success-500/20 text-success-400 border border-success-500/30">RECARGA VC</span>`;
-                else typeBadge = `<span class="text-[8px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">MENSAGEM</span>`;
-
-                const div = document.createElement('div');
-                div.className = `ticket-item p-4 border-b border-slate-800/50 cursor-pointer hover:bg-slate-800/30 transition flex items-center gap-3 ${isActive}`;
-                div.onclick = () => selectTicket(ticket.id);
-                
-                div.innerHTML = `
-                    <div class="shrink-0 flex items-center justify-center">${statusDot}</div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex justify-between items-start mb-1">
-                            <div class="flex items-center gap-2">${typeBadge} <span class="text-xs font-bold text-white">#${ticket.orderId ? escapeHTML(ticket.orderId) : 'SUPORTE'}</span></div>
-                            <span class="text-[9px] text-slate-500 whitespace-nowrap">${dateStr}</span>
+            if (filteredTickets.length === 0) {
+                ticketListEl.innerHTML = `
+                    <div class="p-6 text-center text-slate-500 text-sm flex flex-col items-center gap-3 mt-10">
+                        <div class="w-14 h-14 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-brand-500/40">
+                            <i data-lucide="search-x" class="w-7 h-7"></i>
                         </div>
-                        <p class="text-xs text-slate-400 truncate pr-2">${escapeHTML(ticket.message || 'Ver Detalhes...')}</p>
+                        <div>
+                            <p class="text-slate-400 font-semibold mb-1">Nenhum ticket encontrado</p>
+                            <p class="text-slate-500 text-xs">Tente mudar o filtro ou iniciar um novo pedido.</p>
+                        </div>
+                        <a href="dashboard.html" class="text-brand-400 hover:underline mt-2 font-semibold">Criar Novo Ticket</a>
                     </div>
                 `;
-                listEl.appendChild(div);
+                lucide.createIcons({ root: ticketListEl });
+                return;
+            }
+
+            filteredTickets.forEach(ticket => {
+                const dateStr = formatDate(ticket.updatedAt || ticket.createdAt);
+                const status = statusMap[ticket.status || 'open'] || statusMap.open;
+                const isActive = activeTicketId === ticket.id ? 'active' : '';
+
+                const div = document.createElement('div');
+                div.className = `ticket-item p-4 border-b border-slate-800/50 cursor-pointer flex items-center gap-3 ${isActive}`;
+                div.onclick = () => selectTicket(ticket.id);
+
+                div.innerHTML = `
+                    <div class="shrink-0 flex items-center justify-center">
+                        <div class="w-2.5 h-2.5 rounded-full ${status.dot} ${status.glow}"></div>
+                    </div>
+
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-start gap-2 mb-1">
+                            <div class="flex items-center gap-2 min-w-0">
+                                ${getTypeBadge(ticket)}
+                                <span class="text-xs font-bold text-white truncate">#${escapeHTML(ticket.orderId || ticket.id.slice(0, 8).toUpperCase())}</span>
+                            </div>
+                            <span class="text-[10px] text-slate-500 whitespace-nowrap">${dateStr}</span>
+                        </div>
+
+                        <p class="text-xs text-slate-400 truncate pr-2">${escapeHTML(ticket.message || 'Ver detalhes...')}</p>
+
+                        <div class="mt-2 flex items-center gap-2">
+                            <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-900 text-slate-400 border border-slate-800">${status.label}</span>
+                        </div>
+                    </div>
+                `;
+                ticketListEl.appendChild(div);
             });
-            lucide.createIcons({root: listEl});
+
+            lucide.createIcons({ root: ticketListEl });
         }
 
-        // 💬 ABRIR CHAT
+        function resetChatArea() {
+            if (unsubscribeMessages) unsubscribeMessages();
+            unsubscribeMessages = null;
+            messageHistoryEl.innerHTML = '';
+            emptyChatStateEl?.classList.remove('hidden');
+            activeTicketIdLabelEl.textContent = '—';
+            activeTicketStatusLabelEl.textContent = '—';
+            document.getElementById('chatTicketType').textContent = 'TICKET';
+        }
+
+        function updateHeaderMeta(ticket) {
+            activeTicketIdLabelEl.textContent = `#${ticket.orderId || ticket.id.slice(0, 8).toUpperCase()}`;
+
+            const status = statusMap[ticket.status || 'open'] || statusMap.open;
+            activeTicketStatusLabelEl.textContent = status.label;
+
+            const mainBadge = document.getElementById('chatTicketType');
+            if (ticket.type === 'refund') {
+                mainBadge.className = "px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-widest bg-danger-500/20 text-danger-400 border border-danger-500/30";
+                mainBadge.textContent = "REEMBOLSO";
+            } else if (ticket.type === 'vc_topup') {
+                mainBadge.className = "px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-widest bg-success-500/20 text-success-400 border border-success-500/30";
+                mainBadge.textContent = "RECARGA VC";
+            } else {
+                mainBadge.className = "px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-widest bg-slate-800 text-slate-300 border border-slate-700";
+                mainBadge.textContent = "MENSAGEM GERAL";
+            }
+        }
+
         window.selectTicket = async (id) => {
             activeTicketId = id;
-            
-            document.getElementById('ticketSidebar').classList.add('hidden', 'md:flex');
-            const chatArea = document.getElementById('chatArea');
-            chatArea.classList.remove('hidden'); chatArea.classList.add('flex');
-
             renderTicketList();
+            setMobileChatState(true);
 
             const ticket = myTickets.find(t => t.id === id);
             if (!ticket) return;
 
-            document.getElementById('emptyChatState')?.classList.add('hidden');
-            
-            const mainBadge = document.getElementById('chatTicketType');
-            if (ticket.type === 'refund') { mainBadge.className = "px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-widest bg-danger-500/20 text-danger-400 border border-danger-500/30"; mainBadge.textContent = "REEMBOLSO"; }
-            else if (ticket.type === 'vc_topup') { mainBadge.className = "px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-widest bg-success-500/20 text-success-400 border border-success-500/30"; mainBadge.textContent = "RECARGA VC"; }
-            else { mainBadge.className = "px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-widest bg-slate-800 text-slate-300 border border-slate-700"; mainBadge.textContent = "MENSAGEM GERAL"; }
+            chatAreaEl.classList.remove('hidden');
+            chatAreaEl.classList.add('flex');
+            emptyChatStateEl?.classList.add('hidden');
+
+            updateHeaderMeta(ticket);
 
             if (unsubscribeMessages) unsubscribeMessages();
-            
+
             const msgRef = collection(db, "support_tickets", id, "messages");
             unsubscribeMessages = onSnapshot(msgRef, (snap) => {
-                const historyEl = document.getElementById('messageHistory');
-                if (!historyEl) return;
-                historyEl.innerHTML = '';
-                
-                const initialTime = ticket.createdAt?.toDate ? ticket.createdAt.toDate().toLocaleTimeString('pt-MZ', {hour: '2-digit', minute:'2-digit'}) : '';
-                historyEl.innerHTML += `
-                    <div class="flex flex-col msg-client max-w-[85%] p-3 text-sm shadow-md">
-                        <p class="whitespace-pre-wrap leading-relaxed">${escapeHTML(ticket.message || '')}</p>
-                        <span class="text-[9px] text-blue-200 self-end mt-1 opacity-70">${initialTime}</span>
-                    </div>`;
+                messageHistoryEl.innerHTML = '';
+
+                const initialTime = formatTime(ticket.createdAt);
+
+                messageHistoryEl.innerHTML += `
+                    <div class="flex justify-center">
+                        <div class="px-3 py-1 rounded-full text-[10px] uppercase tracking-widest bg-slate-900 text-slate-500 border border-slate-800">
+                            Conversa iniciada
+                        </div>
+                    </div>
+
+                    <div class="msg-wrap justify-end">
+                        <div class="msg-bubble msg-client">
+                            <p class="whitespace-pre-wrap">${escapeHTML(ticket.message || '')}</p>
+                            <div class="text-[10px] text-blue-100/80 text-right mt-2">${initialTime}</div>
+                        </div>
+                    </div>
+                `;
 
                 let msgsArray = [];
                 snap.forEach(docMsg => msgsArray.push(docMsg.data()));
-                msgsArray.sort((a,b) => (a.createdAt?.seconds||0) - (b.createdAt?.seconds||0));
+                msgsArray.sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
 
                 msgsArray.forEach(m => {
-                    const time = m.createdAt?.toDate ? m.createdAt.toDate().toLocaleTimeString('pt-MZ', {hour: '2-digit', minute:'2-digit'}) : '';
-                    const isClient = m.sender === currentUser.uid; 
-                    const cssClass = isClient ? 'msg-client' : 'msg-admin';
-                    
+                    const time = formatTime(m.createdAt);
+                    const isClient = m.sender === currentUser.uid;
+                    const bubbleClass = isClient ? 'msg-client' : 'msg-admin';
+                    const wrapClass = isClient ? 'justify-end' : 'justify-start';
+
                     let attachHtml = '';
                     if (m.attachmentUrl) {
                         const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(m.attachmentUrl);
-                        attachHtml = isImage 
-                            ? `<img src="${m.attachmentUrl}" alt="Anexo" class="max-w-full rounded-lg mt-2 border border-white/10" loading="lazy">`
-                            : `<a href="${m.attachmentUrl}" target="_blank" class="block mb-2 mt-1 px-3 py-2 bg-black/20 rounded-lg text-xs font-bold hover:bg-black/30 transition flex items-center gap-2"><i data-lucide="paperclip" class="w-3 h-3"></i> Ver Anexo</a>`;
+                        attachHtml = isImage
+                            ? `<img src="${m.attachmentUrl}" alt="Anexo" class="max-w-full rounded-xl mt-2 border border-white/10" loading="lazy">`
+                            : `<a href="${m.attachmentUrl}" target="_blank" class="inline-flex mb-2 mt-1 px-3 py-2 bg-black/20 rounded-lg text-xs font-bold hover:bg-black/30 transition items-center gap-2">
+                                    <i data-lucide="paperclip" class="w-3 h-3"></i> Ver Anexo
+                               </a>`;
                     }
 
-                    historyEl.innerHTML += `
-                        <div class="flex flex-col ${cssClass} max-w-[85%] p-3 text-sm shadow-md">
-                            ${attachHtml}
-                            <p class="whitespace-pre-wrap leading-relaxed">${escapeHTML(m.text || '')}</p>
-                            <span class="text-[9px] ${isClient ? 'text-blue-200' : 'text-slate-400'} self-end mt-1 opacity-70">${time}</span>
-                        </div>`;
+                    messageHistoryEl.innerHTML += `
+                        <div class="msg-wrap ${wrapClass}">
+                            <div class="msg-bubble ${bubbleClass}">
+                                ${attachHtml}
+                                ${m.text ? `<p class="whitespace-pre-wrap">${escapeHTML(m.text)}</p>` : ''}
+                                <div class="text-[10px] ${isClient ? 'text-blue-100/80' : 'text-slate-400'} text-right mt-2">${time}</div>
+                            </div>
+                        </div>
+                    `;
                 });
-                
-                lucide.createIcons({root: historyEl});
-                setTimeout(() => { if (historyEl) historyEl.scrollTop = historyEl.scrollHeight; }, 50);
+
+                lucide.createIcons({ root: messageHistoryEl });
+                setTimeout(() => {
+                    messageHistoryEl.scrollTop = messageHistoryEl.scrollHeight;
+                }, 50);
             });
         };
 
         window.closeMobileChat = () => {
-            document.getElementById('chatArea').classList.add('hidden');
-            document.getElementById('chatArea').classList.remove('flex');
-            document.getElementById('ticketSidebar').classList.remove('hidden');
-            activeTicketId = null; renderTicketList();
+            activeTicketId = null;
+            setMobileChatState(false);
+            renderTicketList();
         };
 
-        // 📎 UPLOAD
         window.handleFileSelect = (e) => {
             selectedFile = e.target.files?.[0];
+
             if (selectedFile) {
-                if (selectedFile.size > 5 * 1024 * 1024) { showToast('Ficheiro muito grande. Max 5MB.', 'error'); e.target.value = ''; selectedFile = null; return; }
+                if (selectedFile.size > 5 * 1024 * 1024) {
+                    showToast('Ficheiro muito grande. Máximo 5MB.', 'error');
+                    e.target.value = '';
+                    selectedFile = null;
+                    return;
+                }
+
                 document.getElementById('fileBadge')?.classList.remove('hidden');
                 document.getElementById('fileNameDisplay')?.classList.remove('hidden');
                 document.getElementById('fileNameDisplay').textContent = `📎 ${selectedFile.name}`;
@@ -351,15 +785,13 @@
             }
         };
 
-        // 🚀 O ATALHO DE "ENTER" PARA O TEXTAREA
         document.getElementById('replyMessage')?.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault(); // Impede de dar um salto de linha
+                e.preventDefault();
                 document.getElementById('replyForm')?.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
             }
         });
 
-        // 📤 ENVIAR RESPOSTA (CLIENTE -> ADMIN)
         document.getElementById('replyForm')?.addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!activeTicketId) return;
@@ -370,44 +802,62 @@
 
             const btn = document.getElementById('btnSendReply');
             const originalBtn = btn.innerHTML;
-            btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>`; 
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>`;
+            lucide.createIcons({ root: btn });
 
             try {
                 let attachmentUrl = null;
+
                 if (selectedFile) {
-                    const fileRef = ref(storage, `ticket_attachments/${activeTicketId}/${Date.now()}_${selectedFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`);
+                    const safeName = selectedFile.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+                    const fileRef = ref(storage, `ticket_attachments/${activeTicketId}/${Date.now()}_${safeName}`);
                     await uploadBytes(fileRef, selectedFile);
                     attachmentUrl = await getDownloadURL(fileRef);
                 }
 
-                // Cliente escreve na subcoleção e o Admin lê
                 await addDoc(collection(db, "support_tickets", activeTicketId, "messages"), {
-                    sender: currentUser.uid, 
-                    text: text, 
-                    attachmentUrl: attachmentUrl, 
+                    sender: currentUser.uid,
+                    text: text,
+                    attachmentUrl: attachmentUrl,
                     createdAt: serverTimestamp()
                 });
 
-                // Atualizamos o ticket para o topo da fila do Admin
                 await updateDoc(doc(db, "support_tickets", activeTicketId), {
-                    status: 'open', 
+                    status: 'open',
                     updatedAt: serverTimestamp()
                 });
 
-                input.value = ''; input.style.height = ''; selectedFile = null;
+                input.value = '';
+                input.style.height = '';
+                selectedFile = null;
+
                 document.getElementById('fileUpload').value = '';
                 document.getElementById('fileBadge')?.classList.add('hidden');
                 document.getElementById('fileNameDisplay')?.classList.add('hidden');
 
-            } catch (err) { 
+            } catch (err) {
                 console.error("Erro Firebase:", err);
-                showToast("Falha técnica ao enviar. Verifique a consola.", "error"); 
-            } 
-            finally { 
-                btn.disabled = false; btn.innerHTML = originalBtn; lucide.createIcons({root: btn}); 
+                showToast("Falha técnica ao enviar. Verifique a consola.", "error");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalBtn;
+                lucide.createIcons({ root: btn });
             }
         });
 
+        searchInputEl?.addEventListener('input', (e) => {
+            activeSearch = e.target.value || '';
+            applyFilters();
+        });
+
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                activeFilter = btn.dataset.filter || 'all';
+                setActiveFilterButton();
+                applyFilters();
+            });
+        });
     </script>
 </body>
 </html>
