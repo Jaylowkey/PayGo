@@ -181,6 +181,32 @@ select, input, textarea { background-color: rgba(15, 23, 42, 0.5) !important; co
       </div>
     </header>
 
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+  <div class="glass-card rounded-2xl p-5 border border-white/5">
+    <p class="text-[10px] uppercase tracking-widest text-slate-500 font-black">Operações</p>
+    <p id="statTotalOrders" class="text-3xl font-display font-extrabold text-white mt-2">0</p>
+    <p class="text-xs text-slate-500 mt-1">Pedidos + depósitos</p>
+  </div>
+
+  <div class="glass-card rounded-2xl p-5 border border-warning-500/20">
+    <p class="text-[10px] uppercase tracking-widest text-slate-500 font-black">Pendentes</p>
+    <p id="statPendingOrders" class="text-3xl font-display font-extrabold text-warning-400 mt-2">0</p>
+    <p class="text-xs text-slate-500 mt-1">Requerem intervenção</p>
+  </div>
+
+  <div class="glass-card rounded-2xl p-5 border border-success-500/20">
+    <p class="text-[10px] uppercase tracking-widest text-slate-500 font-black">Concluídas</p>
+    <p id="statCompletedOrders" class="text-3xl font-display font-extrabold text-success-400 mt-2">0</p>
+    <p class="text-xs text-slate-500 mt-1">Encerradas com sucesso</p>
+  </div>
+
+  <div class="glass-card rounded-2xl p-5 border border-brand-500/20">
+    <p class="text-[10px] uppercase tracking-widest text-slate-500 font-black">Volume MT</p>
+    <p id="statRevenueOrders" class="text-3xl font-display font-extrabold text-brand-400 mt-2">0.00</p>
+    <p class="text-xs text-slate-500 mt-1">Valor total registado</p>
+  </div>
+</div>
+
     <div class="glass-card rounded-[2rem] p-5 md:p-6 shadow-2xl border-t-2 border-t-brand-500">
       <div class="grid grid-cols-1 md:grid-cols-4 gap-5 items-end">
         <div class="relative md:col-span-2">
@@ -212,6 +238,17 @@ select, input, textarea { background-color: rgba(15, 23, 42, 0.5) !important; co
         </div>
       </div>
     </div>
+
+      <div class="glass-card rounded-2xl p-4 border border-white/5">
+  <div class="flex flex-wrap gap-2">
+    <button class="quick-filter px-4 py-2 rounded-xl bg-brand-500/20 border border-brand-500/30 text-brand-400 text-xs font-black uppercase tracking-widest" data-status="all">Todas</button>
+    <button class="quick-filter px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 text-xs font-black uppercase tracking-widest" data-status="pending">Pendentes</button>
+    <button class="quick-filter px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 text-xs font-black uppercase tracking-widest" data-status="processing">Em Compra</button>
+    <button class="quick-filter px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 text-xs font-black uppercase tracking-widest" data-status="shipped">Em Trânsito</button>
+    <button class="quick-filter px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 text-xs font-black uppercase tracking-widest" data-status="completed">Fechadas</button>
+    <button class="quick-filter px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 text-xs font-black uppercase tracking-widest" data-status="refunded">Reembolsadas</button>
+  </div>
+</div>
 
     <div class="glass-card rounded-[2rem] p-0 overflow-hidden shadow-2xl border border-slate-800 flex flex-col">
       <div class="p-5 border-b border-white/5 flex justify-between items-center bg-slate-900/60 backdrop-blur-sm">
@@ -550,6 +587,23 @@ window.renderOrders = function() {
         return matchSearch && matchStatus && matchPayment;
     });
 
+    function updateDashboardStats(list) {
+    const total = list.length;
+    const pending = list.filter(o => ['pending', 'processing', 'shipped'].includes(o.status)).length;
+    const completed = list.filter(o => o.status === 'completed').length;
+    const revenue = list.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+
+    const statTotal = document.getElementById('statTotalOrders');
+    const statPending = document.getElementById('statPendingOrders');
+    const statCompleted = document.getElementById('statCompletedOrders');
+    const statRevenue = document.getElementById('statRevenueOrders');
+
+    if (statTotal) statTotal.textContent = total;
+    if (statPending) statPending.textContent = pending;
+    if (statCompleted) statCompleted.textContent = completed;
+    if (statRevenue) statRevenue.textContent = revenue.toLocaleString('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
     const countEl = document.getElementById('ordersCount');
     if (countEl) countEl.textContent = `${currentFilteredOrders.length} Operações Encontradas`;
 
@@ -692,6 +746,15 @@ window.openModal = (orderId, isSilentUpdate = false) => {
     const order = orders.find(o => o.id === orderId);
     if (!order) return;
 
+    const topStatusBadge = {
+  pending: '⏳ Pendente',
+  processing: '🔄 Em Compra',
+  shipped: '✈️ Em Trânsito',
+  completed: '✅ Fechado',
+  cancelled: '❌ Cancelado',
+  refunded: '🟣 Reembolsado'
+}[order.status] || order.status;
+    
     currentOrderId = orderId;
     const methodColor = (order.paymentMethod === 'mpesa' || order.paymentMethod === 'e-mola') ? 'brand' : (order.isTopup ? 'success' : 'warning');
     const methodName = order.paymentMethod ? order.paymentMethod.toUpperCase() : 'CARTEIRA (WALLET)';
@@ -703,6 +766,21 @@ window.openModal = (orderId, isSilentUpdate = false) => {
     if (order.adminNotes && order.adminNotes.length > 0) {
         notesHtml = order.adminNotes.map(n => {
             // Converte links de anexo em botões clicáveis automaticamente
+
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-[inset_0_2px_15px_rgba(0,0,0,0.5)]">
+  <div>
+    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 flex items-center gap-1">
+      <i data-lucide="fingerprint" class="w-3 h-3"></i> Fatura Oficial
+    </p>
+    <p class="font-mono font-black ${order.isTopup ? 'text-success-400' : 'text-brand-400'} text-2xl tracking-tight">${order.orderId}</p>
+  </div>
+
+  <div class="flex flex-col items-start sm:items-end gap-2">
+    <span class="status-badge ${order.status}">${topStatusBadge}</span>
+    <p class="text-[11px] text-slate-500 font-medium">${order.createdAt.toLocaleString('pt-MZ')}</p>
+  </div>
+</div>
+            
             const formattedText = n.text.replace(/ \| Anexo: (https?:\/\/[^\s]+)/g, ' <br><a href="$1" target="_blank" class="text-brand-400 text-[10px] mt-1.5 inline-flex items-center gap-1 hover:underline bg-slate-900 px-2 py-1 rounded border border-brand-500/20"><i data-lucide="external-link" class="w-3 h-3"></i> Ver Anexo/Prova Logística</a>');
             return `
             <div class="bg-warning-900/10 p-3 rounded-xl border border-warning-500/20 mb-2 relative overflow-hidden group">
@@ -809,12 +887,14 @@ window.openModal = (orderId, isSilentUpdate = false) => {
                 ${notesHtml}
             </div>
 
-            <div class="relative z-10 flex gap-2 shrink-0">
-                <input type="text" id="newNoteInput" placeholder="Afixar nota confidencial..." class="flex-1 bg-slate-950 border border-slate-700 text-white text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-warning-500 focus:ring-1 focus:ring-warning-500/50 transition-all placeholder-slate-600 shadow-inner" onkeydown="if(event.key==='Enter') window.addInternalNote('${order.id}')">
-                <button onclick="window.addInternalNote('${order.id}')" class="bg-warning-500/10 text-warning-400 hover:bg-warning-500 hover:text-slate-900 border border-warning-500/30 px-5 py-3 rounded-xl text-sm font-black transition-all shadow-lg active:scale-95 flex items-center justify-center">
-                    <i data-lucide="send" class="w-4 h-4"></i>
-                </button>
-            </div>
+                   <div class="relative z-10 flex flex-col gap-3 shrink-0">
+          <textarea id="newNoteInput" placeholder="Escreva uma nota confidencial para a equipa..." class="w-full bg-slate-950 border border-slate-700 text-white text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-warning-500 focus:ring-1 focus:ring-warning-500/50 transition-all placeholder-slate-600 shadow-inner min-h-[88px]"></textarea>
+          <div class="flex justify-end">
+            <button onclick="window.addInternalNote('${order.id}')" class="bg-warning-500/10 text-warning-400 hover:bg-warning-500 hover:text-slate-900 border border-warning-500/30 px-5 py-3 rounded-xl text-sm font-black transition-all shadow-lg active:scale-95 flex items-center gap-2">
+              <i data-lucide="send" class="w-4 h-4"></i>
+              Guardar Nota
+            </button>
+          </div>
         </div>
 
         ${topupProtectionHtml}
@@ -836,6 +916,15 @@ window.openModal = (orderId, isSilentUpdate = false) => {
             </button>
         </div>
     `;
+    <div class="relative z-10 flex flex-col gap-3 shrink-0">
+  <textarea id="newNoteInput" placeholder="Escreva uma nota confidencial para a equipa..." class="w-full bg-slate-950 border border-slate-700 text-white text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-warning-500 focus:ring-1 focus:ring-warning-500/50 transition-all placeholder-slate-600 shadow-inner min-h-[88px]"></textarea>
+  <div class="flex justify-end">
+    <button onclick="window.addInternalNote('${order.id}')" class="bg-warning-500/10 text-warning-400 hover:bg-warning-500 hover:text-slate-900 border border-warning-500/30 px-5 py-3 rounded-xl text-sm font-black transition-all shadow-lg active:scale-95 flex items-center gap-2">
+      <i data-lucide="send" class="w-4 h-4"></i>
+      Guardar Nota
+    </button>
+  </div>
+</div>
 
     const statusSelect = document.getElementById('statusSelect');
     const trackingInput = document.getElementById('trackingInput');
@@ -878,6 +967,7 @@ window.openModal = (orderId, isSilentUpdate = false) => {
             </button>
         `;
     }
+    
 
     if (!isSilentUpdate) {
         const modal = document.getElementById('orderModal');
@@ -1115,6 +1205,7 @@ window.exportToCSV = () => {
     document.body.appendChild(link); link.click(); document.body.removeChild(link);
 };
 
+    
 // ==========================================
 // 📱 CONTROLOS MÓVEIS E AÇÕES DE TECLADO
 // ==========================================
