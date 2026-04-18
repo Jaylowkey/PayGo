@@ -1,1256 +1,1219 @@
 <!DOCTYPE html>
-<html lang="pt-MZ" class="scroll-smooth">
+<html lang="pt-MZ">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Todos os Pedidos | Gestão PayGo</title>
-<meta name="theme-color" content="#0f172a">
-<meta name="robots" content="noindex, nofollow">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/lucide@latest"></script>
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-tailwind.config = {
-    theme: {
-        extend: {
-            fontFamily: { 
-                sans: ['"Plus Jakarta Sans"', 'sans-serif'], 
-                display: ['"Outfit"', 'sans-serif'], 
-                mono: ['"Fira Code"', 'monospace'] 
-            },
-            colors: { 
-                brand: { 50: '#eff6ff', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 900: '#1e3a8a', 950: '#0f172a' }, 
-                success: { 400: '#4ade80', 500: '#22c55e' }, 
-                warning: { 400: '#fbbf24', 500: '#f59e0b', 600: '#d97706' }, 
-                danger: { 400: '#f87171', 500: '#ef4444' },
-                vip: { 400: '#c084fc', 500: '#a855f7', 600: '#9333ea', 900: '#4c1d95' }
-            }
-        }
-    }
-};
-</script>
-<style>
-body { background-color: #020617; color: #f8fafc; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
-::-webkit-scrollbar { width: 6px; height: 6px; } ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-
-.bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
-.glass-nav { background: rgba(2, 6, 23, 0.85); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.05); z-index: 50; }
-.glass-card { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.3s ease; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3); }
-
-.sidebar-link { position: relative; transition: all 0.3s ease; }
-.sidebar-link::before { content: ''; position: absolute; left: 0; top: 10%; height: 80%; width: 3px; background: transparent; border-radius: 0 4px 4px 0; transition: all 0.3s ease; }
-.sidebar-link:hover { background: rgba(255,255,255,0.03); color: #fff; }
-.sidebar-link.active { background: linear-gradient(90deg, rgba(59,130,246,0.1) 0%, transparent 100%); color: #60a5fa; font-weight: 700; }
-.sidebar-link.active::before { background: #3b82f6; box-shadow: 0 0 10px #3b82f6; }
-
-.status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 8px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1); }
-.status-badge.completed { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
-.status-badge.processing { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
-.status-badge.shipped { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
-.status-badge.pending { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
-.status-badge.cancelled { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
-.status-badge.refunded { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
-
-.date-group-header { background: rgba(2, 6, 23, 0.95); border-y: 1px solid rgba(255,255,255,0.05); }
-
-#toastContainer { position: fixed; top: 24px; right: 24px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-.toast { pointer-events: auto; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 12px; display: flex; gap: 12px; transform: translateX(120%); transition: transform 0.4s ease; opacity: 0; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
-.toast.show { transform: translateX(0); opacity: 1; }
-.toast.error { border-left-color: #ef4444; }
-.toast.success { border-left-color: #22c55e; }
-.toast.warning { border-left-color: #f59e0b; }
-
-.modal-wrapper { display: none; position: fixed; inset: 0; z-index: 10000; align-items: center; justify-content: center; }
-.modal-wrapper.active { display: flex; }
-.modal-backdrop { position: absolute; inset: 0; background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(8px); opacity: 0; transition: opacity 0.3s ease; }
-.modal-wrapper.active .modal-backdrop { opacity: 1; }
-.modal-panel { position: relative; background: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; width: 95%; max-width: 800px; max-height: 90vh; display: flex; flex-direction: column; opacity: 0; transform: scale(0.95) translateY(10px); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 30px 60px -10px rgba(0,0,0,0.8); z-index: 10; overflow: hidden; }
-.modal-wrapper.active .modal-panel { opacity: 1; transform: scale(1) translateY(0); }
-
-.btn-action { transition: all 0.2s ease; position: relative; overflow: hidden; }
-.btn-action:active:not(:disabled) { transform: scale(0.96); }
-
-.notes-scrollbar::-webkit-scrollbar { width: 4px; }
-.notes-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 10px; }
-.notes-scrollbar::-webkit-scrollbar-thumb { background: rgba(245, 158, 11, 0.3); border-radius: 10px; }
-.notes-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(245, 158, 11, 0.5); }
-
-select, input, textarea { background-color: rgba(15, 23, 42, 0.5) !important; color: white !important; color-scheme: dark; }
-@media (max-width: 768px) { .glass-card { border-radius: 1.5rem; } }
-
-/* Estilo para filtros ativos */
-.quick-filter.active { background-color: rgba(59, 130, 246, 0.2); border-color: rgba(59, 130, 246, 0.5); color: #60a5fa; }
-</style>
-</head>
-<body class="selection:bg-brand-500 selection:text-white">
-
-<div id="sysLoader" class="fixed inset-0 bg-[#020617] z-[200] flex flex-col items-center justify-center transition-opacity duration-500">
-  <div class="w-16 h-16 border-4 border-slate-800 border-t-brand-500 rounded-full animate-spin mb-4 shadow-[0_0_20px_rgba(59,130,246,0.5)]"></div>
-  <h2 class="text-white text-2xl font-bold font-display tracking-tight">PayGo OS</h2>
-  <p class="text-slate-400 text-sm mt-1 font-medium">A sincronizar livros de registos logísticos...</p>
-</div>
-
-<div class="fixed inset-0 bg-grid opacity-20 pointer-events-none z-0"></div>
-<div class="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-brand-600/10 rounded-full mix-blend-screen blur-[120px] pointer-events-none z-0"></div>
-
-<div id="toastContainer"></div>
-
-<header class="fixed w-full z-50 glass-nav shadow-lg">
-  <div class="container mx-auto px-6 h-20 flex justify-between items-center">
-    <div class="flex items-center gap-3">
-      <button id="mobileMenuBtn" class="lg:hidden text-slate-400 hover:text-white p-2 -ml-2 transition-colors rounded-lg hover:bg-white/5" aria-label="Abrir menu">
-        <i data-lucide="menu" class="w-6 h-6"></i>
-      </button>
-      <div class="bg-gradient-to-tr from-brand-500 to-brand-400 p-2.5 rounded-xl text-white shadow-lg shadow-brand-500/20">
-        <i data-lucide="zap" class="w-5 h-5"></i>
-      </div>
-      <div class="hidden sm:block">
-        <span class="text-2xl font-display font-bold text-white tracking-wide">PayGo</span>
-        <span class="text-[10px] text-brand-400 ml-2 px-2 py-0.5 bg-brand-500/10 border border-brand-500/20 rounded-full font-black uppercase tracking-widest shadow-inner">Database</span>
-      </div>
-    </div>
-    <div class="flex items-center gap-4">
-      <div class="text-right hidden sm:block">
-        <p class="text-sm font-bold text-white" id="adminName">A carregar...</p>
-      </div>
-      <button onclick="window.logout()" class="bg-slate-800 hover:bg-danger-500 hover:text-white text-slate-400 rounded-xl p-2.5 transition-all shadow-md border border-slate-700" title="Sair do sistema">
-        <i data-lucide="power" class="w-5 h-5"></i>
-      </button>
-    </div>
-  </div>
-</header>
-
-<div id="sidebarOverlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-40 hidden lg:hidden opacity-0 transition-opacity duration-300"></div>
-
-<div class="pt-28 pb-10 relative z-10 container mx-auto px-4 md:px-6 grid lg:grid-cols-4 xl:grid-cols-5 gap-6 xl:gap-8">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestão de Pedidos | PayGo Admin</title>
+  <meta name="description" content="Painel de gestão logística e financeira da PayGo Moçambique">
   
-  <div id="sidebar" class="lg:col-span-1 fixed lg:static top-0 left-0 h-full lg:h-auto w-72 lg:w-auto bg-slate-900 lg:bg-transparent z-50 lg:z-auto p-6 lg:p-0 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 border-r border-slate-800 lg:border-none shadow-2xl lg:shadow-none">
-    <div class="glass-card rounded-3xl p-0 lg:p-6 sticky top-28 border-none lg:border-solid bg-transparent lg:bg-[rgba(15,23,42,0.6)]">
-      <div class="flex justify-between items-center mb-8 lg:hidden pb-4 border-b border-white/10">
-        <span class="text-xl font-display font-bold text-white tracking-wide">PayGo Admin</span>
-        <button id="closeSidebarBtn" class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-white/5 transition-colors">
-          <i data-lucide="x" class="w-6 h-6"></i>
-        </button>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --surface-alt: #f1f5f9;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --purple: #8b5cf6;
+      --border: #e2e8f0;
+      --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+      --radius: 12px;
+      --radius-lg: 16px;
+      --transition: all 0.2s ease;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ===== HEADER ===== */
+    .admin-header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #fff;
+      padding: 1rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow-lg);
+    }
+    .header-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 800;
+      font-size: 1.25rem;
+      letter-spacing: -0.5px;
+    }
+    .brand-badge {
+      background: rgba(255,255,255,0.15);
+      padding: 0.25rem 0.75rem;
+      border-radius: 99px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .brand-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      color: #cbd5e1;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(0.9); }
+    }
+
+    /* ===== NAV ===== */
+    .admin-nav {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0.75rem 2rem;
+      position: sticky;
+      top: 72px;
+      z-index: 99;
+    }
+    .nav-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .nav-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+    .nav-link:hover, .nav-link.active {
+      background: var(--primary);
+      color: #fff;
+    }
+    .nav-link i { font-size: 0.95rem; }
+
+    /* ===== MAIN ===== */
+    .main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    /* ===== PAGE HEADER ===== */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .page-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .page-title i { color: var(--primary); }
+    .page-subtitle {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-top: 0.25rem;
+    }
+
+    /* ===== STATS CARDS ===== */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    .stat-card {
+      background: var(--surface);
+      padding: 1.25rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      transition: var(--transition);
+    }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+    .stat-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .stat-value {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .stat-value.success { color: var(--success); }
+    .stat-value.warning { color: var(--warning); }
+    .stat-value.danger { color: var(--danger); }
+    .stat-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* ===== CONTROLS BAR ===== */
+    .controls-bar {
+      background: var(--surface);
+      padding: 1rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .search-box {
+      flex: 1;
+      min-width: 200px;
+      position: relative;
+    }
+    .search-box i {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+    }
+    .search-box input {
+      width: 100%;
+      padding: 0.75rem 1rem 0.75rem 2.5rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      background: var(--surface-alt);
+      transition: var(--transition);
+    }
+    .search-box input:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    }
+    .filter-group {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .filter-select {
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      background: var(--surface-alt);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .filter-select:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: #fff;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.25rem;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-secondary { background: var(--surface-alt); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: var(--border); }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-danger:hover { background: #dc2626; }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    /* ===== TABLE ===== */
+    .table-container {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .table-header {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .table-title {
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .table-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .table-wrapper {
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+    thead {
+      background: var(--surface-alt);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    th {
+      padding: 1rem 1.25rem;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    tbody tr {
+      transition: var(--transition);
+    }
+    tbody tr:hover {
+      background: rgba(37,99,235,0.03);
+    }
+    tbody tr:last-child td { border-bottom: none; }
+
+    /* ===== BADGES & STATUS ===== */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: 99px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .badge.pending { background: #fef3c7; color: #92400e; }
+    .badge.processing { background: #dbeafe; color: #1e40af; }
+    .badge.shipped { background: #ede9fe; color: #6d28d9; }
+    .badge.completed { background: #dcfce7; color: #166534; }
+    .badge.cancelled { background: #fee2e2; color: #b91c1c; }
+    .badge.refunded { background: #f3e8ff; color: #7c3aed; }
+    .badge.paid { background: #d1fae5; color: #065f46; }
+    .badge.unpaid { background: #fee2e2; color: #991b1b; }
+
+    .order-id {
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--surface-alt);
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: var(--text);
+    }
+
+    .client-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .client-name { font-weight: 600; color: var(--text); }
+    .client-contact { font-size: 0.85rem; color: var(--text-muted); }
+    .client-contact a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+    .client-contact a:hover { text-decoration: underline; }
+
+    .amount-cell {
+      font-weight: 700;
+      color: var(--text);
+    }
+    .amount-usd {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .action-btns {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .action-btn {
+      padding: 0.5rem;
+      border: none;
+      background: var(--surface-alt);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: var(--transition);
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+    }
+    .action-btn:hover {
+      background: var(--primary);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+    .action-btn.danger:hover { background: var(--danger); }
+    .action-btn.success:hover { background: var(--success); }
+
+    /* ===== MODAL ===== */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      padding: 1rem;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 560px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-lg);
+      animation: modalSlide 0.3s ease;
+    }
+    @keyframes modalSlide {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .modal-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-title {
+      font-weight: 700;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.25rem;
+      cursor: pointer;
+      color: var(--text-muted);
+      padding: 0.25rem;
+      border-radius: 6px;
+      transition: var(--transition);
+    }
+    .modal-close:hover { background: var(--surface-alt); color: var(--text); }
+    .modal-body { padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem; }
+    .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    .form-group label {
+      font-weight: 500;
+      font-size: 0.9rem;
+      color: var(--text);
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      background: var(--surface-alt);
+      transition: var(--transition);
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    }
+    .form-hint {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .modal-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    /* ===== EMPTY STATE ===== */
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--text-muted);
+    }
+    .empty-state i {
+      font-size: 3rem;
+      color: var(--border);
+      margin-bottom: 1rem;
+      display: block;
+    }
+    .empty-state h3 {
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+
+    /* ===== LOADING ===== */
+    .loading {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-muted);
+    }
+    .loading-spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== TOAST ===== */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: var(--surface);
+      padding: 1rem 1.5rem;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+      border-left: 4px solid var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      z-index: 300;
+      animation: toastSlide 0.3s ease;
+      max-width: 360px;
+    }
+    .toast.success { border-left-color: var(--success); }
+    .toast.error { border-left-color: var(--danger); }
+    .toast.warning { border-left-color: var(--warning); }
+    @keyframes toastSlide {
+      from { opacity: 0; transform: translateX(100px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .toast-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 0.25rem;
+      margin-left: auto;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+      .admin-header, .admin-nav, .main { padding-left: 1rem; padding-right: 1rem; }
+      .header-inner, .nav-inner { flex-wrap: wrap; }
+      .page-header { flex-direction: column; align-items: flex-start; }
+      .controls-bar { flex-direction: column; align-items: stretch; }
+      .search-box { width: 100%; }
+      th, td { padding: 0.75rem 1rem; font-size: 0.9rem; }
+      .action-btns { flex-wrap: wrap; }
+      .modal { margin: 1rem; max-height: calc(100vh - 2rem); }
+    }
+
+    /* ===== UTILS ===== */
+    .text-truncate {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 200px;
+    }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    .flex { display: flex; }
+    .items-center { align-items: center; }
+    .gap-1 { gap: 0.5rem; }
+    .gap-2 { gap: 1rem; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <header class="admin-header">
+    <div class="header-inner">
+      <div class="brand">
+        <i class="fa-solid fa-layer-group"></i>
+        <span>PayGo <span class="brand-badge">Admin</span></span>
       </div>
-
-      <nav class="space-y-2">
-        <a href="dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-3.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all font-medium">
-          <i data-lucide="layout-dashboard" class="w-5 h-5"></i> <span>Visão Geral</span>
-        </a>
-        <a href="pedidos.html" class="sidebar-link active flex items-center gap-3 px-4 py-3.5 rounded-xl text-white shadow-md">
-          <i data-lucide="shopping-bag" class="w-5 h-5"></i> <span>Gestão de Pedidos</span>
-        </a>
-        <a href="clientes.html" class="sidebar-link flex items-center gap-3 px-4 py-3.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all font-medium">
-          <i data-lucide="users" class="w-5 h-5"></i> <span>Base de Clientes</span>
-        </a>
-        <a href="afiliados.html" class="sidebar-link flex items-center gap-3 px-4 py-3.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all font-medium">
-          <i data-lucide="network" class="w-5 h-5"></i> <span>Rede de Afiliados</span>
-        </a>
-        <a href="gerar-fatura.html" class="sidebar-link flex items-center gap-3 px-4 py-3.5 rounded-xl text-slate-400 hover:text-brand-400 hover:bg-white/5 transition-all font-medium mt-2">
-          <i data-lucide="file-check-2" class="w-5 h-5"></i> <span>Emissão de Faturas</span>
-        </a>
-        
-        <div class="pt-4 mt-4 border-t border-slate-700/50"></div>
-        
-        <a href="logs.html" class="sidebar-link flex items-center gap-3 px-4 py-3.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all font-medium">
-          <i data-lucide="activity" class="w-5 h-5 text-warning-400"></i> <span>Logs / Auditoria</span>
-        </a>
-        <a href="admin.html" class="sidebar-link flex items-center gap-3 px-4 py-3.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all font-medium">
-          <i data-lucide="shield" class="w-5 h-5"></i> <span>Acessos & Equipa</span>
-        </a>
-        <a href="configuracoes.html" class="sidebar-link flex items-center gap-3 px-4 py-3.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all font-medium mb-4">
-          <i data-lucide="settings" class="w-5 h-5"></i> <span>Definições Globais</span>
-        </a>
-      </nav>
+      <div class="brand-status">
+        <span class="status-dot"></span>
+        <span id="adminName">A carregar...</span>
+      </div>
     </div>
-  </div>
+  </header>
 
-  <div class="lg:col-span-3 xl:col-span-4 space-y-6">
+  <nav class="admin-nav">
+    <div class="nav-inner">
+      <a href="dashboard.html" class="nav-link"><i class="fa-solid fa-chart-pie"></i> Visão Geral</a>
+      <a href="pedidos.html" class="nav-link active"><i class="fa-solid fa-box-open"></i> Pedidos</a>
+      <a href="clientes.html" class="nav-link"><i class="fa-solid fa-users"></i> Clientes</a>
+      <a href="afiliados.html" class="nav-link"><i class="fa-solid fa-hand-holding-dollar"></i> Afiliados</a>
+      <a href="gerar-fatura.html" class="nav-link"><i class="fa-solid fa-file-invoice"></i> Faturas</a>
+      <a href="logs.html" class="nav-link"><i class="fa-solid fa-shield-halved"></i> Auditoria</a>
+      <a href="admin.html" class="nav-link"><i class="fa-solid fa-user-shield"></i> Equipa</a>
+      <a href="configuracoes.html" class="nav-link"><i class="fa-solid fa-gear"></i> Configurações</a>
+      <button onclick="window.logout()" class="nav-link" style="margin-left:auto; background:none; border:none; cursor:pointer; color:var(--danger);"><i class="fa-solid fa-power-off"></i> Sair</button>
+    </div>
+  </nav>
+
+  <main class="main">
     
-    <header class="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-6 mb-8">
+    <div class="page-header">
       <div>
-        <h1 class="text-3xl md:text-4xl font-display font-extrabold text-white tracking-tight">Histórico de Transações</h1>
-        <p class="text-slate-400 text-sm mt-2 font-medium">Gira pagamentos, atualize o estado logístico e audite reembolsos e estornos.</p>
+        <h1 class="page-title"><i class="fa-solid fa-list-check"></i> Histórico de Transações</h1>
+        <p class="page-subtitle">Gira pagamentos, atualize estados logísticos e audite reembolsos</p>
       </div>
-      <div class="flex flex-col sm:flex-row items-center gap-3 w-full xl:w-auto">
-        <button onclick="window.clearHistory()" class="btn-action w-full sm:w-auto px-6 py-3.5 bg-danger-500/10 hover:bg-danger-500/20 text-danger-400 border border-danger-500/20 rounded-xl text-sm font-bold transition-all shadow-sm flex items-center justify-center gap-2">
-          <i data-lucide="trash-2" class="w-4 h-4"></i> Purgar Visíveis
-        </button>
-        <button onclick="window.exportToCSV()" class="btn-action w-full sm:w-auto px-6 py-3.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-sm font-bold transition-all shadow-[0_0_20px_rgba(37,99,235,0.4)] flex items-center justify-center gap-2 border border-brand-500">
-          <i data-lucide="download" class="w-4 h-4"></i> Relatório Excel (CSV)
-        </button>
-      </div>
-    </header>
-
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-      <div class="glass-card rounded-2xl p-5 border border-white/5">
-        <p class="text-[10px] uppercase tracking-widest text-slate-500 font-black">Operações</p>
-        <p id="statTotalOrders" class="text-3xl font-display font-extrabold text-white mt-2">0</p>
-        <p class="text-xs text-slate-500 mt-1">Pedidos + depósitos</p>
-      </div>
-      <div class="glass-card rounded-2xl p-5 border border-warning-500/20">
-        <p class="text-[10px] uppercase tracking-widest text-slate-500 font-black">Pendentes</p>
-        <p id="statPendingOrders" class="text-3xl font-display font-extrabold text-warning-400 mt-2">0</p>
-        <p class="text-xs text-slate-500 mt-1">Requerem intervenção</p>
-      </div>
-      <div class="glass-card rounded-2xl p-5 border border-success-500/20">
-        <p class="text-[10px] uppercase tracking-widest text-slate-500 font-black">Concluídas</p>
-        <p id="statCompletedOrders" class="text-3xl font-display font-extrabold text-success-400 mt-2">0</p>
-        <p class="text-xs text-slate-500 mt-1">Encerradas com sucesso</p>
-      </div>
-      <div class="glass-card rounded-2xl p-5 border border-brand-500/20">
-        <p class="text-[10px] uppercase tracking-widest text-slate-500 font-black">Volume MT</p>
-        <p id="statRevenueOrders" class="text-3xl font-display font-extrabold text-brand-400 mt-2">0.00</p>
-        <p class="text-xs text-slate-500 mt-1">Valor total registado</p>
+      <div class="flex gap-2">
+        <button class="btn btn-secondary" id="btnPurge"><i class="fa-solid fa-broom"></i> Purgar Visíveis</button>
+        <button class="btn btn-secondary" id="btnExport"><i class="fa-solid fa-file-csv"></i> Exportar CSV</button>
       </div>
     </div>
 
-    <div class="glass-card rounded-[2rem] p-5 md:p-6 shadow-2xl border-t-2 border-t-brand-500">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-5 items-end">
-        <div class="relative md:col-span-2">
-          <label for="searchInput" class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2.5 ml-1">Pesquisa Inteligente</label>
-          <i data-lucide="search" class="absolute left-4 top-10 w-5 h-5 text-slate-500"></i>
-          <input type="text" id="searchInput" placeholder="ID da Fatura, Nome, Email ou WhatsApp..." class="pl-12 pr-4 py-3.5 w-full bg-slate-900/80 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50 text-sm text-white placeholder-slate-500 transition-all shadow-inner" oninput="window.renderOrders()">
-        </div>
-        
-        <div>
-          <label for="statusFilter" class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2.5 ml-1">Filtro Logístico</label>
-          <select id="statusFilter" class="w-full px-4 py-3.5 bg-slate-900/80 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50 text-sm text-slate-200 font-bold cursor-pointer transition-all shadow-inner" onchange="window.syncQuickFilters(this.value); window.renderOrders()">
-            <option value="all">Todas as Fases</option>
-            <option value="pending">⏳ Aguardando Ação (Pendente)</option>
-            <option value="processing">🔄 Em Processamento / Compra</option>
-            <option value="shipped">✈️ Em Trânsito / Despachado</option>
-            <option value="completed">✅ Concluídos (Fechados)</option>
-            <option value="cancelled">❌ Cancelados / Recusados</option>
-            <option value="refunded">🟣 Reembolsados ao Cliente</option>
-          </select>
-        </div>
-        
-        <div>
-          <label for="paymentFilter" class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2.5 ml-1">Controlo Financeiro</label>
-          <select id="paymentFilter" class="w-full px-4 py-3.5 bg-slate-900/80 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50 text-sm text-slate-200 font-bold cursor-pointer transition-all shadow-inner" onchange="window.renderOrders()">
-            <option value="all">Todo o Histórico</option>
-            <option value="paid">🟢 Liquidados (Confirmados)</option>
-            <option value="unpaid">🔴 Por Liquidar (Em Dívida)</option>
-          </select>
-        </div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-label"><i class="fa-solid fa-inbox"></i> Total Operações</span>
+        <span class="stat-value" id="statTotal">0</span>
+        <span class="stat-desc">Pedidos + Depósitos</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label"><i class="fa-solid fa-hourglass-half"></i> Pendentes</span>
+        <span class="stat-value warning" id="statPending">0</span>
+        <span class="stat-desc">Requerem intervenção</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label"><i class="fa-solid fa-check-circle"></i> Concluídas</span>
+        <span class="stat-value success" id="statCompleted">0</span>
+        <span class="stat-desc">Encerradas com sucesso</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label"><i class="fa-solid fa-coins"></i> Volume Total</span>
+        <span class="stat-value" id="statVolume">0.00 MT</span>
+        <span class="stat-desc">Valor líquido</span>
       </div>
     </div>
 
-    <div class="glass-card rounded-2xl p-4 border border-white/5 mt-4">
-      <div class="flex flex-wrap gap-2">
-        <button class="quick-filter active px-4 py-2 rounded-xl bg-brand-500/20 border border-brand-500/30 text-brand-400 text-xs font-black uppercase tracking-widest" data-status="all">Todas</button>
-        <button class="quick-filter px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-colors" data-status="pending">Pendentes</button>
-        <button class="quick-filter px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-colors" data-status="processing">Em Compra</button>
-        <button class="quick-filter px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-colors" data-status="shipped">Em Trânsito</button>
-        <button class="quick-filter px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-colors" data-status="completed">Fechadas</button>
-        <button class="quick-filter px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-colors" data-status="refunded">Reembolsadas</button>
+    <div class="controls-bar">
+      <div class="search-box">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="searchInput" placeholder="Pesquisar por ID, cliente, email ou telefone...">
+      </div>
+      <div class="filter-group">
+        <select class="filter-select" id="filterStatus">
+          <option value="">Todas as Fases</option>
+          <option value="pending">⏳ Pendente</option>
+          <option value="processing">🔄 Em Processamento</option>
+          <option value="shipped">✈️ Em Trânsito</option>
+          <option value="completed">✅ Concluído</option>
+          <option value="cancelled">❌ Cancelado</option>
+          <option value="refunded">🟣 Reembolsado</option>
+        </select>
+        <select class="filter-select" id="filterPayment">
+          <option value="">Todo o Histórico</option>
+          <option value="paid">🟢 Liquidados</option>
+          <option value="unpaid">🔴 Por Liquidar</option>
+        </select>
+        <button class="btn btn-secondary" id="btnClearFilters"><i class="fa-solid fa-filter-circle-xmark"></i> Limpar</button>
       </div>
     </div>
 
-    <div class="glass-card rounded-[2rem] p-0 overflow-hidden shadow-2xl border border-slate-800 flex flex-col mt-4">
-      <div class="p-5 border-b border-white/5 flex justify-between items-center bg-slate-900/60 backdrop-blur-sm">
-        <h2 class="text-sm font-bold text-white flex items-center gap-2"><i data-lucide="database" class="w-4 h-4 text-brand-400"></i> Base de Dados Criptografada</h2>
-        <span class="text-[10px] font-black px-3 py-1.5 bg-brand-500/20 border border-brand-500/30 rounded-full text-brand-400 uppercase tracking-widest shadow-inner" id="ordersCount">0 Pedidos Encontrados</span>
+    <div class="table-container">
+      <div class="table-header">
+        <span class="table-title"><i class="fa-solid fa-database"></i> Base de Dados Criptografada</span>
+        <div class="table-actions">
+          <span class="badge" id="tableCount">0 Pedidos</span>
+        </div>
       </div>
-      
-      <div class="overflow-x-auto min-h-[500px]">
-        <table class="w-full text-left border-collapse whitespace-nowrap">
-          <thead class="bg-slate-950/80 text-[10px] uppercase text-slate-400 tracking-widest border-b border-white/10 sticky top-0 z-10 backdrop-blur-md">
+      <div class="table-wrapper">
+        <table>
+          <thead>
             <tr>
-              <th class="px-6 py-5 font-bold">Data & ID Transação</th>
-              <th class="px-6 py-5 font-bold">Cliente e Contactos</th>
-              <th class="px-6 py-5 font-bold">Categoria & Base (USD)</th>
-              <th class="px-6 py-5 font-bold">Cobrado Líquido (MT)</th>
-              <th class="px-6 py-5 font-bold text-center">Status Operacional</th>
+              <th>Data & ID</th>
+              <th>Cliente</th>
+              <th>Categoria & Base (USD)</th>
+              <th>Cobrado (MT)</th>
+              <th>Status</th>
+              <th>Pagamento</th>
+              <th>Ações</th>
             </tr>
           </thead>
-          <tbody id="ordersTable" class="divide-y divide-white/5 bg-slate-900/20">
-            <tr><td colspan="5" class="text-center py-16 text-slate-500"><div class="w-10 h-10 border-4 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div><p class="font-medium text-sm">A sincronizar com a central...</p></td></tr>
+          <tbody id="tableBody">
+            <tr>
+              <td colspan="7" class="loading">
+                <div class="loading-spinner"></div>
+                A sincronizar com a central PayGo...
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
     </div>
 
-  </div>
-</div>
+  </main>
 
-<div id="orderModal" class="modal-wrapper">
-    <div class="modal-backdrop" onclick="window.closeModal()"></div>
-    <div class="modal-panel flex flex-col h-auto max-h-[90vh]">
+  <div class="modal-overlay" id="modalUpdate">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title"><i class="fa-solid fa-pen-to-square"></i> Atualizar Pedido</h3>
+        <button class="modal-close" id="modalClose">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="modalOrderId">
+        <input type="hidden" id="modalIsTopup">
+        <input type="hidden" id="modalOldStatus">
         
-        <div class="flex justify-between items-center p-6 border-b border-white/10 bg-slate-950 shrink-0">
-            <h2 class="text-2xl font-display font-extrabold text-white flex items-center gap-3">
-                <div class="p-2 bg-brand-500/20 rounded-xl border border-brand-500/30"><i data-lucide="file-text" class="w-5 h-5 text-brand-400"></i></div> 
-                Dossier Logístico
-            </h2>
-            <button onclick="window.closeModal()" class="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-700 hover:text-white flex items-center justify-center transition-colors text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500">
-                <i data-lucide="x" class="w-5 h-5"></i>
-            </button>
+        <div class="form-group">
+          <label for="modalStatus">Fase Logística</label>
+          <select id="modalStatus">
+            <option value="pending">⏳ Ação Necessária (Pendente)</option>
+            <option value="processing">🔄 Em Compra Internacional</option>
+            <option value="shipped">✈️ Em Trânsito / Despachado</option>
+            <option value="completed">✅ Finalizado com Sucesso</option>
+            <option value="cancelled">❌ Cancelar / Recusar</option>
+            <option value="refunded">🟣 Reembolsado ao Cliente</option>
+          </select>
         </div>
-        
-        <div id="modalContent" class="p-6 md:p-8 overflow-y-auto space-y-6 bg-slate-900 flex-1 relative notes-scrollbar">
-            </div>
 
-        <div class="p-6 border-t border-white/10 bg-slate-950 flex flex-col gap-4 shrink-0 shadow-[0_-10px_20px_rgba(0,0,0,0.3)] relative z-20">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
-                <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Fase Logística (Atualizar)</label>
-                    <div class="relative">
-                        <i data-lucide="git-commit" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
-                        <select id="statusSelect" class="w-full pl-12 pr-4 py-3.5 border border-slate-700 bg-slate-800 text-white rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50 font-bold text-sm cursor-pointer shadow-inner appearance-none transition-all">
-                            <option value="pending">⏳ Ação Necessária (Pendente)</option>
-                            <option value="processing">🔄 Em Compra Internacional (Processando)</option>
-                            <option value="shipped">✈️ Em Trânsito (Enviado / Código Rastreio)</option>
-                            <option value="completed">✅ Finalizado com Sucesso (Envia Email)</option>
-                            <option value="cancelled">❌ Cancelar / Recusar Encomenda</option>
-                            <option value="refunded">🟣 Marcar como Reembolsado ao Cliente</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div id="trackingContainer" class="hidden">
-                    <label class="block text-[10px] font-black text-brand-400 uppercase tracking-widest mb-2 ml-1">Código de Rastreio (Físicos)</label>
-                    <div class="relative">
-                        <i data-lucide="truck" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-500"></i>
-                        <input type="text" id="trackingInput" placeholder="Ex: SY123456789" class="w-full pl-12 pr-4 py-3.5 border border-brand-500/50 bg-slate-800 text-white rounded-xl focus:outline-none focus:border-brand-500 font-mono text-sm transition-all uppercase">
-                    </div>
-                </div>
-            </div>
-
-            <div id="refundReasonContainer" class="hidden mt-2 bg-danger-500/10 border border-danger-500/30 p-4 rounded-xl">
-                <label class="block text-[10px] font-black text-danger-400 uppercase tracking-widest mb-2 ml-1">Motivo do Reembolso (Será enviado ao Cliente)</label>
-                <textarea id="refundReasonInput" placeholder="Escreva o motivo oficial (Ex: Fornecedor sem stock)..." class="w-full p-3 bg-slate-900 border border-danger-500/50 rounded-xl text-white text-sm focus:outline-none focus:border-danger-500 placeholder-slate-500 min-h-[80px] mb-3"></textarea>
-                
-                <label class="block text-[10px] font-black text-danger-400 uppercase tracking-widest mb-2 ml-1 flex items-center gap-1"><i data-lucide="paperclip" class="w-3 h-3"></i> Anexar Prova (Opcional - Imagem/PDF)</label>
-                <input type="file" id="refundMediaInput" accept="image/*,application/pdf" class="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-danger-500/20 file:text-danger-400 hover:file:bg-danger-500/30 cursor-pointer bg-slate-900 border border-danger-500/30 rounded-xl p-2 transition-all">
-                <p class="text-[10px] text-danger-400/80 mt-2 font-bold flex items-center gap-1"><i data-lucide="info" class="w-3 h-3"></i> O valor exacto pago será devolvido à Carteira PayGo do cliente.</p>
-            </div>
-            
-            <div class="flex flex-col sm:flex-row items-end justify-end mt-2 gap-3" id="modalActionButtons">
-                </div>
+        <div class="form-group" id="groupTracking">
+          <label for="modalTracking">Código de Rastreio (Físicos)</label>
+          <input type="text" id="modalTracking" placeholder="Ex: CP123456789MZ" class="mono">
+          <span class="form-hint">Opcional. O cliente usará este código para rastrear a encomenda.</span>
         </div>
+
+        <div class="form-group" id="groupReason" style="display:none;">
+          <label for="modalReason">Motivo Oficial (Cancelamento/Reembolso)</label>
+          <textarea id="modalReason" rows="3" placeholder="Descreva o motivo que será enviado ao cliente (Ex: Fornecedor sem stock)..."></textarea>
+          <span class="form-hint" style="color:var(--danger)">Ao reembolsar, o valor total será injetado de volta na Carteira PayGo do cliente.</span>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="modalCancel">Cancelar</button>
+        <button class="btn btn-primary" id="modalSave"><i class="fa-solid fa-save"></i> Guardar Decisão</button>
+      </div>
     </div>
-</div>
+  </div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, collection, doc, updateDoc, onSnapshot, query, orderBy, getDoc, serverTimestamp, writeBatch, increment, deleteDoc, getDocs, where, arrayUnion, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+  <div id="toastContainer"></div>
 
-const firebaseConfig = {
-    apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
-    authDomain: "paygo-14311.firebaseapp.com",
-    projectId: "paygo-14311",
-    storageBucket: "paygo-14311.firebasestorage.app",
-    messagingSenderId: "208360646277",
-    appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
-};
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, doc, updateDoc, onSnapshot, query, orderBy, serverTimestamp, writeBatch, increment, deleteDoc, getDocs, where, addDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app, "paygodb"); 
-const auth = getAuth(app);
-const storage = getStorage(app);
+    const firebaseConfig = {
+      apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
+      authDomain: "paygo-14311.firebaseapp.com",
+      projectId: "paygo-14311",
+      storageBucket: "paygo-14311.firebasestorage.app",
+      messagingSenderId: "208360646277",
+      appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
+    };
 
-let orders = [];
-let rawOrders = [];
-let rawTopups = [];
-let currentFilteredOrders = [];
-let currentOrderId = null;
-let ordersUnsubscribe = null;
-let topupsUnsubscribe = null;
-let loggedInAdminId = null;
-let loggedInAdminName = null;
-const userCache = {}; 
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app, "paygodb"); 
+    const auth = getAuth(app);
 
-// ==========================================
-// 🔔 RENDERIZAÇÃO E TOASTS
-// ==========================================
-window.renderIcons = () => {
-    setTimeout(() => {
-        if (typeof lucide !== 'undefined') {
-            try { lucide.createIcons(); } catch(e) { console.error('Erro nos ícones:', e); }
-        }
-    }, 50); 
-};
-
-window.showToast = (message, type = 'success') => {
-    const container = document.getElementById('toastContainer');
-    if (!container) return;
-
-    const toast = document.createElement('div');
-    const borderColor = type === 'error' ? 'border-danger-500' : type === 'warning' ? 'border-warning-500' : 'border-brand-500';
-    const icon = type === 'error' ? 'alert-octagon text-danger-400' : type === 'warning' ? 'alert-triangle text-warning-400' : 'check-check text-brand-400';
-
-    toast.className = `flex items-center gap-3 px-5 py-4 rounded-xl shadow-2xl backdrop-blur-xl transform transition-all duration-400 translate-x-full border-l-4 ${borderColor} bg-slate-900/95 border-y border-r border-white/5`;
-    toast.innerHTML = `<i data-lucide="${icon.split(' ')[0]}" class="w-5 h-5 ${icon.split(' ')[1]}"></i> <span class="text-sm font-bold text-white tracking-wide">${message}</span>`;
-
-    container.appendChild(toast);
-    window.renderIcons();
-
-    requestAnimationFrame(() => toast.classList.remove('translate-x-full'));
-    setTimeout(() => {
-        toast.classList.add('opacity-0', 'translate-x-8');
-        setTimeout(() => toast.remove(), 400);
-    }, 5000);
-};
-
-// ==========================================
-// 🛠️ FUNÇÕES DE FORMATAÇÃO E CÁLCULO
-// ==========================================
-function formatValue(value, type = 'currency') {
-    if (value === null || value === undefined) return type === 'currency' ? '0.00 MT' : '0';
-    if (type === 'currency') return `${Number(value).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`;
-    if (type === 'usd') return `$${Number(value).toFixed(2)}`;
-    return String(value);
-}
-
-function getRelativeDateLabel(date) {
-    if (!date) return 'Desconhecido';
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    if (date.toDateString() === today.toDateString()) return 'Hoje';
-    if (date.toDateString() === yesterday.toDateString()) return 'Ontem';
-    return date.toLocaleDateString('pt-MZ');
-}
-
-const escapeHTML = (str) => {
-    if (!str) return '';
-    return String(str).replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
-};
-
-const resolveUserName = async (userId) => {
-    if (!userId) return;
-    if (userCache[userId]) return;
-    try {
-        const userDoc = await getDoc(doc(db, "users", userId));
-        if(userDoc.exists()) {
-            userCache[userId] = { name: userDoc.data().name || userDoc.data().email || 'Cliente Sem Nome' };
-            const topupIndex = rawTopups.findIndex(t => t.userId === userId);
-            if(topupIndex > -1) {
-                rawTopups[topupIndex].name = userCache[userId].name;
-                mergeAndRender();
-            }
-        }
-    } catch(e) {}
-};
-
-// ==========================================
-// 📧 API E LOGS DE AUDITORIA
-// ==========================================
-async function sendNotificationEmail(order, actionType) {
-    try {
-        let payloadAction = actionType === 'paid' ? "payment_confirmed" : (actionType === 'completed' ? "order_completed" : "");
-        if (!payloadAction) return;
-
-        await fetch('/api/notify-order', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ orderData: order, action: payloadAction, sendEmail: true, sendLark: false })
-        });
-        showToast('Notificação oficial disparada para o cliente.', 'info');
-    } catch (error) { console.error('Erro de envio:', error); }
-}
-
-async function logAdminAction(actionCode, targetId, previousData, newData) {
-    if(!loggedInAdminId) return; 
-    try {
-        await fetch('/api/log-action', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ adminId: loggedInAdminId, adminName: loggedInAdminName, action: actionCode, targetId: targetId, targetType: 'order', previousData: previousData, newData: newData })
-        });
-    } catch (err) { console.warn("Auditoria falhou", err); }
-}
-
-// ==========================================
-// 📦 MOTOR HÍBRIDO (ORDERS + TOPUPS)
-// ==========================================
-function mergeAndRender() {
-    orders = [...rawOrders, ...rawTopups].sort((a, b) => b.createdAt - a.createdAt);
-    window.renderOrders();
+    // ===== STATE =====
+    let rawOrders = [];
+    let rawTopups = [];
+    let allOperations = [];
+    let filteredOrders = [];
     
-    if (currentOrderId && document.getElementById('orderModal').classList.contains('active')) {
-        window.openModal(currentOrderId, true); 
+    let loggedInAdminId = null;
+    let loggedInAdminName = null;
+
+    // ===== DOM ELEMENTS =====
+    const els = {
+      tableBody: document.getElementById('tableBody'),
+      tableCount: document.getElementById('tableCount'),
+      statTotal: document.getElementById('statTotal'),
+      statPending: document.getElementById('statPending'),
+      statCompleted: document.getElementById('statCompleted'),
+      statVolume: document.getElementById('statVolume'),
+      searchInput: document.getElementById('searchInput'),
+      filterStatus: document.getElementById('filterStatus'),
+      filterPayment: document.getElementById('filterPayment'),
+      btnClear: document.getElementById('btnClearFilters'),
+      btnExport: document.getElementById('btnExport'),
+      btnPurge: document.getElementById('btnPurge'),
+      
+      modal: document.getElementById('modalUpdate'),
+      modalClose: document.getElementById('modalClose'),
+      modalCancel: document.getElementById('modalCancel'),
+      modalSave: document.getElementById('modalSave'),
+      modalOrderId: document.getElementById('modalOrderId'),
+      modalIsTopup: document.getElementById('modalIsTopup'),
+      modalOldStatus: document.getElementById('modalOldStatus'),
+      modalStatus: document.getElementById('modalStatus'),
+      modalTracking: document.getElementById('modalTracking'),
+      modalReason: document.getElementById('modalReason'),
+      groupTracking: document.getElementById('groupTracking'),
+      groupReason: document.getElementById('groupReason'),
+      
+      toastContainer: document.getElementById('toastContainer'),
+      adminName: document.getElementById('adminName')
+    };
+
+    // ===== AUTH & INITIALIZATION =====
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { window.location.href = '../login.html'; return; }
+      try {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists() && (userDoc.data().role === 'admin' || userDoc.data().role === 'superadmin')) {
+          loggedInAdminId = user.uid;
+          loggedInAdminName = userDoc.data().name || 'Equipa Admin';
+          els.adminName.textContent = loggedInAdminName;
+          
+          setupEventListeners();
+          loadDataRealTime(); 
+        } else {
+          window.location.href = '../index.html';
+        }
+      } catch (error) { 
+        showToast("Erro na autenticação. Recarregue a página.", "error"); 
+      }
+    });
+
+    window.logout = async function() { 
+        if (confirm('Encerrar sessão de forma segura?')) { 
+            await signOut(auth); 
+            window.location.href = '../login.html'; 
+        } 
+    };
+
+    // ===== EVENT LISTENERS =====
+    function setupEventListeners() {
+      els.searchInput.addEventListener('input', applyFilters);
+      els.filterStatus.addEventListener('change', applyFilters);
+      els.filterPayment.addEventListener('change', applyFilters);
+      els.btnClear.addEventListener('click', clearFilters);
+      els.btnExport.addEventListener('click', exportToCSV);
+      els.btnPurge.addEventListener('click', purgeVisible);
+      
+      els.modalClose.addEventListener('click', closeModal);
+      els.modalCancel.addEventListener('click', closeModal);
+      els.modalSave.addEventListener('click', saveOrderUpdate);
+      
+      els.modal.addEventListener('click', (e) => { if (e.target === els.modal) closeModal(); });
+
+      els.modalStatus.addEventListener('change', () => {
+        const status = els.modalStatus.value;
+        els.groupTracking.style.display = status === 'shipped' ? 'flex' : 'none';
+        els.groupReason.style.display = ['cancelled', 'refunded'].includes(status) ? 'flex' : 'none';
+      });
     }
-}
 
-function loadDataRealTime() {
-    const qOrders = query(collection(db, "orders"), orderBy("createdAt", "desc"));
-    const qTopups = query(collection(db, "topups"), orderBy("createdAt", "desc"));
+    // ===== REAL-TIME DATA FETCHING =====
+    function loadDataRealTime() {
+      const qOrders = query(collection(db, "orders"), orderBy("createdAt", "desc"));
+      const qTopups = query(collection(db, "topups"), orderBy("createdAt", "desc"));
 
-    ordersUnsubscribe = onSnapshot(qOrders, (snapshot) => {
+      onSnapshot(qOrders, (snapshot) => {
         rawOrders = snapshot.docs.map(doc => {
-            const data = doc.data();
-            return {
-                id: doc.id,
-                orderId: data.orderId || `ORD-${doc.id.slice(0, 8)}`,
-                name: data.name || 'Sem Nome',
-                email: data.email || 'N/A',
-                category: data.category || 'physical',
-                shipping: data.shipping || null,
-                digitalData: data.digitalData || null,
-                whatsapp: data.whatsapp || 'N/A',
-                type: data.type || 'unknown',
-                usd: Number(data.usd) || 0,
-                total: Number(data.total) || 0,
-                tax: Number(data.tax) || 0,
-                status: data.status || 'pending',
-                trackingCode: data.trackingCode || '',
-                isPaid: data.isPaid || false,
-                paymentMethod: data.paymentMethod || 'mpesa',
-                detail: data.detail || 'N/A',
-                referredBy: data.referredBy || null,
-                userId: data.userId || null,
-                commissionProcessed: data.commissionProcessed || false,
-                refundProcessed: data.refundProcessed || false,
-                adminNotes: data.adminNotes || [], 
-                createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
-                paysuitePaymentId: data.paysuitePaymentId || null,
-                isTopup: false
-            };
+          const data = doc.data();
+          return {
+            id: doc.id,
+            orderId: data.orderId || `ORD-${doc.id.slice(0, 8)}`,
+            customer: { name: data.name, email: data.email, phone: data.whatsapp },
+            category: data.category || 'Físico',
+            usdAmount: Number(data.usd) || 0,
+            amount: Number(data.total) || 0,
+            tax: Number(data.tax) || 0,
+            status: data.status || 'pending',
+            trackingCode: data.trackingCode || '',
+            isPaid: data.isPaid || false,
+            paymentMethod: data.paymentMethod || 'mpesa',
+            referredBy: data.referredBy || null,
+            userId: data.userId || null,
+            commissionProcessed: data.commissionProcessed || false,
+            refundProcessed: data.refundProcessed || false,
+            createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
+            isTopup: false
+          };
         });
         mergeAndRender();
-    }, (err) => { showToast('Acesso Restrito ao Servidor.', 'error'); });
+      });
 
-    topupsUnsubscribe = onSnapshot(qTopups, (snapshot) => {
+      onSnapshot(qTopups, (snapshot) => {
         rawTopups = snapshot.docs.map(doc => {
-            const data = doc.data();
-            const isCompleted = data.status === 'completed';
-            const isFailed = data.status === 'failed' || data.status === 'cancelled';
-            
-            let resolvedName = data.userName || data.name || data.customerName;
-            if (!resolvedName && data.userId) {
-                if (userCache[data.userId]) { resolvedName = userCache[data.userId].name; } 
-                else { resolvedName = 'A carregar identificação...'; resolveUserName(data.userId); }
-            } else if (!resolvedName) { resolvedName = 'Cliente Não Identificado'; }
-
-            return {
-                id: doc.id,
-                orderId: data.topupId || `TOP-${doc.id.slice(0, 8)}`,
-                name: resolvedName, 
-                email: data.userEmail || data.email || `Via ${String(data.method).toUpperCase()}`,
-                category: 'Carregamento de Saldo',
-                shipping: null, digitalData: null, whatsapp: 'N/A', type: 'topup',
-                usd: 0,
-                total: Number(data.amount) || 0,
-                tax: 0,
-                status: isCompleted ? 'completed' : (isFailed ? 'cancelled' : 'pending'),
-                trackingCode: '',
-                isPaid: isCompleted,
-                paymentMethod: data.method || 'mpesa',
-                detail: data.detail || `Depósito de ${data.amount} MT na Carteira PayGo.`,
-                referredBy: null, userId: data.userId || null,
-                commissionProcessed: true, refundProcessed: true, 
-                adminNotes: data.adminNotes || [], 
-                createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
-                paysuitePaymentId: data.paysuiteId || null,
-                isTopup: true
-            };
+          const data = doc.data();
+          const isCompleted = data.status === 'completed';
+          return {
+            id: doc.id,
+            orderId: data.topupId || `TOP-${doc.id.slice(0, 8)}`,
+            customer: { name: data.userName || data.name || 'Cliente', email: data.userEmail || data.email, phone: '' },
+            category: 'Depósito Carteira',
+            usdAmount: 0,
+            amount: Number(data.amount) || 0,
+            tax: 0,
+            status: isCompleted ? 'completed' : (data.status === 'failed' ? 'cancelled' : 'pending'),
+            trackingCode: '',
+            isPaid: isCompleted,
+            paymentMethod: data.method || 'mpesa',
+            referredBy: null, userId: data.userId || null,
+            commissionProcessed: true, refundProcessed: true, 
+            createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
+            isTopup: true
+          };
         });
         mergeAndRender();
-    });
-}
+      });
+    }
 
-function updateDashboardStats(list) {
-    const total = list.length;
-    const pending = list.filter(o => ['pending', 'processing', 'shipped'].includes(o.status)).length;
-    const completed = list.filter(o => o.status === 'completed').length;
-    const revenue = list.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+    function mergeAndRender() {
+      allOperations = [...rawOrders, ...rawTopups].sort((a, b) => b.createdAt - a.createdAt);
+      applyFilters();
+    }
 
-    if (document.getElementById('statTotalOrders')) document.getElementById('statTotalOrders').textContent = total;
-    if (document.getElementById('statPendingOrders')) document.getElementById('statPendingOrders').textContent = pending;
-    if (document.getElementById('statCompletedOrders')) document.getElementById('statCompletedOrders').textContent = completed;
-    if (document.getElementById('statRevenueOrders')) document.getElementById('statRevenueOrders').textContent = revenue.toLocaleString('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
+    // ===== RENDER TABLE & STATS =====
+    function applyFilters() {
+      const search = els.searchInput.value.toLowerCase();
+      const status = els.filterStatus.value;
+      const payment = els.filterPayment.value;
 
-// ==========================================
-// 🎨 RENDERIZAÇÃO DA TABELA MESTRA
-// ==========================================
-window.renderOrders = function() {
-    const table = document.getElementById('ordersTable');
-    if (!table) return;
+      filteredOrders = allOperations.filter(order => {
+        const matchesSearch = !search || 
+          order.orderId.toLowerCase().includes(search) ||
+          (order.customer?.name?.toLowerCase().includes(search)) ||
+          (order.customer?.email?.toLowerCase().includes(search));
+        
+        const matchesStatus = !status || order.status === status;
+        const matchesPayment = !payment || (payment === 'paid' ? order.isPaid : !order.isPaid);
+        
+        return matchesSearch && matchesStatus && matchesPayment;
+      });
 
-    const search = document.getElementById('searchInput')?.value.toLowerCase() || '';
-    const statusFilter = document.getElementById('statusFilter')?.value || 'all';
-    const paymentFilter = document.getElementById('paymentFilter')?.value || 'all';
+      updateStats();
+      renderTable();
+    }
 
-    currentFilteredOrders = orders.filter(order => {
-        const matchSearch = order.name.toLowerCase().includes(search) || order.orderId.toLowerCase().includes(search) || order.email.toLowerCase().includes(search);
-        const matchStatus = statusFilter === 'all' || order.status === statusFilter;
-        let matchPayment = true;
-        if (paymentFilter === 'paid') matchPayment = order.isPaid === true;
-        if (paymentFilter === 'unpaid') matchPayment = order.isPaid === false;
-        return matchSearch && matchStatus && matchPayment;
-    });
+    function clearFilters() {
+      els.searchInput.value = '';
+      els.filterStatus.value = '';
+      els.filterPayment.value = '';
+      applyFilters();
+    }
 
-    updateDashboardStats(currentFilteredOrders);
+    function updateStats() {
+      const total = filteredOrders.length;
+      const pending = filteredOrders.filter(o => ['pending', 'processing'].includes(o.status)).length;
+      const completed = filteredOrders.filter(o => o.status === 'completed').length;
+      const volume = filteredOrders.reduce((sum, o) => sum + (o.amount || 0), 0);
 
-    const countEl = document.getElementById('ordersCount');
-    if (countEl) countEl.textContent = `${currentFilteredOrders.length} Operações Encontradas`;
+      els.statTotal.textContent = total;
+      els.statPending.textContent = pending;
+      els.statCompleted.textContent = completed;
+      els.statVolume.textContent = formatCurrency(volume);
+      els.tableCount.textContent = `${total} Operações`;
+    }
 
-    if (currentFilteredOrders.length === 0) {
-        table.innerHTML = `<tr><td colspan="5" class="text-center py-16 text-slate-500"><i data-lucide="search-x" class="w-12 h-12 mx-auto mb-4 opacity-30 text-slate-400"></i><p class="font-bold text-lg">Sem Registos</p></td></tr>`;
-        window.renderIcons();
+    function renderTable() {
+      if (filteredOrders.length === 0) {
+        els.tableBody.innerHTML = `<tr><td colspan="7" class="empty-state"><i class="fa-solid fa-inbox"></i><h3>Nenhum registo encontrado</h3><p>Ajuste os filtros de pesquisa.</p></td></tr>`;
         return;
-    }
-
-    let htmlContent = '';
-    let lastDateGroup = '';
-
-    currentFilteredOrders.forEach(order => {
-        const dateLabel = getRelativeDateLabel(order.createdAt);
-        const timeStr = order.createdAt.toLocaleTimeString('pt-MZ', { hour: '2-digit', minute:'2-digit' });
-
-        if (dateLabel !== lastDateGroup) {
-            lastDateGroup = dateLabel;
-            htmlContent += `<tr class="date-group-header"><td colspan="5" class="px-6 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-950/80"><i data-lucide="calendar" class="w-3 h-3 inline pb-0.5 mr-1"></i> ${dateLabel}</td></tr>`;
-        }
-
-        const payBadge = order.isPaid
-            ? `<span class="bg-success-500/20 text-success-400 px-2.5 py-1 rounded text-[9px] font-black border border-success-500/30 uppercase tracking-widest shadow-sm">✅ Liquidado</span>`
-            : `<span class="bg-danger-500/20 text-danger-400 px-2.5 py-1 rounded text-[9px] font-black border border-danger-500/30 uppercase tracking-widest shadow-sm">❌ Por Pagar</span>`;
-
-        const logStatus = {
-            'pending': '<span class="status-badge pending shadow-sm">⏳ Pendente</span>',
-            'processing': '<span class="status-badge processing shadow-sm">🔄 Em Compra</span>',
-            'shipped': '<span class="status-badge shipped shadow-sm">✈️ Em Trânsito</span>',
-            'completed': '<span class="status-badge completed shadow-sm">✅ Fechado</span>',
-            'cancelled': '<span class="status-badge cancelled shadow-sm">❌ Cancelado</span>',
-            'refunded': '<span class="status-badge refunded shadow-sm">🟣 Reembolsado</span>'
-        }[order.status] || `<span class="status-badge bg-slate-800 border border-slate-700">${order.status}</span>`;
-
-        let catIcon = 'package'; let catLabel = 'Físico';
-        if(order.category === 'digital') { catIcon = 'laptop'; catLabel = 'Digital'; }
-        if(order.category === 'game') { catIcon = 'gamepad-2'; catLabel = 'Jogo'; }
-        if(order.isTopup) { catIcon = 'wallet'; catLabel = 'Depósito'; }
-        if(order.orderId.startsWith('REF-')) { catIcon = 'corner-up-left'; catLabel = 'Reembolso Carteira'; }
-
-        const notesIcon = order.adminNotes && order.adminNotes.length > 0 
-            ? `<span class="ml-2 text-warning-500" title="Contém Notas Secretas"><i data-lucide="sticky-note" class="w-3 h-3 inline"></i></span>` : '';
-
-        htmlContent += `
-        <tr class="hover:bg-slate-800/60 transition-colors group border-b border-white/5 last:border-0 cursor-pointer h-[72px]" onclick="window.openModal('${order.id}')" role="button" tabindex="0">
-            <td class="px-6 py-4">
-                <div class="text-sm font-mono font-bold ${order.isTopup ? 'text-success-400 bg-success-900/20 border-success-500/20' : 'text-brand-400 bg-brand-900/20 border-brand-500/20'} inline-block px-2 py-0.5 rounded border">${order.orderId}</div>
-                <div class="text-[11px] font-bold text-slate-500 mt-1 uppercase tracking-widest"><i data-lucide="clock" class="w-3 h-3 inline pb-0.5"></i> ${timeStr} ${notesIcon}</div>
-            </td>
-            <td class="px-6 py-4">
-                <div class="text-sm font-bold text-white group-hover:text-brand-300 transition-colors truncate max-w-[200px]">${escapeHTML(order.name)}</div>
-                <div class="text-xs text-slate-500 font-mono mt-0.5 truncate max-w-[200px]">${escapeHTML(order.email)}</div>
-            </td>
-            <td class="px-6 py-4">
-                <div class="flex items-center gap-2 mb-1">
-                    <i data-lucide="${catIcon}" class="w-4 h-4 ${order.isTopup ? 'text-success-400' : 'text-brand-400'}"></i>
-                    <span class="text-xs font-bold text-slate-300">${catLabel}</span>
-                </div>
-                ${!order.isTopup ? `<span class="text-sm font-black text-slate-400 font-mono">${formatValue(order.usd, 'usd')}</span>` : `<span class="text-[10px] text-slate-500 font-mono uppercase tracking-widest">Saldo Interno</span>`}
-            </td>
-            <td class="px-6 py-4 text-sm font-black text-white font-mono tracking-tight">
-                <div class="flex flex-col gap-1 items-start">
-                    ${formatValue(order.total, 'currency')}
-                    ${payBadge}
-                </div>
-            </td>
-            <td class="px-6 py-4 text-center flex items-center justify-between gap-4 h-[72px]">
-                ${logStatus}
-                <button class="w-10 h-10 inline-flex items-center justify-center rounded-xl bg-slate-800 text-slate-400 group-hover:bg-brand-600 group-hover:text-white transition-all shadow-md border border-slate-700 group-hover:border-brand-500" onclick="event.stopPropagation(); window.openModal('${order.id}')" title="Inspecionar">
-                    <i data-lucide="chevron-right" class="w-5 h-5"></i>
-                </button>
-            </td>
+      }
+      
+      els.tableBody.innerHTML = filteredOrders.map(order => `
+        <tr>
+          <td>
+            <div class="mono" style="font-size:0.8rem; color:var(--text-muted); margin-bottom:4px;">${formatDate(order.createdAt)}</div>
+            <span class="order-id" style="color:${order.isTopup ? 'var(--success)' : 'var(--primary)'}">${order.orderId}</span>
+          </td>
+          <td>
+            <div class="client-info">
+              <span class="client-name">${escapeHtml(order.customer?.name)}</span>
+              <span class="client-contact">${escapeHtml(order.customer?.email)}</span>
+            </div>
+          </td>
+          <td>
+            <div><i class="fa-solid ${order.isTopup ? 'fa-wallet' : (order.category === 'digital' ? 'fa-laptop' : 'fa-box')}"></i> ${order.category}</div>
+            ${order.usdAmount > 0 ? `<div class="amount-usd">$${order.usdAmount.toFixed(2)}</div>` : ''}
+          </td>
+          <td class="amount-cell">${formatCurrency(order.amount)}</td>
+          <td><span class="badge ${getStatusClass(order.status)}">${getStatusLabel(order.status)}</span></td>
+          <td><span class="badge ${order.isPaid ? 'paid' : 'unpaid'}">${order.isPaid ? '✅ Confirmado' : '🔴 Por Liquidar'}</span></td>
+          <td>
+            <div class="action-btns">
+              <button class="action-btn success" title="Editar / Atualizar Estado" onclick="window.openUpdateModal('${order.id}')" ${order.isTopup ? 'disabled style="opacity:0.3"' : ''}><i class="fa-solid fa-pen"></i></button>
+              <button class="action-btn danger" title="Eliminar Definitivamente" onclick="window.confirmDelete('${order.id}', ${order.isTopup})"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          </td>
         </tr>
-        `;
-    });
+      `).join('');
+    }
 
-    table.innerHTML = htmlContent;
-    window.renderIcons();
-};
+    // ===== MODAL UPDATE LOGIC =====
+    window.openUpdateModal = (orderId) => {
+      const order = allOperations.find(o => o.id === orderId);
+      if (!order || order.isTopup) return; // Topups don't open modal
 
-window.syncQuickFilters = (status) => {
-    document.querySelectorAll('.quick-filter').forEach(btn => {
-        if(btn.getAttribute('data-status') === status) {
-            btn.classList.add('active', 'bg-brand-500/20', 'border-brand-500/50', 'text-brand-400');
-            btn.classList.remove('bg-slate-900', 'border-slate-700', 'text-slate-300');
-        } else {
-            btn.classList.remove('active', 'bg-brand-500/20', 'border-brand-500/50', 'text-brand-400');
-            btn.classList.add('bg-slate-900', 'border-slate-700', 'text-slate-300');
+      els.modalOrderId.value = orderId;
+      els.modalIsTopup.value = order.isTopup;
+      els.modalOldStatus.value = order.status;
+      
+      els.modalStatus.value = order.status;
+      els.modalTracking.value = order.trackingCode || '';
+      els.modalReason.value = '';
+      
+      // Trigger visual changes
+      els.modalStatus.dispatchEvent(new Event('change'));
+      els.modal.classList.add('active');
+    };
+
+    function closeModal() {
+      els.modal.classList.remove('active');
+    }
+
+    async function saveOrderUpdate() {
+      const orderId = els.modalOrderId.value;
+      const isTopup = els.modalIsTopup.value === 'true';
+      const oldStatus = els.modalOldStatus.value;
+      
+      const newStatus = els.modalStatus.value;
+      const tracking = els.modalTracking.value.trim();
+      const reason = els.modalReason.value.trim();
+      
+      const order = allOperations.find(o => o.id === orderId);
+      if(!order) return;
+
+      // Validation
+      if (['cancelled', 'refunded'].includes(newStatus) && !reason) {
+        showToast('Obrigatório preencher o motivo do cancelamento/reembolso.', 'warning');
+        return;
+      }
+
+      if (newStatus === 'refunded' && order.refundProcessed) {
+        showToast('Este pedido já foi reembolsado anteriormente.', 'error');
+        return;
+      }
+
+      els.modalSave.disabled = true;
+      els.modalSave.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> A gravar...`;
+
+      try {
+        const updateData = { status: newStatus, trackingCode: tracking || null, updatedAt: serverTimestamp() };
+        
+        if (['cancelled', 'refunded'].includes(newStatus)) {
+          updateData.adminNotes = [{ text: `Ação: ${newStatus.toUpperCase()}. Motivo: ${reason}`, author: loggedInAdminName, date: new Date().toISOString() }];
         }
-    });
-};
 
-document.querySelectorAll('.quick-filter').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-        const status = e.target.getAttribute('data-status');
-        const select = document.getElementById('statusFilter');
-        if(select) {
-            select.value = status;
-            window.syncQuickFilters(status);
-            window.renderOrders();
+        if (newStatus === 'refunded') {
+            updateData.refundProcessed = true;
         }
-    });
-});
 
-// ==========================================
-// 📝 ADICIONAR NOTA SECRETA E FUNDOS
-// ==========================================
-window.addInternalNote = async (orderId) => {
-    const input = document.getElementById('newNoteInput');
-    const text = input.value.trim();
-    if (!text) return;
-    
-    input.disabled = true;
-    const originalPh = input.placeholder;
-    input.placeholder = "A gravar...";
-    
-    try {
-        const noteObj = { text: text, author: loggedInAdminName || 'Equipa', date: new Date().toISOString() };
-        const collectionTarget = orders.find(o => o.id === orderId)?.isTopup ? "topups" : "orders";
-        await updateDoc(doc(db, collectionTarget, orderId), { adminNotes: arrayUnion(noteObj), updatedAt: serverTimestamp() });
-        await logAdminAction('ADD_INTERNAL_NOTE', orderId, null, { noteAdded: text });
-        showToast('Nota confidencial guardada.', 'success');
-        input.value = '';
-    } catch(e) { 
-        showToast('Acesso negado.', 'error'); 
-    } finally {
-        input.disabled = false; 
-        input.placeholder = originalPh; 
-    }
-};
+        await updateDoc(doc(db, "orders", orderId), updateData);
 
-window.requestExtraFunds = async (orderId) => {
-    const amount = prompt("Indique o valor em FALTA (MT) que o cliente deve pagar:");
-    if (!amount || isNaN(amount) || Number(amount) <= 0) return;
-    
-    const reason = prompt("Qual o motivo? (Ex: Subida do câmbio, taxa extra de envio, etc)");
-    if (!reason) return;
-
-    const order = orders.find(o => o.id === orderId);
-    const noteText = `ALERTA DE FUNDOS: Solicitado ${amount} MT adicionais ao cliente. Motivo: ${reason}`;
-    
-    try {
-        const noteObj = { text: noteText, author: loggedInAdminName || 'Sistema', date: new Date().toISOString() };
-        await updateDoc(doc(db, order.isTopup ? "topups" : "orders", orderId), {
-            adminNotes: arrayUnion(noteObj),
-            updatedAt: serverTimestamp()
-        });
-
-        await fetch('/api/notify-order', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ orderData: order, action: "insufficient_funds", extraAmount: amount, reason: reason, sendEmail: true })
-        }).catch(e => console.warn("Aviso: Falha ao invocar servidor de emails."));
-
-        showToast(`Solicitação de ${amount} MT enviada e registada!`, 'success');
-        window.closeModal();
-    } catch (e) {
-        showToast('Falha técnica ao solicitar fundos.', 'error');
-    }
-};
-
-// ==========================================
-// 🔍 ECRÃ DE DOSSIER (MODAL CAMALEÃO)
-// ==========================================
-window.openModal = (orderId, isSilentUpdate = false) => {
-    const order = orders.find(o => o.id === orderId);
-    if (!order) return;
-
-    const topStatusBadge = {
-        pending: '⏳ Pendente',
-        processing: '🔄 Em Compra',
-        shipped: '✈️ Em Trânsito',
-        completed: '✅ Fechado',
-        cancelled: '❌ Cancelado',
-        refunded: '🟣 Reembolsado'
-    }[order.status] || order.status;
-    
-    currentOrderId = orderId;
-    const methodColor = (order.paymentMethod === 'mpesa' || order.paymentMethod === 'e-mola') ? 'brand' : (order.isTopup ? 'success' : 'warning');
-    const methodName = order.paymentMethod ? order.paymentMethod.toUpperCase() : 'CARTEIRA (WALLET)';
-    
-    let trackRefHtml = order.paysuitePaymentId ? 
-        `<div class="flex justify-between items-center mt-3 pt-3 border-t border-white/5"><p class="text-[10px] font-bold text-slate-500 uppercase">Referência Externa</p><p class="font-mono text-xs text-brand-300 bg-brand-500/10 px-2 py-1 rounded border border-brand-500/20">${order.paysuitePaymentId}</p></div>` : '';
-
-    let notesHtml = '';
-    if (order.adminNotes && order.adminNotes.length > 0) {
-        notesHtml = order.adminNotes.map(n => {
-            const formattedText = n.text.replace(/ \| Anexo: (https?:\/\/[^\s]+)/g, ' <br><a href="$1" target="_blank" class="text-brand-400 text-[10px] mt-1.5 inline-flex items-center gap-1 hover:underline bg-slate-900 px-2 py-1 rounded border border-brand-500/20"><i data-lucide="external-link" class="w-3 h-3"></i> Ver Anexo/Prova Logística</a>');
-            return `
-            <div class="bg-warning-900/10 p-3 rounded-xl border border-warning-500/20 mb-2 relative overflow-hidden group">
-                <div class="absolute left-0 top-0 h-full w-1 bg-warning-500"></div>
-                <div class="flex justify-between items-center mb-1">
-                    <span class="text-[10px] font-black text-warning-400 uppercase tracking-widest pl-2"><i data-lucide="user" class="w-3 h-3 inline pb-0.5"></i> ${escapeHTML(n.author)}</span>
-                    <span class="text-[9px] font-mono text-slate-500">${new Date(n.date).toLocaleString('pt-MZ', { day: '2-digit', month: 'short', hour:'2-digit', minute:'2-digit'})}</span>
-                </div>
-                <p class="text-sm text-slate-300 pl-2 leading-relaxed font-medium break-words">${formattedText}</p>
-            </div>
-            `;
-        }).join('');
-    } else {
-        notesHtml = `<div class="text-center py-6 text-slate-600"><i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-50"></i><p class="text-xs font-medium">O cofre confidencial deste pedido está vazio.</p></div>`;
-    }
-
-    let dynamicDataHtml = '';
-    let topupProtectionHtml = '';
-    
-    if (order.isTopup) {
-        dynamicDataHtml = `
-            <div class="bg-success-900/20 p-5 rounded-2xl border border-success-500/30 shadow-inner mt-2">
-                <h3 class="text-xs font-black text-success-400 uppercase tracking-widest border-b border-success-500/20 pb-3 mb-3 flex items-center gap-2"><i data-lucide="wallet" class="w-4 h-4"></i> Transação de TopUp</h3>
-                <p class="text-sm text-slate-300">Este registo representa uma injeção de saldo diretamente na carteira do cliente. As faturas de depósito não exigem despacho físico ou digital.</p>
-            </div>`;
-            
-        topupProtectionHtml = `
-            <div class="bg-danger-500/10 border border-danger-500/30 p-4 rounded-xl mt-4 flex gap-3">
-                <i data-lucide="shield-alert" class="text-danger-400 w-5 h-5 shrink-0"></i>
-                <p class="text-xs text-danger-200"><b>Acesso Bloqueado:</b> O estado financeiro dos depósitos de carteira é gerido exclusivamente pelos Webhooks da PaySuite para evitar fraude e injeção falsa de dinheiro no sistema.</p>
-            </div>`;
-    } else if (order.category === 'physical' || !order.category) {
-        const ship = order.shipping || {};
-        dynamicDataHtml = `
-            <div class="bg-brand-900/20 p-5 rounded-2xl border border-brand-500/30 shadow-inner mt-2">
-                <h3 class="text-xs font-black text-brand-400 uppercase tracking-widest border-b border-brand-500/20 pb-3 mb-3 flex items-center gap-2"><i data-lucide="truck" class="w-4 h-4"></i> Dados de Despacho</h3>
-                <div class="grid grid-cols-2 gap-4 text-sm">
-                    <div><p class="text-[10px] text-slate-500 uppercase">Recetor</p><p class="text-white font-bold">${escapeHTML(ship.shipName || order.name)}</p></div>
-                    <div><p class="text-[10px] text-slate-500 uppercase">Tel</p><p class="text-white font-bold">${escapeHTML(ship.shipPhone || 'N/A')}</p></div>
-                    <div class="col-span-2"><p class="text-[10px] text-slate-500 uppercase">Morada Completa</p><p class="text-white bg-slate-950 p-3 rounded-xl border border-slate-800">${escapeHTML(ship.shipAddress || 'N/A')}</p></div>
-                </div>
-            </div>`;
-    } else {
-        const digital = order.digitalData || {};
-        dynamicDataHtml = `
-            <div class="bg-vip-900/20 p-5 rounded-2xl border border-vip-500/30 shadow-inner mt-2">
-                <h3 class="text-xs font-black text-vip-400 uppercase tracking-widest border-b border-vip-500/20 pb-3 mb-3 flex items-center gap-2"><i data-lucide="gamepad-2" class="w-4 h-4"></i> Credenciais Conta/Jogo</h3>
-                <div>
-                    <p class="text-[10px] text-slate-500 uppercase mb-1">Player ID / E-mail</p>
-                    <p class="text-white font-mono font-bold text-2xl bg-slate-950 p-4 rounded-xl border border-slate-800 select-all">${escapeHTML(digital.accountOrId || 'N/A')}</p>
-                </div>
-            </div>`;
-    }
-
-    const urlStr = order.detail ? order.detail.split(' | ')[0] : '#';
-    const detStr = order.detail ? order.detail.split(' | ')[1] : 'Nenhum detalhe adicional.';
-
-    document.getElementById('modalContent').innerHTML = `
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-[inset_0_2px_15px_rgba(0,0,0,0.5)]">
-            <div>
-                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 flex items-center gap-1">
-                    <i data-lucide="fingerprint" class="w-3 h-3"></i> Fatura Oficial (ID)
-                </p>
-                <p class="font-mono font-black ${order.isTopup ? 'text-success-400' : 'text-brand-400'} text-2xl tracking-tight">${order.orderId}</p>
-            </div>
-            <div class="flex flex-col items-start sm:items-end gap-2">
-                <span class="status-badge ${order.status}">${topStatusBadge}</span>
-                <p class="text-[11px] text-slate-500 font-medium"><i data-lucide="calendar-clock" class="w-3 h-3 inline pb-0.5"></i> ${order.createdAt.toLocaleString('pt-MZ')}</p>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-            <div class="bg-slate-900/50 p-6 rounded-2xl border border-white/5 flex flex-col gap-4">
-                <h3 class="text-xs font-black ${order.isTopup ? 'text-success-400' : 'text-brand-400'} uppercase tracking-widest border-b border-white/10 pb-3 flex items-center gap-2"><i data-lucide="user-circle" class="w-4 h-4"></i> Identidade do Pagador</h3>
-                <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nome Registado</p><p class="font-bold text-white text-base">${escapeHTML(order.name)}</p></div>
-                <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Correio/Ref</p><p class="font-medium text-slate-300 font-mono text-sm">${escapeHTML(order.email)}</p></div>
-            </div>
-
-            <div class="bg-slate-900 p-6 rounded-2xl border border-${order.isTopup ? 'success' : 'brand'}-500/20 shadow-lg relative overflow-hidden">
-                <div class="absolute top-0 right-0 w-32 h-32 bg-${order.isTopup ? 'success' : 'brand'}-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
-                <h3 class="text-xs font-black ${order.isTopup ? 'text-success-400' : 'text-brand-400'} uppercase tracking-widest border-b border-white/10 pb-3 flex items-center gap-2 relative z-10"><i data-lucide="calculator" class="w-4 h-4"></i> Extrato de Liquidação</h3>
-                <div class="space-y-3 relative z-10 mt-4">
-                    ${!order.isTopup ? `<div class="flex justify-between items-center"><p class="text-xs font-bold text-slate-400">Conversão (USD)</p><p class="font-mono font-bold text-slate-200 bg-slate-800 px-2 py-1 rounded">${formatValue(order.usd, 'usd')}</p></div>
-                    <div class="flex justify-between items-center"><p class="text-xs font-bold text-slate-400">Taxa do Serviço PayGo</p><p class="font-mono font-bold text-slate-300">${formatValue(order.tax, 'currency')}</p></div>` : ''}
-                    <div class="flex justify-between items-center"><p class="text-xs font-bold text-slate-400">Canal Pagamento</p><p class="text-[10px] font-black text-${methodColor}-400 bg-${methodColor}-500/20 px-2.5 py-1 rounded border border-${methodColor}-500/30 uppercase tracking-widest shadow-sm">${methodName}</p></div>
-                    ${trackRefHtml}
-                    <div class="flex justify-between pt-4 border-t border-white/10 mt-2 items-end"><p class="text-xs font-black text-white uppercase tracking-widest mb-1">TOTAL PAGO</p><p class="font-black text-3xl text-success-400 tracking-tight">${formatValue(order.total, 'currency')}</p></div>
-                </div>
-            </div>
-        </div>
-
-        ${dynamicDataHtml}
-        
-        ${!order.isTopup ? `
-        <div class="bg-slate-800/80 rounded-2xl p-6 border border-slate-700 shadow-inner mt-4">
-            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5"><i data-lucide="shopping-cart" class="w-3 h-3"></i> Resumo da Compra</p>
-            <a href="${urlStr}" target="_blank" class="text-brand-400 font-medium hover:underline break-all block mb-4 bg-slate-950 p-3 rounded-xl border border-slate-800"><i data-lucide="external-link" class="w-3 h-3 inline"></i> ${urlStr}</a>
-            <div class="bg-slate-950 p-4 rounded-xl font-mono text-sm text-brand-200 break-words leading-relaxed border border-white/5 whitespace-pre-wrap flex-1">${escapeHTML(detStr)}</div>
-        </div>` : ''}
-
-        <div class="bg-slate-900 rounded-2xl p-6 border border-warning-500/20 shadow-[0_10px_30px_rgba(245,158,11,0.05)] relative overflow-hidden flex flex-col mt-4">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-warning-500/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
-            <h3 class="text-xs font-black text-warning-400 uppercase tracking-widest border-b border-white/5 pb-3 flex items-center gap-2 relative z-10"><i data-lucide="sticky-note" class="w-4 h-4"></i> Notas Secretas da Equipa</h3>
-            
-            <div class="flex-1 overflow-y-auto pr-2 mt-4 relative z-10 mb-4 space-y-2 notes-scrollbar max-h-[160px]">
-                ${notesHtml}
-            </div>
-
-            <div class="relative z-10 flex flex-col gap-3 shrink-0 mt-2">
-                <textarea id="newNoteInput" placeholder="Escreva uma nota confidencial para a equipa..." class="w-full bg-slate-950 border border-slate-700 text-white text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-warning-500 focus:ring-1 focus:ring-warning-500/50 transition-all placeholder-slate-600 shadow-inner min-h-[88px]"></textarea>
-                <div class="flex justify-end">
-                    <button onclick="window.addInternalNote('${order.id}')" class="bg-warning-500/10 text-warning-400 hover:bg-warning-500 hover:text-slate-900 border border-warning-500/30 px-5 py-3 rounded-xl text-sm font-black transition-all shadow-lg active:scale-95 flex items-center gap-2">
-                        <i data-lucide="send" class="w-4 h-4"></i> Guardar Nota
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        ${topupProtectionHtml}
-
-        ${!order.isTopup ? `
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-sm mt-4">
-            <div class="flex-1 w-full">
-                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-1"><i data-lucide="shield-check" class="w-3 h-3"></i> Auditoria de Recebimento</p>
-                <button onclick="window.togglePaymentStatus('${order.id}', ${order.isPaid})" class="w-full sm:w-auto px-6 py-3.5 rounded-xl font-bold text-sm transition-all shadow-lg flex items-center justify-center gap-2 ${order.isPaid ? 'bg-success-600 hover:bg-success-500 text-white shadow-success-500/20' : 'bg-slate-950 border border-danger-500 text-danger-400 hover:bg-danger-500 hover:text-white'}">
-                    <i data-lucide="${order.isPaid ? 'check-circle' : 'alert-octagon'}" class="w-4 h-4"></i>
-                    ${order.isPaid ? '✅ DINHEIRO CONFIRMADO NA CONTA' : '⚠️ MARCAR PAGAMENTO MANUALMENTE'}
-                </button>
-            </div>
-        </div>` : ''}
-        
-        <div class="mt-6 pt-4 border-t border-slate-800 text-right">
-             <button onclick="window.deleteSingleOrder('${order.id}', ${order.isTopup})" class="px-5 py-3 bg-danger-500/10 hover:bg-danger-500 hover:text-white text-danger-400 border border-danger-500/30 rounded-xl text-sm font-bold transition flex items-center justify-center gap-2 inline-flex ml-auto">
-                <i data-lucide="trash-2" class="w-4 h-4"></i> Destruir Registo
-            </button>
-        </div>
-    `;
-
-    // BLOQUEIO ANTI-ATUALIZAÇÃO DE FUNDO
-    // Só mexemos nos inputs visíveis do utilizador se o modal estiver a ser aberto manualmente
-    if (!isSilentUpdate) {
-        const statusSelect = document.getElementById('statusSelect');
-        const trackingInput = document.getElementById('trackingInput');
-        const refundReasonContainer = document.getElementById('refundReasonContainer');
-        
-        if (order.isTopup) {
-            if(statusSelect) statusSelect.disabled = true;
-            if(trackingInput) trackingInput.parentElement.parentElement.classList.add('hidden');
-            if(refundReasonContainer) refundReasonContainer.classList.add('hidden');
-        } else {
-            if(statusSelect) { 
-                statusSelect.disabled = false; 
-                statusSelect.value = order.status; 
-                
-                statusSelect.onchange = (e) => {
-                    if (refundReasonContainer) {
-                        if(e.target.value === 'refunded') refundReasonContainer.classList.remove('hidden');
-                        else refundReasonContainer.classList.add('hidden');
-                    }
-                };
-                statusSelect.dispatchEvent(new Event('change')); 
-            }
-            if(trackingInput) {
-                if(order.category === 'physical' || !order.category) trackingInput.parentElement.parentElement.classList.remove('hidden');
-                else trackingInput.parentElement.parentElement.classList.add('hidden');
-                trackingInput.value = order.trackingCode || '';
+        // CPA
+        if (newStatus === 'completed' && order.referredBy && !order.commissionProcessed) {
+            const q = query(collection(db, "users"), where("affiliateCode", "==", order.referredBy), where("role", "==", "affiliate"));
+            const snap = await getDocs(q);
+            if(!snap.empty) {
+                const refDoc = snap.docs[0];
+                const commission = order.tax * (refDoc.data().approvedReferrals >= 10 ? 0.05 : 0.03);
+                await updateDoc(doc(db, "users", refDoc.id), { affiliateEarnings: increment(commission), approvedReferrals: increment(1) });
+                await updateDoc(doc(db, "orders", orderId), { commissionProcessed: true });
             }
         }
 
-        // Renderiza botões de ação dinamicamente apenas para Orders não-topup
-        const modalActionButtons = document.getElementById('modalActionButtons');
-        if(modalActionButtons) {
-            modalActionButtons.innerHTML = `
-                ${!order.isTopup && order.status !== 'completed' && order.status !== 'refunded' ? `
-                <button onclick="window.requestExtraFunds('${order.id}')" class="btn-action w-full md:w-auto px-6 py-3.5 bg-warning-500/10 hover:bg-warning-500 hover:text-slate-900 text-warning-500 rounded-xl font-bold transition-all flex items-center justify-center gap-2 border border-warning-500/30 mb-2 sm:mb-0">
-                    <i data-lucide="hand-coins" class="w-4 h-4"></i> <span>Falta Dinheiro (+ Valor)</span>
-                </button>` : ''}
-                ${!order.isTopup ? `
-                <button id="updateStatusBtn" onclick="window.saveOrderStatus()" class="btn-action w-full md:w-auto px-8 py-3.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(37,99,235,0.4)] border border-brand-500">
-                    <i data-lucide="save" class="w-4 h-4"></i> <span>Salvar Decisão</span>
-                </button>` : ''}
-            `;
-        }
-
-        const modal = document.getElementById('orderModal');
-        modal.classList.add('active');
-        document.body.style.overflow = 'hidden';
-    }
-    
-    window.renderIcons();
-};
-
-window.closeModal = () => {
-    document.getElementById('orderModal').classList.remove('active');
-    document.body.style.overflow = '';
-    currentOrderId = null;
-};
-
-// ==========================================
-// 💾 AÇÕES DE GESTÃO DO MODAL E REEMBOLSOS
-// ==========================================
-window.saveOrderStatus = async () => {
-    if (!currentOrderId) return;
-    const order = orders.find(o => o.id === currentOrderId);
-    if(order.isTopup) return;
-
-    const newStatus = document.getElementById('statusSelect').value;
-    const newTracking = document.getElementById('trackingInput').value.trim();
-    const oldStatus = order?.status;
-    
-    let refundReasonText = '';
-    let refundNoteObj = null;
-    let mediaUrl = null;
-
-    const btn = document.getElementById('updateStatusBtn');
-    const originalText = btn ? btn.innerHTML : 'Salvar Decisão';
-
-    // 🔴 FLUXO DE REEMBOLSO + STORAGE + WALLET
-    if (newStatus === 'refunded') {
-        refundReasonText = document.getElementById('refundReasonInput').value.trim();
-        if (!refundReasonText) {
-            showToast('Obrigatório preencher o motivo do reembolso!', 'error');
-            return;
-        }
-
-        if (order.refundProcessed) {
-            showToast('Alerta: Este pedido já foi reembolsado na carteira.', 'warning');
-            return;
-        }
-
-        if (btn) btn.disabled = true;
-        
-        const mediaInput = document.getElementById('refundMediaInput');
-        if (mediaInput && mediaInput.files && mediaInput.files[0]) {
-            const file = mediaInput.files[0];
-            if (btn) btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Anexo a carregar...`;
-            try {
-                const storageRef = ref(storage, `refunds_media/${order.id}_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '')}`);
-                const snapshot = await uploadBytesResumable(storageRef, file);
-                mediaUrl = await getDownloadURL(snapshot.ref);
-            } catch(err) {
-                console.error(err);
-                showToast('Erro ao enviar ficheiro. Tente sem anexo ou diminua o tamanho.', 'error');
-                if (btn) { btn.disabled = false; btn.innerHTML = originalText; }
-                return;
-            }
-        }
-
-        if (btn) btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A processar Reembolso Seguro...`;
-        
-        let textWithMedia = `REEMBOLSO EMITIDO: ${refundReasonText}`;
-        if(mediaUrl) textWithMedia += ` | Anexo: ${mediaUrl}`;
-
-        refundNoteObj = { 
-            text: textWithMedia, 
-            author: loggedInAdminName || 'Sistema', 
-            date: new Date().toISOString() 
-        };
-    } else {
-        if (btn) {
-            btn.disabled = true;
-            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A Sincronizar DB...`;
-        }
-    }
-
-    try {
-        const updateData = { status: newStatus, trackingCode: newTracking || null, updatedAt: serverTimestamp() };
-        
-        if (refundNoteObj) {
-            updateData.adminNotes = arrayUnion(refundNoteObj);
-            updateData.refundProcessed = true; 
-        }
-
-        await updateDoc(doc(db, "orders", currentOrderId), updateData);
-        await logAdminAction('UPDATE_ORDER_STATUS', currentOrderId, { status: oldStatus }, { status: newStatus });
-
-        // 💰 MOTOR CPA (Distribuição de Comissões)
-        if (newStatus === 'completed' && order?.referredBy && !order?.commissionProcessed) {
-            await processAffiliateCPA(order);
-            await updateDoc(doc(db, "orders", currentOrderId), { commissionProcessed: true });
-        }
-
-        // 🔄 MOTOR DE DEVOLUÇÃO À CARTEIRA (WALLET REFUND)
+        // WALLET REFUND
         if (newStatus === 'refunded' && !order.refundProcessed && order.userId) {
-            const refundAmount = Number(order.total) || 0;
+            const refundAmount = Number(order.amount) || 0;
             if (refundAmount > 0) {
                 const userRef = doc(db, "users", order.userId);
                 const uSnap = await getDoc(userRef);
-                
                 if(uSnap.exists()) {
                     await updateDoc(userRef, { walletBalance: increment(refundAmount) });
-                    
                     await addDoc(collection(db, "topups"), {
-                        userId: order.userId,
-                        userName: order.name,
-                        userEmail: order.email,
-                        amount: refundAmount,
-                        method: 'refund',
-                        status: 'completed',
-                        topupId: `REF-${order.orderId || order.id.substring(0,6)}`,
-                        createdAt: serverTimestamp(),
-                        detail: `Reembolso automático. Fatura: ${order.orderId}. Motivo: ${refundReasonText}`
+                        userId: order.userId, userName: order.customer.name, userEmail: order.customer.email, amount: refundAmount, method: 'refund', status: 'completed', topupId: `REF-${order.orderId}`, createdAt: serverTimestamp(), detail: `Reembolso. Pedido: ${order.orderId}. Motivo: ${reason}`
                     });
-                    
-                    showToast(`Reembolso de ${formatValue(refundAmount, 'currency')} injetado na carteira do cliente.`, 'success');
-                } else {
-                    showToast(`Atenção: Cliente já não existe na DB. Saldo não injetado.`, 'error');
+                    showToast(`Reembolso de ${refundAmount} MT injetado na carteira.`, 'success');
                 }
             }
         }
 
-        showToast('Nova fase logística gravada.', 'success');
-
+        showToast('Pedido atualizado com sucesso na Cloud.', 'success');
+        
+        // Notify
         if (newStatus === 'completed' && oldStatus !== 'completed') {
-            await sendNotificationEmail(order, 'completed');
+            fetch('/api/notify-order', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ orderData: order, action: "order_completed" }) }).catch(()=>{});
         } else if (newStatus === 'refunded' && oldStatus !== 'refunded') {
-            await fetch('/api/notify-order', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ orderData: order, action: "order_refunded", reason: refundReasonText, mediaUrl: mediaUrl, sendEmail: true })
-            }).catch(() => console.warn("API de notificação indisponível, mas refund salvo."));
+            fetch('/api/notify-order', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ orderData: order, action: "order_refunded", reason: reason }) }).catch(()=>{});
         }
 
-        window.closeModal();
-    } catch (error) { 
-        console.error("Erro ao Salvar:", error);
-        showToast(`Erro na gravação: ${error.message}`, 'error'); 
-    } 
-    finally { 
-        if (btn) { btn.disabled = false; btn.innerHTML = originalText; }
-        window.renderIcons(); 
+        closeModal();
+      } catch (err) {
+        showToast('Erro interno. Sem permissão.', 'error');
+        console.error(err);
+      } finally {
+        els.modalSave.disabled = false;
+        els.modalSave.innerHTML = `<i class="fa-solid fa-save"></i> Guardar Decisão`;
+      }
     }
-};
 
-async function processAffiliateCPA(order) {
-    try {
-        const q = query(collection(db, "users"), where("affiliateCode", "==", order.referredBy), where("role", "==", "affiliate"));
-        const snap = await getDocs(q);
-        if(snap.empty) return;
+    // ===== MASS ACTIONS & DELETE =====
+    window.confirmDelete = async (orderId, isTopup) => {
+      if (!confirm(`⚠️ PERIGO: Eliminar definitivamente a operação ${orderId} da base de dados?`)) return;
+      try {
+        const col = isTopup ? "topups" : "orders";
+        await deleteDoc(doc(db, col, orderId));
+        showToast('Registo vaporizado.', 'success');
+      } catch (err) {
+        showToast('Falha técnica ao eliminar.', 'error');
+      }
+    };
 
-        const refDoc = snap.docs[0];
-        const refData = refDoc.data();
-
-        const commissionValue = order.tax * (refData.approvedReferrals >= 10 ? 0.05 : 0.03);
-
-        await updateDoc(doc(db, "users", refDoc.id), {
-            affiliateEarnings: increment(commissionValue),
-            approvedReferrals: increment(1)
-        });
-
-    } catch(e) { console.error("Falha ao distribuir comissões", e); }
-}
-
-window.togglePaymentStatus = async (orderId, isCurrentlyPaid) => {
-    const newStatus = !isCurrentlyPaid;
-    const order = orders.find(o => o.id === orderId);
-    if(order.isTopup) return;
-
-    try {
-        await updateDoc(doc(db, "orders", orderId), { isPaid: newStatus, updatedAt: serverTimestamp() });
-        await logAdminAction('TOGGLE_PAYMENT_STATUS', orderId, { isPaid: isCurrentlyPaid }, { isPaid: newStatus });
-
-        showToast(newStatus ? 'Validado como PAGO!' : 'Assinatura Financeira Removida.', 'success');
-
-        if (newStatus === true) {
-            showToast('Servidor de Emails ativado.', 'info');
-            await sendNotificationEmail(order, 'paid');
-        }
-        window.closeModal();
-    } catch (e) { showToast('Falha técnica.', 'error'); }
-};
-
-window.deleteSingleOrder = async (orderId, isTopup) => {
-    if(!confirm(`⚠️ PERIGO EXTREMO ⚠️\n\nTem a certeza que deseja apagar este registo?`)) return;
-    try {
-        await logAdminAction('DELETE_ORDER', orderId, { order_id: orderId }, null);
-        const collectionTarget = isTopup ? "topups" : "orders";
-        await deleteDoc(doc(db, collectionTarget, orderId));
-        showToast(`O documento foi vaporizado da Base de Dados.`, 'success');
-        window.closeModal();
-    } catch(error) { showToast('Falha técnica ao eliminar o documento.', 'error'); }
-};
-
-window.clearHistory = async () => {
-    if (currentFilteredOrders.length === 0) return showToast('Sem pedidos visíveis para purgar.', 'warning');
-    const qty = currentFilteredOrders.length;
-    if (!confirm(`⚠️ ALERTA VERMELHO ⚠️\n\nIsto irá varrer TODOS os ${qty} pedidos no ecrã.\nProceder?`)) return;
-
-    showToast('A preparar injeção de eliminação em massa...', 'info');
-    try {
-        await logAdminAction('BULK_DELETE_ORDERS', 'multiple', null, { deletedCount: qty });
+    function purgeVisible() {
+      if (filteredOrders.length === 0) return showToast('Sem pedidos na lista.', 'warning');
+      const qty = filteredOrders.length;
+      if (!confirm(`⚠️ ALERTA: Isto irá ELIMINAR TODOS os ${qty} registos visíveis na tabela atualmente. Proceder?`)) return;
+      
+      showToast('A executar eliminação em massa...', 'info');
+      try {
         const batch = writeBatch(db);
-        currentFilteredOrders.forEach(order => { const col = order.isTopup ? "topups" : "orders"; batch.delete(doc(db, col, order.id)); });
-        await batch.commit();
-        showToast(`Operação Global: ${qty} Documentos Destruídos.`, 'success');
-    } catch (e) { showToast('O servidor bloqueou a execução em massa (Limites).', 'error'); }
-};
-
-window.exportToCSV = () => {
-    if (currentFilteredOrders.length === 0) return showToast('Dados insuficientes para relatório.', 'warning');
-    
-    logAdminAction('EXPORT_CSV', 'all', null, { exportedCount: currentFilteredOrders.length });
-    
-    let csvContent = "ID,Data,Hora,Cliente,Email,Categoria,Total(MT),Status\n";
-
-    currentFilteredOrders.forEach(order => {
-        const safeName = `"${order.name.replace(/"/g, '""')}"`;
-        const safeEmail = `"${order.email.replace(/"/g, '""')}"`;
-        const safeCategory = `"${order.category}"`;
-        csvContent += `"${order.orderId}","${order.createdAt.toLocaleDateString('pt-MZ')}","${order.createdAt.toLocaleTimeString('pt-MZ')}",${safeName},${safeEmail},${safeCategory},"${order.total}","${order.status}"\n`;
-    });
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `PayGo_Relatorio_${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(link); link.click(); document.body.removeChild(link);
-};
-
-// ==========================================
-// 📱 CONTROLOS MÓVEIS E AÇÕES DE TECLADO
-// ==========================================
-const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-const sidebar = document.getElementById('sidebar');
-const sidebarOverlay = document.getElementById('sidebarOverlay');
-const closeSidebarBtn = document.getElementById('closeSidebarBtn');
-
-function toggleMobileSidebar() {
-    sidebar.classList.toggle('-translate-x-full');
-    if(sidebarOverlay.classList.contains('hidden')) {
-        sidebarOverlay.classList.remove('hidden');
-        setTimeout(() => sidebarOverlay.classList.remove('opacity-0'), 10);
-    } else {
-        sidebarOverlay.classList.add('opacity-0');
-        setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
+        filteredOrders.forEach(order => {
+          const col = order.isTopup ? "topups" : "orders";
+          batch.delete(doc(db, col, order.id));
+        });
+        batch.commit().then(() => showToast(`${qty} Documentos Destruídos.`, 'success'));
+      } catch (e) {
+        showToast('O servidor bloqueou a execução em massa.', 'error');
+      }
     }
-}
-if(mobileMenuBtn) mobileMenuBtn.addEventListener('click', toggleMobileSidebar);
-if(closeSidebarBtn) closeSidebarBtn.addEventListener('click', toggleMobileSidebar);
-if(sidebarOverlay) sidebarOverlay.addEventListener('click', toggleMobileSidebar);
 
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && document.getElementById('orderModal').classList.contains('active')) window.closeModal(); });
-window.logout = async function() { if (confirm('Encerrar sessão de forma segura?')) { await signOut(auth); window.location.href = '../login.html'; } };
-
-// ==========================================
-// 🚀 INICIALIZAÇÃO
-// ==========================================
-const fallbackTimer = setTimeout(() => { const loader = document.getElementById('sysLoader'); if(loader) loader.style.display = 'none'; }, 3000);
-
-onAuthStateChanged(auth, async (user) => {
-    if (!user) { window.location.href = '../login.html'; return; }
-    try {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists() && (userDoc.data().role === 'admin' || userDoc.data().role === 'superadmin')) {
-            loggedInAdminId = user.uid;
-            loggedInAdminName = userDoc.data().name || 'Admin';
-            const adminNameEl = document.getElementById('adminName');
-            if(adminNameEl) adminNameEl.textContent = loggedInAdminName;
-            loadDataRealTime(); 
-        } else { window.location.href = '../index.html'; }
-    } catch (error) { 
-        alert("ALERTA DE SISTEMA: " + error.message);
-        showToast("Erro de ligação à rede segura.", "error"); 
-    } 
-    finally { 
-        clearTimeout(fallbackTimer);
-        const loader = document.getElementById('sysLoader');
-        if(loader) loader.style.display = 'none'; 
+    function exportToCSV() {
+      if (filteredOrders.length === 0) return showToast('Sem dados para exportar.', 'warning');
+      
+      const headers = ['ID_Interno', 'Fatura', 'Data', 'Nome', 'Email', 'Categoria', 'Valor(USD)', 'Valor(MT)', 'Status', 'Pago'];
+      const rows = filteredOrders.map(o => [
+        o.id, o.orderId, formatDate(o.createdAt), o.customer?.name || '', o.customer?.email || '', o.category, o.usdAmount, o.amount, o.status, o.isPaid ? 'Sim' : 'Não'
+      ]);
+      
+      const csv = [headers, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `PayGo_DB_${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
     }
-});
 
-document.addEventListener('DOMContentLoaded', () => { window.renderIcons(); });
-window.addEventListener('beforeunload', () => { 
-    if (ordersUnsubscribe) ordersUnsubscribe(); 
-    if (topupsUnsubscribe) topupsUnsubscribe(); 
-});
-</script>
+    // ===== UTILS =====
+    function showToast(message, type = 'info') {
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.innerHTML = `<i class="fa-solid fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'triangle-exclamation' : 'info-circle'}"></i> <span>${message}</span>`;
+      els.toastContainer.appendChild(toast);
+      setTimeout(() => toast.remove(), 4000);
+    }
+
+    function formatDate(date) {
+      if (!date) return '—';
+      return date.toLocaleDateString('pt-MZ', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + date.toLocaleTimeString('pt-MZ', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function formatCurrency(amount) {
+      if (amount == null) return '0.00 MT';
+      return Number(amount).toLocaleString('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' MT';
+    }
+
+    function getStatusClass(status) {
+      return { 'pending': 'pending', 'processing': 'processing', 'shipped': 'transit', 'completed': 'completed', 'cancelled': 'cancelled', 'refunded': 'refunded' }[status] || 'pending';
+    }
+
+    function getStatusLabel(status) {
+      return { 'pending': '⏳ Pendente', 'processing': '🔄 Compra Int.', 'shipped': '✈️ Em Trânsito', 'completed': '✅ Fechado', 'cancelled': '❌ Cancelado', 'refunded': '🟣 Reembolsado' }[status] || status;
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    }
+  </script>
 </body>
 </html>
