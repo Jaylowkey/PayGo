@@ -276,6 +276,110 @@ function generateNotifyHTML(action, order, reason, extraAmount, mediaUrl) {
 }
 
 // =========================================================
+// 🎓 GROUP APPLICATIONS HELPERS
+// =========================================================
+const GROUP_APPLICATIONS_COLLECTION = 'group_applications';
+const GROUP_APPLICATION_PRICE = 1200;
+
+function normalizePhone(value = '') {
+  return String(value || '').replace(/[^\d+]/g, '').trim();
+}
+
+function sanitizeText(value = '') {
+  return String(value || '').trim();
+}
+
+function generateApplicationShortId() {
+  const n = Math.floor(100000 + Math.random() * 900000);
+  return `APL-${n}`;
+}
+
+function resolveApplicationCardProvider(cardProvider, cardProviderOther) {
+  const provider = sanitizeText(cardProvider);
+  const other = sanitizeText(cardProviderOther);
+  if (provider === 'Outro') return other || 'Outro';
+  return provider;
+}
+
+function mapApplicationStatus(status) {
+  const clean = sanitizeText(status || 'pending');
+  if (['pending', 'paid', 'confirmed', 'added_to_group'].includes(clean)) return clean;
+  return 'pending';
+}
+
+async function generateUniqueApplicationShortId(db) {
+  for (let i = 0; i < 10; i++) {
+    const shortId = generateApplicationShortId();
+    const existing = await db
+      .collection(GROUP_APPLICATIONS_COLLECTION)
+      .where('shortId', '==', shortId)
+      .limit(1)
+      .get();
+
+    if (existing.empty) return shortId;
+  }
+
+  return `APL-${Date.now().toString().slice(-6)}`;
+}
+
+function buildApplicationPaymentReference(shortId) {
+  return String(shortId || '').replace(/[^a-zA-Z0-9]/g, '');
+}
+
+async function createPaySuitePaymentLink(req, {
+  orderId,
+  amount,
+  method = 'mpesa',
+  description
+}) {
+  const cleanMethod = ['mpesa', 'm-pesa'].includes(method) ? 'mpesa' : method === 'card' ? 'card' : 'emola';
+  const baseUrl = buildBaseUrl(req);
+
+  const payload = {
+    amount: parseFloat(amount),
+    method: cleanMethod,
+    reference: buildApplicationPaymentReference(orderId),
+    description: description || `Candidatura PayGo ${orderId}`,
+    callback_url: `${baseUrl}/api/paysuite-webhook`,
+    return_url: `${baseUrl}/candidatura-cartao.html`
+  };
+
+  const response = await fetch(`${(process.env.PAYSUITE_API_URL || 'https://paysuite.tech/api/v1').replace(/\/+$/, '')}/payments`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      Authorization: `Bearer ${process.env.PAYSUITE_API_KEY || process.env.PAYSUITE_API_TOKEN}`
+    },
+    body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(30000)
+  });
+
+  const textResponse = await response.text();
+
+  let result;
+  try {
+    result = JSON.parse(textResponse);
+  } catch {
+    throw new Error('Resposta inválida da Paysuite.');
+  }
+
+  if (!response.ok || result.status === 'error') {
+    throw new Error(result.message || 'Falha ao criar pagamento na Paysuite.');
+  }
+
+  return {
+    paymentId: result.data?.id || null,
+    reference: result.data?.reference || payload.reference,
+    status: result.data?.status || 'pending',
+    checkoutUrl: result.data?.checkout_url || null,
+    amount: result.data?.amount || amount,
+    method: cleanMethod,
+    raw: result
+  };
+}
+
+// =========================================================
 // 🛠️ HANDLERS DE ROTAS
 // =========================================================
 async function handlePaySuitePayment(req, res, body) {
@@ -338,6 +442,63 @@ async function handlePaySuiteWebhook(req, res, body) {
   }
   
   if (!merchantReference) return res.status(200).json({ warning: 'Sem Referência para processar' });
+
+    // PROCESSAMENTO DE CANDIDATURAS DE GRUPO
+  if (merchantReference.startsWith('APL')) {
+    const normalizedShortId = merchantReference.includes('-')
+      ? merchantReference
+      : merchantReference.replace(/^APL/, 'APL-');
+
+    const snap = await db
+      .collection(GROUP_APPLICATIONS_COLLECTION)
+      .where('shortId', '==', normalizedShortId)
+      .limit(1)
+      .get();
+
+    if (!snap.empty) {
+      const docApp = snap.docs[0];
+      const appData = docApp.data();
+
+      if (isSuccess) {
+        await docApp.ref.update({
+          status: appData.status === 'added_to_group' ? 'added_to_group' : 'paid',
+          isPaid: true,
+          paymentStatus: 'paid',
+          paysuitePaymentId: paymentData.payment_id || paymentData.id || appData.paysuitePaymentId || null,
+          paysuiteReference: paymentData.reference || normalizedShortId,
+          updatedAt: agora
+        });
+
+        await db.collection('admin_audit_logs').add({
+          adminId: 'system_bot',
+          adminName: '🤖 Sistema Automático',
+          action: 'GROUP_APPLICATION_PAYMENT_CONFIRMED',
+          targetId: docApp.id,
+          targetType: 'group_application',
+          details: {
+            shortId: normalizedShortId,
+            updated: {
+              status: 'paid',
+              isPaid: true,
+              paymentStatus: 'paid'
+            }
+          },
+          createdAt: agora
+        });
+
+        return res.status(200).json({ success: true, operation: 'group_application_paid' });
+      }
+
+      if (isFailed) {
+        await docApp.ref.update({
+          paymentStatus: 'failed',
+          updatedAt: agora
+        });
+
+        return res.status(200).json({ success: true, operation: 'group_application_failed' });
+      }
+    }
+  }
 
   // PROCESSAMENTO DE DEPÓSITOS (TOP-UPS)
   if (merchantReference.startsWith('TOP-')) {
@@ -599,6 +760,255 @@ async function handleNotifyOrder(req, res, body) {
 }
 
 // =========================================================
+// 🎓 GROUP APPLICATIONS HANDLERS
+// =========================================================
+async function handleCreateGroupApplication(req, res, body) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ success: false, error: 'Método não permitido' });
+  }
+
+  const {
+    db
+  } = getFirebase();
+
+  const fullName = sanitizeText(body.fullName);
+  const email = sanitizeText(body.email).toLowerCase();
+  const whatsapp = normalizePhone(body.whatsapp);
+  const city = sanitizeText(body.city);
+  const goal = sanitizeText(body.goal);
+  const paymentName = sanitizeText(body.paymentName);
+  const notes = sanitizeText(body.notes);
+  const cardOption = sanitizeText(body.cardOption) || 'no_card';
+  const paymentMethod = sanitizeText(body.paymentMethod) || 'mpesa';
+  const createPayment = Boolean(body.createPayment);
+  const cardProvider = resolveApplicationCardProvider(body.cardProvider, body.cardProviderOther);
+
+  if (!fullName || fullName.length < 5) {
+    return res.status(400).json({ success: false, error: 'Nome completo inválido.' });
+  }
+  if (!email || !email.includes('@')) {
+    return res.status(400).json({ success: false, error: 'Email inválido.' });
+  }
+  if (!whatsapp || whatsapp.replace(/\D/g, '').length < 8) {
+    return res.status(400).json({ success: false, error: 'WhatsApp inválido.' });
+  }
+  if (!goal || goal.length < 10) {
+    return res.status(400).json({ success: false, error: 'Objetivo inválido.' });
+  }
+  if (!paymentName || paymentName.length < 5) {
+    return res.status(400).json({ success: false, error: 'Nome de pagamento inválido.' });
+  }
+  if (!['no_card', 'have_card_recharge'].includes(cardOption)) {
+    return res.status(400).json({ success: false, error: 'Opção de cartão inválida.' });
+  }
+  if (cardOption === 'have_card_recharge' && !cardProvider) {
+    return res.status(400).json({ success: false, error: 'Provedor do cartão é obrigatório.' });
+  }
+
+  const shortId = await generateUniqueApplicationShortId(db);
+  const now = new Date().toISOString();
+
+  const applicationData = {
+    shortId,
+    fullName,
+    email,
+    whatsapp,
+    city,
+    goal,
+    paymentName,
+    notes,
+    cardOption,
+    cardProvider: cardOption === 'have_card_recharge' ? cardProvider : '',
+    amount: GROUP_APPLICATION_PRICE,
+    currency: 'MZN',
+    status: 'pending',
+    paymentMethod,
+    paymentStatus: 'pending',
+    isPaid: false,
+    paysuiteCheckoutUrl: null,
+    paysuitePaymentId: null,
+    paysuiteReference: null,
+    createdAt: now,
+    updatedAt: now,
+    source: 'landing_page',
+    adminNotes: []
+  };
+
+  const docRef = await db.collection(GROUP_APPLICATIONS_COLLECTION).add(applicationData);
+
+  let checkoutData = null;
+
+  if (createPayment) {
+    try {
+      checkoutData = await createPaySuitePaymentLink(req, {
+        orderId: shortId,
+        amount: GROUP_APPLICATION_PRICE,
+        method: paymentMethod,
+        description: `Candidatura para aulas de cartão virtual - ${shortId}`
+      });
+
+      await docRef.update({
+        paysuiteCheckoutUrl: checkoutData.checkoutUrl || null,
+        paysuitePaymentId: checkoutData.paymentId || null,
+        paysuiteReference: checkoutData.reference || null,
+        paymentStatus: checkoutData.status || 'pending',
+        updatedAt: new Date().toISOString()
+      });
+    } catch (error) {
+      await docRef.update({
+        paymentError: error.message || 'Falha ao gerar checkout',
+        updatedAt: new Date().toISOString()
+      });
+    }
+  }
+
+  return res.status(200).json({
+    success: true,
+    data: {
+      id: docRef.id,
+      shortId,
+      status: 'pending',
+      amount: GROUP_APPLICATION_PRICE,
+      checkoutUrl: checkoutData?.checkoutUrl || null,
+      paymentId: checkoutData?.paymentId || null,
+      paymentStatus: checkoutData?.status || 'pending'
+    }
+  });
+}
+
+async function handleGetGroupApplication(req, res, body) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ success: false, error: 'Método não permitido' });
+  }
+
+  const { db } = getFirebase();
+  const shortId = sanitizeText(body.shortId);
+
+  if (!shortId) {
+    return res.status(400).json({ success: false, error: 'shortId é obrigatório.' });
+  }
+
+  const snap = await db
+    .collection(GROUP_APPLICATIONS_COLLECTION)
+    .where('shortId', '==', shortId)
+    .limit(1)
+    .get();
+
+  if (snap.empty) {
+    return res.status(404).json({ success: false, error: 'Candidatura não encontrada.' });
+  }
+
+  const doc = snap.docs[0];
+  const data = doc.data();
+
+  return res.status(200).json({
+    success: true,
+    application: {
+      id: doc.id,
+      ...data
+    }
+  });
+}
+
+async function handleGetGroupApplications(req, res) {
+  if (req.method !== 'POST' && req.method !== 'GET') {
+    return res.status(405).json({ success: false, error: 'Método não permitido' });
+  }
+
+  const { db } = getFirebase();
+
+  const snap = await db
+    .collection(GROUP_APPLICATIONS_COLLECTION)
+    .orderBy('createdAt', 'desc')
+    .get();
+
+  const applications = snap.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data()
+  }));
+
+  return res.status(200).json({
+    success: true,
+    applications
+  });
+}
+
+async function handleUpdateGroupApplicationStatus(req, res, body) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ success: false, error: 'Método não permitido' });
+  }
+
+  const { db } = getFirebase();
+
+  const applicationId = sanitizeText(body.applicationId);
+  const status = mapApplicationStatus(body.status);
+  const adminName = sanitizeText(body.adminName) || 'Admin PayGo';
+  const adminId = sanitizeText(body.adminId) || 'admin_manual';
+  const adminNote = sanitizeText(body.adminNote);
+
+  if (!applicationId) {
+    return res.status(400).json({ success: false, error: 'applicationId é obrigatório.' });
+  }
+
+  const docRef = db.collection(GROUP_APPLICATIONS_COLLECTION).doc(applicationId);
+  const docSnap = await docRef.get();
+
+  if (!docSnap.exists) {
+    return res.status(404).json({ success: false, error: 'Candidatura não encontrada.' });
+  }
+
+  const currentData = docSnap.data() || {};
+  const now = new Date().toISOString();
+
+  const updateData = {
+    status,
+    updatedAt: now
+  };
+
+  if (status === 'paid') {
+    updateData.isPaid = true;
+    updateData.paymentStatus = 'paid';
+  }
+
+  if (status === 'pending' && currentData.isPaid !== true) {
+    updateData.paymentStatus = 'pending';
+  }
+
+  if (adminNote) {
+    updateData.adminNotes = FieldValue.arrayUnion({
+      text: adminNote,
+      adminName,
+      adminId,
+      createdAt: now
+    });
+  }
+
+  await docRef.update(updateData);
+
+  await db.collection('admin_audit_logs').add({
+    adminId,
+    adminName,
+    action: 'UPDATE_GROUP_APPLICATION_STATUS',
+    targetId: applicationId,
+    targetType: 'group_application',
+    details: {
+      previous: {
+        status: currentData.status || 'pending',
+        isPaid: Boolean(currentData.isPaid),
+        paymentStatus: currentData.paymentStatus || 'pending'
+      },
+      updated: updateData
+    },
+    createdAt: now
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: 'Estado atualizado com sucesso.'
+  });
+}
+
+// =========================================================
 // 🗺️ MAPA DE ROTAS & EXPORT
 // =========================================================
 const routes = {
@@ -613,6 +1023,10 @@ const routes = {
   'recover-password': handleRecoverPassword,
   'verify-email': handleVerifyEmail,
   'notify-order': handleNotifyOrder,
+  'create-group-application': handleCreateGroupApplication,
+  'get-group-application': handleGetGroupApplication,
+  'get-group-applications': handleGetGroupApplications,
+  'update-group-application-status': handleUpdateGroupApplicationStatus,
 };
 
 export default async function handler(req, res) {
