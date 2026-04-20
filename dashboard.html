@@ -191,7 +191,6 @@
     <div class="fixed bottom-0 right-0 w-[420px] h-[420px] bg-vip-500/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
     <div id="toastContainer"></div>
 
-    <!-- HEADER -->
     <header class="fixed w-full z-50 glass-nav">
         <div class="container mx-auto px-4 md:px-6 h-20 flex justify-between items-center">
             <div class="flex items-center gap-3 min-w-0">
@@ -233,7 +232,6 @@
 
     <main class="pt-28 pb-20 relative z-10 container mx-auto px-4 md:px-6 max-w-7xl">
 
-        <!-- HERO -->
         <section class="hero-card rounded-3xl p-6 md:p-8 mb-8 relative overflow-hidden">
             <div class="absolute inset-0 bg-gradient-to-r from-brand-500/10 via-transparent to-vip-500/10 pointer-events-none"></div>
 
@@ -274,10 +272,8 @@
         </section>
 
         <div class="grid lg:grid-cols-3 gap-8">
-            <!-- COLUNA ESQUERDA -->
             <div class="lg:col-span-1 space-y-6">
 
-                <!-- CARTEIRA -->
                 <div class="glass-card rounded-3xl p-6 relative overflow-hidden shadow-2xl border-t-4 border-t-brand-500" id="walletCard">
                     <div class="absolute -right-6 -top-6 opacity-10">
                         <i data-lucide="wallet" class="w-32 h-32"></i>
@@ -311,7 +307,6 @@
                     </div>
                 </div>
 
-                <!-- VIP -->
                 <div class="glass-card rounded-3xl p-6 border border-slate-800 relative overflow-hidden group">
                     <div class="absolute right-0 top-0 w-24 h-24 bg-vip-500/10 rounded-full blur-2xl group-hover:bg-vip-500/20 transition"></div>
                     <p class="section-label mb-2 flex items-center gap-2 text-vip-400">
@@ -326,7 +321,6 @@
                     </button>
                 </div>
 
-                <!-- AFILIADOS -->
                 <div class="glass-card rounded-3xl p-6 border border-brand-500/20 relative overflow-hidden bg-brand-500/5">
                     <div class="absolute -right-4 -bottom-4 text-brand-500/20">
                         <i data-lucide="gift" class="w-24 h-24"></i>
@@ -345,7 +339,6 @@
                     </div>
                 </div>
 
-                <!-- SUPORTE -->
                 <div class="glass-card rounded-3xl p-5 border border-slate-800">
                     <p class="section-label mb-4 flex items-center gap-2">
                         <i data-lucide="life-buoy" class="w-4 h-4 text-brand-400"></i>
@@ -374,7 +367,6 @@
                     </div>
                 </div>
 
-                <!-- SISTEMA -->
                 <div class="glass-card rounded-3xl p-5 border border-slate-800">
                     <p class="section-label mb-4">Informação do Sistema</p>
                     <div class="space-y-3">
@@ -393,10 +385,8 @@
                 </div>
             </div>
 
-            <!-- COLUNA DIREITA -->
             <div class="lg:col-span-2 space-y-6">
 
-                <!-- CARTÃO VIRTUAL -->
                 <div class="glass-card rounded-3xl p-6 md:p-8 border border-brand-500/20 shadow-[0_0_30px_rgba(59,130,246,0.08)] relative overflow-hidden">
                     <div class="flex flex-col md:flex-row gap-8 items-center">
                         <div class="realistic-card w-full md:w-80 h-48 rounded-2xl p-6 flex flex-col justify-between shrink-0 transform transition-transform hover:scale-[1.02] relative overflow-hidden group">
@@ -459,7 +449,6 @@
                     </div>
                 </div>
 
-                <!-- ORÇAMENTADOR -->
                 <div class="glass-card rounded-3xl p-6 md:p-8 relative overflow-hidden">
                     <div class="absolute right-0 top-0 w-40 h-40 bg-brand-500/5 rounded-full blur-3xl"></div>
 
@@ -604,7 +593,6 @@
                     </form>
                 </div>
 
-                <!-- OPERAÇÕES RECENTES -->
                 <div class="glass-card rounded-3xl p-6 md:p-8">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
                         <div>
@@ -646,8 +634,6 @@
             </div>
         </div>
     </main>
-
-    <!-- MANTÉM AQUI TODOS OS TEUS MODAIS E O BLOCO <script type="module"> ORIGINAL -->
 
     <div id="profileModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl relative">
@@ -949,41 +935,7 @@
             appId: "1:208360646277:web:aecc57cc0077ae48a52bec" 
         };
 
-        let app, auth, db;
-        try {
-            app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app, "paygodb"); // 🔥 AQUI ESTÁ A CORREÇÃO DA BASE DE DADOS!
-            if (typeof lucide !== 'undefined') lucide.createIcons();
-        } catch (error) {
-            console.error("❌ Erro ao inicializar Firebase:", error);
-            document.getElementById('sysLoader').innerHTML = `
-                <div class="text-center p-6">
-                    <i data-lucide="alert-triangle" class="w-16 h-16 text-danger-400 mx-auto mb-4"></i>
-                    <h2 class="text-white text-xl font-bold mb-2">Erro de Conexão</h2>
-                    <button onclick="location.reload()" class="mt-4 px-6 py-2 bg-brand-600 rounded-lg text-white text-sm font-bold">Tentar Novamente</button>
-                </div>
-            `;
-            if (typeof lucide !== 'undefined') lucide.createIcons();
-        }
-
-        let currentUser = null, userData = null;
-        let sysExchangeRate = 85, sysTax1 = 150, sysTax2 = 250, sysTax3 = 600;
-        let isFirstPurchaseEligible = false, firstPurchaseFree = true, isUserVip = false;
-        let currentCalculatedTotal = 0, currentCalculatedTax = 0;
-        let rawVcNumber = ''; let rawVcCvc = ''; let isCardRevealed = false;
-        let isProcessing = false, isRefreshing = false, lastFetchTime = null; 
-        let walletUnsubscribe = null;
-
-        // ==========================================
-        // 3. UTILITÁRIOS GERAIS
-        // ==========================================
-        const escapeHTML = (str) => { if (!str) return ''; return String(str).replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)); };
-        const sanitizeInput = (str, maxLength = 500) => { if (!str) return ''; return escapeHTML(String(str).trim().substring(0, maxLength)); };
-        const setSafeText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text ?? ''; };
-        const setSafeHTML = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; }; 
-        const setSafeValue = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
-        const setRequiredElements = (selector, isRequired) => { document.querySelectorAll(selector).forEach(el => { if (isRequired) { el.setAttribute('required', 'true'); el.disabled = false; } else { el.removeAttribute('required'); el.disabled = true; } }); };
+        let app, auth, db, currentUser;
 
         window.showToast = function(msg, type = 'success') {
             const container = document.getElementById('toastContainer');
@@ -998,55 +950,65 @@
             setTimeout(() => { t.classList.remove('show'); t.classList.add('hiding'); setTimeout(() => t.remove(), 400); }, 4000);
         }
 
-                    const formatMZN = (val) =>
-                new Intl.NumberFormat('pt-MZ', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                }).format(Number(val || 0));
-            
-            const formatUSD = (val) =>
-                new Intl.NumberFormat('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                }).format(Number(val || 0));
-            
-            const formatCurrency = (val, currency = 'MZN') => {
-                const num = Number(val || 0);
-            
-                if (currency === 'USD') {
-                    return new Intl.NumberFormat('en-US', {
-                        style: 'currency',
-                        currency: 'USD',
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    }).format(num);
-                }
-            
-                return new Intl.NumberFormat('pt-MZ', {
-                    style: 'currency',
-                    currency: 'MZN',
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                }).format(num);
-            };
-            
-            const formatDate = (timestamp) => {
-                if (!timestamp) return '—';
-                try {
-                    const date = timestamp instanceof Date
-                        ? timestamp
-                        : timestamp?.toDate?.() || new Date(timestamp?.seconds * 1000);
-            
-                    return date.toLocaleDateString('pt-MZ', {
-                        day: '2-digit',
-                        month: 'short',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    });
-                } catch {
-                    return 'Data inválida';
-                }
-            };
+        window.closeModals = () => { 
+            ['topUpModal', 'transferModal', 'vipModal', 'vcModal', 'vcTopUpModal', 'supportModal', 'profileModal'].forEach(id => { 
+                const el = document.getElementById(id); if(el) { el.classList.remove('flex'); el.classList.add('hidden'); } 
+            }); 
+        };
+        window.openTopUpModal = () => { window.closeModals(); const el = document.getElementById('topUpModal'); if(el) el.classList.replace('hidden', 'flex'); };
+        window.openTransferModal = () => { window.closeModals(); const el = document.getElementById('transferModal'); if(el) el.classList.replace('hidden', 'flex'); };
+        window.openVipModal = () => { window.closeModals(); const el = document.getElementById('vipModal'); if(el) el.classList.replace('hidden', 'flex'); };
+        window.openVcTopUpModal = () => { window.closeModals(); const el = document.getElementById('vcTopUpModal'); if(el) el.classList.replace('hidden', 'flex'); };
+        window.logout = async () => { if(confirm('Sair da conta?')) { await signOut(auth); window.location.href = 'login.html'; } };
+
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app, "paygodb");
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        } catch (error) {
+            console.error("❌ Erro ao inicializar Firebase:", error);
+            document.getElementById('sysLoader').innerHTML = `
+                <div class="text-center p-6">
+                    <i data-lucide="alert-triangle" class="w-16 h-16 text-danger-400 mx-auto mb-4"></i>
+                    <h2 class="text-white text-xl font-bold mb-2">Erro de Conexão</h2>
+                    <button onclick="location.reload()" class="mt-4 px-6 py-2 bg-brand-600 rounded-lg text-white text-sm font-bold">Tentar Novamente</button>
+                </div>
+            `;
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        let userData = null;
+        let sysExchangeRate = 85, sysTax1 = 150, sysTax2 = 250, sysTax3 = 600;
+        let isFirstPurchaseEligible = false, firstPurchaseFree = true, isUserVip = false;
+        let currentCalculatedTotal = 0, currentCalculatedTax = 0;
+        let rawVcNumber = ''; let rawVcCvc = ''; let isCardRevealed = false;
+        let isProcessing = false, isRefreshing = false, lastFetchTime = null; 
+        let walletUnsubscribe = null;
+
+        // ==========================================
+        // 3. UTILITÁRIOS GERAIS
+        // ==========================================
+        const escapeHTML = (str) => { if (!str) return ''; return String(str).replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)); };
+        const setSafeText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text ?? ''; };
+        const setSafeHTML = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; }; 
+        const setSafeValue = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+        const setRequiredElements = (selector, isRequired) => { document.querySelectorAll(selector).forEach(el => { if (isRequired) { el.setAttribute('required', 'true'); el.disabled = false; } else { el.removeAttribute('required'); el.disabled = true; } }); };
+
+        const formatMZN = (val) => new Intl.NumberFormat('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(val || 0));
+        const formatUSD = (val) => new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(val || 0));
+        const formatCurrency = (val, currency = 'MZN') => {
+            const num = Number(val || 0);
+            if (currency === 'USD') return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
+            return new Intl.NumberFormat('pt-MZ', { style: 'currency', currency: 'MZN', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
+        };
+        const formatDate = (timestamp) => {
+            if (!timestamp) return '—';
+            try {
+                const date = timestamp instanceof Date ? timestamp : timestamp?.toDate?.() || new Date(timestamp?.seconds * 1000);
+                return date.toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+            } catch { return 'Data inválida'; }
+        };
        
         // ==========================================
         // 4. AUTENTICAÇÃO E CARREGAMENTO
@@ -1127,10 +1089,11 @@
                             if (typeof lucide !== 'undefined') lucide.createIcons();
                             const currentUsdInput = parseFloat(document.getElementById('productUsd')?.value) || 0;
                             if(currentUsdInput > 0) window.updateCalculator(currentUsdInput);
+                            
+                            // 🔥 CORREÇÃO: Força o recarregamento das tabelas ignorando o cache de 10s quando o saldo muda
+                            await window.fetchDashboardData(true);
                         }
                     });
-
-                    await window.fetchDashboardData();
 
                 } catch (error) { window.showToast("Falha ao carregar dados do cofre.", "error"); }
                 finally { if (loader) { loader.style.opacity = '0'; setTimeout(() => loader.style.display = 'none', 500); } }
@@ -1315,6 +1278,7 @@
                 await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: safeTotal, description: `Pedido ${orderId}`, reference: orderId, createdAt: new Date().toISOString() });
 
                 document.getElementById('orderForm').reset(); window.updateCalculator(0); 
+                window.fetchDashboardData(true);
                 window.showToast("Pagamento processado com sucesso!", "success");
             } catch (err) { 
                 window.showToast(err.message || "Falha ao processar encomenda.", "error"); 
@@ -1342,6 +1306,7 @@
             try {
                 if (method === 'bank') {
                     await addDoc(collection(db, "support_tickets"), { userId: currentUser.uid, userName: userData.name, userEmail: currentUser.email, type: 'deposit_request', amount: amount, paymentMethod: method, message: `Depósito Bancário de ${formatMZN(amount)} MT.`, status: 'open', createdAt: serverTimestamp() });
+                    window.fetchDashboardData(true);
                     window.closeModals(); document.getElementById('topUpForm').reset(); window.showToast("Pedido enviado! O Admin confirmará após verificação.", "success");
                 } else {
                     window.showToast("A conectar de forma segura à PaySuite...", "info");
@@ -1349,12 +1314,15 @@
                     
                     await addDoc(collection(db, "topups"), { topupId: topupId, userId: currentUser.uid, amount: amount, method: method, status: 'pending', createdAt: serverTimestamp() });
 
-                    // DISPARO ATRAVÉS DO ESCUDO DE PROTEÇÃO!
                     const payloadVercel = { orderId: topupId, amount: amount, method: method, description: `Depósito Carteira PayGo: ${topupId}` };
                     const data = await pagamentoSeguro.fire(payloadVercel);
 
-                    if (data.data && data.data.checkoutUrl) { window.location.href = data.data.checkoutUrl; } 
-                    else { window.closeModals(); document.getElementById('topUpForm').reset(); window.showToast("Verifique o seu telemóvel para inserir o PIN!", "success"); }
+                    if (data.data && data.data.checkoutUrl) { 
+                        window.location.href = data.data.checkoutUrl; 
+                    } else { 
+                        window.fetchDashboardData(true);
+                        window.closeModals(); document.getElementById('topUpForm').reset(); window.showToast("Verifique o seu telemóvel para inserir o PIN!", "success"); 
+                    }
                 }
             } catch (err) { 
                 if (err.message === "MANUTENCAO_PAYSUITE" || err.message.startsWith("CIRCUITO_ABERTO")) {
@@ -1406,6 +1374,7 @@
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.error || "Erro na transferência.");
 
+                window.fetchDashboardData(true);
                 window.closeModals(); document.getElementById('transferForm').reset();
                 window.showToast(`Transferência de ${formatMZN(amount)} MT concluída!`, "success");
             } catch (err) { window.showToast(err.message, "error"); } 
@@ -1434,6 +1403,7 @@
                     await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: price, description: `Assinatura VIP (${plan})`, reference: 'VIP', createdAt: new Date().toISOString() });
                     await addDoc(collection(db, "vip_subscriptions"), { userId: currentUser.uid, userName: userData.name, userEmail: currentUser.email, plan: plan, amountPaid: price, expiryDate: expiryDate, createdAt: serverTimestamp() });
                     
+                    window.fetchDashboardData(true);
                     window.showToast("Parabéns! Conta VIP ativada.", "success"); setTimeout(() => window.location.reload(), 1500);
                 } catch (err) { window.showToast(err.message || "Erro.", "error"); isProcessing = false; btn.disabled = false; btn.innerHTML = origText; }
             } else { isProcessing = false; }
@@ -1461,6 +1431,7 @@
                 await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: 1000, description: `Emissão de Cartão`, reference: 'VC-EMISSION', createdAt: new Date().toISOString() });
                 await addDoc(collection(db, "vc_requests"), { userId: currentUser.uid, userName: userData.name, userEmail: currentUser.email, status: 'pending', amountPaid: 1000, createdAt: serverTimestamp() });
                 
+                window.fetchDashboardData(true);
                 window.closeModals(); window.showToast("Solicitação enviada!", "success"); setTimeout(() => window.location.reload(), 1500);
             } catch (err) { window.showToast(err.message, "error"); isProcessing = false; btn.disabled = false; btn.innerHTML = origText; }
         };
@@ -1484,6 +1455,7 @@
                 await addDoc(collection(db, "wallet_transactions"), { userId: currentUser.uid, type: 'debit', amount: mznCost, description: `Recarga VC ($${usdAmount})`, reference: 'VC-TOPUP', createdAt: new Date().toISOString() });
                 await addDoc(collection(db, "support_tickets"), { userId: currentUser.uid, type: 'vc_topup', usdAmount: usdAmount, mznCost: mznCost, userName: userData.name, userEmail: currentUser.email, destination: destination, message: `Recarga VC: $${usdAmount} para o destino: ${destination}`, status: 'open', createdAt: serverTimestamp() });
                 
+                window.fetchDashboardData(true);
                 window.closeModals(); window.showToast("Pedido de recarga enviado!", "success"); document.getElementById('vcTopUpForm').reset();
             } catch (err) { window.showToast(err.message, "error"); } 
             finally { isProcessing = false; btn.disabled = false; btn.innerHTML = origText; }
@@ -1591,14 +1563,6 @@
             if (sidebar && overlay) { sidebar.classList.toggle('-translate-x-full'); overlay.classList.toggle('hidden'); document.body.style.overflow = sidebar.classList.contains('-translate-x-full') ? '' : 'hidden'; }
         };
 
-        window.closeModals = function() { ['topUpModal', 'transferModal', 'vipModal', 'vcModal', 'vcTopUpModal', 'supportModal', 'profileModal'].forEach(id => { const el = document.getElementById(id); if(el) { el.classList.remove('flex'); el.classList.add('hidden'); } }); };
-        window.openTopUpModal = () => { window.closeModals(); const el = document.getElementById('topUpModal'); if(el) el.classList.replace('hidden', 'flex'); };
-        window.openTransferModal = () => { window.closeModals(); const el = document.getElementById('transferModal'); if(el) el.classList.replace('hidden', 'flex'); };
-        window.openVipModal = () => { window.closeModals(); const el = document.getElementById('vipModal'); if(el) el.classList.replace('hidden', 'flex'); };
-        window.openVcTopUpModal = () => { window.closeModals(); const el = document.getElementById('vcTopUpModal'); if(el) el.classList.replace('hidden', 'flex'); };
-        
-        window.logout = async () => { if(confirm('Sair da conta?')) { await signOut(auth); window.location.href = 'login.html'; } };
-        
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape') window.closeModals(); });
 
         // ==========================================
