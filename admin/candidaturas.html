@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PayGo Admin PRO | Candidaturas</title>
+  <meta name="theme-color" content="#0b1220" />
+  <meta name="robots" content="noindex,nofollow" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#020617;
+      --bg-2:#08101d;
+      --panel:rgba(11,18,32,.86);
+      --card:rgba(15,23,42,.84);
+      --text:#f8fafc;
+      --muted:#94a3b8;
+      --line:rgba(255,255,255,.08);
+      --line-2:rgba(255,255,255,.12);
+      --brand:#2563eb;
+      --brand-2:#60a5fa;
+      --success:#22c55e;
+      --warning:#f59e0b;
+      --danger:#ef4444;
+      --purple:#a855f7;
+      --teal:#14b8a6;
+      --radius:22px;
+      --shadow:0 18px 60px rgba(0,0,0,.45);
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:"Inter",system-ui,sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at left top, rgba(37,99,235,.14), transparent 26%),
+        radial-gradient(circle at 90% 10%, rgba(96,165,250,.10), transparent 22%),
+        linear-gradient(180deg,var(--bg) 0%, var(--bg-2) 100%);
+      overflow-x:hidden;
+    }
+
+    h1,h2,h3,h4{font-family:"Outfit",sans-serif;margin:0}
+    button,input,select,textarea{font:inherit}
+    a{text-decoration:none;color:inherit}
+
+    .container{width:min(1380px, calc(100% - 28px));margin:auto}
+
+    .topbar{
+      position:sticky;top:0;z-index:40;
+      background:rgba(2,6,23,.82);
+      backdrop-filter:blur(18px);
+      border-bottom:1px solid rgba(255,255,255,.06);
+    }
+    .topbar-inner{
+      min-height:78px;
+      display:flex;justify-content:space-between;align-items:center;gap:16px;
+    }
+    .brand{
+      display:flex;align-items:center;gap:12px;font-weight:900;
+    }
+    .logo{
+      width:46px;height:46px;border-radius:16px;
+      display:grid;place-items:center;
+      background:linear-gradient(135deg,var(--brand),var(--brand-2));
+      font-size:22px;font-family:"Outfit",sans-serif;font-weight:900;
+      box-shadow:0 14px 36px rgba(37,99,235,.28);
+    }
+    .brand-meta small{
+      display:block;
+      color:#93c5fd;
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:.16em;
+      font-weight:900;
+      margin-top:2px;
+    }
+
+    .btn{
+      border:0;cursor:pointer;
+      border-radius:16px;
+      padding:13px 16px;
+      font-weight:800;
+      color:#fff;
+      display:inline-flex;align-items:center;justify-content:center;gap:10px;
+      transition:.2s ease;
+    }
+    .btn:hover{transform:translateY(-1px)}
+    .btn:active{transform:translateY(0)}
+    .btn.primary{background:linear-gradient(135deg,var(--brand),#3b82f6)}
+    .btn.secondary{background:rgba(255,255,255,.05);border:1px solid var(--line)}
+    .btn.success{background:linear-gradient(135deg,#16a34a,#22c55e)}
+    .btn.warning{background:linear-gradient(135deg,#d97706,#f59e0b)}
+    .btn.purple{background:linear-gradient(135deg,#7e22ce,#a855f7)}
+    .btn.danger{background:linear-gradient(135deg,#dc2626,#ef4444)}
+    .btn.teal{background:linear-gradient(135deg,#0f766e,#14b8a6)}
+    .btn.small{padding:10px 12px;border-radius:12px;font-size:.9rem}
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(14px);
+    }
+
+    .hero{
+      padding:22px 0 12px;
+    }
+    .hero-grid{
+      display:grid;
+      grid-template-columns:repeat(5,minmax(0,1fr));
+      gap:14px;
+    }
+    .stat{
+      padding:18px;
+      min-height:118px;
+      position:relative;
+      overflow:hidden;
+    }
+    .stat:before{
+      content:"";
+      position:absolute;
+      inset:auto -20px -20px auto;
+      width:82px;height:82px;border-radius:50%;
+      opacity:.14;
+      background:currentColor;
+      filter:blur(12px);
+    }
+    .stat small{
+      display:block;
+      color:var(--muted);
+      font-size:.75rem;
+      text-transform:uppercase;
+      letter-spacing:.14em;
+      font-weight:800;
+      margin-bottom:10px;
+    }
+    .stat strong{
+      font-size:2rem;
+      font-family:"Outfit",sans-serif;
+      letter-spacing:-.04em;
+      line-height:1;
+    }
+    .stat span{
+      display:block;
+      margin-top:10px;
+      color:#cbd5e1;
+      font-size:.86rem;
+    }
+    .c-brand{color:#93c5fd}
+    .c-warning{color:#fde68a}
+    .c-success{color:#bbf7d0}
+    .c-purple{color:#e9d5ff}
+    .c-teal{color:#99f6e4}
+
+    .section{padding:12px 0 26px}
+
+    .toolbar{
+      padding:18px;
+      display:grid;
+      grid-template-columns:1.1fr .65fr .65fr .65fr auto auto;
+      gap:12px;
+      align-items:end;
+    }
+
+    .field{display:flex;flex-direction:column;gap:8px}
+    label{
+      font-size:.8rem;
+      color:#dbe4ef;
+      font-weight:700;
+    }
+    input,select,textarea{
+      width:100%;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(2,6,23,.62);
+      color:#fff;
+      padding:13px 14px;
+      outline:none;
+      transition:.18s ease;
+    }
+    input:focus,select:focus,textarea:focus{
+      border-color:rgba(96,165,250,.55);
+      box-shadow:0 0 0 4px rgba(59,130,246,.12);
+    }
+
+    .toolbar-actions{
+      display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+    }
+
+    .meta-row{
+      margin-top:14px;
+      display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+    }
+    .meta-info{
+      color:#cbd5e1;
+      font-size:.92rem;
+    }
+
+    .message{
+      display:none;
+      margin-top:14px;
+      padding:14px 16px;
+      border-radius:16px;
+      font-weight:700;
+    }
+    .message.show{display:block}
+    .message.success{background:rgba(34,197,94,.10);border:1px solid rgba(34,197,94,.24);color:#bbf7d0}
+    .message.error{background:rgba(239,68,68,.10);border:1px solid rgba(239,68,68,.24);color:#fecaca}
+    .message.info{background:rgba(59,130,246,.10);border:1px solid rgba(59,130,246,.24);color:#bfdbfe}
+
+    .table-card{margin-top:14px;overflow:hidden}
+    .table-wrap{overflow:auto}
+    table{
+      width:100%;
+      border-collapse:collapse;
+      min-width:1400px;
+    }
+    th,td{
+      padding:16px 14px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      text-align:left;
+      vertical-align:top;
+    }
+    th{
+      font-size:.72rem;
+      text-transform:uppercase;
+      letter-spacing:.14em;
+      color:var(--muted);
+      font-weight:800;
+      background:rgba(2,6,23,.64);
+      position:sticky;
+      top:0;
+      z-index:1;
+    }
+    tbody tr{
+      transition:.18s ease;
+      cursor:pointer;
+    }
+    tbody tr:hover{
+      background:rgba(255,255,255,.03);
+    }
+
+    .mono{
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      font-weight:800;
+      color:#bfdbfe;
+    }
+
+    .badge{
+      display:inline-flex;align-items:center;justify-content:center;
+      padding:8px 11px;border-radius:999px;
+      font-size:10px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.04);
+      white-space:nowrap;
+    }
+    .badge.pending{background:rgba(245,158,11,.12);color:#fde68a;border-color:rgba(245,158,11,.22)}
+    .badge.paid{background:rgba(34,197,94,.12);color:#bbf7d0;border-color:rgba(34,197,94,.22)}
+    .badge.confirmed{background:rgba(59,130,246,.12);color:#bfdbfe;border-color:rgba(59,130,246,.22)}
+    .badge.added_to_group{background:rgba(168,85,247,.12);color:#e9d5ff;border-color:rgba(168,85,247,.22)}
+
+    .pill{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:8px 11px;border-radius:999px;
+      font-size:.78rem;font-weight:800;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.04);
+      color:#e2e8f0;
+    }
+
+    .small{font-size:.88rem;color:var(--muted);line-height:1.6}
+    .muted{color:var(--muted)}
+    .strong{font-weight:800}
+    .grid-actions{
+      display:grid;gap:8px;
+    }
+
+    .table-note{
+      max-width:230px;
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
+
+    .empty-state{
+      padding:34px 18px;
+      text-align:center;
+      color:#cbd5e1;
+    }
+
+    .quick-filters{
+      display:flex;gap:10px;flex-wrap:wrap;
+    }
+    .quick-filter{
+      padding:10px 12px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.04);
+      color:#e2e8f0;
+      cursor:pointer;
+      font-weight:800;
+      transition:.18s ease;
+    }
+    .quick-filter.active,
+    .quick-filter:hover{
+      background:rgba(37,99,235,.16);
+      border-color:rgba(96,165,250,.28);
+      color:#bfdbfe;
+    }
+
+    .modal{
+      position:fixed;
+      inset:0;
+      z-index:100;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      background:rgba(2,6,23,.72);
+      backdrop-filter:blur(10px);
+    }
+    .modal.show{display:flex}
+    .modal-panel{
+      width:min(1120px,100%);
+      max-height:92vh;
+      overflow:auto;
+      background:rgba(11,18,32,.96);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:28px;
+      box-shadow:0 40px 90px rgba(0,0,0,.5);
+    }
+    .modal-head{
+      position:sticky;top:0;z-index:2;
+      padding:22px 24px;
+      display:flex;justify-content:space-between;align-items:center;gap:12px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      background:rgba(11,18,32,.96);
+      backdrop-filter:blur(12px);
+    }
+    .modal-body{
+      padding:24px;
+      display:grid;
+      grid-template-columns:1.05fr .95fr;
+      gap:18px;
+    }
+    .modal-col{
+      display:grid;
+      gap:16px;
+      align-content:start;
+    }
+    .info-card{
+      padding:18px;
+      border-radius:22px;
+      background:rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.06);
+    }
+    .info-card h3{
+      font-size:1.02rem;
+      margin-bottom:10px;
+    }
+    .kv{
+      display:grid;gap:10px;
+    }
+    .kv-row{
+      display:flex;justify-content:space-between;gap:10px;
+      padding-bottom:10px;
+      border-bottom:1px dashed rgba(255,255,255,.08);
+    }
+    .kv-row:last-child{border-bottom:0;padding-bottom:0}
+    .kv-label{color:#94a3b8;font-size:.86rem}
+    .kv-value{font-weight:700;text-align:right;max-width:65%;word-break:break-word}
+
+    .notes-list{
+      display:grid;gap:10px;
+      max-height:240px;
+      overflow:auto;
+    }
+    .note-item{
+      padding:12px 14px;
+      border-radius:16px;
+      background:rgba(245,158,11,.08);
+      border:1px solid rgba(245,158,11,.18);
+    }
+    .note-item strong{
+      display:block;
+      margin-bottom:4px;
+      color:#fde68a;
+      font-size:.86rem;
+    }
+
+    .status-actions{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:10px;
+    }
+
+    .contact-actions{
+      display:flex;gap:10px;flex-wrap:wrap;
+    }
+
+    .footer-actions{
+      display:flex;justify-content:flex-end;gap:12px;flex-wrap:wrap;
+      padding:0 24px 24px;
+    }
+
+    .auth-loading{
+      min-height:100vh;
+      display:grid;
+      place-items:center;
+      padding:24px;
+    }
+    .auth-box{
+      width:min(520px,100%);
+      text-align:center;
+      padding:30px;
+    }
+    .spinner{
+      width:58px;height:58px;
+      border-radius:50%;
+      border:4px solid rgba(255,255,255,.08);
+      border-top-color:#60a5fa;
+      margin:0 auto 18px;
+      animation:spin 1s linear infinite;
+    }
+
+    @keyframes spin{
+      to{transform:rotate(360deg)}
+    }
+
+    .hidden{display:none !important}
+
+    @media (max-width:1280px){
+      .hero-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+      .toolbar{grid-template-columns:1fr 1fr 1fr}
+    }
+    @media (max-width:980px){
+      .hero-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .toolbar{grid-template-columns:1fr 1fr}
+      .modal-body{grid-template-columns:1fr}
+    }
+    @media (max-width:680px){
+      .hero-grid{grid-template-columns:1fr}
+      .toolbar{grid-template-columns:1fr}
+      .topbar-inner{align-items:flex-start;padding:14px 0}
+      .footer-actions,.contact-actions,.toolbar-actions{flex-direction:column}
+      .footer-actions .btn,.contact-actions .btn,.toolbar-actions .btn{width:100%}
+      .status-actions{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <div id="authLoading" class="auth-loading">
+    <div class="card auth-box">
+      <div class="spinner"></div>
+      <h1 style="font-size:2rem;margin-bottom:10px;">PayGo Admin PRO</h1>
+      <p class="small">A validar sessão do administrador...</p>
+    </div>
+  </div>
+
+  <div id="app" class="hidden">
+    <header class="topbar">
+      <div class="container topbar-inner">
+        <div class="brand">
+          <div class="logo">P</div>
+          <div class="brand-meta">
+            <div style="font-size:1.05rem;">PayGo Admin PRO</div>
+            <small>Candidaturas • Cartão Virtual</small>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <div class="pill">
+            <span>Admin:</span>
+            <strong id="adminDisplayName">---</strong>
+          </div>
+          <button class="btn secondary small" id="refreshBtn">Atualizar</button>
+          <button class="btn danger small" id="logoutBtn">Sair</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="container hero-grid">
+          <div class="card stat c-brand">
+            <small>Total</small>
+            <strong id="statTotal">0</strong>
+            <span>Todas as candidaturas</span>
+          </div>
+
+          <div class="card stat c-warning">
+            <small>Pendentes</small>
+            <strong id="statPending">0</strong>
+            <span>Aguardando validação</span>
+          </div>
+
+          <div class="card stat c-success">
+            <small>Pagas</small>
+            <strong id="statPaid">0</strong>
+            <span>Pagamento reconhecido</span>
+          </div>
+
+          <div class="card stat c-brand">
+            <small>Confirmadas</small>
+            <strong id="statConfirmed">0</strong>
+            <span>Validadas pela equipa</span>
+          </div>
+
+          <div class="card stat c-purple">
+            <small>No grupo</small>
+            <strong id="statAdded">0</strong>
+            <span>Adicionados ao WhatsApp</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container">
+          <div class="card toolbar">
+            <div class="field">
+              <label for="searchInput">Pesquisar</label>
+              <input type="text" id="searchInput" placeholder="Nome, email, WhatsApp, ID curto, provedor..." />
+            </div>
+
+            <div class="field">
+              <label for="statusFilter">Estado</label>
+              <select id="statusFilter">
+                <option value="all">Todos</option>
+                <option value="pending">pendente</option>
+                <option value="paid">pago</option>
+                <option value="confirmed">confirmado</option>
+                <option value="added_to_group">adicionado ao grupo</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="typeFilter">Tipo</label>
+              <select id="typeFilter">
+                <option value="all">Todos</option>
+                <option value="no_card">Não tenho cartão</option>
+                <option value="have_card_recharge">Já tenho cartão</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="providerFilter">Provedor</label>
+              <select id="providerFilter">
+                <option value="all">Todos</option>
+                <option value="RedotPay">RedotPay</option>
+                <option value="Payyzi">Payyzi</option>
+                <option value="Ezzocard">Ezzocard</option>
+                <option value="Bybit">Bybit</option>
+                <option value="Binance Card">Binance Card</option>
+                <option value="Outro">Outro</option>
+              </select>
+            </div>
+
+            <div class="toolbar-actions">
+              <button class="btn primary" id="applyFilterBtn">Aplicar</button>
+              <button class="btn secondary" id="clearFilterBtn">Limpar</button>
+            </div>
+
+            <div class="toolbar-actions">
+              <button class="btn teal" id="exportBtn">Exportar CSV</button>
+            </div>
+          </div>
+
+          <div class="meta-row">
+            <div class="quick-filters">
+              <button class="quick-filter active" data-status="all">Todos</button>
+              <button class="quick-filter" data-status="pending">Pendentes</button>
+              <button class="quick-filter" data-status="paid">Pagas</button>
+              <button class="quick-filter" data-status="confirmed">Confirmadas</button>
+              <button class="quick-filter" data-status="added_to_group">No grupo</button>
+            </div>
+
+            <div class="meta-info">
+              <strong id="resultCount">0</strong> candidaturas encontradas
+            </div>
+          </div>
+
+          <div id="message" class="message"></div>
+
+          <div class="card table-card">
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID / Data</th>
+                    <th>Candidato</th>
+                    <th>Tipo</th>
+                    <th>Estado</th>
+                    <th>Pagamento</th>
+                    <th>Contato</th>
+                    <th>Resumo</th>
+                    <th>Ações rápidas</th>
+                  </tr>
+                </thead>
+                <tbody id="tableBody">
+                  <tr>
+                    <td colspan="8" class="empty-state">A carregar candidaturas...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal" id="detailModal">
+    <div class="modal-panel">
+      <div class="modal-head">
+        <div>
+          <h2 id="modalTitle">Detalhes da candidatura</h2>
+          <div class="small" id="modalSubtitle">---</div>
+        </div>
+        <button class="btn secondary small" id="closeModalBtn">Fechar</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="modal-col">
+          <div class="info-card">
+            <h3>Dados do candidato</h3>
+            <div class="kv" id="candidateInfo"></div>
+          </div>
+
+          <div class="info-card">
+            <h3>Objetivo / Observações</h3>
+            <div class="small" id="goalInfo">---</div>
+            <div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.06);">
+              <div class="small strong" style="margin-bottom:8px;">Observações adicionais</div>
+              <div class="small" id="notesInfo">---</div>
+            </div>
+          </div>
+
+          <div class="info-card">
+            <h3>Notas do admin</h3>
+            <div class="notes-list" id="notesList"></div>
+          </div>
+        </div>
+
+        <div class="modal-col">
+          <div class="info-card">
+            <h3>Estado e pagamento</h3>
+            <div class="kv" id="paymentInfo"></div>
+          </div>
+
+          <div class="info-card">
+            <h3>Ações rápidas</h3>
+            <div class="contact-actions">
+              <a class="btn success small" id="modalWhatsappBtn" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+              <a class="btn secondary small" id="modalEmailBtn">Email</a>
+              <button class="btn teal small" id="modalCopyIdBtn">Copiar ID</button>
+            </div>
+          </div>
+
+          <div class="info-card">
+            <h3>Mudar estado</h3>
+            <div class="status-actions">
+              <button class="btn secondary small" data-action-status="pending">Pendente</button>
+              <button class="btn success small" data-action-status="paid">Pago</button>
+              <button class="btn primary small" data-action-status="confirmed">Confirmado</button>
+              <button class="btn purple small" data-action-status="added_to_group">No grupo</button>
+            </div>
+
+            <div class="field" style="margin-top:14px;">
+              <label for="adminNoteInput">Nota do admin</label>
+              <textarea id="adminNoteInput" placeholder="Escreve uma nota sobre esta candidatura..."></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-actions">
+        <button class="btn secondary" id="savePendingBtn">Salvar como pendente</button>
+        <button class="btn success" id="savePaidBtn">Salvar como pago</button>
+        <button class="btn primary" id="saveConfirmedBtn">Salvar como confirmado</button>
+        <button class="btn purple" id="saveAddedBtn">Salvar como no grupo</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import {
+      getAuth,
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import {
+      getFirestore,
+      doc,
+      getDoc
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // =========================================================
+    // FIREBASE CONFIG
+    // Usa a tua config real. Se já tens a mesma config noutras páginas, mantém igual.
+    // =========================================================
+    const firebaseConfig = {
+      apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
+      authDomain: "paygo-14311.firebaseapp.com",
+      projectId: "paygo-14311",
+      storageBucket: "paygo-14311.firebasestorage.app",
+      messagingSenderId: "208360646277",
+      appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
+    };
+
+    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    let db;
+    try {
+      db = getFirestore(app, "paygodb");
+    } catch {
+      db = getFirestore(app);
+    }
+
+    // =========================================================
+    // DOM
+    // =========================================================
+    const authLoading = document.getElementById("authLoading");
+    const appEl = document.getElementById("app");
+    const adminDisplayName = document.getElementById("adminDisplayName");
+
+    const refreshBtn = document.getElementById("refreshBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const applyFilterBtn = document.getElementById("applyFilterBtn");
+    const clearFilterBtn = document.getElementById("clearFilterBtn");
+    const exportBtn = document.getElementById("exportBtn");
+
+    const searchInput = document.getElementById("searchInput");
+    const statusFilter = document.getElementById("statusFilter");
+    const typeFilter = document.getElementById("typeFilter");
+    const providerFilter = document.getElementById("providerFilter");
+    const tableBody = document.getElementById("tableBody");
+    const messageEl = document.getElementById("message");
+    const resultCount = document.getElementById("resultCount");
+
+    const statTotal = document.getElementById("statTotal");
+    const statPending = document.getElementById("statPending");
+    const statPaid = document.getElementById("statPaid");
+    const statConfirmed = document.getElementById("statConfirmed");
+    const statAdded = document.getElementById("statAdded");
+
+    const quickFilters = Array.from(document.querySelectorAll(".quick-filter"));
+
+    const detailModal = document.getElementById("detailModal");
+    const closeModalBtn = document.getElementById("closeModalBtn");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalSubtitle = document.getElementById("modalSubtitle");
+    const candidateInfo = document.getElementById("candidateInfo");
+    const goalInfo = document.getElementById("goalInfo");
+    const notesInfo = document.getElementById("notesInfo");
+    const notesList = document.getElementById("notesList");
+    const paymentInfo = document.getElementById("paymentInfo");
+    const adminNoteInput = document.getElementById("adminNoteInput");
+    const modalWhatsappBtn = document.getElementById("modalWhatsappBtn");
+    const modalEmailBtn = document.getElementById("modalEmailBtn");
+    const modalCopyIdBtn = document.getElementById("modalCopyIdBtn");
+
+    const savePendingBtn = document.getElementById("savePendingBtn");
+    const savePaidBtn = document.getElementById("savePaidBtn");
+    const saveConfirmedBtn = document.getElementById("saveConfirmedBtn");
+    const saveAddedBtn = document.getElementById("saveAddedBtn");
+
+    // =========================================================
+    // API
+    // =========================================================
+    const API_BASE = "/api";
+    const GET_APPLICATIONS_ENDPOINT = `${API_BASE}/get-group-applications`;
+    const UPDATE_STATUS_ENDPOINT = `${API_BASE}/update-group-application-status`;
+
+    // =========================================================
+    // STATE
+    // =========================================================
+    let allApplications = [];
+    let filteredApplications = [];
+    let currentAdmin = null;
+    let currentApplication = null;
+    let autoRefreshTimer = null;
+
+    // =========================================================
+    // HELPERS
+    // =========================================================
+    function showMessage(text, type = "success") {
+      messageEl.className = `message show ${type}`;
+      messageEl.textContent = text;
+    }
+
+    function clearMessage() {
+      messageEl.className = "message";
+      messageEl.textContent = "";
+    }
+
+    function escapeHtml(value) {
+      return String(value || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function getBadge(status) {
+      const safe = String(status || "pending");
+      return `<span class="badge ${safe}">${safe.replaceAll("_", " ")}</span>`;
+    }
+
+    function formatType(item) {
+      if (item.cardOption === "have_card_recharge") {
+        return `
+          <div class="strong">Já tem cartão</div>
+          <div class="small">${escapeHtml(item.cardProvider || "provedor não indicado")}</div>
+        `;
+      }
+      return `
+        <div class="strong">Não tem cartão</div>
+        <div class="small">Aprender do zero</div>
+      `;
+    }
+
+    function formatDate(value) {
+      if (!value) return "-";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "-";
+      return date.toLocaleString("pt-MZ");
+    }
+
+    function shortText(value, max = 90) {
+      const text = String(value || "");
+      if (text.length <= max) return text;
+      return text.slice(0, max) + "...";
+    }
+
+    function buildWhatsappLink(item) {
+      const message = [
+        "Olá, estou a falar da candidatura PayGo.",
+        "",
+        `ID: ${item.shortId || "-"}`,
+        `Nome: ${item.fullName || "-"}`,
+        `Estado: ${item.status || "pending"}`,
+        "",
+        "Mensagem da equipa PayGo:"
+      ].join("\n");
+
+      const phone = String(item.whatsapp || "").replace(/[^\d]/g, "");
+      const withCountry = phone.startsWith("258") ? phone : `258${phone}`;
+      return `https://wa.me/${withCountry}?text=${encodeURIComponent(message)}`;
+    }
+
+    function updateStats(source) {
+      statTotal.textContent = source.length;
+      statPending.textContent = source.filter(x => x.status === "pending").length;
+      statPaid.textContent = source.filter(x => x.status === "paid").length;
+      statConfirmed.textContent = source.filter(x => x.status === "confirmed").length;
+      statAdded.textContent = source.filter(x => x.status === "added_to_group").length;
+    }
+
+    function getFilteredList() {
+      const search = searchInput.value.trim().toLowerCase();
+      const status = statusFilter.value;
+      const type = typeFilter.value;
+      const provider = providerFilter.value;
+
+      return allApplications.filter(item => {
+        const blob = [
+          item.shortId,
+          item.fullName,
+          item.email,
+          item.whatsapp,
+          item.paymentName,
+          item.cardProvider,
+          item.goal,
+          item.notes
+        ].join(" ").toLowerCase();
+
+        const matchSearch = !search || blob.includes(search);
+        const matchStatus = status === "all" || item.status === status;
+        const matchType = type === "all" || item.cardOption === type;
+        const matchProvider =
+          provider === "all" ||
+          (provider === "Outro"
+            ? item.cardProvider &&
+              !["RedotPay","Payyzi","Ezzocard","Bybit","Binance Card"].includes(item.cardProvider)
+            : item.cardProvider === provider);
+
+        return matchSearch && matchStatus && matchType && matchProvider;
+      });
+    }
+
+    function renderTable() {
+      filteredApplications = getFilteredList();
+      resultCount.textContent = filteredApplications.length;
+      updateStats(allApplications);
+
+      if (!filteredApplications.length) {
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="8" class="empty-state">Nenhuma candidatura encontrada.</td>
+          </tr>
+        `;
+        return;
+      }
+
+      tableBody.innerHTML = filteredApplications.map(item => `
+        <tr data-id="${escapeHtml(item.id)}">
+          <td>
+            <div class="mono">${escapeHtml(item.shortId || "-")}</div>
+            <div class="small">${formatDate(item.createdAt)}</div>
+          </td>
+
+          <td>
+            <div class="strong">${escapeHtml(item.fullName || "-")}</div>
+            <div class="small">${escapeHtml(item.email || "-")}</div>
+            <div class="small">${escapeHtml(item.city || "-")}</div>
+          </td>
+
+          <td>${formatType(item)}</td>
+
+          <td>
+            ${getBadge(item.status || "pending")}
+            <div class="small" style="margin-top:8px;">Atualizado: ${formatDate(item.updatedAt)}</div>
+          </td>
+
+          <td>
+            <div class="strong">${Number(item.amount || 1200).toLocaleString("pt-MZ")} MT</div>
+            <div class="small">${escapeHtml(item.paymentStatus || "pending")}</div>
+            <div class="small">${item.isPaid ? "Marcado como pago" : "Ainda não pago"}</div>
+          </td>
+
+          <td>
+            <div class="small">${escapeHtml(item.whatsapp || "-")}</div>
+            <div class="small">${escapeHtml(item.paymentName || "-")}</div>
+          </td>
+
+          <td>
+            <div class="table-note small">${escapeHtml(shortText(item.goal || "-", 110))}</div>
+          </td>
+
+          <td>
+            <div class="grid-actions">
+              <button class="btn secondary small quick-action" data-id="${escapeHtml(item.id)}" data-status="pending">Pendente</button>
+              <button class="btn success small quick-action" data-id="${escapeHtml(item.id)}" data-status="paid">Pago</button>
+              <button class="btn primary small quick-action" data-id="${escapeHtml(item.id)}" data-status="confirmed">Confirmado</button>
+              <button class="btn purple small quick-action" data-id="${escapeHtml(item.id)}" data-status="added_to_group">No grupo</button>
+            </div>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    function exportCSV() {
+      const rows = filteredApplications.map(item => ({
+        shortId: item.shortId || "",
+        fullName: item.fullName || "",
+        email: item.email || "",
+        whatsapp: item.whatsapp || "",
+        city: item.city || "",
+        cardOption: item.cardOption || "",
+        cardProvider: item.cardProvider || "",
+        status: item.status || "",
+        paymentStatus: item.paymentStatus || "",
+        isPaid: item.isPaid ? "sim" : "não",
+        amount: item.amount || 1200,
+        paymentName: item.paymentName || "",
+        goal: item.goal || "",
+        notes: item.notes || "",
+        createdAt: item.createdAt || "",
+        updatedAt: item.updatedAt || ""
+      }));
+
+      const headers = Object.keys(rows[0] || {
+        shortId: "", fullName: "", email: "", whatsapp: "", city: "",
+        cardOption: "", cardProvider: "", status: "", paymentStatus: "",
+        isPaid: "", amount: "", paymentName: "", goal: "", notes: "",
+        createdAt: "", updatedAt: ""
+      });
+
+      const csv = [
+        headers.join(","),
+        ...rows.map(row =>
+          headers.map(h => `"${String(row[h] ?? "").replaceAll('"', '""')}"`).join(",")
+        )
+      ].join("\n");
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `paygo-candidaturas-${new Date().toISOString().slice(0,10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    }
+
+    function getApplicationById(id) {
+      return allApplications.find(item => item.id === id) || null;
+    }
+
+    function openModal(item) {
+      currentApplication = item;
+      adminNoteInput.value = "";
+
+      modalTitle.textContent = item.fullName || "Candidatura";
+      modalSubtitle.innerHTML = `${escapeHtml(item.shortId || "-")} • ${escapeHtml((item.status || "pending").replaceAll("_"," "))}`;
+
+      candidateInfo.innerHTML = `
+        <div class="kv-row"><div class="kv-label">Nome</div><div class="kv-value">${escapeHtml(item.fullName || "-")}</div></div>
+        <div class="kv-row"><div class="kv-label">Email</div><div class="kv-value">${escapeHtml(item.email || "-")}</div></div>
+        <div class="kv-row"><div class="kv-label">WhatsApp</div><div class="kv-value">${escapeHtml(item.whatsapp || "-")}</div></div>
+        <div class="kv-row"><div class="kv-label">Cidade</div><div class="kv-value">${escapeHtml(item.city || "-")}</div></div>
+        <div class="kv-row"><div class="kv-label">Tipo</div><div class="kv-value">${item.cardOption === "have_card_recharge" ? "Já tem cartão" : "Não tem cartão"}</div></div>
+        <div class="kv-row"><div class="kv-label">Provedor</div><div class="kv-value">${escapeHtml(item.cardProvider || "-")}</div></div>
+      `;
+
+      goalInfo.textContent = item.goal || "-";
+      notesInfo.textContent = item.notes || "-";
+
+      const adminNotes = Array.isArray(item.adminNotes) ? item.adminNotes : [];
+      notesList.innerHTML = adminNotes.length
+        ? adminNotes.map(note => `
+            <div class="note-item">
+              <strong>${escapeHtml(note.adminName || "Admin")} • ${formatDate(note.createdAt)}</strong>
+              <div class="small">${escapeHtml(note.text || "-")}</div>
+            </div>
+          `).join("")
+        : `<div class="small">Sem notas do admin ainda.</div>`;
+
+      paymentInfo.innerHTML = `
+        <div class="kv-row"><div class="kv-label">Estado</div><div class="kv-value">${escapeHtml(item.status || "pending")}</div></div>
+        <div class="kv-row"><div class="kv-label">Pagamento</div><div class="kv-value">${escapeHtml(item.paymentStatus || "pending")}</div></div>
+        <div class="kv-row"><div class="kv-label">Pago?</div><div class="kv-value">${item.isPaid ? "Sim" : "Não"}</div></div>
+        <div class="kv-row"><div class="kv-label">Valor</div><div class="kv-value">${Number(item.amount || 1200).toLocaleString("pt-MZ")} MT</div></div>
+        <div class="kv-row"><div class="kv-label">Nome no pagamento</div><div class="kv-value">${escapeHtml(item.paymentName || "-")}</div></div>
+        <div class="kv-row"><div class="kv-label">PaySuite Ref</div><div class="kv-value">${escapeHtml(item.paysuiteReference || "-")}</div></div>
+        <div class="kv-row"><div class="kv-label">Checkout</div><div class="kv-value">${item.paysuiteCheckoutUrl ? "Gerado" : "Não gerado"}</div></div>
+        <div class="kv-row"><div class="kv-label">Criado em</div><div class="kv-value">${formatDate(item.createdAt)}</div></div>
+        <div class="kv-row"><div class="kv-label">Atualizado em</div><div class="kv-value">${formatDate(item.updatedAt)}</div></div>
+      `;
+
+      modalWhatsappBtn.href = buildWhatsappLink(item);
+      modalEmailBtn.href = `mailto:${encodeURIComponent(item.email || "")}?subject=${encodeURIComponent(`Candidatura PayGo ${item.shortId || ""}`)}`;
+      modalCopyIdBtn.onclick = async () => {
+        try {
+          await navigator.clipboard.writeText(item.shortId || "");
+          showMessage("ID copiado com sucesso.", "success");
+        } catch {
+          showMessage("Não foi possível copiar o ID.", "error");
+        }
+      };
+
+      detailModal.classList.add("show");
+    }
+
+    function closeModal() {
+      detailModal.classList.remove("show");
+      currentApplication = null;
+      adminNoteInput.value = "";
+    }
+
+    async function loadApplications() {
+      tableBody.innerHTML = `<tr><td colspan="8" class="empty-state">A carregar candidaturas...</td></tr>`;
+
+      try {
+        const response = await fetch(GET_APPLICATIONS_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({})
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.error || "Erro ao carregar candidaturas.");
+        }
+
+        allApplications = Array.isArray(result.applications) ? result.applications : [];
+        renderTable();
+
+        if (currentApplication) {
+          const fresh = getApplicationById(currentApplication.id);
+          if (fresh) openModal(fresh);
+        }
+      } catch (err) {
+        tableBody.innerHTML = `<tr><td colspan="8" class="empty-state">Erro: ${escapeHtml(err.message || "falha ao carregar")}</td></tr>`;
+        showMessage(err.message || "Erro ao carregar candidaturas.", "error");
+      }
+    }
+
+    async function updateStatus(applicationId, status) {
+      const adminNote = adminNoteInput.value.trim();
+      const adminName = currentAdmin?.name || currentAdmin?.email || "Admin PayGo";
+      const adminId = currentAdmin?.uid || "admin_manual";
+
+      try {
+        const response = await fetch(UPDATE_STATUS_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            applicationId,
+            status,
+            adminName,
+            adminId,
+            adminNote
+          })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.error || "Falha ao atualizar estado.");
+        }
+
+        showMessage(`Estado atualizado para "${status.replaceAll("_", " ")}".`, "success");
+        await loadApplications();
+        closeModal();
+      } catch (err) {
+        showMessage(err.message || "Erro ao atualizar candidatura.", "error");
+      }
+    }
+
+    async function ensureAdmin(user) {
+      const ref = doc(db, "users", user.uid);
+      const snap = await getDoc(ref);
+
+      if (!snap.exists()) {
+        throw new Error("Perfil do utilizador não encontrado na coleção users.");
+      }
+
+      const data = snap.data() || {};
+      const role = String(data.role || "").toLowerCase();
+
+      if (!["admin", "superadmin"].includes(role)) {
+        throw new Error("Acesso negado. Esta conta não é admin.");
+      }
+
+      return {
+        uid: user.uid,
+        email: user.email || "",
+        name: data.name || user.displayName || "Admin PayGo",
+        role
+      };
+    }
+
+    function startAutoRefresh() {
+      stopAutoRefresh();
+      autoRefreshTimer = setInterval(loadApplications, 30000);
+    }
+
+    function stopAutoRefresh() {
+      if (autoRefreshTimer) {
+        clearInterval(autoRefreshTimer);
+        autoRefreshTimer = null;
+      }
+    }
+
+    function bindQuickFilters() {
+      quickFilters.forEach(btn => {
+        btn.addEventListener("click", () => {
+          quickFilters.forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          statusFilter.value = btn.dataset.status;
+          renderTable();
+        });
+      });
+    }
+
+    // =========================================================
+    // EVENTS
+    // =========================================================
+    refreshBtn.addEventListener("click", loadApplications);
+    applyFilterBtn.addEventListener("click", renderTable);
+    clearFilterBtn.addEventListener("click", () => {
+      searchInput.value = "";
+      statusFilter.value = "all";
+      typeFilter.value = "all";
+      providerFilter.value = "all";
+      quickFilters.forEach(b => b.classList.remove("active"));
+      const allBtn = quickFilters.find(b => b.dataset.status === "all");
+      if (allBtn) allBtn.classList.add("active");
+      renderTable();
+    });
+    exportBtn.addEventListener("click", exportCSV);
+
+    searchInput.addEventListener("input", renderTable);
+    statusFilter.addEventListener("change", renderTable);
+    typeFilter.addEventListener("change", renderTable);
+    providerFilter.addEventListener("change", renderTable);
+
+    logoutBtn.addEventListener("click", async () => {
+      await signOut(auth);
+      window.location.href = "../login.html";
+    });
+
+    closeModalBtn.addEventListener("click", closeModal);
+    detailModal.addEventListener("click", (e) => {
+      if (e.target === detailModal) closeModal();
+    });
+
+    savePendingBtn.addEventListener("click", () => currentApplication && updateStatus(currentApplication.id, "pending"));
+    savePaidBtn.addEventListener("click", () => currentApplication && updateStatus(currentApplication.id, "paid"));
+    saveConfirmedBtn.addEventListener("click", () => currentApplication && updateStatus(currentApplication.id, "confirmed"));
+    saveAddedBtn.addEventListener("click", () => currentApplication && updateStatus(currentApplication.id, "added_to_group"));
+
+    document.querySelectorAll("[data-action-status]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        if (!currentApplication) return;
+        updateStatus(currentApplication.id, btn.dataset.actionStatus);
+      });
+    });
+
+    tableBody.addEventListener("click", (e) => {
+      const quickBtn = e.target.closest(".quick-action");
+      if (quickBtn) {
+        e.stopPropagation();
+        updateStatus(quickBtn.dataset.id, quickBtn.dataset.status);
+        return;
+      }
+
+      const row = e.target.closest("tr[data-id]");
+      if (!row) return;
+      const app = getApplicationById(row.dataset.id);
+      if (app) openModal(app);
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeModal();
+    });
+
+    bindQuickFilters();
+
+    // =========================================================
+    // AUTH INIT
+    // =========================================================
+    onAuthStateChanged(auth, async (user) => {
+      try {
+        if (!user) {
+          window.location.href = "../login.html";
+          return;
+        }
+
+        currentAdmin = await ensureAdmin(user);
+        adminDisplayName.textContent = currentAdmin.name;
+
+        authLoading.classList.add("hidden");
+        appEl.classList.remove("hidden");
+
+        await loadApplications();
+        startAutoRefresh();
+      } catch (error) {
+        authLoading.innerHTML = `
+          <div class="card auth-box">
+            <h1 style="font-size:2rem;margin-bottom:10px;">Acesso negado</h1>
+            <p class="small">${escapeHtml(error.message || "Não autorizado.")}</p>
+            <div style="margin-top:18px;">
+              <a class="btn primary" href="../login.html">Ir para login</a>
+            </div>
+          </div>
+        `;
+      }
+    });
+  </script>
+</body>
+</html>
