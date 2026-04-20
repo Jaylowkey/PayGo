@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PayGo | Aulas de Cartão Virtual</title>
+  <meta name="description" content="Candidatura oficial PayGo para aulas de cartão virtual. Pagamento via Paysuite, confirmação por WhatsApp e controlo de estado da inscrição." />
+  <meta name="theme-color" content="#0b1220" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#040814;
+      --panel:#0b1220;
+      --panel-2:#0f172a;
+      --soft:#111c33;
+      --card:rgba(11,18,32,.82);
+      --text:#f8fafc;
+      --muted:#94a3b8;
+      --line:rgba(255,255,255,.08);
+      --brand:#2563eb;
+      --brand-2:#3b82f6;
+      --brand-3:#60a5fa;
+      --success:#22c55e;
+      --warning:#f59e0b;
+      --danger:#ef4444;
+      --whatsapp:#25D366;
+      --radius:24px;
+      --shadow:0 22px 60px rgba(0,0,0,.45);
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:"Inter",system-ui,sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at left top, rgba(37,99,235,.18), transparent 28%),
+        radial-gradient(circle at 90% 20%, rgba(96,165,250,.12), transparent 24%),
+        linear-gradient(180deg,#020617 0%, #08101d 100%);
+      overflow-x:hidden;
+    }
+
+    h1,h2,h3,h4{font-family:"Outfit",sans-serif;margin:0}
+    a{text-decoration:none;color:inherit}
+    button,input,select,textarea{font:inherit}
+    input,select,textarea{outline:none}
+
+    .grid-bg::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+      background-size:34px 34px;
+      pointer-events:none;
+      z-index:-2;
+      mask-image:linear-gradient(180deg, rgba(255,255,255,.8), rgba(255,255,255,.08));
+    }
+
+    .orb{
+      position:fixed;
+      width:460px;height:460px;border-radius:50%;
+      pointer-events:none;z-index:-1;filter:blur(35px)
+    }
+    .orb.a{left:-120px;top:-120px;background:radial-gradient(circle, rgba(37,99,235,.25), transparent 65%)}
+    .orb.b{right:-140px;top:80px;background:radial-gradient(circle, rgba(59,130,246,.16), transparent 65%)}
+    .orb.c{left:30%;bottom:-180px;background:radial-gradient(circle, rgba(96,165,250,.10), transparent 65%)}
+
+    .container{width:min(1180px, calc(100% - 28px)); margin:auto}
+
+    .topbar{
+      position:sticky; top:0; z-index:20;
+      backdrop-filter:blur(18px);
+      background:rgba(2,6,23,.72);
+      border-bottom:1px solid rgba(255,255,255,.06);
+    }
+
+    .topbar-inner{
+      min-height:74px;
+      display:flex; align-items:center; justify-content:space-between; gap:16px;
+    }
+
+    .brand{
+      display:flex; align-items:center; gap:12px;
+      font-weight:900;
+    }
+
+    .logo{
+      width:46px; height:46px; border-radius:16px;
+      display:grid; place-items:center;
+      background:linear-gradient(135deg,var(--brand),var(--brand-3));
+      box-shadow:0 12px 30px rgba(37,99,235,.35);
+      font-family:"Outfit",sans-serif;
+      font-size:22px; font-weight:900;
+    }
+
+    .brand small{
+      display:block; color:var(--brand-3);
+      font-size:11px; text-transform:uppercase; letter-spacing:.16em;
+      font-weight:800;
+    }
+
+    .btn{
+      border:0; cursor:pointer;
+      border-radius:16px;
+      padding:14px 18px;
+      font-weight:800;
+      display:inline-flex; align-items:center; justify-content:center; gap:10px;
+      transition:.22s ease;
+      text-align:center;
+    }
+    .btn:hover{transform:translateY(-1px)}
+    .btn:active{transform:translateY(0)}
+    .btn.primary{
+      color:#fff;
+      background:linear-gradient(135deg,var(--brand),var(--brand-2));
+      box-shadow:0 14px 34px rgba(37,99,235,.28);
+    }
+    .btn.secondary{
+      color:#fff;
+      background:rgba(255,255,255,.04);
+      border:1px solid var(--line);
+    }
+    .btn.success{
+      color:#fff;
+      background:linear-gradient(135deg,#16a34a,#22c55e);
+    }
+    .btn.whatsapp{
+      color:#fff;
+      background:linear-gradient(135deg,#16a34a,var(--whatsapp));
+    }
+
+    .hero{
+      padding:34px 0 18px;
+    }
+
+    .hero-grid{
+      display:grid;
+      grid-template-columns:1.15fr .85fr;
+      gap:22px;
+    }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(16px);
+    }
+
+    .hero-main{padding:30px}
+    .hero-side{padding:24px}
+
+    .eyebrow{
+      display:inline-flex; gap:8px; align-items:center;
+      padding:10px 14px; border-radius:999px;
+      background:rgba(37,99,235,.12);
+      border:1px solid rgba(96,165,250,.22);
+      color:#bfdbfe;
+      font-size:12px; font-weight:900; letter-spacing:.14em; text-transform:uppercase;
+      margin-bottom:18px;
+    }
+
+    .hero-main h1{
+      font-size:clamp(2rem,4vw,4.2rem);
+      line-height:1.02;
+      letter-spacing:-.045em;
+      max-width:12ch;
+      margin-bottom:14px;
+    }
+
+    .lead{
+      color:var(--muted);
+      line-height:1.75;
+      font-size:1.03rem;
+      max-width:64ch;
+      margin:0;
+    }
+
+    .hero-points{
+      display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:12px; margin-top:22px;
+    }
+
+    .point{
+      background:rgba(255,255,255,.03);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:14px 15px;
+      color:#dbeafe;
+      font-weight:700;
+      font-size:.95rem;
+    }
+
+    .side-badge{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 12px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.04);
+      font-size:11px; font-weight:900; letter-spacing:.14em; text-transform:uppercase;
+      margin-bottom:14px;
+    }
+
+    .price{
+      display:flex; align-items:flex-end; gap:10px; margin-bottom:12px;
+    }
+    .price strong{
+      font-size:clamp(2.4rem, 5vw, 4rem);
+      line-height:.95; letter-spacing:-.05em; font-family:"Outfit",sans-serif;
+    }
+    .price span{color:#cbd5e1; font-weight:700; margin-bottom:8px}
+
+    .stack{display:grid; gap:10px}
+    .stack-item{
+      display:flex; justify-content:space-between; gap:12px;
+      padding:12px 14px;
+      border-radius:16px;
+      background:rgba(255,255,255,.035);
+      border:1px solid rgba(255,255,255,.06);
+      color:#e2e8f0;
+      font-size:.95rem;
+    }
+
+    .warning-box{
+      margin-top:14px;
+      padding:16px 18px;
+      border-radius:18px;
+      background:rgba(245,158,11,.10);
+      border:1px solid rgba(245,158,11,.22);
+      color:#fde68a;
+      line-height:1.7;
+      font-size:.95rem;
+    }
+
+    .section{padding:18px 0}
+    .section-head{
+      display:flex; justify-content:space-between; align-items:end; gap:18px;
+      margin-bottom:16px;
+    }
+    .section-head h2{
+      font-size:clamp(1.5rem,2vw,2.2rem);
+      letter-spacing:-.03em;
+    }
+    .section-head p{
+      margin:0; max-width:660px; color:var(--muted); line-height:1.75;
+    }
+
+    .steps{
+      display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px;
+    }
+
+    .step{
+      padding:22px;
+      border-radius:22px;
+      background:rgba(255,255,255,.03);
+      border:1px solid var(--line);
+    }
+
+    .step-num{
+      width:42px;height:42px;border-radius:14px;display:grid;place-items:center;
+      background:rgba(37,99,235,.14);
+      border:1px solid rgba(96,165,250,.18);
+      color:#bfdbfe; font-family:"Outfit",sans-serif; font-weight:900;
+      margin-bottom:16px;
+    }
+
+    .step h3{font-size:1.04rem; margin-bottom:8px}
+    .step p{margin:0;color:var(--muted);line-height:1.68;font-size:.95rem}
+
+    .layout{
+      display:grid; grid-template-columns:1.02fr .98fr; gap:22px;
+    }
+
+    .panel{padding:26px}
+
+    .mini-title{
+      color:#bfdbfe;
+      text-transform:uppercase;
+      letter-spacing:.16em;
+      font-size:11px;
+      font-weight:900;
+      display:block;
+      margin-bottom:10px;
+    }
+
+    .helper{
+      margin:0; color:var(--muted); line-height:1.72;
+    }
+
+    .chooser{
+      display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px;
+      margin-top:18px;
+    }
+
+    .choice{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      border-radius:22px;
+      padding:18px;
+      cursor:pointer;
+      transition:.2s ease;
+    }
+
+    .choice:hover{border-color:rgba(96,165,250,.32); transform:translateY(-1px)}
+    .choice.active{
+      border-color:rgba(96,165,250,.48);
+      background:rgba(37,99,235,.12);
+      box-shadow:0 0 0 3px rgba(59,130,246,.12) inset;
+    }
+
+    .choice strong{
+      display:block;
+      margin-bottom:6px;
+      font-size:1rem;
+    }
+
+    .choice p{
+      margin:0;
+      color:var(--muted);
+      line-height:1.65;
+      font-size:.92rem;
+    }
+
+    .form-grid{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:14px;
+      margin-top:18px;
+    }
+
+    .field{
+      display:flex; flex-direction:column; gap:8px;
+    }
+    .field.full{grid-column:1 / -1}
+
+    label{
+      font-size:.84rem;
+      color:#dbe4ef;
+      font-weight:700;
+    }
+
+    input, select, textarea{
+      width:100%;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(2,6,23,.62);
+      color:#fff;
+      padding:14px 15px;
+      transition:.18s ease;
+    }
+
+    input:focus, select:focus, textarea:focus{
+      border-color:rgba(96,165,250,.6);
+      box-shadow:0 0 0 4px rgba(59,130,246,.12);
+    }
+
+    textarea{min-height:110px;resize:vertical}
+    .hint{color:var(--muted); font-size:.82rem; line-height:1.55}
+
+    .summary{
+      display:grid; gap:12px; margin-top:18px;
+    }
+
+    .summary-item{
+      padding:14px 15px;
+      border-radius:16px;
+      background:rgba(255,255,255,.035);
+      border:1px solid rgba(255,255,255,.06);
+    }
+
+    .summary-item small{
+      display:block; color:var(--muted); margin-bottom:4px;
+      font-size:.78rem; text-transform:uppercase; letter-spacing:.14em; font-weight:800;
+    }
+
+    .summary-item strong{font-size:1rem}
+
+    .status-track{
+      display:grid; gap:12px; margin-top:18px;
+    }
+
+    .status-pill{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      padding:14px 15px;
+      border-radius:16px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+    }
+
+    .status-tag{
+      padding:8px 11px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:900;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.04);
+    }
+
+    .status-tag.pending{background:rgba(245,158,11,.12); color:#fde68a; border-color:rgba(245,158,11,.22)}
+    .status-tag.paid{background:rgba(34,197,94,.12); color:#bbf7d0; border-color:rgba(34,197,94,.22)}
+    .status-tag.confirmed{background:rgba(59,130,246,.12); color:#bfdbfe; border-color:rgba(59,130,246,.22)}
+    .status-tag.added_to_group{background:rgba(168,85,247,.12); color:#e9d5ff; border-color:rgba(168,85,247,.22)}
+
+    .payment-box{
+      margin-top:18px;
+      border-radius:22px;
+      padding:20px;
+      background:linear-gradient(180deg, rgba(15,23,42,.9), rgba(2,6,23,.95));
+      border:1px solid rgba(255,255,255,.08);
+    }
+
+    .payment-row{
+      display:flex; justify-content:space-between; gap:12px;
+      padding:13px 0; border-bottom:1px solid rgba(255,255,255,.06);
+    }
+    .payment-row:last-child{border-bottom:0}
+
+    .payment-label{color:var(--muted); font-size:.88rem}
+    .payment-value{font-weight:900; text-align:right}
+
+    .payment-id{
+      margin-top:16px;
+      display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+      padding:16px;
+      border-radius:18px;
+      background:rgba(37,99,235,.12);
+      border:1px solid rgba(96,165,250,.2);
+    }
+
+    .payment-id-code{
+      font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+      font-size:1.06rem; font-weight:900; color:#bfdbfe; letter-spacing:.08em;
+    }
+
+    .mini-btn{
+      padding:10px 14px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.05);
+      color:#fff; cursor:pointer; font-weight:800;
+    }
+
+    .message{
+      display:none;
+      margin-top:16px;
+      border-radius:16px;
+      padding:14px 16px;
+      font-weight:700;
+      line-height:1.6;
+    }
+    .message.show{display:block}
+    .message.success{
+      background:rgba(34,197,94,.10);
+      border:1px solid rgba(34,197,94,.24);
+      color:#bbf7d0;
+    }
+    .message.error{
+      background:rgba(239,68,68,.10);
+      border:1px solid rgba(239,68,68,.24);
+      color:#fecaca;
+    }
+    .message.info{
+      background:rgba(59,130,246,.10);
+      border:1px solid rgba(59,130,246,.24);
+      color:#bfdbfe;
+    }
+
+    .faq{display:grid; gap:12px}
+    .faq-item{
+      padding:18px; border-radius:20px;
+      background:rgba(255,255,255,.03);
+      border:1px solid var(--line);
+    }
+    .faq-item h3{font-size:1rem; margin-bottom:8px}
+    .faq-item p{margin:0;color:var(--muted);line-height:1.72}
+
+    .sticky-bar{
+      position:sticky; bottom:14px; z-index:12; margin-top:24px;
+    }
+    .sticky-inner{
+      padding:15px 16px;
+      display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;
+      border-radius:22px;
+      background:rgba(2,6,23,.86);
+      border:1px solid rgba(255,255,255,.08);
+      backdrop-filter:blur(18px);
+      box-shadow:var(--shadow);
+    }
+
+    .sticky-left{
+      display:flex; align-items:center; gap:12px; flex-wrap:wrap; color:#e2e8f0;
+    }
+    .sticky-left strong{
+      font-size:1.55rem; letter-spacing:-.04em; font-family:"Outfit",sans-serif;
+    }
+
+    .hidden{display:none !important}
+
+    @media (max-width: 1060px){
+      .hero-grid,.layout{grid-template-columns:1fr}
+      .steps{grid-template-columns:repeat(2,minmax(0,1fr))}
+    }
+
+    @media (max-width: 760px){
+      .hero-main,.hero-side,.panel{padding:22px}
+      .hero-points,.steps,.chooser,.form-grid{grid-template-columns:1fr}
+      .payment-row{flex-direction:column; align-items:flex-start}
+      .sticky-inner{flex-direction:column; align-items:stretch}
+      .sticky-inner .btn{width:100%}
+    }
+  </style>
+</head>
+<body class="grid-bg">
+  <div class="orb a"></div>
+  <div class="orb b"></div>
+  <div class="orb c"></div>
+
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a href="https://paygo.co.mz/" class="brand">
+        <div class="logo">P</div>
+        <div>
+          <div style="font-size:1.06rem">PayGo</div>
+          <small>Aula oficial • cartão virtual</small>
+        </div>
+      </a>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a class="btn secondary" href="#candidatura">Candidatar agora</a>
+        <a class="btn primary" href="#pagamento-box">Ver pagamento</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container hero-grid">
+        <div class="card hero-main">
+          <div class="eyebrow">Grupo oficial PayGo • acesso controlado</div>
+          <h1>Aprenda a criar ou recarregar o seu cartão virtual.</h1>
+          <p class="lead">
+            Esta candidatura foi organizada para ficar mais simples de entender. Primeiro escolhe o teu caso,
+            depois preenches os dados, fazemos a cobrança via Paysuite, confirmamos o pagamento e por fim a equipa PayGo
+            muda o teu estado para <strong>pendente</strong>, <strong>pago</strong>, <strong>confirmado</strong> e
+            <strong>adicionado ao grupo</strong>.
+          </p>
+
+          <div class="hero-points">
+            <div class="point">✔ Não tenho cartão e quero aprender do zero</div>
+            <div class="point">✔ Já tenho cartão e quero saber como recarregar</div>
+            <div class="point">✔ Pagamento identificado com ID curto</div>
+            <div class="point">✔ Entrada no grupo só após validação</div>
+          </div>
+
+          <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:22px;">
+            <a class="btn primary" href="#candidatura">Fazer candidatura</a>
+            <a class="btn whatsapp" href="https://wa.me/258871002255?text=Ol%C3%A1%20PayGo%2C%20quero%20informa%C3%A7%C3%B5es%20sobre%20as%20aulas%20de%20cart%C3%A3o%20virtual." target="_blank" rel="noopener noreferrer">
+              Falar no WhatsApp
+            </a>
+          </div>
+        </div>
+
+        <div class="card hero-side">
+          <div class="side-badge">Investimento único</div>
+
+          <div class="price">
+            <strong>1200 MT</strong>
+            <span>pagamento da candidatura</span>
+          </div>
+
+          <div class="stack">
+            <div class="stack-item">
+              <span>Geração do cartão</span>
+              <strong>incluído</strong>
+            </div>
+            <div class="stack-item">
+              <span>Primeira recarga</span>
+              <strong>incluído</strong>
+            </div>
+            <div class="stack-item">
+              <span>Custo da aula</span>
+              <strong>incluído</strong>
+            </div>
+          </div>
+
+          <div class="warning-box">
+            <strong>Importante:</strong> só serão adicionados ao grupo os candidatos que pagarem,
+            tiverem o nome validado e forem confirmados pela equipa PayGo.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <span class="mini-title">Como funciona</span>
+            <h2>Processo mais fácil de seguir</h2>
+          </div>
+          <p>
+            A página foi reorganizada para a pessoa perceber rápido o que fazer, quanto paga, porque paga e em que fase está a inscrição.
+          </p>
+        </div>
+
+        <div class="steps">
+          <div class="step card">
+            <div class="step-num">1</div>
+            <h3>Escolha o seu caso</h3>
+            <p>Primeiro diz se já tem cartão ou se ainda não tem cartão.</p>
+          </div>
+          <div class="step card">
+            <div class="step-num">2</div>
+            <h3>Preencha os dados</h3>
+            <p>Nome, email, WhatsApp, objetivo e nome que será usado no pagamento.</p>
+          </div>
+          <div class="step card">
+            <div class="step-num">3</div>
+            <h3>Pagamento pela Paysuite</h3>
+            <p>A candidatura é criada na API e o sistema gera a cobrança real com ID curto.</p>
+          </div>
+          <div class="step card">
+            <div class="step-num">4</div>
+            <h3>Confirmação e entrada</h3>
+            <p>Após o webhook e a validação manual, o estado avança até “adicionado ao grupo”.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="candidatura">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <span class="mini-title">Candidatura PayGo</span>
+            <h2>Página organizada para candidatura e pagamento</h2>
+          </div>
+          <p>
+            Escolhe a opção certa, preenche apenas o necessário e acompanha o teu estado sem confusão.
+          </p>
+        </div>
+
+        <div class="layout">
+          <div class="card panel">
+            <span class="mini-title">1. Escolha do tipo de candidato</span>
+            <h3 style="font-size:1.45rem; margin-bottom:8px;">Qual é o teu caso?</h3>
+            <p class="helper">Escolhe a opção que mais combina contigo. Isso ajuda a PayGo a orientar melhor a aula.</p>
+
+            <div class="chooser">
+              <div class="choice active" data-choice="no_card" id="choiceNoCard">
+                <strong>Não tenho cartão</strong>
+                <p>Quero aprender a criar o meu cartão virtual e entender o processo do zero.</p>
+              </div>
+
+              <div class="choice" data-choice="have_card_recharge" id="choiceHaveCard">
+                <strong>Já tenho cartão e quero saber como recarregar</strong>
+                <p>Já possuo cartão e quero aprender a fazer recarga, gestão e uso mais correto.</p>
+              </div>
+            </div>
+
+            <form id="applicationForm">
+              <input type="hidden" id="cardOption" value="no_card" />
+
+              <div class="form-grid">
+                <div class="field full hidden" id="providerField">
+                  <label for="cardProvider">Se já tens cartão, qual é o provedor?</label>
+                  <select id="cardProvider">
+                    <option value="">Selecione</option>
+                    <option value="RedotPay">RedotPay</option>
+                    <option value="Payyzi">Payyzi</option>
+                    <option value="Ezzocard">Ezzocard</option>
+                    <option value="Bybit">Bybit</option>
+                    <option value="Binance Card">Binance Card</option>
+                    <option value="Outro">Outro</option>
+                  </select>
+                </div>
+
+                <div class="field full hidden" id="providerOtherField">
+                  <label for="cardProviderOther">Especifique o outro provedor</label>
+                  <input type="text" id="cardProviderOther" placeholder="Digite o nome do provedor" />
+                </div>
+
+                <div class="field">
+                  <label for="fullName">Nome completo</label>
+                  <input type="text" id="fullName" placeholder="Ex.: Samad Júnior" required />
+                </div>
+
+                <div class="field">
+                  <label for="email">Email</label>
+                  <input type="email" id="email" placeholder="Ex.: voce@email.com" required />
+                </div>
+
+                <div class="field">
+                  <label for="whatsapp">WhatsApp</label>
+                  <input type="tel" id="whatsapp" placeholder="Ex.: 871234567" required />
+                </div>
+
+                <div class="field">
+                  <label for="city">Cidade / Província</label>
+                  <input type="text" id="city" placeholder="Ex.: Maputo" />
+                </div>
+
+                <div class="field full">
+                  <label for="goal">O que pretende aprender nesta aula?</label>
+                  <textarea id="goal" placeholder="Explique com poucas palavras o teu objetivo..." required></textarea>
+                </div>
+
+                <div class="field full">
+                  <label for="paymentName">Nome que será usado no pagamento</label>
+                  <input type="text" id="paymentName" placeholder="Digite exatamente o nome usado na transferência ou no checkout" required />
+                  <div class="hint">Este nome será usado pela equipa para validar o pagamento com mais rapidez.</div>
+                </div>
+
+                <div class="field full">
+                  <label for="notes">Observações adicionais</label>
+                  <textarea id="notes" placeholder="Escreva qualquer detalhe importante, se necessário..."></textarea>
+                </div>
+              </div>
+
+              <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:22px;">
+                <button class="btn primary" type="submit" id="submitBtn">Criar candidatura e gerar pagamento</button>
+                <button class="btn secondary" type="button" id="resetBtn">Limpar</button>
+              </div>
+            </form>
+
+            <div id="formMessage" class="message"></div>
+          </div>
+
+          <div class="card panel">
+            <span class="mini-title">2. Resumo e pagamento</span>
+            <h3 style="font-size:1.45rem; margin-bottom:8px;">Resumo da tua candidatura</h3>
+            <p class="helper">Depois de preencher e enviar, a candidatura é criada na tua API e aparece aqui com ID curto e estado.</p>
+
+            <div class="summary">
+              <div class="summary-item">
+                <small>Tipo selecionado</small>
+                <strong id="summaryType">Não tenho cartão</strong>
+              </div>
+
+              <div class="summary-item">
+                <small>Provedor</small>
+                <strong id="summaryProvider">Ainda não se aplica</strong>
+              </div>
+
+              <div class="summary-item">
+                <small>ID curto</small>
+                <strong id="summaryShortId">Será gerado pela API</strong>
+              </div>
+            </div>
+
+            <div class="payment-box" id="pagamento-box">
+              <div class="payment-row">
+                <div class="payment-label">Produto</div>
+                <div class="payment-value">Aulas PayGo • Cartão Virtual</div>
+              </div>
+              <div class="payment-row">
+                <div class="payment-label">Valor</div>
+                <div class="payment-value" style="color:#bfdbfe;font-size:1.1rem;">1200 MT</div>
+              </div>
+              <div class="payment-row">
+                <div class="payment-label">Cobrança</div>
+                <div class="payment-value">Paysuite</div>
+              </div>
+              <div class="payment-row">
+                <div class="payment-label">WhatsApp de comprovativo</div>
+                <div class="payment-value">871002255</div>
+              </div>
+
+              <div class="payment-id">
+                <div>
+                  <div class="payment-label" style="margin-bottom:6px;">ID curto da candidatura</div>
+                  <div class="payment-id-code" id="shortId">APL------</div>
+                </div>
+                <button class="mini-btn" id="copyIdBtn" type="button">Copiar ID</button>
+              </div>
+
+              <div style="display:grid; gap:12px; margin-top:18px;">
+                <a class="btn success" href="#" id="paysuiteBtn" target="_blank" rel="noopener noreferrer">Pagar agora via Paysuite</a>
+                <button class="btn whatsapp" type="button" id="whatsappBtn">Enviar comprovativo no WhatsApp</button>
+                <button class="btn secondary" type="button" id="copyInstructionsBtn">Copiar instruções</button>
+              </div>
+            </div>
+
+            <span class="mini-title" style="margin-top:22px;">3. Acompanhamento do estado</span>
+            <div class="status-track">
+              <div class="status-pill">
+                <div>
+                  <strong>Estado atual</strong>
+                  <div class="helper" style="margin-top:4px;">Atualizado pelo sistema e pela equipa PayGo</div>
+                </div>
+                <div class="status-tag pending" id="statusBadge">pendente</div>
+              </div>
+
+              <div class="summary-item">
+                <small>ID do documento</small>
+                <strong id="applicationDocId">Ainda não criado</strong>
+              </div>
+
+              <div class="summary-item">
+                <small>Última atualização</small>
+                <strong id="applicationUpdatedAt">—</strong>
+              </div>
+            </div>
+
+            <div id="statusMessage" class="message info show" style="margin-top:16px;">
+              Preencha o formulário e crie a candidatura para gerar cobrança real pela tua API.
+            </div>
+          </div>
+        </div>
+
+        <div class="sticky-bar">
+          <div class="sticky-inner">
+            <div class="sticky-left">
+              <span>Pagamento confirmado apenas após validação</span>
+              <strong>1200 MT</strong>
+              <span>cartão + 1ª recarga + aula</span>
+            </div>
+
+            <div style="display:flex; gap:12px; flex-wrap:wrap;">
+              <a class="btn primary" href="#candidatura">Candidatar agora</a>
+              <button class="btn whatsapp" type="button" id="stickyWhatsappBtn">Enviar comprovativo</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <span class="mini-title">Perguntas frequentes</span>
+            <h2>Informação mais fácil de entender</h2>
+          </div>
+          <p>
+            Estes blocos ajudam o utilizador a perceber logo como funciona a candidatura e o motivo do pagamento.
+          </p>
+        </div>
+
+        <div class="faq">
+          <div class="faq-item card">
+            <h3>O que está incluído nos 1200 MT?</h3>
+            <p>O valor inclui a geração do cartão, a primeira recarga e o custo da aula.</p>
+          </div>
+
+          <div class="faq-item card">
+            <h3>Recebo o link do grupo imediatamente?</h3>
+            <p>Não. O estado tem de avançar até pagamento validado e confirmação da equipa antes de entrares no grupo.</p>
+          </div>
+
+          <div class="faq-item card">
+            <h3>Se eu já tiver cartão, esta aula também serve?</h3>
+            <p>Sim. Podes escolher a opção “já tenho cartão e quero saber como recarregar” e indicar se usas RedotPay, Payyzi ou outro.</p>
+          </div>
+
+          <div class="faq-item card">
+            <h3>Como envio o comprovativo?</h3>
+            <p>Pelo WhatsApp para <strong>871002255</strong>, com o teu nome e o ID curto da candidatura.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const API_BASE = "/api";
+    const CREATE_APPLICATION_ENDPOINT = `${API_BASE}/create-group-application`;
+    const GET_APPLICATION_ENDPOINT = `${API_BASE}/get-group-application`;
+    const WHATSAPP_NUMBER = "258871002255";
+
+    const form = document.getElementById("applicationForm");
+    const formMessage = document.getElementById("formMessage");
+    const statusMessage = document.getElementById("statusMessage");
+    const submitBtn = document.getElementById("submitBtn");
+    const resetBtn = document.getElementById("resetBtn");
+
+    const choiceNoCard = document.getElementById("choiceNoCard");
+    const choiceHaveCard = document.getElementById("choiceHaveCard");
+    const cardOptionInput = document.getElementById("cardOption");
+    const cardProvider = document.getElementById("cardProvider");
+    const cardProviderOther = document.getElementById("cardProviderOther");
+    const providerField = document.getElementById("providerField");
+    const providerOtherField = document.getElementById("providerOtherField");
+
+    const shortIdEl = document.getElementById("shortId");
+    const summaryShortId = document.getElementById("summaryShortId");
+    const summaryType = document.getElementById("summaryType");
+    const summaryProvider = document.getElementById("summaryProvider");
+    const paysuiteBtn = document.getElementById("paysuiteBtn");
+    const whatsappBtn = document.getElementById("whatsappBtn");
+    const stickyWhatsappBtn = document.getElementById("stickyWhatsappBtn");
+    const copyIdBtn = document.getElementById("copyIdBtn");
+    const copyInstructionsBtn = document.getElementById("copyInstructionsBtn");
+    const statusBadge = document.getElementById("statusBadge");
+    const applicationDocId = document.getElementById("applicationDocId");
+    const applicationUpdatedAt = document.getElementById("applicationUpdatedAt");
+
+    let currentApplication = null;
+
+    function setChoice(type) {
+      cardOptionInput.value = type;
+
+      choiceNoCard.classList.toggle("active", type === "no_card");
+      choiceHaveCard.classList.toggle("active", type === "have_card_recharge");
+
+      const hasCard = type === "have_card_recharge";
+      providerField.classList.toggle("hidden", !hasCard);
+
+      if (!hasCard) {
+        providerOtherField.classList.add("hidden");
+        cardProvider.value = "";
+        cardProviderOther.value = "";
+      }
+
+      updateSummary();
+    }
+
+    function updateSummary() {
+      const type = cardOptionInput.value;
+      const provider = cardProvider.value;
+      const providerOther = cardProviderOther.value.trim();
+
+      if (type === "have_card_recharge") {
+        summaryType.textContent = "Já tenho cartão e quero saber como recarregar";
+        if (!provider) {
+          summaryProvider.textContent = "Por indicar";
+        } else if (provider === "Outro") {
+          summaryProvider.textContent = providerOther || "Outro provedor";
+        } else {
+          summaryProvider.textContent = provider;
+        }
+      } else {
+        summaryType.textContent = "Não tenho cartão";
+        summaryProvider.textContent = "Ainda não se aplica";
+      }
+    }
+
+    function showMessage(el, text, type = "info") {
+      el.className = `message show ${type}`;
+      el.textContent = text;
+    }
+
+    function clearMessage(el) {
+      el.className = "message";
+      el.textContent = "";
+    }
+
+    function mapStatusClass(status) {
+      if (status === "paid") return "paid";
+      if (status === "confirmed") return "confirmed";
+      if (status === "added_to_group") return "added_to_group";
+      return "pending";
+    }
+
+    function updateStatusUI(application) {
+      const status = application?.status || "pending";
+      statusBadge.textContent = status.replaceAll("_", " ");
+      statusBadge.className = `status-tag ${mapStatusClass(status)}`;
+
+      applicationDocId.textContent = application?.id || "Ainda não criado";
+      applicationUpdatedAt.textContent = application?.updatedAt
+        ? new Date(application.updatedAt).toLocaleString("pt-MZ")
+        : "—";
+
+      const shortId = application?.shortId || "APL------";
+      shortIdEl.textContent = shortId;
+      summaryShortId.textContent = shortId;
+    }
+
+    function getFormData() {
+      return {
+        fullName: document.getElementById("fullName").value.trim(),
+        email: document.getElementById("email").value.trim(),
+        whatsapp: document.getElementById("whatsapp").value.trim(),
+        city: document.getElementById("city").value.trim(),
+        goal: document.getElementById("goal").value.trim(),
+        paymentName: document.getElementById("paymentName").value.trim(),
+        notes: document.getElementById("notes").value.trim(),
+        cardOption: cardOptionInput.value,
+        cardProvider: cardProvider.value,
+        cardProviderOther: cardProviderOther.value.trim()
+      };
+    }
+
+    function validateForm(data) {
+      if (!data.fullName || data.fullName.length < 5) return "Digite um nome completo válido.";
+      if (!data.email || !data.email.includes("@")) return "Digite um email válido.";
+      if (!data.whatsapp || data.whatsapp.replace(/\D/g, "").length < 8) return "Digite um WhatsApp válido.";
+      if (!data.goal || data.goal.length < 10) return "Explique melhor o teu objetivo.";
+      if (!data.paymentName || data.paymentName.length < 5) return "Digite o nome usado no pagamento.";
+
+      if (data.cardOption === "have_card_recharge") {
+        if (!data.cardProvider) return "Selecione o provedor do cartão.";
+        if (data.cardProvider === "Outro" && !data.cardProviderOther) {
+          return "Especifique o outro provedor do cartão.";
+        }
+      }
+
+      return null;
+    }
+
+    async function createApplication(payload) {
+      const response = await fetch(CREATE_APPLICATION_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...payload,
+          paymentMethod: "mpesa",
+          createPayment: true
+        })
+      });
+
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || result.message || "Falha ao criar candidatura.");
+      }
+
+      return result.data;
+    }
+
+    async function getApplicationByShortId(shortId) {
+      const response = await fetch(GET_APPLICATION_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ shortId })
+      });
+
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Não foi possível consultar o estado.");
+      }
+
+      return result.application;
+    }
+
+    function buildWhatsAppMessage() {
+      const shortId = currentApplication?.shortId || shortIdEl.textContent;
+      const data = getFormData();
+
+      return [
+        "Olá PayGo, estou a enviar o meu comprovativo da candidatura para as aulas de cartão virtual.",
+        "",
+        "Dados:",
+        `Nome: ${data.fullName || "-"}`,
+        `Email: ${data.email || "-"}`,
+        `WhatsApp: ${data.whatsapp || "-"}`,
+        `Nome no pagamento: ${data.paymentName || "-"}`,
+        `ID curto: ${shortId || "-"}`,
+        `Opção: ${summaryType.textContent}`,
+        `Provedor: ${summaryProvider.textContent}`,
+        "",
+        "Peço a confirmação do pagamento e da minha entrada no grupo."
+      ].join("\n");
+    }
+
+    function buildInstructions() {
+      const shortId = currentApplication?.shortId || shortIdEl.textContent;
+
+      return [
+        "PAYGO - INSTRUÇÕES DE PAGAMENTO",
+        "Produto: Aulas de Cartão Virtual",
+        "Valor: 1200 MT",
+        `ID curto: ${shortId}`,
+        `Tipo: ${summaryType.textContent}`,
+        `Provedor: ${summaryProvider.textContent}`,
+        "WhatsApp: 871002255",
+        "",
+        "O valor será usado na geração do cartão, primeira recarga e custo da aula.",
+        "Só entra no grupo quem pagar e for confirmado pela equipa PayGo."
+      ].join("\n");
+    }
+
+    async function copyText(text, successText) {
+      try {
+        await navigator.clipboard.writeText(text);
+        alert(successText);
+      } catch {
+        alert("Não foi possível copiar automaticamente.\n\n" + text);
+      }
+    }
+
+    choiceNoCard.addEventListener("click", () => setChoice("no_card"));
+    choiceHaveCard.addEventListener("click", () => setChoice("have_card_recharge"));
+
+    cardProvider.addEventListener("change", () => {
+      providerOtherField.classList.toggle("hidden", cardProvider.value !== "Outro");
+      if (cardProvider.value !== "Outro") cardProviderOther.value = "";
+      updateSummary();
+    });
+
+    cardProviderOther.addEventListener("input", updateSummary);
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      clearMessage(formMessage);
+
+      const data = getFormData();
+      const error = validateForm(data);
+
+      if (error) {
+        showMessage(formMessage, error, "error");
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "A criar candidatura...";
+
+      try {
+        const created = await createApplication(data);
+
+        currentApplication = {
+          id: created.id || null,
+          shortId: created.shortId,
+          status: created.status || "pending",
+          updatedAt: new Date().toISOString(),
+          checkoutUrl: created.checkoutUrl || null
+        };
+
+        updateStatusUI(currentApplication);
+        paysuiteBtn.href = created.checkoutUrl || "#";
+
+        localStorage.setItem("paygo_group_application_short_id", created.shortId);
+
+        showMessage(
+          formMessage,
+          `Candidatura criada com sucesso. O teu ID é ${created.shortId}. Agora podes pagar pela Paysuite e depois enviar o comprovativo no WhatsApp.`,
+          "success"
+        );
+
+        showMessage(
+          statusMessage,
+          `Candidatura criada. Estado atual: ${currentApplication.status}.`,
+          "info"
+        );
+
+        document.getElementById("pagamento-box").scrollIntoView({ behavior: "smooth", block: "start" });
+      } catch (err) {
+        showMessage(formMessage, err.message || "Erro ao criar candidatura.", "error");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Criar candidatura e gerar pagamento";
+      }
+    });
+
+    paysuiteBtn.addEventListener("click", (e) => {
+      if (!paysuiteBtn.href || paysuiteBtn.getAttribute("href") === "#") {
+        e.preventDefault();
+        alert("Primeiro cria a candidatura para gerar o link de pagamento.");
+      }
+    });
+
+    whatsappBtn.addEventListener("click", () => {
+      const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(buildWhatsAppMessage())}`;
+      window.open(url, "_blank");
+    });
+
+    stickyWhatsappBtn.addEventListener("click", () => {
+      const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(buildWhatsAppMessage())}`;
+      window.open(url, "_blank");
+    });
+
+    copyIdBtn.addEventListener("click", () => {
+      copyText(shortIdEl.textContent, "ID curto copiado com sucesso.");
+    });
+
+    copyInstructionsBtn.addEventListener("click", () => {
+      copyText(buildInstructions(), "Instruções copiadas com sucesso.");
+    });
+
+    resetBtn.addEventListener("click", () => {
+      form.reset();
+      setChoice("no_card");
+      currentApplication = null;
+      updateStatusUI(null);
+      paysuiteBtn.href = "#";
+      clearMessage(formMessage);
+      showMessage(statusMessage, "Preencha o formulário e crie a candidatura para gerar cobrança real pela tua API.", "info");
+    });
+
+    async function restoreApplication() {
+      const shortId = localStorage.getItem("paygo_group_application_short_id");
+      if (!shortId) return;
+
+      try {
+        const application = await getApplicationByShortId(shortId);
+        if (!application) return;
+
+        currentApplication = application;
+        updateStatusUI(application);
+
+        if (application.shortId) {
+          shortIdEl.textContent = application.shortId;
+          summaryShortId.textContent = application.shortId;
+        }
+
+        if (application.paysuiteCheckoutUrl) {
+          paysuiteBtn.href = application.paysuiteCheckoutUrl;
+        }
+
+        if (application.cardOption === "have_card_recharge") {
+          setChoice("have_card_recharge");
+          cardProvider.value = application.cardProvider || "";
+          if (
+            application.cardProvider &&
+            !["RedotPay","Payyzi","Ezzocard","Bybit","Binance Card"].includes(application.cardProvider)
+          ) {
+            cardProvider.value = "Outro";
+            providerOtherField.classList.remove("hidden");
+            cardProviderOther.value = application.cardProvider;
+          }
+        } else {
+          setChoice("no_card");
+        }
+
+        updateSummary();
+        showMessage(statusMessage, `Candidatura restaurada. Estado atual: ${application.status}.`, "info");
+      } catch (err) {
+        console.warn("Não foi possível restaurar candidatura:", err.message);
+      }
+    }
+
+    setChoice("no_card");
+    updateStatusUI(null);
+    restoreApplication();
+  </script>
+</body>
+</html>
