@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PayGo Partners | Dashboard Afiliado</title>
-    
     <meta name="robots" content="noindex, nofollow">
     <meta name="theme-color" content="#0f172a">
-    
+    <meta name="description" content="Painel de afiliados PayGo com métricas, link exclusivo, QR code, rede de convidados e pedidos de levantamento.">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -21,10 +21,10 @@
             darkMode: 'class',
             theme: {
                 extend: {
-                    fontFamily: { 
-                        sans: ['"Plus Jakarta Sans"', 'sans-serif'], 
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
                         display: ['"Outfit"', 'sans-serif'],
-                        mono: ['"Fira Code"', 'monospace']
+                        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace']
                     },
                     colors: {
                         brand: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 900: '#1e3a8a', 950: '#0f172a' },
@@ -33,8 +33,8 @@
                         danger: { 400: '#f87171', 500: '#ef4444', 600: '#dc2626' }
                     },
                     animation: {
-                        'shimmer': 'shimmer 2s linear infinite',
-                        'slide-up': 'slideUp 0.4s ease-out forwards'
+                        shimmer: 'shimmer 2s linear infinite',
+                        'slide-up': 'slideUp 0.45s ease-out forwards'
                     },
                     keyframes: {
                         shimmer: { '0%': { backgroundPosition: '-200% 0' }, '100%': { backgroundPosition: '200% 0' } },
@@ -44,76 +44,72 @@
             }
         };
 
-        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
+        (() => {
+            const isDark = localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            document.documentElement.classList.toggle('dark', isDark);
+        })();
     </script>
 
     <style>
-        body { background-color: #f8fafc; transition: background-color 0.3s ease, color 0.3s ease; }
+        :root { color-scheme: light; }
+        .dark { color-scheme: dark; }
+        body { background-color: #f8fafc; transition: background-color .3s ease, color .3s ease; }
         .dark body { background-color: #0f172a; }
-        
-        .glass-card { 
-            background: rgba(255, 255, 255, 0.9); 
-            backdrop-filter: blur(16px); 
-            border: 1px solid rgba(226, 232, 240, 0.8); 
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        .glass-card {
+            background: rgba(255,255,255,.9);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(226,232,240,.8);
+            box-shadow: 0 10px 30px rgba(15,23,42,.06);
+            transition: all .3s cubic-bezier(.4,0,.2,1);
         }
-        .dark .glass-card { 
-            background: rgba(30, 41, 59, 0.8); 
-            border: 1px solid rgba(51, 65, 85, 0.6); 
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+        .dark .glass-card {
+            background: rgba(30,41,59,.8);
+            border: 1px solid rgba(51,65,85,.7);
+            box-shadow: 0 12px 30px rgba(0,0,0,.22);
         }
-        
-        .stat-card:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
-        .dark .stat-card:hover { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3); }
-
-        .btn-action { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
-        .btn-action:active:not(:disabled) { transform: scale(0.96); }
-        .btn-action:disabled { opacity: 0.6; cursor: not-allowed; filter: grayscale(100%); }
-        
+        .stat-card:hover { transform: translateY(-4px); }
+        .btn-action { transition: all .2s cubic-bezier(.4,0,.2,1); cursor: pointer; }
+        .btn-action:active:not(:disabled) { transform: scale(.97); }
+        .btn-action:disabled { opacity: .65; cursor: not-allowed; filter: grayscale(20%); }
         .skeleton {
             background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
             background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
+            animation: shimmer 1.4s infinite;
         }
         .dark .skeleton {
             background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
             background-size: 200% 100%;
         }
-
-        #qrCodeContainer img { margin: auto; border-radius: 0.5rem; }
-        
-        .dark-toggle { position: relative; width: 44px; height: 24px; cursor: pointer; }
+        #qrCodeContainer canvas, #qrCodeContainer img { margin: auto; border-radius: .75rem; }
+        .dark-toggle { position: relative; width: 46px; height: 24px; cursor: pointer; }
         .dark-toggle input { opacity: 0; width: 0; height: 0; }
-        .dark-toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: 0.3s; border-radius: 34px; }
-        .dark-toggle-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: 0.3s; border-radius: 50%; }
-        input:checked + .dark-toggle-slider { background-color: #1e293b; }
-        input:checked + .dark-toggle-slider:before { transform: translateX(20px); }
-
-        /* Estilos do Toast */
+        .dark-toggle-slider { position: absolute; inset: 0; background: #cbd5e1; border-radius: 999px; transition: .3s; }
+        .dark-toggle-slider:before { content: ''; position: absolute; width: 18px; height: 18px; left: 3px; bottom: 3px; background: white; border-radius: 999px; transition: .3s; }
+        .dark-toggle input:checked + .dark-toggle-slider { background: #1e293b; }
+        .dark-toggle input:checked + .dark-toggle-slider:before { transform: translateX(22px); }
         #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-        .toast-item { pointer-events: auto; display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-radius: 14px; color: white; font-weight: 600; font-size: 14px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); transform: translateX(120%); transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); border-left: 4px solid; background: rgba(15,23,42,0.95); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); }
+        .toast-item {
+            pointer-events: auto; display: flex; align-items: center; gap: 12px; padding: 16px 18px; border-radius: 14px;
+            color: white; font-weight: 700; font-size: 14px; box-shadow: 0 20px 40px rgba(0,0,0,.38);
+            transform: translateX(120%); transition: all .35s ease; border-left: 4px solid; background: rgba(15,23,42,.96);
+            backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,.05);
+        }
         .toast-item.show { transform: translateX(0); }
     </style>
 </head>
 <body class="text-slate-800 dark:text-slate-200 antialiased selection:bg-brand-500 selection:text-white">
-
     <div id="toastContainer"></div>
 
     <div id="confirmModal" class="fixed inset-0 z-[9999] hidden items-center justify-center backdrop-blur-sm bg-slate-950/80 opacity-0 transition-opacity duration-300 p-4">
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-6 md:p-8 rounded-[2rem] shadow-2xl max-w-md w-full mx-4 transform scale-95 transition-transform duration-300" id="confirmModalContent">
-            <div class="flex items-center justify-center w-16 h-16 rounded-2xl mb-6 mx-auto bg-danger-50 dark:bg-danger-500/20 text-danger-500 border border-danger-100 dark:border-danger-500/30" id="confirmModalIconContainer">
-                <i data-lucide="alert-octagon" class="w-8 h-8" id="confirmModalIcon"></i>
+            <div class="flex items-center justify-center w-16 h-16 rounded-2xl mb-6 mx-auto bg-danger-50 dark:bg-danger-500/20 text-danger-500 border border-danger-100 dark:border-danger-500/30">
+                <i data-lucide="alert-octagon" class="w-8 h-8"></i>
             </div>
             <h3 class="text-xl font-display font-bold text-slate-900 dark:text-white text-center mb-2" id="confirmModalTitle">Confirmação</h3>
             <p class="text-slate-500 dark:text-slate-400 text-center text-sm mb-8 leading-relaxed" id="confirmModalMessage">Tem a certeza que deseja realizar esta ação?</p>
             <div class="flex gap-3 w-full">
-                <button onclick="window.closeConfirmModal(false)" class="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-white rounded-xl font-bold transition-colors text-sm">Cancelar</button>
-                <button id="confirmModalBtn" onclick="window.closeConfirmModal(true)" class="flex-1 px-4 py-3 bg-danger-600 hover:bg-danger-700 text-white rounded-xl font-bold transition-colors shadow-lg shadow-danger-500/30 text-sm flex items-center justify-center gap-2">Confirmar</button>
+                <button type="button" onclick="window.closeConfirmModal(false)" class="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-white rounded-xl font-bold transition-colors text-sm">Cancelar</button>
+                <button type="button" id="confirmModalBtn" onclick="window.closeConfirmModal(true)" class="flex-1 px-4 py-3 bg-danger-600 hover:bg-danger-700 text-white rounded-xl font-bold transition-colors shadow-lg shadow-danger-500/30 text-sm flex items-center justify-center gap-2">Confirmar</button>
             </div>
         </div>
     </div>
@@ -136,15 +132,12 @@
                 </div>
                 <span class="text-xl font-display font-bold tracking-tight dark:text-white">PayGo <span class="text-brand-600">Partners</span></span>
             </div>
-            
             <div class="flex items-center gap-4">
                 <label class="dark-toggle hidden sm:block" title="Alternar modo escuro">
                     <input type="checkbox" id="darkModeToggleDesk" onchange="toggleTheme(this.checked)">
                     <span class="dark-toggle-slider"></span>
                 </label>
-                
                 <div class="h-6 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block"></div>
-
                 <button onclick="window.logoutAffiliate()" class="text-sm font-bold px-4 py-2 text-slate-600 hover:text-danger-600 dark:text-slate-300 dark:hover:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-xl transition-all flex items-center gap-2">
                     <i data-lucide="log-out" class="w-4 h-4"></i> <span class="hidden sm:inline">Terminar Sessão</span>
                 </button>
@@ -160,10 +153,9 @@
     </div>
 
     <main class="max-w-7xl mx-auto px-6 pt-32 pb-20">
-        
         <header class="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-4 animate-slide-up">
             <div>
-                <h1 class="text-3xl md:text-4xl font-display font-extrabold text-slate-900 dark:text-white tracking-tight" id="userGreeting">A Carregar...</h1>
+                <h1 class="text-3xl md:text-4xl font-display font-extrabold text-slate-900 dark:text-white tracking-tight" id="userGreeting">A carregar...</h1>
                 <p class="text-slate-500 dark:text-slate-400 font-medium mt-2 text-lg">Acompanhe a sua rede de convidados e gere os seus lucros.</p>
             </div>
             <div id="statusBadge" class="hidden inline-flex items-center gap-2 px-3 py-1.5 bg-success-50 dark:bg-success-500/10 border border-success-200 dark:border-success-500/20 text-success-700 dark:text-success-400 rounded-full text-xs font-bold shadow-sm">
@@ -185,10 +177,8 @@
         </div>
 
         <div id="dashboardContent" class="hidden space-y-8">
-            
             <div class="glass-card rounded-[2rem] p-6 md:p-10 shadow-sm overflow-hidden relative animate-slide-up" style="animation-delay: 100ms;">
                 <div class="absolute top-0 right-0 w-64 h-64 bg-brand-500/10 blur-3xl rounded-full pointer-events-none"></div>
-                
                 <div class="grid md:grid-cols-4 gap-8 items-center relative z-10">
                     <div class="md:col-span-3">
                         <h2 class="text-xl font-display font-bold mb-5 flex items-center gap-3 dark:text-white">
@@ -210,12 +200,11 @@
                         <div class="flex items-start gap-2 p-4 bg-brand-50 dark:bg-brand-500/10 rounded-xl border border-brand-100 dark:border-brand-500/20">
                             <i data-lucide="info" class="w-4 h-4 text-brand-600 flex-shrink-0 mt-0.5"></i>
                             <p class="text-xs text-brand-800 dark:text-brand-300 font-medium leading-relaxed">
-                                Plano de Ganhos: Receba <strong class="text-brand-600 dark:text-brand-400">3%</strong> sobre a taxa de serviço PayGo nas suas primeiras 10 indicações concluídas. Da 11ª em diante, ganha <strong class="text-brand-600 dark:text-brand-400">5%</strong>! <br>
-                                <span class="text-brand-600 dark:text-brand-400 mt-1 block italic opacity-90">* Nota: A comissão só é gerada na PRIMEIRA compra concluída de cada novo cliente indicado. Compras repetidas não geram nova comissão.</span>
+                                Plano de Ganhos: Receba <strong class="text-brand-600 dark:text-brand-400">3%</strong> sobre a taxa de serviço PayGo nas suas primeiras 10 indicações concluídas. Da 11ª em diante, ganha <strong class="text-brand-600 dark:text-brand-400">5%</strong>.<br>
+                                <span class="text-brand-600 dark:text-brand-400 mt-1 block italic opacity-90">* A comissão só é gerada na primeira compra concluída de cada novo cliente indicado.</span>
                             </p>
                         </div>
                     </div>
-
                     <div class="md:col-span-1 flex flex-col items-center justify-center p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
                         <div id="qrCodeContainer" class="p-2 bg-white rounded-xl mb-2 w-32 h-32 flex items-center justify-center border border-slate-100">
                             <div class="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
@@ -282,8 +271,7 @@
                                 <th class="px-8 py-5 text-right">Status de Conversão</th>
                             </tr>
                         </thead>
-                        <tbody id="referralsBody" class="divide-y divide-slate-100 dark:divide-slate-800/80 bg-white/40 dark:bg-slate-900/20">
-                            </tbody>
+                        <tbody id="referralsBody" class="divide-y divide-slate-100 dark:divide-slate-800/80 bg-white/40 dark:bg-slate-900/20"></tbody>
                     </table>
                 </div>
             </div>
@@ -292,20 +280,18 @@
 
     <div id="withdrawModal" class="fixed inset-0 z-[200] hidden flex items-end sm:items-center justify-center p-4 sm:p-6 transition-opacity opacity-0">
         <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="window.closeWithdrawModal()"></div>
-        
         <div class="glass-card w-full max-w-md rounded-t-[2.5rem] sm:rounded-[2.5rem] p-8 sm:p-10 relative z-10 shadow-2xl transform translate-y-full sm:translate-y-10 transition-transform duration-300 bg-white dark:bg-slate-900" id="withdrawModalContent">
             <div class="w-12 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mx-auto mb-6 sm:hidden"></div>
-            
             <div class="flex justify-between items-start mb-6">
                 <div>
                     <h2 class="text-2xl font-display font-extrabold dark:text-white tracking-tight">Levantamento</h2>
                     <p class="text-slate-500 dark:text-slate-400 text-sm mt-1 font-medium">O mínimo para saque é de 600,00 MT.</p>
                 </div>
-                <button onclick="window.closeWithdrawModal()" class="w-8 h-8 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors hidden sm:flex">
+                <button type="button" onclick="window.closeWithdrawModal()" class="w-8 h-8 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors hidden sm:flex">
                     <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>
-            
+
             <div class="bg-success-50 dark:bg-success-900/20 border border-success-100 dark:border-success-800 rounded-xl p-4 mb-6 flex justify-between items-center">
                 <div>
                     <p class="text-sm text-success-700 dark:text-success-300 font-medium">Saldo Disponível</p>
@@ -321,7 +307,7 @@
                     <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Montante a Levantar (MT)</label>
                     <div class="relative group">
                         <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400">MT</span>
-                        <input type="number" id="wAmount" required min="600" class="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl pl-12 pr-4 py-4 font-mono font-bold text-lg outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white dark:focus:bg-slate-900 transition-all dark:text-white placeholder:text-slate-300" placeholder="0.00">
+                        <input type="number" id="wAmount" required min="600" step="0.01" class="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl pl-12 pr-4 py-4 font-mono font-bold text-lg outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white dark:focus:bg-slate-900 transition-all dark:text-white placeholder:text-slate-300" placeholder="0.00">
                     </div>
                 </div>
                 <div>
@@ -338,461 +324,543 @@
                         <input type="tel" id="wPhone" required placeholder="Ex: 841234567" pattern="^\d{9}$" class="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl pl-12 pr-4 py-4 font-bold outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white dark:focus:bg-slate-900 transition-all dark:text-white placeholder:text-slate-300">
                     </div>
                 </div>
-                <button type="submit" id="btnSubmitWithdraw" class="btn-action w-full py-4 mt-2 bg-gradient-to-r from-success-600 to-emerald-500 hover:from-success-500 hover:to-emerald-400 text-white font-bold rounded-xl shadow-lg shadow-success-600/30 flex items-center justify-center gap-2 active:scale-[0.98]">
+                <button type="submit" id="btnSubmitWithdraw" class="btn-action w-full py-4 mt-2 bg-gradient-to-r from-success-600 to-emerald-500 hover:from-success-500 hover:to-emerald-400 text-white font-bold rounded-xl shadow-lg shadow-success-600/30 flex items-center justify-center gap-2">
                     <i data-lucide="check-circle-2" class="w-5 h-5"></i> <span>Confirmar Pedido</span>
                 </button>
             </form>
         </div>
     </div>
 
-   <script type="module">
-    import { CircuitBreaker } from './js/circuit-breaker.js';
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import {
+    getFirestore,
+    doc,
+    getDoc,
+    collection,
+    addDoc,
+    serverTimestamp,
+    increment,
+    runTransaction
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // A tua função normal que chama a tua mega API da Vercel
-    async function chamarBackendVercel(dados) {
-        const res = await fetch('/api/paysuite-payment', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dados)
+// Removi do dashboard o CircuitBreaker de pagamento porque ele não é usado nesta tela e pode quebrar se o ficheiro ./js/circuit-breaker.js não existir.
+
+const firebaseConfig = {
+    apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
+    authDomain: "paygo-14311.firebaseapp.com",
+    projectId: "paygo-14311",
+    storageBucket: "paygo-14311.firebasestorage.app",
+    messagingSenderId: "208360646277",
+    appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+// Se a tua instância nomeada "paygodb" não existir, troca para: const db = getFirestore(app);
+const db = getFirestore(app, "paygodb");
+
+let currentUserData = null;
+let rawReferralsList = [];
+let resolveConfirm = null;
+let isSubmittingWithdraw = false;
+
+lucide.createIcons();
+
+const escapeHTML = (str = '') => String(str).replace(/[&<>'"]/g, tag => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    "'": '&#39;',
+    '"': '&quot;'
+}[tag] || tag));
+
+const formatMZN = (value = 0) => new Intl.NumberFormat('pt-MZ', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+}).format(Number(value || 0)) + ' MT';
+
+const maskEmail = (email) => {
+    if (!email || !email.includes('@')) return 'Oculto';
+    const [name, domain] = email.split('@');
+    return `${name.substring(0, 3)}***@${domain}`;
+};
+
+const toMillis = (value) => {
+    if (!value) return 0;
+    if (typeof value?.toMillis === 'function') return value.toMillis();
+    if (typeof value?.seconds === 'number') return value.seconds * 1000;
+    const time = new Date(value).getTime();
+    return Number.isNaN(time) ? 0 : time;
+};
+
+const formatReferralDate = (value) => {
+    const ms = toMillis(value);
+    if (!ms) return 'N/A';
+    return new Date(ms).toLocaleDateString('pt-MZ');
+};
+
+window.showToast = (msg, type = 'success') => {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    const borderColor = type === 'error' ? 'border-danger-500' : type === 'warning' ? 'border-warning-500' : 'border-brand-500';
+    const icon = type === 'error' ? 'alert-octagon text-danger-400' : type === 'warning' ? 'alert-triangle text-warning-400' : 'check-check text-brand-400';
+
+    toast.className = `toast-item border-l-4 ${borderColor}`;
+    toast.innerHTML = `
+        <i data-lucide="${icon.split(' ')[0]}" class="w-6 h-6 flex-shrink-0 ${icon.split(' ')[1]}"></i>
+        <span class="flex-1">${escapeHTML(msg)}</span>
+    `;
+
+    container.appendChild(toast);
+    lucide.createIcons({ root: toast });
+
+    requestAnimationFrame(() => toast.classList.add('show'));
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 350);
+    }, 4200);
+};
+
+function setThemeCheckboxes(isDark) {
+    const desk = document.getElementById('darkModeToggleDesk');
+    const mob = document.getElementById('darkModeToggleMob');
+    if (desk) desk.checked = isDark;
+    if (mob) mob.checked = isDark;
+}
+
+window.toggleTheme = (forceDark) => {
+    const html = document.documentElement;
+    html.classList.toggle('dark', forceDark);
+    localStorage.theme = forceDark ? 'dark' : 'light';
+    setThemeCheckboxes(forceDark);
+
+    const currentLink = document.getElementById('affLink')?.value?.trim();
+    if (currentLink && currentLink !== 'A gerar link...') {
+        renderQR(currentLink, forceDark ? 'dark' : 'light');
+    }
+};
+
+setThemeCheckboxes(document.documentElement.classList.contains('dark'));
+
+window.confirmAction = (title, message, confirmText = 'Confirmar') => {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('confirmModal');
+        const content = document.getElementById('confirmModalContent');
+        const button = document.getElementById('confirmModalBtn');
+
+        document.getElementById('confirmModalTitle').textContent = title;
+        document.getElementById('confirmModalMessage').textContent = message;
+        button.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> ${escapeHTML(confirmText)}`;
+
+        lucide.createIcons({ root: modal });
+        resolveConfirm = resolve;
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        requestAnimationFrame(() => {
+            modal.classList.remove('opacity-0');
+            content.classList.remove('scale-95');
         });
-        if (!res.ok) throw new Error("FALHA_API");
-        return await res.json();
+    });
+};
+
+window.closeConfirmModal = (result) => {
+    const modal = document.getElementById('confirmModal');
+    const content = document.getElementById('confirmModalContent');
+    modal.classList.add('opacity-0');
+    content.classList.add('scale-95');
+    setTimeout(() => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        if (resolveConfirm) {
+            resolveConfirm(result);
+            resolveConfirm = null;
+        }
+    }, 280);
+};
+
+function renderQR(url, theme) {
+    if (!url) return;
+    const container = document.getElementById('qrCodeContainer');
+    if (!container) return;
+
+    container.innerHTML = '';
+    const colorDark = theme === 'dark' ? '#ffffff' : '#0f172a';
+    const colorLight = theme === 'dark' ? '#1e293b' : '#ffffff';
+
+    QRCode.toCanvas(url, {
+        width: 112,
+        margin: 1,
+        color: { dark: colorDark, light: colorLight }
+    }, (err, canvas) => {
+        if (err) {
+            container.innerHTML = '<span class="text-xs text-slate-400">QR indisponível</span>';
+            return;
+        }
+        container.appendChild(canvas);
+        container.classList.remove('p-2');
+    });
+}
+
+function updateStats({ totalIndicados = 0, vendasFeitas = 0, saldoDisponivel = 0 }) {
+    const totalEl = document.getElementById('statTotalRefs');
+    const salesEl = document.getElementById('statSales');
+    const balanceEl = document.getElementById('statBalance');
+    const modalBalanceEl = document.getElementById('modalAvailableBalance');
+    const tierBadge = document.getElementById('tierBadge');
+
+    totalEl.textContent = totalIndicados;
+    salesEl.textContent = vendasFeitas;
+    balanceEl.textContent = formatMZN(saldoDisponivel);
+    modalBalanceEl.textContent = formatMZN(saldoDisponivel);
+
+    totalEl.classList.remove('skeleton');
+    salesEl.classList.remove('skeleton');
+    balanceEl.classList.remove('skeleton');
+
+    tierBadge.classList.remove('hidden', 'bg-slate-100', 'text-slate-500', 'dark:bg-slate-700', 'dark:text-slate-300', 'bg-brand-100', 'text-brand-700', 'dark:bg-brand-900/30', 'dark:text-brand-400');
+
+    if (vendasFeitas >= 10) {
+        tierBadge.textContent = 'TIER: PRO 5%';
+        tierBadge.classList.add('bg-brand-100', 'text-brand-700', 'dark:bg-brand-900/30', 'dark:text-brand-400');
+    } else {
+        tierBadge.textContent = 'TIER: BASE 3%';
+        tierBadge.classList.add('bg-slate-100', 'text-slate-500', 'dark:bg-slate-700', 'dark:text-slate-300');
+    }
+}
+
+function renderReferralTable() {
+    const container = document.getElementById('referralsBody');
+    if (!container) return;
+
+    if (!rawReferralsList.length) {
+        container.innerHTML = `
+            <tr>
+                <td colspan="4" class="px-8 py-12 text-center text-slate-500 italic font-medium">
+                    <div class="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <i data-lucide="users" class="w-6 h-6 text-slate-400"></i>
+                    </div>
+                    Ainda não tem convidados na sua rede. Partilhe o seu link.
+                </td>
+            </tr>
+        `;
+        lucide.createIcons();
+        return;
     }
 
-    // O Escudo
-    const pagamentoSeguro = new CircuitBreaker(chamarBackendVercel, {
-        serviceName: 'Gateway_Pagamentos',
-        failureThreshold: 3,
-        resetTimeout: 120000 // 2 minutos de bloqueio
+    container.innerHTML = '';
+    rawReferralsList.slice(0, 50).forEach((invitedUser) => {
+        const isVerified = invitedUser.emailVerified || invitedUser.status === 'active';
+        const verifiedBadge = isVerified
+            ? `<span class="px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-wider text-success-600 bg-success-50 dark:bg-success-500/10 border border-success-200 dark:border-success-500/20">Verificado</span>`
+            : `<span class="px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-wider text-warning-600 bg-warning-50 dark:bg-warning-500/10 border border-warning-200 dark:border-warning-500/20">Pendente</span>`;
+
+        const conversionHtml = invitedUser.firstPurchaseProcessed
+            ? `<span class="text-success-600 dark:text-success-400 font-black"><i data-lucide="check" class="w-4 h-4 inline pb-0.5"></i> Venda Concluída</span>`
+            : `<span class="text-slate-400 text-xs italic">Aguardando 1ª Compra</span>`;
+
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors';
+        row.innerHTML = `
+            <td class="px-8 py-5 text-sm font-medium text-slate-500 dark:text-slate-400">${formatReferralDate(invitedUser.createdAt)}</td>
+            <td class="px-8 py-5 text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <div class="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] text-slate-500 border border-slate-200 dark:border-slate-700">
+                    <i data-lucide="user" class="w-3 h-3"></i>
+                </div>
+                ${escapeHTML(invitedUser.name || maskEmail(invitedUser.email))}
+            </td>
+            <td class="px-8 py-5 text-center">${verifiedBadge}</td>
+            <td class="px-8 py-5 text-right font-mono">${conversionHtml}</td>
+        `;
+        container.appendChild(row);
+    });
+    lucide.createIcons();
+}
+
+async function fetchReferralsAndCalculate() {
+    const container = document.getElementById('referralsBody');
+    const skeletonRow = `<tr><td class="px-8 py-5"><div class="skeleton h-4 w-24 rounded"></div></td><td class="px-8 py-5"><div class="skeleton h-4 w-32 rounded"></div></td><td class="px-8 py-5"><div class="skeleton h-6 w-20 mx-auto rounded-full"></div></td><td class="px-8 py-5 text-right"><div class="skeleton h-4 w-24 ml-auto rounded"></div></td></tr>`;
+    container.innerHTML = skeletonRow.repeat(3);
+
+    try {
+        const response = await fetch('/api/get-referrals', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ affiliateCode: currentUserData.affiliateCode })
+        });
+
+        if (!response.ok) {
+            let errorMessage = 'Falha ao carregar a rede';
+            try {
+                const errData = await response.json();
+                errorMessage = errData.error || errorMessage;
+            } catch {}
+            throw new Error(errorMessage);
+        }
+
+        const data = await response.json();
+        rawReferralsList = Array.isArray(data.referrals) ? data.referrals : [];
+        rawReferralsList.sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt));
+
+        updateStats({
+            totalIndicados: rawReferralsList.length,
+            vendasFeitas: Number(currentUserData.approvedReferrals || 0),
+            saldoDisponivel: Number(currentUserData.affiliateEarnings || 0)
+        });
+
+        renderReferralTable();
+    } catch (err) {
+        console.error('Erro ao ler indicados:', err);
+        container.innerHTML = `<tr><td colspan="4" class="px-8 py-6 text-center text-danger-500 font-bold">Falha ao ler a base de dados da rede: ${escapeHTML(err.message)}</td></tr>`;
+    }
+}
+
+function renderUIData() {
+    const isApproved = currentUserData?.affiliateCodeActive === true;
+    const badge = document.getElementById('statusBadge');
+    const alert = document.getElementById('pendingAlert');
+    const content = document.getElementById('dashboardContent');
+    const loader = document.getElementById('loader');
+
+    const firstName = (currentUserData?.name || (isApproved ? 'Parceiro' : 'Candidato')).split(' ')[0];
+    document.getElementById('userGreeting').innerHTML = `Olá, <span class="text-brand-600 dark:text-brand-400">${escapeHTML(firstName)}</span>!`;
+
+    if (isApproved) {
+        badge.classList.remove('hidden');
+        alert.classList.add('hidden');
+        content.classList.remove('hidden');
+
+        const linkStr = `https://www.paygo.co.mz/register.html?ref=${encodeURIComponent(currentUserData.affiliateCode || '')}`;
+        document.getElementById('affLink').value = linkStr;
+        renderQR(linkStr, document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+
+        updateStats({
+            totalIndicados: 0,
+            vendasFeitas: Number(currentUserData.approvedReferrals || 0),
+            saldoDisponivel: Number(currentUserData.affiliateEarnings || 0)
+        });
+    } else {
+        badge.classList.add('hidden');
+        alert.classList.remove('hidden');
+        content.classList.add('hidden');
+    }
+
+    loader.style.opacity = '0';
+    setTimeout(() => { loader.style.display = 'none'; }, 450);
+}
+
+window.copyLink = async () => {
+    const input = document.getElementById('affLink');
+    if (!input || !input.value) return;
+    try {
+        await navigator.clipboard.writeText(input.value);
+        window.showToast('Link exclusivo copiado com sucesso.');
+    } catch {
+        input.select();
+        document.execCommand('copy');
+        window.showToast('Link copiado com método alternativo.', 'warning');
+    }
+};
+
+window.shareWhatsApp = () => {
+    const link = document.getElementById('affLink')?.value;
+    if (!link) return;
+    const text = encodeURIComponent(`Olá. 🚀\n\nCria a tua conta na PayGo com o meu link oficial e faz compras internacionais usando M-Pesa ou e-Mola.\n\nAcede aqui: ${link}`);
+    window.open(`https://wa.me/?text=${text}`, '_blank', 'noopener,noreferrer');
+};
+
+window.exportToCSV = () => {
+    if (!rawReferralsList.length) {
+        window.showToast('Não possui convidados para exportar.', 'warning');
+        return;
+    }
+
+    const headers = ['Data_Registo', 'Nome_Convidado', 'Verificacao_Email', 'Efetuou_Primeira_Compra'];
+    const rows = rawReferralsList.map((item) => [
+        formatReferralDate(item.createdAt),
+        (item.name || maskEmail(item.email)).replace(/"/g, '""'),
+        (item.emailVerified || item.status === 'active') ? 'Verificado' : 'Pendente',
+        item.firstPurchaseProcessed ? 'Sim' : 'Nao'
+    ]);
+
+    const csv = [headers.join(','), ...rows.map(row => row.map(col => `"${col}"`).join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `PayGo_Rede_${currentUserData?.affiliateCode || 'afiliado'}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+
+    window.showToast('Relatório CSV exportado com sucesso.');
+};
+
+window.openWithdrawModal = () => {
+    const balance = Number(currentUserData?.affiliateEarnings || 0);
+    if (balance < 600) {
+        window.showToast('O mínimo para levantamento é de 600 MT.', 'warning');
+        return;
+    }
+
+    const modal = document.getElementById('withdrawModal');
+    modal.classList.remove('hidden');
+    requestAnimationFrame(() => {
+        modal.classList.remove('opacity-0');
+        document.getElementById('withdrawModalContent').classList.remove('translate-y-full', 'sm:translate-y-10');
     });
 
-    // O botão de pagar
-    window.processarCompra = async () => {
-        try {
-            const resultado = await pagamentoSeguro.fire({ amount: 500, method: 'mpesa' });
-            // Sucesso!
-        } catch (erro) {
-            if (erro.message.startsWith("CIRCUITO_ABERTO")) {
-                alert("A nossa gateway está instável. Por segurança, bloqueámos novas tentativas por 2 minutos.");
+    const amountInput = document.getElementById('wAmount');
+    amountInput.max = String(balance);
+    amountInput.value = '';
+    document.getElementById('modalAvailableBalance').textContent = formatMZN(balance);
+};
+
+window.closeWithdrawModal = () => {
+    document.getElementById('withdrawModalContent').classList.add('translate-y-full', 'sm:translate-y-10');
+    const modal = document.getElementById('withdrawModal');
+    modal.classList.add('opacity-0');
+    setTimeout(() => modal.classList.add('hidden'), 280);
+    document.getElementById('withdrawForm').reset();
+};
+
+document.getElementById('withdrawForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (isSubmittingWithdraw) return;
+
+    const btn = document.getElementById('btnSubmitWithdraw');
+    const originalHtml = btn.innerHTML;
+
+    const amount = Number(document.getElementById('wAmount').value || 0);
+    const phone = document.getElementById('wPhone').value.trim();
+    const method = document.getElementById('wMethod').value;
+    const currentBalance = Number(currentUserData?.affiliateEarnings || 0);
+
+    if (!amount || amount < 600) {
+        window.showToast('O valor mínimo é 600 MT.', 'error');
+        return;
+    }
+    if (amount > currentBalance) {
+        window.showToast('Saldo insuficiente para este levantamento.', 'error');
+        return;
+    }
+    if (!/^\d{9}$/.test(phone)) {
+        window.showToast('Número de telefone inválido.', 'error');
+        return;
+    }
+    if (!currentUserData?.uid) {
+        window.showToast('Sessão inválida. Recarregue a página.', 'error');
+        return;
+    }
+
+    isSubmittingWithdraw = true;
+    btn.disabled = true;
+    btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Processando...`;
+    lucide.createIcons({ root: btn });
+
+    try {
+        const userRef = doc(db, 'users', currentUserData.uid);
+        const withdrawalsRef = collection(db, 'withdrawals');
+
+        await runTransaction(db, async (transaction) => {
+            const userSnap = await transaction.get(userRef);
+            if (!userSnap.exists()) throw new Error('Perfil do afiliado não encontrado.');
+
+            const latestBalance = Number(userSnap.data().affiliateEarnings || 0);
+            if (latestBalance < amount) {
+                throw new Error('Saldo insuficiente no momento da confirmação.');
             }
-        }
-    };
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, collection, query, where, getDocs, updateDoc, addDoc, serverTimestamp, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // 🔥 CONFIGURAÇÃO FIREBASE
-        const firebaseConfig = {
-            apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
-            authDomain: "paygo-14311.firebaseapp.com",
-            projectId: "paygo-14311",
-            storageBucket: "paygo-14311.firebasestorage.app",
-            messagingSenderId: "208360646277",
-            appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
-        };
-
-        let app, auth, db;
-        let currentUserData = null;
-        let rawReferralsList = [];
-        let resolveConfirm = null; // Para o Custom Modal
-
-        app = initializeApp(firebaseConfig);
-        auth = getAuth(app);
-        db = getFirestore(app, "paygodb");
-
-        lucide.createIcons();
-
-        // 🔔 SISTEMA DE TOASTS
-        window.showToast = function(msg, type = 'success') {
-            const container = document.getElementById('toastContainer');
-            if (!container) return; 
-            
-            const t = document.createElement('div');
-            const borderColor = type === 'error' ? 'border-danger-500' : type === 'warning' ? 'border-warning-500' : 'border-brand-500';
-            const icon = type === 'error' ? 'alert-octagon text-danger-400' : type === 'warning' ? 'alert-triangle text-warning-400' : 'check-check text-brand-400';
-            
-            t.className = `toast-item border-l-4 ${borderColor}`;
-            t.innerHTML = `<i data-lucide="${icon.split(' ')[0]}" class="w-6 h-6 flex-shrink-0 ${icon.split(' ')[1]}"></i><span class="flex-1">${escapeHTML(msg)}</span>`;
-            
-            container.appendChild(t);
-            lucide.createIcons({ root: t });
-            
-            requestAnimationFrame(() => t.classList.add('show'));
-            setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 5000);
-        }
-
-        const escapeHTML = (str) => {
-            if (!str) return '';
-            return String(str).replace(/[&<>'"]/g, tag => ({
-                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
-            }[tag] || tag));
-        };
-
-        function formatMZN(val) { return new Intl.NumberFormat('pt-MZ', { minimumFractionDigits: 2 }).format(val || 0) + ' MT'; }
-        
-        function maskEmail(email) {
-            if (!email || !email.includes('@')) return 'Oculto';
-            const [n, d] = email.split('@');
-            return `${n.substring(0,3)}***@${d}`;
-        }
-
-        // 🌗 DARK MODE TOGGLE
-        window.toggleTheme = function(isChecked) {
-            const html = document.documentElement;
-            if (isChecked || !html.classList.contains('dark')) {
-                html.classList.add('dark');
-                localStorage.theme = 'dark';
-                document.getElementById('darkModeToggleDesk').checked = true;
-                document.getElementById('darkModeToggleMob').checked = true;
-                renderQR(document.getElementById('affLink').value, 'dark');
-            } else {
-                html.classList.remove('dark');
-                localStorage.theme = 'light';
-                document.getElementById('darkModeToggleDesk').checked = false;
-                document.getElementById('darkModeToggleMob').checked = false;
-                renderQR(document.getElementById('affLink').value, 'light');
-            }
-        };
-        
-        if(localStorage.theme === 'dark'){
-            const dMob = document.getElementById('darkModeToggleMob');
-            const dDesk = document.getElementById('darkModeToggleDesk');
-            if(dMob) dMob.checked = true;
-            if(dDesk) dDesk.checked = true;
-        }
-
-        // 🛑 MODAL DE CONFIRMAÇÃO CUSTOMIZADO
-        window.confirmAction = (title, message, confirmText = 'Confirmar', type = 'warning') => {
-            return new Promise((resolve) => {
-                const modal = document.getElementById('confirmModal');
-                const content = document.getElementById('confirmModalContent');
-                const btn = document.getElementById('confirmModalBtn');
-                
-                document.getElementById('confirmModalTitle').textContent = title;
-                document.getElementById('confirmModalMessage').textContent = message;
-                btn.innerHTML = `<i data-lucide="log-out" class="w-4 h-4"></i> ${confirmText}`;
-                
-                lucide.createIcons({root: modal});
-
-                resolveConfirm = resolve;
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-                setTimeout(() => {
-                    modal.classList.remove('opacity-0');
-                    content.classList.remove('scale-95');
-                }, 10);
+            const withdrawalRef = doc(withdrawalsRef);
+            transaction.set(withdrawalRef, {
+                userId: currentUserData.uid,
+                affiliateCode: currentUserData.affiliateCode || null,
+                amount,
+                method,
+                phone,
+                status: 'pending',
+                requestedAt: serverTimestamp(),
+                availableBalanceBefore: latestBalance
             });
-        };
 
-        window.closeConfirmModal = (result) => {
-            const modal = document.getElementById('confirmModal');
-            const content = document.getElementById('confirmModalContent');
-            modal.classList.add('opacity-0');
-            content.classList.add('scale-95');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-                if (resolveConfirm) {
-                    resolveConfirm(result);
-                    resolveConfirm = null;
-                }
-            }, 300);
-        };
-
-        // 🚀 INICIALIZAÇÃO DE SESSÃO
-        onAuthStateChanged(auth, async (user) => {
-            if (!user) {
-                window.location.href = 'login.html?redirect=dashboard-afiliado.html';
-                return;
-            }
-            
-            try {
-                const userDoc = await getDoc(doc(db, "users", user.uid));
-                
-                if (userDoc.exists()) {
-                    currentUserData = { uid: user.uid, ...userDoc.data() };
-                    
-                    // Validação de Role - Só Afiliados entram aqui
-                    if (currentUserData.role !== 'affiliate' && currentUserData.affiliateStatus !== 'pending') {
-                        window.showToast("Não tem acesso ao painel de parceiros.", "error");
-                        setTimeout(() => window.location.href = 'index.html', 2000);
-                        return;
-                    }
-
-                    renderUIData();
-                    if(currentUserData.affiliateCodeActive) {
-                        await fetchReferralsAndCalculate();
-                    }
-
-                } else {
-                    window.showToast("Perfil não encontrado.", "error");
-                    setTimeout(() => window.logoutAffiliate(), 2000);
-                }
-            } catch (err) {
-                console.error("Erro na leitura de perfil:", err);
-                window.showToast("Falha técnica ao carregar o seu perfil.", "error");
-            }
+            transaction.update(userRef, {
+                affiliateEarnings: increment(-amount)
+            });
         });
 
-        // 🎨 RENDERIZAÇÃO DA UI
-        function renderUIData() {
-            // Conta é considerada aprovada se affiliateCodeActive for true
-            const isApproved = currentUserData.affiliateCodeActive === true;
-            
-            const badge = document.getElementById('statusBadge');
-            const alert = document.getElementById('pendingAlert');
-            const content = document.getElementById('dashboardContent');
-
-            if (isApproved) {
-                badge.classList.remove('hidden');
-                alert.classList.add('hidden');
-                content.classList.remove('hidden');
-                
-                const firstName = (currentUserData.name || 'Parceiro').split(' ')[0];
-                document.getElementById('userGreeting').innerHTML = `Olá, <span class="text-brand-600 dark:text-brand-400">${escapeHTML(firstName)}</span>!`;
-                
-                const linkStr = `https://www.paygo.co.mz/register.html?ref=${currentUserData.affiliateCode}`;
-                const inputLink = document.getElementById('affLink');
-                if (inputLink) inputLink.value = linkStr;
-
-                renderQR(linkStr, document.documentElement.classList.contains('dark') ? 'dark' : 'light');
-            } else {
-                alert.classList.remove('hidden');
-                content.classList.add('hidden');
-                document.getElementById('userGreeting').innerHTML = `Olá, <span class="text-brand-600 dark:text-brand-400">${escapeHTML((currentUserData.name || 'Candidato').split(' ')[0])}</span>!`;
-            }
-
-            const loader = document.getElementById('loader');
-            loader.style.opacity = '0';
-            setTimeout(() => loader.style.display = 'none', 500);
-        }
-
-        // 🔳 GERADOR DE QR CODE
-        function renderQR(url, theme) {
-            if(!url) return;
-            const c = document.getElementById('qrCodeContainer');
-            c.innerHTML = '';
-            const colorDark = theme === 'dark' ? '#ffffff' : '#0f172a';
-            const colorLight = theme === 'dark' ? '#1e293b' : '#ffffff';
-            QRCode.toCanvas(url, { width: 110, margin: 1, color: { dark: colorDark, light: colorLight } }, (err, canvas) => {
-                if(!err) { c.appendChild(canvas); c.classList.remove('p-2'); }
-            });
-        }
-
-// 📊 LER REDE DE INDICADOS (VIA VERCEL API) 🚀
-        async function fetchReferralsAndCalculate() {
-            const container = document.getElementById('referralsBody');
-            const skeletonRow = `<tr><td class="px-8 py-5"><div class="skeleton h-4 w-24 rounded"></div></td><td class="px-8 py-5"><div class="skeleton h-4 w-32 rounded"></div></td><td class="px-8 py-5"><div class="skeleton h-6 w-20 mx-auto rounded-full"></div></td><td class="px-8 py-5 text-right"><div class="skeleton h-4 w-24 ml-auto rounded"></div></td></tr>`;
-            container.innerHTML = skeletonRow + skeletonRow + skeletonRow;
-
-            try {
-                // 🛑 A SOLUÇÃO: Chamar a API da Vercel (que tem a Chave Mestra) em vez do Firestore nativo
-                const response = await fetch('/api/get-referrals', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ affiliateCode: currentUserData.affiliateCode })
-                });
-
-                if(!response.ok) {
-                    const errData = await response.json();
-                    throw new Error(errData.error || "Acesso negado na API da Vercel");
-                }
-
-                const data = await response.json();
-                rawReferralsList = data.referrals || [];
-
-                // Ordenar do mais recente para o mais antigo
-                rawReferralsList.sort((a,b) => {
-                    const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-                    const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-                    return dateB - dateA;
-                });
-
-                const totalIndicados = rawReferralsList.length;
-                const vendasFeitas = currentUserData.approvedReferrals || 0;
-                const saldoDisponivel = currentUserData.affiliateEarnings || 0;
-
-                // UI Updates
-                const tierBadge = document.getElementById('tierBadge');
-                if (vendasFeitas >= 10) {
-                    tierBadge.textContent = "TIER: PRO 5%";
-                    tierBadge.classList.add('bg-brand-100', 'text-brand-700', 'dark:bg-brand-900/30', 'dark:text-brand-400');
-                    tierBadge.classList.remove('bg-slate-100', 'text-slate-500', 'hidden');
-                } else if (vendasFeitas >= 0) {
-                    tierBadge.textContent = "TIER: BASE 3%";
-                    tierBadge.classList.remove('hidden');
-                }
-
-                document.getElementById('statTotalRefs').textContent = totalIndicados;
-                document.getElementById('statTotalRefs').classList.remove('skeleton');
-                
-                document.getElementById('statSales').textContent = vendasFeitas;
-                document.getElementById('statSales').classList.remove('skeleton');
-                
-                document.getElementById('statBalance').textContent = formatMZN(saldoDisponivel);
-                document.getElementById('statBalance').classList.remove('skeleton');
-                
-                document.getElementById('modalAvailableBalance').textContent = formatMZN(saldoDisponivel);
-
-                // Render Tabela
-                container.innerHTML = '';
-                if (rawReferralsList.length === 0) {
-                    container.innerHTML = `<tr><td colspan="4" class="px-8 py-12 text-center text-slate-500 italic font-medium"><div class="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-3"><i data-lucide="users" class="w-6 h-6 text-slate-400"></i></div>Ainda não tem convidados na sua rede. Partilhe o seu link!</td></tr>`;
-                    lucide.createIcons();
-                    return;
-                }
-
-                rawReferralsList.slice(0, 20).forEach(invitedUser => {
-                    const isVerified = invitedUser.emailVerified || invitedUser.status === 'active';
-                    const verifiedBadge = isVerified 
-                        ? `<span class="px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-wider text-success-600 bg-success-50 dark:bg-success-500/10 border border-success-200 dark:border-success-500/20">Verificado</span>`
-                        : `<span class="px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-wider text-warning-600 bg-warning-50 dark:bg-warning-500/10 border border-warning-200 dark:border-warning-500/20">Pendente</span>`;
-                    
-                    const hasBought = invitedUser.firstPurchaseProcessed;
-                    let conversionText = hasBought
-                        ? `<span class="text-success-600 dark:text-success-400 font-black"><i data-lucide="check" class="w-4 h-4 inline pb-0.5"></i> Venda Concluída</span>`
-                        : `<span class="text-slate-400 text-xs italic">Aguardando 1ª Compra</span>`;
-                    
-                    const dStr = invitedUser.createdAt ? new Date(invitedUser.createdAt).toLocaleDateString('pt-MZ') : 'N/A';
-                    
-                    const row = document.createElement('tr');
-                    row.className = "hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors";
-                    row.innerHTML = `
-                        <td class="px-8 py-5 text-sm font-medium text-slate-500 dark:text-slate-400">${dStr}</td>
-                        <td class="px-8 py-5 text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2"><div class="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] text-slate-500 border border-slate-200 dark:border-slate-700"><i data-lucide="user" class="w-3 h-3"></i></div>${escapeHTML(invitedUser.name || maskEmail(invitedUser.email))}</td>
-                        <td class="px-8 py-5 text-center">${verifiedBadge}</td>
-                        <td class="px-8 py-5 text-right font-mono">
-                            ${conversionText}
-                        </td>
-                    `;
-                    container.appendChild(row);
-                });
-                lucide.createIcons();
-            } catch (err) {
-                console.error("Erro ao ler indicados:", err);
-                container.innerHTML = `<tr><td colspan="4" class="px-8 py-6 text-center text-danger-500 font-bold">Falha ao ler a base de dados de rede: ${err.message}</td></tr>`;
-            }
-        }
-
-        // ==========================================
-        // 🔄 AÇÕES DE PARTILHA E EXPORTAÇÃO
-        // ==========================================
-        window.copyLink = () => {
-            const input = document.getElementById('affLink');
-            if(input) {
-                input.select(); 
-                navigator.clipboard.writeText(input.value);
-                window.showToast("Link Exclusivo copiado para a área de transferência!", "success");
-            }
-        };
-
-        window.shareWhatsApp = () => {
-            const linkInput = document.getElementById('affLink');
-            if (linkInput) {
-                const link = linkInput.value;
-                const text = encodeURIComponent(`Olá! 🚀 Queres fazer compras internacionais e pagar com o teu M-Pesa/e-Mola sem cartões de crédito?\n\nCria a tua conta na PayGo usando o meu link oficial e tens acesso imediato ao mercado global!\n\nAcede aqui: ${link}`);
-                window.open(`https://wa.me/?text=${text}`, '_blank');
-            }
-        };
-
-        window.exportToCSV = () => {
-            if(!rawReferralsList.length) return window.showToast("Não possui convidados na sua rede para exportar.", "warning");
-            const headers = ['Data_Registo', 'Nome_Convidado', 'Verificacao_Email', 'Efetou_Compra'];
-            const rows = rawReferralsList.map(o => [
-                o.createdAt?.toDate ? o.createdAt.toDate().toLocaleDateString('pt-MZ') : '-',
-                o.name || maskEmail(o.email),
-                (o.emailVerified || o.status === 'active') ? 'Verificado' : 'Pendente',
-                o.firstPurchaseProcessed ? 'Sim' : 'Nao'
-            ]);
-            const csv = [headers.join(','), ...rows.map(r => r.map(c => `"${c}"`).join(','))].join('\n');
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `PayGo_Rede_${currentUserData.affiliateCode}.csv`;
-            link.click();
-            window.showToast("Relatório de Rede Descarregado com sucesso.", "success");
-        };
-
-        // ==========================================
-        // 💸 SISTEMA DE LEVANTAMENTOS (SAQUES)
-        // ==========================================
-        window.openWithdrawModal = () => {
-            const balance = currentUserData?.affiliateEarnings || 0;
-            if (balance < 600) return window.showToast("O teto mínimo para um levantamento é de 600 MT.", "warning");
-            
-            const m = document.getElementById('withdrawModal');
-            m.classList.remove('hidden');
-            setTimeout(() => {
-                m.classList.remove('opacity-0');
-                document.getElementById('withdrawModalContent').classList.remove('translate-y-full', 'sm:translate-y-10');
-            }, 10);
-            document.getElementById('wAmount').max = balance;
-        };
-
-        window.closeWithdrawModal = () => {
-            document.getElementById('withdrawModalContent').classList.add('translate-y-full', 'sm:translate-y-10');
-            const m = document.getElementById('withdrawModal');
-            m.classList.add('opacity-0');
-            setTimeout(() => m.classList.add('hidden'), 300);
-            document.getElementById('withdrawForm').reset();
-        };
-
-        document.getElementById('withdrawForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('btnSubmitWithdraw');
-            const amount = parseFloat(document.getElementById('wAmount').value);
-            const phone = document.getElementById('wPhone').value.trim();
-            
-            if (!amount || amount > currentUserData.affiliateEarnings || amount < 600) return window.showToast("Transação declinada: Saldo insuficiente ou limite inválido.", "error");
-            if (!/^\d{9}$/.test(phone)) return window.showToast("Número de telefone moçambicano inválido.", "error");
-
-            btn.disabled = true;
-            const oHtml = btn.innerHTML;
-            btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Processando...`;
-            lucide.createIcons({root:btn});
-
-            try {
-                // 🛑 CORREÇÃO CRÍTICA DE SEGURANÇA: Registar o saque E abater o saldo em simultâneo
-                
-                // 1. Cria o registo na coleção de Withdrawals
-                await addDoc(collection(db, "withdrawals"), {
-                    userId: currentUserData.uid,
-                    affiliateCode: currentUserData.affiliateCode,
-                    amount: amount,
-                    method: document.getElementById('wMethod').value,
-                    phone: phone,
-                    status: 'pending',
-                    requestedAt: serverTimestamp()
-                });
-                
-                // 2. Abate o saldo no Documento do Utilizador (Isto é obrigatório para não haver saques duplos)
-                await updateDoc(doc(db, "users", currentUserData.uid), {
-                    affiliateEarnings: increment(-amount)
-                });
-
-                window.showToast("Pedido de Levantamento submetido com sucesso!", "success");
-                
-                // Atualizar o ecrã instantaneamente
-                currentUserData.affiliateEarnings -= amount;
-                document.getElementById('statBalance').textContent = formatMZN(currentUserData.affiliateEarnings);
-                window.closeWithdrawModal();
-                
-            } catch(err) {
-                console.error("Falha ao gravar saque:", err);
-                window.showToast("Falha na ponte de comunicação. O seu perfil pode não ter permissão para gravar.", "error");
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = oHtml;
-            }
+        currentUserData.affiliateEarnings = currentBalance - amount;
+        updateStats({
+            totalIndicados: rawReferralsList.length,
+            vendasFeitas: Number(currentUserData.approvedReferrals || 0),
+            saldoDisponivel: Number(currentUserData.affiliateEarnings || 0)
         });
 
-        window.logoutAffiliate = async () => {
-            const confirmed = await window.confirmAction('Encerrar Sessão?', 'Deseja efetuar logout do Painel de Parceiros?', 'Sair agora', 'danger');
-            if (confirmed) {
-                await signOut(auth);
-                window.location.href = 'login.html';
-            }
-        };
-    </script>
+        window.showToast('Pedido de levantamento enviado com sucesso.');
+        window.closeWithdrawModal();
+    } catch (err) {
+        console.error('Erro no levantamento:', err);
+        window.showToast(err.message || 'Falha ao processar levantamento.', 'error');
+    } finally {
+        isSubmittingWithdraw = false;
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+        lucide.createIcons({ root: btn });
+    }
+});
+
+window.logoutAffiliate = async () => {
+    const confirmed = await window.confirmAction('Encerrar Sessão?', 'Deseja efetuar logout do Painel de Parceiros?', 'Sair agora');
+    if (!confirmed) return;
+
+    try {
+        await signOut(auth);
+        window.location.href = 'login.html';
+    } catch (err) {
+        console.error(err);
+        window.showToast('Não foi possível terminar a sessão.', 'error');
+    }
+};
+
+onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+        window.location.href = 'login.html?redirect=dashboard-afiliado.html';
+        return;
+    }
+
+    try {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (!userDoc.exists()) {
+            window.showToast('Perfil não encontrado.', 'error');
+            setTimeout(() => window.logoutAffiliate(), 1500);
+            return;
+        }
+
+        currentUserData = { uid: user.uid, ...userDoc.data() };
+
+        // Corrigido: só entra se for afiliado OU candidato pendente.
+        const canAccess = currentUserData.role === 'affiliate' || currentUserData.affiliateStatus === 'pending';
+        if (!canAccess) {
+            window.showToast('Não tem acesso ao painel de parceiros.', 'error');
+            setTimeout(() => { window.location.href = 'index.html'; }, 1600);
+            return;
+        }
+
+        renderUIData();
+        if (currentUserData.affiliateCodeActive) {
+            await fetchReferralsAndCalculate();
+        }
+    } catch (err) {
+        console.error('Erro na leitura de perfil:', err);
+        window.showToast('Falha técnica ao carregar o seu perfil.', 'error');
+        document.getElementById('loader').style.display = 'none';
+    }
+});
+</script>
 </body>
 </html>
