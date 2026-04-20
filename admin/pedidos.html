@@ -51,7 +51,7 @@ body { background-color: #020617; color: #f8fafc; overflow-x: hidden; -webkit-fo
 .status-badge.processing { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
 .status-badge.shipped { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
 .status-badge.pending { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
-.status-badge.cancelled { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+.status-badge.cancelled, .status-badge.failed { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
 .status-badge.refunded { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
 
 .date-group-header { background: rgba(2, 6, 23, 0.95); border-y: 1px solid rgba(255,255,255,0.05); }
@@ -108,7 +108,7 @@ select, input, textarea { background-color: rgba(15, 23, 42, 0.5) !important; co
         <i data-lucide="zap" class="w-5 h-5"></i>
       </div>
       <div class="hidden sm:block">
-        <span class="text-2xl font-display font-bold text-white tracking-wide">PayGo</span>
+        <span class="text-2xl font-display font-bold text-white tracking-wide">PayGo Admin</span>
         <span class="text-[10px] text-brand-400 ml-2 px-2 py-0.5 bg-brand-500/10 border border-brand-500/20 rounded-full font-black uppercase tracking-widest shadow-inner">Database</span>
       </div>
     </div>
@@ -302,13 +302,7 @@ select, input, textarea { background-color: rgba(15, 23, 42, 0.5) !important; co
                     <div class="relative">
                         <i data-lucide="git-commit" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
                         <select id="statusSelect" class="w-full pl-12 pr-4 py-3.5 border border-slate-700 bg-slate-800 text-white rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50 font-bold text-sm cursor-pointer shadow-inner appearance-none transition-all">
-                            <option value="pending">⏳ Ação Necessária (Pendente)</option>
-                            <option value="processing">🔄 Em Compra Internacional (Processando)</option>
-                            <option value="shipped">✈️ Em Trânsito (Enviado / Código Rastreio)</option>
-                            <option value="completed">✅ Finalizado com Sucesso (Envia Email)</option>
-                            <option value="cancelled">❌ Cancelar / Recusar Encomenda</option>
-                            <option value="refunded">🟣 Marcar como Reembolsado ao Cliente</option>
-                        </select>
+                            </select>
                     </div>
                 </div>
                 
@@ -441,7 +435,7 @@ const resolveUserName = async (userId) => {
 };
 
 // ==========================================
-// 📧 API E LOGS DE AUDITORIA
+// 📧 API RESEND E LOGS DE AUDITORIA
 // ==========================================
 async function sendNotificationEmail(order, actionType) {
     try {
@@ -539,7 +533,7 @@ function loadDataRealTime() {
                 usd: 0,
                 total: Number(data.amount) || 0,
                 tax: 0,
-                status: isCompleted ? 'completed' : (isFailed ? 'cancelled' : 'pending'),
+                status: isCompleted ? 'completed' : (isFailed ? 'failed' : 'pending'),
                 trackingCode: '',
                 isPaid: isCompleted,
                 paymentMethod: data.method || 'mpesa',
@@ -581,7 +575,7 @@ window.renderOrders = function() {
 
     currentFilteredOrders = orders.filter(order => {
         const matchSearch = order.name.toLowerCase().includes(search) || order.orderId.toLowerCase().includes(search) || order.email.toLowerCase().includes(search);
-        const matchStatus = statusFilter === 'all' || order.status === statusFilter;
+        const matchStatus = statusFilter === 'all' || order.status === statusFilter || (statusFilter === 'cancelled' && order.status === 'failed');
         let matchPayment = true;
         if (paymentFilter === 'paid') matchPayment = order.isPaid === true;
         if (paymentFilter === 'unpaid') matchPayment = order.isPaid === false;
@@ -621,6 +615,7 @@ window.renderOrders = function() {
             'shipped': '<span class="status-badge shipped shadow-sm">✈️ Em Trânsito</span>',
             'completed': '<span class="status-badge completed shadow-sm">✅ Fechado</span>',
             'cancelled': '<span class="status-badge cancelled shadow-sm">❌ Cancelado</span>',
+            'failed': '<span class="status-badge failed shadow-sm">❌ Falhou</span>',
             'refunded': '<span class="status-badge refunded shadow-sm">🟣 Reembolsado</span>'
         }[order.status] || `<span class="status-badge bg-slate-800 border border-slate-700">${order.status}</span>`;
 
@@ -741,7 +736,7 @@ window.requestExtraFunds = async (orderId) => {
         await fetch('/api/notify-order', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ orderData: order, action: "insufficient_funds", extraAmount: amount, reason: reason, sendEmail: true })
-        }).catch(e => console.warn("Aviso: Falha ao invocar servidor de emails."));
+        }).catch(e => console.warn("Aviso: Falha ao invocar servidor de emails, mas nota salva."));
 
         showToast(`Solicitação de ${amount} MT enviada e registada!`, 'success');
         window.closeModal();
@@ -763,6 +758,7 @@ window.openModal = (orderId, isSilentUpdate = false) => {
         shipped: '✈️ Em Trânsito',
         completed: '✅ Fechado',
         cancelled: '❌ Cancelado',
+        failed: '❌ Falhou',
         refunded: '🟣 Reembolsado'
     }[order.status] || order.status;
     
@@ -799,13 +795,13 @@ window.openModal = (orderId, isSilentUpdate = false) => {
         dynamicDataHtml = `
             <div class="bg-success-900/20 p-5 rounded-2xl border border-success-500/30 shadow-inner mt-2">
                 <h3 class="text-xs font-black text-success-400 uppercase tracking-widest border-b border-success-500/20 pb-3 mb-3 flex items-center gap-2"><i data-lucide="wallet" class="w-4 h-4"></i> Transação de TopUp</h3>
-                <p class="text-sm text-slate-300">Este registo representa uma injeção de saldo diretamente na carteira do cliente. As faturas de depósito não exigem despacho físico ou digital.</p>
+                <p class="text-sm text-slate-300">Este registo representa um depósito na carteira do cliente.</p>
             </div>`;
             
         topupProtectionHtml = `
-            <div class="bg-danger-500/10 border border-danger-500/30 p-4 rounded-xl mt-4 flex gap-3">
-                <i data-lucide="shield-alert" class="text-danger-400 w-5 h-5 shrink-0"></i>
-                <p class="text-xs text-danger-200"><b>Acesso Bloqueado:</b> O estado financeiro dos depósitos de carteira é gerido exclusivamente pelos Webhooks da PaySuite para evitar fraude e injeção falsa de dinheiro no sistema.</p>
+            <div class="bg-warning-500/10 border border-warning-500/30 p-4 rounded-xl mt-4 flex gap-3">
+                <i data-lucide="shield-alert" class="text-warning-400 w-5 h-5 shrink-0"></i>
+                <p class="text-xs text-warning-200"><b>Atenção Admin:</b> Ao alterar o estado de um Depósito Pendente para "Aprovar e Injetar", o sistema irá creditar imediatamente os ${formatValue(order.total, 'currency')} na conta do cliente.</p>
             </div>`;
     } else if (order.category === 'physical' || !order.category) {
         const ship = order.shipping || {};
@@ -914,38 +910,48 @@ window.openModal = (orderId, isSilentUpdate = false) => {
         </div>
     `;
 
-    // BLOQUEIO ANTI-ATUALIZAÇÃO DE FUNDO
-    // Só mexemos nos inputs visíveis do utilizador se o modal estiver a ser aberto manualmente
     if (!isSilentUpdate) {
         const statusSelect = document.getElementById('statusSelect');
         const trackingInput = document.getElementById('trackingInput');
         const refundReasonContainer = document.getElementById('refundReasonContainer');
         
-        if (order.isTopup) {
-            if(statusSelect) statusSelect.disabled = true;
-            if(trackingInput) trackingInput.parentElement.parentElement.classList.add('hidden');
-            if(refundReasonContainer) refundReasonContainer.classList.add('hidden');
-        } else {
-            if(statusSelect) { 
-                statusSelect.disabled = false; 
-                statusSelect.value = order.status; 
-                
+        if (statusSelect) {
+            statusSelect.disabled = false;
+            if (order.isTopup) {
+                statusSelect.innerHTML = `
+                    <option value="pending">⏳ Pendente (Aguardando Pagamento/Comprovativo)</option>
+                    <option value="completed">✅ Aprovar e Injetar Saldo na Carteira</option>
+                    <option value="failed">❌ Recusar Depósito</option>
+                `;
+            } else {
+                statusSelect.innerHTML = `
+                    <option value="pending">⏳ Ação Necessária (Pendente)</option>
+                    <option value="processing">🔄 Em Compra Internacional (Processando)</option>
+                    <option value="shipped">✈️ Em Trânsito (Enviado / Código Rastreio)</option>
+                    <option value="completed">✅ Finalizado com Sucesso (Envia Email)</option>
+                    <option value="cancelled">❌ Cancelar / Recusar Encomenda</option>
+                    <option value="refunded">🟣 Marcar como Reembolsado ao Cliente</option>
+                `;
+            }
+            statusSelect.value = order.status;
+            
+            if (!order.isTopup) {
                 statusSelect.onchange = (e) => {
                     if (refundReasonContainer) {
                         if(e.target.value === 'refunded') refundReasonContainer.classList.remove('hidden');
                         else refundReasonContainer.classList.add('hidden');
                     }
                 };
-                statusSelect.dispatchEvent(new Event('change')); 
-            }
-            if(trackingInput) {
-                if(order.category === 'physical' || !order.category) trackingInput.parentElement.parentElement.classList.remove('hidden');
-                else trackingInput.parentElement.parentElement.classList.add('hidden');
-                trackingInput.value = order.trackingCode || '';
+                statusSelect.dispatchEvent(new Event('change'));
             }
         }
 
-        // Renderiza botões de ação dinamicamente apenas para Orders não-topup
+        if (trackingInput) {
+            if (order.category === 'physical' || (!order.category && !order.isTopup)) trackingInput.parentElement.parentElement.classList.remove('hidden');
+            else trackingInput.parentElement.parentElement.classList.add('hidden');
+            trackingInput.value = order.trackingCode || '';
+        }
+
         const modalActionButtons = document.getElementById('modalActionButtons');
         if(modalActionButtons) {
             modalActionButtons.innerHTML = `
@@ -953,18 +959,15 @@ window.openModal = (orderId, isSilentUpdate = false) => {
                 <button onclick="window.requestExtraFunds('${order.id}')" class="btn-action w-full md:w-auto px-6 py-3.5 bg-warning-500/10 hover:bg-warning-500 hover:text-slate-900 text-warning-500 rounded-xl font-bold transition-all flex items-center justify-center gap-2 border border-warning-500/30 mb-2 sm:mb-0">
                     <i data-lucide="hand-coins" class="w-4 h-4"></i> <span>Falta Dinheiro (+ Valor)</span>
                 </button>` : ''}
-                ${!order.isTopup ? `
                 <button id="updateStatusBtn" onclick="window.saveOrderStatus()" class="btn-action w-full md:w-auto px-8 py-3.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(37,99,235,0.4)] border border-brand-500">
-                    <i data-lucide="save" class="w-4 h-4"></i> <span>Salvar Decisão</span>
-                </button>` : ''}
+                    <i data-lucide="save" class="w-4 h-4"></i> <span>${order.isTopup ? 'Salvar Depósito' : 'Salvar Decisão'}</span>
+                </button>
             `;
         }
-
-        const modal = document.getElementById('orderModal');
-        modal.classList.add('active');
+        
+        document.getElementById('orderModal').classList.add('active');
         document.body.style.overflow = 'hidden';
     }
-    
     window.renderIcons();
 };
 
@@ -980,68 +983,81 @@ window.closeModal = () => {
 window.saveOrderStatus = async () => {
     if (!currentOrderId) return;
     const order = orders.find(o => o.id === currentOrderId);
-    if(order.isTopup) return;
-
     const newStatus = document.getElementById('statusSelect').value;
-    const newTracking = document.getElementById('trackingInput').value.trim();
-    const oldStatus = order?.status;
-    
-    let refundReasonText = '';
-    let refundNoteObj = null;
-    let mediaUrl = null;
-
     const btn = document.getElementById('updateStatusBtn');
-    const originalText = btn ? btn.innerHTML : 'Salvar Decisão';
+    const originalText = btn ? btn.innerHTML : 'Salvar';
 
-    // 🔴 FLUXO DE REEMBOLSO + STORAGE + WALLET
-    if (newStatus === 'refunded') {
-        refundReasonText = document.getElementById('refundReasonInput').value.trim();
-        if (!refundReasonText) {
-            showToast('Obrigatório preencher o motivo do reembolso!', 'error');
-            return;
-        }
-
-        if (order.refundProcessed) {
-            showToast('Alerta: Este pedido já foi reembolsado na carteira.', 'warning');
-            return;
-        }
-
-        if (btn) btn.disabled = true;
-        
-        const mediaInput = document.getElementById('refundMediaInput');
-        if (mediaInput && mediaInput.files && mediaInput.files[0]) {
-            const file = mediaInput.files[0];
-            if (btn) btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Anexo a carregar...`;
-            try {
-                const storageRef = ref(storage, `refunds_media/${order.id}_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '')}`);
-                const snapshot = await uploadBytesResumable(storageRef, file);
-                mediaUrl = await getDownloadURL(snapshot.ref);
-            } catch(err) {
-                console.error(err);
-                showToast('Erro ao enviar ficheiro. Tente sem anexo ou diminua o tamanho.', 'error');
-                if (btn) { btn.disabled = false; btn.innerHTML = originalText; }
-                return;
-            }
-        }
-
-        if (btn) btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A processar Reembolso Seguro...`;
-        
-        let textWithMedia = `REEMBOLSO EMITIDO: ${refundReasonText}`;
-        if(mediaUrl) textWithMedia += ` | Anexo: ${mediaUrl}`;
-
-        refundNoteObj = { 
-            text: textWithMedia, 
-            author: loggedInAdminName || 'Sistema', 
-            date: new Date().toISOString() 
-        };
-    } else {
-        if (btn) {
-            btn.disabled = true;
-            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A Sincronizar DB...`;
-        }
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A gravar...`;
+        lucide.createIcons({root: btn});
     }
 
     try {
+        // === FLUXO DE DEPÓSITO (TOPUP) ===
+        if (order.isTopup) {
+            if (newStatus === 'completed' && order.status !== 'completed') {
+                const userRef = doc(db, "users", order.userId);
+                await updateDoc(userRef, { walletBalance: increment(Number(order.total)) });
+                await addDoc(collection(db, "wallet_transactions"), { 
+                    userId: order.userId, 
+                    type: 'credit', 
+                    amount: Number(order.total), 
+                    description: `Depósito Aprovado Manualmente`, 
+                    reference: order.orderId, 
+                    createdAt: new Date().toISOString() 
+                });
+                showToast('Dinheiro Injetado na Carteira do Cliente!', 'success');
+            }
+            await updateDoc(doc(db, "topups", currentOrderId), { status: newStatus, updatedAt: serverTimestamp() });
+            window.closeModal();
+            return; 
+        }
+
+        // === FLUXO DE PEDIDO NORMAL (ORDERS) ===
+        const newTracking = document.getElementById('trackingInput').value.trim();
+        const oldStatus = order?.status;
+        let refundReasonText = '';
+        let refundNoteObj = null;
+        let mediaUrl = null;
+
+        // 🔴 REEMBOLSO + STORAGE + WALLET
+        if (newStatus === 'refunded') {
+            refundReasonText = document.getElementById('refundReasonInput').value.trim();
+            if (!refundReasonText) {
+                showToast('Obrigatório preencher o motivo do reembolso!', 'error');
+                if (btn) { btn.disabled = false; btn.innerHTML = originalText; }
+                return;
+            }
+
+            if (order.refundProcessed) {
+                showToast('Alerta: Este pedido já foi reembolsado.', 'warning');
+                if (btn) { btn.disabled = false; btn.innerHTML = originalText; }
+                return;
+            }
+
+            const mediaInput = document.getElementById('refundMediaInput');
+            if (mediaInput && mediaInput.files && mediaInput.files[0]) {
+                const file = mediaInput.files[0];
+                if (btn) btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Anexo a carregar...`;
+                try {
+                    const storageRef = ref(storage, `refunds_media/${order.id}_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '')}`);
+                    const snapshot = await uploadBytesResumable(storageRef, file);
+                    mediaUrl = await getDownloadURL(snapshot.ref);
+                } catch(err) {
+                    showToast('Erro ao enviar ficheiro. Tente sem anexo ou diminua o tamanho.', 'error');
+                    if (btn) { btn.disabled = false; btn.innerHTML = originalText; }
+                    return;
+                }
+            }
+
+            if (btn) btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A processar Reembolso...`;
+            let textWithMedia = `REEMBOLSO EMITIDO: ${refundReasonText}`;
+            if(mediaUrl) textWithMedia += ` | Anexo: ${mediaUrl}`;
+
+            refundNoteObj = { text: textWithMedia, author: loggedInAdminName || 'Sistema', date: new Date().toISOString() };
+        }
+
         const updateData = { status: newStatus, trackingCode: newTracking || null, updatedAt: serverTimestamp() };
         
         if (refundNoteObj) {
@@ -1052,7 +1068,7 @@ window.saveOrderStatus = async () => {
         await updateDoc(doc(db, "orders", currentOrderId), updateData);
         await logAdminAction('UPDATE_ORDER_STATUS', currentOrderId, { status: oldStatus }, { status: newStatus });
 
-        // 💰 MOTOR CPA (Distribuição de Comissões)
+        // 💰 MOTOR CPA
         if (newStatus === 'completed' && order?.referredBy && !order?.commissionProcessed) {
             await processAffiliateCPA(order);
             await updateDoc(doc(db, "orders", currentOrderId), { commissionProcessed: true });
@@ -1064,10 +1080,8 @@ window.saveOrderStatus = async () => {
             if (refundAmount > 0) {
                 const userRef = doc(db, "users", order.userId);
                 const uSnap = await getDoc(userRef);
-                
                 if(uSnap.exists()) {
                     await updateDoc(userRef, { walletBalance: increment(refundAmount) });
-                    
                     await addDoc(collection(db, "topups"), {
                         userId: order.userId,
                         userName: order.name,
@@ -1079,8 +1093,7 @@ window.saveOrderStatus = async () => {
                         createdAt: serverTimestamp(),
                         detail: `Reembolso automático. Fatura: ${order.orderId}. Motivo: ${refundReasonText}`
                     });
-                    
-                    showToast(`Reembolso de ${formatValue(refundAmount, 'currency')} injetado na carteira do cliente.`, 'success');
+                    showToast(`Reembolso de ${formatValue(refundAmount, 'currency')} injetado na carteira.`, 'success');
                 } else {
                     showToast(`Atenção: Cliente já não existe na DB. Saldo não injetado.`, 'error');
                 }
@@ -1095,7 +1108,7 @@ window.saveOrderStatus = async () => {
             await fetch('/api/notify-order', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ orderData: order, action: "order_refunded", reason: refundReasonText, mediaUrl: mediaUrl, sendEmail: true })
-            }).catch(() => console.warn("API de notificação indisponível, mas refund salvo."));
+            }).catch(() => console.warn("API de notificação indisponível."));
         }
 
         window.closeModal();
@@ -1114,18 +1127,11 @@ async function processAffiliateCPA(order) {
         const q = query(collection(db, "users"), where("affiliateCode", "==", order.referredBy), where("role", "==", "affiliate"));
         const snap = await getDocs(q);
         if(snap.empty) return;
-
         const refDoc = snap.docs[0];
         const refData = refDoc.data();
-
         const commissionValue = order.tax * (refData.approvedReferrals >= 10 ? 0.05 : 0.03);
-
-        await updateDoc(doc(db, "users", refDoc.id), {
-            affiliateEarnings: increment(commissionValue),
-            approvedReferrals: increment(1)
-        });
-
-    } catch(e) { console.error("Falha ao distribuir comissões", e); }
+        await updateDoc(doc(db, "users", refDoc.id), { affiliateEarnings: increment(commissionValue), approvedReferrals: increment(1) });
+    } catch(e) {}
 }
 
 window.togglePaymentStatus = async (orderId, isCurrentlyPaid) => {
@@ -1136,9 +1142,7 @@ window.togglePaymentStatus = async (orderId, isCurrentlyPaid) => {
     try {
         await updateDoc(doc(db, "orders", orderId), { isPaid: newStatus, updatedAt: serverTimestamp() });
         await logAdminAction('TOGGLE_PAYMENT_STATUS', orderId, { isPaid: isCurrentlyPaid }, { isPaid: newStatus });
-
         showToast(newStatus ? 'Validado como PAGO!' : 'Assinatura Financeira Removida.', 'success');
-
         if (newStatus === true) {
             showToast('Servidor de Emails ativado.', 'info');
             await sendNotificationEmail(order, 'paid');
@@ -1175,18 +1179,14 @@ window.clearHistory = async () => {
 
 window.exportToCSV = () => {
     if (currentFilteredOrders.length === 0) return showToast('Dados insuficientes para relatório.', 'warning');
-    
     logAdminAction('EXPORT_CSV', 'all', null, { exportedCount: currentFilteredOrders.length });
-    
     let csvContent = "ID,Data,Hora,Cliente,Email,Categoria,Total(MT),Status\n";
-
     currentFilteredOrders.forEach(order => {
         const safeName = `"${order.name.replace(/"/g, '""')}"`;
         const safeEmail = `"${order.email.replace(/"/g, '""')}"`;
         const safeCategory = `"${order.category}"`;
         csvContent += `"${order.orderId}","${order.createdAt.toLocaleDateString('pt-MZ')}","${order.createdAt.toLocaleTimeString('pt-MZ')}",${safeName},${safeEmail},${safeCategory},"${order.total}","${order.status}"\n`;
     });
-
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
