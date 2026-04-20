@@ -6,39 +6,39 @@
     <title>Gestão de Afiliados | PayGo Admin</title>
     <meta name="theme-color" content="#0f172a">
     <meta name="robots" content="noindex, nofollow">
-    
+    <meta name="description" content="Painel administrativo para gestão de afiliados, saques, candidaturas e controlo de parceiros PayGo.">
+
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
-    
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: { 
-                        sans: ['"Plus Jakarta Sans"', 'sans-serif'], 
-                        display: ['"Outfit"', 'sans-serif'], 
-                        mono: ['"Fira Code"', 'monospace'] 
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        display: ['"Outfit"', 'sans-serif'],
+                        mono: ['"Fira Code"', 'monospace']
                     },
-                    colors: { 
-                        brand: { 50: '#eff6ff', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 900: '#1e3a8a', 950: '#0f172a' }, 
+                    colors: {
+                        brand: { 50: '#eff6ff', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 900: '#1e3a8a', 950: '#0f172a' },
                         accent: { 400: '#22d3ee', 500: '#06b6d4' },
-                        success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' }, 
-                        warning: { 400: '#fbbf24', 500: '#f59e0b' }, 
-                        danger: { 400: '#f87171', 500: '#ef4444' } 
+                        success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' },
+                        warning: { 400: '#fbbf24', 500: '#f59e0b' },
+                        danger: { 400: '#f87171', 500: '#ef4444', 600: '#dc2626' }
                     },
                     animation: {
-                        'blob': 'blob 10s infinite',
-                        'shimmer': 'shimmer 2s infinite linear',
-                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        blob: 'blob 10s infinite',
+                        shimmer: 'shimmer 2s infinite linear',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite'
                     },
                     keyframes: {
                         blob: {
                             '0%, 100%': { transform: 'translate(0px, 0px) scale(1)' },
                             '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
-                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' }
                         },
                         shimmer: {
                             '0%': { backgroundPosition: '-200% 0' },
@@ -49,38 +49,167 @@
             }
         };
     </script>
-    
+
     <style>
-        body { background-color: #020617; color: #f8fafc; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
-        
-        .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
-        .glass-nav { background: rgba(2, 6, 23, 0.85); backdrop-filter: blur(20px) saturate(180%); border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .glass-card { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3); transition: all 0.4s ease; }
-        
-        .sidebar-link { position: relative; transition: all 0.3s ease; }
-        .sidebar-link::before { content: ''; position: absolute; left: 0; top: 10%; height: 80%; width: 3px; background: transparent; border-radius: 0 4px 4px 0; transition: all 0.3s ease; }
-        .sidebar-link:hover { background: rgba(255,255,255,0.03); color: #fff; }
-        .sidebar-link.active { background: linear-gradient(90deg, rgba(59,130,246,0.1) 0%, transparent 100%); color: #60a5fa; font-weight: 700; }
-        .sidebar-link.active::before { background: #3b82f6; box-shadow: 0 0 10px #3b82f6; }
-        
-        .btn-action { padding: 8px 16px; border-radius: 10px; font-size: 0.8rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s ease; overflow: hidden; position: relative; min-width: 110px; }
-        .btn-action:active:not(:disabled) { transform: scale(0.95); }
-        .btn-action:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(100%); }
-        
-        .btn-approve { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
-        .btn-approve:hover:not(:disabled) { background: #22c55e; color: white; border-color: #22c55e; box-shadow: 0 0 15px rgba(34,197,94,0.4); }
-        
-        .btn-reject { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
-        .btn-reject:hover:not(:disabled) { background: #ef4444; color: white; border-color: #ef4444; box-shadow: 0 0 15px rgba(239,68,68,0.4); }
-        
-        .btn-warning { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
-        .btn-warning:hover:not(:disabled) { background: #f59e0b; color: white; border-color: #f59e0b; box-shadow: 0 0 15px rgba(245,158,11,0.4); }
-        
-        .status-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; }
-        .status-badge.active { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.2); }
-        .status-badge.blocked { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); }
-        
-        .skeleton-text { background: linear-gradient(90deg, rgba(30,41,59,0.5) 25%, rgba(51,65,85,0.5) 50%, rgba(30,41,59,0.5) 75%); background-size: 200% 100%; animation: shimmer 2s infinite; color: transparent !important; border-radius: 6px; display: inline-block; min-width: 60px; min-height: 1em; }
+        body {
+            background-color: #020617;
+            color: #f8fafc;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        .bg-grid {
+            background-size: 40px 40px;
+            background-image:
+                linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+        }
+
+        .glass-nav {
+            background: rgba(2, 6, 23, 0.85);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .glass-card {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
+            transition: all 0.35s ease;
+        }
+
+        .sidebar-link {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-link::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 10%;
+            height: 80%;
+            width: 3px;
+            background: transparent;
+            border-radius: 0 4px 4px 0;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-link:hover {
+            background: rgba(255, 255, 255, 0.03);
+            color: #fff;
+        }
+
+        .sidebar-link.active {
+            background: linear-gradient(90deg, rgba(59, 130, 246, 0.1) 0%, transparent 100%);
+            color: #60a5fa;
+            font-weight: 700;
+        }
+
+        .sidebar-link.active::before {
+            background: #3b82f6;
+            box-shadow: 0 0 10px #3b82f6;
+        }
+
+        .btn-action {
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            overflow: hidden;
+            position: relative;
+            min-width: 110px;
+        }
+
+        .btn-action:active:not(:disabled) { transform: scale(0.96); }
+        .btn-action:disabled { opacity: 0.55; cursor: not-allowed; filter: grayscale(70%); }
+
+        .btn-approve {
+            background: rgba(34, 197, 94, 0.15);
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .btn-approve:hover:not(:disabled) {
+            background: #22c55e;
+            color: white;
+            border-color: #22c55e;
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.4);
+        }
+
+        .btn-reject {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-reject:hover:not(:disabled) {
+            background: #ef4444;
+            color: white;
+            border-color: #ef4444;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-warning {
+            background: rgba(245, 158, 11, 0.15);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .btn-warning:hover:not(:disabled) {
+            background: #f59e0b;
+            color: white;
+            border-color: #f59e0b;
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-badge.active {
+            background: rgba(34, 197, 94, 0.15);
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .status-badge.blocked {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .status-badge.pending {
+            background: rgba(245, 158, 11, 0.15);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        .skeleton-text {
+            background: linear-gradient(90deg, rgba(30, 41, 59, 0.5) 25%, rgba(51, 65, 85, 0.5) 50%, rgba(30, 41, 59, 0.5) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+            color: transparent !important;
+            border-radius: 6px;
+            display: inline-block;
+            min-width: 60px;
+            min-height: 1em;
+        }
 
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -88,15 +217,67 @@
         ::-webkit-scrollbar-thumb:hover { background: #475569; }
 
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); }
 
-        #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-        .toast-item { pointer-events: auto; display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-radius: 14px; color: white; font-weight: 600; font-size: 14px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); transform: translateX(120%); transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); border-left: 4px solid; background: rgba(15,23,42,0.95); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); }
+        #toastContainer {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .toast-item {
+            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 20px;
+            border-radius: 14px;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            transform: translateX(120%);
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            border-left: 4px solid;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
         .toast-item.show { transform: translateX(0); }
 
-        table { border-collapse: separate; border-spacing: 0; width: 100%; }
-        th { background: rgba(15, 23, 42, 0.8); padding: 16px; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8; font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.05); white-space: nowrap; }
-        td { padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; color: #e2e8f0; vertical-align: middle; }
+        table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+        }
+
+        th {
+            background: rgba(15, 23, 42, 0.8);
+            padding: 16px;
+            text-align: left;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #94a3b8;
+            font-weight: 800;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 14px;
+            color: #e2e8f0;
+            vertical-align: middle;
+        }
+
         tr:hover td { background: rgba(255,255,255,0.02); }
         tr:last-child td { border-bottom: none; }
     </style>
@@ -122,8 +303,8 @@
             <h3 class="text-xl font-display font-bold text-white text-center mb-2" id="confirmModalTitle">Confirmação</h3>
             <p class="text-slate-400 text-center text-sm mb-8 leading-relaxed" id="confirmModalMessage">Tem a certeza que deseja realizar esta ação?</p>
             <div class="flex gap-3 w-full">
-                <button onclick="window.closeConfirmModal(false)" class="flex-1 px-4 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-colors text-sm">Cancelar</button>
-                <button id="confirmModalBtn" onclick="window.closeConfirmModal(true)" class="flex-1 px-4 py-3 text-white rounded-xl font-bold transition-colors shadow-lg text-sm flex items-center justify-center gap-2">Confirmar</button>
+                <button type="button" onclick="window.closeConfirmModal(false)" class="flex-1 px-4 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-colors text-sm">Cancelar</button>
+                <button type="button" id="confirmModalBtn" onclick="window.closeConfirmModal(true)" class="flex-1 px-4 py-3 text-white rounded-xl font-bold transition-colors shadow-lg text-sm flex items-center justify-center gap-2">Confirmar</button>
             </div>
         </div>
     </div>
@@ -132,14 +313,53 @@
         <div class="bg-slate-900 border border-white/10 p-6 md:p-8 rounded-[2rem] shadow-2xl max-w-lg w-full transform scale-95 transition-transform duration-300" id="detailsModalContent">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-xl font-display font-bold text-white flex items-center gap-2"><i data-lucide="file-search" class="w-6 h-6 text-brand-400"></i> Análise de Candidato</h3>
-                <button onclick="window.closeDetailsModal()" class="text-slate-400 hover:text-white transition-colors bg-white/5 p-2 rounded-lg"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button type="button" onclick="window.closeDetailsModal()" class="text-slate-400 hover:text-white transition-colors bg-white/5 p-2 rounded-lg"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
-            
-            <div id="detailsModalBody" class="space-y-3 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+
+            <div id="detailsModalBody" class="space-y-3 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar"></div>
+
+            <div class="mt-6 pt-6 border-t border-white/10 flex gap-3 w-full" id="detailsModalActions"></div>
+        </div>
+    </div>
+
+    <div id="payoutModal" class="fixed inset-0 z-[10001] hidden items-center justify-center backdrop-blur-sm bg-slate-950/80 p-4">
+        <div class="bg-slate-900 border border-white/10 p-6 md:p-8 rounded-[2rem] shadow-2xl max-w-xl w-full">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-display font-bold text-white flex items-center gap-2"><i data-lucide="wallet-cards" class="w-6 h-6 text-success-400"></i> Confirmar Pagamento do Saque</h3>
+                <button type="button" onclick="window.closePayoutModal()" class="text-slate-400 hover:text-white transition-colors bg-white/5 p-2 rounded-lg"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+
+            <input type="hidden" id="payoutWithdrawalId">
+            <input type="hidden" id="payoutUserId">
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2">Método</label>
+                    <select id="payoutMethod" class="w-full bg-slate-800 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <option value="mpesa">M-Pesa</option>
+                        <option value="emola">e-Mola</option>
+                    </select>
                 </div>
-            
-            <div class="mt-6 pt-6 border-t border-white/10 flex gap-3 w-full" id="detailsModalActions">
+                <div>
+                    <label class="block text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2">Telefone</label>
+                    <input type="tel" id="payoutPhone" class="w-full bg-slate-800 border border-white/10 rounded-xl px-4 py-3 text-white font-mono font-bold focus:outline-none focus:ring-2 focus:ring-brand-500" placeholder="841234567">
                 </div>
+                <div class="md:col-span-2">
+                    <label class="block text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2">Montante (MT)</label>
+                    <input type="number" id="payoutAmount" min="1" step="0.01" class="w-full bg-slate-800 border border-white/10 rounded-xl px-4 py-3 text-white font-mono font-bold focus:outline-none focus:ring-2 focus:ring-brand-500" placeholder="0.00">
+                </div>
+            </div>
+
+            <div class="mt-6 p-4 rounded-xl bg-success-500/10 border border-success-500/20 text-sm text-slate-300">
+                Ao confirmar, a API <span class="font-bold text-success-400">/api/paysuite-payout</span> será chamada e o pedido será removido dos pendentes quando a resposta for bem-sucedida.
+            </div>
+
+            <div class="mt-6 flex gap-3 justify-end">
+                <button type="button" onclick="window.closePayoutModal()" class="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-colors text-sm">Cancelar</button>
+                <button type="button" id="btnSubmitPayout" onclick="window.confirmAndSendPayout()" class="px-5 py-3 bg-success-600 hover:bg-success-500 text-white rounded-xl font-bold transition-colors text-sm shadow-[0_0_15px_rgba(34,197,94,0.3)] flex items-center gap-2">
+                    <i data-lucide="send" class="w-4 h-4"></i> Confirmar e Transferir
+                </button>
+            </div>
         </div>
     </div>
 
@@ -150,7 +370,7 @@
             </div>
             <span class="font-display font-extrabold text-xl tracking-wide">PayGo Admin</span>
         </div>
-        <button onclick="window.toggleSidebar()" class="text-white p-2 focus:outline-none bg-white/5 rounded-lg transition-colors border border-white/5">
+        <button type="button" onclick="window.toggleSidebar()" class="text-white p-2 focus:outline-none bg-white/5 rounded-lg transition-colors border border-white/5">
             <i data-lucide="menu" class="w-6 h-6"></i>
         </button>
     </div>
@@ -168,14 +388,14 @@
                     <span class="block text-[9px] text-brand-400 font-black uppercase tracking-widest mt-0.5">Admin Supremo</span>
                 </div>
             </div>
-            <button onclick="window.toggleSidebar()" class="md:hidden text-slate-400 hover:text-white transition-colors bg-white/5 p-2 rounded-lg"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button type="button" onclick="window.toggleSidebar()" class="md:hidden text-slate-400 hover:text-white transition-colors bg-white/5 p-2 rounded-lg"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
         <nav class="flex-1 space-y-1.5 overflow-y-auto pr-2" id="adminNav">
             <a href="dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-3.5 rounded-xl text-slate-300 hover:text-white">
                 <i data-lucide="layout-dashboard" class="w-5 h-5"></i> <span class="text-sm font-medium">Visão Central</span>
             </a>
-            
+
             <div class="pt-4 pb-2"><p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold px-4">Operações</p></div>
 
             <a href="pedidos.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-300 hover:text-white rounded-xl font-medium">
@@ -200,16 +420,15 @@
                 <i data-lucide="settings" class="w-5 h-5"></i> <span class="text-sm">Configurações</span>
             </a>
         </nav>
-        
+
         <div class="pt-4 border-t border-white/5 mt-auto">
-            <button onclick="window.logoutAdmin()" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-danger-500/10 border border-danger-500/20 hover:bg-danger-500 hover:text-white text-danger-400 rounded-xl transition-all text-sm font-bold overflow-hidden relative active:scale-95">
+            <button type="button" onclick="window.logoutAdmin()" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-danger-500/10 border border-danger-500/20 hover:bg-danger-500 hover:text-white text-danger-400 rounded-xl transition-all text-sm font-bold overflow-hidden relative active:scale-95">
                 <i data-lucide="log-out" class="w-4 h-4"></i> Encerrar Sessão
             </button>
         </div>
     </aside>
 
     <main class="md:ml-64 p-4 md:p-8 pt-24 md:pt-8 min-h-screen transition-all relative z-10">
-
         <header class="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-6 mb-8">
             <div>
                 <h1 class="text-3xl md:text-4xl font-display font-extrabold text-white tracking-tight">Rede de Afiliados</h1>
@@ -223,7 +442,7 @@
                 </div>
             </div>
             <div class="flex items-center gap-3 w-full xl:w-auto">
-                <button onclick="window.loadAllData()" id="btnRefresh" class="w-full sm:w-auto px-6 py-3.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(37,99,235,0.4)] border border-brand-500 active:scale-95">
+                <button type="button" onclick="window.loadAllData()" id="btnRefresh" class="w-full sm:w-auto px-6 py-3.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(37,99,235,0.4)] border border-brand-500 active:scale-95">
                     <i data-lucide="refresh-cw" class="w-4 h-4 transition-transform duration-500" id="refreshIcon"></i> Atualizar Dados
                 </button>
             </div>
@@ -247,7 +466,7 @@
                 </div>
                 <p class="text-4xl font-display font-extrabold text-white relative z-10"><span id="kpiTotalEarnings" class="skeleton-text">0,00</span></p>
             </div>
-            
+
             <div class="glass-card p-6 rounded-[2rem] border-t-4 border-t-warning-500 bg-warning-900/5 group hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden">
                 <div class="absolute top-0 right-0 w-24 h-24 bg-warning-500/10 blur-xl rounded-full group-hover:scale-150 transition-transform duration-700"></div>
                 <div class="flex items-center justify-between mb-4 relative z-10">
@@ -265,7 +484,7 @@
                         <div class="w-12 h-12 rounded-2xl bg-success-500/20 text-success-400 flex items-center justify-center border border-success-500/30 shadow-[0_0_15px_rgba(34,197,94,0.2)]"><i data-lucide="arrow-down-to-line" class="w-6 h-6"></i></div>
                         <div>
                             <h2 class="text-lg font-display font-bold text-white leading-tight">Solicitações de Pagamento (Saques)</h2>
-                            <p class="text-xs text-slate-400 mt-1">Ao processar, o valor é deduzido da plataforma e o afiliado notificado via email.</p>
+                            <p class="text-xs text-slate-400 mt-1">Ao processar, o valor é deduzido da plataforma e o afiliado é notificado.</p>
                         </div>
                     </div>
                 </div>
@@ -306,7 +525,7 @@
                             </tr>
                         </thead>
                         <tbody id="pendingTableBody" class="divide-y divide-white/5 bg-slate-900/30">
-                           <tr><td class="py-6 px-6"><div class="skeleton-text w-32 h-4 mb-2"></div><br><div class="skeleton-text w-48 h-3"></div></td><td><div class="skeleton-text w-20 h-4"></div></td><td class="text-right"><div class="skeleton-text w-32 h-8"></div></td></tr>
+                            <tr><td class="py-6 px-6"><div class="skeleton-text w-32 h-4 mb-2"></div><br><div class="skeleton-text w-48 h-3"></div></td><td><div class="skeleton-text w-20 h-4"></div></td><td class="text-right"><div class="skeleton-text w-32 h-8"></div></td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -338,16 +557,29 @@
                     </table>
                 </div>
             </div>
-
         </div>
     </main>
 
-   <script type="module">
+    <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, serverTimestamp, increment, addDoc, limit, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import {
+            getFirestore,
+            doc,
+            getDoc,
+            updateDoc,
+            collection,
+            query,
+            where,
+            getDocs,
+            serverTimestamp,
+            increment,
+            addDoc,
+            limit,
+            orderBy,
+            runTransaction
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // 🔥 CONFIGURAÇÃO FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
             authDomain: "paygo-14311.firebaseapp.com",
@@ -362,39 +594,67 @@
         const db = getFirestore(app, "paygodb");
 
         let loggedInAdminId = null;
-        let resolveConfirm = null; 
-        window.pendingUsersData = {}; // Cache para o Modal de Ficha
+        let resolveConfirm = null;
+        let isLoadingAll = false;
+        window.pendingUsersData = {};
 
-        // 🛡️ UTILITÁRIOS DE SEGURANÇA E FORMATAÇÃO
         const escapeHTML = (str) => {
-            if (!str) return '';
+            if (str === null || str === undefined) return '';
             return String(str).replace(/[&<>'"]/g, tag => ({
-                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                "'": '&#39;',
+                '"': '&quot;'
             }[tag] || tag));
         };
 
-        const setSafeText = (id, text) => { const el = document.getElementById(id); if (el) { el.textContent = text; el.classList.remove('skeleton-text'); } };
-        const setSafeHTML = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
-        const formatMZN = (val) => new Intl.NumberFormat('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val || 0);
+        const setSafeText = (id, text) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.textContent = text;
+            el.classList.remove('skeleton-text');
+        };
 
-        // 🔔 TOAST NOTIFICATIONS ANIMADOS
+        const setSafeHTML = (id, html) => {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = html;
+        };
+
+        const formatMZN = (val) => new Intl.NumberFormat('pt-MZ', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(Number(val || 0));
+
+        const toDateText = (value) => {
+            if (!value) return '-';
+            if (typeof value?.toDate === 'function') return value.toDate().toLocaleDateString('pt-MZ');
+            const dt = new Date(value);
+            return Number.isNaN(dt.getTime()) ? '-' : dt.toLocaleDateString('pt-MZ');
+        };
+
+        const renderIcons = (root = document) => {
+            if (typeof lucide !== 'undefined') lucide.createIcons({ root });
+        };
+
         window.showToast = (message, type = 'success') => {
             const container = document.getElementById('toastContainer');
             if (!container) return;
+
             const toast = document.createElement('div');
             const borderColor = type === 'error' ? 'border-danger-500' : type === 'warning' ? 'border-warning-500' : 'border-brand-500';
             const icon = type === 'error' ? 'alert-octagon text-danger-400' : type === 'warning' ? 'alert-triangle text-warning-400' : 'check-check text-brand-400';
-
             toast.className = `toast-item border-l-4 ${borderColor}`;
             toast.innerHTML = `<i data-lucide="${icon.split(' ')[0]}" class="w-6 h-6 flex-shrink-0 ${icon.split(' ')[1]}"></i><span class="flex-1">${escapeHTML(message)}</span>`;
             container.appendChild(toast);
-            if(typeof lucide !== 'undefined') lucide.createIcons({root: toast});
-
+            renderIcons(toast);
             requestAnimationFrame(() => toast.classList.add('show'));
-            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 4000);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 350);
+            }, 4200);
         };
 
-        // 🛑 MODAL DE CONFIRMAÇÃO CUSTOMIZADO
         window.confirmAction = (title, message, confirmText = 'Confirmar', type = 'warning') => {
             return new Promise((resolve) => {
                 const modal = document.getElementById('confirmModal');
@@ -402,16 +662,16 @@
                 const btn = document.getElementById('confirmModalBtn');
                 const iconContainer = document.getElementById('confirmModalIconContainer');
                 const icon = document.getElementById('confirmModalIcon');
-                
+
                 document.getElementById('confirmModalTitle').textContent = title;
                 document.getElementById('confirmModalMessage').textContent = message;
                 btn.textContent = confirmText;
-                
-                if(type === 'danger') {
+
+                if (type === 'danger') {
                     btn.className = 'flex-1 px-4 py-3 bg-danger-600 hover:bg-danger-500 text-white rounded-xl font-bold transition-colors shadow-[0_0_15px_rgba(239,68,68,0.3)] text-sm';
                     iconContainer.className = 'flex items-center justify-center w-16 h-16 rounded-2xl mb-6 mx-auto bg-danger-500/20 border border-danger-500/30 text-danger-500';
                     icon.setAttribute('data-lucide', 'alert-octagon');
-                } else if(type === 'success') {
+                } else if (type === 'success') {
                     btn.className = 'flex-1 px-4 py-3 bg-success-600 hover:bg-success-500 text-white rounded-xl font-bold transition-colors shadow-[0_0_15px_rgba(34,197,94,0.3)] text-sm';
                     iconContainer.className = 'flex items-center justify-center w-16 h-16 rounded-2xl mb-6 mx-auto bg-success-500/20 border border-success-500/30 text-success-500';
                     icon.setAttribute('data-lucide', 'check-circle');
@@ -420,9 +680,8 @@
                     iconContainer.className = 'flex items-center justify-center w-16 h-16 rounded-2xl mb-6 mx-auto bg-warning-500/20 border border-warning-500/30 text-warning-500';
                     icon.setAttribute('data-lucide', 'help-circle');
                 }
-                
-                if(typeof lucide !== 'undefined') lucide.createIcons({root: modal});
 
+                renderIcons(modal);
                 resolveConfirm = resolve;
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
@@ -448,10 +707,9 @@
             }, 300);
         };
 
-        // 👁️ ABRIR FICHA DE CANDIDATO (MODAL ATUALIZADO)
         window.showCandidateDetails = (id) => {
             const u = window.pendingUsersData[id];
-            if(!u) return;
+            if (!u) return;
 
             const phone = escapeHTML(u.phone || 'Não fornecido');
             const motivation = escapeHTML(u.whyAffiliate || 'O candidato não detalhou a sua motivação.');
@@ -459,11 +717,11 @@
             const expectedRef = escapeHTML(u.expectedReferrals || 'N/A');
             const socialLinks = escapeHTML(u.socialMediaLinks || 'Sem links fornecidos');
 
-            const linkHtml = socialLinks.startsWith('http') 
-                ? `<a href="${socialLinks}" target="_blank" class="text-brand-400 hover:text-brand-300 hover:underline break-all"><i data-lucide="external-link" class="w-3 h-3 inline mr-1"></i>${socialLinks}</a>`
+            const linkHtml = socialLinks.startsWith('http')
+                ? `<a href="${socialLinks}" target="_blank" rel="noopener noreferrer" class="text-brand-400 hover:text-brand-300 hover:underline break-all"><i data-lucide="external-link" class="w-3 h-3 inline mr-1"></i>${socialLinks}</a>`
                 : `<span class="text-slate-300">${socialLinks}</span>`;
 
-            const html = `
+            document.getElementById('detailsModalBody').innerHTML = `
                 <div class="bg-slate-800/50 p-4 rounded-xl border border-white/5">
                     <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2">Dados de Contacto</p>
                     <p class="text-white font-medium mb-1"><i data-lucide="user" class="w-4 h-4 inline mr-2 text-slate-400"></i> ${escapeHTML(u.name || 'N/A')}</p>
@@ -473,12 +731,12 @@
 
                 <div class="bg-slate-800/50 p-4 rounded-xl border border-white/5 mt-3 space-y-3">
                     <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Estratégia de Vendas</p>
-                    
+
                     <div class="flex justify-between items-center border-b border-white/5 pb-2">
                         <span class="text-xs text-slate-400">Canal Principal:</span>
                         <span class="bg-slate-900 border border-white/10 text-white text-xs px-2 py-1 rounded font-mono uppercase">${promoMethod}</span>
                     </div>
-                    
+
                     <div class="flex justify-between items-center border-b border-white/5 pb-2">
                         <span class="text-xs text-slate-400">Estimativa (Mês):</span>
                         <span class="text-sm font-bold text-success-400">${expectedRef} indicações</span>
@@ -491,32 +749,28 @@
                 </div>
 
                 <div class="bg-slate-800/50 p-4 rounded-xl border border-white/5 mt-3">
-                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-3">Motivação ("Porquê ser parceiro?")</p>
+                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-3">Motivação</p>
                     <p class="text-slate-300 text-sm leading-relaxed border-l-2 border-brand-500 pl-3 italic">"${motivation}"</p>
                 </div>
             `;
 
-            document.getElementById('detailsModalBody').innerHTML = html;
-            
             document.getElementById('detailsModalActions').innerHTML = `
-                <button onclick="window.closeDetailsModal()" class="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-colors text-sm">Fechar</button>
+                <button type="button" onclick="window.closeDetailsModal()" class="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-colors text-sm">Fechar</button>
                 <div class="flex gap-3 ml-auto">
-                    <button onclick="window.closeDetailsModal(); window.decideAffiliate('${id}', '${u.email}', '${escapeHTML(u.name)}', false)" class="px-4 py-3 bg-danger-500/10 hover:bg-danger-500 border border-danger-500/30 text-danger-400 hover:text-white rounded-xl font-bold transition-colors text-sm"><i data-lucide="x" class="w-4 h-4 inline mr-1"></i> Rejeitar</button>
-                    <button onclick="window.closeDetailsModal(); window.decideAffiliate('${id}', '${u.email}', '${escapeHTML(u.name)}', true)" class="px-4 py-3 bg-success-600 hover:bg-success-500 text-white rounded-xl font-bold transition-colors shadow-[0_0_15px_rgba(34,197,94,0.3)] text-sm"><i data-lucide="check" class="w-4 h-4 inline mr-1"></i> Aprovar Parceiro</button>
+                    <button type="button" onclick="window.closeDetailsModal(); window.decideAffiliate('${id}', '${escapeHTML(u.email || '')}', '${escapeHTML(u.name || '')}', false)" class="px-4 py-3 bg-danger-500/10 hover:bg-danger-500 border border-danger-500/30 text-danger-400 hover:text-white rounded-xl font-bold transition-colors text-sm"><i data-lucide="x" class="w-4 h-4 inline mr-1"></i> Rejeitar</button>
+                    <button type="button" onclick="window.closeDetailsModal(); window.decideAffiliate('${id}', '${escapeHTML(u.email || '')}', '${escapeHTML(u.name || '')}', true)" class="px-4 py-3 bg-success-600 hover:bg-success-500 text-white rounded-xl font-bold transition-colors shadow-[0_0_15px_rgba(34,197,94,0.3)] text-sm"><i data-lucide="check" class="w-4 h-4 inline mr-1"></i> Aprovar Parceiro</button>
                 </div>
             `;
 
             const modal = document.getElementById('detailsModal');
             const content = document.getElementById('detailsModalContent');
-            
             modal.classList.remove('hidden');
             modal.classList.add('flex');
             setTimeout(() => {
                 modal.classList.remove('opacity-0');
                 content.classList.remove('scale-95');
             }, 10);
-            
-            if(typeof lucide !== 'undefined') lucide.createIcons({root: modal});
+            renderIcons(modal);
         };
 
         window.closeDetailsModal = () => {
@@ -530,221 +784,253 @@
             }, 300);
         };
 
-        // ==========================================
-        // 📱 UX E SIDENAV
-        // ==========================================
+        window.openPayoutModal = (id, userId, phone, amount, method) => {
+            document.getElementById('payoutWithdrawalId').value = id;
+            document.getElementById('payoutUserId').value = userId || '';
+            document.getElementById('payoutPhone').value = phone || '';
+            document.getElementById('payoutAmount').value = Number(amount || 0);
+            document.getElementById('payoutMethod').value = method || 'mpesa';
+            const modal = document.getElementById('payoutModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            renderIcons(modal);
+        };
+
+        window.closePayoutModal = () => {
+            const modal = document.getElementById('payoutModal');
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        };
+
         window.toggleSidebar = () => {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('mobileOverlay');
-            if (sidebar && overlay) {
-                sidebar.classList.toggle('-translate-x-full');
-                if(overlay.classList.contains('hidden')) {
-                    overlay.classList.remove('hidden');
-                    setTimeout(() => overlay.classList.remove('opacity-0'), 10);
-                } else {
-                    overlay.classList.add('opacity-0');
-                    setTimeout(() => overlay.classList.add('hidden'), 300);
-                }
+            if (!sidebar || !overlay) return;
+            sidebar.classList.toggle('-translate-x-full');
+            if (overlay.classList.contains('hidden')) {
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+            } else {
+                overlay.classList.add('opacity-0');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
             }
         };
 
         window.logoutAdmin = async () => {
             const confirmed = await window.confirmAction('Encerrar Sessão?', 'Irá sair do Centro de Comando PayGo.', 'Sair agora', 'danger');
-            if (confirmed) {
-                await signOut(auth);
-                window.location.href = '../login.html';
-            }
+            if (!confirmed) return;
+            await signOut(auth);
+            window.location.href = '../login.html';
         };
 
-        // ==========================================
-        // 🚀 INICIALIZAÇÃO E CARREGAMENTO DE DADOS
-        // ==========================================
-        onAuthStateChanged(auth, async (user) => {
-            if (!user) { window.location.href = '../login.html'; return; }
-            
-            try {
-                const userDoc = await getDoc(doc(db, "users", user.uid));
-                if (!userDoc.exists() || (userDoc.data().role !== 'admin' && userDoc.data().role !== 'superadmin')) {
-                    window.location.href = '../dashboard.html'; return;
-                }
-                
-                loggedInAdminId = user.uid;
-                await window.loadAllData();
-                
-            } catch (error) {
-                console.error("Erro Auth:", error);
-                window.showToast("Falha na validação de segurança.", "error");
-            } finally {
-                const ldr = document.getElementById('sysLoader');
-                if(ldr) { ldr.style.opacity = '0'; setTimeout(() => ldr.style.display = 'none', 500); }
-            }
-        });
-
-        window.loadAllData = async () => {
-            const refreshIcon = document.getElementById('refreshIcon');
-            if(refreshIcon) refreshIcon.classList.add('animate-spin');
-            
-            try {
-                await Promise.all([
-                    loadWithdrawals(),
-                    loadPendingAffiliates(),
-                    loadAllAffiliates()
-                ]);
-            } catch(e) {
-                console.error("Erro no carregamento:", e);
-                window.showToast("Alguns dados não puderam ser carregados.", "warning");
-            } finally {
-                if(refreshIcon) refreshIcon.classList.remove('animate-spin');
-                if(typeof lucide !== 'undefined') lucide.createIcons();
-            }
-        };
-
-        // ==========================================
-        // 🔔 NOTIFICAÇÕES HÍBRIDAS E AUDITORIA
-        // ==========================================
         async function sendHybridNotification(userId, userEmail, subject, type, message, inAppType = 'alert') {
             try {
                 if (userId) {
-                    await addDoc(collection(db, "notifications"), {
-                        userId: userId, title: subject, message: message, type: inAppType, read: false, createdAt: serverTimestamp()
+                    await addDoc(collection(db, 'notifications'), {
+                        userId,
+                        title: subject,
+                        message,
+                        type: inAppType,
+                        read: false,
+                        createdAt: serverTimestamp()
                     });
                 }
+
                 if (userEmail) {
                     fetch('/api/send-email', {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ to: userEmail, subject: subject, template: type, type: 'transactional', variables: { message: message } })
-                    }).catch(e => console.log("Nota: Endpoint de Email local offline."));
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            to: userEmail,
+                            subject,
+                            template: type,
+                            type: 'transactional',
+                            variables: { message }
+                        })
+                    }).catch(() => {});
                 }
-            } catch (error) { console.error("Falha ao notificar:", error); }
+            } catch (error) {
+                console.error('Falha ao notificar:', error);
+            }
         }
 
         async function logAdminAction(action, details) {
             try {
-                await addDoc(collection(db, "admin_audit_logs"), {
-                    adminId: loggedInAdminId, action: action, details: details, createdAt: serverTimestamp()
+                await addDoc(collection(db, 'admin_audit_logs'), {
+                    adminId: loggedInAdminId,
+                    action,
+                    details,
+                    createdAt: serverTimestamp()
                 });
-            } catch(e) { console.warn("Log não gravado."); }
+            } catch (e) {
+                console.warn('Log não gravado.');
+            }
         }
 
-        // ==========================================
-        // 1. GESTÃO DE SAQUES
-        // ==========================================
         async function loadWithdrawals() {
             try {
-                const q = query(collection(db, "withdrawals"), where("status", "==", "pending"), limit(50));
+                const q = query(collection(db, 'withdrawals'), where('status', '==', 'pending'), limit(50));
                 const snap = await getDocs(q);
                 let pendingCount = 0;
                 let html = '';
 
-                snap.forEach(doc => {
+                snap.forEach((docSnap) => {
                     pendingCount++;
-                    const w = doc.data();
+                    const w = docSnap.data();
                     html += `
-                    <tr class="hover:bg-slate-800/40 transition">
-                        <td class="py-4 px-4"><span class="font-bold text-white block bg-slate-800/80 px-3 py-1.5 rounded-lg w-max border border-slate-700 shadow-inner">${escapeHTML(w.affiliateCode || 'N/A')}</span></td>
-                        <td class="py-4 px-4">
-                            <div class="flex items-center gap-2">
-                                <span class="bg-slate-800 p-1.5 rounded-md border border-white/5"><i data-lucide="smartphone" class="w-4 h-4 text-brand-400"></i></span>
-                                <div>
-                                    <div class="font-bold text-sm text-white">${escapeHTML(w.method?.toUpperCase())}</div>
-                                    <div class="font-mono text-slate-400 text-xs">${escapeHTML(w.phone)}</div>
+                        <tr class="hover:bg-slate-800/40 transition">
+                            <td class="py-4 px-4"><span class="font-bold text-white block bg-slate-800/80 px-3 py-1.5 rounded-lg w-max border border-slate-700 shadow-inner">${escapeHTML(w.affiliateCode || 'N/A')}</span></td>
+                            <td class="py-4 px-4">
+                                <div class="flex items-center gap-2">
+                                    <span class="bg-slate-800 p-1.5 rounded-md border border-white/5"><i data-lucide="smartphone" class="w-4 h-4 text-brand-400"></i></span>
+                                    <div>
+                                        <div class="font-bold text-sm text-white">${escapeHTML((w.method || '').toUpperCase())}</div>
+                                        <div class="font-mono text-slate-400 text-xs">${escapeHTML(w.phone || '')}</div>
+                                    </div>
                                 </div>
-                            </div>
-                        </td>
-                        <td class="py-4 px-4 font-black text-success-400 font-display text-lg">${formatMZN(w.amount)} MT</td>
-                        <td class="py-4 px-4 text-right whitespace-nowrap">
-                            <button id="btn-pay-${doc.id}" onclick="window.processWithdrawal('${doc.id}', '${w.userId}', ${w.amount}, true)" class="btn-action btn-approve mr-2"><i data-lucide="check" class="w-4 h-4"></i> Pago</button>
-                            <button id="btn-rej-wd-${doc.id}" onclick="window.processWithdrawal('${doc.id}', '${w.userId}', ${w.amount}, false)" class="btn-action btn-reject"><i data-lucide="x" class="w-4 h-4"></i> Rejeitar</button>
-                        </td>
-                    </tr>`;
+                            </td>
+                            <td class="py-4 px-4 font-black text-success-400 font-display text-lg">${formatMZN(w.amount)} MT</td>
+                            <td class="py-4 px-4 text-right whitespace-nowrap">
+                                <button type="button" id="btn-pay-${docSnap.id}" onclick="window.processWithdrawal('${docSnap.id}', '${w.userId || ''}', ${Number(w.amount || 0)}, true)" class="btn-action btn-approve mr-2"><i data-lucide="check" class="w-4 h-4"></i> Pago</button>
+                                <button type="button" id="btn-rej-wd-${docSnap.id}" onclick="window.processWithdrawal('${docSnap.id}', '${w.userId || ''}', ${Number(w.amount || 0)}, false)" class="btn-action btn-reject"><i data-lucide="x" class="w-4 h-4"></i> Rejeitar</button>
+                            </td>
+                        </tr>
+                    `;
                 });
 
                 setSafeText('kpiPendingWithdrawals', pendingCount);
-                
-                if(pendingCount === 0) {
-                    setSafeHTML('withdrawalsTableBody', `<tr><td colspan="4" class="text-center py-12"><div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-success-500/10 mb-4"><i data-lucide="check-circle" class="w-8 h-8 text-success-500/50"></i></div><p class="text-slate-400 font-medium">Nenhum saque pendente. Bom trabalho!</p></td></tr>`);
+                if (pendingCount === 0) {
+                    setSafeHTML('withdrawalsTableBody', `<tr><td colspan="4" class="text-center py-12"><div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-success-500/10 mb-4"><i data-lucide="check-circle" class="w-8 h-8 text-success-500/50"></i></div><p class="text-slate-400 font-medium">Nenhum saque pendente. Bom trabalho.</p></td></tr>`);
                 } else {
                     setSafeHTML('withdrawalsTableBody', html);
                 }
-            } catch(e) { window.showToast('Erro ao carregar saques.', 'error'); }
+                renderIcons(document.getElementById('withdrawalsTableBody'));
+            } catch (e) {
+                console.error(e);
+                window.showToast('Erro ao carregar saques.', 'error');
+            }
         }
 
-       // 1. A NOVA LÓGICA DO BOTÃO (Aprovar abre o Modal, Rejeitar devolve o dinheiro)
-        window.processWithdrawal = async function(id, userId, amount, isApproved) {
+        window.processWithdrawal = async (id, userId, amount, isApproved) => {
             if (isApproved) {
-                // Em vez de disparar logo, vamos buscar os dados e abrir o Modal de edição
                 try {
-                    const wDoc = await getDoc(doc(db, "withdrawals", id));
-                    if(wDoc.exists()) {
-                        const data = wDoc.data();
-                        window.openPayoutModal(id, userId, data.phone, data.amount, data.method);
+                    const wDoc = await getDoc(doc(db, 'withdrawals', id));
+                    if (!wDoc.exists()) {
+                        window.showToast('Saque não encontrado.', 'error');
+                        return;
                     }
-                } catch(e) { window.showToast('Erro ao ler dados do saque.', 'error'); }
-            } else {
-                // Lógica de Rejeição (mantém-se inalterada)
-                const confirmed = await window.confirmAction('Rejeitar Pagamento', `Deseja REJEITAR este saque de ${amount} MT? O valor será devolvido ao saldo do parceiro.`, 'Rejeitar Saque', 'danger');
-                if(!confirmed) return;
-                
-                const btn = document.getElementById(`btn-rej-wd-${id}`);
-                if(btn) { btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>`; }
+                    const data = wDoc.data();
+                    window.openPayoutModal(id, userId, data.phone, data.amount, data.method);
+                } catch (e) {
+                    console.error(e);
+                    window.showToast('Erro ao ler dados do saque.', 'error');
+                }
+                return;
+            }
 
-                try {
-                    const userDoc = await getDoc(doc(db, "users", userId));
-                    const userEmail = userDoc.exists() ? userDoc.data().email : null;
+            const confirmed = await window.confirmAction(
+                'Rejeitar Pagamento',
+                `Deseja rejeitar este saque de ${formatMZN(amount)} MT? O valor será devolvido ao saldo do parceiro.`,
+                'Rejeitar Saque',
+                'danger'
+            );
+            if (!confirmed) return;
 
-                    await updateDoc(doc(db, "withdrawals", id), { status: 'rejected', processedAt: serverTimestamp() });
-                    await updateDoc(doc(db, "users", userId), { affiliateEarnings: increment(amount) });
-                    sendHybridNotification(userId, userEmail, '⚠️ Pedido de Saque Rejeitado', 'payout-rejected', `O seu pedido de saque de ${amount} MT foi rejeitado. Os fundos voltaram para a sua conta.`, 'error');
-                    logAdminAction('SAQUE_REJEITADO', `Saque ID: ${id} | Devolução de ${amount} MT`);
-                    
-                    window.showToast('Saque rejeitado e fundos devolvidos.', 'warning');
-                    await window.loadAllData();
-                } catch(e) { window.showToast('Erro crítico.', 'error'); }
+            const btn = document.getElementById(`btn-rej-wd-${id}`);
+            const original = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>`;
+                renderIcons(btn);
+            }
+
+            try {
+                const withdrawalRef = doc(db, 'withdrawals', id);
+                const userRef = doc(db, 'users', userId);
+
+                let userEmail = null;
+                await runTransaction(db, async (transaction) => {
+                    const withdrawalSnap = await transaction.get(withdrawalRef);
+                    if (!withdrawalSnap.exists()) throw new Error('Pedido de saque não encontrado.');
+                    const withdrawalData = withdrawalSnap.data();
+                    if (withdrawalData.status !== 'pending') throw new Error('Este saque já foi processado.');
+
+                    const userSnap = await transaction.get(userRef);
+                    if (!userSnap.exists()) throw new Error('Utilizador do saque não encontrado.');
+                    userEmail = userSnap.data().email || null;
+
+                    transaction.update(withdrawalRef, {
+                        status: 'rejected',
+                        processedAt: serverTimestamp(),
+                        processedBy: loggedInAdminId,
+                        rejectionReason: 'Rejeitado pelo administrador'
+                    });
+
+                    transaction.update(userRef, {
+                        affiliateEarnings: increment(Number(amount || 0))
+                    });
+                });
+
+                await sendHybridNotification(userId, userEmail, '⚠️ Pedido de Saque Rejeitado', 'payout-rejected', `O seu pedido de saque de ${formatMZN(amount)} MT foi rejeitado. Os fundos voltaram para a sua conta.`, 'error');
+                await logAdminAction('SAQUE_REJEITADO', `Saque ID: ${id} | Devolução de ${formatMZN(amount)} MT`);
+                window.showToast('Saque rejeitado e fundos devolvidos.', 'warning');
+                await window.loadAllData();
+            } catch (e) {
+                console.error(e);
+                window.showToast(e.message || 'Erro crítico ao rejeitar saque.', 'error');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = original;
+                    renderIcons(btn);
+                }
             }
         };
 
-        // 2. FUNÇÕES DE CONTROLO DO MODAL
-        window.openPayoutModal = function(id, userId, phone, amount, method) {
-            document.getElementById('payoutWithdrawalId').value = id;
-            document.getElementById('payoutUserId').value = userId;
-            document.getElementById('payoutPhone').value = phone;
-            document.getElementById('payoutAmount').value = amount;
-            document.getElementById('payoutMethod').value = method || 'mpesa';
-
-            const modal = document.getElementById('payoutModal');
-            if(modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
-            if(typeof lucide !== 'undefined') lucide.createIcons();
-        };
-
-        window.closePayoutModal = function() {
-            const modal = document.getElementById('payoutModal');
-            if(modal) { modal.classList.remove('flex'); modal.classList.add('hidden'); }
-        };
-
-        // 3. O DISPARO FINAL PARA A VERCEL
-        window.confirmAndSendPayout = async function() {
+        window.confirmAndSendPayout = async () => {
             const btn = document.getElementById('btnSubmitPayout');
-            const origHtml = btn.innerHTML;
+            const original = btn.innerHTML;
             btn.disabled = true;
             btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Transferindo...`;
-            if(typeof lucide !== 'undefined') lucide.createIcons({root:btn});
+            renderIcons(btn);
 
             const id = document.getElementById('payoutWithdrawalId').value;
             const userId = document.getElementById('payoutUserId').value;
-            const phone = document.getElementById('payoutPhone').value;
-            const amount = parseFloat(document.getElementById('payoutAmount').value);
+            const phone = document.getElementById('payoutPhone').value.trim();
+            const amount = Number(document.getElementById('payoutAmount').value || 0);
             const method = document.getElementById('payoutMethod').value;
 
+            if (!id || !userId) {
+                window.showToast('Dados do saque inválidos.', 'error');
+                btn.disabled = false;
+                btn.innerHTML = original;
+                renderIcons(btn);
+                return;
+            }
+            if (!/^\d{9}$/.test(phone)) {
+                window.showToast('Telefone de payout inválido.', 'error');
+                btn.disabled = false;
+                btn.innerHTML = original;
+                renderIcons(btn);
+                return;
+            }
+            if (!amount || amount <= 0) {
+                window.showToast('Montante inválido.', 'error');
+                btn.disabled = false;
+                btn.innerHTML = original;
+                renderIcons(btn);
+                return;
+            }
+
             try {
-                const userDoc = await getDoc(doc(db, "users", userId));
+                const userDoc = await getDoc(doc(db, 'users', userId));
                 const userEmail = userDoc.exists() ? userDoc.data().email : null;
 
-                // Chamada à nova API dinâmica que criámos na Vercel
                 const response = await fetch('/api/paysuite-payout', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        adminId: loggedInAdminId, // A variável global do teu painel
+                        adminId: loggedInAdminId,
                         withdrawalId: id,
                         targetPhone: phone,
                         targetAmount: amount,
@@ -752,227 +1038,314 @@
                     })
                 });
 
-                const result = await response.json();
-
+                const result = await response.json().catch(() => ({}));
                 if (!response.ok || !result.success) {
-                    throw new Error(result.error || "A PaySuite recusou a transação de Payout.");
+                    throw new Error(result.error || 'A PaySuite recusou a transação de payout.');
                 }
 
-                // Notificar Cliente
-                sendHybridNotification(userId, userEmail, '💸 O seu pagamento chegou!', 'payout-processed', `Acabámos de processar a transferência de ${amount} MT para a sua conta ${method.toUpperCase()}.`, 'deposit');
-                
-                window.showToast('Dinheiro transferido com sucesso!', 'success');
+                await sendHybridNotification(userId, userEmail, '💸 O seu pagamento chegou', 'payout-processed', `Acabámos de processar a transferência de ${formatMZN(amount)} MT para a sua conta ${String(method).toUpperCase()}.`, 'deposit');
+                await logAdminAction('SAQUE_PAGO', `Saque ID: ${id} | ${formatMZN(amount)} MT enviado via ${method}`);
+                window.showToast('Dinheiro transferido com sucesso.', 'success');
                 window.closePayoutModal();
-                await window.loadAllData(); // Recarrega a tabela para sumir o botão
-
-            } catch(e) {
-                window.showToast(e.message || 'Erro crítico no Payout.', 'error');
+                await window.loadAllData();
+            } catch (e) {
+                console.error(e);
+                window.showToast(e.message || 'Erro crítico no payout.', 'error');
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = origHtml;
-                if(typeof lucide !== 'undefined') lucide.createIcons({root:btn});
+                btn.innerHTML = original;
+                renderIcons(btn);
             }
         };
 
-        // ==========================================
-        // 2. GESTÃO DE CANDIDATURAS PENDENTES (🚨 A CORREÇÃO MÁGICA 🚨)
-        // ==========================================
         async function loadPendingAffiliates() {
             try {
-                // 🛑 A PESQUISA ESTAVA ERRADA! Passa a ser "affiliateStatus" em vez de "status"
-                const q = query(collection(db, "users"), where("affiliateStatus", "==", "pending"), limit(50));
+                const q = query(collection(db, 'users'), where('affiliateStatus', '==', 'pending'), limit(50));
                 const snap = await getDocs(q);
                 let html = '';
                 let count = 0;
-                window.pendingUsersData = {}; // Reset da cache
+                window.pendingUsersData = {};
 
-                snap.forEach(d => { 
+                snap.forEach((d) => {
                     const u = d.data();
                     count++;
                     window.pendingUsersData[d.id] = u;
-                    
                     const initials = (u.name || 'U').substring(0, 2).toUpperCase();
-                    
+
                     html += `
-                    <tr class="hover:bg-slate-800/40 transition">
-                        <td class="py-4 px-4">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center font-bold text-white border border-white/10 shadow-inner">${initials}</div>
-                                <div>
-                                    <div class="font-bold text-white text-sm">${escapeHTML(u.name || 'Desconhecido')}</div>
-                                    <div class="text-xs text-slate-400 mt-0.5">${escapeHTML(u.email)}</div>
+                        <tr class="hover:bg-slate-800/40 transition">
+                            <td class="py-4 px-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center font-bold text-white border border-white/10 shadow-inner">${initials}</div>
+                                    <div>
+                                        <div class="font-bold text-white text-sm">${escapeHTML(u.name || 'Desconhecido')}</div>
+                                        <div class="text-xs text-slate-400 mt-0.5">${escapeHTML(u.email || '')}</div>
+                                    </div>
                                 </div>
-                            </div>
-                        </td>
-                        <td class="py-4 px-4 text-xs font-bold text-slate-400 uppercase tracking-widest"><i data-lucide="calendar" class="w-3 h-3 inline mr-1 opacity-50"></i> ${u.createdAt?.toDate ? u.createdAt.toDate().toLocaleDateString('pt-MZ') : '-'}</td>
-                        <td class="py-4 px-4 text-right whitespace-nowrap">
-                            <button onclick="window.showCandidateDetails('${d.id}')" class="btn-action bg-slate-800 hover:bg-brand-600 text-white border border-white/10 transition-all"><i data-lucide="eye" class="w-4 h-4"></i> Analisar Ficha</button>
-                        </td>
-                    </tr>`;
+                            </td>
+                            <td class="py-4 px-4 text-xs font-bold text-slate-400 uppercase tracking-widest"><i data-lucide="calendar" class="w-3 h-3 inline mr-1 opacity-50"></i> ${toDateText(u.createdAt)}</td>
+                            <td class="py-4 px-4 text-right whitespace-nowrap">
+                                <button type="button" onclick="window.showCandidateDetails('${d.id}')" class="btn-action bg-slate-800 hover:bg-brand-600 text-white border border-white/10 transition-all"><i data-lucide="eye" class="w-4 h-4"></i> Analisar Ficha</button>
+                            </td>
+                        </tr>
+                    `;
                 });
 
-                if(count === 0) {
+                if (count === 0) {
                     setSafeHTML('pendingTableBody', `<tr><td colspan="3" class="text-center py-12"><div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-warning-500/10 mb-4"><i data-lucide="user-check" class="w-8 h-8 text-warning-500/50"></i></div><p class="text-slate-400 font-medium">Sem novas candidaturas no momento.</p></td></tr>`);
                 } else {
                     setSafeHTML('pendingTableBody', html);
                 }
-            } catch(e) { window.showToast('Erro ao ler candidaturas.', 'error'); }
+                renderIcons(document.getElementById('pendingTableBody'));
+            } catch (e) {
+                console.error(e);
+                window.showToast('Erro ao ler candidaturas.', 'error');
+            }
         }
 
-        window.decideAffiliate = async function(id, email, name, isApproved) {
+        window.decideAffiliate = async (id, email, name, isApproved) => {
             const title = isApproved ? 'Aprovar Parceiro' : 'Rejeitar Candidatura';
-            const msg = isApproved ? `Deseja aprovar e ativar o link de afiliado para ${name}? Ele será notificado.` : `Deseja rejeitar a candidatura de ${name}? A conta permanecerá apenas como cliente.`;
+            const msg = isApproved
+                ? `Deseja aprovar e ativar o link de afiliado para ${name}? Ele será notificado.`
+                : `Deseja rejeitar a candidatura de ${name}? A conta permanecerá apenas como cliente.`;
             const type = isApproved ? 'success' : 'danger';
-            
             const confirmed = await window.confirmAction(title, msg, isApproved ? 'Sim, Aprovar' : 'Sim, Rejeitar', type);
-            if(!confirmed) return;
+            if (!confirmed) return;
 
             try {
-                await updateDoc(doc(db, "users", id), {
-                    status: 'active', // Mantém a conta como utilizador ativo da plataforma
-                    affiliateStatus: isApproved ? 'approved' : 'rejected', // 🛑 ESTADO CERTO! Remove dos pendentes.
+                await updateDoc(doc(db, 'users', id), {
+                    status: 'active',
+                    affiliateStatus: isApproved ? 'approved' : 'rejected',
                     role: isApproved ? 'affiliate' : 'user',
-                    affiliateCodeActive: isApproved,
+                    affiliateCodeActive: !!isApproved,
                     updatedAt: serverTimestamp()
                 });
 
                 if (isApproved) {
-                    sendHybridNotification(id, email, '🎉 Conta de Parceiro Aprovada!', 'affiliate-approved', `Olá ${name}! O seu acesso ao painel de parceiros foi ativado. Já pode partilhar o seu link e começar a ganhar.`, 'vip');
-                    logAdminAction('AFILIADO_APROVADO', `Parceiro ativado: ${email}`);
+                    await sendHybridNotification(id, email, '🎉 Conta de Parceiro Aprovada', 'affiliate-approved', `Olá ${name}. O seu acesso ao painel de parceiros foi ativado. Já pode partilhar o seu link e começar a ganhar.`, 'vip');
+                    await logAdminAction('AFILIADO_APROVADO', `Parceiro ativado: ${email}`);
                     window.showToast('Novo parceiro integrado com sucesso.', 'success');
                 } else {
-                    sendHybridNotification(id, email, 'Atualização da Candidatura PayGo', 'affiliate-rejected', `Infelizmente, a sua candidatura para parceiro não foi aprovada neste momento. A sua conta de cliente continua ativa.`, 'alert');
+                    await sendHybridNotification(id, email, 'Atualização da Candidatura PayGo', 'affiliate-rejected', 'Infelizmente, a sua candidatura para parceiro não foi aprovada neste momento. A sua conta de cliente continua ativa.', 'alert');
+                    await logAdminAction('AFILIADO_REJEITADO', `Candidatura rejeitada: ${email}`);
                     window.showToast('Candidatura rejeitada e arquivada.', 'warning');
                 }
-                await window.loadAllData(); 
-            } catch(e) { window.showToast('Falha técnica de comunicação com a Cloud.', 'error'); await window.loadAllData(); }
+
+                await window.loadAllData();
+            } catch (e) {
+                console.error(e);
+                window.showToast('Falha técnica de comunicação com a cloud.', 'error');
+                await window.loadAllData();
+            }
         };
 
-        // ==========================================
-        // 3. REDE GLOBAL E MÉTRICAS
-        // ==========================================
         async function loadAllAffiliates() {
             try {
-                const q = query(collection(db, "users"), where("role", "==", "affiliate"), limit(200)); 
+                const q = query(collection(db, 'users'), where('role', '==', 'affiliate'), limit(200));
                 const snap = await getDocs(q);
                 let html = '';
                 let activeCount = 0;
                 let globalEarnings = 0;
 
-                snap.forEach(d => {
+                snap.forEach((d) => {
                     const u = d.data();
-                    if(u.affiliateStatus === 'pending') return; // Segurança extra
-                    
-                    if(u.status === 'active') activeCount++;
-                    globalEarnings += (Number(u.affiliateEarnings) || 0);
+                    if (u.affiliateStatus === 'pending') return;
+
+                    if (u.status === 'active') activeCount++;
+                    globalEarnings += Number(u.affiliateEarnings || 0);
 
                     const isBlocked = u.status === 'blocked';
-                    const statusBadge = isBlocked ? '<span class="status-badge blocked mb-2"><i data-lucide="lock" class="w-3 h-3"></i> Bloqueado</span>' : '<span class="status-badge active mb-2"><i data-lucide="check-circle" class="w-3 h-3"></i> Ativo</span>';
-                    
+                    const statusBadge = isBlocked
+                        ? '<span class="status-badge blocked mb-2"><i data-lucide="lock" class="w-3 h-3"></i> Bloqueado</span>'
+                        : '<span class="status-badge active mb-2"><i data-lucide="check-circle" class="w-3 h-3"></i> Ativo</span>';
+
                     let controlBtns = '';
-                    if(isBlocked) {
-                        controlBtns += `<button id="btn-unblk-${d.id}" onclick="window.toggleAffiliateStatus('${d.id}', '${u.email}', '${escapeHTML(u.name)}', 'blocked')" class="btn-action btn-approve mr-2" title="Desbloquear"><i data-lucide="unlock" class="w-4 h-4"></i> Restaurar</button>`;
+                    if (isBlocked) {
+                        controlBtns += `<button type="button" id="btn-unblk-${d.id}" onclick="window.toggleAffiliateStatus('${d.id}', '${escapeHTML(u.email || '')}', '${escapeHTML(u.name || '')}', 'blocked')" class="btn-action btn-approve mr-2" title="Desbloquear"><i data-lucide="unlock" class="w-4 h-4"></i> Restaurar</button>`;
                     } else {
-                        controlBtns += `<button id="btn-blk-${d.id}" onclick="window.toggleAffiliateStatus('${d.id}', '${u.email}', '${escapeHTML(u.name)}', 'active')" class="btn-action btn-warning mr-2" title="Bloquear link"><i data-lucide="lock" class="w-4 h-4"></i> Suspender</button>`;
+                        controlBtns += `<button type="button" id="btn-blk-${d.id}" onclick="window.toggleAffiliateStatus('${d.id}', '${escapeHTML(u.email || '')}', '${escapeHTML(u.name || '')}', 'active')" class="btn-action btn-warning mr-2" title="Bloquear link"><i data-lucide="lock" class="w-4 h-4"></i> Suspender</button>`;
                     }
-                    controlBtns += `<button id="btn-rev-${d.id}" onclick="window.revokeAffiliate('${d.id}', '${u.email}', '${escapeHTML(u.name)}')" class="btn-action btn-reject" title="Remover cargo permanentemente"><i data-lucide="user-minus" class="w-4 h-4"></i> Revogar</button>`;
+                    controlBtns += `<button type="button" id="btn-rev-${d.id}" onclick="window.revokeAffiliate('${d.id}', '${escapeHTML(u.email || '')}', '${escapeHTML(u.name || '')}')" class="btn-action btn-reject" title="Remover cargo permanentemente"><i data-lucide="user-minus" class="w-4 h-4"></i> Revogar</button>`;
 
                     const initials = (u.name || 'U').substring(0, 2).toUpperCase();
 
                     html += `
-                    <tr class="hover:bg-slate-800/40 transition">
-                        <td class="py-4 px-4">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center font-bold text-slate-300 border border-slate-700">${initials}</div>
-                                <div>
-                                    <div class="font-bold text-white text-sm">${escapeHTML(u.name || 'N/A')}</div>
-                                    <div class="text-xs text-slate-400 mt-0.5">${escapeHTML(u.email)}</div>
+                        <tr class="hover:bg-slate-800/40 transition">
+                            <td class="py-4 px-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center font-bold text-slate-300 border border-slate-700">${initials}</div>
+                                    <div>
+                                        <div class="font-bold text-white text-sm">${escapeHTML(u.name || 'N/A')}</div>
+                                        <div class="text-xs text-slate-400 mt-0.5">${escapeHTML(u.email || '')}</div>
+                                    </div>
                                 </div>
-                            </div>
-                        </td>
-                        <td class="py-4 px-4 text-center">
-                            ${statusBadge}<br>
-                            <span class="font-mono font-bold text-brand-400 bg-brand-500/10 px-3 py-1 rounded-md text-xs border border-brand-500/20">${escapeHTML(u.affiliateCode || 'S/N')}</span>
-                        </td>
-                        <td class="py-4 px-4 text-center">
-                            <div class="bg-slate-900/50 inline-block p-2 rounded-xl border border-white/5">
-                                <div class="text-[11px] text-slate-300 font-bold mb-1 uppercase tracking-widest"><i data-lucide="users" class="w-3 h-3 inline text-slate-400 mr-1"></i> ${u.approvedReferrals || 0} Registos</div>
-                                <div class="text-sm text-success-400 font-bold"><i data-lucide="banknote" class="w-4 h-4 inline mr-1"></i> ${formatMZN(u.affiliateEarnings)} MT</div>
-                            </div>
-                        </td>
-                        <td class="py-4 px-4 text-right whitespace-nowrap">${controlBtns}</td>
-                    </tr>`;
+                            </td>
+                            <td class="py-4 px-4 text-center">
+                                ${statusBadge}<br>
+                                <span class="font-mono font-bold text-brand-400 bg-brand-500/10 px-3 py-1 rounded-md text-xs border border-brand-500/20">${escapeHTML(u.affiliateCode || 'S/N')}</span>
+                            </td>
+                            <td class="py-4 px-4 text-center">
+                                <div class="bg-slate-900/50 inline-block p-2 rounded-xl border border-white/5">
+                                    <div class="text-[11px] text-slate-300 font-bold mb-1 uppercase tracking-widest"><i data-lucide="users" class="w-3 h-3 inline text-slate-400 mr-1"></i> ${Number(u.approvedReferrals || 0)} Registos</div>
+                                    <div class="text-sm text-success-400 font-bold"><i data-lucide="banknote" class="w-4 h-4 inline mr-1"></i> ${formatMZN(u.affiliateEarnings)} MT</div>
+                                </div>
+                            </td>
+                            <td class="py-4 px-4 text-right whitespace-nowrap">${controlBtns}</td>
+                        </tr>
+                    `;
                 });
 
                 setSafeText('kpiTotalActive', activeCount);
                 setSafeText('kpiTotalEarnings', formatMZN(globalEarnings));
 
-                if(html === '') {
+                if (!html) {
                     setSafeHTML('activeTableBody', `<tr><td colspan="4" class="text-center py-12"><div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-brand-500/10 mb-4"><i data-lucide="network" class="w-8 h-8 text-brand-500/50"></i></div><p class="text-slate-400 font-medium">Nenhum parceiro registado na rede.</p></td></tr>`);
                 } else {
                     setSafeHTML('activeTableBody', html);
                 }
-            } catch(e) { window.showToast('Erro ao carregar a rede completa.', 'error'); }
+                renderIcons(document.getElementById('activeTableBody'));
+            } catch (e) {
+                console.error(e);
+                window.showToast('Erro ao carregar a rede completa.', 'error');
+            }
         }
 
-        window.toggleAffiliateStatus = async function(id, email, name, currentStatus) {
+        window.toggleAffiliateStatus = async (id, email, name, currentStatus) => {
             const isCurrentlyActive = currentStatus === 'active';
             const title = isCurrentlyActive ? 'Suspender Parceiro' : 'Restaurar Parceiro';
-            const msg = isCurrentlyActive 
+            const msg = isCurrentlyActive
                 ? `O link de ${name} será inativado temporariamente e ele não gerará comissões. Deseja prosseguir?`
                 : `Deseja reativar a conta e o link de afiliado de ${name}?`;
             const type = isCurrentlyActive ? 'warning' : 'success';
-
             const confirmed = await window.confirmAction(title, msg, isCurrentlyActive ? 'Sim, Suspender' : 'Sim, Restaurar', type);
-            if(!confirmed) return;
-            
-            const newStatus = isCurrentlyActive ? 'blocked' : 'active';
+            if (!confirmed) return;
+
             const btn = document.getElementById(isCurrentlyActive ? `btn-blk-${id}` : `btn-unblk-${id}`);
-            if(btn) { btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>`; }
+            const original = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>`;
+                renderIcons(btn);
+            }
 
             try {
-                await updateDoc(doc(db, "users", id), {
+                const newStatus = isCurrentlyActive ? 'blocked' : 'active';
+                await updateDoc(doc(db, 'users', id), {
                     status: newStatus,
                     affiliateCodeActive: !isCurrentlyActive,
                     updatedAt: serverTimestamp()
                 });
 
                 const alertSubj = isCurrentlyActive ? '⚠️ Parceria Suspensa' : '✅ Parceria Restaurada';
-                const alertMsg = isCurrentlyActive 
-                    ? `A sua conta de afiliado foi temporariamente suspensa por violação dos termos. O seu link não irá gerar comissões.`
-                    : `A sua conta de afiliado foi restaurada. Já pode partilhar o link novamente.`;
-                
-                sendHybridNotification(id, email, alertSubj, 'affiliate-status', alertMsg, isCurrentlyActive ? 'error' : 'success');
-                logAdminAction('STATUS_AFILIADO_ALTERADO', `Afiliado ${email} alterado para ${newStatus}`);
+                const alertMsg = isCurrentlyActive
+                    ? 'A sua conta de afiliado foi temporariamente suspensa. O seu link não irá gerar comissões.'
+                    : 'A sua conta de afiliado foi restaurada. Já pode partilhar o link novamente.';
 
+                await sendHybridNotification(id, email, alertSubj, 'affiliate-status', alertMsg, isCurrentlyActive ? 'error' : 'success');
+                await logAdminAction('STATUS_AFILIADO_ALTERADO', `Afiliado ${email} alterado para ${newStatus}`);
                 window.showToast(isCurrentlyActive ? 'Parceiro suspenso.' : 'Parceiro restaurado.', 'success');
                 await window.loadAllData();
-            } catch(e) { window.showToast('Falha técnica.', 'error'); await window.loadAllData(); }
-        }
+            } catch (e) {
+                console.error(e);
+                window.showToast('Falha técnica.', 'error');
+                await window.loadAllData();
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = original;
+                    renderIcons(btn);
+                }
+            }
+        };
 
-        window.revokeAffiliate = async function(id, email, name) {
-            const confirmed = await window.confirmAction('Revogar Afiliação (Ação Crítica)', `Deseja remover TODAS as permissões de parceiro de ${name}? A conta voltará a ser apenas de Cliente e o código será destruído.`, 'Sim, Revogar Definitivamente', 'danger');
-            if(!confirmed) return;
-            
+        window.revokeAffiliate = async (id, email, name) => {
+            const confirmed = await window.confirmAction('Revogar Afiliação', `Deseja remover todas as permissões de parceiro de ${name}? A conta voltará a ser apenas de cliente.`, 'Sim, Revogar', 'danger');
+            if (!confirmed) return;
+
             const btn = document.getElementById(`btn-rev-${id}`);
-            if(btn) { btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>`; }
+            const original = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>`;
+                renderIcons(btn);
+            }
 
             try {
-                await updateDoc(doc(db, "users", id), {
+                await updateDoc(doc(db, 'users', id), {
                     role: 'user',
-                    status: 'active', // Fica como cliente ativo
-                    affiliateStatus: null, // Limpa o rasto
+                    status: 'active',
+                    affiliateStatus: null,
                     affiliateCodeActive: false,
                     updatedAt: serverTimestamp()
                 });
 
-                sendHybridNotification(id, email, '⚠️ Fim do Programa de Parceiros', 'affiliate-revoked', `Infelizmente, a sua conta foi removida permanentemente do programa de Parceiros PayGo. A sua conta normal de cliente continua ativa.`, 'error');
-                logAdminAction('AFILIADO_REVOGADO', `Parceiro expulso do programa: ${email}`);
-
-                window.showToast('Acesso de parceiro revogado. Utilizador convertido em cliente.', 'success');
+                await sendHybridNotification(id, email, '⚠️ Fim do Programa de Parceiros', 'affiliate-revoked', 'A sua conta foi removida do programa de Parceiros PayGo. A sua conta normal de cliente continua ativa.', 'error');
+                await logAdminAction('AFILIADO_REVOGADO', `Parceiro removido do programa: ${email}`);
+                window.showToast('Acesso de parceiro revogado.', 'success');
                 await window.loadAllData();
-            } catch(e) { window.showToast('Falha técnica ao tentar revogar acessos.', 'error'); await window.loadAllData(); }
+            } catch (e) {
+                console.error(e);
+                window.showToast('Falha técnica ao tentar revogar acessos.', 'error');
+                await window.loadAllData();
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = original;
+                    renderIcons(btn);
+                }
+            }
         };
+
+        window.loadAllData = async () => {
+            if (isLoadingAll) return;
+            isLoadingAll = true;
+            const refreshIcon = document.getElementById('refreshIcon');
+            if (refreshIcon) refreshIcon.classList.add('animate-spin');
+
+            try {
+                await Promise.all([
+                    loadWithdrawals(),
+                    loadPendingAffiliates(),
+                    loadAllAffiliates()
+                ]);
+            } catch (e) {
+                console.error(e);
+                window.showToast('Alguns dados não puderam ser carregados.', 'warning');
+            } finally {
+                isLoadingAll = false;
+                if (refreshIcon) refreshIcon.classList.remove('animate-spin');
+                renderIcons();
+            }
+        };
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.href = '../login.html';
+                return;
+            }
+
+            try {
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                if (!userDoc.exists() || !['admin', 'superadmin'].includes(userDoc.data().role)) {
+                    window.location.href = '../dashboard.html';
+                    return;
+                }
+
+                loggedInAdminId = user.uid;
+                await window.loadAllData();
+            } catch (error) {
+                console.error('Erro Auth:', error);
+                window.showToast('Falha na validação de segurança.', 'error');
+            } finally {
+                const ldr = document.getElementById('sysLoader');
+                if (ldr) {
+                    ldr.style.opacity = '0';
+                    setTimeout(() => { ldr.style.display = 'none'; }, 500);
+                }
+            }
+        });
+
+        renderIcons();
     </script>
 </body>
 </html>
