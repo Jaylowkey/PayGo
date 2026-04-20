@@ -64,17 +64,15 @@ function getFirebase() {
     }
     initializeApp({ credential: cert(serviceAccount) });
   }
-  
+
   const app = getApps()[0];
   let db;
   try {
-    // 🔥 CORREÇÃO CRÍTICA: O SDK Node.js exige a instância "app" como 1º argumento.
     db = getFirestore(app, 'paygodb');
   } catch (e) {
-    // Fallback caso a base de dados principal falhe ou o ID seja (default)
     db = getFirestore(app);
   }
-  
+
   return { db, auth: getAuth(app) };
 }
 
@@ -86,7 +84,7 @@ function purificarDados(obj) {
 
 function verifyPaySuiteSignature(rawBody, signatureHeader) {
   const secret = process.env.PAYSUITE_WEBHOOK_SECRET;
-  if (!secret) return true; // Ignora se não houver secret configurado
+  if (!secret) return true;
   if (!signatureHeader) return false;
   const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
   const provided = signatureHeader.startsWith('sha256=') ? signatureHeader.slice(7) : signatureHeader;
@@ -101,13 +99,76 @@ function buildBaseUrl(req) {
   return `${proto}://${host}`;
 }
 
+async function getAuthenticatedUser(req) {
+  const authHeader = req.headers.authorization || req.headers.Authorization || '';
+  if (!authHeader.startsWith('Bearer ')) {
+    throw new Error('Token de autenticação ausente.');
+  }
+
+  const idToken = authHeader.slice(7).trim();
+  if (!idToken) {
+    throw new Error('Token inválido.');
+  }
+
+  const { auth, db } = getFirebase();
+  const decoded = await auth.verifyIdToken(idToken);
+
+  const userDoc = await db.collection('users').doc(decoded.uid).get();
+  const userData = userDoc.exists ? (userDoc.data() || {}) : {};
+
+  return {
+    uid: decoded.uid,
+    email: decoded.email || userData.email || '',
+    name: userData.name || decoded.name || ''
+  };
+}
+
+async function getAuthenticatedAdmin(req) {
+  const authHeader = req.headers.authorization || req.headers.Authorization || '';
+  if (!authHeader.startsWith('Bearer ')) {
+    throw new Error('Token de autenticação ausente.');
+  }
+
+  const idToken = authHeader.slice(7).trim();
+  if (!idToken) {
+    throw new Error('Token inválido.');
+  }
+
+  const { auth, db } = getFirebase();
+  const decoded = await auth.verifyIdToken(idToken);
+
+  const userDoc = await db.collection('users').doc(decoded.uid).get();
+  if (!userDoc.exists) {
+    throw new Error('Perfil do utilizador não encontrado.');
+  }
+
+  const userData = userDoc.data() || {};
+  const role = String(userData.role || '').toLowerCase();
+
+  if (!['admin', 'superadmin'].includes(role)) {
+    throw new Error('Acesso negado. Utilizador não é admin.');
+  }
+
+  return {
+    uid: decoded.uid,
+    email: decoded.email || '',
+    name: userData.name || decoded.name || decoded.email || 'Admin PayGo',
+    role
+  };
+}
+
 // =========================================================
 // ✨ EMAIL TEMPLATES - HYPER ULTRA PROFESSIONAL
 // =========================================================
 
 function escapeHTML(str) {
   if (str === null || str === undefined) return '';
-  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 function getWhatsAppLink(order) {
@@ -136,13 +197,19 @@ async function sendLarkNotification(title, templateColor = 'blue', fields = [], 
     }
   };
   try {
-    const res = await fetch(process.env.LARK_WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    const res = await fetch(process.env.LARK_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
     const text = await res.text();
     let result;
     try { result = JSON.parse(text); } catch { result = { raw: text }; }
     if (result.code === 0 || result.StatusCode === 0 || (!result.code && res.ok)) return { success: true };
     return { success: false, error: 'Lark API error', data: result };
-  } catch (err) { return { success: false, error: err.message }; }
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
 }
 
 const getBaseStyles = () => `
@@ -203,11 +270,12 @@ function generateEmailHTML(template, vars) {
       return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>PayGo - Pagamento Confirmado</title><style>${getBaseStyles()}</style></head><body><div class="wrapper"><table class="container" cellpadding="0" cellspacing="0"><tr><td class="header" style="background:linear-gradient(135deg,${BRAND_COLORS.success} 0%,#059669 100%);"><div class="header-content"><div class="logo">✅ PayGo <span class="logo-badge">Confirmado</span></div></div></td></tr><tr><td class="content"><span class="hero-icon">🎉</span><h1 style="font-size:24px;font-weight:800;color:${BRAND_COLORS.dark};margin:0 0 8px;">Pagamento Recebido!</h1><p class="greeting">Olá, ${escapeHTML(vars.customer_name || 'Cliente')}.</p><p class="message">Recebemos o seu pagamento do pedido <span class="order-id">#${escapeHTML(vars.order_id)}</span>.</p><div class="card" style="border-color:#bbf7d0;background:linear-gradient(145deg,#f0fdf4,#dcfce7);"><div class="card-title" style="color:${BRAND_COLORS.success};">💸 Confirmação de Pagamento</div><div class="amount-highlight">${totalFormatted} MT</div><div class="detail-row"><span class="detail-label">Status</span><span class="status-badge completed">🔄 Em Processamento</span></div><div class="detail-row"><span class="detail-label">Pedido</span><span class="detail-value order-id">#${escapeHTML(vars.order_id)}</span></div></div><p style="text-align:center;color:#64748b;font-size:14px;margin:20px 0;">A nossa equipa irá processar o seu pedido e notificar-lhe em breve.</p><div style="text-align:center;"><a href="${waLink}" class="btn">📊 Acompanhar no WhatsApp</a></div></td></tr><tr><td class="footer"><div class="footer-brand">PayGo Moçambique 🇲🇿</div><div>O mundo no seu bolso.</div><div class="footer-links"><a href="${baseUrl}">Dashboard</a>•<a href="${baseUrl}/suporte">Ajuda</a></div></td></tr></table></div></body></html>`;
 
     case 'order-processing':
-    case 'order-completed':
+    case 'order-completed': {
       const status = template === 'order-processing' ? '🔄 Em Processamento' : '✅ Concluído';
       const statusColor = template === 'order-processing' ? BRAND_COLORS.warning : BRAND_COLORS.success;
       const statusBg = template === 'order-processing' ? '#fef3c7' : '#f0fdf4';
       return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>PayGo - ${status}</title><style>${getBaseStyles()}</style></head><body><div class="wrapper"><table class="container" cellpadding="0" cellspacing="0"><tr><td class="header" style="background:linear-gradient(135deg,${statusColor} 0%,${statusColor === BRAND_COLORS.warning ? '#d97706' : '#059669'} 100%);"><div class="header-content"><div class="logo">${template === 'order-processing' ? '⏳' : '🎉'} PayGo <span class="logo-badge">${template === 'order-processing' ? 'Processando' : 'Concluído'}</span></div></div></td></tr><tr><td class="content"><span class="hero-icon">${template === 'order-processing' ? '🔄' : '✨'}</span><h1 style="font-size:24px;font-weight:800;color:${BRAND_COLORS.dark};margin:0 0 8px;">${status}</h1><p class="greeting">Olá, ${escapeHTML(vars.customer_name || 'Cliente')}.</p><p class="message">O seu pedido <span class="order-id">#${escapeHTML(vars.order_id)}</span> está <strong style="color:${statusColor};">${status.toLowerCase()}</strong>.</p><div class="card" style="background:${statusBg};border-color:${statusColor === BRAND_COLORS.warning ? '#fde68a' : '#bbf7d0'};"><div class="card-title" style="color:${statusColor};">📋 Estado Atual</div><div class="detail-row"><span class="detail-label">Fase</span><span class="detail-value">${template === 'order-processing' ? 'Processamento Internacional' : 'Despachado / Finalizado'}</span></div><div class="detail-row"><span class="detail-label">Atualizado</span><span class="detail-value">${new Date().toLocaleDateString('pt-MZ')}</span></div></div>${template === 'order-completed' ? `<p style="color:#64748b;font-size:14px;">Se a sua compra incluiu produtos físicos, verifique o código de rastreio na sua conta PayGo.</p>` : ''}<div style="text-align:center;margin:24px 0;"><a href="${baseUrl}/login.html" class="btn">🔐 Aceder à Minha Conta</a></div></td></tr><tr><td class="footer"><div class="footer-brand">PayGo Moçambique 🇲🇿</div><div>Suporte 24/7: <a href="https://wa.me/${WHATSAPP_NUMBER}" style="color:${BRAND_COLORS.primary};">WhatsApp</a></div></td></tr></table></div></body></html>`;
+    }
 
     case 'password-reset':
       return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>PayGo - Recuperação de Senha</title><style>${getBaseStyles()}</style></head><body><div class="wrapper"><table class="container" cellpadding="0" cellspacing="0"><tr><td class="header" style="background:linear-gradient(135deg,${BRAND_COLORS.purple} 0%,#7c3aed 100%);"><div class="header-content"><div class="logo">🔐 PayGo <span class="logo-badge">Segurança</span></div></div></td></tr><tr><td class="content"><span class="hero-icon">🛡️</span><h1 style="font-size:24px;font-weight:800;color:${BRAND_COLORS.dark};margin:0 0 8px;">Recuperação de Senha</h1><p class="message">Recebemos um pedido para redefinir a palavra-passe da sua conta PayGo. Se não foi você, ignore este email.</p><div class="alert"><div class="alert-title">⏱️ Este link expira em 1 hora</div><div style="color:#78350f;font-size:14px;">Por segurança, o link de recuperação é válido apenas por 60 minutos.</div></div><div style="text-align:center;margin:28px 0;"><a href="${escapeHTML(vars.reset_link || '#')}" class="btn" style="background:linear-gradient(135deg,${BRAND_COLORS.purple},#7c3aed);">🔄 Redefinir Palavra-passe</a></div><p style="color:#64748b;font-size:13px;text-align:center;">Ou copie este link manualmente:<br><span style="font-family:monospace;background:#f1f5f9;padding:4px 8px;border-radius:4px;">${escapeHTML(vars.reset_link || '#')}</span></p></td></tr><tr><td class="footer"><div class="footer-brand">PayGo Moçambique 🇲🇿</div><div>Este email foi enviado automaticamente. Não responda.</div></td></tr></table></div></body></html>`;
@@ -254,24 +322,25 @@ function getFallbackSubject(template, vars) {
 function generateNotifyHTML(action, order, reason, extraAmount, mediaUrl) {
   const total = Number(order.total || order.amount || 0).toLocaleString('pt-MZ', { minimumFractionDigits: 2 });
   const orderId = order.orderId || order.topupId || 'N/A';
-  
+
   const base = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><style>${getBaseStyles()}</style></head><body><div class="wrapper"><table class="container" cellpadding="0" cellspacing="0">`;
   const foot = `<tr><td class="footer"><div class="footer-brand">PayGo Admin 🎛️</div><div>Painel de Controlo Interno</div></td></tr></table></div></body></html>`;
-  
+
   switch(action) {
     case 'payment_confirmed':
       return `${base}<tr><td class="header" style="background:linear-gradient(135deg,${BRAND_COLORS.success},#059669);"><div class="header-content"><div class="logo">✅ PayGo <span class="logo-badge">Pago</span></div></div></td></tr><tr><td class="content"><span class="hero-icon">💸</span><h1 style="font-size:24px;font-weight:800;margin:0 0 8px;">Pagamento Recebido!</h1><p class="greeting">Olá, ${escapeHTML(order.name || 'Cliente')}.</p><div class="card" style="background:linear-gradient(145deg,#f0fdf4,#dcfce7);border-color:#bbf7d0;"><div class="card-title" style="color:${BRAND_COLORS.success};">🎉 Confirmação</div><div class="amount-highlight">${total} MT</div><div class="detail-row"><span class="detail-label">Pedido</span><span class="detail-value order-id">#${orderId}</span></div><div class="detail-row"><span class="detail-label">Status</span><span class="status-badge completed">🔄 Processando</span></div></div><p style="text-align:center;color:#64748b;">A equipa PayGo irá processar o seu pedido.</p></td></tr>${foot}`;
-    
+
     case 'order_refunded':
       return `${base}<tr><td class="header" style="background:linear-gradient(135deg,${BRAND_COLORS.purple},#7c3aed);"><div class="header-content"><div class="logo">🟣 PayGo <span class="logo-badge">Reembolso</span></div></div></td></tr><tr><td class="content"><span class="hero-icon">↩️</span><h1 style="font-size:24px;font-weight:800;margin:0 0 8px;">Reembolso Emitido</h1><p class="greeting">Olá, ${escapeHTML(order.name || 'Cliente')}.</p><div class="card" style="background:linear-gradient(145deg,#faf5ff,#f3e8ff);border-color:#ddd6fe;"><div class="card-title" style="color:${BRAND_COLORS.purple};">💰 Valor Devolvido</div><div class="amount-highlight" style="color:${BRAND_COLORS.purple};">${total} MT</div><div class="detail-row"><span class="detail-label">Motivo</span><span class="detail-value">${escapeHTML(reason || 'Processado pela equipa.')}</span></div></div>${mediaUrl ? `<div style="text-align:center;margin:20px 0;"><a href="${mediaUrl}" class="btn" style="background:linear-gradient(135deg,${BRAND_COLORS.purple},#7c3aed);">📄 Ver Comprovativo</a></div>` : ''}</td></tr>${foot}`;
-    
+
     case 'insufficient_funds':
       return `${base}<tr><td class="header" style="background:linear-gradient(135deg,${BRAND_COLORS.warning},#d97706);"><div class="header-content"><div class="logo">⚠️ PayGo <span class="logo-badge">Ação</span></div></div></td></tr><tr><td class="content"><span class="hero-icon">🔔</span><h1 style="font-size:24px;font-weight:800;margin:0 0 8px;">Ação Necessária</h1><p class="greeting">Olá, ${escapeHTML(order.name || 'Cliente')}.</p><p class="message">Houve uma alteração de custos no pedido <span class="order-id">#${orderId}</span>.</p><div class="alert"><div class="alert-title">💰 Valor em Falta</div><div style="font-size:24px;font-weight:800;color:#b45309;text-align:center;margin:8px 0;">${Number(extraAmount || 0).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT</div></div><div class="card"><div class="card-title" style="color:${BRAND_COLORS.warning};">📝 Justificação</div><p style="margin:0;color:#78350e;">${escapeHTML(reason || 'Subida de câmbio ou taxa extra de transporte.')}</p></div><div style="text-align:center;margin:24px 0;"><a href="${SITE_URL}/dashboard.html" class="btn">💳 Depositar Fundos</a></div></td></tr>${foot}`;
-    
-    default: // new_order
+
+    default: {
       const waLink = getWhatsAppLink(order);
       const isBank = String(order.paymentMethod || '').includes('transferencia');
       return `${base}<tr><td class="header"><div class="header-content"><div class="logo">🛒 PayGo <span class="logo-badge">Novo</span></div></div></td></tr><tr><td class="content"><span class="hero-icon">📦</span><h1 style="font-size:24px;font-weight:800;margin:0 0 8px;">Pedido Registado!</h1><p class="greeting">Olá, ${escapeHTML(order.name || 'Cliente')}.</p><p class="message">O pedido <span class="order-id">#${orderId}</span> foi registado com sucesso.</p><div class="card"><div class="card-title">💰 Detalhes</div><div class="detail-row"><span class="detail-label">Total</span><span class="detail-value" style="color:${BRAND_COLORS.primary};font-size:18px;">${total} MT</span></div><div class="detail-row"><span class="detail-label">Método</span><span class="detail-value">${(order.paymentMethod || 'N/A').toUpperCase()}</span></div><div class="detail-row"><span class="detail-label">Cliente</span><span class="detail-value">${escapeHTML(order.name || 'N/A')}</span></div></div>${isBank ? `<div class="alert"><div class="alert-title">⚠️ Transferência Bancária</div><div style="color:#78350e;font-size:14px;">Envie o comprovativo via WhatsApp para validação.</div></div>` : `<div class="alert success"><div class="alert-title">🔔 Próximo Passo</div><div style="color:#166534;font-size:14px;">Aguarde instruções de pagamento no seu telemóvel.</div></div>`}<div style="text-align:center;margin:24px 0;"><a href="${waLink}" class="btn btn-whatsapp">💬 Falar no WhatsApp</a></div></td></tr>${foot}`;
+    }
   }
 }
 
@@ -417,12 +486,9 @@ async function handlePaySuitePayment(req, res, body) {
 
 async function handlePaySuiteWebhook(req, res, body) {
   const rawBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body || body || {});
-  
-  // A assinatura está comentada/ignorada conforme deixaste no teu código (ajuda a evitar bloqueios do Vercel na receção do payload)
   const signature = req.headers['x-webhook-signature'] || req.headers['x-paysuite-signature'] || '';
   if (!verifyPaySuiteSignature(rawBody, String(signature))) {
-     // Apenas avisa internamente, mas não bloqueia para não perder o webhook
-     console.warn('Assinatura do webhook inválida, mas a execução continua (Debug Mode).');
+    console.warn('Assinatura do webhook inválida, mas a execução continua (Debug Mode).');
   }
 
   const { db } = getFirebase();
@@ -435,15 +501,14 @@ async function handlePaySuiteWebhook(req, res, body) {
   const isFailed = evento === 'payment.failed';
   const paymentData = body.data || body;
   let merchantReference = paymentData.reference || body.reference;
-  
+
   if (merchantReference) {
     if (merchantReference.startsWith('PG') && !merchantReference.startsWith('PG-')) merchantReference = merchantReference.replace('PG', 'PG-');
     else if (merchantReference.startsWith('TOP') && !merchantReference.startsWith('TOP-')) merchantReference = merchantReference.replace('TOP', 'TOP-');
   }
-  
+
   if (!merchantReference) return res.status(200).json({ warning: 'Sem Referência para processar' });
 
-    // PROCESSAMENTO DE CANDIDATURAS DE GRUPO
   if (merchantReference.startsWith('APL')) {
     const normalizedShortId = merchantReference.includes('-')
       ? merchantReference
@@ -478,7 +543,7 @@ async function handlePaySuiteWebhook(req, res, body) {
           details: {
             shortId: normalizedShortId,
             updated: {
-              status: 'paid',
+              status: appData.status === 'added_to_group' ? 'added_to_group' : 'paid',
               isPaid: true,
               paymentStatus: 'paid'
             }
@@ -500,56 +565,54 @@ async function handlePaySuiteWebhook(req, res, body) {
     }
   }
 
-  // PROCESSAMENTO DE DEPÓSITOS (TOP-UPS)
   if (merchantReference.startsWith('TOP-')) {
     const snap = await db.collection('topups').where('topupId', '==', merchantReference).get();
     if (snap.empty) return res.status(200).json({ warning: `Depósito ${merchantReference} não encontrado.` });
-    
+
     const docTopup = snap.docs[0];
     const topupData = docTopup.data();
-    
+
     if (isSuccess) {
       if (topupData.status === 'completed') return res.status(200).json({ message: 'Depósito já processado.' });
-      
+
       const userId = topupData.userId;
       const amountToCredit = parseFloat(topupData.amount);
-      
+
       await docTopup.ref.update({ status: 'completed', paysuiteId: paymentData.payment_id || paymentData.id || 'N/A', updatedAt: agora });
       await db.collection('users').doc(userId).update({ walletBalance: FieldValue.increment(amountToCredit) });
       await db.collection('wallet_transactions').add({ userId, type: 'credit', amount: amountToCredit, description: `Depósito via ${paymentData.method || 'M-Pesa/e-Mola'}`, reference: merchantReference, createdAt: agora });
-      
+
       return res.status(200).json({ success: true, operation: 'wallet_funded' });
     }
-    
-    if (isFailed) { 
-      await docTopup.ref.update({ status: 'failed', updatedAt: agora }); 
-      return res.status(200).json({ message: 'Depósito falhou.' }); 
+
+    if (isFailed) {
+      await docTopup.ref.update({ status: 'failed', updatedAt: agora });
+      return res.status(200).json({ message: 'Depósito falhou.' });
     }
   }
 
-  // PROCESSAMENTO DE PEDIDOS (ORDERS)
   if (merchantReference.startsWith('PG-')) {
     const snap = await db.collection('orders').where('orderId', '==', merchantReference).get();
     if (snap.empty) return res.status(200).json({ warning: `Pedido ${merchantReference} não encontrado.` });
-    
+
     const docOrder = snap.docs[0];
     const orderData = docOrder.data();
-    
+
     if (isSuccess) {
       if (orderData.isPaid) return res.status(200).json({ message: 'Já pago.' });
-      
+
       await docOrder.ref.update({ status: 'processing', isPaid: true, paysuitePaymentId: paymentData.payment_id || paymentData.id || 'N/A', updatedAt: agora });
       await db.collection('admin_audit_logs').add({ adminId: 'system_bot', adminName: '🤖 Sistema Automático', action: 'PAGAMENTO_CONFIRMADO', targetId: String(merchantReference), targetType: 'order', details: { updated: { status: 'processing', isPaid: true } }, createdAt: agora });
-      
+
       return res.status(200).json({ success: true, operation: 'order_paid' });
     }
-    
-    if (isFailed && !orderData.isPaid) { 
-      await docOrder.ref.update({ status: 'cancelled', updatedAt: agora }); 
-      return res.status(200).json({ message: 'Pedido cancelado por falha no pagamento.' }); 
+
+    if (isFailed && !orderData.isPaid) {
+      await docOrder.ref.update({ status: 'cancelled', updatedAt: agora });
+      return res.status(200).json({ message: 'Pedido cancelado por falha no pagamento.' });
     }
   }
-  
+
   return res.status(200).json({ success: true, message: 'Referência processada.' });
 }
 
@@ -729,16 +792,16 @@ async function handleNotifyOrder(req, res, body) {
       emailText = `PEDIDO REGISTADO - PAYGO\nOlá ${orderData.name || 'Cliente'},\nO pedido #${orderId} foi registado.\nTotal: ${orderData.total || orderData.amount || 0} MT\nMétodo: ${(orderData.paymentMethod || 'N/A').toUpperCase()}`;
   }
 
-  // Enviar Email
   if (sendEmail && orderData.email && orderData.email.includes('@') && resend) {
     try {
       const { data, error } = await resend.emails.send({ from: FROM_EMAIL, to: [orderData.email], subject: emailSubject, html: emailHTML, text: emailText });
       if (error) { results.email = { success: false, error: error.message }; }
       else { results.email = { success: true, id: data?.id }; }
     } catch (err) { results.email = { success: false, error: err.message }; }
-  } else { results.email = { success: false, error: 'Email inválido ou Resend não configurado.' }; }
+  } else {
+    results.email = { success: false, error: 'Email inválido ou Resend não configurado.' };
+  }
 
-  // Enviar Lark
   if (sendLark && process.env.LARK_WEBHOOK_URL) {
     const fields = [
       { is_short: true, text: { tag: 'lark_md', content: `**ID:**\n#${orderId}` } },
@@ -767,114 +830,198 @@ async function handleCreateGroupApplication(req, res, body) {
     return res.status(405).json({ success: false, error: 'Método não permitido' });
   }
 
-  const {
-    db
-  } = getFirebase();
+  try {
+    const authUser = await getAuthenticatedUser(req);
+    const { db } = getFirebase();
 
-  const fullName = sanitizeText(body.fullName);
-  const email = sanitizeText(body.email).toLowerCase();
-  const whatsapp = normalizePhone(body.whatsapp);
-  const city = sanitizeText(body.city);
-  const goal = sanitizeText(body.goal);
-  const paymentName = sanitizeText(body.paymentName);
-  const notes = sanitizeText(body.notes);
-  const cardOption = sanitizeText(body.cardOption) || 'no_card';
-  const paymentMethod = sanitizeText(body.paymentMethod) || 'mpesa';
-  const createPayment = Boolean(body.createPayment);
-  const cardProvider = resolveApplicationCardProvider(body.cardProvider, body.cardProviderOther);
+    const fullName = sanitizeText(body.fullName || authUser.name);
+    const email = sanitizeText(body.email || authUser.email).toLowerCase();
+    const whatsapp = normalizePhone(body.whatsapp);
+    const city = sanitizeText(body.city);
+    const goal = sanitizeText(body.goal);
+    const paymentName = sanitizeText(body.paymentName);
+    const notes = sanitizeText(body.notes);
+    const cardOption = sanitizeText(body.cardOption) || 'no_card';
+    const paymentMethod = sanitizeText(body.paymentMethod) || 'mpesa';
+    const createPayment = Boolean(body.createPayment);
+    const cardProvider = resolveApplicationCardProvider(body.cardProvider, body.cardProviderOther);
 
-  if (!fullName || fullName.length < 5) {
-    return res.status(400).json({ success: false, error: 'Nome completo inválido.' });
-  }
-  if (!email || !email.includes('@')) {
-    return res.status(400).json({ success: false, error: 'Email inválido.' });
-  }
-  if (!whatsapp || whatsapp.replace(/\D/g, '').length < 8) {
-    return res.status(400).json({ success: false, error: 'WhatsApp inválido.' });
-  }
-  if (!goal || goal.length < 10) {
-    return res.status(400).json({ success: false, error: 'Objetivo inválido.' });
-  }
-  if (!paymentName || paymentName.length < 5) {
-    return res.status(400).json({ success: false, error: 'Nome de pagamento inválido.' });
-  }
-  if (!['no_card', 'have_card_recharge'].includes(cardOption)) {
-    return res.status(400).json({ success: false, error: 'Opção de cartão inválida.' });
-  }
-  if (cardOption === 'have_card_recharge' && !cardProvider) {
-    return res.status(400).json({ success: false, error: 'Provedor do cartão é obrigatório.' });
-  }
+    if (!fullName || fullName.length < 3) {
+      return res.status(400).json({ success: false, error: 'Nome completo inválido.' });
+    }
+    if (!email || !email.includes('@')) {
+      return res.status(400).json({ success: false, error: 'Email inválido.' });
+    }
+    if (!whatsapp || whatsapp.replace(/\D/g, '').length < 8) {
+      return res.status(400).json({ success: false, error: 'WhatsApp inválido.' });
+    }
+    if (!goal || goal.length < 10) {
+      return res.status(400).json({ success: false, error: 'Objetivo inválido.' });
+    }
+    if (!paymentName || paymentName.length < 3) {
+      return res.status(400).json({ success: false, error: 'Nome de pagamento inválido.' });
+    }
+    if (!['no_card', 'have_card_recharge'].includes(cardOption)) {
+      return res.status(400).json({ success: false, error: 'Opção de cartão inválida.' });
+    }
+    if (!['mpesa', 'emola'].includes(paymentMethod)) {
+      return res.status(400).json({ success: false, error: 'Método de pagamento inválido.' });
+    }
+    if (cardOption === 'have_card_recharge' && !cardProvider) {
+      return res.status(400).json({ success: false, error: 'Provedor do cartão é obrigatório.' });
+    }
 
-  const shortId = await generateUniqueApplicationShortId(db);
-  const now = new Date().toISOString();
+    const now = new Date().toISOString();
 
-  const applicationData = {
-    shortId,
-    fullName,
-    email,
-    whatsapp,
-    city,
-    goal,
-    paymentName,
-    notes,
-    cardOption,
-    cardProvider: cardOption === 'have_card_recharge' ? cardProvider : '',
-    amount: GROUP_APPLICATION_PRICE,
-    currency: 'MZN',
-    status: 'pending',
-    paymentMethod,
-    paymentStatus: 'pending',
-    isPaid: false,
-    paysuiteCheckoutUrl: null,
-    paysuitePaymentId: null,
-    paysuiteReference: null,
-    createdAt: now,
-    updatedAt: now,
-    source: 'landing_page',
-    adminNotes: []
-  };
+    const existingSnap = await db
+      .collection(GROUP_APPLICATIONS_COLLECTION)
+      .where('userId', '==', authUser.uid)
+      .limit(1)
+      .get();
 
-  const docRef = await db.collection(GROUP_APPLICATIONS_COLLECTION).add(applicationData);
+    let docRef;
+    let shortId;
+    let existingData = null;
 
-  let checkoutData = null;
+    if (!existingSnap.empty) {
+      const existingDoc = existingSnap.docs[0];
+      docRef = existingDoc.ref;
+      existingData = existingDoc.data();
+      shortId = existingData.shortId;
 
-  if (createPayment) {
-    try {
-      checkoutData = await createPaySuitePaymentLink(req, {
-        orderId: shortId,
-        amount: GROUP_APPLICATION_PRICE,
-        method: paymentMethod,
-        description: `Candidatura para aulas de cartão virtual - ${shortId}`
-      });
-
-          await docRef.update({
-        paysuiteCheckoutUrl: checkoutData.checkoutUrl || null,
-        paysuitePaymentId: checkoutData.paymentId || null,
-        paysuiteReference: checkoutData.reference || null,
-        paymentStatus: checkoutData.status || 'pending',
-        paymentError: null,
-        updatedAt: new Date().toISOString()
-      });
-    } catch (error) {
       await docRef.update({
-        paymentError: error.message || 'Falha ao gerar checkout',
-        updatedAt: new Date().toISOString()
+        fullName,
+        email,
+        whatsapp,
+        city,
+        goal,
+        paymentName,
+        notes,
+        cardOption,
+        cardProvider: cardOption === 'have_card_recharge' ? cardProvider : '',
+        paymentMethod,
+        updatedAt: now
       });
+    } else {
+      shortId = await generateUniqueApplicationShortId(db);
+
+      const applicationData = {
+        userId: authUser.uid,
+        shortId,
+        fullName,
+        email,
+        whatsapp,
+        city,
+        goal,
+        paymentName,
+        notes,
+        cardOption,
+        cardProvider: cardOption === 'have_card_recharge' ? cardProvider : '',
+        amount: GROUP_APPLICATION_PRICE,
+        currency: 'MZN',
+        status: 'pending',
+        paymentMethod,
+        paymentStatus: 'pending',
+        isPaid: false,
+        paysuiteCheckoutUrl: null,
+        paysuitePaymentId: null,
+        paysuiteReference: null,
+        createdAt: now,
+        updatedAt: now,
+        source: 'landing_page',
+        adminNotes: []
+      };
+
+      docRef = await db.collection(GROUP_APPLICATIONS_COLLECTION).add(applicationData);
     }
+
+    let checkoutData = null;
+
+    if (createPayment) {
+      try {
+        checkoutData = await createPaySuitePaymentLink(req, {
+          orderId: shortId,
+          amount: GROUP_APPLICATION_PRICE,
+          method: paymentMethod,
+          description: `Candidatura para aulas de cartão virtual - ${shortId}`
+        });
+
+        await docRef.update({
+          paymentMethod,
+          paysuiteCheckoutUrl: checkoutData.checkoutUrl || null,
+          paysuitePaymentId: checkoutData.paymentId || null,
+          paysuiteReference: checkoutData.reference || null,
+          paymentStatus: checkoutData.status || 'pending',
+          paymentError: null,
+          updatedAt: new Date().toISOString()
+        });
+      } catch (error) {
+        await docRef.update({
+          paymentMethod,
+          paymentError: error.message || 'Falha ao gerar checkout',
+          updatedAt: new Date().toISOString()
+        });
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        id: docRef.id,
+        shortId,
+        status: existingData?.status || 'pending',
+        amount: GROUP_APPLICATION_PRICE,
+        paymentMethod,
+        checkoutUrl: checkoutData?.checkoutUrl || existingData?.paysuiteCheckoutUrl || null,
+        paymentId: checkoutData?.paymentId || existingData?.paysuitePaymentId || null,
+        paymentStatus: checkoutData?.status || existingData?.paymentStatus || 'pending',
+        alreadyExists: Boolean(existingData)
+      }
+    });
+  } catch (error) {
+    return res.status(403).json({
+      success: false,
+      error: error.message || 'Acesso negado.'
+    });
+  }
+}
+
+async function handleGetMyGroupApplication(req, res) {
+  if (req.method !== 'GET' && req.method !== 'POST') {
+    return res.status(405).json({ success: false, error: 'Método não permitido' });
   }
 
-  return res.status(200).json({
-    success: true,
-    data: {
-      id: docRef.id,
-      shortId,
-      status: 'pending',
-      amount: GROUP_APPLICATION_PRICE,
-      checkoutUrl: checkoutData?.checkoutUrl || null,
-      paymentId: checkoutData?.paymentId || null,
-      paymentStatus: checkoutData?.status || 'pending'
+  try {
+    const authUser = await getAuthenticatedUser(req);
+    const { db } = getFirebase();
+
+    const snap = await db
+      .collection(GROUP_APPLICATIONS_COLLECTION)
+      .where('userId', '==', authUser.uid)
+      .limit(1)
+      .get();
+
+    if (snap.empty) {
+      return res.status(200).json({
+        success: true,
+        application: null
+      });
     }
-  });
+
+    const doc = snap.docs[0];
+    return res.status(200).json({
+      success: true,
+      application: {
+        id: doc.id,
+        ...doc.data()
+      }
+    });
+  } catch (error) {
+    return res.status(403).json({
+      success: false,
+      error: error.message || 'Acesso negado.'
+    });
+  }
 }
 
 async function handleGetGroupApplication(req, res, body) {
@@ -916,22 +1063,30 @@ async function handleGetGroupApplications(req, res) {
     return res.status(405).json({ success: false, error: 'Método não permitido' });
   }
 
-  const { db } = getFirebase();
+  try {
+    await getAuthenticatedAdmin(req);
+    const { db } = getFirebase();
 
-  const snap = await db
-    .collection(GROUP_APPLICATIONS_COLLECTION)
-    .orderBy('createdAt', 'desc')
-    .get();
+    const snap = await db
+      .collection(GROUP_APPLICATIONS_COLLECTION)
+      .orderBy('createdAt', 'desc')
+      .get();
 
-  const applications = snap.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data()
-  }));
+    const applications = snap.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data()
+    }));
 
-  return res.status(200).json({
-    success: true,
-    applications
-  });
+    return res.status(200).json({
+      success: true,
+      applications
+    });
+  } catch (error) {
+    return res.status(403).json({
+      success: false,
+      error: error.message || 'Acesso negado.'
+    });
+  }
 }
 
 async function handleUpdateGroupApplicationStatus(req, res, body) {
@@ -939,74 +1094,80 @@ async function handleUpdateGroupApplicationStatus(req, res, body) {
     return res.status(405).json({ success: false, error: 'Método não permitido' });
   }
 
-  const { db } = getFirebase();
+  try {
+    const adminUser = await getAuthenticatedAdmin(req);
+    const { db } = getFirebase();
 
-  const applicationId = sanitizeText(body.applicationId);
-  const status = mapApplicationStatus(body.status);
-  const adminName = sanitizeText(body.adminName) || 'Admin PayGo';
-  const adminId = sanitizeText(body.adminId) || 'admin_manual';
-  const adminNote = sanitizeText(body.adminNote);
+    const applicationId = sanitizeText(body.applicationId);
+    const status = mapApplicationStatus(body.status);
+    const adminNote = sanitizeText(body.adminNote);
 
-  if (!applicationId) {
-    return res.status(400).json({ success: false, error: 'applicationId é obrigatório.' });
-  }
+    if (!applicationId) {
+      return res.status(400).json({ success: false, error: 'applicationId é obrigatório.' });
+    }
 
-  const docRef = db.collection(GROUP_APPLICATIONS_COLLECTION).doc(applicationId);
-  const docSnap = await docRef.get();
+    const docRef = db.collection(GROUP_APPLICATIONS_COLLECTION).doc(applicationId);
+    const docSnap = await docRef.get();
 
-  if (!docSnap.exists) {
-    return res.status(404).json({ success: false, error: 'Candidatura não encontrada.' });
-  }
+    if (!docSnap.exists) {
+      return res.status(404).json({ success: false, error: 'Candidatura não encontrada.' });
+    }
 
-  const currentData = docSnap.data() || {};
-  const now = new Date().toISOString();
+    const currentData = docSnap.data() || {};
+    const now = new Date().toISOString();
 
-  const updateData = {
-    status,
-    updatedAt: now
-  };
+    const updateData = {
+      status,
+      updatedAt: now
+    };
 
-  if (['paid', 'confirmed', 'added_to_group'].includes(status)) {
-    updateData.isPaid = true;
-    updateData.paymentStatus = 'paid';
-  }
+    if (['paid', 'confirmed', 'added_to_group'].includes(status)) {
+      updateData.isPaid = true;
+      updateData.paymentStatus = 'paid';
+    }
 
-  if (status === 'pending' && currentData.isPaid !== true) {
-    updateData.paymentStatus = 'pending';
-  }
+    if (status === 'pending' && currentData.isPaid !== true) {
+      updateData.paymentStatus = 'pending';
+    }
 
-  if (adminNote) {
-    updateData.adminNotes = FieldValue.arrayUnion({
-      text: adminNote,
-      adminName,
-      adminId,
+    if (adminNote) {
+      updateData.adminNotes = FieldValue.arrayUnion({
+        text: adminNote,
+        adminName: adminUser.name,
+        adminId: adminUser.uid,
+        createdAt: now
+      });
+    }
+
+    await docRef.update(updateData);
+
+    await db.collection('admin_audit_logs').add({
+      adminId: adminUser.uid,
+      adminName: adminUser.name,
+      action: 'UPDATE_GROUP_APPLICATION_STATUS',
+      targetId: applicationId,
+      targetType: 'group_application',
+      details: {
+        previous: {
+          status: currentData.status || 'pending',
+          isPaid: Boolean(currentData.isPaid),
+          paymentStatus: currentData.paymentStatus || 'pending'
+        },
+        updated: updateData
+      },
       createdAt: now
     });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Estado atualizado com sucesso.'
+    });
+  } catch (error) {
+    return res.status(403).json({
+      success: false,
+      error: error.message || 'Acesso negado.'
+    });
   }
-
-  await docRef.update(updateData);
-
-  await db.collection('admin_audit_logs').add({
-    adminId,
-    adminName,
-    action: 'UPDATE_GROUP_APPLICATION_STATUS',
-    targetId: applicationId,
-    targetType: 'group_application',
-    details: {
-      previous: {
-        status: currentData.status || 'pending',
-        isPaid: Boolean(currentData.isPaid),
-        paymentStatus: currentData.paymentStatus || 'pending'
-      },
-      updated: updateData
-    },
-    createdAt: now
-  });
-
-  return res.status(200).json({
-    success: true,
-    message: 'Estado atualizado com sucesso.'
-  });
 }
 
 // =========================================================
@@ -1024,7 +1185,9 @@ const routes = {
   'recover-password': handleRecoverPassword,
   'verify-email': handleVerifyEmail,
   'notify-order': handleNotifyOrder,
+
   'create-group-application': handleCreateGroupApplication,
+  'get-my-group-application': handleGetMyGroupApplication,
   'get-group-application': handleGetGroupApplication,
   'get-group-applications': handleGetGroupApplications,
   'update-group-application-status': handleUpdateGroupApplicationStatus,
@@ -1033,16 +1196,27 @@ const routes = {
 export default async function handler(req, res) {
   setCors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
+
   try {
     const route = getRoute(req);
     const body = normalizeBody(req);
     const endpoint = routes[route];
+
     if (!endpoint) {
-      return res.status(404).json({ success: false, error: 'Endpoint não encontrado', route, available: Object.keys(routes) });
+      return res.status(404).json({
+        success: false,
+        error: 'Endpoint não encontrado',
+        route,
+        available: Object.keys(routes)
+      });
     }
+
     return await endpoint(req, res, body);
   } catch (error) {
     console.error('❌ [api/[...slug]] Erro crítico:', error);
-    return res.status(500).json({ success: false, error: error.message || 'Erro interno do servidor' });
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Erro interno do servidor'
+    });
   }
 }
