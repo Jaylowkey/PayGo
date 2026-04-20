@@ -847,11 +847,12 @@ async function handleCreateGroupApplication(req, res, body) {
         description: `Candidatura para aulas de cartão virtual - ${shortId}`
       });
 
-      await docRef.update({
+          await docRef.update({
         paysuiteCheckoutUrl: checkoutData.checkoutUrl || null,
         paysuitePaymentId: checkoutData.paymentId || null,
         paysuiteReference: checkoutData.reference || null,
         paymentStatus: checkoutData.status || 'pending',
+        paymentError: null,
         updatedAt: new Date().toISOString()
       });
     } catch (error) {
@@ -965,7 +966,7 @@ async function handleUpdateGroupApplicationStatus(req, res, body) {
     updatedAt: now
   };
 
-  if (status === 'paid') {
+  if (['paid', 'confirmed', 'added_to_group'].includes(status)) {
     updateData.isPaid = true;
     updateData.paymentStatus = 'paid';
   }
