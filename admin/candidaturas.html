@@ -14,15 +14,14 @@
   <style>
     :root{
       --bg:#020617;
-      --bg-2:#08101d;
-      --panel:rgba(11,18,32,.86);
+      --bg2:#08101d;
+      --panel:rgba(11,18,32,.88);
       --card:rgba(15,23,42,.84);
       --text:#f8fafc;
       --muted:#94a3b8;
       --line:rgba(255,255,255,.08);
-      --line-2:rgba(255,255,255,.12);
       --brand:#2563eb;
-      --brand-2:#60a5fa;
+      --brand2:#60a5fa;
       --success:#22c55e;
       --warning:#f59e0b;
       --danger:#ef4444;
@@ -41,7 +40,7 @@
       background:
         radial-gradient(circle at left top, rgba(37,99,235,.14), transparent 26%),
         radial-gradient(circle at 90% 10%, rgba(96,165,250,.10), transparent 22%),
-        linear-gradient(180deg,var(--bg) 0%, var(--bg-2) 100%);
+        linear-gradient(180deg,var(--bg) 0%, var(--bg2) 100%);
       overflow-x:hidden;
     }
 
@@ -52,22 +51,21 @@
     .container{width:min(1380px, calc(100% - 28px));margin:auto}
 
     .topbar{
-      position:sticky;top:0;z-index:40;
-      background:rgba(2,6,23,.82);
+      position:sticky;top:0;z-index:50;
+      background:rgba(2,6,23,.84);
       backdrop-filter:blur(18px);
       border-bottom:1px solid rgba(255,255,255,.06);
     }
     .topbar-inner{
       min-height:78px;
       display:flex;justify-content:space-between;align-items:center;gap:16px;
+      flex-wrap:wrap;
     }
-    .brand{
-      display:flex;align-items:center;gap:12px;font-weight:900;
-    }
+    .brand{display:flex;align-items:center;gap:12px;font-weight:900}
     .logo{
       width:46px;height:46px;border-radius:16px;
       display:grid;place-items:center;
-      background:linear-gradient(135deg,var(--brand),var(--brand-2));
+      background:linear-gradient(135deg,var(--brand),var(--brand2));
       font-size:22px;font-family:"Outfit",sans-serif;font-weight:900;
       box-shadow:0 14px 36px rgba(37,99,235,.28);
     }
@@ -89,6 +87,7 @@
       color:#fff;
       display:inline-flex;align-items:center;justify-content:center;gap:10px;
       transition:.2s ease;
+      text-align:center;
     }
     .btn:hover{transform:translateY(-1px)}
     .btn:active{transform:translateY(0)}
@@ -109,9 +108,28 @@
       backdrop-filter:blur(14px);
     }
 
-    .hero{
-      padding:22px 0 12px;
+    .auth-loading{
+      min-height:100vh;
+      display:grid;
+      place-items:center;
+      padding:24px;
     }
+    .auth-box{
+      width:min(520px,100%);
+      text-align:center;
+      padding:30px;
+    }
+    .spinner{
+      width:58px;height:58px;
+      border-radius:50%;
+      border:4px solid rgba(255,255,255,.08);
+      border-top-color:#60a5fa;
+      margin:0 auto 18px;
+      animation:spin 1s linear infinite;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .hero{padding:22px 0 12px}
     .hero-grid{
       display:grid;
       grid-template-columns:repeat(5,minmax(0,1fr));
@@ -122,15 +140,6 @@
       min-height:118px;
       position:relative;
       overflow:hidden;
-    }
-    .stat:before{
-      content:"";
-      position:absolute;
-      inset:auto -20px -20px auto;
-      width:82px;height:82px;border-radius:50%;
-      opacity:.14;
-      background:currentColor;
-      filter:blur(12px);
     }
     .stat small{
       display:block;
@@ -153,25 +162,18 @@
       color:#cbd5e1;
       font-size:.86rem;
     }
-    .c-brand{color:#93c5fd}
-    .c-warning{color:#fde68a}
-    .c-success{color:#bbf7d0}
-    .c-purple{color:#e9d5ff}
-    .c-teal{color:#99f6e4}
 
     .section{padding:12px 0 26px}
-
     .toolbar{
       padding:18px;
       display:grid;
-      grid-template-columns:1.1fr .65fr .65fr .65fr auto auto;
+      grid-template-columns:1.15fr .7fr .7fr auto auto;
       gap:12px;
       align-items:end;
     }
-
     .field{display:flex;flex-direction:column;gap:8px}
     label{
-      font-size:.8rem;
+      font-size:.82rem;
       color:#dbe4ef;
       font-weight:700;
     }
@@ -198,6 +200,26 @@
       margin-top:14px;
       display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
     }
+    .quick-filters{
+      display:flex;gap:10px;flex-wrap:wrap;
+    }
+    .quick-filter{
+      padding:10px 12px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.04);
+      color:#e2e8f0;
+      cursor:pointer;
+      font-weight:800;
+      transition:.18s ease;
+    }
+    .quick-filter.active,
+    .quick-filter:hover{
+      background:rgba(37,99,235,.16);
+      border-color:rgba(96,165,250,.28);
+      color:#bfdbfe;
+    }
+
     .meta-info{
       color:#cbd5e1;
       font-size:.92rem;
@@ -220,7 +242,7 @@
     table{
       width:100%;
       border-collapse:collapse;
-      min-width:1400px;
+      min-width:1280px;
     }
     th,td{
       padding:16px 14px;
@@ -239,13 +261,8 @@
       top:0;
       z-index:1;
     }
-    tbody tr{
-      transition:.18s ease;
-      cursor:pointer;
-    }
-    tbody tr:hover{
-      background:rgba(255,255,255,.03);
-    }
+    tbody tr{transition:.18s ease}
+    tbody tr:hover{background:rgba(255,255,255,.03)}
 
     .mono{
       font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
@@ -266,52 +283,28 @@
     .badge.confirmed{background:rgba(59,130,246,.12);color:#bfdbfe;border-color:rgba(59,130,246,.22)}
     .badge.added_to_group{background:rgba(168,85,247,.12);color:#e9d5ff;border-color:rgba(168,85,247,.22)}
 
-    .pill{
-      display:inline-flex;align-items:center;gap:8px;
-      padding:8px 11px;border-radius:999px;
-      font-size:.78rem;font-weight:800;
-      border:1px solid rgba(255,255,255,.08);
-      background:rgba(255,255,255,.04);
-      color:#e2e8f0;
-    }
-
     .small{font-size:.88rem;color:var(--muted);line-height:1.6}
-    .muted{color:var(--muted)}
     .strong{font-weight:800}
-    .grid-actions{
-      display:grid;gap:8px;
-    }
-
-    .table-note{
-      max-width:230px;
-      white-space:pre-wrap;
-      word-break:break-word;
+    .muted{color:var(--muted)}
+    .count-bubble{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:28px;
+      height:28px;
+      padding:0 10px;
+      border-radius:999px;
+      background:rgba(168,85,247,.16);
+      color:#e9d5ff;
+      border:1px solid rgba(168,85,247,.22);
+      font-size:.82rem;
+      font-weight:900;
     }
 
     .empty-state{
       padding:34px 18px;
       text-align:center;
       color:#cbd5e1;
-    }
-
-    .quick-filters{
-      display:flex;gap:10px;flex-wrap:wrap;
-    }
-    .quick-filter{
-      padding:10px 12px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.08);
-      background:rgba(255,255,255,.04);
-      color:#e2e8f0;
-      cursor:pointer;
-      font-weight:800;
-      transition:.18s ease;
-    }
-    .quick-filter.active,
-    .quick-filter:hover{
-      background:rgba(37,99,235,.16);
-      border-color:rgba(96,165,250,.28);
-      color:#bfdbfe;
     }
 
     .modal{
@@ -322,15 +315,15 @@
       align-items:center;
       justify-content:center;
       padding:18px;
-      background:rgba(2,6,23,.72);
+      background:rgba(2,6,23,.76);
       backdrop-filter:blur(10px);
     }
     .modal.show{display:flex}
     .modal-panel{
-      width:min(1120px,100%);
+      width:min(1180px,100%);
       max-height:92vh;
       overflow:auto;
-      background:rgba(11,18,32,.96);
+      background:rgba(11,18,32,.98);
       border:1px solid rgba(255,255,255,.08);
       border-radius:28px;
       box-shadow:0 40px 90px rgba(0,0,0,.5);
@@ -340,13 +333,12 @@
       padding:22px 24px;
       display:flex;justify-content:space-between;align-items:center;gap:12px;
       border-bottom:1px solid rgba(255,255,255,.06);
-      background:rgba(11,18,32,.96);
-      backdrop-filter:blur(12px);
+      background:rgba(11,18,32,.98);
     }
     .modal-body{
       padding:24px;
       display:grid;
-      grid-template-columns:1.05fr .95fr;
+      grid-template-columns:1.1fr .9fr;
       gap:18px;
     }
     .modal-col{
@@ -354,6 +346,7 @@
       gap:16px;
       align-content:start;
     }
+
     .info-card{
       padding:18px;
       border-radius:22px;
@@ -362,11 +355,10 @@
     }
     .info-card h3{
       font-size:1.02rem;
-      margin-bottom:10px;
+      margin-bottom:12px;
     }
-    .kv{
-      display:grid;gap:10px;
-    }
+
+    .kv{display:grid;gap:10px}
     .kv-row{
       display:flex;justify-content:space-between;gap:10px;
       padding-bottom:10px;
@@ -374,11 +366,41 @@
     }
     .kv-row:last-child{border-bottom:0;padding-bottom:0}
     .kv-label{color:#94a3b8;font-size:.86rem}
-    .kv-value{font-weight:700;text-align:right;max-width:65%;word-break:break-word}
+    .kv-value{
+      font-weight:700;
+      text-align:right;
+      max-width:68%;
+      word-break:break-word;
+    }
+
+    .contact-actions,
+    .footer-actions{
+      display:flex;gap:10px;flex-wrap:wrap;
+    }
+
+    .status-actions{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:10px;
+    }
+
+    .history-list{
+      display:grid;gap:12px;
+    }
+    .history-item{
+      padding:14px;
+      border-radius:18px;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.06);
+    }
+    .history-item.active{
+      border-color:rgba(96,165,250,.28);
+      background:rgba(37,99,235,.10);
+    }
 
     .notes-list{
       display:grid;gap:10px;
-      max-height:240px;
+      max-height:220px;
       overflow:auto;
     }
     .note-item{
@@ -394,43 +416,18 @@
       font-size:.86rem;
     }
 
-    .status-actions{
-      display:grid;
-      grid-template-columns:repeat(2,minmax(0,1fr));
-      gap:10px;
-    }
-
-    .contact-actions{
-      display:flex;gap:10px;flex-wrap:wrap;
-    }
-
     .footer-actions{
-      display:flex;justify-content:flex-end;gap:12px;flex-wrap:wrap;
+      justify-content:flex-end;
       padding:0 24px 24px;
     }
 
-    .auth-loading{
-      min-height:100vh;
-      display:grid;
-      place-items:center;
-      padding:24px;
-    }
-    .auth-box{
-      width:min(520px,100%);
-      text-align:center;
-      padding:30px;
-    }
-    .spinner{
-      width:58px;height:58px;
-      border-radius:50%;
-      border:4px solid rgba(255,255,255,.08);
-      border-top-color:#60a5fa;
-      margin:0 auto 18px;
-      animation:spin 1s linear infinite;
-    }
-
-    @keyframes spin{
-      to{transform:rotate(360deg)}
+    .pill{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:8px 11px;border-radius:999px;
+      font-size:.78rem;font-weight:800;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.04);
+      color:#e2e8f0;
     }
 
     .hidden{display:none !important}
@@ -447,9 +444,8 @@
     @media (max-width:680px){
       .hero-grid{grid-template-columns:1fr}
       .toolbar{grid-template-columns:1fr}
-      .topbar-inner{align-items:flex-start;padding:14px 0}
-      .footer-actions,.contact-actions,.toolbar-actions{flex-direction:column}
-      .footer-actions .btn,.contact-actions .btn,.toolbar-actions .btn{width:100%}
+      .toolbar-actions,.contact-actions,.footer-actions{flex-direction:column}
+      .toolbar-actions .btn,.contact-actions .btn,.footer-actions .btn{width:100%}
       .status-actions{grid-template-columns:1fr}
     }
   </style>
@@ -459,7 +455,7 @@
     <div class="card auth-box">
       <div class="spinner"></div>
       <h1 style="font-size:2rem;margin-bottom:10px;">PayGo Admin PRO</h1>
-      <p class="small">A validar sessão do administrador...</p>
+      <p class="small">A validar sessão usando o login da PayGo...</p>
     </div>
   </div>
 
@@ -488,34 +484,30 @@
     <main>
       <section class="hero">
         <div class="container hero-grid">
-          <div class="card stat c-brand">
-            <small>Total</small>
+          <div class="card stat">
+            <small>Total de candidatos</small>
             <strong id="statTotal">0</strong>
-            <span>Todas as candidaturas</span>
+            <span>pessoas únicas</span>
           </div>
-
-          <div class="card stat c-warning">
+          <div class="card stat">
             <small>Pendentes</small>
             <strong id="statPending">0</strong>
-            <span>Aguardando validação</span>
+            <span>aguardando validação</span>
           </div>
-
-          <div class="card stat c-success">
+          <div class="card stat">
             <small>Pagas</small>
             <strong id="statPaid">0</strong>
-            <span>Pagamento reconhecido</span>
+            <span>pagamento reconhecido</span>
           </div>
-
-          <div class="card stat c-brand">
+          <div class="card stat">
             <small>Confirmadas</small>
             <strong id="statConfirmed">0</strong>
-            <span>Validadas pela equipa</span>
+            <span>validadas pela equipa</span>
           </div>
-
-          <div class="card stat c-purple">
+          <div class="card stat">
             <small>No grupo</small>
             <strong id="statAdded">0</strong>
-            <span>Adicionados ao WhatsApp</span>
+            <span>adicionados ao WhatsApp</span>
           </div>
         </div>
       </section>
@@ -524,12 +516,12 @@
         <div class="container">
           <div class="card toolbar">
             <div class="field">
-              <label for="searchInput">Pesquisar</label>
-              <input type="text" id="searchInput" placeholder="Nome, email, WhatsApp, ID curto, provedor..." />
+              <label for="searchInput">Pesquisar candidato</label>
+              <input type="text" id="searchInput" placeholder="Nome, email, WhatsApp, ID curto..." />
             </div>
 
             <div class="field">
-              <label for="statusFilter">Estado</label>
+              <label for="statusFilter">Estado principal</label>
               <select id="statusFilter">
                 <option value="all">Todos</option>
                 <option value="pending">pendente</option>
@@ -545,19 +537,6 @@
                 <option value="all">Todos</option>
                 <option value="no_card">Não tenho cartão</option>
                 <option value="have_card_recharge">Já tenho cartão</option>
-              </select>
-            </div>
-
-            <div class="field">
-              <label for="providerFilter">Provedor</label>
-              <select id="providerFilter">
-                <option value="all">Todos</option>
-                <option value="RedotPay">RedotPay</option>
-                <option value="Payyzi">Payyzi</option>
-                <option value="Ezzocard">Ezzocard</option>
-                <option value="Bybit">Bybit</option>
-                <option value="Binance Card">Binance Card</option>
-                <option value="Outro">Outro</option>
               </select>
             </div>
 
@@ -581,7 +560,7 @@
             </div>
 
             <div class="meta-info">
-              <strong id="resultCount">0</strong> candidaturas encontradas
+              <strong id="resultCount">0</strong> candidatos encontrados
             </div>
           </div>
 
@@ -592,19 +571,19 @@
               <table>
                 <thead>
                   <tr>
-                    <th>ID / Data</th>
                     <th>Candidato</th>
-                    <th>Tipo</th>
-                    <th>Estado</th>
-                    <th>Pagamento</th>
                     <th>Contato</th>
-                    <th>Resumo</th>
-                    <th>Ações rápidas</th>
+                    <th>Estado principal</th>
+                    <th>Tipo</th>
+                    <th>Candidaturas</th>
+                    <th>Último ID</th>
+                    <th>Pagamento</th>
+                    <th>Ações</th>
                   </tr>
                 </thead>
                 <tbody id="tableBody">
                   <tr>
-                    <td colspan="8" class="empty-state">A carregar candidaturas...</td>
+                    <td colspan="8" class="empty-state">A carregar candidatos...</td>
                   </tr>
                 </tbody>
               </table>
@@ -615,11 +594,11 @@
     </main>
   </div>
 
-  <div class="modal" id="detailModal">
-    <div class="modal-panel">
+  <div class="modal" id="detailModal" aria-hidden="true">
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <div class="modal-head">
         <div>
-          <h2 id="modalTitle">Detalhes da candidatura</h2>
+          <h2 id="modalTitle">Detalhes do candidato</h2>
           <div class="small" id="modalSubtitle">---</div>
         </div>
         <button class="btn secondary small" id="closeModalBtn">Fechar</button>
@@ -633,7 +612,7 @@
           </div>
 
           <div class="info-card">
-            <h3>Objetivo / Observações</h3>
+            <h3>Objetivo / observações</h3>
             <div class="small" id="goalInfo">---</div>
             <div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.06);">
               <div class="small strong" style="margin-bottom:8px;">Observações adicionais</div>
@@ -649,7 +628,12 @@
 
         <div class="modal-col">
           <div class="info-card">
-            <h3>Estado e pagamento</h3>
+            <h3>Candidaturas deste candidato</h3>
+            <div class="history-list" id="historyList"></div>
+          </div>
+
+          <div class="info-card">
+            <h3>Estado / pagamento da candidatura selecionada</h3>
             <div class="kv" id="paymentInfo"></div>
           </div>
 
@@ -660,20 +644,17 @@
               <a class="btn secondary small" id="modalEmailBtn">Email</a>
               <button class="btn teal small" id="modalCopyIdBtn">Copiar ID</button>
             </div>
-          </div>
-
-          <div class="info-card">
-            <h3>Mudar estado</h3>
-            <div class="status-actions">
-              <button class="btn secondary small" data-action-status="pending">Pendente</button>
-              <button class="btn success small" data-action-status="paid">Pago</button>
-              <button class="btn primary small" data-action-status="confirmed">Confirmado</button>
-              <button class="btn purple small" data-action-status="added_to_group">No grupo</button>
-            </div>
 
             <div class="field" style="margin-top:14px;">
               <label for="adminNoteInput">Nota do admin</label>
               <textarea id="adminNoteInput" placeholder="Escreve uma nota sobre esta candidatura..."></textarea>
+            </div>
+
+            <div class="status-actions" style="margin-top:14px;">
+              <button class="btn secondary small" data-action-status="pending">Pendente</button>
+              <button class="btn success small" data-action-status="paid">Pago</button>
+              <button class="btn primary small" data-action-status="confirmed">Confirmado</button>
+              <button class="btn purple small" data-action-status="added_to_group">No grupo</button>
             </div>
           </div>
         </div>
@@ -690,21 +671,9 @@
 
   <script type="module">
     import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import {
-      getAuth,
-      onAuthStateChanged,
-      signOut
-    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import {
-      getFirestore,
-      doc,
-      getDoc
-    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // =========================================================
-    // FIREBASE CONFIG
-    // Usa a tua config real. Se já tens a mesma config noutras páginas, mantém igual.
-    // =========================================================
     const firebaseConfig = {
       apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
       authDomain: "paygo-14311.firebaseapp.com",
@@ -724,9 +693,10 @@
       db = getFirestore(app);
     }
 
-    // =========================================================
-    // DOM
-    // =========================================================
+    const API_BASE = "/api";
+    const GET_APPLICATIONS_ENDPOINT = `${API_BASE}/get-group-applications`;
+    const UPDATE_STATUS_ENDPOINT = `${API_BASE}/update-group-application-status`;
+
     const authLoading = document.getElementById("authLoading");
     const appEl = document.getElementById("app");
     const adminDisplayName = document.getElementById("adminDisplayName");
@@ -740,7 +710,8 @@
     const searchInput = document.getElementById("searchInput");
     const statusFilter = document.getElementById("statusFilter");
     const typeFilter = document.getElementById("typeFilter");
-    const providerFilter = document.getElementById("providerFilter");
+
+    const quickFilters = Array.from(document.querySelectorAll(".quick-filter"));
     const tableBody = document.getElementById("tableBody");
     const messageEl = document.getElementById("message");
     const resultCount = document.getElementById("resultCount");
@@ -751,8 +722,6 @@
     const statConfirmed = document.getElementById("statConfirmed");
     const statAdded = document.getElementById("statAdded");
 
-    const quickFilters = Array.from(document.querySelectorAll(".quick-filter"));
-
     const detailModal = document.getElementById("detailModal");
     const closeModalBtn = document.getElementById("closeModalBtn");
     const modalTitle = document.getElementById("modalTitle");
@@ -761,6 +730,7 @@
     const goalInfo = document.getElementById("goalInfo");
     const notesInfo = document.getElementById("notesInfo");
     const notesList = document.getElementById("notesList");
+    const historyList = document.getElementById("historyList");
     const paymentInfo = document.getElementById("paymentInfo");
     const adminNoteInput = document.getElementById("adminNoteInput");
     const modalWhatsappBtn = document.getElementById("modalWhatsappBtn");
@@ -772,25 +742,14 @@
     const saveConfirmedBtn = document.getElementById("saveConfirmedBtn");
     const saveAddedBtn = document.getElementById("saveAddedBtn");
 
-    // =========================================================
-    // API
-    // =========================================================
-    const API_BASE = "/api";
-    const GET_APPLICATIONS_ENDPOINT = `${API_BASE}/get-group-applications`;
-    const UPDATE_STATUS_ENDPOINT = `${API_BASE}/update-group-application-status`;
-
-    // =========================================================
-    // STATE
-    // =========================================================
-    let allApplications = [];
-    let filteredApplications = [];
     let currentAdmin = null;
+    let rawApplications = [];
+    let groupedCandidates = [];
+    let filteredCandidates = [];
+    let currentCandidate = null;
     let currentApplication = null;
     let autoRefreshTimer = null;
 
-    // =========================================================
-    // HELPERS
-    // =========================================================
     function showMessage(text, type = "success") {
       messageEl.className = `message show ${type}`;
       messageEl.textContent = text;
@@ -810,35 +769,55 @@
         .replaceAll("'", "&#039;");
     }
 
+    function formatDate(value) {
+      if (!value) return "-";
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return "-";
+      return d.toLocaleString("pt-MZ");
+    }
+
+    function normalizePhone(value = "") {
+      return String(value || "").replace(/[^\d]/g, "");
+    }
+
+    function buildCandidateKey(item) {
+      const email = String(item.email || "").trim().toLowerCase();
+      const whatsapp = normalizePhone(item.whatsapp || "");
+      if (email) return `email:${email}`;
+      if (whatsapp) return `wa:${whatsapp}`;
+      return `fallback:${String(item.fullName || "").trim().toLowerCase()}|${whatsapp}`;
+    }
+
+    function getStatusRank(status) {
+      const order = {
+        pending: 1,
+        paid: 2,
+        confirmed: 3,
+        added_to_group: 4
+      };
+      return order[status] || 0;
+    }
+
+    function getBestApplication(applications) {
+      return [...applications].sort((a, b) => {
+        const rankDiff = getStatusRank(b.status) - getStatusRank(a.status);
+        if (rankDiff !== 0) return rankDiff;
+        return new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0);
+      })[0];
+    }
+
     function getBadge(status) {
       const safe = String(status || "pending");
       return `<span class="badge ${safe}">${safe.replaceAll("_", " ")}</span>`;
     }
 
-    function formatType(item) {
-      if (item.cardOption === "have_card_recharge") {
-        return `
-          <div class="strong">Já tem cartão</div>
-          <div class="small">${escapeHtml(item.cardProvider || "provedor não indicado")}</div>
-        `;
-      }
-      return `
-        <div class="strong">Não tem cartão</div>
-        <div class="small">Aprender do zero</div>
-      `;
-    }
-
-    function formatDate(value) {
-      if (!value) return "-";
-      const date = new Date(value);
-      if (Number.isNaN(date.getTime())) return "-";
-      return date.toLocaleString("pt-MZ");
-    }
-
     function shortText(value, max = 90) {
       const text = String(value || "");
-      if (text.length <= max) return text;
-      return text.slice(0, max) + "...";
+      return text.length <= max ? text : text.slice(0, max) + "...";
+    }
+
+    function getCandidatePrimaryStatus(candidate) {
+      return candidate.primaryApplication?.status || "pending";
     }
 
     function buildWhatsappLink(item) {
@@ -852,137 +831,166 @@
         "Mensagem da equipa PayGo:"
       ].join("\n");
 
-      const phone = String(item.whatsapp || "").replace(/[^\d]/g, "");
+      const phone = normalizePhone(item.whatsapp || "");
       const withCountry = phone.startsWith("258") ? phone : `258${phone}`;
       return `https://wa.me/${withCountry}?text=${encodeURIComponent(message)}`;
     }
 
-    function updateStats(source) {
-      statTotal.textContent = source.length;
-      statPending.textContent = source.filter(x => x.status === "pending").length;
-      statPaid.textContent = source.filter(x => x.status === "paid").length;
-      statConfirmed.textContent = source.filter(x => x.status === "confirmed").length;
-      statAdded.textContent = source.filter(x => x.status === "added_to_group").length;
+    function buildGroups(source) {
+      const map = new Map();
+
+      for (const item of source) {
+        const key = buildCandidateKey(item);
+        if (!map.has(key)) {
+          map.set(key, {
+            key,
+            fullName: item.fullName || "-",
+            email: item.email || "",
+            whatsapp: item.whatsapp || "",
+            city: item.city || "",
+            applications: []
+          });
+        }
+
+        map.get(key).applications.push(item);
+      }
+
+      return Array.from(map.values()).map(group => {
+        group.applications.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+        group.primaryApplication = getBestApplication(group.applications);
+        return group;
+      }).sort((a, b) => {
+        const ad = new Date(a.primaryApplication?.updatedAt || a.primaryApplication?.createdAt || 0);
+        const bd = new Date(b.primaryApplication?.updatedAt || b.primaryApplication?.createdAt || 0);
+        return bd - ad;
+      });
     }
 
-    function getFilteredList() {
+    function updateStats(groups) {
+      statTotal.textContent = groups.length;
+      statPending.textContent = groups.filter(x => getCandidatePrimaryStatus(x) === "pending").length;
+      statPaid.textContent = groups.filter(x => getCandidatePrimaryStatus(x) === "paid").length;
+      statConfirmed.textContent = groups.filter(x => getCandidatePrimaryStatus(x) === "confirmed").length;
+      statAdded.textContent = groups.filter(x => getCandidatePrimaryStatus(x) === "added_to_group").length;
+    }
+
+    function getFilteredCandidates() {
       const search = searchInput.value.trim().toLowerCase();
       const status = statusFilter.value;
       const type = typeFilter.value;
-      const provider = providerFilter.value;
 
-      return allApplications.filter(item => {
-        const blob = [
-          item.shortId,
-          item.fullName,
-          item.email,
-          item.whatsapp,
-          item.paymentName,
-          item.cardProvider,
-          item.goal,
-          item.notes
+      return groupedCandidates.filter(candidate => {
+        const primary = candidate.primaryApplication || {};
+        const allText = [
+          candidate.fullName,
+          candidate.email,
+          candidate.whatsapp,
+          candidate.city,
+          ...candidate.applications.map(a => [
+            a.shortId, a.paymentName, a.goal, a.notes, a.cardProvider
+          ].join(" "))
         ].join(" ").toLowerCase();
 
-        const matchSearch = !search || blob.includes(search);
-        const matchStatus = status === "all" || item.status === status;
-        const matchType = type === "all" || item.cardOption === type;
-        const matchProvider =
-          provider === "all" ||
-          (provider === "Outro"
-            ? item.cardProvider &&
-              !["RedotPay","Payyzi","Ezzocard","Bybit","Binance Card"].includes(item.cardProvider)
-            : item.cardProvider === provider);
+        const matchSearch = !search || allText.includes(search);
+        const matchStatus = status === "all" || getCandidatePrimaryStatus(candidate) === status;
+        const matchType = type === "all" || primary.cardOption === type;
 
-        return matchSearch && matchStatus && matchType && matchProvider;
+        return matchSearch && matchStatus && matchType;
       });
     }
 
     function renderTable() {
-      filteredApplications = getFilteredList();
-      resultCount.textContent = filteredApplications.length;
-      updateStats(allApplications);
+      filteredCandidates = getFilteredCandidates();
+      resultCount.textContent = filteredCandidates.length;
+      updateStats(groupedCandidates);
 
-      if (!filteredApplications.length) {
+      if (!filteredCandidates.length) {
         tableBody.innerHTML = `
           <tr>
-            <td colspan="8" class="empty-state">Nenhuma candidatura encontrada.</td>
+            <td colspan="8" class="empty-state">Nenhum candidato encontrado.</td>
           </tr>
         `;
         return;
       }
 
-      tableBody.innerHTML = filteredApplications.map(item => `
-        <tr data-id="${escapeHtml(item.id)}">
-          <td>
-            <div class="mono">${escapeHtml(item.shortId || "-")}</div>
-            <div class="small">${formatDate(item.createdAt)}</div>
-          </td>
+      tableBody.innerHTML = filteredCandidates.map(candidate => {
+        const primary = candidate.primaryApplication || {};
+        return `
+          <tr data-candidate-key="${escapeHtml(candidate.key)}">
+            <td>
+              <div class="strong">${escapeHtml(candidate.fullName || "-")}</div>
+              <div class="small">${escapeHtml(candidate.email || "-")}</div>
+              <div class="small">${escapeHtml(candidate.city || "-")}</div>
+            </td>
 
-          <td>
-            <div class="strong">${escapeHtml(item.fullName || "-")}</div>
-            <div class="small">${escapeHtml(item.email || "-")}</div>
-            <div class="small">${escapeHtml(item.city || "-")}</div>
-          </td>
+            <td>
+              <div class="small">${escapeHtml(candidate.whatsapp || "-")}</div>
+              <div class="small">${escapeHtml(primary.paymentName || "-")}</div>
+            </td>
 
-          <td>${formatType(item)}</td>
+            <td>
+              ${getBadge(primary.status || "pending")}
+              <div class="small" style="margin-top:8px;">Atualizado: ${formatDate(primary.updatedAt)}</div>
+            </td>
 
-          <td>
-            ${getBadge(item.status || "pending")}
-            <div class="small" style="margin-top:8px;">Atualizado: ${formatDate(item.updatedAt)}</div>
-          </td>
+            <td>
+              <div class="strong">${primary.cardOption === "have_card_recharge" ? "Já tem cartão" : "Não tem cartão"}</div>
+              <div class="small">${escapeHtml(primary.cardProvider || "—")}</div>
+            </td>
 
-          <td>
-            <div class="strong">${Number(item.amount || 1200).toLocaleString("pt-MZ")} MT</div>
-            <div class="small">${escapeHtml(item.paymentStatus || "pending")}</div>
-            <div class="small">${item.isPaid ? "Marcado como pago" : "Ainda não pago"}</div>
-          </td>
+            <td>
+              <span class="count-bubble">${candidate.applications.length}</span>
+              <div class="small" style="margin-top:8px;">ver histórico completo</div>
+            </td>
 
-          <td>
-            <div class="small">${escapeHtml(item.whatsapp || "-")}</div>
-            <div class="small">${escapeHtml(item.paymentName || "-")}</div>
-          </td>
+            <td>
+              <div class="mono">${escapeHtml(primary.shortId || "-")}</div>
+              <div class="small">${formatDate(primary.createdAt)}</div>
+            </td>
 
-          <td>
-            <div class="table-note small">${escapeHtml(shortText(item.goal || "-", 110))}</div>
-          </td>
+            <td>
+              <div class="strong">${Number(primary.amount || 1200).toLocaleString("pt-MZ")} MT</div>
+              <div class="small">${escapeHtml(primary.paymentStatus || "pending")}</div>
+              <div class="small">${primary.isPaid ? "Marcado como pago" : "Ainda não pago"}</div>
+            </td>
 
-          <td>
-            <div class="grid-actions">
-              <button class="btn secondary small quick-action" data-id="${escapeHtml(item.id)}" data-status="pending">Pendente</button>
-              <button class="btn success small quick-action" data-id="${escapeHtml(item.id)}" data-status="paid">Pago</button>
-              <button class="btn primary small quick-action" data-id="${escapeHtml(item.id)}" data-status="confirmed">Confirmado</button>
-              <button class="btn purple small quick-action" data-id="${escapeHtml(item.id)}" data-status="added_to_group">No grupo</button>
-            </div>
-          </td>
-        </tr>
-      `).join("");
+            <td>
+              <div style="display:grid;gap:8px;">
+                <button class="btn secondary small open-candidate-btn" data-candidate-key="${escapeHtml(candidate.key)}">Abrir</button>
+                <button class="btn success small quick-action" data-id="${escapeHtml(primary.id)}" data-status="paid">Pago</button>
+                <button class="btn primary small quick-action" data-id="${escapeHtml(primary.id)}" data-status="confirmed">Confirmado</button>
+                <button class="btn purple small quick-action" data-id="${escapeHtml(primary.id)}" data-status="added_to_group">No grupo</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
     }
 
     function exportCSV() {
-      const rows = filteredApplications.map(item => ({
-        shortId: item.shortId || "",
-        fullName: item.fullName || "",
-        email: item.email || "",
-        whatsapp: item.whatsapp || "",
-        city: item.city || "",
-        cardOption: item.cardOption || "",
-        cardProvider: item.cardProvider || "",
-        status: item.status || "",
-        paymentStatus: item.paymentStatus || "",
-        isPaid: item.isPaid ? "sim" : "não",
-        amount: item.amount || 1200,
-        paymentName: item.paymentName || "",
-        goal: item.goal || "",
-        notes: item.notes || "",
-        createdAt: item.createdAt || "",
-        updatedAt: item.updatedAt || ""
-      }));
+      const rows = filteredCandidates.flatMap(candidate =>
+        candidate.applications.map(item => ({
+          candidateName: candidate.fullName || "",
+          candidateEmail: candidate.email || "",
+          candidateWhatsapp: candidate.whatsapp || "",
+          shortId: item.shortId || "",
+          status: item.status || "",
+          paymentStatus: item.paymentStatus || "",
+          isPaid: item.isPaid ? "sim" : "não",
+          cardOption: item.cardOption || "",
+          cardProvider: item.cardProvider || "",
+          paymentName: item.paymentName || "",
+          goal: item.goal || "",
+          notes: item.notes || "",
+          createdAt: item.createdAt || "",
+          updatedAt: item.updatedAt || ""
+        }))
+      );
 
       const headers = Object.keys(rows[0] || {
-        shortId: "", fullName: "", email: "", whatsapp: "", city: "",
-        cardOption: "", cardProvider: "", status: "", paymentStatus: "",
-        isPaid: "", amount: "", paymentName: "", goal: "", notes: "",
-        createdAt: "", updatedAt: ""
+        candidateName: "", candidateEmail: "", candidateWhatsapp: "", shortId: "",
+        status: "", paymentStatus: "", isPaid: "", cardOption: "", cardProvider: "",
+        paymentName: "", goal: "", notes: "", createdAt: "", updatedAt: ""
       });
 
       const csv = [
@@ -995,36 +1003,38 @@
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.download = `paygo-candidaturas-${new Date().toISOString().slice(0,10)}.csv`;
+      link.download = `paygo-candidatos-${new Date().toISOString().slice(0,10)}.csv`;
       document.body.appendChild(link);
       link.click();
       link.remove();
     }
 
-    function getApplicationById(id) {
-      return allApplications.find(item => item.id === id) || null;
+    function getCandidateByKey(key) {
+      return groupedCandidates.find(item => item.key === key) || null;
     }
 
-    function openModal(item) {
-      currentApplication = item;
-      adminNoteInput.value = "";
+    function getApplicationById(id) {
+      return rawApplications.find(item => item.id === id) || null;
+    }
 
-      modalTitle.textContent = item.fullName || "Candidatura";
-      modalSubtitle.innerHTML = `${escapeHtml(item.shortId || "-")} • ${escapeHtml((item.status || "pending").replaceAll("_"," "))}`;
+    function renderSelectedApplication(application) {
+      currentApplication = application;
+      if (!application || !currentCandidate) return;
+
+      modalTitle.textContent = currentCandidate.fullName || "Candidato";
+      modalSubtitle.textContent = `${currentCandidate.applications.length} candidatura(s) • principal: ${(currentCandidate.primaryApplication?.status || "pending").replaceAll("_"," ")}`;
 
       candidateInfo.innerHTML = `
-        <div class="kv-row"><div class="kv-label">Nome</div><div class="kv-value">${escapeHtml(item.fullName || "-")}</div></div>
-        <div class="kv-row"><div class="kv-label">Email</div><div class="kv-value">${escapeHtml(item.email || "-")}</div></div>
-        <div class="kv-row"><div class="kv-label">WhatsApp</div><div class="kv-value">${escapeHtml(item.whatsapp || "-")}</div></div>
-        <div class="kv-row"><div class="kv-label">Cidade</div><div class="kv-value">${escapeHtml(item.city || "-")}</div></div>
-        <div class="kv-row"><div class="kv-label">Tipo</div><div class="kv-value">${item.cardOption === "have_card_recharge" ? "Já tem cartão" : "Não tem cartão"}</div></div>
-        <div class="kv-row"><div class="kv-label">Provedor</div><div class="kv-value">${escapeHtml(item.cardProvider || "-")}</div></div>
+        <div class="kv-row"><div class="kv-label">Nome</div><div class="kv-value">${escapeHtml(currentCandidate.fullName || "-")}</div></div>
+        <div class="kv-row"><div class="kv-label">Email</div><div class="kv-value">${escapeHtml(currentCandidate.email || "-")}</div></div>
+        <div class="kv-row"><div class="kv-label">WhatsApp</div><div class="kv-value">${escapeHtml(currentCandidate.whatsapp || "-")}</div></div>
+        <div class="kv-row"><div class="kv-label">Cidade</div><div class="kv-value">${escapeHtml(currentCandidate.city || "-")}</div></div>
       `;
 
-      goalInfo.textContent = item.goal || "-";
-      notesInfo.textContent = item.notes || "-";
+      goalInfo.textContent = application.goal || "-";
+      notesInfo.textContent = application.notes || "-";
 
-      const adminNotes = Array.isArray(item.adminNotes) ? item.adminNotes : [];
+      const adminNotes = Array.isArray(application.adminNotes) ? application.adminNotes : [];
       notesList.innerHTML = adminNotes.length
         ? adminNotes.map(note => `
             <div class="note-item">
@@ -1032,62 +1042,104 @@
               <div class="small">${escapeHtml(note.text || "-")}</div>
             </div>
           `).join("")
-        : `<div class="small">Sem notas do admin ainda.</div>`;
+        : `<div class="small">Sem notas do admin nesta candidatura.</div>`;
+
+      historyList.innerHTML = currentCandidate.applications.map(item => `
+        <button
+          type="button"
+          class="history-item ${item.id === application.id ? "active" : ""}"
+          data-history-id="${escapeHtml(item.id)}"
+          style="text-align:left;cursor:pointer;color:inherit;"
+        >
+          <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap;">
+            <div>
+              <div class="mono">${escapeHtml(item.shortId || "-")}</div>
+              <div class="small">${formatDate(item.createdAt)}</div>
+            </div>
+            <div>${getBadge(item.status || "pending")}</div>
+          </div>
+          <div class="small" style="margin-top:8px;">${escapeHtml(shortText(item.goal || "-", 100))}</div>
+        </button>
+      `).join("");
 
       paymentInfo.innerHTML = `
-        <div class="kv-row"><div class="kv-label">Estado</div><div class="kv-value">${escapeHtml(item.status || "pending")}</div></div>
-        <div class="kv-row"><div class="kv-label">Pagamento</div><div class="kv-value">${escapeHtml(item.paymentStatus || "pending")}</div></div>
-        <div class="kv-row"><div class="kv-label">Pago?</div><div class="kv-value">${item.isPaid ? "Sim" : "Não"}</div></div>
-        <div class="kv-row"><div class="kv-label">Valor</div><div class="kv-value">${Number(item.amount || 1200).toLocaleString("pt-MZ")} MT</div></div>
-        <div class="kv-row"><div class="kv-label">Nome no pagamento</div><div class="kv-value">${escapeHtml(item.paymentName || "-")}</div></div>
-        <div class="kv-row"><div class="kv-label">PaySuite Ref</div><div class="kv-value">${escapeHtml(item.paysuiteReference || "-")}</div></div>
-        <div class="kv-row"><div class="kv-label">Checkout</div><div class="kv-value">${item.paysuiteCheckoutUrl ? "Gerado" : "Não gerado"}</div></div>
-        <div class="kv-row"><div class="kv-label">Criado em</div><div class="kv-value">${formatDate(item.createdAt)}</div></div>
-        <div class="kv-row"><div class="kv-label">Atualizado em</div><div class="kv-value">${formatDate(item.updatedAt)}</div></div>
+        <div class="kv-row"><div class="kv-label">ID curto</div><div class="kv-value">${escapeHtml(application.shortId || "-")}</div></div>
+        <div class="kv-row"><div class="kv-label">Estado</div><div class="kv-value">${escapeHtml(application.status || "pending")}</div></div>
+        <div class="kv-row"><div class="kv-label">Pagamento</div><div class="kv-value">${escapeHtml(application.paymentStatus || "pending")}</div></div>
+        <div class="kv-row"><div class="kv-label">Pago?</div><div class="kv-value">${application.isPaid ? "Sim" : "Não"}</div></div>
+        <div class="kv-row"><div class="kv-label">Valor</div><div class="kv-value">${Number(application.amount || 1200).toLocaleString("pt-MZ")} MT</div></div>
+        <div class="kv-row"><div class="kv-label">Tipo</div><div class="kv-value">${application.cardOption === "have_card_recharge" ? "Já tem cartão" : "Não tem cartão"}</div></div>
+        <div class="kv-row"><div class="kv-label">Provedor</div><div class="kv-value">${escapeHtml(application.cardProvider || "-")}</div></div>
+        <div class="kv-row"><div class="kv-label">Nome no pagamento</div><div class="kv-value">${escapeHtml(application.paymentName || "-")}</div></div>
+        <div class="kv-row"><div class="kv-label">PaySuite Ref</div><div class="kv-value">${escapeHtml(application.paysuiteReference || "-")}</div></div>
+        <div class="kv-row"><div class="kv-label">Checkout</div><div class="kv-value">${application.paysuiteCheckoutUrl ? "Gerado" : "Não gerado"}</div></div>
+        <div class="kv-row"><div class="kv-label">Criado em</div><div class="kv-value">${formatDate(application.createdAt)}</div></div>
+        <div class="kv-row"><div class="kv-label">Atualizado em</div><div class="kv-value">${formatDate(application.updatedAt)}</div></div>
       `;
 
-      modalWhatsappBtn.href = buildWhatsappLink(item);
-      modalEmailBtn.href = `mailto:${encodeURIComponent(item.email || "")}?subject=${encodeURIComponent(`Candidatura PayGo ${item.shortId || ""}`)}`;
+      modalWhatsappBtn.href = buildWhatsappLink(application);
+      modalEmailBtn.href = `mailto:${encodeURIComponent(application.email || "")}?subject=${encodeURIComponent(`Candidatura PayGo ${application.shortId || ""}`)}`;
       modalCopyIdBtn.onclick = async () => {
         try {
-          await navigator.clipboard.writeText(item.shortId || "");
+          await navigator.clipboard.writeText(application.shortId || "");
           showMessage("ID copiado com sucesso.", "success");
         } catch {
           showMessage("Não foi possível copiar o ID.", "error");
         }
       };
+    }
 
+    function openCandidateModal(candidate) {
+      currentCandidate = candidate;
+      adminNoteInput.value = "";
+      const selected = candidate.primaryApplication || candidate.applications[0];
+      renderSelectedApplication(selected);
       detailModal.classList.add("show");
+      detailModal.setAttribute("aria-hidden", "false");
     }
 
     function closeModal() {
       detailModal.classList.remove("show");
+      detailModal.setAttribute("aria-hidden", "true");
+      currentCandidate = null;
       currentApplication = null;
       adminNoteInput.value = "";
     }
 
+    async function getAuthHeaders() {
+      const user = auth.currentUser;
+      if (!user) throw new Error("Sessão expirada.");
+      const idToken = await user.getIdToken(true);
+      return {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${idToken}`
+      };
+    }
+
     async function loadApplications() {
-      tableBody.innerHTML = `<tr><td colspan="8" class="empty-state">A carregar candidaturas...</td></tr>`;
+      tableBody.innerHTML = `<tr><td colspan="8" class="empty-state">A carregar candidatos...</td></tr>`;
 
       try {
         const response = await fetch(GET_APPLICATIONS_ENDPOINT, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: await getAuthHeaders(),
           body: JSON.stringify({})
         });
 
         const result = await response.json();
-
         if (!response.ok || !result.success) {
           throw new Error(result.error || "Erro ao carregar candidaturas.");
         }
 
-        allApplications = Array.isArray(result.applications) ? result.applications : [];
+        rawApplications = Array.isArray(result.applications) ? result.applications : [];
+        groupedCandidates = buildGroups(rawApplications);
         renderTable();
 
-        if (currentApplication) {
-          const fresh = getApplicationById(currentApplication.id);
-          if (fresh) openModal(fresh);
+        if (currentCandidate) {
+          const freshCandidate = getCandidateByKey(currentCandidate.key);
+          if (freshCandidate) {
+            openCandidateModal(freshCandidate);
+          }
         }
       } catch (err) {
         tableBody.innerHTML = `<tr><td colspan="8" class="empty-state">Erro: ${escapeHtml(err.message || "falha ao carregar")}</td></tr>`;
@@ -1097,31 +1149,26 @@
 
     async function updateStatus(applicationId, status) {
       const adminNote = adminNoteInput.value.trim();
-      const adminName = currentAdmin?.name || currentAdmin?.email || "Admin PayGo";
-      const adminId = currentAdmin?.uid || "admin_manual";
 
       try {
         const response = await fetch(UPDATE_STATUS_ENDPOINT, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: await getAuthHeaders(),
           body: JSON.stringify({
             applicationId,
             status,
-            adminName,
-            adminId,
             adminNote
           })
         });
 
         const result = await response.json();
-
         if (!response.ok || !result.success) {
           throw new Error(result.error || "Falha ao atualizar estado.");
         }
 
         showMessage(`Estado atualizado para "${status.replaceAll("_", " ")}".`, "success");
         await loadApplications();
-        closeModal();
+        adminNoteInput.value = "";
       } catch (err) {
         showMessage(err.message || "Erro ao atualizar candidatura.", "error");
       }
@@ -1156,10 +1203,8 @@
     }
 
     function stopAutoRefresh() {
-      if (autoRefreshTimer) {
-        clearInterval(autoRefreshTimer);
-        autoRefreshTimer = null;
-      }
+      if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+      autoRefreshTimer = null;
     }
 
     function bindQuickFilters() {
@@ -1173,16 +1218,12 @@
       });
     }
 
-    // =========================================================
-    // EVENTS
-    // =========================================================
     refreshBtn.addEventListener("click", loadApplications);
     applyFilterBtn.addEventListener("click", renderTable);
     clearFilterBtn.addEventListener("click", () => {
       searchInput.value = "";
       statusFilter.value = "all";
       typeFilter.value = "all";
-      providerFilter.value = "all";
       quickFilters.forEach(b => b.classList.remove("active"));
       const allBtn = quickFilters.find(b => b.dataset.status === "all");
       if (allBtn) allBtn.classList.add("active");
@@ -1193,7 +1234,6 @@
     searchInput.addEventListener("input", renderTable);
     statusFilter.addEventListener("change", renderTable);
     typeFilter.addEventListener("change", renderTable);
-    providerFilter.addEventListener("change", renderTable);
 
     logoutBtn.addEventListener("click", async () => {
       await signOut(auth);
@@ -1225,10 +1265,24 @@
         return;
       }
 
-      const row = e.target.closest("tr[data-id]");
+      const openBtn = e.target.closest(".open-candidate-btn");
+      if (openBtn) {
+        const candidate = getCandidateByKey(openBtn.dataset.candidateKey);
+        if (candidate) openCandidateModal(candidate);
+        return;
+      }
+
+      const row = e.target.closest("tr[data-candidate-key]");
       if (!row) return;
-      const app = getApplicationById(row.dataset.id);
-      if (app) openModal(app);
+      const candidate = getCandidateByKey(row.dataset.candidateKey);
+      if (candidate) openCandidateModal(candidate);
+    });
+
+    historyList.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-history-id]");
+      if (!btn) return;
+      const app = getApplicationById(btn.dataset.historyId);
+      if (app) renderSelectedApplication(app);
     });
 
     document.addEventListener("keydown", (e) => {
@@ -1237,9 +1291,6 @@
 
     bindQuickFilters();
 
-    // =========================================================
-    // AUTH INIT
-    // =========================================================
     onAuthStateChanged(auth, async (user) => {
       try {
         if (!user) {
@@ -1261,7 +1312,7 @@
             <h1 style="font-size:2rem;margin-bottom:10px;">Acesso negado</h1>
             <p class="small">${escapeHtml(error.message || "Não autorizado.")}</p>
             <div style="margin-top:18px;">
-              <a class="btn primary" href="../login.html">Ir para login</a>
+              <a class="btn primary" href="../login.html">Ir para login da PayGo</a>
             </div>
           </div>
         `;
