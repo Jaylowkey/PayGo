@@ -128,6 +128,19 @@
         #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
         .toast { pointer-events: auto; background: #1e293b; border: 1px solid rgba(255,255,255,0.1); padding: 16px 20px; border-radius: 12px; display: flex; align-items: center; gap: 12px; transform: translateX(120%); transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .toast.show { transform: translateX(0); }
+
+        .terms-legal-box {
+            background: rgba(59, 130, 246, 0.08);
+            border: 1px solid rgba(59, 130, 246, 0.18);
+            border-radius: 1rem;
+            padding: 1rem;
+        }
+
+        .submit-disabled {
+            background: rgb(51 65 85) !important;
+            color: rgb(203 213 225) !important;
+            box-shadow: none !important;
+        }
     </style>
 </head>
 <body class="hero-gradient min-h-screen flex flex-col">
@@ -252,21 +265,54 @@
                                     </div>
                                 </div>
 
-                                <div class="mt-4 mb-6">
-                                    <label class="flex items-start gap-3 cursor-pointer group">
-                                        <div class="relative flex items-center justify-center mt-0.5">
-                                            <input type="checkbox" id="agreeTerms" required class="peer appearance-none w-5 h-5 border-2 border-slate-600 rounded bg-slate-800 checked:bg-brand-600 checked:border-brand-600 transition-colors">
-                                            <i data-lucide="check" class="absolute w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity"></i>
+                                <!-- BLOCO LEGAL NOVO -->
+                                <div class="mt-4 mb-4 terms-legal-box">
+                                    <div class="flex items-start gap-3">
+                                        <div class="mt-0.5 shrink-0 rounded-xl bg-brand-500/15 p-2 border border-brand-500/20">
+                                            <i data-lucide="shield-check" class="w-5 h-5 text-brand-400"></i>
                                         </div>
-                                        <span class="text-xs text-slate-400 leading-relaxed group-hover:text-slate-300 transition-colors">
-                                            Confirmo que os dados estão corretos e concordo com os <a href="termos.html" class="text-brand-400 hover:underline">Termos de Uso</a> e a <a href="privacidade.html" class="text-brand-400 hover:underline">Política de Privacidade</a>.
-                                        </span>
-                                    </label>
+
+                                        <div class="flex-1">
+                                            <h3 class="text-white font-bold text-sm md:text-base mb-2">
+                                                Confirmação legal e política de reembolso
+                                            </h3>
+
+                                            <p class="text-sm text-slate-300 leading-relaxed mb-4">
+                                                Ao criar a sua conta, confirma que leu e aceita os
+                                                <a href="termos.html" target="_blank" class="text-brand-400 hover:text-brand-300 underline underline-offset-4 font-semibold">
+                                                    Termos e Condições da PayGo
+                                                </a>
+                                                e a
+                                                <a href="privacidade.html" target="_blank" class="text-brand-400 hover:text-brand-300 underline underline-offset-4 font-semibold">
+                                                    Política de Privacidade
+                                                </a>,
+                                                incluindo a política de cancelamento e reembolso. Declara ainda estar ciente de que, em caso de reembolso aprovado, poderão ser aplicadas, adicionadas ou descontadas taxas de transação, processamento, reversão, levantamento, liquidação ou outros custos operacionais cobrados por terceiros.
+                                            </p>
+
+                                            <label class="flex items-start gap-3 cursor-pointer group">
+                                                <div class="relative flex items-center justify-center mt-0.5">
+                                                    <input type="checkbox" id="agreeTerms" required class="peer appearance-none w-5 h-5 border-2 border-slate-600 rounded bg-slate-800 checked:bg-brand-600 checked:border-brand-600 transition-colors">
+                                                    <i data-lucide="check" class="absolute w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity"></i>
+                                                </div>
+                                                <span class="text-xs text-slate-300 leading-relaxed group-hover:text-slate-200 transition-colors">
+                                                    Li, compreendi e aceito os termos legais da PayGo, incluindo a política de reembolso com taxas e custos operacionais aplicáveis.
+                                                </span>
+                                            </label>
+
+                                            <p class="mt-3 text-[11px] text-slate-400 leading-relaxed">
+                                                O registo só poderá ser concluído após a aceitação desta cláusula.
+                                            </p>
+
+                                            <p id="termsWarning" class="mt-3 text-xs text-warning-400 hidden">
+                                                É obrigatório aceitar os termos e a política de reembolso antes de continuar.
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <button type="submit" id="btnSubmit" class="btn-premium w-full bg-brand-600 hover:bg-brand-500 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-brand-600/20">
+                                <button type="submit" id="btnSubmit" disabled class="btn-premium submit-disabled w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2">
                                     <span id="btnText">Criar Conta Gratuita</span>
-                                    <i data-lucide="arrow-right" id="btnIcon" class="w-4 h-4"></i>
+                                    <i data-lucide="lock" id="btnIcon" class="w-4 h-4"></i>
                                 </button>
                             </div>
                         </form>
@@ -383,9 +429,49 @@
             setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 5000);
         }
 
+        // ATIVAR / DESATIVAR BOTÃO PELOS TERMOS
+        const agreeTerms = document.getElementById('agreeTerms');
+        const btnSubmit = document.getElementById('btnSubmit');
+        const btnText = document.getElementById('btnText');
+        const btnIcon = document.getElementById('btnIcon');
+        const termsWarning = document.getElementById('termsWarning');
+
+        function updateTermsState() {
+            if (!agreeTerms || !btnSubmit) return;
+
+            if (agreeTerms.checked) {
+                btnSubmit.disabled = false;
+                btnSubmit.classList.remove('submit-disabled');
+                btnSubmit.classList.add('bg-brand-600', 'hover:bg-brand-500', 'text-white', 'shadow-lg', 'shadow-brand-600/20');
+                btnText.textContent = 'Criar Conta Gratuita';
+                btnIcon.setAttribute('data-lucide', 'arrow-right');
+                if (termsWarning) termsWarning.classList.add('hidden');
+            } else {
+                btnSubmit.disabled = true;
+                btnSubmit.classList.add('submit-disabled');
+                btnSubmit.classList.remove('bg-brand-600', 'hover:bg-brand-500', 'text-white', 'shadow-lg', 'shadow-brand-600/20');
+                btnText.textContent = 'Criar Conta Gratuita';
+                btnIcon.setAttribute('data-lucide', 'lock');
+            }
+
+            lucide.createIcons({ root: btnSubmit });
+        }
+
+        if (agreeTerms) {
+            agreeTerms.addEventListener('change', updateTermsState);
+            updateTermsState();
+        }
+
         // SUBMISSÃO DO FORMULÁRIO DE REGISTO
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            if (!agreeTerms.checked) {
+                if (termsWarning) termsWarning.classList.remove('hidden');
+                showToast('Precisa aceitar os termos e a política de reembolso.', 'warning');
+                agreeTerms.focus();
+                return;
+            }
             
             const password = document.getElementById('regPassword').value;
             const confirmPassword = document.getElementById('regConfirmPassword').value;
@@ -396,19 +482,15 @@
                 return;
             }
 
-            const btn = document.getElementById('btnSubmit');
-            const btnText = document.getElementById('btnText');
-            const btnIcon = document.getElementById('btnIcon');
-            
             const name = document.getElementById('regName').value.trim();
             const email = document.getElementById('regEmail').value.trim();
             const phone = document.getElementById('regPhone').value.trim();
 
-            btn.disabled = true;
+            btnSubmit.disabled = true;
             btnText.textContent = 'A criar infraestrutura...';
             btnIcon.setAttribute('data-lucide', 'loader-2');
             btnIcon.classList.add('animate-spin');
-            lucide.createIcons({root: btn});
+            lucide.createIcons({root: btnSubmit});
 
             try {
                 // 1. Criar Autenticação
@@ -428,7 +510,9 @@
                     firstPurchaseProcessed: false,
                     totalPurchases: 0,
                     createdAt: new Date().toISOString(),
-                    emailVerified: false 
+                    emailVerified: false,
+                    acceptedTermsAt: new Date().toISOString(),
+                    acceptedRefundPolicy: true
                 };
                 await setDoc(doc(db, "users", user.uid), userData);
 
@@ -457,11 +541,10 @@
                 
                 showToast(msg, 'error');
                 
-                btn.disabled = false;
-                btnText.textContent = 'Criar Conta Gratuita';
-                btnIcon.setAttribute('data-lucide', 'arrow-right');
+                btnSubmit.disabled = false;
+                updateTermsState();
                 btnIcon.classList.remove('animate-spin');
-                lucide.createIcons({root: btn});
+                lucide.createIcons({root: btnSubmit});
             }
         });
     </script>
