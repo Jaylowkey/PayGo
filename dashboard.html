@@ -216,6 +216,32 @@
         .game-service-card:hover { border-color: rgba(59,130,246,0.35); transform: translateY(-2px); }
         .game-service-card.active { border-color: rgba(34,197,94,0.45); background: rgba(34,197,94,0.08); box-shadow: 0 0 0 1px rgba(34,197,94,0.15) inset; }
         .game-service-card .logo { width: 2.25rem; height: 2.25rem; border-radius: 0.9rem; display:flex; align-items:center; justify-content:center; font-size: 1rem; font-weight: 800; }
+        .selection-chip {
+            border: 1px solid rgba(148,163,184,0.35);
+            background: rgba(15,23,42,0.75);
+            color: #cbd5e1;
+            transition: all .2s ease;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+        }
+        .selection-chip:hover {
+            border-color: rgba(96,165,250,0.5);
+            color: #fff;
+            background: rgba(30,41,59,0.95);
+        }
+        .selection-chip.active {
+            border-color: rgba(59,130,246,0.7);
+            background: linear-gradient(135deg, rgba(37,99,235,0.28), rgba(15,23,42,0.92));
+            color: #fff;
+            box-shadow: 0 0 0 1px rgba(59,130,246,0.2) inset, 0 12px 30px rgba(37,99,235,0.14);
+        }
+        .selection-chip.success-active {
+            border-color: rgba(34,197,94,0.6);
+            background: linear-gradient(135deg, rgba(22,163,74,0.28), rgba(15,23,42,0.92));
+        }
+        .selection-chip.warning-active {
+            border-color: rgba(245,158,11,0.6);
+            background: linear-gradient(135deg, rgba(217,119,6,0.28), rgba(15,23,42,0.92));
+        }
         .mode-pill { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
         .hidden-soft { display: none !important; }
     </style>
@@ -626,15 +652,15 @@
                                         <div class="grid grid-cols-1 md:grid-cols-3 gap-3" id="digitalModeGrid">
                                             <label class="cursor-pointer">
                                                 <input type="radio" name="digitalMode" value="account" class="peer sr-only" checked>
-                                                <div class="p-3 rounded-xl border border-slate-700 bg-slate-900 text-slate-300 font-bold text-sm peer-checked:border-brand-500 peer-checked:bg-brand-500/10 peer-checked:text-brand-300 transition">Pagar conta / assinatura</div>
+                                                <div class="selection-chip active p-3 rounded-xl font-bold text-sm peer-checked:border-brand-500 peer-checked:bg-brand-500/20 peer-checked:text-white transition">Pagar conta / assinatura</div>
                                             </label>
                                             <label class="cursor-pointer">
                                                 <input type="radio" name="digitalMode" value="giftcard" class="peer sr-only">
-                                                <div class="p-3 rounded-xl border border-slate-700 bg-slate-900 text-slate-300 font-bold text-sm peer-checked:border-success-500 peer-checked:bg-success-500/10 peer-checked:text-success-300 transition">Gift card / saldo</div>
+                                                <div class="selection-chip p-3 rounded-xl font-bold text-sm peer-checked:border-success-500 peer-checked:bg-success-500/20 peer-checked:text-white transition">Gift card / saldo</div>
                                             </label>
                                             <label class="cursor-pointer hidden" id="gameSubscriptionModeWrap">
                                                 <input type="radio" name="digitalMode" value="subscription" class="peer sr-only">
-                                                <div class="p-3 rounded-xl border border-slate-700 bg-slate-900 text-slate-300 font-bold text-sm peer-checked:border-vip-500 peer-checked:bg-vip-500/10 peer-checked:text-vip-300 transition">Assinaturas gamer</div>
+                                                <div class="selection-chip p-3 rounded-xl font-bold text-sm peer-checked:border-vip-500 peer-checked:bg-vip-500/20 peer-checked:text-white transition">Assinaturas gamer</div>
                                             </label>
                                         </div>
                                     </div>
@@ -889,19 +915,29 @@
             <button type="button" onclick="window.closeModals()" class="absolute top-5 right-5 text-slate-400 hover:text-white focus:outline-none"><i data-lucide="x" class="w-6 h-6"></i></button>
             <div class="p-6 pb-0 mb-6">
                 <h3 class="text-xl font-display font-bold text-white mb-2">Depositar Fundos</h3>
-                <p class="text-sm text-slate-400">Adicione fundos calculando diretamente em Dólares (USD).</p>
+                <p class="text-sm text-slate-400">Adicione fundos em USD ou MT. O sistema converte sempre com o câmbio PayGo.</p>
             </div>
             <form id="topUpForm" onsubmit="event.preventDefault(); window.processTopUp();" class="p-6 pt-0 space-y-5">
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Valor Pretendido (USD)</label>
-                    <div class="relative">
-                        <i data-lucide="dollar-sign" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-brand-400"></i>
-                        <input type="number" id="topUpUsdInput" required min="1" step="0.01" placeholder="Ex: 10" class="w-full pl-11 pr-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white font-mono text-lg font-bold shadow-inner outline-none transition-all" oninput="window.calcTopUpMzn()">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Valor Pretendido (USD)</label>
+                        <div class="relative">
+                            <i data-lucide="dollar-sign" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-brand-400"></i>
+                            <input type="number" id="topUpUsdInput" min="0.01" step="0.01" placeholder="Ex: 10" class="w-full pl-11 pr-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 text-white font-mono text-lg font-bold shadow-inner outline-none transition-all" oninput="window.syncTopUpFromUsd()">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-brand-400 uppercase tracking-widest mb-2">Valor em MT</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-brand-400 font-black text-sm">MT</span>
+                            <input type="number" id="topUpMtInput" required min="10" step="0.01" placeholder="Ex: 850" class="w-full pl-12 pr-4 py-3.5 bg-slate-950 border border-brand-500/40 rounded-xl focus:border-brand-500 text-white font-mono text-lg font-bold shadow-inner outline-none transition-all" oninput="window.syncTopUpFromMt()">
+                        </div>
                     </div>
                 </div>
-                <div class="bg-slate-950 p-4 rounded-xl border border-brand-500/20 text-center shadow-inner">
-                    <p class="text-[9px] uppercase tracking-widest text-slate-500 mb-1 font-bold">A Pagar / Creditar (<span id="topUpRateDisplay">--</span> MT/$)</p>
+                <div class="bg-slate-950 p-4 rounded-xl border border-brand-500/20 text-center shadow-inner space-y-2">
+                    <p class="text-[9px] uppercase tracking-widest text-slate-500 mb-1 font-bold">Conversão PayGo (<span id="topUpRateDisplay">--</span> MT/$)</p>
                     <p class="text-2xl font-display font-black text-brand-400" id="topUpMznDisplay">0.00 MT</p>
+                    <p class="text-xs text-slate-400">Equivalente: <span id="topUpUsdDisplay" class="font-mono text-white">0.00 USD</span></p>
                     <input type="hidden" id="topUpAmount">
                 </div>
                 <div>
@@ -909,15 +945,15 @@
                     <div class="grid grid-cols-3 gap-2">
                         <label class="cursor-pointer">
                             <input type="radio" name="topUpMethod" value="mpesa" class="peer sr-only" checked onchange="window.toggleBankDetails(this.value)">
-                            <div class="p-3 border border-slate-700 rounded-xl text-center text-xs font-bold text-slate-400 peer-checked:bg-red-500/10 peer-checked:border-red-500 peer-checked:text-red-500 transition-all shadow-sm">M-PESA</div>
+                            <div class="selection-chip p-3 rounded-xl text-center text-xs font-bold peer-checked:text-white peer-checked:border-red-500 peer-checked:bg-red-500/20 transition-all shadow-sm">M-PESA</div>
                         </label>
                         <label class="cursor-pointer">
                             <input type="radio" name="topUpMethod" value="emola" class="peer sr-only" onchange="window.toggleBankDetails(this.value)">
-                            <div class="p-3 border border-slate-700 rounded-xl text-center text-xs font-bold text-slate-400 peer-checked:bg-orange-500/10 peer-checked:border-orange-500 peer-checked:text-orange-500 transition-all shadow-sm">E-MOLA</div>
+                            <div class="selection-chip p-3 rounded-xl text-center text-xs font-bold peer-checked:text-white peer-checked:border-orange-500 peer-checked:bg-orange-500/20 transition-all shadow-sm">E-MOLA</div>
                         </label>
                         <label class="cursor-pointer">
                             <input type="radio" name="topUpMethod" value="bank" class="peer sr-only" onchange="window.toggleBankDetails(this.value)">
-                            <div class="p-3 border border-slate-700 rounded-xl text-center text-xs font-bold text-slate-400 peer-checked:bg-blue-500/10 peer-checked:border-blue-500 peer-checked:text-blue-500 transition-all shadow-sm">BANCO</div>
+                            <div class="selection-chip p-3 rounded-xl text-center text-xs font-bold peer-checked:text-white peer-checked:border-blue-500 peer-checked:bg-blue-500/20 transition-all shadow-sm">BANCO</div>
                         </label>
                     </div>
                 </div>
@@ -1102,6 +1138,17 @@
                     </div>
                 </div>
 
+                <div id="refundPayeeFields" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-danger-400 uppercase tracking-widest mb-2">Número para envio do valor</label>
+                        <input type="text" id="refundPhone" placeholder="Ex: 84xxxxxxx / 86xxxxxxx" class="w-full px-4 py-3.5 bg-slate-950 border border-danger-500/30 rounded-xl focus:outline-none focus:border-danger-400 focus:ring-1 focus:ring-danger-400 text-white transition-all shadow-inner text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-danger-400 uppercase tracking-widest mb-2">Nome que irá aparecer</label>
+                        <input type="text" id="refundRecipientName" placeholder="Nome do destinatário" class="w-full px-4 py-3.5 bg-slate-950 border border-danger-500/30 rounded-xl focus:outline-none focus:border-danger-400 focus:ring-1 focus:ring-danger-400 text-white transition-all shadow-inner text-sm">
+                    </div>
+                </div>
+
                 <div>
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2" id="supportMsgLabel">A sua Mensagem ou Justificação</label>
                     <textarea id="supportMessage" required rows="4" placeholder="Descreva aqui a situação detalhadamente..." class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white resize-none transition-all shadow-inner text-sm"></textarea>
@@ -1262,7 +1309,7 @@
             'League of Legends': 'https://www.leagueoflegends.com/',
             'Roblox': 'https://www.roblox.com/',
             'Brawl Stars': 'https://supercell.com/en/games/brawlstars/',
-            'eFootball Coins': 'https://www.konami.com/efootball/'
+            'eFootball Coins': 'https://www.konami.com/efootball/',
             'Apple ID / iCloud': 'https://appleid.apple.com/',
             'App Store & iTunes': 'https://www.apple.com/app-store/',
             'Hostinger': 'https://www.hostinger.com/',
@@ -1275,45 +1322,45 @@
         };
 
         const DIGITAL_SERVICE_PRESETS = {
-            'Netflix': [7.99, 9.99, 12.99, 15.49, 22.99],
-            'Meta Ads': [10, 20, 50, 100, 200, 500],
-            'Google Ads': [10, 20, 50, 100, 200, 500],
-            'TikTok Ads': [10, 20, 50, 100, 200],
-            'ChatGPT Plus': [20],
-            'Claude Pro': [20],
-            'Canva Pro': [15],
-            'Adobe Creative Cloud': [10, 20, 35, 50, 60],
-            'CapCut Pro': [5, 10, 20],
-            'Spotify': [5, 10, 15],
-            'YouTube Premium': [5, 10, 15],
-            'Disney+': [8, 15, 25],
-            'Amazon Prime': [5, 10, 15],
-            'Prime Video': [5, 10, 15],
-            'Google One': [2, 5, 10, 20],
-            'Microsoft 365': [10, 20, 30],
-            'Xbox Game Pass': [10, 15, 20],
-            'PlayStation Plus': [10, 20, 50, 60],
-            'Nintendo eShop': [10, 20, 35, 50],
-            'Steam Wallet': [5, 10, 20, 50, 100],
-            'EA Play': [5, 10, 15],
-            'Garena Shells': [5, 10, 20, 50],
-            'PUBG UC': [5, 10, 20, 50],
-            'Free Fire': [1, 3, 5, 10, 20],
-            'Mobile Legends': [2, 5, 10, 20, 50],
-            'Call of Duty Mobile': [1, 5, 10, 25, 50],
-            'Valorant': [5, 10, 20, 50],
-            'League of Legends': [5, 10, 25, 50],
-            'Roblox': [5, 10, 20, 50],
-            'Brawl Stars': [2, 5, 10, 20, 50],
-            'eFootball Coins': [1, 5, 10, 25]
-            'App Store & iTunes': [5, 10, 15, 25, 50],
-            'Apple ID / iCloud': [5, 10, 20, 50],
-            'Hostinger': [5, 10, 20, 50, 100],
-            'Namecheap': [5, 10, 20, 50, 100],
-            'GoDaddy': [5, 10, 20, 50, 100],
-            'Cloudflare': [5, 10, 20, 50, 100],
-            'DigitalOcean': [5, 10, 20, 50, 100],
-            'AWS': [10, 20, 50, 100]
+            'Netflix': [10, 15, 20, 25, 30, 50],
+            'Meta Ads': [10, 15, 20, 25, 50, 100, 200, 500],
+            'Google Ads': [10, 15, 20, 25, 50, 100, 200, 500],
+            'TikTok Ads': [10, 20, 25, 50, 100, 200],
+            'ChatGPT Plus': [20, 40, 60],
+            'Claude Pro': [20, 40, 60],
+            'Canva Pro': [15, 30, 60],
+            'Adobe Creative Cloud': [10, 20, 30, 50, 60, 100],
+            'CapCut Pro': [5, 10, 20, 30],
+            'Spotify': [5, 10, 15, 20, 30],
+            'YouTube Premium': [5, 10, 15, 20, 30],
+            'Disney+': [10, 15, 20, 25, 30],
+            'Amazon Prime': [10, 15, 20, 25, 50],
+            'Prime Video': [10, 15, 20, 25, 50],
+            'Google One': [2, 5, 10, 15, 20, 50],
+            'Microsoft 365': [10, 15, 20, 30, 50, 100],
+            'Xbox Game Pass': [10, 15, 20, 25, 50],
+            'PlayStation Plus': [10, 20, 25, 30, 50, 60, 100],
+            'Nintendo eShop': [10, 20, 25, 35, 50, 100],
+            'Steam Wallet': [5, 10, 20, 25, 50, 100],
+            'EA Play': [5, 10, 15, 20, 40],
+            'Garena Shells': [5, 10, 20, 25, 50, 100],
+            'PUBG UC': [5, 10, 15, 20, 25, 50, 100],
+            'Free Fire': [1.14, 2.89, 5.98, 12, 24.15, 60],
+            'Mobile Legends': [2, 5, 10, 20, 25, 50, 100],
+            'Call of Duty Mobile': [1, 5, 10, 25, 50, 100],
+            'Valorant': [5, 10, 20, 25, 50, 100],
+            'League of Legends': [5, 10, 25, 50, 100],
+            'Roblox': [5, 10, 20, 25, 50, 100],
+            'Brawl Stars': [2, 5, 10, 20, 25, 50],
+            'eFootball Coins': [5, 10, 15, 25, 50],
+            'App Store & iTunes': [5, 10, 15, 20, 25, 50, 100],
+            'Apple ID / iCloud': [5, 10, 20, 25, 50, 100],
+            'Hostinger': [5, 10, 20, 25, 50, 100],
+            'Namecheap': [5, 10, 20, 25, 50, 100],
+            'GoDaddy': [5, 10, 20, 25, 50, 100],
+            'Cloudflare': [5, 10, 20, 25, 50, 100],
+            'DigitalOcean': [5, 10, 20, 25, 50, 100],
+            'AWS': [10, 20, 25, 50, 100, 200]
         };
 
         const GAME_PACKAGE_PRESETS = {
@@ -2139,7 +2186,7 @@
                 if (method === 'bank') {
                     await addDoc(collection(db, "support_tickets"), { userId: currentUser.uid, userName: userData.name, userEmail: currentUser.email, type: 'deposit_request', amount: amount, paymentMethod: method, message: `Depósito Bancário de ${formatMZN(amount)} MT.`, status: 'open', createdAt: serverTimestamp() });
                     window.fetchDashboardData(true);
-                    window.closeModals(); document.getElementById('topUpForm').reset(); window.showToast("Pedido enviado! O Admin confirmará após verificação.", "success");
+                    window.closeModals(); document.getElementById('topUpForm').reset(); setSafeText('topUpMznDisplay','0.00 MT'); setSafeText('topUpUsdDisplay','0.00 USD'); window.showToast("Pedido enviado! O Admin confirmará após verificação.", "success");
                 } else {
                     window.showToast("A conectar de forma segura à PaySuite...", "info");
                     const topupId = 'TOP-' + Date.now().toString().slice(-6).toUpperCase();
@@ -2153,7 +2200,7 @@
                         window.location.href = data.data.checkoutUrl; 
                     } else { 
                         window.fetchDashboardData(true);
-                        window.closeModals(); document.getElementById('topUpForm').reset(); window.showToast("Verifique o seu telemóvel para inserir o PIN!", "success"); 
+                        window.closeModals(); document.getElementById('topUpForm').reset(); setSafeText('topUpMznDisplay','0.00 MT'); setSafeText('topUpUsdDisplay','0.00 USD'); window.showToast("Verifique o seu telemóvel para inserir o PIN!", "success"); 
                     }
                 }
             } catch (err) { 
@@ -2334,49 +2381,100 @@
         // 9. COMUNICAÇÃO DE SUPORTE (MENSAGENS)
         // =====================================
         window.processSupport = async () => {
-            if (isProcessing) return;
-            isProcessing = true;
+            if (isProcessing) return; isProcessing = true;
+            const btn = document.getElementById('btnSubmitSupport'); const origText = btn.innerHTML;
+            btn.disabled = true; btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A enviar...'; if (typeof lucide !== 'undefined') lucide.createIcons({ root: btn });
 
-            const type = document.getElementById('supportType').value, msg = document.getElementById('supportMessage').value, orderId = document.getElementById('supportOrderId').value;
-            if (type === 'refund' && !orderId) { window.showToast("Selecione um pedido.", "error"); isProcessing = false; return; }
-            
-            const btn = document.getElementById('btnSubmitSupport'); 
-            const origText = btn.innerHTML;
-            btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A enviar...`; if (typeof lucide !== 'undefined') lucide.createIcons({root: btn});
-            
+            const type = document.getElementById('supportType').value;
+            const msg = cleanTextInput(document.getElementById('supportMessage').value, 1500);
+            const orderId = document.getElementById('supportOrderId').value;
+            const refundPhone = cleanTextInput(document.getElementById('refundPhone')?.value || '', 40);
+            const refundRecipientName = cleanTextInput(document.getElementById('refundRecipientName')?.value || '', 100);
+
+            if (!msg) { window.showToast("Escreva a sua mensagem.", "error"); isProcessing = false; btn.disabled = false; btn.innerHTML = origText; return; }
+            if (type === 'refund' && !orderId) { window.showToast("Selecione um pedido.", "error"); isProcessing = false; btn.disabled = false; btn.innerHTML = origText; return; }
+            if (type === 'refund' && (!refundPhone || !refundRecipientName)) { window.showToast("Preencha o número e o nome do destinatário do reembolso.", "error"); isProcessing = false; btn.disabled = false; btn.innerHTML = origText; return; }
+
             try {
-                await addDoc(collection(db, "support_tickets"), { userId: currentUser.uid, userName: userData.name, userEmail: currentUser.email, type: type, orderId: type === 'refund' ? orderId : null, message: msg, status: 'open', createdAt: serverTimestamp() });
-                window.closeModals(); document.getElementById('supportForm').reset(); window.showToast("Mensagem enviada com sucesso! A equipa responderá em breve.", "success");
-            } catch (err) { 
-                window.showToast("Erro ao enviar mensagem.", "error"); 
+                await addDoc(collection(db, "support_tickets"), {
+                    userId: currentUser.uid,
+                    userName: userData.name,
+                    userEmail: currentUser.email,
+                    type: type,
+                    orderId: type === 'refund' ? orderId : null,
+                    refundPhone: type === 'refund' ? refundPhone : null,
+                    refundRecipientName: type === 'refund' ? refundRecipientName : null,
+                    message: msg,
+                    status: 'open',
+                    createdAt: serverTimestamp()
+                });
+                window.showToast(type === 'refund' ? 'Pedido de reembolso enviado com os dados do destinatário.' : 'Mensagem enviada com sucesso.', "success");
+                document.getElementById('supportForm').reset();
+                document.getElementById('refundPayeeFields')?.classList.add('hidden');
+                window.closeModals();
+            } catch (error) {
+                console.error(error);
+                window.showToast("Falha ao enviar para a equipa.", "error");
             } finally {
-                isProcessing = false; btn.disabled = false; btn.innerHTML = origText;
+                isProcessing = false;
+                btn.disabled = false;
+                btn.innerHTML = origText;
+                if (typeof lucide !== 'undefined') lucide.createIcons({ root: btn });
             }
         };
 
-        window.openSupportModal = async (type) => {
-            window.closeModals(); const modal = document.getElementById('supportModal'); document.getElementById('supportType').value = type;
+        window.openSupportModal = async (type = 'message') => {
+            window.closeModals();
+            const modal = document.getElementById('supportModal');
+            const typeInput = document.getElementById('supportType');
             const selectCont = document.getElementById('orderSelectContainer');
+            const orderSelect = document.getElementById('supportOrderId');
+            const refundFields = document.getElementById('refundPayeeFields');
+            const titleText = document.getElementById('supportTitleText');
+            const msgLabel = document.getElementById('supportMsgLabel');
+            const iconBox = document.getElementById('supportIconBox');
+            const icon = document.getElementById('supportIcon');
+
+            if (typeInput) typeInput.value = type;
+            document.getElementById('supportMessage').value = '';
+            if (orderSelect) orderSelect.value = '';
+            if (document.getElementById('refundPhone')) document.getElementById('refundPhone').value = '';
+            if (document.getElementById('refundRecipientName')) document.getElementById('refundRecipientName').value = '';
+
             if (type === 'refund') {
-                setSafeText('supportTitleText', "Solicitar Reembolso"); 
-                const iconBox = document.getElementById('supportIconBox'); if(iconBox) iconBox.className = 'bg-danger-500/20 p-2 rounded-xl border border-danger-500/30';
-                const icon = document.getElementById('supportIcon'); if(icon) { icon.setAttribute('data-lucide', 'rotate-ccw'); icon.classList.replace('text-brand-400', 'text-danger-400'); }
-                if(selectCont) selectCont.classList.remove('hidden');
-                
-                const orderSelect = document.getElementById('supportOrderId'); 
-                if(orderSelect) {
-                    orderSelect.innerHTML = '<option value="">A carregar...</option>';
-                    const snap = await getDocs(query(collection(db, "orders"), where("userId", "==", currentUser.uid), where("status", "in", ["pending", "processing"]), limit(10)));
-                    if (snap.empty) { orderSelect.innerHTML = '<option value="">Sem pedidos elegíveis.</option>'; orderSelect.disabled = true; } 
-                    else { orderSelect.innerHTML = '<option value="" disabled selected>Selecione um pedido...</option>'; snap.forEach(doc => { const d = doc.data(); orderSelect.innerHTML += `<option value="${d.orderId}">#${d.orderId} - $${d.usd}</option>`; }); orderSelect.disabled = false; }
+                if (titleText) titleText.textContent = 'Solicitar Reembolso';
+                if (msgLabel) msgLabel.textContent = 'Motivo do reembolso';
+                if (iconBox) iconBox.className = 'bg-danger-500/20 p-2 rounded-xl border border-danger-500/30';
+                if (icon) { icon.setAttribute('data-lucide', 'rotate-ccw'); icon.className = 'w-5 h-5 text-danger-400'; }
+                if (selectCont) selectCont.classList.remove('hidden');
+                if (refundFields) refundFields.classList.remove('hidden');
+
+                if (orderSelect) {
+                    orderSelect.innerHTML = '<option value="">A carregar pedidos elegíveis...</option>';
+                    const snap = await getDocs(query(collection(db, "orders"), where("userId", "==", currentUser.uid), limit(20)));
+                    const refundable = [];
+                    snap.forEach(docSnap => {
+                        const data = docSnap.data() || {};
+                        const canRefund = data.isPaid === true && !['refunded', 'cancelled'].includes(data.status);
+                        if (canRefund) refundable.push({ id: docSnap.id, orderId: data.orderId || docSnap.id, total: Number(data.total) || 0 });
+                    });
+                    orderSelect.innerHTML = refundable.length
+                        ? '<option value="">Selecione um pedido...</option>' + refundable.map(item => `<option value="${item.id}">${escapeHTML(item.orderId)} — ${formatCurrency(item.total)}</option>`).join('')
+                        : '<option value="">Sem pedidos elegíveis.</option>';
+                    orderSelect.disabled = refundable.length === 0;
                 }
             } else {
-                setSafeText('supportTitleText', "Enviar Mensagem"); 
-                const iconBox = document.getElementById('supportIconBox'); if(iconBox) iconBox.className = 'bg-brand-500/20 p-2 rounded-xl border border-brand-500/30';
-                const icon = document.getElementById('supportIcon'); if(icon) { icon.setAttribute('data-lucide', 'message-square'); icon.classList.replace('text-danger-400', 'text-brand-400'); }
-                if(selectCont) selectCont.classList.add('hidden');
+                if (titleText) titleText.textContent = 'Enviar Mensagem';
+                if (msgLabel) msgLabel.textContent = 'A sua Mensagem ou Justificação';
+                if (iconBox) iconBox.className = 'bg-brand-500/20 p-2 rounded-xl border border-brand-500/30';
+                if (icon) { icon.setAttribute('data-lucide', 'message-square'); icon.className = 'w-5 h-5 text-brand-400'; }
+                if (selectCont) selectCont.classList.add('hidden');
+                if (refundFields) refundFields.classList.add('hidden');
+                if (orderSelect) { orderSelect.innerHTML = '<option value="">Selecione um pedido...</option>'; orderSelect.disabled = true; }
             }
-            if (typeof lucide !== 'undefined') lucide.createIcons(); if(modal) modal.classList.replace('hidden', 'flex');
+
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            if (modal) modal.classList.replace('hidden', 'flex');
         };
 
         // =====================================
