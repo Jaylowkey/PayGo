@@ -592,10 +592,16 @@
                     <p class="text-slate-400 text-sm mb-4 relative z-10">
                         Pague qualquer site internacional com o seu saldo PayGo.
                     </p>
-                    <div class="flex flex-wrap gap-2 mb-6 relative z-10">
+                    <div class="flex flex-wrap gap-2 mb-4 relative z-10">
                         <span class="trust-badge"><i data-lucide="badge-check" class="w-3.5 h-3.5 text-success-400"></i> Total sempre com câmbio PayGo</span>
                         <span class="trust-badge"><i data-lucide="shield-check" class="w-3.5 h-3.5 text-brand-400"></i> Campos guiados para cliente</span>
                         <span class="trust-badge"><i data-lucide="receipt-text" class="w-3.5 h-3.5 text-warning-400"></i> Admin recebe pedido organizado</span>
+                    </div>
+                    <div class="mb-6 rounded-2xl border border-warning-500/30 bg-warning-500/10 px-4 py-3 relative z-10">
+                        <p class="text-xs md:text-sm font-bold text-warning-300 flex items-start gap-2">
+                            <i data-lucide="shield-alert" class="w-4 h-4 mt-0.5 shrink-0"></i>
+                            <span><strong>Lembrete importante:</strong> não pagamos produtos com bónus de primeira conta, promoções de primeira compra, primeira recarga ou ofertas exclusivas para conta nova.</span>
+                        </p>
                     </div>
 
                     <form id="orderForm" onsubmit="event.preventDefault(); window.processOrder();" class="space-y-6 relative z-10">
@@ -1345,11 +1351,16 @@
             const res = await fetch('/api/paysuite-payment', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
             });
-            const result = await res.json();
+            let result = {};
+            try {
+                result = await res.json();
+            } catch {
+                result = {};
+            }
             if (res.status === 503 || result.error?.includes("manutenção preventiva")) {
                 throw new Error("MANUTENCAO_PAYSUITE");
             }
-            if (!res.ok || !result.success) throw new Error(result.error || "A transação foi recusada pela operadora.");
+            if (!res.ok || !result.success) throw new Error(result.error || `Falha no gateway (${res.status}). Verifique o método, o valor e a configuração da API.`);
             return result;
         }
         const pagamentoSeguro = new CircuitBreaker(fetchPaymentApi, { failureThreshold: 2 });
@@ -2358,30 +2369,30 @@
             const origText = btn.innerHTML;
             btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A preparar Pagamento...`; if (typeof lucide !== 'undefined') lucide.createIcons({root: btn});
 
-            const amount = parseFloat(document.getElementById('topUpAmount').value);
-            const method = document.querySelector('input[name="topUpMethod"]:checked').value;
+            const amount = Number(parseFloat(document.getElementById('topUpAmount').value) || 0);
+            const method = document.querySelector('input[name="topUpMethod"]:checked')?.value || 'mpesa';
 
-            if (amount < 10) { window.showToast("O depósito mínimo é de 10 MT.", "warning"); isProcessing = false; btn.disabled = false; btn.innerHTML = origText; return; }
+            if (!Number.isFinite(amount) || amount < 10) { window.showToast("O depósito mínimo é de 10 MT.", "warning"); isProcessing = false; btn.disabled = false; btn.innerHTML = origText; return; }
 
             try {
                 if (method === 'bank') {
                     await addDoc(collection(db, "support_tickets"), { userId: currentUser.uid, userName: userData.name, userEmail: currentUser.email, type: 'deposit_request', amount: amount, paymentMethod: method, message: `Depósito Bancário de ${formatMZN(amount)} MT.`, status: 'open', createdAt: serverTimestamp() });
                     window.fetchDashboardData(true);
-                    window.closeModals(); document.getElementById('topUpForm').reset(); setSafeText('topUpMznDisplay','0.00 MT'); setSafeText('topUpUsdDisplay','0.00 USD'); window.showToast("Pedido enviado! O Admin confirmará após verificação.", "success");
+                    window.closeModals(); document.getElementById('topUpForm').reset(); setSafeValue('topUpAmount',''); window.syncTopUpPreview(0, 0); window.showToast("Pedido enviado! O Admin confirmará após verificação.", "success");
                 } else {
                     window.showToast("A conectar de forma segura à PaySuite...", "info");
                     const topupId = 'TOP-' + Date.now().toString().slice(-6).toUpperCase();
                     
                     await addDoc(collection(db, "topups"), { topupId: topupId, userId: currentUser.uid, amount: amount, method: method, status: 'pending', createdAt: serverTimestamp() });
 
-                    const payloadVercel = { orderId: topupId, amount: amount, method: method, description: `Depósito Carteira PayGo: ${topupId}` };
+                    const payloadVercel = { orderId: topupId, amount: Number(amount.toFixed(2)), method: method, description: `Depósito Carteira PayGo: ${topupId}` };
                     const data = await pagamentoSeguro.fire(payloadVercel);
 
                     if (data.data && data.data.checkoutUrl) { 
                         window.location.href = data.data.checkoutUrl; 
                     } else { 
                         window.fetchDashboardData(true);
-                        window.closeModals(); document.getElementById('topUpForm').reset(); setSafeText('topUpMznDisplay','0.00 MT'); setSafeText('topUpUsdDisplay','0.00 USD'); window.showToast("Verifique o seu telemóvel para inserir o PIN!", "success"); 
+                        window.closeModals(); document.getElementById('topUpForm').reset(); setSafeValue('topUpAmount',''); window.syncTopUpPreview(0, 0); window.showToast("Verifique o seu telemóvel para inserir o PIN!", "success"); 
                     }
                 }
             } catch (err) { 
@@ -2397,12 +2408,31 @@
             }
         };
 
-        window.calcTopUpMzn = () => {
-            const usd = parseFloat(document.getElementById('topUpUsdInput').value) || 0;
-            const mzn = usd * sysExchangeRate;
-            setSafeText('topUpMznDisplay', formatMZN(mzn) + " MT");
-            setSafeValue('topUpAmount', usd > 0 ? mzn.toFixed(2) : '');
+        window.syncTopUpPreview = (usd = 0, mt = 0) => {
+            setSafeText('topUpMznDisplay', `${formatMZN(mt)} MT`);
+            setSafeText('topUpUsdDisplay', `${formatUSD(usd)} USD`);
+            setSafeValue('topUpAmount', mt > 0 ? mt.toFixed(2) : '');
         };
+
+        window.syncTopUpFromUsd = () => {
+            const usdInputEl = document.getElementById('topUpUsdInput');
+            const mtInputEl = document.getElementById('topUpMtInput');
+            const usd = parseFloat(usdInputEl?.value) || 0;
+            const mt = usd > 0 ? usd * sysExchangeRate : 0;
+            if (mtInputEl) mtInputEl.value = usd > 0 ? mt.toFixed(2) : '';
+            window.syncTopUpPreview(usd, mt);
+        };
+
+        window.syncTopUpFromMt = () => {
+            const usdInputEl = document.getElementById('topUpUsdInput');
+            const mtInputEl = document.getElementById('topUpMtInput');
+            const mt = parseFloat(mtInputEl?.value) || 0;
+            const usd = mt > 0 ? (mt / sysExchangeRate) : 0;
+            if (usdInputEl) usdInputEl.value = usd > 0 ? usd.toFixed(2) : '';
+            window.syncTopUpPreview(usd, mt);
+        };
+
+        window.calcTopUpMzn = () => window.syncTopUpFromUsd();
 
         window.toggleBankDetails = (method) => {
             const el = document.getElementById('bankDetails');
@@ -2625,8 +2655,8 @@
             if (type === 'refund') {
                 if (titleText) titleText.textContent = 'Solicitar Reembolso';
                 if (msgLabel) msgLabel.textContent = 'Motivo do reembolso';
-                if (iconBox) iconBox.className = 'bg-danger-500/20 p-2 rounded-xl border border-danger-500/30';
-                if (icon) { icon.setAttribute('data-lucide', 'rotate-ccw'); icon.className = 'w-5 h-5 text-danger-400'; }
+                if (iconBox) iconBox.setAttribute('class', 'bg-danger-500/20 p-2 rounded-xl border border-danger-500/30');
+                if (icon) { icon.setAttribute('data-lucide', 'rotate-ccw'); icon.setAttribute('class', 'w-5 h-5 text-danger-400'); }
                 if (selectCont) selectCont.classList.remove('hidden');
                 if (refundFields) refundFields.classList.remove('hidden');
 
@@ -2647,8 +2677,8 @@
             } else {
                 if (titleText) titleText.textContent = 'Enviar Mensagem';
                 if (msgLabel) msgLabel.textContent = 'A sua Mensagem ou Justificação';
-                if (iconBox) iconBox.className = 'bg-brand-500/20 p-2 rounded-xl border border-brand-500/30';
-                if (icon) { icon.setAttribute('data-lucide', 'message-square'); icon.className = 'w-5 h-5 text-brand-400'; }
+                if (iconBox) iconBox.setAttribute('class', 'bg-brand-500/20 p-2 rounded-xl border border-brand-500/30');
+                if (icon) { icon.setAttribute('data-lucide', 'message-square'); icon.setAttribute('class', 'w-5 h-5 text-brand-400'); }
                 if (selectCont) selectCont.classList.add('hidden');
                 if (refundFields) refundFields.classList.add('hidden');
                 if (orderSelect) { orderSelect.innerHTML = '<option value="">Selecione um pedido...</option>'; orderSelect.disabled = true; }
