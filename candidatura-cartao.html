@@ -204,6 +204,113 @@
       font-size:.95rem;
     }
 
+    .hero-meta{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:18px;
+    }
+
+    .meta-chip{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 14px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.04);
+      color:#e2e8f0;
+      font-size:.88rem;
+      font-weight:800;
+    }
+
+    .countdown-wrap{
+      margin-top:22px;
+      padding:18px;
+      border-radius:22px;
+      background:linear-gradient(180deg, rgba(37,99,235,.14), rgba(59,130,246,.08));
+      border:1px solid rgba(96,165,250,.22);
+    }
+
+    .countdown-head{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:center;
+      flex-wrap:wrap;
+      margin-bottom:14px;
+    }
+
+    .countdown-head strong{
+      font-size:1.05rem;
+      color:#dbeafe;
+      display:block;
+      margin-bottom:4px;
+    }
+
+    .countdown-head span{
+      color:var(--muted);
+      font-size:.92rem;
+      line-height:1.6;
+    }
+
+    .countdown-badge{
+      padding:9px 12px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:900;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      border:1px solid rgba(245,158,11,.22);
+      background:rgba(245,158,11,.12);
+      color:#fde68a;
+      white-space:nowrap;
+    }
+
+    .countdown-grid{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:12px;
+    }
+
+    .count-item{
+      text-align:center;
+      padding:16px 10px;
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(2,6,23,.45);
+    }
+
+    .count-item strong{
+      display:block;
+      font-family:"Outfit",sans-serif;
+      font-size:clamp(1.6rem,3vw,2.2rem);
+      line-height:1;
+      letter-spacing:-.04em;
+      color:#fff;
+    }
+
+    .count-item span{
+      display:block;
+      margin-top:8px;
+      font-size:.8rem;
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.12em;
+      font-weight:800;
+    }
+
+    .countdown-note{
+      margin-top:14px;
+      padding:12px 14px;
+      border-radius:16px;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.06);
+      color:#dbeafe;
+      font-size:.92rem;
+      line-height:1.7;
+    }
+
     .side-badge{
       display:inline-flex; align-items:center; gap:8px;
       padding:8px 12px; border-radius:999px;
@@ -522,7 +629,7 @@
 
     @media (max-width: 760px){
       .hero-main,.hero-side,.panel{padding:22px}
-      .hero-points,.chooser,.form-grid,.payment-method-grid{grid-template-columns:1fr}
+      .hero-points,.chooser,.form-grid,.payment-method-grid,.countdown-grid{grid-template-columns:1fr}
       .sticky-inner{flex-direction:column; align-items:stretch}
       .sticky-inner .btn{width:100%}
     }
@@ -560,6 +667,45 @@
             Faz a tua candidatura com a tua conta PayGo. Cada utilizador tem uma única candidatura e um ID permanente.
             Depois de guardar a candidatura, escolhes pagar por <strong>M-Pesa</strong> ou <strong>e-Mola</strong>.
           </p>
+
+          <div class="hero-meta">
+            <div class="meta-chip">📅 Sábado</div>
+            <div class="meta-chip">⏰ 18h00</div>
+            <div class="meta-chip">💰 1200 MT</div>
+          </div>
+
+          <div class="countdown-wrap">
+            <div class="countdown-head">
+              <div>
+                <strong>Contagem regressiva para a primeira turma</strong>
+                <span>As candidaturas continuam abertas até ao início da aula ou até ao encerramento das vagas.</span>
+              </div>
+              <div class="countdown-badge" id="countdownBadge">Vagas abertas</div>
+            </div>
+
+            <div class="countdown-grid">
+              <div class="count-item">
+                <strong id="countDays">00</strong>
+                <span>Dias</span>
+              </div>
+              <div class="count-item">
+                <strong id="countHours">00</strong>
+                <span>Horas</span>
+              </div>
+              <div class="count-item">
+                <strong id="countMinutes">00</strong>
+                <span>Minutos</span>
+              </div>
+              <div class="count-item">
+                <strong id="countSeconds">00</strong>
+                <span>Segundos</span>
+              </div>
+            </div>
+
+            <div class="countdown-note" id="countdownNote">
+              Primeira turma marcada para <strong>sábado às 18h</strong>. Garante a candidatura antes do encerramento.
+            </div>
+          </div>
 
           <div class="hero-points">
             <div class="point">✔ Login PayGo obrigatório</div>
@@ -909,9 +1055,60 @@
     const payMpesaBtn = document.getElementById("payMpesaBtn");
     const payEmolaBtn = document.getElementById("payEmolaBtn");
 
+    const countDays = document.getElementById("countDays");
+    const countHours = document.getElementById("countHours");
+    const countMinutes = document.getElementById("countMinutes");
+    const countSeconds = document.getElementById("countSeconds");
+    const countdownBadge = document.getElementById("countdownBadge");
+    const countdownNote = document.getElementById("countdownNote");
+
     let currentApplication = null;
     let currentUser = null;
     let selectedPaymentMethod = "mpesa";
+
+    // Define aqui a data da aula
+    // Sábado às 18h em Maputo (+02:00)
+    const CLASS_TARGET_DATE = new Date("2026-04-25T18:00:00+02:00").getTime();
+
+    function padNumber(value) {
+      return String(value).padStart(2, "0");
+    }
+
+    function updateCountdown() {
+      const now = Date.now();
+      const distance = CLASS_TARGET_DATE - now;
+
+      if (distance <= 0) {
+        countDays.textContent = "00";
+        countHours.textContent = "00";
+        countMinutes.textContent = "00";
+        countSeconds.textContent = "00";
+        countdownBadge.textContent = "Turma iniciada";
+        countdownNote.innerHTML = `A contagem terminou. Esta turma já iniciou ou o período de candidatura foi encerrado.`;
+        return;
+      }
+
+      const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((distance / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((distance / (1000 * 60)) % 60);
+      const seconds = Math.floor((distance / 1000) % 60);
+
+      countDays.textContent = padNumber(days);
+      countHours.textContent = padNumber(hours);
+      countMinutes.textContent = padNumber(minutes);
+      countSeconds.textContent = padNumber(seconds);
+
+      if (days === 0 && hours < 6) {
+        countdownBadge.textContent = "Últimas horas";
+        countdownNote.innerHTML = `Faltam muito poucas horas para a primeira aula. Faz a tua candidatura e pagamento o quanto antes.`;
+      } else if (days <= 1) {
+        countdownBadge.textContent = "Último dia";
+        countdownNote.innerHTML = `A primeira turma acontece <strong>sábado às 18h</strong>. Aproveita enquanto as vagas continuam abertas.`;
+      } else {
+        countdownBadge.textContent = "Vagas abertas";
+        countdownNote.innerHTML = `Primeira turma marcada para <strong>sábado às 18h</strong>. Garante a candidatura antes do encerramento.`;
+      }
+    }
 
     function setChoice(type) {
       cardOptionInput.value = type;
@@ -1362,6 +1559,8 @@
 
     setChoice("no_card");
     updateStatusUI(null);
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
   </script>
 </body>
 </html>
