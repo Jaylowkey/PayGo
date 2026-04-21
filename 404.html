@@ -126,7 +126,8 @@
         .btn-primary,
         .btn-secondary,
         .btn-success,
-        .btn-warning {
+        .btn-warning,
+        .btn-danger {
             transition: all 0.22s ease;
             cursor: pointer;
         }
@@ -134,14 +135,16 @@
         .btn-primary:hover,
         .btn-secondary:hover,
         .btn-success:hover,
-        .btn-warning:hover {
+        .btn-warning:hover,
+        .btn-danger:hover {
             transform: translateY(-2px);
         }
 
         .btn-primary:active,
         .btn-secondary:active,
         .btn-success:active,
-        .btn-warning:active {
+        .btn-warning:active,
+        .btn-danger:active {
             transform: translateY(0);
         }
 
@@ -231,17 +234,29 @@
                     </h2>
 
                     <p id="errorMessage" class="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto lg:mx-0 leading-8 mb-8">
-                        A página que procura não existe ou foi movida. Não se preocupe, vamos ajudá-lo a voltar ao caminho certo.
+                        A página que procura não existe, foi movida ou o link está incorreto. Use as opções abaixo para continuar.
                     </p>
+
+                    <div id="contextBox" class="hidden mb-8 glass-card rounded-2xl px-5 py-4 text-sm text-slate-300 leading-7 text-left">
+                        <div class="flex items-start gap-3">
+                            <div class="shrink-0 mt-0.5 text-brand-300">
+                                <i data-lucide="info" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <strong class="block text-white mb-1">Contexto detectado</strong>
+                                <span id="contextMessage">Estamos a tentar ajudá-lo a voltar à área correta do site.</span>
+                            </div>
+                        </div>
+                    </div>
 
                     <div id="autoRedirectNotice" class="hidden mb-8 glass-card rounded-2xl px-5 py-4 text-sm text-slate-300 leading-7">
                         Será redirecionado automaticamente em <strong id="redirectCountdown">15</strong> segundos.
                     </div>
 
                     <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-6">
-                        <a href="/" class="btn-primary inline-flex items-center justify-center gap-2 px-7 py-4 bg-brand-600 hover:bg-brand-500 text-white rounded-2xl font-bold text-base shadow-lg shadow-brand-600/30">
+                        <a id="primaryAction" href="/" class="btn-primary inline-flex items-center justify-center gap-2 px-7 py-4 bg-brand-600 hover:bg-brand-500 text-white rounded-2xl font-bold text-base shadow-lg shadow-brand-600/30">
                             <i data-lucide="home" class="w-5 h-5"></i>
-                            Voltar ao Início
+                            <span id="primaryActionText">Voltar ao Início</span>
                         </a>
 
                         <button type="button" id="goBackBtn" class="btn-secondary inline-flex items-center justify-center gap-2 px-7 py-4 bg-slate-800/90 hover:bg-slate-700 text-white rounded-2xl font-bold text-base border border-slate-700">
@@ -249,7 +264,7 @@
                             Voltar à Página Anterior
                         </button>
 
-                        <a href="https://wa.me/258837522255" target="_blank" rel="noopener noreferrer" class="btn-success inline-flex items-center justify-center gap-2 px-7 py-4 bg-success-600 hover:bg-success-500 text-white rounded-2xl font-bold text-base shadow-lg shadow-success-600/30">
+                        <a id="supportAction" href="https://wa.me/258837522255" target="_blank" rel="noopener noreferrer" class="btn-success inline-flex items-center justify-center gap-2 px-7 py-4 bg-success-600 hover:bg-success-500 text-white rounded-2xl font-bold text-base shadow-lg shadow-success-600/30">
                             <i data-lucide="message-circle" class="w-5 h-5"></i>
                             Falar com Suporte
                         </a>
@@ -258,11 +273,11 @@
                     <div class="glass-card rounded-3xl p-5 sm:p-6 shadow-soft">
                         <div class="flex items-start gap-4">
                             <div class="hidden sm:flex shrink-0 w-12 h-12 rounded-2xl bg-brand-500/10 border border-brand-400/20 items-center justify-center text-brand-300">
-                                <i data-lucide="shield-check" class="w-6 h-6"></i>
+                                <i id="helperIcon" data-lucide="shield-check" class="w-6 h-6"></i>
                             </div>
                             <div class="text-left">
-                                <h3 class="text-white font-bold text-lg mb-2">O que pode fazer agora?</h3>
-                                <p class="text-slate-400 leading-7 text-sm sm:text-base">
+                                <h3 id="helperTitle" class="text-white font-bold text-lg mb-2">O que pode fazer agora?</h3>
+                                <p id="helperText" class="text-slate-400 leading-7 text-sm sm:text-base">
                                     Voltar ao início, abrir o suporte no WhatsApp, repetir a operação ou usar os links úteis abaixo para continuar no site com segurança.
                                 </p>
                             </div>
@@ -273,46 +288,16 @@
                 <aside class="glass-card rounded-[28px] p-6 sm:p-7 shadow-glow">
                     <div class="flex items-center justify-between gap-3 mb-6">
                         <h3 class="text-xl font-bold text-white flex items-center gap-2">
-                            <i data-lucide="compass" class="w-5 h-5 text-brand-400"></i>
-                            Links Úteis
+                            <i id="linksIcon" data-lucide="compass" class="w-5 h-5 text-brand-400"></i>
+                            <span id="linksTitle">Links Úteis</span>
                         </h3>
                         <span class="text-xs uppercase tracking-[0.2em] text-slate-500 font-bold">PayGo</span>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-                        <a href="/" class="group flex items-center gap-3 text-slate-300 hover:text-white transition-colors p-4 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.04]">
-                            <i data-lucide="home" class="w-4 h-4 text-brand-400"></i>
-                            <span class="text-sm font-semibold">Página Inicial</span>
-                        </a>
-
-                        <a href="/login.html" class="group flex items-center gap-3 text-slate-300 hover:text-white transition-colors p-4 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.04]">
-                            <i data-lucide="log-in" class="w-4 h-4 text-brand-400"></i>
-                            <span class="text-sm font-semibold">Entrar</span>
-                        </a>
-
-                        <a href="/register.html" class="group flex items-center gap-3 text-slate-300 hover:text-white transition-colors p-4 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.04]">
-                            <i data-lucide="user-plus" class="w-4 h-4 text-brand-400"></i>
-                            <span class="text-sm font-semibold">Registar</span>
-                        </a>
-
-                        <a href="/#como-usar" class="group flex items-center gap-3 text-slate-300 hover:text-white transition-colors p-4 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.04]">
-                            <i data-lucide="info" class="w-4 h-4 text-brand-400"></i>
-                            <span class="text-sm font-semibold">Como Funciona</span>
-                        </a>
-
-                        <a href="/faq.html" class="group flex items-center gap-3 text-slate-300 hover:text-white transition-colors p-4 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.04]">
-                            <i data-lucide="help-circle" class="w-4 h-4 text-brand-400"></i>
-                            <span class="text-sm font-semibold">FAQ</span>
-                        </a>
-
-                        <a href="/contacto.html" class="group flex items-center gap-3 text-slate-300 hover:text-white transition-colors p-4 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.04]">
-                            <i data-lucide="mail" class="w-4 h-4 text-brand-400"></i>
-                            <span class="text-sm font-semibold">Contacto</span>
-                        </a>
-                    </div>
+                    <div id="smartLinks" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6"></div>
 
                     <div class="border-t border-white/5 pt-6">
-                        <h4 class="text-white font-bold text-base mb-3">Acesso rápido</h4>
+                        <h4 id="quickAccessTitle" class="text-white font-bold text-base mb-3">Acesso rápido</h4>
                         <form id="quickSearchForm" action="/#formulario" class="relative">
                             <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500"></i>
                             <input
@@ -322,13 +307,13 @@
                                 class="search-input w-full pl-12 pr-4 py-4 bg-slate-900/60 border border-slate-700 rounded-2xl focus:outline-none focus:border-brand-500 text-white transition-colors"
                             >
                         </form>
-                        <p class="text-xs text-slate-500 mt-3 leading-6">
+                        <p id="quickAccessHint" class="text-xs text-slate-500 mt-3 leading-6">
                             Dica: se estava a tentar fazer um pedido, use o botão abaixo para ir diretamente ao formulário principal.
                         </p>
 
-                        <a href="/#formulario" class="btn-warning mt-4 inline-flex w-full items-center justify-center gap-2 px-5 py-4 bg-warning-500 hover:bg-warning-400 text-slate-950 rounded-2xl font-extrabold shadow-lg shadow-warning-500/20">
+                        <a id="bottomAction" href="/#formulario" class="btn-warning mt-4 inline-flex w-full items-center justify-center gap-2 px-5 py-4 bg-warning-500 hover:bg-warning-400 text-slate-950 rounded-2xl font-extrabold shadow-lg shadow-warning-500/20">
                             <i data-lucide="shopping-cart" class="w-5 h-5"></i>
-                            Fazer Pedido Agora
+                            <span id="bottomActionText">Fazer Pedido Agora</span>
                         </a>
                     </div>
                 </aside>
@@ -402,6 +387,128 @@
             }
         };
 
+        const contextConfig = {
+            admin: {
+                label: 'Área administrativa',
+                message: 'Detectámos que estava numa área administrativa. Use os atalhos abaixo para voltar rapidamente à gestão da plataforma.',
+                helperTitle: 'Problema numa área administrativa?',
+                helperText: 'Se estava no painel admin, pode voltar ao dashboard, abrir a área de candidaturas ou falar com o suporte técnico.',
+                primaryText: 'Abrir Admin',
+                primaryHref: '/admin/',
+                bottomText: 'Abrir Dashboard Admin',
+                bottomHref: '/admin/',
+                linksTitle: 'Atalhos do Admin',
+                quickAccessTitle: 'Acesso rápido do admin',
+                quickAccessHint: 'Se o erro aconteceu no painel administrativo, use um dos atalhos abaixo.',
+                links: [
+                    { href: '/admin/', icon: 'layout-dashboard', text: 'Dashboard Admin' },
+                    { href: '/admin/candidaturas.html', icon: 'files', text: 'Candidaturas' },
+                    { href: '/admin/clientes.html', icon: 'users', text: 'Clientes' },
+                    { href: '/admin/configuracoes.html', icon: 'settings', text: 'Configurações' },
+                    { href: '/login.html', icon: 'log-in', text: 'Entrar novamente' },
+                    { href: 'https://wa.me/258837522255', icon: 'message-circle', text: 'Suporte técnico', external: true }
+                ]
+            },
+            login: {
+                label: 'Autenticação',
+                message: 'Parece que estava a tentar iniciar sessão ou aceder a uma área protegida.',
+                helperTitle: 'Precisa voltar a autenticar?',
+                helperText: 'Pode abrir a página de login, criar uma nova conta ou regressar ao início do site para continuar.',
+                primaryText: 'Ir para Login',
+                primaryHref: '/login.html',
+                bottomText: 'Criar nova conta',
+                bottomHref: '/register.html',
+                linksTitle: 'Ações de autenticação',
+                quickAccessTitle: 'Entrar ou registar',
+                quickAccessHint: 'Se a sua sessão expirou, volte a entrar e tente novamente.',
+                links: [
+                    { href: '/login.html', icon: 'log-in', text: 'Entrar' },
+                    { href: '/register.html', icon: 'user-plus', text: 'Criar conta' },
+                    { href: '/recuperar-senha.html', icon: 'key-round', text: 'Recuperar senha' },
+                    { href: '/faq.html', icon: 'help-circle', text: 'Ajuda' }
+                ]
+            },
+            dashboard: {
+                label: 'Conta do cliente',
+                message: 'Detectámos que estava a tentar abrir uma área da sua conta PayGo.',
+                helperTitle: 'Problema no dashboard?',
+                helperText: 'Pode voltar ao painel do cliente, iniciar sessão novamente ou contactar o suporte se o problema persistir.',
+                primaryText: 'Abrir Dashboard',
+                primaryHref: '/dashboard.html',
+                bottomText: 'Entrar na conta',
+                bottomHref: '/login.html',
+                linksTitle: 'Atalhos da conta',
+                quickAccessTitle: 'Acesso rápido da conta',
+                quickAccessHint: 'Se o dashboard falhou ao carregar, tente reabrir a conta ou autenticar novamente.',
+                links: [
+                    { href: '/dashboard.html', icon: 'layout-dashboard', text: 'Dashboard' },
+                    { href: '/perfil.html', icon: 'user', text: 'Perfil' },
+                    { href: '/pedidos.html', icon: 'shopping-bag', text: 'Pedidos' },
+                    { href: '/carteira.html', icon: 'wallet', text: 'Carteira' },
+                    { href: '/login.html', icon: 'log-in', text: 'Entrar novamente' },
+                    { href: 'https://wa.me/258837522255', icon: 'message-circle', text: 'Falar com suporte', external: true }
+                ]
+            },
+            candidatura: {
+                label: 'Candidatura PayGo',
+                message: 'Parece que estava na área de candidatura das aulas ou do cartão virtual.',
+                helperTitle: 'Problema na candidatura?',
+                helperText: 'Pode voltar à candidatura, abrir a página principal das aulas ou falar com a equipa PayGo para confirmar o estado.',
+                primaryText: 'Abrir candidatura',
+                primaryHref: '/candidatura-cartao',
+                bottomText: 'Falar sobre candidatura',
+                bottomHref: 'https://wa.me/258871002255?text=Ol%C3%A1%20PayGo%2C%20preciso%20de%20ajuda%20com%20a%20minha%20candidatura.',
+                linksTitle: 'Atalhos da candidatura',
+                quickAccessTitle: 'Acesso rápido da candidatura',
+                quickAccessHint: 'Se a página de candidatura falhou, volte à candidatura ou fale com a equipa da PayGo.',
+                links: [
+                    { href: '/candidatura-cartao', icon: 'file-pen-line', text: 'Página de candidatura' },
+                    { href: '/login.html', icon: 'log-in', text: 'Entrar na conta' },
+                    { href: '/faq.html', icon: 'help-circle', text: 'Perguntas frequentes' },
+                    { href: 'https://wa.me/258871002255', icon: 'message-circle', text: 'WhatsApp candidatura', external: true }
+                ]
+            },
+            register: {
+                label: 'Registo',
+                message: 'Parece que estava a criar uma conta nova na PayGo.',
+                helperTitle: 'Problema no registo?',
+                helperText: 'Pode voltar ao registo, abrir o login se já tiver conta ou pedir ajuda à equipa da PayGo.',
+                primaryText: 'Criar conta',
+                primaryHref: '/register.html',
+                bottomText: 'Já tenho conta',
+                bottomHref: '/login.html',
+                linksTitle: 'Atalhos do registo',
+                quickAccessTitle: 'Registo e acesso',
+                quickAccessHint: 'Se o registo falhou, tente novamente ou entre com uma conta existente.',
+                links: [
+                    { href: '/register.html', icon: 'user-plus', text: 'Criar conta' },
+                    { href: '/login.html', icon: 'log-in', text: 'Entrar' },
+                    { href: '/faq.html', icon: 'help-circle', text: 'Ajuda' }
+                ]
+            },
+            default: {
+                label: 'Navegação do site',
+                message: 'Estamos a tentar ajudá-lo a voltar à área correta do site.',
+                helperTitle: 'O que pode fazer agora?',
+                helperText: 'Volte ao início, tente novamente a ação anterior ou use os links úteis para continuar a navegar com segurança.',
+                primaryText: 'Voltar ao início',
+                primaryHref: '/',
+                bottomText: 'Fazer pedido agora',
+                bottomHref: '/#formulario',
+                linksTitle: 'Links úteis',
+                quickAccessTitle: 'Acesso rápido',
+                quickAccessHint: 'Se estava a tentar fazer um pedido, use o botão abaixo para ir diretamente ao formulário principal.',
+                links: [
+                    { href: '/', icon: 'home', text: 'Página inicial' },
+                    { href: '/login.html', icon: 'log-in', text: 'Entrar' },
+                    { href: '/register.html', icon: 'user-plus', text: 'Registar' },
+                    { href: '/faq.html', icon: 'help-circle', text: 'FAQ' },
+                    { href: '/contacto.html', icon: 'mail', text: 'Contacto' },
+                    { href: 'https://wa.me/258837522255', icon: 'message-circle', text: 'Suporte', external: true }
+                ]
+            }
+        };
+
         function createIconsSafe() {
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons();
@@ -411,6 +518,33 @@
         function getErrorType() {
             const params = new URLSearchParams(window.location.search);
             return params.get('error') || '404';
+        }
+
+        function getReferrerPath() {
+            try {
+                if (!document.referrer) return '';
+                const refUrl = new URL(document.referrer);
+                return refUrl.pathname.toLowerCase();
+            } catch {
+                return '';
+            }
+        }
+
+        function detectContext() {
+            const params = new URLSearchParams(window.location.search);
+            const forcedContext = (params.get('context') || '').toLowerCase();
+            const pathname = window.location.pathname.toLowerCase();
+            const referrerPath = getReferrerPath();
+            const combined = `${pathname} ${referrerPath} ${window.location.href.toLowerCase()} ${forcedContext}`;
+
+            if (forcedContext && contextConfig[forcedContext]) return forcedContext;
+            if (combined.includes('/admin')) return 'admin';
+            if (combined.includes('/dashboard')) return 'dashboard';
+            if (combined.includes('/login')) return 'login';
+            if (combined.includes('/register')) return 'register';
+            if (combined.includes('/candidatura') || combined.includes('cartao')) return 'candidatura';
+
+            return 'default';
         }
 
         function applyErrorConfig(type) {
@@ -425,6 +559,57 @@
             if (config.redirectHome) {
                 startAutoRedirect(15, '/');
             }
+        }
+
+        function applyContextConfig(contextKey) {
+            const ctx = contextConfig[contextKey] || contextConfig.default;
+
+            document.getElementById('contextBox').classList.remove('hidden');
+            document.getElementById('contextMessage').textContent = ctx.message;
+            document.getElementById('helperTitle').textContent = ctx.helperTitle;
+            document.getElementById('helperText').textContent = ctx.helperText;
+            document.getElementById('linksTitle').textContent = ctx.linksTitle;
+            document.getElementById('quickAccessTitle').textContent = ctx.quickAccessTitle;
+            document.getElementById('quickAccessHint').textContent = ctx.quickAccessHint;
+
+            const primaryAction = document.getElementById('primaryAction');
+            const primaryActionText = document.getElementById('primaryActionText');
+            primaryAction.href = ctx.primaryHref;
+            primaryActionText.textContent = ctx.primaryText;
+
+            const bottomAction = document.getElementById('bottomAction');
+            const bottomActionText = document.getElementById('bottomActionText');
+            bottomAction.href = ctx.bottomHref;
+            if (ctx.bottomHref.startsWith('http')) {
+                bottomAction.target = '_blank';
+                bottomAction.rel = 'noopener noreferrer';
+            }
+            bottomActionText.textContent = ctx.bottomText;
+
+            renderSmartLinks(ctx.links);
+        }
+
+        function renderSmartLinks(links) {
+            const container = document.getElementById('smartLinks');
+            container.innerHTML = '';
+
+            links.forEach(link => {
+                const a = document.createElement('a');
+                a.href = link.href;
+                a.className = 'group flex items-center gap-3 text-slate-300 hover:text-white transition-colors p-4 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.04]';
+                if (link.external) {
+                    a.target = '_blank';
+                    a.rel = 'noopener noreferrer';
+                }
+
+                a.innerHTML = `
+                    <i data-lucide="${link.icon}" class="w-4 h-4 text-brand-400"></i>
+                    <span class="text-sm font-semibold">${link.text}</span>
+                `;
+                container.appendChild(a);
+            });
+
+            createIconsSafe();
         }
 
         function startAutoRedirect(seconds, url) {
@@ -503,15 +688,19 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            createIconsSafe();
-            applyErrorConfig(getErrorType());
+            const errorType = getErrorType();
+            const contextKey = detectContext();
+
+            applyErrorConfig(errorType);
+            applyContextConfig(contextKey);
             setupGoBackButton();
             setupQuickSearch();
             setupOfflineListener();
             setupOnlineRecovery();
             setupGlobalErrorLog();
+            createIconsSafe();
 
-            console.log(`🔍 PayGo Error Page Loaded: ${getErrorType()}`);
+            console.log(`🔍 PayGo Error Page Loaded: ${errorType} | Context: ${contextKey}`);
         });
     </script>
 </body>
