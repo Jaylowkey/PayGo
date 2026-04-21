@@ -216,6 +216,18 @@
         .game-service-card:hover { border-color: rgba(59,130,246,0.35); transform: translateY(-2px); }
         .game-service-card.active { border-color: rgba(34,197,94,0.45); background: rgba(34,197,94,0.08); box-shadow: 0 0 0 1px rgba(34,197,94,0.15) inset; }
         .game-service-card .logo { width: 2.25rem; height: 2.25rem; border-radius: 0.9rem; display:flex; align-items:center; justify-content:center; font-size: 1rem; font-weight: 800; }
+        .service-quick-card {
+            position: relative;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(15,23,42,0.72);
+            border-radius: 1rem;
+            padding: 0.95rem;
+            transition: all 0.22s ease;
+            overflow: hidden;
+        }
+        .service-quick-card:hover { border-color: rgba(59,130,246,0.35); transform: translateY(-2px); }
+        .service-quick-card.active { border-color: rgba(59,130,246,0.45); background: rgba(59,130,246,0.10); box-shadow: 0 0 0 1px rgba(59,130,246,0.15) inset; }
+        .service-quick-card .logo { width: 2.25rem; height: 2.25rem; border-radius: 0.9rem; display:flex; align-items:center; justify-content:center; font-size: 1rem; font-weight: 800; }
         .selection-chip {
             border: 1px solid rgba(148,163,184,0.35);
             background: rgba(15,23,42,0.75);
@@ -629,6 +641,16 @@
                                                 </optgroup>
                                                 <option value="Outro">Outros</option>
                                             </select>
+                                        </div>
+                                        <div id="digitalStorefront" class="bg-brand-500/10 border border-brand-500/25 rounded-2xl p-4 space-y-4">
+                                            <div class="flex items-center justify-between gap-3 flex-wrap">
+                                                <div>
+                                                    <p class="text-xs font-bold text-brand-400 uppercase tracking-widest">Serviços em destaque</p>
+                                                    <p class="text-xs text-slate-400 mt-1">Escolha rápido um software popular e a PayGo preenche o link e os valores sugeridos.</p>
+                                                </div>
+                                                <span class="mode-pill bg-brand-500/10 text-brand-300 border border-brand-500/20">V6 PRO</span>
+                                            </div>
+                                            <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3" id="digitalServiceCards"></div>
                                         </div>
                                         <div id="customSoftwareWrap" class="hidden">
                                             <label class="block text-xs font-bold text-warning-400 uppercase tracking-widest mb-2">Nome do Software</label>
@@ -1460,6 +1482,17 @@
             ]
         };
 
+        const DIGITAL_FEATURED_CARDS = [
+            { name: 'Netflix', icon: 'N', tint: 'from-red-500/20 to-rose-500/20' },
+            { name: 'Meta Ads', icon: 'M', tint: 'from-blue-500/20 to-cyan-500/20' },
+            { name: 'ChatGPT Plus', icon: 'AI', tint: 'from-emerald-500/20 to-green-500/20' },
+            { name: 'Spotify', icon: 'S', tint: 'from-green-500/20 to-emerald-500/20' },
+            { name: 'Canva Pro', icon: 'C', tint: 'from-sky-500/20 to-cyan-500/20' },
+            { name: 'Adobe Creative Cloud', icon: 'A', tint: 'from-red-500/20 to-orange-500/20' },
+            { name: 'Google Play', icon: 'G', tint: 'from-amber-500/20 to-yellow-500/20' },
+            { name: 'App Store & iTunes', icon: '', tint: 'from-slate-500/20 to-slate-300/20' }
+        ];
+
         const GAME_FEATURED_CARDS = [
             { name: 'Free Fire', icon: '🔥', tint: 'from-orange-500/20 to-red-500/20' },
             { name: 'PUBG UC', icon: '🪖', tint: 'from-yellow-500/20 to-amber-500/20' },
@@ -1542,6 +1575,29 @@
             if (!value) return null;
             const [usdRaw, ...labelParts] = value.split('|');
             return { usd: parseFloat(usdRaw) || 0, label: labelParts.join('|') || '' };
+        };
+        const renderDigitalCards = () => {
+            const wrap = document.getElementById('digitalServiceCards');
+            if (!wrap) return;
+            const current = digitalService?.value || '';
+            wrap.innerHTML = DIGITAL_FEATURED_CARDS.map(card => `
+                <button type="button" class="service-quick-card ${card.name === current ? 'active' : ''}" data-digital-service="${escapeHTML(card.name)}">
+                    <div class="absolute inset-0 bg-gradient-to-br ${card.tint} opacity-60 pointer-events-none"></div>
+                    <div class="relative flex items-start gap-3">
+                        <div class="logo bg-slate-900/80 border border-white/10 text-white">${card.icon}</div>
+                        <div class="text-left">
+                            <div class="text-sm font-bold text-white leading-tight">${escapeHTML(card.name)}</div>
+                            <div class="text-[11px] text-slate-400 mt-1">Acesso rápido PayGo</div>
+                        </div>
+                    </div>
+                </button>
+            `).join('');
+            wrap.querySelectorAll('[data-digital-service]').forEach(btn => btn.addEventListener('click', () => {
+                if (digitalService) {
+                    digitalService.value = btn.getAttribute('data-digital-service') || '';
+                    window.syncDigitalServiceUI();
+                }
+            }));
         };
         const renderGameCards = () => {
             const wrap = document.getElementById('gameServiceCards');
@@ -1909,11 +1965,13 @@
             const serviceName = digitalService?.value || '';
             const customWrap = document.getElementById('customSoftwareWrap');
             const customInput = document.getElementById('customSoftwareName');
+            const digitalStorefront = document.getElementById('digitalStorefront');
             if (customWrap) customWrap.classList.toggle('hidden', serviceName !== 'Outro');
             if (customInput) {
                 if (serviceName === 'Outro') customInput.setAttribute('required', 'true');
                 else customInput.removeAttribute('required');
             }
+            if (digitalStorefront) digitalStorefront.classList.toggle('hidden', cat !== 'digital');
 
             if (cat === 'digital' && serviceName && DIGITAL_SERVICE_LINKS[serviceName]) {
                 setSafeValue('productUrl', DIGITAL_SERVICE_LINKS[serviceName]);
@@ -1921,6 +1979,7 @@
 
             populateGiftCardPresets(serviceName);
             window.syncGamePackageUI();
+            renderDigitalCards();
             renderGameCards();
             const labelMap = {
                 game: 'Player ID',
@@ -1957,6 +2016,7 @@
                 if (cat === 'physical') {
                     document.getElementById('physicalFields').classList.remove('hidden'); document.getElementById('digitalFields').classList.add('hidden');
                     document.getElementById('gameStorefront')?.classList.add('hidden');
+                    document.getElementById('digitalStorefront')?.classList.add('hidden');
                     document.getElementById('gameSubscriptionModeWrap')?.classList.add('hidden');
                     setSafeText('labelUrl', "Link do Produto");
                     setRequiredElements('.physical-req', true); setRequiredElements('#digitalAccount', false);
@@ -1964,6 +2024,7 @@
                     updateDigitalSummary();
                 } else {
                     document.getElementById('physicalFields').classList.add('hidden'); document.getElementById('digitalFields').classList.remove('hidden');
+                    document.getElementById('digitalStorefront')?.classList.toggle('hidden', cat !== 'digital');
                     setRequiredElements('.physical-req', false);
                     const firstModeLabel = document.querySelector('input[name="digitalMode"][value="account"]')?.nextElementSibling;
                     if (cat === 'game') {
@@ -2137,12 +2198,12 @@
                     };
 
                     payloadData.detail = mode === 'giftcard'
-                        ? `${safeUrl} | [DIGITAL][GIFTCARD] Serviço: ${serviceName} | Valor: ${Number(giftUsd).toFixed(2)} USD | Destino: ${giftRecipient || 'N/A'} | Notas: ${detailsNote || 'Sem notas'}`
+                        ? `${safeUrl} | [DIGITAL][GIFTCARD] Serviço: ${serviceName} | Valor: ${Number(giftUsd).toFixed(2)} USD | Câmbio: ${sysExchangeRate} MT | Taxa: ${Number(currentCalculatedTax).toFixed(2)} MT | Total: ${Number(safeTotal).toFixed(2)} MT | Destino: ${giftRecipient || 'N/A'} | Notas: ${detailsNote || 'Sem notas'}`
                         : (cat === 'game'
                             ? (mode === 'subscription'
-                                ? `${safeUrl} | [GAME][ASSINATURA] Jogo: ${serviceName} | Plano: ${gameSubscription?.label || 'Valor manual'} | Valor: ${Number(finalUsd).toFixed(2)} USD | Conta / ID: ${accountOrId} | Nota acesso: ${accessNote || 'N/A'} | Notas: ${detailsNote || 'Sem notas'}`
-                                : `${safeUrl} | [GAME][TOPUP] Jogo: ${serviceName} | Pacote: ${gamePackage?.label || 'Valor manual'} | Valor: ${Number(finalUsd).toFixed(2)} USD | Player ID: ${accountOrId} | Nota acesso: ${accessNote || 'N/A'} | Notas: ${detailsNote || 'Sem notas'}`)
-                            : `${safeUrl} | [DIGITAL][CONTA] Serviço: ${serviceName} | Login(${loginType || 'N/A'}): ${accountOrId} | Nota acesso: ${accessNote || 'N/A'} | Notas: ${detailsNote || 'Sem notas'}`);
+                                ? `${safeUrl} | [GAME][ASSINATURA] Jogo: ${serviceName} | Plano: ${gameSubscription?.label || 'Valor manual'} | Valor: ${Number(finalUsd).toFixed(2)} USD | Câmbio: ${sysExchangeRate} MT | Taxa: ${Number(currentCalculatedTax).toFixed(2)} MT | Total: ${Number(safeTotal).toFixed(2)} MT | Conta / ID: ${accountOrId} | Nota acesso: ${accessNote || 'N/A'} | Notas: ${detailsNote || 'Sem notas'}`
+                                : `${safeUrl} | [GAME][TOPUP] Jogo: ${serviceName} | Pacote: ${gamePackage?.label || 'Valor manual'} | Valor: ${Number(finalUsd).toFixed(2)} USD | Câmbio: ${sysExchangeRate} MT | Taxa: ${Number(currentCalculatedTax).toFixed(2)} MT | Total: ${Number(safeTotal).toFixed(2)} MT | Player ID: ${accountOrId} | Nota acesso: ${accessNote || 'N/A'} | Notas: ${detailsNote || 'Sem notas'}`)
+                            : `${safeUrl} | [DIGITAL][CONTA] Serviço: ${serviceName} | Login(${loginType || 'N/A'}): ${accountOrId} | Câmbio: ${sysExchangeRate} MT | Taxa: ${Number(currentCalculatedTax).toFixed(2)} MT | Total: ${Number(safeTotal).toFixed(2)} MT | Nota acesso: ${accessNote || 'N/A'} | Notas: ${detailsNote || 'Sem notas'}`);
                 }
 
                 await updateDoc(doc(db, "users", currentUser.uid), { walletBalance: increment(-safeTotal) });
