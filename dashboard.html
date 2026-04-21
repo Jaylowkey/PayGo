@@ -256,6 +256,53 @@
         }
         .mode-pill { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
         .hidden-soft { display: none !important; }
+
+        .client-guide-card {
+            background: linear-gradient(135deg, rgba(15,23,42,0.86), rgba(30,41,59,0.75));
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 1.5rem;
+            overflow: hidden;
+        }
+        .client-step-card {
+            background: rgba(2,6,23,0.55);
+            border: 1px solid rgba(148,163,184,0.16);
+            border-radius: 1rem;
+            padding: 1rem;
+            transition: all .22s ease;
+        }
+        .client-step-card:hover {
+            border-color: rgba(96,165,250,0.35);
+            transform: translateY(-2px);
+        }
+        .trust-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: .45rem;
+            padding: .6rem .85rem;
+            border-radius: 999px;
+            border: 1px solid rgba(148,163,184,0.2);
+            background: rgba(15,23,42,0.78);
+            color: #cbd5e1;
+            font-size: .72rem;
+            font-weight: 800;
+            letter-spacing: .04em;
+        }
+        .client-help-chip {
+            border: 1px solid rgba(59,130,246,0.18);
+            background: rgba(59,130,246,0.08);
+            color: #bfdbfe;
+            border-radius: 999px;
+            padding: .45rem .75rem;
+            font-size: .72rem;
+            font-weight: 800;
+            letter-spacing: .04em;
+        }
+        .live-summary-card {
+            background: linear-gradient(135deg, rgba(59,130,246,0.12), rgba(15,23,42,0.92));
+            border: 1px solid rgba(59,130,246,0.22);
+            border-radius: 1rem;
+            padding: 1rem;
+        }
     </style>
 </head>
 <body class="selection:bg-brand-500 selection:text-white">
@@ -328,6 +375,11 @@
                     <p class="text-slate-400 mt-3 text-sm md:text-base max-w-2xl leading-relaxed">
                         Gere a sua carteira, envie depósitos, acompanhe compras, use o seu cartão virtual e pague serviços internacionais com mais confiança.
                     </p>
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <span class="client-help-chip">V7 Cliente</span>
+                        <span class="client-help-chip">Resumo em tempo real</span>
+                        <span class="client-help-chip">Jogos + gift cards + assinaturas</span>
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full lg:w-auto lg:min-w-[520px]">
@@ -537,9 +589,14 @@
                         <i data-lucide="bot" class="w-8 h-8 text-brand-500"></i>
                         Orçamentador de Pagamentos
                     </h2>
-                    <p class="text-slate-400 text-sm mb-6 relative z-10">
+                    <p class="text-slate-400 text-sm mb-4 relative z-10">
                         Pague qualquer site internacional com o seu saldo PayGo.
                     </p>
+                    <div class="flex flex-wrap gap-2 mb-6 relative z-10">
+                        <span class="trust-badge"><i data-lucide="badge-check" class="w-3.5 h-3.5 text-success-400"></i> Total sempre com câmbio PayGo</span>
+                        <span class="trust-badge"><i data-lucide="shield-check" class="w-3.5 h-3.5 text-brand-400"></i> Campos guiados para cliente</span>
+                        <span class="trust-badge"><i data-lucide="receipt-text" class="w-3.5 h-3.5 text-warning-400"></i> Admin recebe pedido organizado</span>
+                    </div>
 
                     <form id="orderForm" onsubmit="event.preventDefault(); window.processOrder();" class="space-y-6 relative z-10">
                         <div class="p-5 border border-slate-700/50 rounded-2xl bg-slate-900/30">
@@ -648,7 +705,7 @@
                                                     <p class="text-xs font-bold text-brand-400 uppercase tracking-widest">Serviços em destaque</p>
                                                     <p class="text-xs text-slate-400 mt-1">Escolha rápido um software popular e a PayGo preenche o link e os valores sugeridos.</p>
                                                 </div>
-                                                <span class="mode-pill bg-brand-500/10 text-brand-300 border border-brand-500/20">V6 PRO</span>
+                                                <span class="mode-pill bg-brand-500/10 text-brand-300 border border-brand-500/20">V7 Cliente + PRO</span>
                                             </div>
                                             <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3" id="digitalServiceCards"></div>
                                         </div>
@@ -784,6 +841,17 @@
                             </div>
                         </div>
 
+                        <div id="digitalSummaryCard" class="hidden live-summary-card">
+                            <div class="flex items-start justify-between gap-4 flex-wrap mb-3">
+                                <div>
+                                    <p class="text-xs font-bold text-brand-300 uppercase tracking-widest">Resumo do pedido do cliente</p>
+                                    <p class="text-xs text-slate-400 mt-1">Veja em tempo real como a sua solicitação será enviada para a equipa PayGo.</p>
+                                </div>
+                                <span class="mode-pill bg-brand-500/10 text-brand-300 border border-brand-500/20">Preview PayGo</span>
+                            </div>
+                            <div id="digitalSummaryContent" class="text-sm text-slate-300 leading-relaxed"></div>
+                        </div>
+
                         <div id="physicalFields" class="p-5 border border-slate-700/50 rounded-2xl bg-slate-900/30">
                             <h3 class="text-sm font-bold text-success-400 mb-4 flex items-center gap-2">
                                 <i data-lucide="map-pin" class="w-4 h-4"></i>
@@ -861,12 +929,62 @@
                     </form>
                 </div>
 
+                <div class="client-guide-card p-6 md:p-8">
+                    <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-5 mb-6">
+                        <div>
+                            <p class="section-label mb-2 text-brand-400">Cliente</p>
+                            <h2 class="text-2xl font-display font-bold text-white">Como o pedido será tratado</h2>
+                            <p class="text-sm text-slate-400 mt-2 max-w-2xl">Esta área deixa mais claro para o cliente o que acontece depois de pagar: validação, execução e confirmação final.</p>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="trust-badge"><i data-lucide="wallet" class="w-3.5 h-3.5 text-brand-400"></i> Saldo protegido</span>
+                            <span class="trust-badge"><i data-lucide="refresh-ccw" class="w-3.5 h-3.5 text-warning-400"></i> Reembolso guiado</span>
+                            <span class="trust-badge"><i data-lucide="bell-ring" class="w-3.5 h-3.5 text-danger-400"></i> Notificações quando houver atualização</span>
+                        </div>
+                    </div>
+                    <div class="grid md:grid-cols-3 gap-4 mb-5">
+                        <div class="client-step-card">
+                            <div class="w-10 h-10 rounded-2xl bg-brand-500/15 border border-brand-500/25 flex items-center justify-center mb-3"><i data-lucide="clipboard-check" class="w-5 h-5 text-brand-400"></i></div>
+                            <h3 class="text-white font-bold text-base mb-2">1. Pedido validado</h3>
+                            <p class="text-sm text-slate-400">A PayGo valida o serviço, o login ou o pacote escolhido antes de executar a compra.</p>
+                        </div>
+                        <div class="client-step-card">
+                            <div class="w-10 h-10 rounded-2xl bg-success-500/15 border border-success-500/25 flex items-center justify-center mb-3"><i data-lucide="zap" class="w-5 h-5 text-success-400"></i></div>
+                            <h3 class="text-white font-bold text-base mb-2">2. Execução com taxa PayGo</h3>
+                            <p class="text-sm text-slate-400">O valor final usa sempre câmbio PayGo + taxa do serviço, sem quebrar a lógica do sistema.</p>
+                        </div>
+                        <div class="client-step-card">
+                            <div class="w-10 h-10 rounded-2xl bg-vip-500/15 border border-vip-500/25 flex items-center justify-center mb-3"><i data-lucide="messages-square" class="w-5 h-5 text-vip-400"></i></div>
+                            <h3 class="text-white font-bold text-base mb-2">3. Resposta e suporte</h3>
+                            <p class="text-sm text-slate-400">Se houver ajuste, falta de dados ou reembolso, a equipa responde com a referência do pedido já organizada.</p>
+                        </div>
+                    </div>
+                    <div class="bg-slate-950/55 border border-white/5 rounded-2xl p-4 grid md:grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-xs font-bold text-slate-300 uppercase tracking-widest mb-2">Bom para o cliente</p>
+                            <ul class="space-y-2 text-sm text-slate-400">
+                                <li>• Menos erros ao escolher serviço, jogo, pacote ou gift card.</li>
+                                <li>• Resumo claro antes de autorizar o pagamento.</li>
+                                <li>• Fluxo mais intuitivo para depósito, pedido e reembolso.</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-300 uppercase tracking-widest mb-2">Bom para o admin</p>
+                            <ul class="space-y-2 text-sm text-slate-400">
+                                <li>• Pedido chega com estrutura mais limpa no histórico.</li>
+                                <li>• Fica mais fácil diferenciar conta, gift card, jogo e assinatura.</li>
+                                <li>• Menos necessidade de pedir dados em falta ao cliente.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="glass-card rounded-3xl p-6 md:p-8">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
                         <div>
                             <p class="section-label mb-2">Atividade</p>
                             <h2 class="text-2xl font-display font-bold text-white">Operações Recentes</h2>
-                            <p class="text-sm text-slate-400 mt-1">Pedidos e depósitos mais recentes da sua conta.</p>
+                            <p class="text-sm text-slate-400 mt-1">Pedidos, depósitos e ações recentes da sua conta com foco cliente + equipa.</p>
                         </div>
 
                         <button id="btnRefresh" onclick="window.fetchDashboardData(true)" class="btn-epic px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm border border-slate-700">
@@ -2053,8 +2171,10 @@
         document.getElementById('gamePackagePreset')?.addEventListener('change', () => { window.syncGamePackageUI(); updateDigitalSummary(); });
         document.getElementById('gameSubscriptionPreset')?.addEventListener('change', () => { window.syncGamePackageUI(); updateDigitalSummary(); });
         populateGiftCardPresets(digitalService?.value || '');
+        renderDigitalCards();
         renderGameCards();
         window.syncGamePackageUI();
+        updateDigitalSummary();
         ['digitalLoginType','digitalAccount','digitalAccessNote','giftCardRecipient','productDetails','customSoftwareName','gamePackagePreset','gameSubscriptionPreset'].forEach(id => {
             document.getElementById(id)?.addEventListener('input', updateDigitalSummary);
             document.getElementById(id)?.addEventListener('change', updateDigitalSummary);
