@@ -5,8 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meu Painel | PayGo Moçambique</title>
     <meta name="theme-color" content="#0f172a">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
 
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: 'unsafe-inline' 'unsafe-eval'; img-src 'self' data: https:; font-src 'self' https: data:; connect-src 'self' https: wss:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: 'unsafe-inline' 'unsafe-eval'; base-uri 'self'; form-action 'self' https:; frame-ancestors 'self'; img-src 'self' data: https:; font-src 'self' https: data:; connect-src 'self' https: wss:;">
     <meta name="heleket" content="a7226d08" />
 
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -182,9 +184,35 @@
             background: #0f172a;
             color: #f8fafc;
         }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            border: 1px solid rgba(255,255,255,0.08);
+            white-space: nowrap;
+        }
+        .status-badge.pending { background: rgba(245,158,11,0.12); color: #fbbf24; border-color: rgba(245,158,11,0.28); }
+        .status-badge.processing { background: rgba(59,130,246,0.12); color: #60a5fa; border-color: rgba(59,130,246,0.28); }
+        .status-badge.completed { background: rgba(34,197,94,0.12); color: #4ade80; border-color: rgba(34,197,94,0.28); }
+        .status-badge.cancelled { background: rgba(239,68,68,0.12); color: #f87171; border-color: rgba(239,68,68,0.28); }
+        .hidden-soft { display: none !important; }
     </style>
 </head>
 <body class="selection:bg-brand-500 selection:text-white">
+
+    <div id="sysLoader" class="fixed inset-0 bg-[#020617] z-[200] flex flex-col items-center justify-center transition-opacity duration-500">
+        <div class="w-14 h-14 border-4 border-slate-800 border-t-brand-500 rounded-full animate-spin mb-4"></div>
+        <h2 class="text-white text-2xl font-bold font-display tracking-tight">PayGo</h2>
+        <p class="text-slate-400 text-sm mt-1 font-medium">A proteger e sincronizar a sua sessão...</p>
+    </div>
 
     <div class="fixed inset-0 bg-grid opacity-20 pointer-events-none z-0"></div>
     <div class="fixed top-0 left-0 w-[500px] h-[500px] bg-brand-600/10 rounded-full mix-blend-screen blur-[120px] pointer-events-none z-0" id="glowOrb"></div>
@@ -217,7 +245,7 @@
                 <div class="flex items-center gap-2">
                     <a href="notificacoes.html" class="relative bg-slate-800 hover:bg-brand-500/20 text-slate-400 hover:text-brand-400 rounded-xl p-2.5 transition-colors border border-transparent hover:border-brand-500/30" title="Notificações">
                         <i data-lucide="bell" class="w-5 h-5"></i>
-                        <span class="absolute top-2 right-2.5 w-2 h-2 bg-danger-500 rounded-full animate-pulse border border-slate-800"></span>
+                        <span id="notifDot" class="hidden absolute top-2 right-2.5 min-w-[8px] h-2 px-1 bg-danger-500 rounded-full animate-pulse border border-slate-800"></span>
                     </a>
                     <a href="index.html" class="bg-slate-800 hover:bg-brand-500/20 text-slate-400 hover:text-brand-400 rounded-xl p-2.5 transition-colors border border-transparent hover:border-brand-500/30" title="Página Inicial">
                         <i data-lucide="home" class="w-5 h-5"></i>
@@ -504,14 +532,102 @@
                                     </div>
                                 </div>
 
-                                <div id="digitalFields" class="hidden bg-slate-950 p-4 border border-brand-500/30 rounded-xl mt-4">
-                                    <label class="block text-xs font-bold text-brand-400 uppercase tracking-widest mb-2" id="labelDigital">Player ID / E-mail da Conta</label>
-                                    <input type="text" id="digitalAccount" placeholder="Insira o ID ou email para recarga" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white transition">
+                                <div id="digitalFields" class="hidden bg-slate-950 p-4 border border-brand-500/30 rounded-xl mt-4 space-y-4">
+                                    <div class="grid md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-bold text-brand-400 uppercase tracking-widest mb-2">Software / Serviço</label>
+                                            <select id="digitalService" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white appearance-none">
+                                                <option value="">Selecione o serviço</option>
+                                                <option value="Netflix">Netflix</option>
+                                                <option value="Meta Ads">Meta Anúncios</option>
+                                                <option value="ChatGPT Plus">ChatGPT Plus</option>
+                                                <option value="Spotify">Spotify</option>
+                                                <option value="Canva Pro">Canva Pro</option>
+                                                <option value="Adobe">Adobe</option>
+                                                <option value="YouTube Premium">YouTube Premium</option>
+                                                <option value="Disney+">Disney+</option>
+                                                <option value="Amazon Prime">Amazon Prime</option>
+                                                <option value="Google One">Google One</option>
+                                                <option value="Microsoft 365">Microsoft 365</option>
+                                                <option value="Hostinger">Hostinger</option>
+                                                <option value="Namecheap">Namecheap</option>
+                                                <option value="Outro">Outros</option>
+                                            </select>
+                                        </div>
+                                        <div id="customSoftwareWrap" class="hidden">
+                                            <label class="block text-xs font-bold text-warning-400 uppercase tracking-widest mb-2">Nome do Software</label>
+                                            <input type="text" id="customSoftwareName" placeholder="Digite o nome do software" class="w-full px-4 py-3 bg-slate-900 border border-warning-500/40 rounded-xl focus:border-warning-400 text-white transition">
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Tipo de pagamento</label>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            <label class="cursor-pointer">
+                                                <input type="radio" name="digitalMode" value="account" class="peer sr-only" checked>
+                                                <div class="p-3 rounded-xl border border-slate-700 bg-slate-900 text-slate-300 font-bold text-sm peer-checked:border-brand-500 peer-checked:bg-brand-500/10 peer-checked:text-brand-300 transition">Pagar conta / assinatura</div>
+                                            </label>
+                                            <label class="cursor-pointer">
+                                                <input type="radio" name="digitalMode" value="giftcard" class="peer sr-only">
+                                                <div class="p-3 rounded-xl border border-slate-700 bg-slate-900 text-slate-300 font-bold text-sm peer-checked:border-success-500 peer-checked:bg-success-500/10 peer-checked:text-success-300 transition">Gift card / saldo</div>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div id="accountAccessFields" class="space-y-4">
+                                        <div class="grid md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="block text-xs font-bold text-brand-400 uppercase tracking-widest mb-2" id="labelDigital">E-mail / ID / Utilizador</label>
+                                                <input type="text" id="digitalAccount" placeholder="Insira o email, ID ou utilizador" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white transition">
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Tipo de login</label>
+                                                <select id="digitalLoginType" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white appearance-none">
+                                                    <option value="email">E-mail</option>
+                                                    <option value="username">Username</option>
+                                                    <option value="phone">Telefone</option>
+                                                    <option value="id">ID</option>
+                                                    <option value="other">Outro</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Observação de acesso</label>
+                                            <input type="text" id="digitalAccessNote" placeholder="Ex: perfil principal, renovação mensal, país da conta..." class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white transition">
+                                        </div>
+                                    </div>
+
+                                    <div id="giftCardFields" class="hidden space-y-4">
+                                        <div class="grid md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="block text-xs font-bold text-success-400 uppercase tracking-widest mb-2">Valor do gift card</label>
+                                                <select id="giftCardPreset" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-success-500 text-white appearance-none">
+                                                    <option value="">Selecionar valor</option>
+                                                    <option value="5">5 USD</option>
+                                                    <option value="10">10 USD</option>
+                                                    <option value="15">15 USD</option>
+                                                    <option value="20">20 USD</option>
+                                                    <option value="25">25 USD</option>
+                                                    <option value="50">50 USD</option>
+                                                    <option value="100">100 USD</option>
+                                                    <option value="custom">Outro valor</option>
+                                                </select>
+                                            </div>
+                                            <div id="giftCardCustomWrap" class="hidden">
+                                                <label class="block text-xs font-bold text-warning-400 uppercase tracking-widest mb-2">Valor personalizado (USD)</label>
+                                                <input type="number" id="giftCardCustomValue" min="1" step="0.01" placeholder="0.00" class="w-full px-4 py-3 bg-slate-900 border border-warning-500/40 rounded-xl focus:border-warning-400 text-white transition">
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Destino / e-mail do gift card</label>
+                                            <input type="text" id="giftCardRecipient" placeholder="E-mail, conta ou referência do gift card" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-success-500 text-white transition">
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div id="extraDetailsContainer">
-                                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Observações / Detalhes (Opcional)</label>
-                                    <input type="text" id="productDetails" placeholder="Tamanho, Cor, ou instrução especial" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 text-white transition">
+                                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Observações / Detalhes</label>
+                                    <textarea id="productDetails" rows="3" placeholder="Detalhes adicionais do pedido, instruções especiais, perfil, período da assinatura, etc." class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 text-white transition resize-none"></textarea>
                                 </div>
                             </div>
                         </div>
@@ -797,17 +913,17 @@
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Número do Cartão</label>
                     <div class="relative">
                         <i data-lucide="credit-card" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
-                        <input type="text" id="vcInputNumber" required maxlength="19" placeholder="0000 0000 0000 0000" class="w-full pl-11 pr-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white font-mono transition-all">
+                        <input type="text" id="vcInputNumber" required maxlength="19" inputmode="numeric" autocomplete="off" placeholder="0000 0000 0000 0000" class="w-full pl-11 pr-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white font-mono transition-all">
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Validade</label>
-                        <input type="text" id="vcInputExpiry" required maxlength="5" placeholder="MM/AA" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white font-mono text-center transition-all">
+                        <input type="text" id="vcInputExpiry" required maxlength="5" inputmode="numeric" autocomplete="off" placeholder="MM/AA" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white font-mono text-center transition-all">
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">CVC</label>
-                        <input type="password" id="vcInputCvc" required maxlength="3" placeholder="***" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white font-mono text-center transition-all">
+                        <input type="password" id="vcInputCvc" required maxlength="3" inputmode="numeric" autocomplete="off" placeholder="***" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white font-mono text-center transition-all">
                     </div>
                 </div>
                 <div>
@@ -827,6 +943,30 @@
                 </div>
                 <button type="submit" id="btnRequestVc" class="btn-epic w-full py-4 bg-brand-600 hover:bg-brand-500 text-white shadow-[0_0_20px_rgba(37,99,235,0.3)] disabled:bg-slate-800 disabled:text-slate-500">
                     Solicitar Emissão (1.000 MT)
+                </button>
+            </form>
+        </div>
+    </div>
+
+
+    <div id="vcTopUpModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-success-500/30 rounded-3xl w-full max-w-md overflow-hidden shadow-[0_0_40px_rgba(34,197,94,0.15)] relative">
+            <button type="button" onclick="window.closeModals()" class="absolute top-5 right-5 text-slate-400 hover:text-white focus:outline-none"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <div class="p-6 pb-0 mb-6">
+                <h3 class="text-xl font-display font-bold text-white mb-2">Recarregar Cartão Virtual</h3>
+                <p class="text-sm text-slate-400">O valor será debitado da sua carteira PayGo e enviado para o destino configurado.</p>
+            </div>
+            <form id="vcTopUpForm" onsubmit="event.preventDefault(); window.processVcTopUp();" class="p-6 pt-0 space-y-4">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Valor em USD</label>
+                    <input type="number" id="vcTopUpAmount" min="10" step="0.01" placeholder="10.00" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:outline-none focus:border-success-500 text-white font-mono">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Destino</label>
+                    <input type="text" id="vcTopUpDestination" placeholder="Pay ID ou carteira de destino" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:outline-none focus:border-success-500 text-white font-mono">
+                </div>
+                <button type="submit" id="btnProcessVcTopUp" class="btn-epic w-full py-4 bg-success-600 hover:bg-success-500 text-white shadow-[0_0_20px_rgba(34,197,94,0.3)] disabled:bg-slate-800 disabled:text-slate-500">
+                    Enviar pedido de recarga
                 </button>
             </form>
         </div>
@@ -968,7 +1108,8 @@
             if (typeof lucide !== 'undefined') lucide.createIcons();
         } catch (error) {
             console.error("❌ Erro ao inicializar Firebase:", error);
-            document.getElementById('sysLoader').innerHTML = `
+            const loaderEl = document.getElementById('sysLoader');
+            if (loaderEl) loaderEl.innerHTML = `
                 <div class="text-center p-6">
                     <i data-lucide="alert-triangle" class="w-16 h-16 text-danger-400 mx-auto mb-4"></i>
                     <h2 class="text-white text-xl font-bold mb-2">Erro de Conexão</h2>
@@ -985,6 +1126,22 @@
         let rawVcNumber = ''; let rawVcCvc = ''; let isCardRevealed = false;
         let isProcessing = false, isRefreshing = false, lastFetchTime = null; 
         let walletUnsubscribe = null;
+        let notificationsUnsubscribe = null;
+        const DIGITAL_SERVICE_LINKS = {
+            'Netflix': 'https://www.netflix.com/',
+            'Meta Ads': 'https://www.facebook.com/adsmanager/',
+            'ChatGPT Plus': 'https://chat.openai.com/',
+            'Spotify': 'https://www.spotify.com/',
+            'Canva Pro': 'https://www.canva.com/',
+            'Adobe': 'https://www.adobe.com/',
+            'YouTube Premium': 'https://www.youtube.com/premium',
+            'Disney+': 'https://www.disneyplus.com/',
+            'Amazon Prime': 'https://www.amazon.com/amazonprime',
+            'Google One': 'https://one.google.com/',
+            'Microsoft 365': 'https://www.microsoft.com/microsoft-365',
+            'Hostinger': 'https://www.hostinger.com/',
+            'Namecheap': 'https://www.namecheap.com/'
+        };
 
         // ==========================================
         // 3. UTILITÁRIOS GERAIS
@@ -994,6 +1151,36 @@
         const setSafeHTML = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; }; 
         const setSafeValue = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
         const setRequiredElements = (selector, isRequired) => { document.querySelectorAll(selector).forEach(el => { if (isRequired) { el.setAttribute('required', 'true'); el.disabled = false; } else { el.removeAttribute('required'); el.disabled = true; } }); };
+        const getSafeHttpsUrl = (value) => {
+            const raw = String(value || '').trim();
+            if (!raw) return '';
+            try {
+                const normalized = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+                const url = new URL(normalized);
+                if (!['http:', 'https:'].includes(url.protocol)) throw new Error('Protocolo inválido');
+                return url.toString();
+            } catch {
+                throw new Error('Insira um link válido.');
+            }
+        };
+        const cleanTextInput = (value, max = 300) => String(value || '').replace(/[<>]/g, '').trim().slice(0, max);
+        const getSelectedDigitalMode = () => document.querySelector('input[name="digitalMode"]:checked')?.value || 'account';
+        const getSelectedServiceName = () => {
+            const selected = document.getElementById('digitalService')?.value || '';
+            if (selected === 'Outro') return cleanTextInput(document.getElementById('customSoftwareName')?.value || '', 80);
+            return cleanTextInput(selected, 80);
+        };
+        const setNotifBadge = (count = 0) => {
+            const dot = document.getElementById('notifDot');
+            if (!dot) return;
+            if (count > 0) {
+                dot.classList.remove('hidden');
+                dot.textContent = count > 9 ? '9+' : '';
+            } else {
+                dot.classList.add('hidden');
+                dot.textContent = '';
+            }
+        };
 
         const formatMZN = (val) => new Intl.NumberFormat('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(val || 0));
         const formatUSD = (val) => new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(val || 0));
@@ -1010,6 +1197,22 @@
             } catch { return 'Data inválida'; }
         };
        
+        const watchNotificationBadge = (uid) => {
+            try {
+                const notificationsQuery = query(collection(db, "notifications"), where("userId", "==", uid));
+                notificationsUnsubscribe = onSnapshot(notificationsQuery, (snap) => {
+                    let unread = 0;
+                    snap.forEach(docSnap => {
+                        const data = docSnap.data() || {};
+                        if (data.read !== true) unread++;
+                    });
+                    setNotifBadge(unread);
+                }, () => setNotifBadge(0));
+            } catch {
+                setNotifBadge(0);
+            }
+        };
+
         // ==========================================
         // 4. AUTENTICAÇÃO E CARREGAMENTO
         // ==========================================
@@ -1039,6 +1242,7 @@
                     setSafeText('infoTax1', sysTax1); setSafeText('infoTax3', sysTax3);
                     setSafeText('topUpRateDisplay', sysExchangeRate);
 
+                    watchNotificationBadge(user.uid);
                     walletUnsubscribe = onSnapshot(doc(db, "users", user.uid), async (userDoc) => {
                         if (userDoc.exists()) {
                             userData = userDoc.data();
@@ -1073,13 +1277,14 @@
                             }
 
                             if (userData.virtualCard) {
-                                rawVcNumber = userData.virtualCard.number || ''; rawVcCvc = userData.virtualCard.cvc || '***';
-                                setSafeText('vcNumber', `**** **** **** ${rawVcNumber.slice(-4)}`);
-                                setSafeText('vcExpiry', userData.virtualCard.expiry);
+                                const last4 = userData.virtualCard.last4 || String(userData.virtualCard.number || '').replace(/\D/g, '').slice(-4);
+                                rawVcNumber = `**** **** **** ${last4}`; rawVcCvc = '***';
+                                setSafeText('vcNumber', rawVcNumber);
+                                setSafeText('vcExpiry', userData.virtualCard.expiry || 'MM/AA');
                                 setSafeText('vcBalanceDisplay', `$${formatUSD(userData.vcBalance || 0)}`);
-                                const btnReveal = document.getElementById('btnRevealCard'); if (btnReveal) btnReveal.classList.remove('hidden');
+                                const btnReveal = document.getElementById('btnRevealCard'); if (btnReveal) btnReveal.classList.add('hidden');
                                 if(userData.virtualCard.destination) setSafeValue('vcTopUpDestination', userData.virtualCard.destination);
-                                setSafeHTML('vcStatusText', `<span class="text-success-400 font-bold flex items-center gap-1.5 justify-center md:justify-start mb-2"><i data-lucide="check-circle" class="w-4 h-4"></i> Cartão Vinculado</span> Controle o saldo e recarregue quando quiser.`);
+                                setSafeHTML('vcStatusText', `<span class="text-success-400 font-bold flex items-center gap-1.5 justify-center md:justify-start mb-2"><i data-lucide="check-circle" class="w-4 h-4"></i> Cartão Vinculado</span> Os dados sensíveis do cartão deixaram de ser reexibidos no painel por segurança. Recarregue quando quiser.`);
                                 setSafeHTML('vcActionButtons', `<button onclick="window.openVcTopUpModal()" class="flex-1 py-3.5 bg-success-600 hover:bg-success-500 text-white rounded-xl font-bold text-sm transition shadow-[0_0_20px_rgba(34,197,94,0.3)] flex items-center justify-center gap-2 active:scale-95"><i data-lucide="zap" class="w-4 h-4"></i> Recarregar ($)</button> <button onclick="window.unlinkVirtualCard()" class="py-3.5 px-5 bg-slate-800 hover:bg-danger-900/50 text-slate-400 hover:text-danger-400 border border-slate-700 hover:border-danger-500/50 rounded-xl font-bold transition flex items-center justify-center gap-2 active:scale-95" title="Remover Cartão"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`);
                             } else if (userData.vcRequestPending) {
                                 setSafeHTML('vcStatusText', `<span class="text-warning-400 font-bold flex items-center gap-1.5 justify-center md:justify-start mb-2"><i data-lucide="clock" class="w-4 h-4"></i> Aguardando Emissão</span> A nossa equipa está a gerar o seu cartão.`);
@@ -1200,6 +1405,72 @@
         };
 
         const orderCategory = document.getElementById('orderCategory');
+        const digitalService = document.getElementById('digitalService');
+        const customSoftwareWrap = document.getElementById('customSoftwareWrap');
+        const giftCardPreset = document.getElementById('giftCardPreset');
+        const giftCardCustomWrap = document.getElementById('giftCardCustomWrap');
+
+        window.syncDigitalModeUI = () => {
+            const mode = getSelectedDigitalMode();
+            const accountWrap = document.getElementById('accountAccessFields');
+            const giftWrap = document.getElementById('giftCardFields');
+            if (accountWrap) accountWrap.classList.toggle('hidden', mode !== 'account');
+            if (giftWrap) giftWrap.classList.toggle('hidden', mode !== 'giftcard');
+
+            const digitalAccount = document.getElementById('digitalAccount');
+            const giftRecipient = document.getElementById('giftCardRecipient');
+            if (digitalAccount) {
+                if (mode === 'account') digitalAccount.setAttribute('required', 'true');
+                else digitalAccount.removeAttribute('required');
+            }
+            if (giftRecipient) {
+                if (mode === 'giftcard') giftRecipient.setAttribute('required', 'true');
+                else giftRecipient.removeAttribute('required');
+            }
+        };
+
+        window.syncDigitalServiceUI = () => {
+            const cat = document.getElementById('orderCategory')?.value;
+            const serviceName = digitalService?.value || '';
+            const customWrap = document.getElementById('customSoftwareWrap');
+            const customInput = document.getElementById('customSoftwareName');
+            if (customWrap) customWrap.classList.toggle('hidden', serviceName !== 'Outro');
+            if (customInput) {
+                if (serviceName === 'Outro') customInput.setAttribute('required', 'true');
+                else customInput.removeAttribute('required');
+            }
+
+            if (cat === 'digital' && serviceName && DIGITAL_SERVICE_LINKS[serviceName]) {
+                setSafeValue('productUrl', DIGITAL_SERVICE_LINKS[serviceName]);
+            }
+
+            const labelMap = {
+                game: 'Player ID',
+                digital: 'E-mail / login da plataforma'
+            };
+            setSafeText('labelDigital', labelMap[cat] || 'E-mail / ID / Utilizador');
+        };
+
+        window.syncGiftCardPresetUI = () => {
+            const selected = giftCardPreset?.value || '';
+            const customWrap = document.getElementById('giftCardCustomWrap');
+            const customInput = document.getElementById('giftCardCustomValue');
+            if (customWrap) customWrap.classList.toggle('hidden', selected !== 'custom');
+            if (customInput) {
+                if (selected === 'custom') customInput.setAttribute('required', 'true');
+                else customInput.removeAttribute('required');
+            }
+
+            if (selected && selected !== 'custom') {
+                const usd = parseFloat(selected) || 0;
+                if (usd > 0) {
+                    setSafeValue('productUsd', usd.toFixed(2));
+                    setSafeValue('productMzn', (usd * sysExchangeRate).toFixed(2));
+                    window.updateCalculator(usd);
+                }
+            }
+        };
+
         if(orderCategory) {
             orderCategory.addEventListener('change', function(e) {
                 const cat = e.target.value;
@@ -1209,12 +1480,19 @@
                     setRequiredElements('.physical-req', true); setRequiredElements('#digitalAccount', false);
                 } else {
                     document.getElementById('physicalFields').classList.add('hidden'); document.getElementById('digitalFields').classList.remove('hidden');
-                    setRequiredElements('.physical-req', false); setRequiredElements('#digitalAccount', true);
+                    setRequiredElements('.physical-req', false);
                     if (cat === 'game') { setSafeText('labelUrl', "Link do Jogo"); setSafeText('labelDigital', "Player ID"); } 
-                    else { setSafeText('labelUrl', "Link do Software"); setSafeText('labelDigital', "E-mail da Conta"); }
+                    else { setSafeText('labelUrl', "Link do Software / Serviço"); setSafeText('labelDigital', "E-mail / login da plataforma"); }
+                    if (digitalService) digitalService.setAttribute('required', 'true');
+                    window.syncDigitalModeUI();
+                    window.syncDigitalServiceUI();
                 }
             });
         }
+
+        document.querySelectorAll('input[name="digitalMode"]').forEach(el => el.addEventListener('change', window.syncDigitalModeUI));
+        if (digitalService) digitalService.addEventListener('change', window.syncDigitalServiceUI);
+        if (giftCardPreset) giftCardPreset.addEventListener('change', window.syncGiftCardPresetUI);
 
         const shipCity = document.getElementById('shipCity');
         if(shipCity) shipCity.addEventListener('change', function(e) { setSafeValue('shipZip', e.target.options[e.target.selectedIndex].getAttribute('data-zip') || ''); });
@@ -1224,10 +1502,26 @@
             usdInput.addEventListener('input', e => { const usdVal = parseFloat(e.target.value) || 0; mznInput.value = usdVal ? (usdVal * sysExchangeRate).toFixed(2) : ''; window.updateCalculator(usdVal); });
             mznInput.addEventListener('input', e => { const mznVal = parseFloat(e.target.value) || 0; const usdVal = mznVal / sysExchangeRate; usdInput.value = usdVal ? usdVal.toFixed(2) : ''; window.updateCalculator(usdVal); });
         }
+        document.getElementById('giftCardCustomValue')?.addEventListener('input', e => {
+            const usdVal = parseFloat(e.target.value) || 0;
+            if (usdInput && mznInput) {
+                usdInput.value = usdVal ? usdVal.toFixed(2) : '';
+                mznInput.value = usdVal ? (usdVal * sysExchangeRate).toFixed(2) : '';
+            }
+            window.updateCalculator(usdVal);
+        });
 
         window.updateCalculator = function(usdVal) {
             const btnSub = document.getElementById('btnSubmitOrder'), warn = document.getElementById('balanceWarning'), succ = document.getElementById('successReady');
-            if (usdVal <= 0) { currentCalculatedTotal = 0; setSafeText('calcTotal', '0.00 MT'); if(btnSub) btnSub.disabled = true; if(warn) warn.classList.add('hidden'); if(succ) succ.classList.add('hidden'); return; }
+            const cat = document.getElementById('orderCategory')?.value;
+            const giftPreset = document.getElementById('giftCardPreset')?.value;
+            const giftCustom = parseFloat(document.getElementById('giftCardCustomValue')?.value) || 0;
+            const mode = getSelectedDigitalMode();
+            if (cat === 'digital' && mode === 'giftcard') {
+                if (giftPreset === 'custom' && giftCustom > 0) usdVal = giftCustom;
+                else if (giftPreset && giftPreset !== 'custom') usdVal = parseFloat(giftPreset) || usdVal;
+            }
+            if (usdVal <= 0) { currentCalculatedTotal = 0; currentCalculatedTax = 0; setSafeText('calcBase', '0.00 MT'); setSafeText('calcFee', '0.00 MT'); setSafeText('calcTotal', '0.00 MT'); if(btnSub) btnSub.disabled = true; if(warn) warn.classList.add('hidden'); if(succ) succ.classList.add('hidden'); return; }
             
             const baseMZN = usdVal * sysExchangeRate;
             let appliedTax = sysTax1;
@@ -1341,7 +1635,7 @@
             const usd = parseFloat(document.getElementById('topUpUsdInput').value) || 0;
             const mzn = usd * sysExchangeRate;
             setSafeText('topUpMznDisplay', formatMZN(mzn) + " MT");
-            setSafeValue('topUpAmount', mzn.toFixed(2));
+            setSafeValue('topUpAmount', usd > 0 ? mzn.toFixed(2) : '');
         };
 
         window.toggleBankDetails = (method) => {
@@ -1411,9 +1705,28 @@
 
         window.processVcAdd = async () => {
             const btn = document.getElementById('btnSubmitVc'); btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Guardando...`; if (typeof lucide !== 'undefined') lucide.createIcons({root: btn});
-            const vcData = { number: document.getElementById('vcInputNumber').value, expiry: document.getElementById('vcInputExpiry').value, cvc: document.getElementById('vcInputCvc').value, destination: document.getElementById('vcInputDestination').value.trim(), addedAt: new Date().toISOString() };
-            try { await updateDoc(doc(db, "users", currentUser.uid), { virtualCard: vcData, vcBalance: 0 }); window.showToast("Cartão vinculado!", "success"); setTimeout(() => window.location.reload(), 1000); } 
-            catch (err) { window.showToast("Erro ao guardar cartão.", "error"); btn.disabled = false; btn.textContent = "Vincular Cartão"; }
+            const rawNumber = String(document.getElementById('vcInputNumber').value || '').replace(/\D/g, '');
+            const expiry = cleanTextInput(document.getElementById('vcInputExpiry').value, 5);
+            const destination = cleanTextInput(document.getElementById('vcInputDestination').value.trim(), 120);
+            if (rawNumber.length < 13) { window.showToast("Número do cartão inválido.", "error"); btn.disabled = false; btn.textContent = "Vincular Cartão"; return; }
+            const vcData = {
+                last4: rawNumber.slice(-4),
+                maskedNumber: `**** **** **** ${rawNumber.slice(-4)}`,
+                expiry,
+                destination,
+                brand: rawNumber.startsWith('4') ? 'visa' : 'mastercard',
+                addedAt: new Date().toISOString(),
+                fullNumberAvailable: false
+            };
+            try { 
+                await updateDoc(doc(db, "users", currentUser.uid), { virtualCard: vcData, vcBalance: 0 }); 
+                document.getElementById('vcInputCvc').value = '';
+                window.showToast("Cartão vinculado com mascaramento seguro!", "success"); 
+                setTimeout(() => window.location.reload(), 1000); 
+            } catch (err) { 
+                window.showToast("Erro ao guardar cartão.", "error"); 
+                btn.disabled = false; btn.textContent = "Vincular Cartão"; 
+            }
         };
 
         window.processVcRequest = async () => {
