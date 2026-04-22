@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vitrine PayGo V2 | Produtos e Serviços</title>
+  <title>Vitrine PayGo V4 | Loja PayGo</title>
   <meta name="theme-color" content="#0f172a" />
   <meta http-equiv="X-Content-Type-Options" content="nosniff" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
@@ -50,6 +50,10 @@
     .soft-panel { background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02)); border: 1px solid rgba(255,255,255,.08); }
     .cta-bright { box-shadow: 0 0 0 1px rgba(96,165,250,.25), 0 16px 35px rgba(37,99,235,.22); }
     .text-soft-bright { color: #cbd5e1; }
+    .logo-shell { background: radial-gradient(circle at top left, rgba(255,255,255,.16), rgba(255,255,255,.06)); border: 1px solid rgba(255,255,255,.14); box-shadow: inset 0 1px 0 rgba(255,255,255,.05); }
+    .card-banner { background: linear-gradient(135deg, rgba(59,130,246,.18), rgba(168,85,247,.10)); }
+    .product-logo { filter: drop-shadow(0 6px 16px rgba(2,6,23,.28)); }
+    .section-glow { box-shadow: 0 0 0 1px rgba(255,255,255,.06), 0 18px 60px rgba(15,23,42,.24); }
 
   </style>
 </head>
@@ -113,7 +117,7 @@
           <div class="mt-4 space-y-3">
             <div class="flex justify-between items-center text-sm"><span class="text-slate-400">Câmbio atual</span><strong id="exchangeBadge" class="text-brand-400">-- MT/USD</strong></div>
             <div class="flex justify-between items-center text-sm"><span class="text-slate-400">Taxas PayGo</span><strong id="feesBadge" class="text-white">--</strong></div>
-            <div class="flex justify-between items-center text-sm"><span class="text-slate-400">Gift cards carregados</span><strong id="reloadlyStatus" class="text-warning-400">A carregar...</strong></div>
+            <div class="flex justify-between items-center text-sm"><span class="text-slate-400">Gift cards e produtos</span><strong id="reloadlyStatus" class="text-warning-400">A carregar...</strong></div>
           </div>
           <div class="mt-5 rounded-2xl bg-danger-500/10 border border-danger-500/20 p-4">
             <p class="text-xs font-bold text-danger-300 leading-relaxed">
@@ -127,13 +131,13 @@
     <section class="grid xl:grid-cols-[.8fr,1.2fr] gap-6">
       <aside class="space-y-6">
         <div class="glass-soft rounded-3xl p-5 md:p-6">
-          <p class="text-[11px] uppercase tracking-[0.18em] text-slate-400 font-black mb-4">Filtrar catálogo</p>
+          <p class="text-[11px] uppercase tracking-[0.18em] text-slate-400 font-black mb-4">Filtrar loja PayGo</p>
           <div class="space-y-3">
             <div>
               <label class="block text-xs text-slate-400 font-bold uppercase tracking-[0.18em] mb-2">Pesquisar</label>
               <div class="relative">
                 <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
-                <input id="catalogSearch" type="text" placeholder="Netflix, Steam, PSN..." class="w-full bg-slate-950 border border-slate-700 rounded-xl pl-11 pr-4 py-3 text-sm text-white outline-none focus:border-brand-500" />
+                <input id="catalogSearch" type="text" placeholder="Netflix, Free Fire, Steam, Hostinger..." class="w-full bg-slate-950 border border-slate-700 rounded-xl pl-11 pr-4 py-3 text-sm text-white outline-none focus:border-brand-500" />
               </div>
             </div>
             <div>
@@ -179,7 +183,7 @@
           </div>
           <div class="glass-soft rounded-2xl p-4">
             <p class="text-[10px] uppercase tracking-[0.18em] text-slate-400 font-black">Pronto para pagar</p>
-            <p class="mt-2 text-sm text-slate-300 leading-relaxed">Todas as compras nesta página usam o saldo da tua carteira PayGo.</p>
+            <p class="mt-2 text-sm text-slate-300 leading-relaxed">Serviços, jogos e gift cards mais completos, sempre pagos com a carteira PayGo.</p>
           </div>
         </div>
 
@@ -318,27 +322,56 @@
     let currentCheckoutItem = null;
 
     const LOCAL_ITEMS = [
-      { id: 'svc-netflix', type: 'service', provider: 'paygo', name: 'Netflix', description: 'Pagamento de conta Netflix já existente.', usd: 9.99, icon: 'monitor-play', accent: 'brand' },
-      { id: 'svc-chatgpt', type: 'service', provider: 'paygo', name: 'ChatGPT Plus', description: 'Renovação da assinatura ChatGPT Plus.', usd: 20, icon: 'sparkles', accent: 'brand' },
-      { id: 'svc-metaads', type: 'service', provider: 'paygo', name: 'Meta Anúncios', description: 'Pagamento de saldo/anúncios no Meta Ads.', usd: 15, icon: 'megaphone', accent: 'warning' },
-      { id: 'svc-canva', type: 'service', provider: 'paygo', name: 'Canva Pro', description: 'Renovação/compra de Canva Pro.', usd: 12.99, icon: 'palette', accent: 'vip' },
-      { id: 'svc-spotify', type: 'service', provider: 'paygo', name: 'Spotify Premium', description: 'Pagamento de assinatura Spotify.', usd: 6.99, icon: 'music-4', accent: 'success' },
-      { id: 'game-ff530', type: 'game', provider: 'paygo', name: 'Free Fire 530 + bónus', description: 'Recarga direta de diamantes Free Fire.', usd: 5.98, icon: 'swords', accent: 'warning' },
-      { id: 'game-ff1080', type: 'game', provider: 'paygo', name: 'Free Fire 1080 + bónus', description: 'Recarga direta de diamantes Free Fire.', usd: 12.00, icon: 'swords', accent: 'warning' },
-      { id: 'game-pubg660', type: 'game', provider: 'paygo', name: 'PUBG 660 UC', description: 'Recarga direta PUBG Mobile.', usd: 9.49, icon: 'crosshair', accent: 'brand' },
-      { id: 'game-psplus', type: 'game', provider: 'paygo', name: 'PlayStation Plus', description: 'Assinatura PlayStation Plus.', usd: 9.99, icon: 'gamepad-2', accent: 'brand' },
-      { id: 'game-roblox', type: 'game', provider: 'paygo', name: 'Roblox 800 Robux', description: 'Recarga direta para Roblox.', usd: 9.99, icon: 'blocks', accent: 'vip' }
+      { id: 'svc-netflix', type: 'service', provider: 'paygo', name: 'Netflix', brand: 'Netflix', description: 'Pagamento de conta Netflix já existente.', usd: 9.99, icon: 'monitor-play', accent: 'danger', logo: 'https://cdn.simpleicons.org/netflix/E50914' },
+      { id: 'svc-chatgpt', type: 'service', provider: 'paygo', name: 'ChatGPT Plus', brand: 'OpenAI', description: 'Renovação da assinatura ChatGPT Plus.', usd: 20.00, icon: 'sparkles', accent: 'brand', logo: 'https://cdn.simpleicons.org/openai/FFFFFF' },
+      { id: 'svc-metaads', type: 'service', provider: 'paygo', name: 'Meta Ads', brand: 'Meta', description: 'Pagamento de saldo e campanhas no Meta Ads.', usd: 15.00, icon: 'megaphone', accent: 'warning', logo: 'https://cdn.simpleicons.org/meta/1877F2' },
+      { id: 'svc-googleads', type: 'service', provider: 'paygo', name: 'Google Ads', brand: 'Google Ads', description: 'Pagamento de saldo e campanhas Google Ads.', usd: 15.00, icon: 'badge-dollar-sign', accent: 'brand', logo: 'https://cdn.simpleicons.org/googleads/4285F4' },
+      { id: 'svc-canva', type: 'service', provider: 'paygo', name: 'Canva Pro', brand: 'Canva', description: 'Renovação ou compra de Canva Pro.', usd: 12.99, icon: 'palette', accent: 'vip', logo: 'https://cdn.simpleicons.org/canva/00C4CC' },
+      { id: 'svc-spotify', type: 'service', provider: 'paygo', name: 'Spotify Premium', brand: 'Spotify', description: 'Pagamento de assinatura Spotify.', usd: 6.99, icon: 'music-4', accent: 'success', logo: 'https://cdn.simpleicons.org/spotify/1DB954' },
+      { id: 'svc-adobe', type: 'service', provider: 'paygo', name: 'Adobe Creative Cloud', brand: 'Adobe', description: 'Pagamento de apps e planos Adobe.', usd: 22.99, icon: 'pen-tool', accent: 'danger', logo: 'https://cdn.simpleicons.org/adobe/FF0000' },
+      { id: 'svc-youtube', type: 'service', provider: 'paygo', name: 'YouTube Premium', brand: 'YouTube', description: 'Pagamento de YouTube Premium.', usd: 8.99, icon: 'play-circle', accent: 'danger', logo: 'https://cdn.simpleicons.org/youtube/FF0000' },
+      { id: 'svc-amazon', type: 'service', provider: 'paygo', name: 'Amazon Prime', brand: 'Amazon', description: 'Renovação de assinatura Amazon Prime.', usd: 8.99, icon: 'package-check', accent: 'warning', logo: 'https://cdn.simpleicons.org/amazon/FF9900' },
+      { id: 'svc-googleone', type: 'service', provider: 'paygo', name: 'Google One', brand: 'Google One', description: 'Pagamento de armazenamento Google One.', usd: 2.99, icon: 'cloud', accent: 'brand', logo: 'https://cdn.simpleicons.org/googleone/4285F4' },
+      { id: 'svc-apple', type: 'service', provider: 'paygo', name: 'Apple ID / iCloud', brand: 'Apple', description: 'Pagamento de iCloud e serviços Apple.', usd: 5.99, icon: 'smartphone', accent: 'vip', logo: 'https://cdn.simpleicons.org/apple/FFFFFF' },
+      { id: 'svc-microsoft', type: 'service', provider: 'paygo', name: 'Microsoft 365', brand: 'Microsoft', description: 'Renovação de assinatura Microsoft 365.', usd: 9.99, icon: 'files', accent: 'brand', logo: 'https://cdn.simpleicons.org/microsoft/5E5E5E' },
+      { id: 'svc-hostinger', type: 'service', provider: 'paygo', name: 'Hostinger', brand: 'Hostinger', description: 'Pagamento de hospedagem e renovação Hostinger.', usd: 14.99, icon: 'server', accent: 'vip', logo: 'https://cdn.simpleicons.org/hostinger/673DE6' },
+      { id: 'svc-namecheap', type: 'service', provider: 'paygo', name: 'Namecheap', brand: 'Namecheap', description: 'Pagamento de domínios e serviços Namecheap.', usd: 12.99, icon: 'globe', accent: 'warning', logo: 'https://cdn.simpleicons.org/namecheap/DE3723' },
+      { id: 'svc-disney', type: 'service', provider: 'paygo', name: 'Disney+', brand: 'Disney+', description: 'Pagamento de assinatura Disney+.', usd: 8.99, icon: 'tv', accent: 'brand', logo: 'https://cdn.simpleicons.org/disney+/113CCF' },
+
+      { id: 'game-ff100', type: 'game', provider: 'paygo', name: 'Free Fire 100 + bónus', brand: 'Garena', description: 'Recarga direta de diamantes Free Fire.', usd: 1.14, icon: 'flame', accent: 'warning', logo: 'https://cdn.simpleicons.org/garena/D91F26' },
+      { id: 'game-ff210', type: 'game', provider: 'paygo', name: 'Free Fire 210 + bónus', brand: 'Garena', description: 'Recarga direta de diamantes Free Fire.', usd: 2.89, icon: 'flame', accent: 'warning', logo: 'https://cdn.simpleicons.org/garena/D91F26' },
+      { id: 'game-ff530', type: 'game', provider: 'paygo', name: 'Free Fire 530 + bónus', brand: 'Garena', description: 'Recarga direta de diamantes Free Fire.', usd: 5.98, icon: 'flame', accent: 'warning', logo: 'https://cdn.simpleicons.org/garena/D91F26' },
+      { id: 'game-ff1080', type: 'game', provider: 'paygo', name: 'Free Fire 1080 + bónus', brand: 'Garena', description: 'Recarga direta de diamantes Free Fire.', usd: 12.00, icon: 'flame', accent: 'warning', logo: 'https://cdn.simpleicons.org/garena/D91F26' },
+      { id: 'game-ff2200', type: 'game', provider: 'paygo', name: 'Free Fire 2200 + bónus', brand: 'Garena', description: 'Recarga direta de diamantes Free Fire.', usd: 24.15, icon: 'flame', accent: 'warning', logo: 'https://cdn.simpleicons.org/garena/D91F26' },
+      { id: 'game-pubg325', type: 'game', provider: 'paygo', name: 'PUBG 325 UC', brand: 'PUBG Mobile', description: 'Recarga direta PUBG Mobile.', usd: 4.79, icon: 'crosshair', accent: 'brand', logo: 'https://cdn.simpleicons.org/krafton/FFFFFF' },
+      { id: 'game-pubg660', type: 'game', provider: 'paygo', name: 'PUBG 660 UC', brand: 'PUBG Mobile', description: 'Recarga direta PUBG Mobile.', usd: 9.49, icon: 'crosshair', accent: 'brand', logo: 'https://cdn.simpleicons.org/krafton/FFFFFF' },
+      { id: 'game-ml172', type: 'game', provider: 'paygo', name: 'Mobile Legends 172 Diamantes', brand: 'Mobile Legends', description: 'Recarga direta Mobile Legends.', usd: 3.49, icon: 'shield-plus', accent: 'vip', logo: 'https://cdn.simpleicons.org/mozilla/FF7139' },
+      { id: 'game-ml706', type: 'game', provider: 'paygo', name: 'Mobile Legends 706 Diamantes', brand: 'Mobile Legends', description: 'Recarga direta Mobile Legends.', usd: 11.99, icon: 'shield-plus', accent: 'vip', logo: 'https://cdn.simpleicons.org/mozilla/FF7139' },
+      { id: 'game-codm420', type: 'game', provider: 'paygo', name: 'Call of Duty 420 CP', brand: 'Activision', description: 'Recarga direta Call of Duty Mobile.', usd: 4.99, icon: 'target', accent: 'danger', logo: 'https://cdn.simpleicons.org/activision/FFFFFF' },
+      { id: 'game-valorant', type: 'game', provider: 'paygo', name: 'Valorant 475 VP', brand: 'Valorant', description: 'Compra de VP para Valorant.', usd: 4.99, icon: 'swords', accent: 'danger', logo: 'https://cdn.simpleicons.org/valorant/FA4454' },
+      { id: 'game-lol', type: 'game', provider: 'paygo', name: 'League of Legends 575 RP', brand: 'Riot Games', description: 'Compra de RP para League of Legends.', usd: 5.99, icon: 'shield', accent: 'warning', logo: 'https://cdn.simpleicons.org/riotgames/EB0029' },
+      { id: 'game-roblox', type: 'game', provider: 'paygo', name: 'Roblox 800 Robux', brand: 'Roblox', description: 'Recarga direta para Roblox.', usd: 9.99, icon: 'blocks', accent: 'vip', logo: 'https://cdn.simpleicons.org/roblox/FFFFFF' },
+      { id: 'game-psplus', type: 'game', provider: 'paygo', name: 'PlayStation Plus Essential', brand: 'PlayStation', description: 'Assinatura PlayStation Plus.', usd: 9.99, icon: 'gamepad-2', accent: 'brand', logo: 'https://cdn.simpleicons.org/playstation/003791' },
+      { id: 'game-xgp', type: 'game', provider: 'paygo', name: 'Xbox Game Pass', brand: 'Xbox', description: 'Assinatura Xbox Game Pass.', usd: 9.99, icon: 'gamepad-2', accent: 'success', logo: 'https://cdn.simpleicons.org/xbox/107C10' }
     ];
 
     const FALLBACK_RELOADLY = [
-      { id: 'rl-steam-10', type: 'giftcard', provider: 'reloadly', name: 'Steam Gift Card 10 USD', description: 'Gift card digital Steam via Reloadly.', usd: 10, fixed: true, brand: 'Steam', icon: 'gift', accent: 'warning', reloadlyProductId: 'steam-10-us' },
-      { id: 'rl-psn-10', type: 'giftcard', provider: 'reloadly', name: 'PlayStation Gift Card 10 USD', description: 'Gift card digital PSN via Reloadly.', usd: 10, fixed: true, brand: 'PlayStation', icon: 'gift', accent: 'brand', reloadlyProductId: 'psn-10-us' },
-      { id: 'rl-xbox-10', type: 'giftcard', provider: 'reloadly', name: 'Xbox Gift Card 10 USD', description: 'Gift card digital Xbox via Reloadly.', usd: 10, fixed: true, brand: 'Xbox', icon: 'gift', accent: 'success', reloadlyProductId: 'xbox-10-us' },
-      { id: 'rl-googleplay-10', type: 'giftcard', provider: 'reloadly', name: 'Google Play 10 USD', description: 'Gift card digital Google Play via Reloadly.', usd: 10, fixed: true, brand: 'Google Play', icon: 'gift', accent: 'brand', reloadlyProductId: 'gplay-10-us' },
-      { id: 'rl-apple-10', type: 'giftcard', provider: 'reloadly', name: 'Apple Gift Card 10 USD', description: 'Gift card digital Apple/iTunes via Reloadly.', usd: 10, fixed: true, brand: 'Apple', icon: 'gift', accent: 'vip', reloadlyProductId: 'apple-10-us' }
+      { id: 'rl-steam-10', type: 'giftcard', provider: 'reloadly', name: 'Steam Gift Card 10 USD', description: 'Gift card digital Steam via Reloadly.', usd: 10, fixed: true, brand: 'Steam', icon: 'gift', accent: 'warning', reloadlyProductId: 'steam-10-us', logo: 'https://cdn.simpleicons.org/steam/FFFFFF' },
+      { id: 'rl-steam-25', type: 'giftcard', provider: 'reloadly', name: 'Steam Gift Card 25 USD', description: 'Gift card digital Steam via Reloadly.', usd: 25, fixed: true, brand: 'Steam', icon: 'gift', accent: 'warning', reloadlyProductId: 'steam-25-us', logo: 'https://cdn.simpleicons.org/steam/FFFFFF' },
+      { id: 'rl-psn-10', type: 'giftcard', provider: 'reloadly', name: 'PlayStation Gift Card 10 USD', description: 'Gift card digital PSN via Reloadly.', usd: 10, fixed: true, brand: 'PlayStation', icon: 'gift', accent: 'brand', reloadlyProductId: 'psn-10-us', logo: 'https://cdn.simpleicons.org/playstation/003791' },
+      { id: 'rl-psn-25', type: 'giftcard', provider: 'reloadly', name: 'PlayStation Gift Card 25 USD', description: 'Gift card digital PSN via Reloadly.', usd: 25, fixed: true, brand: 'PlayStation', icon: 'gift', accent: 'brand', reloadlyProductId: 'psn-25-us', logo: 'https://cdn.simpleicons.org/playstation/003791' },
+      { id: 'rl-xbox-10', type: 'giftcard', provider: 'reloadly', name: 'Xbox Gift Card 10 USD', description: 'Gift card digital Xbox via Reloadly.', usd: 10, fixed: true, brand: 'Xbox', icon: 'gift', accent: 'success', reloadlyProductId: 'xbox-10-us', logo: 'https://cdn.simpleicons.org/xbox/107C10' },
+      { id: 'rl-xbox-25', type: 'giftcard', provider: 'reloadly', name: 'Xbox Gift Card 25 USD', description: 'Gift card digital Xbox via Reloadly.', usd: 25, fixed: true, brand: 'Xbox', icon: 'gift', accent: 'success', reloadlyProductId: 'xbox-25-us', logo: 'https://cdn.simpleicons.org/xbox/107C10' },
+      { id: 'rl-googleplay-10', type: 'giftcard', provider: 'reloadly', name: 'Google Play 10 USD', description: 'Gift card digital Google Play via Reloadly.', usd: 10, fixed: true, brand: 'Google Play', icon: 'gift', accent: 'brand', reloadlyProductId: 'gplay-10-us', logo: 'https://cdn.simpleicons.org/googleplay/414141' },
+      { id: 'rl-googleplay-25', type: 'giftcard', provider: 'reloadly', name: 'Google Play 25 USD', description: 'Gift card digital Google Play via Reloadly.', usd: 25, fixed: true, brand: 'Google Play', icon: 'gift', accent: 'brand', reloadlyProductId: 'gplay-25-us', logo: 'https://cdn.simpleicons.org/googleplay/414141' },
+      { id: 'rl-apple-10', type: 'giftcard', provider: 'reloadly', name: 'Apple Gift Card 10 USD', description: 'Gift card digital Apple via Reloadly.', usd: 10, fixed: true, brand: 'Apple', icon: 'gift', accent: 'vip', reloadlyProductId: 'apple-10-us', logo: 'https://cdn.simpleicons.org/apple/FFFFFF' },
+      { id: 'rl-apple-25', type: 'giftcard', provider: 'reloadly', name: 'Apple Gift Card 25 USD', description: 'Gift card digital Apple via Reloadly.', usd: 25, fixed: true, brand: 'Apple', icon: 'gift', accent: 'vip', reloadlyProductId: 'apple-25-us', logo: 'https://cdn.simpleicons.org/apple/FFFFFF' },
+      { id: 'rl-amazon-10', type: 'giftcard', provider: 'reloadly', name: 'Amazon Gift Card 10 USD', description: 'Gift card digital Amazon via Reloadly.', usd: 10, fixed: true, brand: 'Amazon', icon: 'gift', accent: 'warning', reloadlyProductId: 'amazon-10-us', logo: 'https://cdn.simpleicons.org/amazon/FF9900' },
+      { id: 'rl-razer-10', type: 'giftcard', provider: 'reloadly', name: 'Razer Gold 10 USD', description: 'Gift card digital Razer Gold via Reloadly.', usd: 10, fixed: true, brand: 'Razer', icon: 'gift', accent: 'success', reloadlyProductId: 'razer-10-us', logo: 'https://cdn.simpleicons.org/razer/00FF00' },
+      { id: 'rl-nintendo-10', type: 'giftcard', provider: 'reloadly', name: 'Nintendo eShop 10 USD', description: 'Gift card digital Nintendo via Reloadly.', usd: 10, fixed: true, brand: 'Nintendo', icon: 'gift', accent: 'danger', reloadlyProductId: 'nintendo-10-us', logo: 'https://cdn.simpleicons.org/nintendo/CC0000' }
     ];
 
-    const formatMZN = (v) => new Intl.NumberFormat('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(v || 0));
+    const formatMZNconst formatMZN = (v) => new Intl.NumberFormat('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(v || 0));
     const formatUSD = (v) => new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(v || 0));
     const escapeHTML = (s) => String(s || '').replace(/[&<>"']/g, (m) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
     const clean = (s, max = 300) => String(s || '').replace(/[<>]/g, '').trim().slice(0, max);
@@ -368,18 +401,38 @@
       return sysTax3;
     }
 
+    function brandLogoMap(brand = '') {
+      const key = String(brand || '').toLowerCase();
+      const map = {
+        'steam': 'https://cdn.simpleicons.org/steam/FFFFFF',
+        'playstation': 'https://cdn.simpleicons.org/playstation/003791',
+        'psn': 'https://cdn.simpleicons.org/playstation/003791',
+        'xbox': 'https://cdn.simpleicons.org/xbox/107C10',
+        'google play': 'https://cdn.simpleicons.org/googleplay/414141',
+        'apple': 'https://cdn.simpleicons.org/apple/FFFFFF',
+        'amazon': 'https://cdn.simpleicons.org/amazon/FF9900',
+        'razer': 'https://cdn.simpleicons.org/razer/00FF00',
+        'nintendo': 'https://cdn.simpleicons.org/nintendo/CC0000',
+        'spotify': 'https://cdn.simpleicons.org/spotify/1DB954',
+        'netflix': 'https://cdn.simpleicons.org/netflix/E50914'
+      };
+      return map[key] || '';
+    }
+
     function decorateReloadlyItem(item) {
+      const brand = item.brand || item.senderCurrencyCode || 'Reloadly';
       return {
         id: item.id || item.productId || crypto.randomUUID(),
         type: 'giftcard',
         provider: 'reloadly',
         name: item.name || item.productName || 'Gift Card',
-        description: item.description || `Gift card ${item.brand || 'digital'} via Reloadly.`,
+        description: item.description || `Gift card ${brand} via Reloadly.`,
         usd: Number(item.usd || item.amount || item.fixedRecipientDenominations?.[0] || 10),
         fixed: item.fixed !== false,
-        brand: item.brand || item.senderCurrencyCode || 'Reloadly',
+        brand,
         icon: 'gift',
         accent: 'warning',
+        logo: item.logo || brandLogoMap(brand),
         reloadlyProductId: item.reloadlyProductId || item.productId || item.id,
         recipientCurrency: item.recipientCurrencyCode || 'USD'
       };
@@ -416,7 +469,7 @@
       const filtered = catalogItems.filter(item => {
         const matchType = currentFilter === 'all' || item.type === currentFilter;
         const matchProvider = provider === 'all' || item.provider === provider;
-        const hay = `${item.name} ${item.description} ${item.brand || ''}`.toLowerCase();
+        const hay = `${item.name} ${item.description} ${item.brand || ''} ${item.type}`.toLowerCase();
         const matchText = !q || hay.includes(q);
         return matchType && matchProvider && matchText;
       });
@@ -431,36 +484,45 @@
       }
 
       grid.innerHTML = filtered.map(item => {
-        const accentClass = item.accent === 'warning' ? 'text-warning-400 bg-warning-500/10 border-warning-500/20' : item.accent === 'success' ? 'text-success-400 bg-success-500/10 border-success-500/20' : item.accent === 'vip' ? 'text-vip-400 bg-vip-500/10 border-vip-500/20' : 'text-brand-400 bg-brand-500/10 border-brand-500/20';
+        const accentClass = item.accent === 'warning' ? 'text-warning-400 bg-warning-500/10 border-warning-500/20' : item.accent === 'success' ? 'text-success-400 bg-success-500/10 border-success-500/20' : item.accent === 'vip' ? 'text-vip-400 bg-vip-500/10 border-vip-500/20' : item.accent === 'danger' ? 'text-danger-400 bg-danger-500/10 border-danger-500/20' : 'text-brand-400 bg-brand-500/10 border-brand-500/20';
         const providerBadge = item.provider === 'reloadly' ? 'Reloadly' : 'PayGo';
+        const typeLabel = item.type === 'giftcard' ? 'Gift Card' : item.type === 'game' ? 'Jogo' : 'Serviço';
+        const bannerGradient = item.accent === 'warning' ? 'from-warning-500/20 to-orange-500/10' : item.accent === 'success' ? 'from-success-500/20 to-emerald-500/10' : item.accent === 'vip' ? 'from-vip-500/18 to-fuchsia-500/10' : item.accent === 'danger' ? 'from-danger-500/18 to-rose-500/10' : 'from-brand-500/18 to-sky-500/10';
         return `
-          <article class="glass-soft rounded-3xl p-5 border border-white/5 card-hover flex flex-col gap-4">
-            <div class="flex items-start justify-between gap-3">
-              <div class="w-12 h-12 rounded-2xl ${accentClass} border flex items-center justify-center shrink-0">
-                <i data-lucide="${item.icon || 'package'}" class="w-5 h-5"></i>
+          <article class="glass-soft rounded-3xl overflow-hidden border border-white/5 card-hover flex flex-col section-glow">
+            <div class="card-banner bg-gradient-to-br ${bannerGradient} p-5 border-b border-white/10">
+              <div class="flex items-start justify-between gap-3">
+                <div class="logo-shell w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 overflow-hidden">
+                  ${item.logo ? `<img src="${item.logo}" alt="${escapeHTML(item.brand || item.name)}" class="product-logo w-9 h-9 object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` : ''}
+                  <div class="${item.logo ? 'hidden' : 'flex'} w-9 h-9 items-center justify-center"><i data-lucide="${item.icon || 'package'}" class="w-5 h-5 ${accentClass.split(' ')[0]}"></i></div>
+                </div>
+                <div class="flex flex-col items-end gap-2 text-right">
+                  <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.18em] ${accentClass} border">${providerBadge}</span>
+                  <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.18em] bg-slate-950/55 border border-white/10 text-slate-200">${typeLabel}</span>
+                </div>
               </div>
-              <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.18em] ${accentClass} border">${providerBadge}</span>
-            </div>
-            <div>
-              <p class="text-[10px] uppercase tracking-[0.18em] text-slate-400 font-black">${item.type}</p>
-              <h3 class="mt-1 text-lg font-display font-extrabold text-white leading-tight">${escapeHTML(item.name)}</h3>
-              <p class="mt-2 text-sm text-slate-400 leading-relaxed min-h-[60px]">${escapeHTML(item.description)}</p>
-            </div>
-            <div class="mt-auto flex items-end justify-between gap-4">
-              <div>
-                <p class="text-[10px] uppercase tracking-[0.18em] text-slate-400 font-black">Preço base</p>
-                <p class="text-2xl font-display font-extrabold text-white">${formatUSD(item.usd)} <span class="text-sm text-slate-500">USD</span></p>
+              <div class="mt-4">
+                <p class="text-[11px] uppercase tracking-[0.18em] text-slate-300/80 font-black">${escapeHTML(item.brand || typeLabel)}</p>
+                <h3 class="mt-1 text-xl font-display font-extrabold text-white leading-tight">${escapeHTML(item.name)}</h3>
               </div>
-              <button class="px-4 py-3 rounded-2xl bg-brand-600 hover:bg-brand-500 text-white font-extrabold text-sm shadow-[0_0_16px_rgba(59,130,246,.22)] inline-flex items-center gap-2" data-buy="${item.id}">
-                <i data-lucide="shopping-cart" class="w-4 h-4"></i>
-                Comprar
-              </button>
+            </div>
+            <div class="p-5 flex flex-col gap-4 grow">
+              <p class="text-sm text-slate-300 leading-relaxed grow">${escapeHTML(item.description)}</p>
+              <div class="rounded-2xl soft-panel p-4 flex items-end justify-between gap-3">
+                <div>
+                  <p class="text-[10px] uppercase tracking-[0.18em] text-slate-400 font-black">Preço base</p>
+                  <p class="mt-1 text-2xl font-display font-extrabold text-white">${formatUSD(item.usd)} <span class="text-sm text-slate-400 font-bold">USD</span></p>
+                </div>
+                <button onclick="openCheckout('${item.id}')" class="px-4 py-3 rounded-2xl bg-white text-slate-900 hover:bg-brand-500 hover:text-white font-black text-sm transition cta-bright inline-flex items-center gap-2">
+                  <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+                  Comprar
+                </button>
+              </div>
             </div>
           </article>`;
       }).join('');
 
       lucide.createIcons({ root: grid });
-      grid.querySelectorAll('[data-buy]').forEach(btn => btn.addEventListener('click', () => openCheckout(btn.getAttribute('data-buy'))));
     }
 
     function updateCheckoutSummary(from = 'usd') {
