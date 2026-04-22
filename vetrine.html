@@ -12,7 +12,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
-  <script src="https://cdn.reloadly.com/widget/v2/reloadly-widget.js"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -101,8 +100,20 @@
       </div>
     </div>
   </header>
-<reloadly-widget data-widget-id="GqAaVTpIBGwl9LwYvdVcLPd5Y4Wek1aYgHO6OT6axQ"></reloadly-widget>
+
   <main class="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-10 space-y-8">
+    <section id="authBanner" class="hidden glass-soft rounded-2xl p-4 md:p-5 premium-stroke border-warning-500/30">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <p class="text-[11px] uppercase tracking-[0.18em] text-warning-400 font-black">Sessão necessária</p>
+          <p class="text-sm text-slate-200 mt-1">Pode ver a vitrine normalmente, mas para comprar precisa estar com a sessão PayGo iniciada.</p>
+        </div>
+        <div class="flex gap-3">
+          <a href="login.html" class="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-sm inline-flex items-center gap-2 cta-bright"><i data-lucide="log-in" class="w-4 h-4"></i>Entrar</a>
+          <a href="criar-conta.html" class="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white border border-white/10 font-bold text-sm inline-flex items-center gap-2"><i data-lucide="user-plus" class="w-4 h-4"></i>Criar conta</a>
+        </div>
+      </div>
+    </section>
     <section class="glass hero-premium rounded-3xl p-6 md:p-8 overflow-hidden relative shadow-[0_20px_60px_rgba(15,23,42,.22)]">
       <div class="absolute right-0 top-0 w-72 h-72 bg-brand-500/10 rounded-full blur-3xl"></div>
       <div class="relative grid lg:grid-cols-[1.3fr,.7fr] gap-6 items-center">
@@ -315,10 +326,11 @@
       messagingSenderId: '208360646277',
       appId: '1:208360646277:web:aecc57cc0077ae48a52bec'
     };
-const API = {
-  reloadlyCatalog: '/api/reloadly/catalog',
-  reloadlyOrder: '/api/reloadly/order'
-};
+
+    const API = {
+      reloadlyCatalog: '/api/reloadly/catalog',
+      reloadlyOrder: '/api/reloadly/order'
+    };
 
     const RELOADLY_CONFIG = {
       recipientCountryCode: 'US',
@@ -341,6 +353,20 @@ const API = {
     let catalogItems = [];
     let currentFilter = 'all';
     let currentCheckoutItem = null;
+    let isAuthResolved = false;
+
+    function setStatusTone(el, tone, text) {
+      if (!el) return;
+      el.textContent = text;
+      el.className = tone === 'success' ? 'text-success-400' : tone === 'warning' ? 'text-warning-400' : tone === 'danger' ? 'text-danger-400' : 'text-slate-300';
+    }
+
+    function showAuthBanner(show = true) {
+      const el = document.getElementById('authBanner');
+      if (!el) return;
+      el.classList.toggle('hidden', !show);
+      if (show) lucide.createIcons({ root: el });
+    }
 
     // Contrato sugerido para o backend Reloadly:
     // GET /api/reloadly/catalog?countryCode=US&recipientCurrencyCode=USD
@@ -487,24 +513,28 @@ const API = {
     }
 
     async function loadReloadlyCatalog() {
+      const statusEl = document.getElementById('reloadlyStatus');
       try {
         const qs = new URLSearchParams({
           countryCode: RELOADLY_CONFIG.recipientCountryCode,
           recipientCurrencyCode: RELOADLY_CONFIG.recipientCurrencyCode
         });
         const res = await fetch(`${API.reloadlyCatalog}?${qs.toString()}`, { headers: { 'Accept': 'application/json' } });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
+        const raw = await res.text();
+        let data = {};
+        try { data = JSON.parse(raw); } catch {}
+        if (!res.ok) {
+          throw new Error(data?.error || raw || `Reloadly catálogo falhou com HTTP ${res.status}.`);
+        }
         const list = Array.isArray(data) ? data : Array.isArray(data.products) ? data.products : [];
         const normalized = list.map(decorateReloadlyItem).filter(Boolean);
-        if (!normalized.length) throw new Error('Catálogo vazio');
-        document.getElementById('reloadlyStatus').textContent = `${normalized.length} itens`; 
-        document.getElementById('reloadlyStatus').className = 'text-success-400';
+        if (!normalized.length) throw new Error('Catálogo vazio.');
+        setStatusTone(statusEl, 'success', `${normalized.length} itens`);
         return normalized;
       } catch (error) {
         console.warn('Reloadly fallback:', error);
-        document.getElementById('reloadlyStatus').textContent = 'Modo fallback';
-        document.getElementById('reloadlyStatus').className = 'text-warning-400';
+        setStatusTone(statusEl, 'warning', 'Modo fallback');
+        showToast(`Reloadly em fallback: ${error.message || 'catálogo indisponível.'}`, 'warning');
         return FALLBACK_RELOADLY;
       }
     }
@@ -687,8 +717,9 @@ const API = {
       const identifier = clean(document.getElementById('serviceIdentifier').value, 150);
       const notes = clean(document.getElementById('serviceNotes').value, 800);
 
+      if (!currentUser) throw new Error('Faça login primeiro para concluir a compra.');
       if (!recipientEmail || !recipientName) throw new Error('Preencha o nome e e-mail do destinatário do gift card.');
-      const idToken = await currentUser.getIdToken();
+      const idToken = await currentUser.getIdToken(true);
 
       const res = await fetch(API.reloadlyOrder, {
         method: 'POST',
@@ -719,13 +750,19 @@ const API = {
         })
       });
 
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data?.success) throw new Error(data?.error || data?.message || `Reloadly falhou com HTTP ${res.status}.`);
+      const raw = await res.text();
+      let data = {};
+      try { data = JSON.parse(raw); } catch {}
+      if (!res.ok || !data?.success) throw new Error(data?.error || data?.message || raw || `Reloadly falhou com HTTP ${res.status}.`);
       return data;
     }
 
     window.processCatalogCheckout = async function() {
       if (!currentCheckoutItem) return;
+      if (!currentUser) {
+        showAuthBanner(true);
+        throw showToast('Precisa iniciar sessão para comprar.', 'warning');
+      }
 
       const btn = document.getElementById('checkoutBtn');
       const original = btn.innerHTML;
@@ -764,7 +801,11 @@ const API = {
         closeCheckoutModal();
       } catch (error) {
         console.error(error);
-        showToast(error.message || 'Falha ao concluir compra.', 'error');
+        const msg = String(error?.message || 'Falha ao concluir compra.');
+        if (/Token de autenticação ausente|Token inválido|Utilizador não encontrado|Access Denied/i.test(msg)) {
+          showAuthBanner(true);
+        }
+        showToast(msg, 'error');
       } finally {
         btn.disabled = false;
         btn.innerHTML = original;
@@ -772,43 +813,54 @@ const API = {
       }
     };
 
+    async function bootstrapCatalogForGuest() {
+      try {
+        const [settingsSnap, reloadlyItems] = await Promise.all([
+          getDoc(doc(db, 'settings', 'global')),
+          loadReloadlyCatalog()
+        ]);
+        if (settingsSnap.exists()) {
+          const s = settingsSnap.data();
+          sysExchangeRate = Number(s.exchangeRate) || sysExchangeRate;
+          sysTax1 = Number(s.tax1) || sysTax1;
+          sysTax2 = Number(s.tax2) || sysTax2;
+          sysTax3 = Number(s.tax3) || sysTax3;
+        }
+        document.getElementById('exchangeBadge').textContent = `${sysExchangeRate} MT/USD`;
+        document.getElementById('feesBadge').textContent = `${formatMZN(sysTax1)} / ${formatMZN(sysTax2)} / ${formatMZN(sysTax3)} MT`;
+        catalogItems = [...LOCAL_ITEMS, ...reloadlyItems];
+        renderCatalog();
+        lucide.createIcons();
+      } catch (error) {
+        console.error(error);
+        showToast(error.message || 'Erro ao carregar a vitrine.', 'error');
+      }
+    }
+
     async function initSession() {
+      await bootstrapCatalogForGuest();
       onAuthStateChanged(auth, async (user) => {
+        isAuthResolved = true;
         if (!user) {
-          window.location.href = 'login.html';
+          currentUser = null;
+          userData = null;
+          showAuthBanner(true);
+          document.getElementById('walletBalance').textContent = '0.00';
           return;
         }
         currentUser = user;
+        showAuthBanner(false);
 
         try {
-          const [userSnap, settingsSnap, reloadlyItems] = await Promise.all([
-            getDoc(doc(db, 'users', user.uid)),
-            getDoc(doc(db, 'settings', 'global')),
-            loadReloadlyCatalog()
-          ]);
-
+          const userSnap = await getDoc(doc(db, 'users', user.uid));
           if (!userSnap.exists()) throw new Error('Utilizador não encontrado.');
           userData = userSnap.data();
           isUserVip = Boolean(userData?.isVip && userData?.vipExpiry?.toDate?.() > new Date());
-
-          if (settingsSnap.exists()) {
-            const s = settingsSnap.data();
-            sysExchangeRate = Number(s.exchangeRate) || sysExchangeRate;
-            sysTax1 = Number(s.tax1) || sysTax1;
-            sysTax2 = Number(s.tax2) || sysTax2;
-            sysTax3 = Number(s.tax3) || sysTax3;
-          }
-
-          document.getElementById('exchangeBadge').textContent = `${sysExchangeRate} MT/USD`;
-          document.getElementById('feesBadge').textContent = `${formatMZN(sysTax1)} / ${formatMZN(sysTax2)} / ${formatMZN(sysTax3)} MT`;
           setWalletUI();
-
-          catalogItems = [...LOCAL_ITEMS, ...reloadlyItems];
-          renderCatalog();
-          lucide.createIcons();
         } catch (error) {
           console.error(error);
-          showToast(error.message || 'Erro ao carregar a vitrine.', 'error');
+          showToast(error.message || 'Erro ao carregar a tua sessão.', 'error');
+          showAuthBanner(true);
         }
       });
     }
