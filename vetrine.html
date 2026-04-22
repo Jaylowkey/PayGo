@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vitrine PayGo</title>
+  <title>Vitrine PayGo V6 Premium | Loja PayGo</title>
   <meta name="theme-color" content="#0e1f3d" />
   <meta http-equiv="X-Content-Type-Options" content="nosniff" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
@@ -38,17 +38,17 @@
         radial-gradient(circle at top left, rgba(96,165,250,.28), transparent 30%),
         radial-gradient(circle at top right, rgba(196,132,252,.18), transparent 24%),
         radial-gradient(circle at bottom right, rgba(34,197,94,.12), transparent 22%),
-        linear-gradient(180deg, #0a1730 0%, #0e2145 44%, #102446 100%);
+        linear-gradient(180deg, #102348 0%, #13305f 44%, #153663 100%);
       color: #f8fafc;
     }
     .glass {
-      background: linear-gradient(180deg, rgba(18,32,61,.88), rgba(18,30,54,.78));
+      background: linear-gradient(180deg, rgba(24,42,78,.90), rgba(20,36,66,.82));
       backdrop-filter: blur(18px);
       border: 1px solid rgba(255,255,255,.12);
       box-shadow: 0 20px 60px rgba(2,6,23,.26), inset 0 1px 0 rgba(255,255,255,.05);
     }
     .glass-soft {
-      background: linear-gradient(180deg, rgba(32,53,88,.64), rgba(21,35,62,.56));
+      background: linear-gradient(180deg, rgba(40,65,104,.70), rgba(28,45,77,.62));
       backdrop-filter: blur(15px);
       border: 1px solid rgba(255,255,255,.11);
       box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 10px 28px rgba(2,6,23,.14);
@@ -85,7 +85,7 @@
         </a>
         <div class="min-w-0">
           <p class="text-[10px] uppercase tracking-[0.22em] text-brand-400 font-bold">Loja</p>
-          <div class="flex items-center gap-2"><h1 class="font-display font-extrabold text-xl md:text-2xl truncate">Vitrine PayGo</h1><span class="hidden sm:inline-flex px-2 py-1 rounded-full bg-white/10 border border-white/10 text-[10px] uppercase tracking-[0.18em] text-brand-200 font-black">V5</span></div>
+          <div class="flex items-center gap-2"><h1 class="font-display font-extrabold text-xl md:text-2xl truncate">Vitrine PayGo</h1><span class="hidden sm:inline-flex px-2 py-1 rounded-full bg-white/10 border border-white/10 text-[10px] uppercase tracking-[0.18em] text-brand-200 font-black">V6</span></div>
         </div>
       </div>
       <div class="flex items-center gap-3">
@@ -558,7 +558,7 @@
                   <p class="text-[10px] uppercase tracking-[0.18em] text-slate-400 font-black">Preço base</p>
                   <p class="mt-1 text-2xl font-display font-extrabold text-white">${formatUSD(item.usd)} <span class="text-sm text-slate-400 font-bold">USD</span></p>
                 </div>
-                <button onclick="openCheckout('${item.id}')" class="px-4 py-3 rounded-2xl bg-white text-slate-900 hover:bg-brand-500 hover:text-white font-black text-sm transition cta-bright inline-flex items-center gap-2">
+                <button onclick="window.openCheckout('${item.id}')" class="px-4 py-3 rounded-2xl bg-white text-slate-900 hover:bg-brand-500 hover:text-white font-black text-sm transition cta-bright inline-flex items-center gap-2">
                   <i data-lucide="shopping-bag" class="w-4 h-4"></i>
                   Comprar
                 </button>
@@ -631,6 +631,8 @@
       currentCheckoutItem = null;
     };
 
+    window.openCheckout = openCheckout;
+
     async function debitWalletAndLog(totalMt, detail, extra = {}) {
       await updateDoc(doc(db, 'users', currentUser.uid), { walletBalance: increment(-totalMt) });
       await addDoc(collection(db, 'wallet_transactions'), {
@@ -677,15 +679,24 @@
       const notes = clean(document.getElementById('serviceNotes').value, 800);
 
       if (!recipientEmail || !recipientName) throw new Error('Preencha o nome e e-mail do destinatário do gift card.');
+      const idToken = await currentUser.getIdToken();
 
       const res = await fetch(API.reloadlyOrder, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
         body: JSON.stringify({
           productId: item.reloadlyProductId,
+          productName: item.name,
           quantity: RELOADLY_CONFIG.quantity,
           unitPrice: Number(usd.toFixed(2)),
           amount: Number(usd.toFixed(2)),
+          exchangeRate: sysExchangeRate,
+          feeMt: Number(fee.toFixed(2)),
+          totalMt: Number(total.toFixed(2)),
           recipientEmail,
           recipientName,
           recipientPhone: clean(userData?.phone || '', 40) || null,
@@ -700,37 +711,8 @@
       });
 
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || data?.message || `Reloadly falhou com HTTP ${res.status}.`);
-
-      const orderId = `RLD-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-      const detail = `[GIFTCARD][RELOADLY] Item: ${item.name} | Destinatário: ${recipientName} <${recipientEmail}> | Ref Reloadly: ${data.referenceId || data.transactionId || 'N/A'} | USD: ${usd.toFixed(2)} | Câmbio: ${sysExchangeRate} | Taxa: ${fee.toFixed(2)} MT | Total: ${total.toFixed(2)} MT | Notas: ${notes || 'N/A'}`;
-
-      await debitWalletAndLog(total, `Gift Card Reloadly: ${item.name}`, { reference: data.referenceId || orderId });
-      await addDoc(collection(db, 'orders'), {
-        orderId,
-        userId: currentUser.uid,
-        name: userData?.name || 'Cliente',
-        email: currentUser.email || '',
-        category: 'digital',
-        type: 'giftcard_reloadly',
-        detail,
-        usd,
-        exchangeRate: sysExchangeRate,
-        tax: fee,
-        total,
-        paymentMethod: 'wallet',
-        isPaid: true,
-        status: 'completed',
-        reloadly: {
-          provider: 'reloadly',
-          productId: item.reloadlyProductId,
-          transactionId: data.transactionId || null,
-          referenceId: data.referenceId || null,
-          recipientEmail,
-          recipientName
-        },
-        createdAt: serverTimestamp()
-      });
+      if (!res.ok || !data?.success) throw new Error(data?.error || data?.message || `Reloadly falhou com HTTP ${res.status}.`);
+      return data;
     }
 
     window.processCatalogCheckout = async function() {
@@ -761,7 +743,7 @@
 
         if (currentCheckoutItem.provider === 'reloadly') {
           await createReloadlyOrder(currentCheckoutItem, usd, base, fee, total);
-          showToast('Gift card comprado com sucesso via Reloadly.', 'success');
+          showToast('Gift card comprado com sucesso via Reloadly e carteira debitada.', 'success');
         } else {
           await createManualOrder(currentCheckoutItem, usd, base, fee, total);
           showToast('Pedido criado com sucesso na vitrine.', 'success');
