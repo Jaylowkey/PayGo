@@ -366,7 +366,7 @@
 
       { id: 'svc-capcut', type: 'service', provider: 'paygo', name: 'CapCut Pro', brand: 'CapCut', description: 'Renovação de assinatura CapCut Pro.', usd: 9.99, icon: 'scissors', accent: 'brand', logo: 'https://cdn.simpleicons.org/capcut/FFFFFF' },
       { id: 'svc-grammarly', type: 'service', provider: 'paygo', name: 'Grammarly Premium', brand: 'Grammarly', description: 'Pagamento de assinatura Grammarly.', usd: 12.00, icon: 'languages', accent: 'success', logo: 'https://cdn.simpleicons.org/grammarly/15C39A' },
-      { id: 'svc-figma', type: 'service', provider: 'paygo', name: 'Figma Professional', brand: 'Figma', description: 'Renovação de assinatura Figma.', usd: 15.00, icon: 'figma', accent: 'warning', logo: 'https://cdn.simpleicons.org/figma/F24E1E' },
+      { id: 'svc-figma', type: 'service', provider: 'paygo', name: 'Figma Professional', brand: 'Figma', description: 'Renovação de assinatura Figma.', usd: 15.00, icon: 'pen-tool', accent: 'warning', logo: 'https://cdn.simpleicons.org/figma/F24E1E' },
       { id: 'svc-midjourney', type: 'service', provider: 'paygo', name: 'Midjourney', brand: 'Midjourney', description: 'Pagamento de assinatura Midjourney.', usd: 10.00, icon: 'image', accent: 'vip', logo: '' },
       { id: 'svc-elevenlabs', type: 'service', provider: 'paygo', name: 'ElevenLabs', brand: 'ElevenLabs', description: 'Pagamento de créditos e assinatura ElevenLabs.', usd: 5.00, icon: 'audio-lines', accent: 'brand', logo: '' },
       { id: 'svc-tiktokads', type: 'service', provider: 'paygo', name: 'TikTok Ads', brand: 'TikTok', description: 'Pagamento de saldo e campanhas TikTok Ads.', usd: 15.00, icon: 'badge-dollar-sign', accent: 'danger', logo: 'https://cdn.simpleicons.org/tiktok/FFFFFF' },
@@ -416,6 +416,13 @@
     const formatUSD = (v) => new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(v || 0));
     const escapeHTML = (s) => String(s || '').replace(/[&<>"']/g, (m) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
     const clean = (s, max = 300) => String(s || '').replace(/[<>]/g, '').trim().slice(0, max);
+
+    function getBrandBadge(item) {
+      const brand = escapeHTML((item.brand || item.name || 'PG').slice(0, 2).toUpperCase());
+      const map = { brand:'from-brand-500/30 to-sky-500/20 text-brand-100', success:'from-success-500/30 to-emerald-500/20 text-emerald-100', warning:'from-warning-500/30 to-orange-500/20 text-yellow-100', vip:'from-vip-500/30 to-fuchsia-500/20 text-fuchsia-100', danger:'from-danger-500/30 to-rose-500/20 text-rose-100' };
+      const cls = map[item.accent] || map.brand;
+      return `<div class="w-9 h-9 rounded-xl bg-gradient-to-br ${cls} flex items-center justify-center text-[11px] font-black tracking-widest">${brand}</div>`;
+    }
 
     function showToast(message, type = 'success') {
       const container = document.getElementById('toastContainer');
@@ -538,8 +545,7 @@
             <div class="card-banner bg-gradient-to-br ${bannerGradient} p-5 border-b border-white/10">
               <div class="flex items-start justify-between gap-3">
                 <div class="logo-shell w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 overflow-hidden">
-                  ${item.logo ? `<img src="${item.logo}" alt="${escapeHTML(item.brand || item.name)}" class="product-logo w-9 h-9 object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` : ''}
-                  <div class="${item.logo ? 'hidden' : 'flex'} w-9 h-9 items-center justify-center"><i data-lucide="${item.icon || 'package'}" class="w-5 h-5 ${accentClass.split(' ')[0]}"></i></div>
+                  ${getBrandBadge(item)}
                 </div>
                 <div class="flex flex-col items-end gap-2 text-right">
                   <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.18em] ${accentClass} border">${providerBadge}</span>
@@ -558,7 +564,7 @@
                   <p class="text-[10px] uppercase tracking-[0.18em] text-slate-400 font-black">Preço base</p>
                   <p class="mt-1 text-2xl font-display font-extrabold text-white">${formatUSD(item.usd)} <span class="text-sm text-slate-400 font-bold">USD</span></p>
                 </div>
-                <button onclick="window.openCheckout('${item.id}')" class="px-4 py-3 rounded-2xl bg-white text-slate-900 hover:bg-brand-500 hover:text-white font-black text-sm transition cta-bright inline-flex items-center gap-2">
+                <button data-buy-id="${item.id}" class="buy-btn px-4 py-3 rounded-2xl bg-white text-slate-900 hover:bg-brand-500 hover:text-white font-black text-sm transition cta-bright inline-flex items-center gap-2">
                   <i data-lucide="shopping-bag" class="w-4 h-4"></i>
                   Comprar
                 </button>
@@ -568,6 +574,9 @@
       }).join('');
 
       lucide.createIcons({ root: grid });
+      grid.querySelectorAll('.buy-btn').forEach(btn => {
+        btn.addEventListener('click', () => openCheckout(btn.getAttribute('data-buy-id')));
+      });
     }
 
     function updateCheckoutSummary(from = 'usd') {
