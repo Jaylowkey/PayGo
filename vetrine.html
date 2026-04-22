@@ -263,6 +263,17 @@
           <div class="rounded-2xl bg-slate-950/70 border border-slate-800 p-4 text-xs text-slate-400 leading-relaxed">
             <strong class="text-white">Observação:</strong> serviços com promoção de <strong>primeira conta</strong>, <strong>novo utilizador</strong>, <strong>bónus de primeira compra</strong> ou semelhantes <strong>não são pagos</strong> pela PayGo.
           </div>
+          <div class="rounded-2xl bg-white/5 border border-white/10 p-4 space-y-3">
+            <label class="flex items-start gap-3 cursor-pointer">
+              <input id="confirmNoFirstBonus" type="checkbox" class="mt-1 h-4 w-4 rounded border-slate-600 bg-slate-900 text-brand-500 focus:ring-brand-500">
+              <span class="text-sm text-slate-300 leading-relaxed"><strong class="text-white">Confirmo</strong> que este produto/serviço <strong>não tem bónus de primeira conta</strong>, não é promoção de novo utilizador e não depende de oferta para primeira compra.</span>
+            </label>
+            <label class="flex items-start gap-3 cursor-pointer">
+              <input id="confirmTerms" type="checkbox" class="mt-1 h-4 w-4 rounded border-slate-600 bg-slate-900 text-brand-500 focus:ring-brand-500">
+              <span class="text-sm text-slate-300 leading-relaxed">Li e <strong class="text-white">aceito os termos e condições da PayGo</strong> para este pagamento.</span>
+            </label>
+            <p id="checkoutConsentHint" class="text-[11px] text-warning-300 font-bold">Para continuar, marque as duas confirmações acima.</p>
+          </div>
           <button id="checkoutBtn" type="button" class="w-full py-4 rounded-2xl bg-success-500 hover:bg-success-400 text-white font-extrabold text-sm shadow-[0_0_20px_rgba(34,197,94,.25)] disabled:bg-slate-800 disabled:text-slate-500 disabled:shadow-none inline-flex items-center justify-center gap-2" onclick="window.processCatalogCheckout()">
             <i data-lucide="wallet-cards" class="w-5 h-5"></i>
             Pagar com a Carteira PayGo
@@ -476,7 +487,11 @@
       document.getElementById('summaryRate').textContent = `${sysExchangeRate} MT/USD`;
       document.getElementById('summaryTotal').textContent = `${formatMZN(total)} MT`;
       document.getElementById('insufficientWarning').classList.toggle('hidden', !(total > wallet));
-      document.getElementById('checkoutBtn').disabled = !usd || total > wallet;
+      const consentNoBonus = document.getElementById('confirmNoFirstBonus')?.checked;
+      const consentTerms = document.getElementById('confirmTerms')?.checked;
+      const consentsOk = Boolean(consentNoBonus && consentTerms);
+      document.getElementById('checkoutConsentHint').classList.toggle('hidden', consentsOk);
+      document.getElementById('checkoutBtn').disabled = !usd || total > wallet || !consentsOk;
     }
 
     function openCheckout(id) {
@@ -495,6 +510,8 @@
       document.getElementById('serviceNotes').value = '';
       document.getElementById('recipientEmail').value = currentUser?.email || '';
       document.getElementById('recipientName').value = userData?.name || '';
+      document.getElementById('confirmNoFirstBonus').checked = false;
+      document.getElementById('confirmTerms').checked = false;
       document.getElementById('reloadlyRecipientBox').classList.toggle('hidden', item.provider !== 'reloadly');
       document.getElementById('serviceBox').classList.remove('hidden');
       updateCheckoutSummary('usd');
@@ -621,8 +638,13 @@
         const total = base + fee;
         const wallet = Number(userData?.walletBalance || 0);
 
+        const consentNoBonus = document.getElementById('confirmNoFirstBonus')?.checked;
+        const consentTerms = document.getElementById('confirmTerms')?.checked;
+
         if (!usd || usd <= 0) throw new Error('Valor inválido.');
         if (total > wallet) throw new Error('Saldo insuficiente na carteira.');
+        if (!consentNoBonus) throw new Error('Confirme primeiro que o pedido não tem bónus de primeira conta.');
+        if (!consentTerms) throw new Error('Aceite os termos da PayGo para continuar.');
 
         if (currentCheckoutItem.provider === 'reloadly') {
           await createReloadlyOrder(currentCheckoutItem, usd, base, fee, total);
@@ -700,6 +722,8 @@
     document.getElementById('providerFilter').addEventListener('change', renderCatalog);
     document.getElementById('checkoutUsd').addEventListener('input', () => updateCheckoutSummary('usd'));
     document.getElementById('checkoutMt').addEventListener('input', () => updateCheckoutSummary('mt'));
+    document.getElementById('confirmNoFirstBonus').addEventListener('change', () => updateCheckoutSummary('usd'));
+    document.getElementById('confirmTerms').addEventListener('change', () => updateCheckoutSummary('usd'));
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCheckoutModal(); });
     document.addEventListener('DOMContentLoaded', initSession);
   </script>
