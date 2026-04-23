@@ -1341,14 +1341,20 @@
                 ? `<span class="status-badge pending">⏳ Pendente</span>`
                 : `<span class="status-badge completed">✅ Emitido</span>`;
 
+              const resolvedUserId = vc.userId || vc.uid || vc.clientId || vc.customerId || '';
+              const resolvedUserName = vc.userName || vc.name || vc.customerName || 'Cliente';
+              const safeReqId = encodeURIComponent(vc.id || '');
+              const safeUserId = encodeURIComponent(resolvedUserId || '');
+              const safeUserName = encodeURIComponent(resolvedUserName || 'Cliente');
+
               const actionBtn = isPending
-                ? `<button onclick="window.openVcApproveModal('${vc.id}', '${vc.userId}', '${escapeHTML(vc.userName)}')" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-500 text-white rounded-lg text-xs font-bold transition shadow-md">Configurar</button>`
-                : `<button onclick="window.openVcApproveModal('${vc.id}', '${vc.userId}', '${escapeHTML(vc.userName)}')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-bold transition border border-slate-700">Ver</button>`;
+                ? `<button onclick="window.openVcApproveModal('${safeReqId}', '${safeUserId}', '${safeUserName}')" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-500 text-white rounded-lg text-xs font-bold transition shadow-md">Configurar</button>`
+                : `<button onclick="window.openVcApproveModal('${safeReqId}', '${safeUserId}', '${safeUserName}')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-bold transition border border-slate-700">Ver</button>`;
 
               rows += `
                 <tr class="hover:bg-slate-800/40 transition">
                   <td class="px-6 py-4">
-                    <div class="font-bold text-white text-sm">${escapeHTML(vc.userName || 'Cliente')}</div>
+                    <div class="font-bold text-white text-sm">${escapeHTML(resolvedUserName || 'Cliente')}</div>
                     <div class="text-[10px] text-slate-400 font-mono mt-0.5">${formatDate(vc.createdAt)}</div>
                   </td>
                   <td class="px-6 py-4 text-sm font-bold text-slate-300 font-mono">${formatCurrency(vc.amountPaid || 0)}</td>
@@ -1499,9 +1505,18 @@
         };
 
         window.openVcApproveModal = async (reqId, userId, userName) => {
-          setSafeText('vcClientName', sanitizeInput(userName, 100));
-          document.getElementById('vcApproveReqId').value = sanitizeInput(reqId, 50);
-          document.getElementById('vcApproveUserId').value = sanitizeInput(userId, 50);
+          const decodedReqId = decodeURIComponent(String(reqId || '')).trim();
+          const decodedUserId = decodeURIComponent(String(userId || '')).trim();
+          const decodedUserName = decodeURIComponent(String(userName || 'Cliente')).trim();
+
+          if (!decodedReqId) {
+            window.showToast('ID do pedido de cartão em falta.', 'error');
+            return;
+          }
+
+          setSafeText('vcClientName', sanitizeInput(decodedUserName, 100));
+          document.getElementById('vcApproveReqId').value = sanitizeInput(decodedReqId, 80);
+          document.getElementById('vcApproveUserId').value = sanitizeInput(decodedUserId, 80);
 
           const form = document.getElementById('vcApproveForm');
           if (form) form.reset();
@@ -1517,14 +1532,25 @@
               window.firebaseFirestore.doc(db, "vc_requests", reqId)
             );
 
+            let resolvedModalUserId = decodedUserId;
             if (reqDoc.exists()) {
               const reqData = reqDoc.data() || {};
+              resolvedModalUserId = resolvedModalUserId || reqData.userId || reqData.uid || reqData.clientId || reqData.customerId || '';
+              document.getElementById('vcApproveUserId').value = sanitizeInput(resolvedModalUserId, 80);
               document.getElementById('vcApproveUsdBalance').value = Number(reqData.cardBalanceUsd || 0).toFixed(2);
               document.getElementById('vcApproveType').value = reqData.cardBalanceType || 'virtual';
+              if (reqData.userName || reqData.name || reqData.customerName) {
+                setSafeText('vcClientName', sanitizeInput(reqData.userName || reqData.name || reqData.customerName, 100));
+              }
+            }
+
+            if (!resolvedModalUserId) {
+              window.showToast('Este pedido não tem userId associado. Verifique o documento em vc_requests.', 'error', 7000);
+              return;
             }
 
             const userDoc = await window.firebaseFirestore.getDoc(
-              window.firebaseFirestore.doc(db, "users", userId)
+              window.firebaseFirestore.doc(db, "users", resolvedModalUserId)
             );
 
             if (userDoc.exists()) {
@@ -1632,8 +1658,8 @@
               addedAt: new Date().toISOString()
             };
 
-            if (vcData.number.length !== 16 || !/^\d+$/.test(vcData.number)) {
-              window.showToast("Número do cartão inválido.", "error");
+            if (!/^\d{13,19}$/.test(vcData.number)) {
+              window.showToast("Número do cartão inválido. Use 13 a 19 dígitos.", "error");
               return;
             }
 
@@ -1665,64 +1691,82 @@
             if (typeof lucide !== 'undefined') lucide.createIcons({ root: btn });
 
             try {
-              await window.firebaseFirestore.updateDoc(
-                window.firebaseFirestore.doc(db, "users", userId),
-                {
-                  virtualCard: vcData,
-                  vcBalance: 0,
-                  vcRequestPending: false,
-                  vcActivatedAt: window.firebaseFirestore.serverTimestamp()
-                }
-              );
+              if (!userId || userId === 'undefined' || userId === 'null') {
+                throw new Error('userId do cliente em falta. O pedido precisa ter userId em vc_requests.');
+              }
 
-              await window.firebaseFirestore.updateDoc(
-                window.firebaseFirestore.doc(db, "vc_requests", reqId),
-                {
-                  status: 'completed',
-                  approvedAt: window.firebaseFirestore.serverTimestamp(),
-                  approvedBy: loggedInAdminId,
-                  cardBalanceUsd: vcData.cardBalanceUsd,
-                  cardBalanceType: vcData.cardBalanceType
-                }
-              );
+              const userRef = window.firebaseFirestore.doc(db, "users", userId);
+              const reqRef = window.firebaseFirestore.doc(db, "vc_requests", reqId);
 
-              await window.firebaseFirestore.addDoc(
-                window.firebaseFirestore.collection(db, "notifications"),
-                {
-                  userId: userId,
-                  title: "Cartão PayGo Ativado 💳",
-                  message: `O seu cartão PayGo foi criado com sucesso. Saldo inicial registado: $${vcData.cardBalanceUsd.toFixed(2)} (${vcData.cardBalanceType}).`,
-                  type: "card_issued",
-                  read: false,
-                  createdAt: window.firebaseFirestore.serverTimestamp(),
-                  priority: 'high'
-                }
-              );
+              const cardPayload = {
+                ...vcData,
+                maskedNumber: `•••• •••• •••• ${vcData.number.slice(-4)}`,
+                last4: vcData.number.slice(-4),
+                brand: vcData.number.startsWith('4') ? 'visa' : 'mastercard'
+              };
 
-              await window.firebaseFirestore.addDoc(
-                window.firebaseFirestore.collection(db, "admin_audit_logs"),
-                {
-                  adminId: loggedInAdminId,
-                  action: 'VC_CARD_APPROVED',
-                  targetId: reqId,
-                  targetType: 'vc_request',
-                  userId: userId,
-                  details: {
-                    cardNumberLast4: vcData.number.slice(-4),
-                    cardBalanceUsd: vcData.cardBalanceUsd,
-                    cardBalanceType: vcData.cardBalanceType,
-                    allowAdminVisibility: vcData.allowAdminVisibility
-                  },
-                  createdAt: window.firebaseFirestore.serverTimestamp()
-                }
-              );
+              await window.firebaseFirestore.updateDoc(userRef, {
+                virtualCard: cardPayload,
+                vcBalance: vcData.cardBalanceUsd,
+                vcRequestPending: false,
+                vcActivatedAt: window.firebaseFirestore.serverTimestamp()
+              });
+
+              await window.firebaseFirestore.updateDoc(reqRef, {
+                status: 'completed',
+                approvedAt: window.firebaseFirestore.serverTimestamp(),
+                approvedBy: loggedInAdminId,
+                userId: userId,
+                cardNumberLast4: vcData.number.slice(-4),
+                cardBalanceUsd: vcData.cardBalanceUsd,
+                cardBalanceType: vcData.cardBalanceType
+              });
+
+              try {
+                await window.firebaseFirestore.addDoc(
+                  window.firebaseFirestore.collection(db, "notifications"),
+                  {
+                    userId: userId,
+                    title: "Cartão PayGo Ativado 💳",
+                    message: `O seu cartão PayGo foi criado com sucesso. Saldo inicial registado: $${vcData.cardBalanceUsd.toFixed(2)} (${vcData.cardBalanceType}).`,
+                    type: "card_issued",
+                    read: false,
+                    createdAt: window.firebaseFirestore.serverTimestamp(),
+                    priority: 'high'
+                  }
+                );
+              } catch (notifyErr) {
+                console.warn('Cartão entregue, mas a notificação falhou:', notifyErr);
+              }
+
+              try {
+                await window.firebaseFirestore.addDoc(
+                  window.firebaseFirestore.collection(db, "admin_audit_logs"),
+                  {
+                    adminId: loggedInAdminId,
+                    action: 'VC_CARD_APPROVED',
+                    targetId: reqId,
+                    targetType: 'vc_request',
+                    userId: userId,
+                    details: {
+                      cardNumberLast4: vcData.number.slice(-4),
+                      cardBalanceUsd: vcData.cardBalanceUsd,
+                      cardBalanceType: vcData.cardBalanceType,
+                      allowAdminVisibility: vcData.allowAdminVisibility
+                    },
+                    createdAt: window.firebaseFirestore.serverTimestamp()
+                  }
+                );
+              } catch (auditErr) {
+                console.warn('Cartão entregue, mas o log de auditoria falhou:', auditErr);
+              }
 
               window.showToast("✅ Cartão PayGo entregue com sucesso!", "success");
               window.closeVcModal();
               await window.fetchDashboardData(true);
             } catch (err) {
               console.error("Erro ao aprovar cartão:", err);
-              window.showToast("❌ Falha ao entregar o cartão. Tente novamente.", "error");
+              window.showToast(`❌ Falha ao entregar: ${err?.message || 'erro desconhecido'}`, "error", 7000);
             } finally {
               btn.disabled = false;
               btn.innerHTML = originalBtnText;
@@ -1769,10 +1813,16 @@
         
         document.addEventListener('paste', (e) => {
             const target = e.target;
-            if (target?.id?.includes('vcApprove') && target?.id !== 'vcApproveDestination' && target?.id !== 'vcApproveUsdBalance') {
-                e.preventDefault();
-                window.showToast('Cole manualmente por segurança', 'warning', 2000);
-            }
+            if (!target?.id?.includes('vcApprove')) return;
+            setTimeout(() => {
+                if (target.id === 'vcApproveNumber') target.value = formatCardInput(target.value);
+                if (target.id === 'vcApproveExpiry') {
+                  const digits = String(target.value || '').replace(/\D/g, '').slice(0, 4);
+                  target.value = digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
+                }
+                if (target.id === 'vcApproveCvc') target.value = String(target.value || '').replace(/\D/g, '').slice(0, 3);
+                window.updateVcPreview?.();
+            }, 0);
         });
         
         document.addEventListener('DOMContentLoaded', () => {
