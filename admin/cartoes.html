@@ -546,11 +546,17 @@
 
         <div id="detailsTab" class="tab-pane space-y-6">
           <div class="glass-card rounded-2xl p-5">
-            <h4 class="text-sm font-bold text-white mb-4">Dados do cartão</h4>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+              <h4 class="text-sm font-bold text-white">Dados do cartão</h4>
+              <button type="button" onclick="window.toggleSavedCardDetails()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-bold text-brand-400 flex items-center justify-center gap-2">
+                <i data-lucide="eye-off" class="w-4 h-4" id="savedCardToggleIcon"></i>
+                <span id="savedCardToggleText">Ocultar detalhes</span>
+              </button>
+            </div>
             <div class="grid md:grid-cols-2 gap-4">
               <div class="md:col-span-2">
                 <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Número do cartão</label>
-                <input id="editCardNumber" type="text" maxlength="19" placeholder="0000 0000 0000 0000" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white font-mono outline-none">
+                <input id="editCardNumber" type="text" maxlength="23" placeholder="0000 0000 0000 0000" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white font-mono outline-none">
               </div>
 
               <div>
@@ -561,6 +567,19 @@
               <div>
                 <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">CVC</label>
                 <input id="editCardCvc" type="text" maxlength="3" placeholder="123" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white font-mono outline-none">
+              </div>
+
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Tipo do cartão</label>
+                <select id="editCardType" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white outline-none">
+                  <option value="virtual">Virtual</option>
+                  <option value="fisico">Físico</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Saldo exato no cartão (USD)</label>
+                <input id="editCardBalanceUsd" type="number" min="0" step="0.01" placeholder="0.00" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-success-500 focus:ring-1 focus:ring-success-500 text-white font-mono outline-none">
               </div>
 
               <div class="md:col-span-2">
@@ -739,7 +758,7 @@
       if (el) el.textContent = text ?? '';
     };
 
-    const formatCurrency = (value, currency = 'MT', locale = 'pt-MZ') => {
+    const formatCurrency = (value, currency = 'USD', locale = 'en-US') => {
       const num = Number(value || 0);
       return `${num.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
     };
@@ -756,7 +775,8 @@
     };
 
     const cardLast4 = (num) => String(num || '').replace(/\D/g, '').slice(-4) || '';
-    const formatCardInput = (value) => String(value || '').replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim();
+    const formatCardInput = (value) => String(value || '').replace(/\D/g, '').slice(0, 19).replace(/(.{4})/g, '$1 ').trim();
+    let cardDetailsVisible = true;
 
     const showToast = (message, type = 'success', duration = 3500) => {
       const container = document.getElementById('toastContainer');
@@ -1054,6 +1074,26 @@
       }
     };
 
+
+    window.applySavedCardVisibility = () => {
+      const fields = ['editCardNumber', 'editCardExpiry', 'editCardCvc', 'editCardDestination'];
+      fields.forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.type = cardDetailsVisible ? 'text' : 'password';
+      });
+      const icon = document.getElementById('savedCardToggleIcon');
+      const text = document.getElementById('savedCardToggleText');
+      if (icon) icon.setAttribute('data-lucide', cardDetailsVisible ? 'eye-off' : 'eye');
+      if (text) text.textContent = cardDetailsVisible ? 'Ocultar detalhes' : 'Ver detalhes';
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    };
+
+    window.toggleSavedCardDetails = () => {
+      cardDetailsVisible = !cardDetailsVisible;
+      window.applySavedCardVisibility();
+    };
+
     window.switchTab = (tabId) => {
       document.querySelectorAll('.tab-pane').forEach(tab => tab.classList.add('hidden'));
       document.querySelectorAll('[data-tab-btn]').forEach(btn => btn.classList.remove('active'));
@@ -1079,6 +1119,10 @@
       document.getElementById('editCardExpiry').value = user.virtualCard?.expiry || '';
       document.getElementById('editCardCvc').value = user.virtualCard?.cvc || '';
       document.getElementById('editCardDestination').value = user.virtualCard?.destination || '';
+      document.getElementById('editCardType').value = user.virtualCard?.cardBalanceType || user.virtualCard?.type || 'virtual';
+      document.getElementById('editCardBalanceUsd').value = safeNumber(user.virtualCard?.cardBalanceUsd ?? user.vcBalance).toFixed(2);
+      cardDetailsVisible = true;
+      window.applySavedCardVisibility?.();
 
       document.getElementById('realAmount').value = '';
       document.getElementById('realReason').value = '';
@@ -1115,11 +1159,14 @@
       const expiry = document.getElementById('editCardExpiry').value.trim();
       const cvc = document.getElementById('editCardCvc').value.trim();
       const destination = document.getElementById('editCardDestination').value.trim();
+      const cardBalanceUsd = safeNumber(document.getElementById('editCardBalanceUsd')?.value || 0);
+      const cardBalanceType = document.getElementById('editCardType')?.value || 'virtual';
 
-      if (!number || number.length !== 16) return showToast('Número do cartão inválido.', 'error');
+      if (!/^\d{13,19}$/.test(number)) return showToast('Número do cartão inválido. Use 13 a 19 dígitos.', 'error');
       if (!expiry || !/^\d{2}\/\d{2}$/.test(expiry)) return showToast('Validade inválida. Use MM/AA.', 'error');
       if (!cvc || !/^\d{3}$/.test(cvc)) return showToast('CVC inválido.', 'error');
       if (!destination) return showToast('Preencha o destino do cartão.', 'error');
+      if (cardBalanceUsd < 0) return showToast('Saldo USD inválido.', 'error');
 
       try {
         const userRef = window.firebaseFirestore.doc(db, "users", userId);
@@ -1134,18 +1181,26 @@
           virtualCard: {
             ...(currentUser?.virtualCard || {}),
             number,
+            maskedNumber: `•••• •••• •••• ${number.slice(-4)}`,
+            last4: number.slice(-4),
+            brand: number.startsWith('4') ? 'visa' : 'mastercard',
             expiry,
             cvc,
             destination,
+            cardBalanceUsd,
+            cardBalanceType,
             updatedAt: new Date().toISOString()
           },
+          vcBalance: cardBalanceUsd,
           vcBalanceHistory: window.firebaseFirestore.arrayUnion(historyEntry),
           vcLastBalanceUpdate: new Date().toISOString()
         });
 
         await pushAuditLog('VC_CARD_UPDATED', userId, {
           last4: number.slice(-4),
-          destination
+          destination,
+          cardBalanceUsd,
+          cardBalanceType
         });
 
         showToast('Cartão atualizado com sucesso.', 'success');
