@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="description" content="Gestão de Cartões Virtuais - PayGo Admin" />
+  <meta name="description" content="Gestão PRO de Cartões Virtuais - PayGo Admin" />
   <meta name="robots" content="noindex,nofollow" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: 'unsafe-inline' 'unsafe-eval'; img-src 'self' data: https:; font-src 'self' https: data:; connect-src 'self' https: wss:;">
-  <title>💳 Gestão de Cartões | PayGo Admin</title>
+  <title>💳 Gestão PRO de Cartões | PayGo Admin</title>
 
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💳</text></svg>">
   <script src="https://cdn.tailwindcss.com"></script>
@@ -25,9 +25,6 @@
     import {
       getFirestore,
       collection,
-      query,
-      where,
-      orderBy,
       getDocs,
       doc,
       getDoc,
@@ -37,12 +34,10 @@
       increment,
       arrayUnion
     } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
     window.firebaseFirestore = {
       getFirestore,
       collection,
-      query,
-      where,
-      orderBy,
       getDocs,
       doc,
       getDoc,
@@ -92,24 +87,24 @@
     .bg-grid {
       background-size: 40px 40px;
       background-image:
-        linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
+        linear-gradient(to right, rgba(255,255,255,.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,.03) 1px, transparent 1px);
     }
     .glass-card {
-      background: rgba(15, 23, 42, 0.60);
+      background: rgba(15, 23, 42, .60);
       backdrop-filter: blur(16px);
-      border: 1px solid rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,.05);
       box-shadow: 0 25px 50px -12px rgba(0,0,0,.30);
       transition: all .25s ease;
     }
     .glass-card:hover {
-      border-color: rgba(59,130,246,.22);
+      border-color: rgba(59,130,246,.25);
       box-shadow: 0 25px 50px -12px rgba(37,99,235,.12);
     }
     .sidebar-link {
       position: relative;
       transition: all .25s ease;
-      border-radius: 0.75rem;
+      border-radius: .75rem;
     }
     .sidebar-link::before {
       content: '';
@@ -136,7 +131,11 @@
       background: #3b82f6;
       box-shadow: 0 0 12px #3b82f6;
     }
-    table { width: 100%; border-collapse: separate; border-spacing: 0; }
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
     th {
       background: rgba(15,23,42,.8);
       padding: 16px;
@@ -160,6 +159,7 @@
       vertical-align: middle;
     }
     tbody tr:hover { background: rgba(255,255,255,.03); }
+
     .status-badge {
       display: inline-flex;
       align-items: center;
@@ -169,7 +169,7 @@
       font-size: 10px;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: .05em;
       border: 1px solid;
     }
     .status-badge.active {
@@ -187,10 +187,17 @@
       color: #cbd5e1;
       border-color: rgba(148,163,184,.30);
     }
+    .status-badge.sim {
+      background: rgba(168,85,247,.15);
+      color: #c084fc;
+      border-color: rgba(168,85,247,.30);
+    }
+
     .modal-backdrop {
       background: rgba(2,6,23,.9);
       backdrop-filter: blur(8px);
     }
+
     #toastContainer {
       position: fixed;
       top: 24px;
@@ -200,7 +207,7 @@
       flex-direction: column;
       gap: 12px;
       pointer-events: none;
-      max-width: 420px;
+      max-width: 430px;
     }
     .toast-item {
       pointer-events: auto;
@@ -230,6 +237,12 @@
     .toast-item.warning { border-left-color: #f59e0b; }
     .toast-item.info { border-left-color: #3b82f6; }
 
+    .tab-btn.active {
+      background: rgba(59,130,246,.15);
+      color: #60a5fa;
+      border-color: rgba(59,130,246,.35);
+    }
+
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb {
@@ -238,14 +251,14 @@
       border: 2px solid transparent;
       background-clip: content-box;
     }
-    ::-webkit-scrollbar-thumb:hover { background: #475569; }
 
     @media (max-width: 768px) {
       .hide-mobile { display: none !important; }
     }
   </style>
 </head>
-<body class="antialiased selection:bg-brand-500 selection:text-white">
+<body class="selection:bg-brand-500 selection:text-white antialiased">
+
   <div class="fixed inset-0 bg-grid opacity-20 pointer-events-none z-0"></div>
   <div class="fixed top-0 left-1/4 w-[800px] h-[600px] bg-brand-600/10 rounded-full mix-blend-screen blur-[120px] pointer-events-none z-0"></div>
   <div class="fixed bottom-0 right-1/4 w-[600px] h-[500px] bg-accent-500/10 rounded-full mix-blend-screen blur-[100px] pointer-events-none z-0"></div>
@@ -255,10 +268,10 @@
   <div id="sysLoader" class="fixed inset-0 bg-[#020617] z-[200] flex flex-col items-center justify-center transition-opacity duration-500">
     <div class="relative">
       <div class="w-20 h-20 border-4 border-slate-800 border-t-brand-500 rounded-full animate-spin"></div>
-      <div class="absolute inset-0 w-20 h-20 border-4 border-transparent border-b-accent-500 rounded-full animate-spin" style="animation-direction:reverse; animation-duration:1.5s;"></div>
+      <div class="absolute inset-0 w-20 h-20 border-4 border-transparent border-b-accent-500 rounded-full animate-spin" style="animation-direction: reverse; animation-duration: 1.5s;"></div>
     </div>
     <h2 class="text-white text-3xl font-display font-extrabold tracking-tight mt-6">PayGo OS</h2>
-    <p class="text-slate-400 text-sm mt-2 font-medium">A carregar gestão de cartões...</p>
+    <p class="text-slate-400 text-sm mt-2 font-medium">A carregar gestão PRO de cartões...</p>
   </div>
 
   <header class="md:hidden bg-slate-900/80 backdrop-blur-md text-white p-4 flex justify-between items-center fixed w-full z-40 top-0 border-b border-white/5">
@@ -268,7 +281,7 @@
       </div>
       <span class="font-display font-extrabold text-xl tracking-wide">PayGo</span>
     </div>
-    <button onclick="window.toggleSidebar()" class="text-white p-2 focus:outline-none bg-white/5 rounded-lg transition-colors border border-white/5 hover:bg-white/10">
+    <button onclick="window.toggleSidebar()" class="text-white p-2 bg-white/5 rounded-lg transition-colors border border-white/5 hover:bg-white/10">
       <i data-lucide="menu" class="w-6 h-6"></i>
     </button>
   </header>
@@ -336,8 +349,8 @@
   <main class="md:ml-64 p-4 md:p-8 pt-24 md:pt-8 min-h-screen relative z-10">
     <header class="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-6 mb-8">
       <div>
-        <h1 class="text-3xl md:text-4xl font-display font-extrabold text-white tracking-tight">Gestão de Cartões Virtuais</h1>
-        <p class="text-slate-400 mt-2 text-sm font-medium">Editar cartões, ajustar saldo real, simular saldo e acompanhar o histórico manual.</p>
+        <h1 class="text-3xl md:text-4xl font-display font-extrabold text-white tracking-tight">Gestão PRO de Cartões Virtuais</h1>
+        <p class="text-slate-400 mt-2 text-sm font-medium">Operações completas: editar cartão, recarregar, debitar, simular, transferir e auditar.</p>
       </div>
       <div class="flex gap-3 w-full xl:w-auto">
         <button onclick="window.fetchCardsData(true)" class="w-full sm:w-auto px-6 py-3.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(37,99,235,0.35)] border border-brand-500">
@@ -347,7 +360,7 @@
       </div>
     </header>
 
-    <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6 mb-8">
+    <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 md:gap-6 mb-8">
       <article class="glass-card p-6 rounded-[2rem] border-t-4 border-t-brand-500 bg-brand-900/10">
         <div class="flex items-center justify-between mb-4">
           <span class="text-xs font-black text-brand-400 uppercase tracking-widest">Cartões Ativos</span>
@@ -378,6 +391,16 @@
         <p id="statSimulatedBalance" class="text-3xl font-display font-extrabold text-warning-400">0.00 MT</p>
       </article>
 
+      <article class="glass-card p-6 rounded-[2rem] border-t-4 border-t-danger-500 bg-danger-900/10">
+        <div class="flex items-center justify-between mb-4">
+          <span class="text-xs font-black text-danger-400 uppercase tracking-widest">Débitos Manuais</span>
+          <div class="w-10 h-10 bg-danger-500/20 rounded-xl flex items-center justify-center border border-danger-500/30">
+            <i data-lucide="minus-circle" class="w-5 h-5 text-danger-400"></i>
+          </div>
+        </div>
+        <p id="statManualDebits" class="text-3xl font-display font-extrabold text-danger-400">0.00 MT</p>
+      </article>
+
       <article class="glass-card p-6 rounded-[2rem] border-t-4 border-t-slate-600">
         <div class="flex items-center justify-between mb-4">
           <span class="text-xs font-black text-slate-400 uppercase tracking-widest">Sem Saldo</span>
@@ -390,7 +413,7 @@
     </section>
 
     <section class="glass-card rounded-[2rem] p-5 md:p-6 mb-8">
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
         <div class="lg:col-span-2">
           <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Pesquisar</label>
           <div class="relative">
@@ -398,6 +421,7 @@
             <input id="searchInput" type="text" placeholder="Nome, email, últimos 4 dígitos ou destino..." class="w-full pl-11 pr-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white transition-all outline-none placeholder-slate-600" oninput="window.renderCardsTable()">
           </div>
         </div>
+
         <div>
           <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Filtro</label>
           <select id="balanceFilter" onchange="window.renderCardsTable()" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white transition-all outline-none">
@@ -405,6 +429,17 @@
             <option value="withBalance">Com saldo real</option>
             <option value="zero">Sem saldo real</option>
             <option value="withSimulation">Com saldo simulado</option>
+            <option value="onlyActive">Apenas cartões ativos</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Ordenar</label>
+          <select id="sortFilter" onchange="window.renderCardsTable()" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white transition-all outline-none">
+            <option value="name_asc">Nome A-Z</option>
+            <option value="real_desc">Maior saldo real</option>
+            <option value="sim_desc">Maior saldo simulado</option>
+            <option value="updated_desc">Última atualização</option>
           </select>
         </div>
       </div>
@@ -419,7 +454,7 @@
         <span class="text-xs text-slate-500 font-mono bg-slate-800 px-3 py-1 rounded-full" id="tableCount">0</span>
       </div>
 
-      <div class="overflow-x-auto max-h-[70vh] overflow-y-auto">
+      <div class="overflow-x-auto max-h-[72vh] overflow-y-auto">
         <table>
           <thead>
             <tr>
@@ -446,37 +481,37 @@
 
     <footer class="mt-12 pt-6 border-t border-white/5 text-center text-xs text-slate-500">
       <p>
-        <span class="font-mono">PayGo OS - Cartões</span> •
+        <span class="font-mono">PayGo OS - Cartões PRO</span> •
         Última sincronização: <span id="lastSync">—</span>
       </p>
     </footer>
   </main>
 
-  <!-- Modal editar cartão -->
   <div id="cardModal" class="fixed inset-0 modal-backdrop z-[100] hidden items-center justify-center p-4">
-    <div class="bg-slate-900 border border-brand-500/30 rounded-3xl w-full max-w-3xl overflow-hidden shadow-[0_0_50px_rgba(59,130,246,0.15)] relative">
-      <button onclick="window.closeCardModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white transition p-2 rounded-lg hover:bg-white/5">
+    <div class="bg-slate-900 border border-brand-500/30 rounded-3xl w-full max-w-6xl overflow-hidden shadow-[0_0_50px_rgba(59,130,246,0.15)] relative">
+      <button onclick="window.closeCardModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white transition p-2 rounded-lg hover:bg-white/5 z-10">
         <i data-lucide="x" class="w-5 h-5"></i>
       </button>
 
       <div class="p-6 border-b border-white/5 bg-slate-900/80">
         <h3 class="text-xl font-display font-bold text-white mb-1 flex items-center gap-2">
           <i data-lucide="credit-card" class="w-5 h-5 text-brand-400"></i>
-          <span>Gerir Cartão</span>
+          <span>Centro Operacional do Cartão</span>
         </h3>
-        <p class="text-sm text-slate-400">Editar dados, adicionar saldo ou simular saldo.</p>
+        <p class="text-sm text-slate-400">Editar, recarregar, debitar, transferir e auditar.</p>
       </div>
 
-      <div class="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+      <div class="p-6 max-h-[84vh] overflow-y-auto space-y-6">
         <input type="hidden" id="modalUserId">
         <input type="hidden" id="modalUserNameHidden">
 
-        <div class="grid md:grid-cols-2 gap-6">
+        <div class="grid xl:grid-cols-3 gap-6">
           <div class="glass-card rounded-2xl p-5">
             <p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-3">Cliente</p>
             <div class="space-y-2">
               <p id="modalUserName" class="text-lg font-bold text-white">—</p>
               <p id="modalUserEmail" class="text-sm text-slate-400 font-mono">—</p>
+              <p id="modalUserPhone" class="text-sm text-slate-500 font-mono">—</p>
             </div>
           </div>
 
@@ -491,97 +526,171 @@
                 <span class="text-sm text-slate-400">Saldo simulado</span>
                 <span id="modalSimBalance" class="text-warning-400 font-bold font-mono">0.00 MT</span>
               </div>
+              <div class="flex justify-between items-center">
+                <span class="text-sm text-slate-400">Últimos 4 dígitos</span>
+                <span id="modalLast4" class="text-brand-400 font-bold font-mono">—</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass-card rounded-2xl p-5">
+            <p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-3">Ações rápidas</p>
+            <div class="grid grid-cols-2 gap-3">
+              <button onclick="window.switchTab('detailsTab')" class="tab-btn active px-4 py-3 rounded-xl border border-slate-700 text-sm font-bold text-white" data-tab-btn="detailsTab">Dados</button>
+              <button onclick="window.switchTab('moneyTab')" class="tab-btn px-4 py-3 rounded-xl border border-slate-700 text-sm font-bold text-white" data-tab-btn="moneyTab">Saldo</button>
+              <button onclick="window.switchTab('transferTab')" class="tab-btn px-4 py-3 rounded-xl border border-slate-700 text-sm font-bold text-white" data-tab-btn="transferTab">Transferir</button>
+              <button onclick="window.switchTab('historyTab')" class="tab-btn px-4 py-3 rounded-xl border border-slate-700 text-sm font-bold text-white" data-tab-btn="historyTab">Histórico</button>
             </div>
           </div>
         </div>
 
-        <div class="glass-card rounded-2xl p-5">
-          <h4 class="text-sm font-bold text-white mb-4">Dados do cartão</h4>
-          <div class="grid md:grid-cols-2 gap-4">
-            <div class="md:col-span-2">
-              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Número do cartão</label>
-              <input id="editCardNumber" type="text" maxlength="19" placeholder="0000 0000 0000 0000" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white font-mono outline-none">
-            </div>
-            <div>
-              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Validade</label>
-              <input id="editCardExpiry" type="text" maxlength="5" placeholder="MM/AA" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white font-mono outline-none">
-            </div>
-            <div>
-              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">CVC</label>
-              <input id="editCardCvc" type="text" maxlength="3" placeholder="123" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white font-mono outline-none">
-            </div>
-            <div class="md:col-span-2">
-              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Pay ID / TRC20 / Destino</label>
-              <input id="editCardDestination" type="text" placeholder="Ex: TXYZ... ou 0x..." class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white font-mono outline-none">
-            </div>
-          </div>
-        </div>
+        <div id="detailsTab" class="tab-pane space-y-6">
+          <div class="glass-card rounded-2xl p-5">
+            <h4 class="text-sm font-bold text-white mb-4">Dados do cartão</h4>
+            <div class="grid md:grid-cols-2 gap-4">
+              <div class="md:col-span-2">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Número do cartão</label>
+                <input id="editCardNumber" type="text" maxlength="19" placeholder="0000 0000 0000 0000" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white font-mono outline-none">
+              </div>
 
-        <div class="grid md:grid-cols-2 gap-6">
-          <div class="glass-card rounded-2xl p-5 border border-success-500/20">
-            <h4 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
-              <i data-lucide="wallet" class="w-4 h-4 text-success-400"></i>
-              Adicionar saldo real
-            </h4>
-            <div class="space-y-4">
               <div>
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Valor (MT)</label>
-                <input id="realAmount" type="number" min="0.01" step="0.01" placeholder="0.00" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-success-500 focus:ring-1 focus:ring-success-500 text-white font-mono outline-none">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Validade</label>
+                <input id="editCardExpiry" type="text" maxlength="5" placeholder="MM/AA" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white font-mono outline-none">
               </div>
+
               <div>
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Motivo</label>
-                <input id="realReason" type="text" placeholder="Ex: recarga manual do cartão" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-success-500 focus:ring-1 focus:ring-success-500 text-white outline-none">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">CVC</label>
+                <input id="editCardCvc" type="text" maxlength="3" placeholder="123" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white font-mono outline-none">
               </div>
-              <button onclick="window.addRealBalance()" class="w-full py-3.5 bg-success-600 hover:bg-success-500 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2">
-                <i data-lucide="plus-circle" class="w-4 h-4"></i>
-                <span>Adicionar saldo real</span>
+
+              <div class="md:col-span-2">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Pay ID / TRC20 / Destino</label>
+                <input id="editCardDestination" type="text" placeholder="Ex: TXYZ... ou 0x..." class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white font-mono outline-none">
+              </div>
+            </div>
+
+            <div class="mt-5">
+              <button onclick="window.saveCardChanges()" class="w-full md:w-auto px-6 py-4 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(37,99,235,0.2)]">
+                <i data-lucide="save" class="w-4 h-4"></i>
+                <span>Guardar alterações do cartão</span>
               </button>
             </div>
           </div>
+        </div>
 
-          <div class="glass-card rounded-2xl p-5 border border-warning-500/20">
-            <h4 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
-              <i data-lucide="flask-conical" class="w-4 h-4 text-warning-400"></i>
-              Simular saldo
-            </h4>
-            <div class="space-y-4">
-              <div>
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Valor simulado (MT)</label>
-                <input id="simAmount" type="number" min="0" step="0.01" placeholder="0.00" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-warning-500 focus:ring-1 focus:ring-warning-500 text-white font-mono outline-none">
-              </div>
-              <div>
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Observação</label>
-                <input id="simReason" type="text" placeholder="Ex: teste interno / simulação" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-warning-500 focus:ring-1 focus:ring-warning-500 text-white outline-none">
-              </div>
-              <div class="grid grid-cols-2 gap-3">
-                <button onclick="window.setSimulatedBalance()" class="w-full py-3.5 bg-warning-600 hover:bg-warning-500 text-slate-950 rounded-xl font-bold transition-all flex items-center justify-center gap-2">
-                  <i data-lucide="sparkles" class="w-4 h-4"></i>
-                  <span>Guardar</span>
+        <div id="moneyTab" class="tab-pane hidden space-y-6">
+          <div class="grid xl:grid-cols-3 gap-6">
+            <div class="glass-card rounded-2xl p-5 border border-success-500/20">
+              <h4 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                <i data-lucide="plus-circle" class="w-4 h-4 text-success-400"></i>
+                Adicionar saldo real
+              </h4>
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Valor (MT)</label>
+                  <input id="realAmount" type="number" min="0.01" step="0.01" placeholder="0.00" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-success-500 focus:ring-1 focus:ring-success-500 text-white font-mono outline-none">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Motivo</label>
+                  <input id="realReason" type="text" placeholder="Ex: recarga manual do cartão" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-success-500 focus:ring-1 focus:ring-success-500 text-white outline-none">
+                </div>
+                <button onclick="window.addRealBalance()" class="w-full py-3.5 bg-success-600 hover:bg-success-500 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2">
+                  <i data-lucide="wallet" class="w-4 h-4"></i>
+                  <span>Adicionar saldo</span>
                 </button>
-                <button onclick="window.clearSimulatedBalance()" class="w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 border border-slate-700">
-                  <i data-lucide="eraser" class="w-4 h-4"></i>
-                  <span>Limpar</span>
+              </div>
+            </div>
+
+            <div class="glass-card rounded-2xl p-5 border border-danger-500/20">
+              <h4 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                <i data-lucide="minus-circle" class="w-4 h-4 text-danger-400"></i>
+                Debitar saldo real
+              </h4>
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Valor (MT)</label>
+                  <input id="debitAmount" type="number" min="0.01" step="0.01" placeholder="0.00" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-danger-500 focus:ring-1 focus:ring-danger-500 text-white font-mono outline-none">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Motivo</label>
+                  <input id="debitReason" type="text" placeholder="Ex: compra efetuada / ajuste interno" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-danger-500 focus:ring-1 focus:ring-danger-500 text-white outline-none">
+                </div>
+                <button onclick="window.debitRealBalance()" class="w-full py-3.5 bg-danger-600 hover:bg-danger-500 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2">
+                  <i data-lucide="minus" class="w-4 h-4"></i>
+                  <span>Debitar saldo</span>
                 </button>
+              </div>
+            </div>
+
+            <div class="glass-card rounded-2xl p-5 border border-warning-500/20">
+              <h4 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                <i data-lucide="flask-conical" class="w-4 h-4 text-warning-400"></i>
+                Saldo simulado
+              </h4>
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Valor simulado (MT)</label>
+                  <input id="simAmount" type="number" min="0" step="0.01" placeholder="0.00" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-warning-500 focus:ring-1 focus:ring-warning-500 text-white font-mono outline-none">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Observação</label>
+                  <input id="simReason" type="text" placeholder="Ex: teste interno / simulação" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-warning-500 focus:ring-1 focus:ring-warning-500 text-white outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                  <button onclick="window.setSimulatedBalance()" class="w-full py-3.5 bg-warning-600 hover:bg-warning-500 text-slate-950 rounded-xl font-bold transition-all flex items-center justify-center gap-2">
+                    <i data-lucide="sparkles" class="w-4 h-4"></i>
+                    <span>Guardar</span>
+                  </button>
+                  <button onclick="window.clearSimulatedBalance()" class="w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 border border-slate-700">
+                    <i data-lucide="eraser" class="w-4 h-4"></i>
+                    <span>Limpar</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="glass-card rounded-2xl p-5">
-          <h4 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
-            <i data-lucide="history" class="w-4 h-4 text-brand-400"></i>
-            Histórico manual
-          </h4>
-          <div id="historyList" class="space-y-3">
-            <p class="text-sm text-slate-500">Sem histórico.</p>
+        <div id="transferTab" class="tab-pane hidden space-y-6">
+          <div class="glass-card rounded-2xl p-5 border border-brand-500/20">
+            <h4 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+              <i data-lucide="send" class="w-4 h-4 text-brand-400"></i>
+              Transferir saldo do cartão para carteira PayGo
+            </h4>
+            <div class="grid md:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Valor (MT)</label>
+                <input id="transferAmount" type="number" min="0.01" step="0.01" placeholder="0.00" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white font-mono outline-none">
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Motivo</label>
+                <input id="transferReason" type="text" placeholder="Ex: devolver para carteira PayGo do cliente" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white outline-none">
+              </div>
+            </div>
+
+            <div class="mt-5 flex flex-col md:flex-row gap-3">
+              <button onclick="window.transferToWallet()" class="w-full md:w-auto px-6 py-4 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2">
+                <i data-lucide="arrow-right-left" class="w-4 h-4"></i>
+                <span>Transferir para carteira</span>
+              </button>
+              <p class="text-xs text-slate-500 self-center">Essa ação debita o cartão e credita a carteira PayGo do utilizador.</p>
+            </div>
+          </div>
+        </div>
+
+        <div id="historyTab" class="tab-pane hidden space-y-6">
+          <div class="glass-card rounded-2xl p-5">
+            <h4 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+              <i data-lucide="history" class="w-4 h-4 text-brand-400"></i>
+              Histórico manual do cartão
+            </h4>
+            <div id="historyList" class="space-y-3">
+              <p class="text-sm text-slate-500">Sem histórico.</p>
+            </div>
           </div>
         </div>
 
         <div class="flex flex-col sm:flex-row gap-3">
-          <button onclick="window.saveCardChanges()" class="w-full sm:flex-1 py-4 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(37,99,235,0.2)]">
-            <i data-lucide="save" class="w-4 h-4"></i>
-            <span>Guardar alterações do cartão</span>
-          </button>
           <button onclick="window.closeCardModal()" class="w-full sm:w-auto px-6 py-4 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-all border border-slate-700">
             Fechar
           </button>
@@ -602,6 +711,7 @@
 
     let app, auth, db;
     let loggedInAdminId = null;
+    let loggedInAdminName = null;
     let cardsUsers = [];
     let lastFetchTime = null;
 
@@ -610,7 +720,7 @@
       auth = window.firebaseAuth.getAuth(app);
       db = window.firebaseFirestore.getFirestore(app, "paygodb");
     } catch (err) {
-      console.error(err);
+      console.error("Erro ao iniciar Firebase:", err);
     }
 
     const escapeHTML = (str) => {
@@ -634,14 +744,19 @@
       return `${num.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
     };
 
+    const safeNumber = (value) => {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : 0;
+    };
+
     const maskCard = (num) => {
       const clean = String(num || '').replace(/\D/g, '');
       if (!clean) return '—';
-      const last4 = clean.slice(-4);
-      return `•••• •••• •••• ${last4}`;
+      return `•••• •••• •••• ${clean.slice(-4)}`;
     };
 
     const cardLast4 = (num) => String(num || '').replace(/\D/g, '').slice(-4) || '';
+    const formatCardInput = (value) => String(value || '').replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim();
 
     const showToast = (message, type = 'success', duration = 3500) => {
       const container = document.getElementById('toastContainer');
@@ -673,6 +788,11 @@
       }, duration);
     };
 
+    const updateLastSync = () => {
+      lastFetchTime = new Date();
+      setSafeText('lastSync', lastFetchTime.toLocaleString('pt-MZ'));
+    };
+
     window.toggleSidebar = () => {
       const sidebar = document.getElementById('sidebar');
       const overlay = document.getElementById('mobileOverlay');
@@ -693,54 +813,55 @@
       }
     };
 
-    const updateLastSync = () => {
-      lastFetchTime = new Date();
-      setSafeText('lastSync', lastFetchTime.toLocaleString('pt-MZ'));
-    };
-
     const normalizeUserCard = (id, data) => {
       const virtualCard = data.virtualCard || {};
-      const vcBalance = Number(data.vcBalance || 0);
-      const vcSimulatedBalance = Number(data.vcSimulatedBalance || 0);
-      const history = Array.isArray(data.vcBalanceHistory) ? data.vcBalanceHistory : [];
-
       return {
         id,
         name: data.name || 'Sem nome',
         email: data.email || 'Sem email',
         phone: data.phone || data.whatsapp || '',
+        walletBalance: safeNumber(data.walletBalance),
         virtualCard,
-        vcBalance,
-        vcSimulatedBalance,
-        history,
-        status: virtualCard?.number ? 'active' : 'pending'
+        vcBalance: safeNumber(data.vcBalance),
+        vcSimulatedBalance: safeNumber(data.vcSimulatedBalance),
+        history: Array.isArray(data.vcBalanceHistory) ? data.vcBalanceHistory : [],
+        status: virtualCard?.number ? 'active' : 'pending',
+        vcLastBalanceUpdate: data.vcLastBalanceUpdate || virtualCard?.updatedAt || null
       };
     };
 
     const renderStats = () => {
       const totalActive = cardsUsers.filter(u => u.virtualCard?.number).length;
-      const realTotal = cardsUsers.reduce((sum, u) => sum + Number(u.vcBalance || 0), 0);
-      const simTotal = cardsUsers.reduce((sum, u) => sum + Number(u.vcSimulatedBalance || 0), 0);
-      const zeroBalance = cardsUsers.filter(u => Number(u.vcBalance || 0) <= 0).length;
+      const realTotal = cardsUsers.reduce((sum, u) => sum + safeNumber(u.vcBalance), 0);
+      const simTotal = cardsUsers.reduce((sum, u) => sum + safeNumber(u.vcSimulatedBalance), 0);
+      const zeroBalance = cardsUsers.filter(u => safeNumber(u.vcBalance) <= 0).length;
+
+      let totalDebits = 0;
+      cardsUsers.forEach(user => {
+        (user.history || []).forEach(item => {
+          if (item?.type === 'real_debit' || item?.type === 'transfer_wallet') {
+            totalDebits += safeNumber(item.amount);
+          }
+        });
+      });
 
       setSafeText('statCardsActive', totalActive);
       setSafeText('statRealBalance', formatCurrency(realTotal));
       setSafeText('statSimulatedBalance', formatCurrency(simTotal));
       setSafeText('statZeroBalance', zeroBalance);
+      setSafeText('statManualDebits', formatCurrency(totalDebits));
     };
 
-    window.renderCardsTable = () => {
-      const tbody = document.getElementById('cardsTable');
-      const countEl = document.getElementById('tableCount');
-      if (!tbody) return;
-
+    const getFilteredUsers = () => {
       const q = (document.getElementById('searchInput')?.value || '').trim().toLowerCase();
       const filter = document.getElementById('balanceFilter')?.value || 'all';
+      const sort = document.getElementById('sortFilter')?.value || 'name_asc';
 
-      const filtered = cardsUsers.filter(user => {
+      let filtered = cardsUsers.filter(user => {
         const searchText = [
           user.name,
           user.email,
+          user.phone,
           cardLast4(user.virtualCard?.number),
           user.virtualCard?.destination || ''
         ].join(' ').toLowerCase();
@@ -748,13 +869,33 @@
         const matchesSearch = !q || searchText.includes(q);
 
         let matchesFilter = true;
-        if (filter === 'withBalance') matchesFilter = Number(user.vcBalance || 0) > 0;
-        if (filter === 'zero') matchesFilter = Number(user.vcBalance || 0) <= 0;
-        if (filter === 'withSimulation') matchesFilter = Number(user.vcSimulatedBalance || 0) > 0;
+        if (filter === 'withBalance') matchesFilter = safeNumber(user.vcBalance) > 0;
+        if (filter === 'zero') matchesFilter = safeNumber(user.vcBalance) <= 0;
+        if (filter === 'withSimulation') matchesFilter = safeNumber(user.vcSimulatedBalance) > 0;
+        if (filter === 'onlyActive') matchesFilter = !!user.virtualCard?.number;
 
         return matchesSearch && matchesFilter;
       });
 
+      if (sort === 'name_asc') {
+        filtered.sort((a, b) => a.name.localeCompare(b.name, 'pt'));
+      } else if (sort === 'real_desc') {
+        filtered.sort((a, b) => safeNumber(b.vcBalance) - safeNumber(a.vcBalance));
+      } else if (sort === 'sim_desc') {
+        filtered.sort((a, b) => safeNumber(b.vcSimulatedBalance) - safeNumber(a.vcSimulatedBalance));
+      } else if (sort === 'updated_desc') {
+        filtered.sort((a, b) => new Date(b.vcLastBalanceUpdate || 0).getTime() - new Date(a.vcLastBalanceUpdate || 0).getTime());
+      }
+
+      return filtered;
+    };
+
+    window.renderCardsTable = () => {
+      const tbody = document.getElementById('cardsTable');
+      const countEl = document.getElementById('tableCount');
+      if (!tbody) return;
+
+      const filtered = getFilteredUsers();
       countEl.textContent = String(filtered.length);
 
       if (!filtered.length) {
@@ -771,8 +912,8 @@
       }
 
       tbody.innerHTML = filtered.map(user => {
-        const hasReal = Number(user.vcBalance || 0) > 0;
-        const hasSim = Number(user.vcSimulatedBalance || 0) > 0;
+        const hasReal = safeNumber(user.vcBalance) > 0;
+        const hasSim = safeNumber(user.vcSimulatedBalance) > 0;
 
         return `
           <tr>
@@ -796,10 +937,9 @@
               </div>
             </td>
             <td>
-              <span class="status-badge ${user.status === 'active' ? 'active' : 'pending'}">
-                ${user.status === 'active' ? 'Ativo' : 'Pendente'}
-              </span>
-              ${Number(user.vcBalance || 0) <= 0 ? `<div class="mt-2"><span class="status-badge zero">Sem saldo</span></div>` : ''}
+              <span class="status-badge ${user.status === 'active' ? 'active' : 'pending'}">${user.status === 'active' ? 'Ativo' : 'Pendente'}</span>
+              ${safeNumber(user.vcBalance) <= 0 ? `<div class="mt-2"><span class="status-badge zero">Sem saldo</span></div>` : ''}
+              ${safeNumber(user.vcSimulatedBalance) > 0 ? `<div class="mt-2"><span class="status-badge sim">Simulado</span></div>` : ''}
             </td>
             <td class="text-right">
               <button onclick="window.openCardModal('${user.id}')" class="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-lg text-xs font-bold transition-all inline-flex items-center gap-2">
@@ -824,12 +964,17 @@
         cardsUsers = [];
         snap.forEach(docSnap => {
           const data = docSnap.data() || {};
-          if (data.virtualCard || data.vcBalance !== undefined || data.vcSimulatedBalance !== undefined || data.vcRequestPending) {
+          if (
+            data.virtualCard ||
+            data.vcBalance !== undefined ||
+            data.vcSimulatedBalance !== undefined ||
+            data.vcRequestPending ||
+            data.vcBalanceHistory
+          ) {
             cardsUsers.push(normalizeUserCard(docSnap.id, data));
           }
         });
 
-        cardsUsers.sort((a, b) => a.name.localeCompare(b.name, 'pt'));
         renderStats();
         window.renderCardsTable();
         updateLastSync();
@@ -849,72 +994,46 @@
         return;
       }
 
-      const ordered = [...history].sort((a, b) => {
-        const ta = new Date(a.date || 0).getTime();
-        const tb = new Date(b.date || 0).getTime();
-        return tb - ta;
-      });
+      const ordered = [...history].sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime());
 
-      container.innerHTML = ordered.map(item => `
-        <div class="bg-slate-950 border border-slate-800 rounded-xl p-4">
-          <div class="flex flex-wrap items-center justify-between gap-3 mb-2">
-            <span class="text-xs font-bold uppercase tracking-widest ${
-              item.type === 'real_add' ? 'text-success-400' :
-              item.type === 'simulation' ? 'text-warning-400' :
-              item.type === 'clear_simulation' ? 'text-slate-300' :
-              'text-brand-400'
-            }">
-              ${escapeHTML(item.type || 'update')}
-            </span>
-            <span class="text-[11px] text-slate-500 font-mono">${escapeHTML(item.date ? new Date(item.date).toLocaleString('pt-MZ') : '—')}</span>
+      container.innerHTML = ordered.map(item => {
+        const type = item?.type || 'update';
+        const colorClass =
+          type === 'real_add' ? 'text-success-400' :
+          type === 'real_debit' ? 'text-danger-400' :
+          type === 'simulation' ? 'text-warning-400' :
+          type === 'transfer_wallet' ? 'text-brand-400' :
+          type === 'clear_simulation' ? 'text-slate-300' :
+          'text-vip-400';
+
+        return `
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-4">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-2">
+              <span class="text-xs font-bold uppercase tracking-widest ${colorClass}">
+                ${escapeHTML(type)}
+              </span>
+              <span class="text-[11px] text-slate-500 font-mono">${escapeHTML(item.date ? new Date(item.date).toLocaleString('pt-MZ') : '—')}</span>
+            </div>
+            <p class="text-sm text-white font-medium">${escapeHTML(item.message || 'Sem descrição')}</p>
+            ${item.amount !== undefined ? `<p class="mt-2 text-sm font-mono ${colorClass}">${formatCurrency(item.amount)}</p>` : ''}
+            ${item.by ? `<p class="mt-2 text-[11px] text-slate-500">Por: ${escapeHTML(item.by)}</p>` : ''}
           </div>
-          <p class="text-sm text-white font-medium">${escapeHTML(item.message || 'Sem descrição')}</p>
-          ${item.amount !== undefined ? `<p class="mt-2 text-sm font-mono ${item.type === 'simulation' ? 'text-warning-400' : 'text-success-400'}">${formatCurrency(item.amount)}</p>` : ''}
-          ${item.by ? `<p class="mt-2 text-[11px] text-slate-500">Por: ${escapeHTML(item.by)}</p>` : ''}
-        </div>
-      `).join('');
+        `;
+      }).join('');
     };
 
-    window.openCardModal = (userId) => {
-      const user = cardsUsers.find(u => u.id === userId);
-      if (!user) return;
-
-      document.getElementById('modalUserId').value = user.id;
-      document.getElementById('modalUserNameHidden').value = user.name;
-      setSafeText('modalUserName', user.name);
-      setSafeText('modalUserEmail', user.email);
-      setSafeText('modalRealBalance', formatCurrency(user.vcBalance));
-      setSafeText('modalSimBalance', formatCurrency(user.vcSimulatedBalance));
-
-      document.getElementById('editCardNumber').value = formatCardInput(user.virtualCard?.number || '');
-      document.getElementById('editCardExpiry').value = user.virtualCard?.expiry || '';
-      document.getElementById('editCardCvc').value = user.virtualCard?.cvc || '';
-      document.getElementById('editCardDestination').value = user.virtualCard?.destination || '';
-
-      document.getElementById('realAmount').value = '';
-      document.getElementById('realReason').value = '';
-      document.getElementById('simAmount').value = String(Number(user.vcSimulatedBalance || 0) || '');
-      document.getElementById('simReason').value = '';
-
-      renderHistoryList(user.history);
-
-      const modal = document.getElementById('cardModal');
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-      document.body.style.overflow = 'hidden';
-      lucide.createIcons();
+    const getCurrentUserFromModal = () => {
+      const userId = document.getElementById('modalUserId').value;
+      return cardsUsers.find(u => u.id === userId);
     };
 
-    window.closeCardModal = () => {
-      const modal = document.getElementById('cardModal');
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
-      document.body.style.overflow = '';
-    };
-
-    const formatCardInput = (value) => {
-      return String(value || '').replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim();
-    };
+    const buildHistoryEntry = (type, message, amount = undefined) => ({
+      type,
+      message,
+      amount: amount !== undefined ? safeNumber(amount) : undefined,
+      by: loggedInAdminName || 'Admin',
+      date: new Date().toISOString()
+    });
 
     const pushAuditLog = async (action, targetUserId, details = {}) => {
       try {
@@ -922,6 +1041,7 @@
           window.firebaseFirestore.collection(db, "admin_audit_logs"),
           {
             adminId: loggedInAdminId,
+            adminName: loggedInAdminName,
             action,
             targetId: targetUserId,
             targetType: 'virtual_card',
@@ -934,13 +1054,58 @@
       }
     };
 
-    const buildHistoryEntry = (type, message, amount = undefined) => ({
-      type,
-      message,
-      amount: amount !== undefined ? Number(amount) : undefined,
-      by: document.getElementById('userName')?.textContent || 'Admin',
-      date: new Date().toISOString()
-    });
+    window.switchTab = (tabId) => {
+      document.querySelectorAll('.tab-pane').forEach(tab => tab.classList.add('hidden'));
+      document.querySelectorAll('[data-tab-btn]').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(tabId)?.classList.remove('hidden');
+      document.querySelector(`[data-tab-btn="${tabId}"]`)?.classList.add('active');
+    };
+
+    window.openCardModal = (userId) => {
+      const user = cardsUsers.find(u => u.id === userId);
+      if (!user) return;
+
+      document.getElementById('modalUserId').value = user.id;
+      document.getElementById('modalUserNameHidden').value = user.name;
+
+      setSafeText('modalUserName', user.name);
+      setSafeText('modalUserEmail', user.email);
+      setSafeText('modalUserPhone', user.phone || 'Sem número');
+      setSafeText('modalRealBalance', formatCurrency(user.vcBalance));
+      setSafeText('modalSimBalance', formatCurrency(user.vcSimulatedBalance));
+      setSafeText('modalLast4', cardLast4(user.virtualCard?.number) || '—');
+
+      document.getElementById('editCardNumber').value = formatCardInput(user.virtualCard?.number || '');
+      document.getElementById('editCardExpiry').value = user.virtualCard?.expiry || '';
+      document.getElementById('editCardCvc').value = user.virtualCard?.cvc || '';
+      document.getElementById('editCardDestination').value = user.virtualCard?.destination || '';
+
+      document.getElementById('realAmount').value = '';
+      document.getElementById('realReason').value = '';
+      document.getElementById('debitAmount').value = '';
+      document.getElementById('debitReason').value = '';
+      document.getElementById('simAmount').value = String(safeNumber(user.vcSimulatedBalance) || '');
+      document.getElementById('simReason').value = '';
+      document.getElementById('transferAmount').value = '';
+      document.getElementById('transferReason').value = '';
+
+      renderHistoryList(user.history);
+
+      const modal = document.getElementById('cardModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.body.style.overflow = 'hidden';
+
+      window.switchTab('detailsTab');
+      lucide.createIcons();
+    };
+
+    window.closeCardModal = () => {
+      const modal = document.getElementById('cardModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      document.body.style.overflow = '';
+    };
 
     window.saveCardChanges = async () => {
       const userId = document.getElementById('modalUserId').value;
@@ -951,45 +1116,38 @@
       const cvc = document.getElementById('editCardCvc').value.trim();
       const destination = document.getElementById('editCardDestination').value.trim();
 
-      if (!number || number.length !== 16) {
-        showToast('Número do cartão inválido.', 'error');
-        return;
-      }
-      if (!expiry || !/^\d{2}\/\d{2}$/.test(expiry)) {
-        showToast('Validade inválida. Use MM/AA.', 'error');
-        return;
-      }
-      if (!cvc || !/^\d{3}$/.test(cvc)) {
-        showToast('CVC inválido.', 'error');
-        return;
-      }
-      if (!destination) {
-        showToast('Preencha o destino do cartão.', 'error');
-        return;
-      }
+      if (!number || number.length !== 16) return showToast('Número do cartão inválido.', 'error');
+      if (!expiry || !/^\d{2}\/\d{2}$/.test(expiry)) return showToast('Validade inválida. Use MM/AA.', 'error');
+      if (!cvc || !/^\d{3}$/.test(cvc)) return showToast('CVC inválido.', 'error');
+      if (!destination) return showToast('Preencha o destino do cartão.', 'error');
 
       try {
         const userRef = window.firebaseFirestore.doc(db, "users", userId);
-        const user = cardsUsers.find(u => u.id === userId);
+        const currentUser = getCurrentUserFromModal();
 
         const historyEntry = buildHistoryEntry(
           'card_update',
-          `Cartão atualizado por ${document.getElementById('userName')?.textContent || 'Admin'}`
+          `Cartão atualizado por ${loggedInAdminName || 'Admin'}`
         );
 
         await window.firebaseFirestore.updateDoc(userRef, {
           virtualCard: {
-            ...(user?.virtualCard || {}),
+            ...(currentUser?.virtualCard || {}),
             number,
             expiry,
             cvc,
             destination,
             updatedAt: new Date().toISOString()
           },
-          vcBalanceHistory: window.firebaseFirestore.arrayUnion(historyEntry)
+          vcBalanceHistory: window.firebaseFirestore.arrayUnion(historyEntry),
+          vcLastBalanceUpdate: new Date().toISOString()
         });
 
-        await pushAuditLog('VC_CARD_UPDATED', userId, { last4: number.slice(-4), destination });
+        await pushAuditLog('VC_CARD_UPDATED', userId, {
+          last4: number.slice(-4),
+          destination
+        });
+
         showToast('Cartão atualizado com sucesso.', 'success');
         await window.fetchCardsData(true);
         window.openCardModal(userId);
@@ -1001,18 +1159,12 @@
 
     window.addRealBalance = async () => {
       const userId = document.getElementById('modalUserId').value;
-      const amount = Number(document.getElementById('realAmount').value || 0);
+      const amount = safeNumber(document.getElementById('realAmount').value);
       const reason = document.getElementById('realReason').value.trim();
 
       if (!userId) return;
-      if (!amount || amount <= 0) {
-        showToast('Informe um valor válido.', 'error');
-        return;
-      }
-      if (!reason) {
-        showToast('Informe o motivo da recarga.', 'error');
-        return;
-      }
+      if (amount <= 0) return showToast('Informe um valor válido.', 'error');
+      if (!reason) return showToast('Informe o motivo da recarga.', 'error');
 
       try {
         const entry = buildHistoryEntry('real_add', `Saldo real adicionado: ${reason}`, amount);
@@ -1028,26 +1180,67 @@
 
         await pushAuditLog('VC_REAL_BALANCE_ADD', userId, { amount, reason });
         showToast(`Saldo real de ${formatCurrency(amount)} adicionado.`, 'success');
+
         document.getElementById('realAmount').value = '';
         document.getElementById('realReason').value = '';
+
         await window.fetchCardsData(true);
         window.openCardModal(userId);
+        window.switchTab('moneyTab');
       } catch (err) {
         console.error(err);
         showToast('Falha ao adicionar saldo real.', 'error');
       }
     };
 
+    window.debitRealBalance = async () => {
+      const userId = document.getElementById('modalUserId').value;
+      const amount = safeNumber(document.getElementById('debitAmount').value);
+      const reason = document.getElementById('debitReason').value.trim();
+      const currentUser = getCurrentUserFromModal();
+
+      if (!userId) return;
+      if (amount <= 0) return showToast('Informe um valor válido.', 'error');
+      if (!reason) return showToast('Informe o motivo do débito.', 'error');
+      if (!currentUser) return;
+      if (safeNumber(currentUser.vcBalance) < amount) return showToast('Saldo real insuficiente.', 'error');
+
+      if (!confirm(`Debitar ${formatCurrency(amount)} deste cartão?`)) return;
+
+      try {
+        const entry = buildHistoryEntry('real_debit', `Débito manual: ${reason}`, amount);
+
+        await window.firebaseFirestore.updateDoc(
+          window.firebaseFirestore.doc(db, "users", userId),
+          {
+            vcBalance: window.firebaseFirestore.increment(-amount),
+            vcBalanceHistory: window.firebaseFirestore.arrayUnion(entry),
+            vcLastBalanceUpdate: new Date().toISOString()
+          }
+        );
+
+        await pushAuditLog('VC_REAL_BALANCE_DEBIT', userId, { amount, reason });
+        showToast(`Débito de ${formatCurrency(amount)} efetuado.`, 'success');
+
+        document.getElementById('debitAmount').value = '';
+        document.getElementById('debitReason').value = '';
+
+        await window.fetchCardsData(true);
+        window.openCardModal(userId);
+        window.switchTab('moneyTab');
+      } catch (err) {
+        console.error(err);
+        showToast('Falha ao debitar saldo.', 'error');
+      }
+    };
+
     window.setSimulatedBalance = async () => {
       const userId = document.getElementById('modalUserId').value;
-      const amount = Number(document.getElementById('simAmount').value || 0);
+      const amount = safeNumber(document.getElementById('simAmount').value);
       const reason = document.getElementById('simReason').value.trim() || 'Simulação manual';
 
       if (!userId) return;
-      if (amount < 0) {
-        showToast('Valor simulado inválido.', 'error');
-        return;
-      }
+      if (amount < 0) return showToast('Valor simulado inválido.', 'error');
 
       try {
         const entry = buildHistoryEntry('simulation', `Saldo simulado definido: ${reason}`, amount);
@@ -1057,14 +1250,16 @@
           {
             vcSimulatedBalance: amount,
             vcBalanceHistory: window.firebaseFirestore.arrayUnion(entry),
-            vcLastSimulationUpdate: new Date().toISOString()
+            vcLastBalanceUpdate: new Date().toISOString()
           }
         );
 
         await pushAuditLog('VC_SIMULATED_BALANCE_SET', userId, { amount, reason });
         showToast('Saldo simulado atualizado.', 'success');
+
         await window.fetchCardsData(true);
         window.openCardModal(userId);
+        window.switchTab('moneyTab');
       } catch (err) {
         console.error(err);
         showToast('Falha ao atualizar saldo simulado.', 'error');
@@ -1082,17 +1277,75 @@
           window.firebaseFirestore.doc(db, "users", userId),
           {
             vcSimulatedBalance: 0,
-            vcBalanceHistory: window.firebaseFirestore.arrayUnion(entry)
+            vcBalanceHistory: window.firebaseFirestore.arrayUnion(entry),
+            vcLastBalanceUpdate: new Date().toISOString()
           }
         );
 
         await pushAuditLog('VC_SIMULATED_BALANCE_CLEAR', userId, {});
         showToast('Saldo simulado limpo.', 'success');
+
         await window.fetchCardsData(true);
         window.openCardModal(userId);
+        window.switchTab('moneyTab');
       } catch (err) {
         console.error(err);
         showToast('Falha ao limpar saldo simulado.', 'error');
+      }
+    };
+
+    window.transferToWallet = async () => {
+      const userId = document.getElementById('modalUserId').value;
+      const amount = safeNumber(document.getElementById('transferAmount').value);
+      const reason = document.getElementById('transferReason').value.trim();
+      const currentUser = getCurrentUserFromModal();
+
+      if (!userId) return;
+      if (!currentUser) return;
+      if (amount <= 0) return showToast('Informe um valor válido.', 'error');
+      if (!reason) return showToast('Informe o motivo da transferência.', 'error');
+      if (safeNumber(currentUser.vcBalance) < amount) return showToast('Saldo do cartão insuficiente.', 'error');
+
+      if (!confirm(`Transferir ${formatCurrency(amount)} do cartão para a carteira PayGo do utilizador?`)) return;
+
+      try {
+        const entry = buildHistoryEntry('transfer_wallet', `Transferido para carteira PayGo: ${reason}`, amount);
+
+        await window.firebaseFirestore.updateDoc(
+          window.firebaseFirestore.doc(db, "users", userId),
+          {
+            vcBalance: window.firebaseFirestore.increment(-amount),
+            walletBalance: window.firebaseFirestore.increment(amount),
+            vcBalanceHistory: window.firebaseFirestore.arrayUnion(entry),
+            vcLastBalanceUpdate: new Date().toISOString()
+          }
+        );
+
+        await window.firebaseFirestore.addDoc(
+          window.firebaseFirestore.collection(db, "wallet_transactions"),
+          {
+            userId,
+            type: 'credit',
+            amount,
+            description: `Transferência do cartão virtual para carteira: ${reason}`,
+            reference: `VC2WALLET-${Date.now()}`,
+            createdAt: new Date().toISOString()
+          }
+        );
+
+        await pushAuditLog('VC_TRANSFER_TO_WALLET', userId, { amount, reason });
+
+        showToast(`Transferência de ${formatCurrency(amount)} realizada para a carteira.`, 'success');
+
+        document.getElementById('transferAmount').value = '';
+        document.getElementById('transferReason').value = '';
+
+        await window.fetchCardsData(true);
+        window.openCardModal(userId);
+        window.switchTab('transferTab');
+      } catch (err) {
+        console.error(err);
+        showToast('Falha ao transferir para carteira.', 'error');
       }
     };
 
@@ -1129,7 +1382,10 @@
         }
 
         try {
-          const userDoc = await window.firebaseFirestore.getDoc(window.firebaseFirestore.doc(db, "users", user.uid));
+          const userDoc = await window.firebaseFirestore.getDoc(
+            window.firebaseFirestore.doc(db, "users", user.uid)
+          );
+
           if (!userDoc.exists()) {
             window.location.href = '../login.html';
             return;
@@ -1143,6 +1399,7 @@
           }
 
           loggedInAdminId = user.uid;
+          loggedInAdminName = data.name || 'Admin PayGo';
 
           setSafeText('userName', data.name || 'Equipa PayGo');
           setSafeText('userEmail', data.email || '');
@@ -1164,9 +1421,7 @@
     };
 
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        window.closeCardModal();
-      }
+      if (e.key === 'Escape') window.closeCardModal();
     });
 
     document.getElementById('cardModal')?.addEventListener('click', (e) => {
