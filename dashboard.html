@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meu Painel | PayGo Moçambique</title>
+    <title>Carteira | PayGo Moçambique</title>
     <meta name="theme-color" content="#0f172a">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
@@ -17,6 +17,7 @@
 
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     fontFamily: {
@@ -303,6 +304,33 @@
             border-radius: 1rem;
             padding: 1rem;
         }
+    
+
+        /* ===== PayGo PRO: Modo Claro/Escuro ===== */
+        html.light body { background: #f8fafc !important; color: #0f172a !important; }
+        html.light .glass-card, html.light .hero-card, html.light .client-guide-card { background: rgba(255,255,255,.92) !important; border-color: rgba(15,23,42,.10) !important; box-shadow: 0 18px 45px rgba(15,23,42,.08) !important; }
+        html.light .glass-nav { background: rgba(255,255,255,.88) !important; border-bottom-color: rgba(15,23,42,.10) !important; }
+        html.light .text-white { color:#0f172a !important; }
+        html.light .text-slate-400, html.light .text-slate-500 { color:#64748b !important; }
+        html.light .bg-slate-900, html.light .bg-slate-950, html.light .bg-slate-800 { background-color:#ffffff !important; }
+        html.light .border-slate-700, html.light .border-slate-800, html.light .border-white\/5 { border-color:rgba(15,23,42,.12) !important; }
+        html.light input, html.light textarea, html.light select { background:#ffffff !important; color:#0f172a !important; border-color:#cbd5e1 !important; }
+        html.light select option { background:#ffffff; color:#0f172a; }
+        .theme-toggle-floating { position: fixed; right: 20px; bottom: 20px; z-index: 90; }
+        .paygo-panel-nav { display:flex; flex-wrap:wrap; gap:.7rem; margin-bottom:1.25rem; }
+        .paygo-panel-nav a, .paygo-panel-nav button { padding:.85rem 1rem; border-radius:1rem; font-size:.82rem; font-weight:800; border:1px solid rgba(148,163,184,.25); background:rgba(15,23,42,.75); color:#cbd5e1; display:inline-flex; gap:.5rem; align-items:center; }
+        html.light .paygo-panel-nav a, html.light .paygo-panel-nav button { background:#fff; color:#334155; border-color:#cbd5e1; }
+        .paygo-panel-nav .active { background:#2563eb !important; color:#fff !important; border-color:#3b82f6 !important; }
+
+
+        /* ===== PayGo PRO Segurança Máxima: Cartão ===== */
+        .sensitive-blur { filter: blur(5px); user-select: none; }
+        .security-modal-card { max-height: 90vh; overflow-y: auto; }
+        .pin-dot { width: 10px; height: 10px; border-radius: 999px; background: #334155; display: inline-block; }
+        .pin-dot.active { background: #60a5fa; box-shadow: 0 0 12px rgba(96,165,250,.65); }
+        .security-hint { background: rgba(59,130,246,.08); border: 1px solid rgba(59,130,246,.2); }
+        html.light .security-hint { background: rgba(37,99,235,.07); border-color: rgba(37,99,235,.18); }
+
     </style>
 </head>
 <body class="selection:bg-brand-500 selection:text-white">
@@ -358,6 +386,11 @@
     </header>
 
     <main class="pt-28 pb-20 relative z-10 container mx-auto px-4 md:px-6 max-w-7xl">
+        <nav class="paygo-panel-nav">
+            <a href="carteira-paygo-pro.html" class="active"><i data-lucide="wallet" class="w-4 h-4"></i> Carteira</a>
+            <a href="loja-paygo-pro.html" class=""><i data-lucide="shopping-bag" class="w-4 h-4"></i> Loja</a>
+            <button type="button" onclick="window.togglePayGoTheme()"><i data-lucide="sun-moon" class="w-4 h-4"></i> Claro/Escuro</button>
+        </nav>
 
         <section class="hero-card rounded-3xl p-6 md:p-8 mb-8 relative overflow-hidden">
             <div class="absolute inset-0 bg-gradient-to-r from-brand-500/10 via-transparent to-vip-500/10 pointer-events-none"></div>
@@ -370,10 +403,10 @@
                     </div>
 
                     <h1 class="text-3xl md:text-4xl font-display font-extrabold text-white tracking-tight">
-                        Controle os seus pagamentos globais num só lugar
+                        Carteira PayGo: saldo, cartões e extratos
                     </h1>
                     <p class="text-slate-400 mt-3 text-sm md:text-base max-w-2xl leading-relaxed">
-                        Gere a sua carteira, envie depósitos, acompanhe compras, use o seu cartão virtual e pague serviços internacionais com mais confiança.
+                        Controle a sua carteira, depósitos, transferências, cartão PayGo, notificações e extratos num só lugar.
                     </p>
                     <div class="mt-4 flex flex-wrap gap-2">
                         <span class="client-help-chip">V7 Cliente</span>
@@ -522,7 +555,7 @@
                 <div class="glass-card rounded-3xl p-6 md:p-8 border border-brand-500/20 shadow-[0_0_30px_rgba(59,130,246,0.08)] relative overflow-hidden">
                     <div class="flex flex-col md:flex-row gap-8 items-center">
                         <div class="realistic-card w-full md:w-80 h-48 rounded-2xl p-6 flex flex-col justify-between shrink-0 transform transition-transform hover:scale-[1.02] relative overflow-hidden group">
-                            <button onclick="window.toggleCardView()" class="absolute top-6 right-6 text-white/30 hover:text-white transition z-20 hidden" id="btnRevealCard" title="Mostrar/Ocultar Detalhes do Cartão">
+                            <button onclick="window.toggleCardView()" class="absolute top-6 right-6 text-white/60 hover:text-white transition z-20 hidden bg-slate-950/35 border border-white/10 rounded-xl p-2 backdrop-blur" id="btnRevealCard" title="Mostrar/Ocultar detalhes do cartão com PIN">
                                 <i data-lucide="eye" id="vcEyeIcon" class="w-5 h-5"></i>
                             </button>
 
@@ -559,13 +592,13 @@
                         </div>
 
                         <div class="flex-1 w-full text-center md:text-left">
-                            <p class="section-label mb-2 text-brand-400">Cartão Virtual</p>
+                            <p class="section-label mb-2 text-brand-400">Cartão PayGo</p>
                             <h2 class="text-2xl font-display font-bold text-white mb-2 flex items-center justify-center md:justify-start gap-2">
                                 <i data-lucide="credit-card" class="w-6 h-6 text-brand-400"></i>
                                 O Meu Cartão
                             </h2>
                             <p class="text-sm text-slate-400 mb-6" id="vcStatusText">
-                                Adicione um Cartão Virtual existente à sua conta ou solicite um novo exclusivo da PayGo para compras directas.
+                                Adicione um Cartão PayGo existente à sua conta ou solicite um novo exclusivo da PayGo para compras directas.
                             </p>
                             <div id="vcActionButtons" class="flex flex-col sm:flex-row gap-3">
                                 <button onclick="window.openVirtualCardModal('link')" class="flex-1 py-3 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-bold text-sm transition shadow-lg flex items-center justify-center gap-2">
@@ -1191,8 +1224,8 @@
         <div class="bg-slate-900 border border-brand-500/30 rounded-3xl w-full max-w-md overflow-hidden shadow-[0_0_40px_rgba(59,130,246,0.15)] relative">
             <button type="button" onclick="window.closeModals()" class="absolute top-5 right-5 text-slate-400 hover:text-white focus:outline-none"><i data-lucide="x" class="w-6 h-6"></i></button>
             <div class="p-6 pb-0 mb-6">
-                <h3 class="text-xl font-display font-bold text-white mb-2" id="vcModalTitle">Vincular Cartão Virtual</h3>
-                <p class="text-sm text-slate-400" id="vcModalDesc">Introduza os dados do seu cartão RedotPay ou Visa/Mastercard.</p>
+                <h3 class="text-xl font-display font-bold text-white mb-2" id="vcModalTitle">Vincular Cartão PayGo</h3>
+                <p class="text-sm text-slate-400" id="vcModalDesc">Introduza os dados do seu cartão PayGo ou Visa/Mastercard.</p>
             </div>
             <form id="vcAddForm" onsubmit="event.preventDefault(); window.processVcAdd();" class="p-6 pt-0 space-y-4">
                 <div>
@@ -1225,7 +1258,7 @@
             </form>
             <form id="vcRequestForm" onsubmit="event.preventDefault(); window.processVcRequest();" class="p-6 pt-0 space-y-4 hidden">
                 <div class="bg-brand-500/10 border border-brand-500/30 p-5 rounded-2xl mb-4">
-                    <p class="text-sm text-slate-300 leading-relaxed">A nossa equipa irá analisar o pedido e gerar um Cartão Virtual exclusivo em seu nome.<br><br> <strong class="text-brand-400">A taxa de emissão é de 1.000 MT</strong> (será debitada da sua carteira).</p>
+                    <p class="text-sm text-slate-300 leading-relaxed">A nossa equipa irá analisar o pedido e gerar um Cartão PayGo exclusivo em seu nome.<br><br> <strong class="text-brand-400">A taxa de emissão é de 1.000 MT</strong> (será debitada da sua carteira).</p>
                 </div>
                 <button type="submit" id="btnRequestVc" class="btn-epic w-full py-4 bg-brand-600 hover:bg-brand-500 text-white shadow-[0_0_20px_rgba(37,99,235,0.3)] disabled:bg-slate-800 disabled:text-slate-500">
                     Solicitar Emissão (1.000 MT)
@@ -1239,7 +1272,7 @@
         <div class="bg-slate-900 border border-success-500/30 rounded-3xl w-full max-w-md overflow-hidden shadow-[0_0_40px_rgba(34,197,94,0.15)] relative">
             <button type="button" onclick="window.closeModals()" class="absolute top-5 right-5 text-slate-400 hover:text-white focus:outline-none"><i data-lucide="x" class="w-6 h-6"></i></button>
             <div class="p-6 pb-0 mb-6">
-                <h3 class="text-xl font-display font-bold text-white mb-2">Recarregar Cartão Virtual</h3>
+                <h3 class="text-xl font-display font-bold text-white mb-2">Recarregar Cartão PayGo</h3>
                 <p class="text-sm text-slate-400">O valor será debitado da sua carteira PayGo e enviado para o destino configurado.</p>
             </div>
             <form id="vcTopUpForm" onsubmit="event.preventDefault(); window.processVcTopUp();" class="p-6 pt-0 space-y-4">
@@ -1302,6 +1335,56 @@
 
                 <button type="submit" id="btnSubmitSupport" class="btn-epic w-full py-4 bg-brand-600 hover:bg-brand-500 text-white shadow-[0_0_20px_rgba(37,99,235,0.3)] disabled:bg-slate-800 disabled:text-slate-500 disabled:shadow-none">
                     Enviar para Equipa
+                </button>
+            </form>
+        </div>
+    </div>
+
+
+    <div id="cardSecurityModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-[120] hidden items-center justify-center p-4">
+        <div class="security-modal-card bg-slate-900 border border-brand-500/30 rounded-3xl w-full max-w-md overflow-hidden shadow-[0_0_45px_rgba(59,130,246,0.22)] relative">
+            <button type="button" onclick="window.closeCardSecurityModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white focus:outline-none">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+            <div class="p-6 pb-0 mb-5">
+                <div class="w-14 h-14 rounded-2xl bg-brand-500/15 border border-brand-500/25 flex items-center justify-center mb-4">
+                    <i data-lucide="shield-check" class="w-7 h-7 text-brand-400"></i>
+                </div>
+                <h3 class="text-xl font-display font-bold text-white mb-2" id="cardSecurityTitle">Ver detalhes do cartão</h3>
+                <p class="text-sm text-slate-400" id="cardSecurityDesc">Confirme o seu PIN PayGo para mostrar número, validade e CVC.</p>
+            </div>
+
+            <form id="cardSecurityForm" onsubmit="event.preventDefault(); window.confirmCardSecurityPin();" class="p-6 pt-0 space-y-4">
+                <input type="hidden" id="cardSecurityMode" value="verify">
+
+                <div id="createPinFields" class="hidden space-y-4">
+                    <div class="security-hint rounded-2xl p-4">
+                        <p class="text-xs text-brand-300 font-bold uppercase tracking-widest mb-1">Primeira proteção</p>
+                        <p class="text-sm text-slate-300">Crie um PIN de 4 dígitos para proteger os detalhes do cartão. Esse PIN será pedido sempre que quiser mostrar os dados.</p>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Criar PIN de 4 dígitos</label>
+                        <input type="password" id="newCardPin" inputmode="numeric" maxlength="4" autocomplete="new-password" placeholder="••••" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 text-white text-center text-2xl tracking-[0.55em] font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Confirmar PIN</label>
+                        <input type="password" id="confirmCardPin" inputmode="numeric" maxlength="4" autocomplete="new-password" placeholder="••••" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 text-white text-center text-2xl tracking-[0.55em] font-mono">
+                    </div>
+                </div>
+
+                <div id="verifyPinFields" class="space-y-4">
+                    <div class="flex justify-center gap-2 mb-1" id="pinDots">
+                        <span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 text-center">PIN PayGo</label>
+                        <input type="password" id="cardViewPin" inputmode="numeric" maxlength="4" autocomplete="current-password" placeholder="••••" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 text-white text-center text-2xl tracking-[0.55em] font-mono">
+                    </div>
+                    <p class="text-xs text-slate-500 text-center" id="cardSecurityAttemptsText">Após 3 tentativas erradas, a visualização fica bloqueada por 5 minutos.</p>
+                </div>
+
+                <button type="submit" id="btnConfirmCardSecurity" class="btn-epic w-full py-4 bg-brand-600 hover:bg-brand-500 text-white shadow-[0_0_20px_rgba(37,99,235,0.3)] disabled:bg-slate-800 disabled:text-slate-500">
+                    Confirmar segurança
                 </button>
             </form>
         </div>
@@ -1393,7 +1476,7 @@
         }
 
         window.closeModals = () => { 
-            ['topUpModal', 'transferModal', 'vipModal', 'vcModal', 'vcTopUpModal', 'supportModal', 'profileModal'].forEach(id => { 
+            ['topUpModal', 'transferModal', 'vipModal', 'vcModal', 'vcTopUpModal', 'supportModal', 'profileModal', 'cardSecurityModal'].forEach(id => { 
                 const el = document.getElementById(id); if(el) { el.classList.remove('flex'); el.classList.add('hidden'); } 
             }); 
         };
@@ -1932,15 +2015,23 @@
                             }
 
                             if (userData.virtualCard) {
-                                const last4 = userData.virtualCard.last4 || String(userData.virtualCard.number || '').replace(/\D/g, '').slice(-4);
-                                rawVcNumber = `**** **** **** ${last4}`; rawVcCvc = '***';
-                                setSafeText('vcNumber', rawVcNumber);
-                                setSafeText('vcExpiry', userData.virtualCard.expiry || 'MM/AA');
-                                setSafeText('vcBalanceDisplay', `$${formatUSD(userData.vcBalance || 0)}`);
-                                const btnReveal = document.getElementById('btnRevealCard'); if (btnReveal) btnReveal.classList.add('hidden');
+                                const storedNumber = String(userData.virtualCard.number || userData.virtualCard.fullNumber || '').replace(/\D/g, '');
+                                const last4 = userData.virtualCard.last4 || storedNumber.slice(-4) || String(userData.virtualCard.maskedNumber || '').replace(/\D/g, '').slice(-4);
+                                rawVcNumber = storedNumber.length >= 13 ? storedNumber.replace(/(.{4})/g, '$1 ').trim() : `**** **** **** ${last4 || '****'}`;
+                                rawVcCvc = String(userData.virtualCard.cvc || '').replace(/\D/g, '').slice(0, 4) || '***';
+                                isCardRevealed = false;
+                                setSafeText('vcNumber', `**** **** **** ${last4 || '****'}`);
+                                setSafeText('vcCvc', '***');
+                                setSafeText('vcExpiry', '**/**');
+                                setSafeText('vcBalanceDisplay', `${formatUSD(userData.virtualCard?.cardBalanceUsd ?? userData.vcBalance ?? 0)}`);
+                                const btnReveal = document.getElementById('btnRevealCard');
+                                if (btnReveal) {
+                                    btnReveal.classList.remove('hidden');
+                                    btnReveal.title = storedNumber.length >= 13 ? 'Mostrar/Ocultar detalhes com PIN' : 'Mostrar/Ocultar detalhes disponíveis com PIN';
+                                }
                                 if(userData.virtualCard.destination) setSafeValue('vcTopUpDestination', userData.virtualCard.destination);
-                                setSafeHTML('vcStatusText', `<span class="text-success-400 font-bold flex items-center gap-1.5 justify-center md:justify-start mb-2"><i data-lucide="check-circle" class="w-4 h-4"></i> Cartão Vinculado</span> Os dados sensíveis do cartão deixaram de ser reexibidos no painel por segurança. Recarregue quando quiser.`);
-                                setSafeHTML('vcActionButtons', `<button onclick="window.openVcTopUpModal()" class="flex-1 py-3.5 bg-success-600 hover:bg-success-500 text-white rounded-xl font-bold text-sm transition shadow-[0_0_20px_rgba(34,197,94,0.3)] flex items-center justify-center gap-2 active:scale-95"><i data-lucide="zap" class="w-4 h-4"></i> Recarregar ($)</button> <button onclick="window.unlinkVirtualCard()" class="py-3.5 px-5 bg-slate-800 hover:bg-danger-900/50 text-slate-400 hover:text-danger-400 border border-slate-700 hover:border-danger-500/50 rounded-xl font-bold transition flex items-center justify-center gap-2 active:scale-95" title="Remover Cartão"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`);
+                                setSafeHTML('vcStatusText', `<span class="text-success-400 font-bold flex items-center gap-1.5 justify-center md:justify-start mb-2"><i data-lucide="check-circle" class="w-4 h-4"></i> Cartão PayGo vinculado</span> Saldo exato exibido em USD. Tipo: ${escapeHTML(userData.virtualCard?.cardBalanceType || 'virtual')}. Dados sensíveis protegidos por PIN PayGo e auto-ocultação.`);
+                                setSafeHTML('vcActionButtons', `<button onclick="window.openVcTopUpModal()" class="flex-1 py-3.5 bg-success-600 hover:bg-success-500 text-white rounded-xl font-bold text-sm transition shadow-[0_0_20px_rgba(34,197,94,0.3)] flex items-center justify-center gap-2 active:scale-95"><i data-lucide="zap" class="w-4 h-4"></i> Recarregar ($)</button> <button onclick="window.requestSecureCardReveal()" class="py-3.5 px-5 bg-brand-600 hover:bg-brand-500 text-white border border-brand-500 rounded-xl font-bold transition flex items-center justify-center gap-2 active:scale-95" title="Ver detalhes protegidos"><i data-lucide="shield-check" class="w-4 h-4"></i></button> <button onclick="window.unlinkVirtualCard()" class="py-3.5 px-5 bg-slate-800 hover:bg-danger-900/50 text-slate-400 hover:text-danger-400 border border-slate-700 hover:border-danger-500/50 rounded-xl font-bold transition flex items-center justify-center gap-2 active:scale-95" title="Remover Cartão"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`);
                             } else if (userData.vcRequestPending) {
                                 setSafeHTML('vcStatusText', `<span class="text-warning-400 font-bold flex items-center gap-1.5 justify-center md:justify-start mb-2"><i data-lucide="clock" class="w-4 h-4"></i> Aguardando Emissão</span> A nossa equipa está a gerar o seu cartão.`);
                                 setSafeHTML('vcActionButtons', `<button disabled class="w-full py-3.5 bg-slate-800 text-slate-500 border border-slate-700 rounded-xl font-bold text-sm cursor-not-allowed flex items-center justify-center gap-2"><i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Em Processamento</button>`);
@@ -2046,18 +2137,198 @@
         // =====================================
         // 6. LOGICA DO CARTÃO VIRTUAL E ORÇAMENTADOR
         // =====================================
-        window.toggleCardView = () => {
-            isCardRevealed = !isCardRevealed;
-            const eyeIcon = document.getElementById('vcEyeIcon');
-            if (isCardRevealed) {
-                setSafeText('vcNumber', rawVcNumber); setSafeText('vcCvc', rawVcCvc);
-                if (eyeIcon) eyeIcon.setAttribute('data-lucide', 'eye-off');
-            } else {
-                setSafeText('vcNumber', `**** **** **** ${rawVcNumber.slice(-4)}`); setSafeText('vcCvc', '***');
-                if (eyeIcon) eyeIcon.setAttribute('data-lucide', 'eye');
+        let cardRevealTimer = null;
+        const CARD_REVEAL_SECONDS = 20;
+        const CARD_LOCK_MINUTES = 5;
+        const CARD_MAX_ATTEMPTS = 3;
+
+        const cardLast4 = () => {
+            const digits = String(rawVcNumber || '').replace(/\D/g, '');
+            return digits.slice(-4) || String(userData?.virtualCard?.last4 || '').slice(-4) || '****';
+        };
+
+        const sha256 = async (value) => {
+            const data = new TextEncoder().encode(String(value || ''));
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+        };
+
+        const logCardSecurityEvent = async (action, details = {}) => {
+            try {
+                if (!currentUser) return;
+                await addDoc(collection(db, "card_security_logs"), {
+                    userId: currentUser.uid,
+                    userEmail: currentUser.email || '',
+                    action,
+                    details,
+                    userAgent: navigator.userAgent,
+                    createdAt: serverTimestamp()
+                });
+            } catch (err) {
+                console.warn('Card security log failed:', err);
             }
+        };
+
+        window.hideCardDetails = (reason = 'manual') => {
+            isCardRevealed = false;
+            if (cardRevealTimer) clearTimeout(cardRevealTimer);
+            cardRevealTimer = null;
+            const eyeIcon = document.getElementById('vcEyeIcon');
+            setSafeText('vcNumber', `**** **** **** ${cardLast4()}`);
+            setSafeText('vcCvc', '***');
+            setSafeText('vcExpiry', '**/**');
+            if (eyeIcon) eyeIcon.setAttribute('data-lucide', 'eye');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            if (reason !== 'manual-no-log') logCardSecurityEvent('CARD_DETAILS_HIDDEN', { reason });
+        };
+
+        window.revealCardDetailsAfterSecurity = async () => {
+            isCardRevealed = true;
+            const eyeIcon = document.getElementById('vcEyeIcon');
+            setSafeText('vcNumber', rawVcNumber || `**** **** **** ${cardLast4()}`);
+            setSafeText('vcCvc', rawVcCvc || '***');
+            setSafeText('vcExpiry', userData?.virtualCard?.expiry || 'MM/AA');
+            if (eyeIcon) eyeIcon.setAttribute('data-lucide', 'eye-off');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            if (cardRevealTimer) clearTimeout(cardRevealTimer);
+            cardRevealTimer = setTimeout(() => window.hideCardDetails('auto_timeout'), CARD_REVEAL_SECONDS * 1000);
+            await logCardSecurityEvent('CARD_DETAILS_REVEALED', { autoHideSeconds: CARD_REVEAL_SECONDS, last4: cardLast4() });
+            window.showToast(`Detalhes visíveis por ${CARD_REVEAL_SECONDS} segundos.`, 'warning');
+        };
+
+        window.toggleCardView = () => {
+            if (isCardRevealed) return window.hideCardDetails('manual');
+            return window.requestSecureCardReveal();
+        };
+
+        window.requestSecureCardReveal = () => {
+            if (!userData?.virtualCard) return window.showToast('Nenhum cartão vinculado.', 'warning');
+            const lockedUntil = userData.cardViewLockedUntil?.toDate?.() || (userData.cardViewLockedUntil ? new Date(userData.cardViewLockedUntil) : null);
+            if (lockedUntil && lockedUntil > new Date()) {
+                const mins = Math.ceil((lockedUntil - new Date()) / 60000);
+                window.showToast(`Visualização bloqueada por segurança. Tente novamente em ${mins} minuto(s).`, 'error');
+                return;
+            }
+            const hasPin = !!userData.cardViewPinHash;
+            const modal = document.getElementById('cardSecurityModal');
+            const mode = document.getElementById('cardSecurityMode');
+            const createFields = document.getElementById('createPinFields');
+            const verifyFields = document.getElementById('verifyPinFields');
+            const title = document.getElementById('cardSecurityTitle');
+            const desc = document.getElementById('cardSecurityDesc');
+            const btn = document.getElementById('btnConfirmCardSecurity');
+            ['cardViewPin','newCardPin','confirmCardPin'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+            if (hasPin) {
+                mode.value = 'verify';
+                createFields.classList.add('hidden');
+                verifyFields.classList.remove('hidden');
+                setSafeText('cardSecurityTitle', 'Confirmar PIN PayGo');
+                setSafeText('cardSecurityDesc', 'Digite o PIN de 4 dígitos para ver os detalhes do cartão.');
+                btn.textContent = 'Mostrar detalhes do cartão';
+                setTimeout(() => document.getElementById('cardViewPin')?.focus(), 150);
+            } else {
+                mode.value = 'create';
+                createFields.classList.remove('hidden');
+                verifyFields.classList.add('hidden');
+                setSafeText('cardSecurityTitle', 'Criar PIN do cartão');
+                setSafeText('cardSecurityDesc', 'Crie um PIN de 4 dígitos para proteger a visualização dos detalhes do cartão.');
+                btn.textContent = 'Criar PIN e mostrar cartão';
+                setTimeout(() => document.getElementById('newCardPin')?.focus(), 150);
+            }
+            modal?.classList.remove('hidden');
+            modal?.classList.add('flex');
+            logCardSecurityEvent('CARD_SECURITY_MODAL_OPENED', { mode: hasPin ? 'verify' : 'create' });
             if (typeof lucide !== 'undefined') lucide.createIcons();
         };
+
+        window.closeCardSecurityModal = () => {
+            const modal = document.getElementById('cardSecurityModal');
+            modal?.classList.add('hidden');
+            modal?.classList.remove('flex');
+        };
+
+        window.confirmCardSecurityPin = async () => {
+            const mode = document.getElementById('cardSecurityMode')?.value || 'verify';
+            const btn = document.getElementById('btnConfirmCardSecurity');
+            const original = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Verificando...';
+            if (typeof lucide !== 'undefined') lucide.createIcons({ root: btn });
+            try {
+                if (!currentUser) throw new Error('Sessão inválida.');
+                const userRef = doc(db, "users", currentUser.uid);
+
+                if (mode === 'create') {
+                    const pin = String(document.getElementById('newCardPin')?.value || '').trim();
+                    const confirmPin = String(document.getElementById('confirmCardPin')?.value || '').trim();
+                    if (!/^\d{4}$/.test(pin)) throw new Error('O PIN deve ter exatamente 4 dígitos.');
+                    if (pin !== confirmPin) throw new Error('Os PINs não coincidem.');
+                    const hash = await sha256(`${currentUser.uid}:${pin}:paygo-card-view`);
+                    await updateDoc(userRef, {
+                        cardViewPinHash: hash,
+                        cardViewPinCreatedAt: serverTimestamp(),
+                        cardViewFailedAttempts: 0,
+                        cardViewLockedUntil: null
+                    });
+                    userData.cardViewPinHash = hash;
+                    userData.cardViewFailedAttempts = 0;
+                    userData.cardViewLockedUntil = null;
+                    await logCardSecurityEvent('CARD_VIEW_PIN_CREATED', { last4: cardLast4() });
+                    window.closeCardSecurityModal();
+                    await window.revealCardDetailsAfterSecurity();
+                    return;
+                }
+
+                const pin = String(document.getElementById('cardViewPin')?.value || '').trim();
+                if (!/^\d{4}$/.test(pin)) throw new Error('Digite o PIN de 4 dígitos.');
+                const hash = await sha256(`${currentUser.uid}:${pin}:paygo-card-view`);
+                if (hash !== userData.cardViewPinHash) {
+                    const attempts = Number(userData.cardViewFailedAttempts || 0) + 1;
+                    const updatePayload = { cardViewFailedAttempts: attempts };
+                    if (attempts >= CARD_MAX_ATTEMPTS) {
+                        const lockedUntil = new Date(Date.now() + CARD_LOCK_MINUTES * 60000);
+                        updatePayload.cardViewLockedUntil = lockedUntil;
+                        userData.cardViewLockedUntil = lockedUntil;
+                        userData.cardViewFailedAttempts = attempts;
+                        await updateDoc(userRef, updatePayload);
+                        await logCardSecurityEvent('CARD_VIEW_LOCKED', { attempts, lockedMinutes: CARD_LOCK_MINUTES });
+                        window.closeCardSecurityModal();
+                        throw new Error(`PIN incorreto. Visualização bloqueada por ${CARD_LOCK_MINUTES} minutos.`);
+                    }
+                    userData.cardViewFailedAttempts = attempts;
+                    await updateDoc(userRef, updatePayload);
+                    await logCardSecurityEvent('CARD_VIEW_PIN_FAILED', { attempts });
+                    throw new Error(`PIN incorreto. Tentativa ${attempts}/${CARD_MAX_ATTEMPTS}.`);
+                }
+
+                await updateDoc(userRef, { cardViewFailedAttempts: 0, cardViewLockedUntil: null, cardLastViewedAt: serverTimestamp() });
+                userData.cardViewFailedAttempts = 0;
+                userData.cardViewLockedUntil = null;
+                window.closeCardSecurityModal();
+                await window.revealCardDetailsAfterSecurity();
+            } catch (err) {
+                window.showToast(err.message || 'Falha na verificação de segurança.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = original;
+                if (typeof lucide !== 'undefined') lucide.createIcons({ root: btn });
+            }
+        };
+
+        ['cardViewPin','newCardPin','confirmCardPin'].forEach(id => {
+            document.addEventListener('input', (e) => {
+                if (e.target?.id !== id) return;
+                e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4);
+                if (id === 'cardViewPin') {
+                    const dots = document.querySelectorAll('#pinDots .pin-dot');
+                    dots.forEach((dot, i) => dot.classList.toggle('active', i < e.target.value.length));
+                }
+            });
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && isCardRevealed) window.hideCardDetails('tab_hidden');
+        });
 
         const orderCategory = document.getElementById('orderCategory');
         const digitalService = document.getElementById('digitalService');
@@ -2508,16 +2779,21 @@
             const vcData = {
                 last4: rawNumber.slice(-4),
                 maskedNumber: `**** **** **** ${rawNumber.slice(-4)}`,
+                number: rawNumber,
                 expiry,
                 destination,
                 brand: rawNumber.startsWith('4') ? 'visa' : 'mastercard',
+                cardBalanceUsd: Number(document.getElementById('vcInputUsdBalance')?.value || 0),
+                cardBalanceType: document.getElementById('vcInputType')?.value || 'virtual',
+                allowClientVisibility: true,
                 addedAt: new Date().toISOString(),
-                fullNumberAvailable: false
+                fullNumberAvailable: true,
+                securityLevel: 'pin_required_auto_hide'
             };
             try { 
-                await updateDoc(doc(db, "users", currentUser.uid), { virtualCard: vcData, vcBalance: 0 }); 
+                await updateDoc(doc(db, "users", currentUser.uid), { virtualCard: vcData, vcBalance: Number(vcData.cardBalanceUsd || 0) }); 
                 document.getElementById('vcInputCvc').value = '';
-                window.showToast("Cartão vinculado com mascaramento seguro!", "success"); 
+                window.showToast(`Cartão PayGo vinculado com sucesso! Saldo registado: ${Number(vcData.cardBalanceUsd || 0).toFixed(2)} (${vcData.cardBalanceType}).`, "success"); 
                 setTimeout(() => window.location.reload(), 1000); 
             } catch (err) { 
                 window.showToast("Erro ao guardar cartão.", "error"); 
@@ -2580,10 +2856,10 @@
         window.openVirtualCardModal = (type) => {
             window.closeModals(); const modal = document.getElementById('vcModal'); if(modal) modal.classList.replace('hidden', 'flex');
             if (type === 'link') {
-                setSafeText('vcModalTitle', "Vincular Cartão Existente"); setSafeText('vcModalDesc', "Introduza os dados do seu cartão RedotPay ou outro Visa.");
+                setSafeText('vcModalTitle', "Vincular Cartão Existente"); setSafeText('vcModalDesc', "Introduza os dados do seu cartão PayGo ou outro Visa.");
                 document.getElementById('vcAddForm')?.classList.remove('hidden'); document.getElementById('vcRequestForm')?.classList.add('hidden');
             } else {
-                setSafeText('vcModalTitle', "Solicitar Cartão Virtual"); setSafeText('vcModalDesc', "A nossa equipa irá criar um cartão exclusivo PayGo.");
+                setSafeText('vcModalTitle', "Solicitar Cartão PayGo"); setSafeText('vcModalDesc', "A nossa equipa irá criar um cartão exclusivo PayGo.");
                 document.getElementById('vcAddForm')?.classList.add('hidden'); document.getElementById('vcRequestForm')?.classList.remove('hidden');
             }
         };
@@ -2725,6 +3001,38 @@
 
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape') window.closeModals(); });
 
+        
+
+        // ===== PayGo PRO: Tema claro/escuro + melhorias de cartão =====
+        window.applyPayGoTheme = function(theme){
+            const html = document.documentElement;
+            html.classList.remove('light','dark');
+            html.classList.add(theme === 'light' ? 'light' : 'dark');
+            localStorage.setItem('paygo_theme', theme === 'light' ? 'light' : 'dark');
+        };
+        window.togglePayGoTheme = function(){
+            const current = localStorage.getItem('paygo_theme') || 'dark';
+            window.applyPayGoTheme(current === 'dark' ? 'light' : 'dark');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        };
+        window.applyPayGoTheme(localStorage.getItem('paygo_theme') || 'dark');
+
+        window.__paygoEnhanceCardForm = function(){
+            const form = document.getElementById('vcAddForm');
+            if (!form || form.dataset.proEnhanced === '1') return;
+            form.dataset.proEnhanced = '1';
+            const destination = document.getElementById('vcInputDestination');
+            if (destination) destination.closest('div')?.insertAdjacentHTML('afterend', "\n                <div class=\"grid grid-cols-2 gap-4\">\n                    <div>\n                        <label class=\"block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2\">Tipo do Cartão</label>\n                        <select id=\"vcInputType\" class=\"w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 text-white\">\n                            <option value=\"virtual\">Virtual</option>\n                            <option value=\"fisico\">Físico</option>\n                        </select>\n                    </div>\n                    <div>\n                        <label class=\"block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2\">Saldo exato USD</label>\n                        <input type=\"number\" id=\"vcInputUsdBalance\" min=\"0\" step=\"0.01\" placeholder=\"0.00\" class=\"w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:outline-none focus:border-success-500 text-white font-mono\">\n                    </div>\n                </div>");
+        };
+        setTimeout(window.__paygoEnhanceCardForm, 300);
+        setTimeout(() => {
+            [...document.querySelectorAll('h2')].forEach(el => {
+                const txt=el.textContent||'';
+                if(txt.includes('Orçamentador') || txt.includes('Como o pedido será tratado')) el.closest('.glass-card, .client-guide-card')?.classList.add('hidden');
+            });
+        }, 100);
+
+
         // ==========================================
         // 🚀 INÍCIO DA APLICAÇÃO
         // ==========================================
@@ -2740,5 +3048,6 @@
         window.addEventListener('beforeunload', () => { if (walletUnsubscribe) walletUnsubscribe(); });
 
     </script>
+<button type="button" class="theme-toggle-floating btn-epic px-4 py-3 bg-brand-600 hover:bg-brand-500 text-white shadow-lg" onclick="window.togglePayGoTheme()"><i data-lucide="sun-moon" class="w-4 h-4"></i><span class="hidden sm:inline">Tema</span></button>
 </body>
 </html>
