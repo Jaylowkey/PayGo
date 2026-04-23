@@ -5,13 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="description" content="Centro de Comando PayGo - Gestão Administrativa Segura">
     <meta name="robots" content="noindex, nofollow">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: 'unsafe-inline' 'unsafe-eval'; img-src 'self' data: https:; font-src 'self' https: data:; connect-src 'self' https: wss:;">
+   <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: 'unsafe-inline' 'unsafe-eval'; img-src 'self' data: https:; font-src 'self' https: data:; connect-src 'self' https: wss:;">
     
     <title>⚡ Centro de Comando | PayGo Admin</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
     
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
@@ -83,6 +84,7 @@
     </script>
     
     <style>
+        /* ===== BASE & RESET ===== */
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
         body { 
@@ -95,6 +97,7 @@
             line-height: 1.5;
         }
         
+        /* ===== BACKGROUND GRID ===== */
         .bg-grid { 
             background-size: 40px 40px; 
             background-image: 
@@ -102,6 +105,7 @@
                 linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); 
         }
         
+        /* ===== GLASSMORPHISM ===== */
         .glass-nav { 
             background: rgba(2, 6, 23, 0.85); 
             backdrop-filter: blur(20px) saturate(180%); 
@@ -119,6 +123,7 @@
             box-shadow: 0 25px 50px -12px rgba(37, 99, 235, 0.15);
         }
         
+        /* ===== SIDEBAR NAVIGATION ===== */
         .sidebar-link { 
             position: relative; 
             transition: all 0.25s ease; 
@@ -150,6 +155,7 @@
             box-shadow: 0 0 12px #3b82f6; 
         }
         
+        /* ===== SKELETON LOADING ===== */
         .skeleton { 
             background: linear-gradient(90deg, rgba(30,41,59,0.6) 25%, rgba(51,65,85,0.6) 50%, rgba(30,41,59,0.6) 75%); 
             background-size: 200% 100%; 
@@ -159,6 +165,7 @@
             user-select: none;
         }
         
+        /* ===== SCROLLBAR CUSTOM ===== */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { 
@@ -169,6 +176,7 @@
         }
         ::-webkit-scrollbar-thumb:hover { background: #475569; }
         
+        /* ===== TOAST NOTIFICATIONS ===== */
         #toastContainer { 
             position: fixed; 
             top: 24px; 
@@ -208,6 +216,7 @@
         .toast-item.warning { border-left-color: #f59e0b; }
         .toast-item.info { border-left-color: #3b82f6; }
         
+        /* ===== BUTTONS ===== */
         .btn-action { 
             transition: all 0.2s ease; 
             position: relative; 
@@ -232,6 +241,7 @@
             height: 300px;
         }
         
+        /* ===== TABLES ===== */
         table { border-collapse: separate; border-spacing: 0; width: 100%; }
         th { 
             background: rgba(15, 23, 42, 0.8); 
@@ -259,6 +269,7 @@
         tbody tr:hover { background: rgba(255,255,255,0.03); }
         tbody tr:last-child td { border-bottom: none; }
         
+        /* ===== STATUS BADGES ===== */
         .status-badge {
             display: inline-flex;
             align-items: center;
@@ -276,18 +287,16 @@
         .status-badge.completed { background: rgba(34, 197, 94, 0.15); color: #4ade80; border-color: rgba(34, 197, 94, 0.3); }
         .status-badge.cancelled { background: rgba(239, 68, 68, 0.15); color: #f87171; border-color: rgba(239, 68, 68, 0.3); }
         
+        /* ===== MODAL ===== */
         .modal-backdrop {
             background: rgba(2, 6, 23, 0.9);
             backdrop-filter: blur(8px);
         }
         .modal-content {
             animation: slideUp 0.3s ease-out;
-            max-height: 90vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
         }
         
+        /* ===== ACCESSIBILITY ===== */
         .sr-only {
             position: absolute;
             width: 1px;
@@ -303,17 +312,14 @@
             outline: 2px solid #3b82f6;
             outline-offset: 2px;
         }
-
-        .sensitive-value {
-            font-family: 'Fira Code', monospace;
-            letter-spacing: .02em;
-        }
         
+        /* ===== RESPONSIVE UTILS ===== */
         @media (max-width: 768px) {
             .hide-mobile { display: none !important; }
             .glass-card { border-radius: 1.25rem !important; }
         }
         
+        /* ===== PRINT STYLES ===== */
         @media print {
             .no-print { display: none !important; }
             body { background: white; color: black; }
@@ -457,9 +463,9 @@
         </div>
     </aside>
 
-    <main class="md:ml-64 p-4 md:p-6 pt-24 md:pt-6 min-h-screen transition-all relative z-10" role="main">
+    <main class="md:ml-64 p-4 md:p-8 pt-24 md:pt-8 min-h-screen transition-all relative z-10" role="main">
 
-        <header class="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-4 mb-6">
+        <header class="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-6 mb-8">
             <div>
                 <h1 class="text-3xl md:text-4xl font-display font-extrabold text-white tracking-tight">Dashboard Central</h1>
                 <p class="text-slate-400 mt-2 text-sm font-medium">Visão global das operações financeiras, fluxo logístico e conversões.</p>
@@ -493,9 +499,9 @@
                 <span>Operações & Logística</span>
             </h2>
             
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 mb-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
                 
-                <article class="glass-card p-5 rounded-[1.6rem] border-t-4 border-t-brand-500 bg-brand-900/10 relative overflow-hidden">
+                <article class="glass-card p-6 rounded-[2rem] border-t-4 border-t-brand-500 bg-brand-900/10 relative overflow-hidden">
                     <div class="absolute top-0 right-0 w-24 h-24 bg-brand-500/20 blur-xl rounded-full" aria-hidden="true"></div>
                     <div class="flex items-center justify-between mb-4 relative z-10">
                         <span class="text-xs font-black text-brand-400 uppercase tracking-widest">Faturação Bruta</span>
@@ -507,7 +513,7 @@
                     <p class="text-xs text-slate-500 mt-2" id="revenueChange">—</p>
                 </article>
 
-                <article class="glass-card p-5 rounded-[1.6rem] border-t-4 border-t-success-500 bg-success-900/5">
+                <article class="glass-card p-6 rounded-[2rem] border-t-4 border-t-success-500 bg-success-900/5">
                     <div class="flex items-center justify-between mb-4">
                         <span class="text-xs font-black text-success-400 uppercase tracking-widest">Concluídos</span>
                         <div class="w-10 h-10 bg-success-500/20 rounded-xl flex items-center justify-center border border-success-500/30" aria-hidden="true">
@@ -517,7 +523,7 @@
                     <p class="text-4xl font-display font-extrabold text-white skeleton" id="statCompleted" aria-live="polite">0</p>
                 </article>
                 
-                <article class="glass-card p-5 rounded-[1.6rem] border-t-4 border-t-warning-500 bg-warning-900/5">
+                <article class="glass-card p-6 rounded-[2rem] border-t-4 border-t-warning-500 bg-warning-900/5">
                     <div class="flex items-center justify-between mb-4">
                         <span class="text-xs font-black text-warning-400 uppercase tracking-widest">Pendentes</span>
                         <div class="w-10 h-10 bg-warning-500/20 rounded-xl flex items-center justify-center border border-warning-500/30" aria-hidden="true">
@@ -527,7 +533,7 @@
                     <p class="text-4xl font-display font-extrabold text-white skeleton" id="statPending" aria-live="polite">0</p>
                 </article>
                 
-                <article class="glass-card p-5 rounded-[1.6rem] border-t-4 border-t-slate-600">
+                <article class="glass-card p-6 rounded-[2rem] border-t-4 border-t-slate-600">
                     <div class="flex items-center justify-between mb-4">
                         <span class="text-xs font-black text-slate-400 uppercase tracking-widest">Total Pedidos</span>
                         <div class="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center border border-slate-700" aria-hidden="true">
@@ -545,8 +551,8 @@
                 <span>Performance da Rede de Afiliados</span>
             </h2>
             
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-5 mb-6">
-                <article class="glass-card p-5 rounded-[1.6rem] border border-slate-700">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 mb-8">
+                <article class="glass-card p-6 rounded-[2rem] border border-slate-700">
                     <div class="flex items-center justify-between mb-4">
                         <span class="text-xs font-black text-slate-300 uppercase tracking-widest">Parceiros Ativos</span>
                         <div class="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center border border-slate-600" aria-hidden="true">
@@ -556,7 +562,7 @@
                     <p class="text-3xl font-display font-extrabold text-white skeleton" id="statAffiliatesCount" aria-live="polite">0</p>
                 </article>
 
-                <article class="glass-card p-5 rounded-[1.6rem] border border-slate-700">
+                <article class="glass-card p-6 rounded-[2rem] border border-slate-700">
                     <div class="flex items-center justify-between mb-4">
                         <span class="text-xs font-black text-slate-300 uppercase tracking-widest">Vendas (Leads)</span>
                         <div class="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center border border-slate-600" aria-hidden="true">
@@ -566,7 +572,7 @@
                     <p class="text-3xl font-display font-extrabold text-white skeleton" id="statAffiliatesLeads" aria-live="polite">0</p>
                 </article>
 
-                <article class="glass-card p-5 rounded-[1.6rem] border border-success-500/20 bg-success-900/10">
+                <article class="glass-card p-6 rounded-[2rem] border border-success-500/20 bg-success-900/10">
                     <div class="flex items-center justify-between mb-4">
                         <span class="text-xs font-black text-success-400 uppercase tracking-widest">Comissões</span>
                         <div class="w-10 h-10 bg-success-500/20 rounded-xl flex items-center justify-center border border-success-500/30" aria-hidden="true">
@@ -578,41 +584,40 @@
             </div>
         </section>
 
-        <div class="grid lg:grid-cols-3 gap-6">
+        <div class="grid lg:grid-cols-3 gap-8">
             
             <div class="lg:col-span-2 space-y-6">
                 
                 <article class="glass-card rounded-[2rem] p-0 overflow-hidden shadow-2xl border border-warning-500/20">
-                    <div class="p-5 border-b border-slate-800 bg-slate-900/50 flex justify-between items-center">
+                    <div class="p-6 border-b border-slate-800 bg-slate-900/50 flex justify-between items-center">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-xl bg-warning-500/20 text-warning-400 flex items-center justify-center" aria-hidden="true">
                                 <i data-lucide="credit-card" class="w-5 h-5" aria-hidden="true"></i>
                             </div>
                             <div>
-                                <h2 class="text-lg font-display font-bold text-white leading-tight">Emissões de Cartão PayGo</h2>
-                                <p class="text-xs text-slate-400">Pedidos pagos aguardando emissão e configuração manual.</p>
+                                <h2 class="text-lg font-display font-bold text-white leading-tight">Emissões de Cartão Virtual</h2>
+                                <p class="text-xs text-slate-400">Pedidos pagos aguardando emissão.</p>
                             </div>
                         </div>
                         <span class="text-xs text-slate-500 font-mono bg-slate-800 px-3 py-1 rounded-full" id="vcCount">0</span>
                     </div>
                     
                     <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
-                        <table class="w-full" role="table" aria-label="Pedidos de cartão pendentes">
+                        <table class="w-full" role="table" aria-label="Pedidos de cartão virtual pendentes">
                             <thead class="bg-slate-950/80 text-[10px] uppercase text-slate-400 tracking-widest border-b border-white/10 sticky top-0 z-10 backdrop-blur-md">
                                 <tr>
-                                    <th scope="col" class="px-6 py-4 font-bold">Cliente</th>
-                                    <th scope="col" class="px-6 py-4 font-bold">Taxa paga</th>
-                                    <th scope="col" class="px-6 py-4 font-bold">Saldo USD</th>
-                                    <th scope="col" class="px-6 py-4 font-bold">Tipo</th>
+                                    <th scope="col" class="px-6 py-4 font-bold">Data / Cliente</th>
+                                    <th scope="col" class="px-6 py-4 font-bold">Taxa Paga</th>
                                     <th scope="col" class="px-6 py-4 font-bold">Status</th>
                                     <th scope="col" class="px-6 py-4 font-bold text-right">Ação</th>
                                 </tr>
                             </thead>
                             <tbody id="tableVcRequests" class="divide-y divide-white/5 bg-slate-900/20" aria-live="polite">
                                 <tr>
-                                    <td colspan="6" class="text-center py-10 text-slate-500">
+                                    <td colspan="4" class="text-center py-10 text-slate-500">
                                         <i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2" aria-hidden="true"></i> 
-                                        <span>A carregar pedidos...</span>
+                                        <span class="sr-only">Carregando pedidos de cartão virtual...</span>
+                                        <span aria-hidden="true">A carregar pedidos...</span>
                                     </td>
                                 </tr>
                             </tbody>
@@ -621,7 +626,7 @@
                 </article>
                 
                 <article class="glass-card rounded-[2rem] p-0 overflow-hidden border border-slate-800 flex flex-col">
-                    <div class="p-5 border-b border-white/5 flex justify-between items-center bg-slate-900/80 backdrop-blur-sm">
+                    <div class="p-6 border-b border-white/5 flex justify-between items-center bg-slate-900/80 backdrop-blur-sm">
                         <h2 class="text-sm font-bold text-white flex items-center gap-2">
                             <i data-lucide="list" class="w-4 h-4 text-brand-400" aria-hidden="true"></i> 
                             <span>Últimas 10 Operações</span>
@@ -657,7 +662,7 @@
 
             <div class="lg:col-span-1 space-y-6">
                 <article class="glass-card rounded-[2rem] overflow-hidden shadow-2xl border border-vip-500/20">
-                    <div class="p-5 border-b border-slate-800 bg-slate-900/50">
+                    <div class="p-6 border-b border-slate-800 bg-slate-900/50">
                         <h2 class="text-sm font-display font-bold text-white flex items-center gap-2">
                             <i data-lucide="crown" class="w-4 h-4 text-vip-400" aria-hidden="true"></i> 
                             <span>Últimas Assinaturas VIP</span>
@@ -679,7 +684,7 @@
             </div>
         </div>
 
-        <footer class="mt-8 pt-5 border-t border-white/5 text-center text-xs text-slate-500">
+        <footer class="mt-12 pt-6 border-t border-white/5 text-center text-xs text-slate-500">
             <p>
                 <span class="font-mono">PayGo OS v2.4</span> • 
                 Última sincronização: <span id="lastSync" class="text-slate-400">—</span> • 
@@ -689,173 +694,145 @@
     </main>
 
     <div 
-      id="vcApproveModal" 
-      class="fixed inset-0 modal-backdrop z-[100] hidden items-center justify-center p-4 transition-opacity"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="vcModalTitle"
+        id="vcApproveModal" 
+        class="fixed inset-0 modal-backdrop z-[100] hidden items-center justify-center p-4 transition-opacity"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="vcModalTitle"
+        aria-describedby="vcModalDesc"
     >
-      <div class="bg-slate-900 border border-brand-500/30 rounded-3xl w-full max-w-3xl max-h-[90vh] overflow-hidden shadow-[0_0_50px_rgba(59,130,246,0.15)] relative modal-content flex flex-col">
-        
-        <button 
-          onclick="window.closeVcModal()" 
-          class="absolute top-5 right-5 text-slate-400 hover:text-white transition p-2 rounded-lg hover:bg-white/5"
-          aria-label="Fechar modal"
-        >
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-        
-        <div class="p-5 pb-0 mb-4 shrink-0">
-          <h3 id="vcModalTitle" class="text-xl font-display font-bold text-white mb-2 flex items-center gap-2">
-            <i data-lucide="check-square" class="w-5 h-5 text-brand-400"></i>
-            <span>Configurar Cartão PayGo</span>
-          </h3>
-          <p class="text-sm text-slate-400">
-            Insira os dados do cartão manualmente para <span id="vcClientName" class="text-white font-bold">o Cliente</span>.
-          </p>
+        <div class="bg-slate-900 border border-brand-500/30 rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-[0_0_50px_rgba(59,130,246,0.15)] relative modal-content flex flex-col">
+            
+            <button 
+                onclick="window.closeVcModal()" 
+                class="absolute top-5 right-5 text-slate-400 hover:text-white transition focus:outline-none p-2 rounded-lg hover:bg-white/5"
+                aria-label="Fechar modal"
+            >
+                <i data-lucide="x" class="w-5 h-5" aria-hidden="true"></i>
+            </button>
+            
+            <div class="p-5 pb-0 mb-4 shrink-0">
+                <h3 id="vcModalTitle" class="text-xl font-display font-bold text-white mb-2 flex items-center gap-2">
+                    <i data-lucide="check-square" class="w-5 h-5 text-brand-400" aria-hidden="true"></i> 
+                    <span>Configurar Cartão PayGo</span>
+                </h3>
+                <p id="vcModalDesc" class="text-sm text-slate-400">
+                    Insira os dados do cartão PayGo para <span id="vcClientName" class="text-white font-bold">o Cliente</span>.
+                </p>
+            </div>
+            
+            <form id="vcApproveForm" class="p-5 pt-0 space-y-4 overflow-y-auto pr-2 flex-1" novalidate>
+                <input type="hidden" id="vcApproveReqId">
+                <input type="hidden" id="vcApproveUserId">
+                
+                <div>
+                    <label for="vcApproveNumber" class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                        Número do Cartão
+                    </label>
+                    <div class="relative">
+                        <i data-lucide="credit-card" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" aria-hidden="true"></i>
+                        <input 
+                            type="text" 
+                            id="vcApproveNumber" 
+                            required 
+                            maxlength="19" 
+                            pattern="\d{4}\s?\d{4}\s?\d{4}\s?\d{4}"
+                            placeholder="0000 0000 0000 0000" 
+                            inputmode="numeric"
+                            autocomplete="cc-number"
+                            class="w-full pl-11 pr-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white font-mono transition-all shadow-inner outline-none placeholder-slate-600"
+                            aria-describedby="cardNumberHint"
+                        >
+                    </div>
+                    <p id="cardNumberHint" class="text-[9px] text-slate-500 mt-1">Digite apenas números. Espaços são adicionados automaticamente.</p>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="vcApproveExpiry" class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                            Validade
+                        </label>
+                        <input 
+                            type="text" 
+                            id="vcApproveExpiry" 
+                            required 
+                            maxlength="5" 
+                            pattern="\d{2}/\d{2}"
+                            placeholder="MM/AA" 
+                            inputmode="numeric"
+                            autocomplete="cc-exp"
+                            class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white font-mono text-center transition-all shadow-inner outline-none placeholder-slate-600"
+                        >
+                    </div>
+                    <div>
+                        <label for="vcApproveCvc" class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                            CVC
+                        </label>
+                        <input 
+                            type="text" 
+                            id="vcApproveCvc" 
+                            required 
+                            maxlength="3" 
+                            pattern="\d{3}"
+                            placeholder="***" 
+                            inputmode="numeric"
+                            autocomplete="cc-csc"
+                            class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white font-mono text-center transition-all shadow-inner outline-none placeholder-slate-600"
+                        >
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="vcApproveDestination" class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                        Pay ID / TRC20 do Cliente
+                    </label>
+                    <div class="relative">
+                        <i data-lucide="wallet" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" aria-hidden="true"></i>
+                        <input 
+                            type="text" 
+                            id="vcApproveDestination" 
+                            required 
+                            placeholder="Ex: TXYZ... ou 0x..." 
+                            pattern="^[a-zA-Z0-9]{20,}$"
+                            class="w-full pl-11 pr-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white font-mono text-sm transition-all shadow-inner outline-none placeholder-slate-600"
+                            aria-describedby="destinationHint"
+                        >
+                    </div>
+                    <p id="destinationHint" class="text-[9px] text-warning-400 font-medium mt-2 leading-relaxed flex items-start gap-1">
+                        <i data-lucide="alert-triangle" class="w-3 h-3 mt-0.5 flex-shrink-0" aria-hidden="true"></i> 
+                        <span>Este ID é essencial para processares as recargas futuras do cliente.</span>
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="vcApproveType" class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Tipo do Cartão</label>
+                        <select id="vcApproveType" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white outline-none">
+                            <option value="virtual">Virtual</option>
+                            <option value="fisico">Físico</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="vcApproveUsdBalance" class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Saldo no cartão (USD)</label>
+                        <input type="number" id="vcApproveUsdBalance" min="0" step="0.01" placeholder="0.00" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-success-500 focus:ring-1 focus:ring-success-500 text-white font-mono outline-none placeholder-slate-600">
+                    </div>
+                </div>
+
+                <label class="flex items-center gap-3 bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 cursor-pointer">
+                    <input type="checkbox" id="vcRevealToAdmin" class="accent-blue-500">
+                    <span class="text-sm text-slate-300">Permitir ver/ocultar dados do cartão no dashboard</span>
+                </label>
+
+                <button 
+                    type="submit" 
+                    id="btnSubmitApproveVc" 
+                    class="btn-epic w-full py-4 mt-4 bg-brand-600 hover:bg-brand-500 text-white shadow-[0_0_20px_rgba(37,99,235,0.3)] disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed rounded-xl font-bold transition-all flex items-center justify-center gap-2"
+                >
+                    <i data-lucide="send" class="w-4 h-4" aria-hidden="true"></i> 
+                    <span>Entregar Cartão PayGo</span>
+                </button>
+            </form>
         </div>
-        
-        <form id="vcApproveForm" class="p-5 pt-0 space-y-4 overflow-y-auto pr-2 flex-1" novalidate>
-          <input type="hidden" id="vcApproveReqId">
-          <input type="hidden" id="vcApproveUserId">
-
-          <div class="grid md:grid-cols-2 gap-4">
-            <div class="md:col-span-2">
-              <label for="vcApproveNumber" class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                Número do Cartão
-              </label>
-              <div class="relative">
-                <i data-lucide="credit-card" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
-                <input 
-                  type="text" 
-                  id="vcApproveNumber" 
-                  required 
-                  maxlength="19"
-                  placeholder="0000 0000 0000 0000"
-                  inputmode="numeric"
-                  class="w-full pl-11 pr-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white font-mono outline-none placeholder-slate-600"
-                >
-              </div>
-            </div>
-
-            <div>
-              <label for="vcApproveExpiry" class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                Validade
-              </label>
-              <input 
-                type="text" 
-                id="vcApproveExpiry" 
-                required 
-                maxlength="5"
-                placeholder="MM/AA"
-                inputmode="numeric"
-                class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white font-mono text-center outline-none placeholder-slate-600"
-              >
-            </div>
-
-            <div>
-              <label for="vcApproveCvc" class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                CVC
-              </label>
-              <input 
-                type="text" 
-                id="vcApproveCvc" 
-                required 
-                maxlength="3"
-                placeholder="123"
-                inputmode="numeric"
-                class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white font-mono text-center outline-none placeholder-slate-600"
-              >
-            </div>
-
-            <div class="md:col-span-2">
-              <label for="vcApproveDestination" class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                Pay ID / TRC20 do Cliente
-              </label>
-              <div class="relative">
-                <i data-lucide="wallet" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
-                <input 
-                  type="text" 
-                  id="vcApproveDestination" 
-                  required
-                  placeholder="Ex: TXYZ... ou 0x..."
-                  class="w-full pl-11 pr-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white font-mono text-sm outline-none placeholder-slate-600"
-                >
-              </div>
-            </div>
-
-            <div>
-              <label for="vcApproveType" class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                Tipo do Cartão
-              </label>
-              <select 
-                id="vcApproveType"
-                class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white outline-none"
-              >
-                <option value="virtual">Virtual</option>
-                <option value="fisico">Físico</option>
-              </select>
-            </div>
-
-            <div>
-              <label for="vcApproveUsdBalance" class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                Saldo exato no cartão (USD)
-              </label>
-              <input 
-                type="number"
-                id="vcApproveUsdBalance"
-                min="0"
-                step="0.01"
-                placeholder="0.00"
-                class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:border-success-500 focus:ring-1 focus:ring-success-500 text-white font-mono outline-none placeholder-slate-600"
-              >
-            </div>
-
-            <div class="md:col-span-2">
-              <label class="flex items-center gap-3 bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 cursor-pointer">
-                <input type="checkbox" id="vcRevealToAdmin" class="accent-blue-500">
-                <span class="text-sm text-slate-300">Permitir ver/ocultar dados do cartão no dashboard</span>
-              </label>
-            </div>
-          </div>
-
-          <div id="vcPreviewBox" class="hidden bg-slate-950 border border-slate-800 rounded-2xl p-4">
-            <div class="flex items-center justify-between mb-3">
-              <p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Pré-visualização</p>
-              <button type="button" onclick="window.toggleCardPreviewVisibility()" class="text-xs font-bold text-brand-400 hover:text-brand-300 inline-flex items-center gap-2">
-                <i data-lucide="eye" class="w-4 h-4" id="togglePreviewIcon"></i>
-                <span id="togglePreviewText">Ver dados</span>
-              </button>
-            </div>
-
-            <div id="vcPreviewMasked" class="space-y-2">
-              <p class="text-sm text-slate-300"><span class="text-slate-500">Cartão:</span> <span id="previewMaskedNumber" class="sensitive-value text-brand-400">•••• •••• •••• ••••</span></p>
-              <p class="text-sm text-slate-300"><span class="text-slate-500">Validade:</span> <span id="previewMaskedExpiry">••/••</span></p>
-              <p class="text-sm text-slate-300"><span class="text-slate-500">CVC:</span> <span id="previewMaskedCvc">•••</span></p>
-              <p class="text-sm text-slate-300"><span class="text-slate-500">Saldo USD:</span> <span id="previewUsd" class="sensitive-value text-success-400">$0.00</span></p>
-              <p class="text-sm text-slate-300"><span class="text-slate-500">Tipo:</span> <span id="previewType">virtual</span></p>
-            </div>
-
-            <div id="vcPreviewFull" class="hidden space-y-2">
-              <p class="text-sm text-slate-300"><span class="text-slate-500">Cartão:</span> <span id="previewFullNumber" class="sensitive-value text-brand-400"></span></p>
-              <p class="text-sm text-slate-300"><span class="text-slate-500">Validade:</span> <span id="previewFullExpiry"></span></p>
-              <p class="text-sm text-slate-300"><span class="text-slate-500">CVC:</span> <span id="previewFullCvc"></span></p>
-              <p class="text-sm text-slate-300"><span class="text-slate-500">Saldo USD:</span> <span id="previewFullUsd" class="sensitive-value text-success-400"></span></p>
-              <p class="text-sm text-slate-300"><span class="text-slate-500">Tipo:</span> <span id="previewFullType"></span></p>
-              <p class="text-sm text-slate-300"><span class="text-slate-500">Destino:</span> <span id="previewFullDestination" class="sensitive-value"></span></p>
-            </div>
-          </div>
-
-          <button 
-            type="submit" 
-            id="btnSubmitApproveVc" 
-            class="w-full py-4 mt-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(37,99,235,0.25)]"
-          >
-            <i data-lucide="send" class="w-4 h-4"></i>
-            <span>Entregar Cartão PayGo</span>
-          </button>
-        </form>
-      </div>
     </div>
 
     <div id="manualPayoutModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
@@ -905,6 +882,10 @@
     </div>
 
     <script type="module">
+        // ==========================================
+        // 🔧 CONFIGURAÇÃO E INICIALIZAÇÃO
+        // ==========================================
+        
         const firebaseConfig = {
             apiKey: import.meta.env?.VITE_FIREBASE_API_KEY || "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
             authDomain: import.meta.env?.VITE_FIREBASE_AUTH_DOMAIN || "paygo-14311.firebaseapp.com",
@@ -914,6 +895,7 @@
             appId: import.meta.env?.VITE_FIREBASE_APP_ID || "1:208360646277:web:aecc57cc0077ae48a52bec"
         };
 
+        // Inicializar Firebase com tratamento de erro
         let app, auth, db;
         try {
             app = window.firebaseApp.initializeApp(firebaseConfig);
@@ -932,11 +914,15 @@
             if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
+        // Estado global
         let loggedInAdminId = null;
         let isRefreshing = false;
         let lastFetchTime = null;
-        let vcPreviewVisible = false;
 
+        // ==========================================
+        // 🛡️ UTILITÁRIOS DE SEGURANÇA
+        // ==========================================
+        
         const escapeHTML = (str) => {
             if (str === null || str === undefined) return '';
             return String(str)
@@ -959,6 +945,23 @@
             if (el) el.textContent = text ?? '';
         };
 
+        const setSafeHTML = (id, html) => {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = sanitizeHTML(html);
+        };
+
+        const sanitizeHTML = (html) => {
+            const temp = document.createElement('div');
+            temp.innerHTML = html;
+            const scripts = temp.querySelectorAll('script, *[on*]');
+            scripts.forEach(el => el.remove());
+            return temp.innerHTML;
+        };
+
+        // ==========================================
+        // 🔔 SISTEMA DE NOTIFICAÇÕES (TOAST)
+        // ==========================================
+        
         window.showToast = (message, type = 'success', duration = 4000) => {
             const container = document.getElementById('toastContainer');
             if (!container) return;
@@ -999,9 +1002,18 @@
             });
         };
 
+        // ==========================================
+        // 💱 FORMATADORES
+        // ==========================================
+        
         const formatCurrency = (value, currency = 'MT', locale = 'pt-MZ') => {
             if (value === null || value === undefined || isNaN(value)) return `0.00 ${currency}`;
             return `${Number(value).toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
+        };
+
+        const formatUSD = (value) => {
+            if (value === null || value === undefined || isNaN(value)) return '$0.00';
+            return `$${Number(value).toFixed(2)}`;
         };
 
         const formatDate = (timestamp, locale = 'pt-MZ') => {
@@ -1030,71 +1042,10 @@
             return formatDate(timestamp);
         };
 
-        const formatCardInput = (value) => {
-            const digits = String(value || '').replace(/\D/g, '').slice(0, 16);
-            return digits.replace(/(.{4})/g, '$1 ').trim();
-        };
-
-        const formatCardMasked = (value) => {
-            const digits = String(value || '').replace(/\D/g, '');
-            if (!digits) return '•••• •••• •••• ••••';
-            const last4 = digits.slice(-4);
-            return `•••• •••• •••• ${last4}`;
-        };
-
-        const updateLastSync = () => {
-            const el = document.getElementById('lastSync');
-            if (el) { lastFetchTime = new Date(); el.textContent = formatRelativeTime(lastFetchTime); }
-        };
-
-        window.updateVcPreview = () => {
-            const number = document.getElementById('vcApproveNumber')?.value || '';
-            const expiry = document.getElementById('vcApproveExpiry')?.value || '';
-            const cvc = document.getElementById('vcApproveCvc')?.value || '';
-            const destination = document.getElementById('vcApproveDestination')?.value || '';
-            const usd = Number(document.getElementById('vcApproveUsdBalance')?.value || 0);
-            const type = document.getElementById('vcApproveType')?.value || 'virtual';
-
-            const box = document.getElementById('vcPreviewBox');
-            if (box) box.classList.remove('hidden');
-
-            setSafeText('previewMaskedNumber', formatCardMasked(number));
-            setSafeText('previewMaskedExpiry', expiry || '••/••');
-            setSafeText('previewMaskedCvc', cvc ? '•••' : '•••');
-            setSafeText('previewUsd', `$${usd.toFixed(2)}`);
-            setSafeText('previewType', type);
-
-            setSafeText('previewFullNumber', number || '—');
-            setSafeText('previewFullExpiry', expiry || '—');
-            setSafeText('previewFullCvc', cvc || '—');
-            setSafeText('previewFullUsd', `$${usd.toFixed(2)}`);
-            setSafeText('previewFullType', type);
-            setSafeText('previewFullDestination', destination || '—');
-        };
-
-        window.toggleCardPreviewVisibility = () => {
-            vcPreviewVisible = !vcPreviewVisible;
-
-            const masked = document.getElementById('vcPreviewMasked');
-            const full = document.getElementById('vcPreviewFull');
-            const icon = document.getElementById('togglePreviewIcon');
-            const text = document.getElementById('togglePreviewText');
-
-            if (vcPreviewVisible) {
-                masked?.classList.add('hidden');
-                full?.classList.remove('hidden');
-                if (icon) icon.setAttribute('data-lucide', 'eye-off');
-                if (text) text.textContent = 'Ocultar dados';
-            } else {
-                masked?.classList.remove('hidden');
-                full?.classList.add('hidden');
-                if (icon) icon.setAttribute('data-lucide', 'eye');
-                if (text) text.textContent = 'Ver dados';
-            }
-
-            if (typeof lucide !== 'undefined') lucide.createIcons();
-        };
-
+        // ==========================================
+        // 🚀 AUTENTICAÇÃO E SESSÃO
+        // ==========================================
+        
         const initSession = async () => {
             const loader = document.getElementById('sysLoader');
             const fallbackTimer = setTimeout(() => {
@@ -1144,6 +1095,15 @@
             }
         };
 
+        const updateLastSync = () => {
+            const el = document.getElementById('lastSync');
+            if (el) { lastFetchTime = new Date(); el.textContent = formatRelativeTime(lastFetchTime); }
+        };
+
+        // ==========================================
+        // 📊 FETCH DE DADOS DO DASHBOARD
+        // ==========================================
+        
         window.fetchDashboardData = async (force = false) => {
             if (isRefreshing && !force) return;
             if (!force && lastFetchTime && (Date.now() - lastFetchTime < 10000)) return;
@@ -1155,6 +1115,7 @@
             if (btn) { btn.disabled = true; icon?.classList.add('animate-spin'); }
             
             try {
+                // ===== 1. ORDENS E TOP-UPS =====
                 const [ordersSnap, topupsSnap] = await Promise.all([
                     window.firebaseFirestore.getDocs(window.firebaseFirestore.collection(db, "orders")),
                     window.firebaseFirestore.getDocs(window.firebaseFirestore.collection(db, "topups"))
@@ -1201,6 +1162,7 @@
                 
                 renderRecentOrders(recentOps);
                 
+                // ===== 2. OUTRAS MÉTRICAS =====
                 await fetchAffiliateStats();
                 await fetchVirtualCardRequests();
                 await fetchVipSubscriptions();
@@ -1314,85 +1276,75 @@
         };
         
         const fetchVirtualCardRequests = async () => {
-          try {
-            const vcSnap = await window.firebaseFirestore.getDocs(
-              window.firebaseFirestore.query(
-                window.firebaseFirestore.collection(db, "vc_requests"),
-                window.firebaseFirestore.orderBy("createdAt", "desc")
-              )
-            );
+            try {
+                const vcSnap = await window.firebaseFirestore.getDocs(
+                    window.firebaseFirestore.query(window.firebaseFirestore.collection(db, "vc_requests"), window.firebaseFirestore.orderBy("createdAt", "desc"))
+                );
+                
+                const tbody = document.getElementById('tableVcRequests');
+                const countEl = document.getElementById('vcCount');
+                if (!tbody) return;
+                
+                let count = 0; let rows = '';
+                
+                vcSnap.forEach(docSnap => {
+                    const vc = { id: docSnap.id, ...docSnap.data() };
+                    const isPending = vc.status === 'pending';
+                    
+                    if (isPending) count++;
+                    
+                    const dateStr = formatDate(vc.createdAt);
+                    const statusBadge = isPending 
+                        ? `<span class="status-badge pending">⏳ Pendente</span>`
+                        : `<span class="status-badge completed">✅ Emitido</span>`;
+                    
+                    const resolvedUserId = vc.userId || vc.uid || vc.clientId || vc.customerId || '';
+                    const resolvedUserName = vc.userName || vc.name || vc.customerName || 'Cliente';
+                    const safeReqId = encodeURIComponent(vc.id || '');
+                    const safeUserId = encodeURIComponent(resolvedUserId || '');
+                    const safeUserName = encodeURIComponent(resolvedUserName || 'Cliente');
 
-            const tbody = document.getElementById('tableVcRequests');
-            const countEl = document.getElementById('vcCount');
-            if (!tbody) return;
-
-            let count = 0;
-            let rows = '';
-
-            vcSnap.forEach(docSnap => {
-              const vc = { id: docSnap.id, ...docSnap.data() };
-              const isPending = vc.status === 'pending';
-              if (isPending) count++;
-
-              const usdBalance = Number(vc.cardBalanceUsd || 0);
-              const cardType = vc.cardBalanceType || 'virtual';
-
-              const statusBadge = isPending
-                ? `<span class="status-badge pending">⏳ Pendente</span>`
-                : `<span class="status-badge completed">✅ Emitido</span>`;
-
-              const resolvedUserId = vc.userId || vc.uid || vc.clientId || vc.customerId || '';
-              const resolvedUserName = vc.userName || vc.name || vc.customerName || 'Cliente';
-              const safeReqId = encodeURIComponent(vc.id || '');
-              const safeUserId = encodeURIComponent(resolvedUserId || '');
-              const safeUserName = encodeURIComponent(resolvedUserName || 'Cliente');
-
-              const actionBtn = isPending
-                ? `<button onclick="window.openVcApproveModal('${safeReqId}', '${safeUserId}', '${safeUserName}')" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-500 text-white rounded-lg text-xs font-bold transition shadow-md">Configurar</button>`
-                : `<button onclick="window.openVcApproveModal('${safeReqId}', '${safeUserId}', '${safeUserName}')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-bold transition border border-slate-700">Ver</button>`;
-
-              rows += `
-                <tr class="hover:bg-slate-800/40 transition">
-                  <td class="px-6 py-4">
-                    <div class="font-bold text-white text-sm">${escapeHTML(resolvedUserName || 'Cliente')}</div>
-                    <div class="text-[10px] text-slate-400 font-mono mt-0.5">${formatDate(vc.createdAt)}</div>
-                  </td>
-                  <td class="px-6 py-4 text-sm font-bold text-slate-300 font-mono">${formatCurrency(vc.amountPaid || 0)}</td>
-                  <td class="px-6 py-4 text-sm font-bold text-success-400 font-mono">$${usdBalance.toFixed(2)}</td>
-                  <td class="px-6 py-4">
-                    <span class="text-[11px] uppercase tracking-widest font-bold ${cardType === 'fisico' ? 'text-warning-400' : 'text-brand-400'}">
-                      ${escapeHTML(cardType)}
-                    </span>
-                  </td>
-                  <td class="px-6 py-4">${statusBadge}</td>
-                  <td class="px-6 py-4 text-right">${actionBtn}</td>
-                </tr>
-              `;
-            });
-
-            if (countEl) countEl.textContent = count;
-
-            tbody.innerHTML = rows || `
-              <tr>
-                <td colspan="6" class="text-center py-8 text-slate-500 text-xs">
-                  Sem pedidos de cartão na fila.
-                </td>
-              </tr>
-            `;
-          } catch (error) {
-            console.error("Erro ao buscar cartões virtuais:", error);
-            const tbody = document.getElementById('tableVcRequests');
-            if (tbody) {
-              tbody.innerHTML = `
-                <tr>
-                  <td colspan="6" class="text-center py-8 text-danger-400 text-xs">
-                    <i data-lucide="alert-circle" class="w-4 h-4 inline mr-1"></i> Erro ao carregar pedidos
-                  </td>
-                </tr>
-              `;
-              if (typeof lucide !== 'undefined') lucide.createIcons({ root: tbody });
+                    const actionBtn = isPending
+                        ? `<button onclick="window.openVcApproveModal('${safeReqId}', '${safeUserId}', '${safeUserName}')" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-500 text-white rounded-lg text-xs font-bold transition shadow-md btn-action">Aprovar</button>`
+                        : `<button onclick="window.openVcApproveModal('${safeReqId}', '${safeUserId}', '${safeUserName}')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-bold transition border border-slate-700">Ver</button>`;
+                    
+                    rows += `
+                        <tr class="hover:bg-slate-800/40 transition">
+                            <td class="px-6 py-4">
+                                <div class="font-bold text-white text-sm">${escapeHTML(resolvedUserName)}</div>
+                                <div class="text-[10px] text-slate-400 font-mono mt-0.5">${dateStr}</div>
+                            </td>
+                            <td class="px-6 py-4 text-sm font-bold text-slate-300 font-mono">${formatCurrency(vc.amountPaid)}</td>
+                            <td class="px-6 py-4">${statusBadge}</td>
+                            <td class="px-6 py-4 text-right">${actionBtn}</td>
+                        </tr>
+                    `;
+                });
+                
+                if (countEl) countEl.textContent = count;
+                
+                tbody.innerHTML = rows || `
+                    <tr>
+                        <td colspan="4" class="text-center py-8 text-slate-500 text-xs">
+                            Sem pedidos de cartão na fila.
+                        </td>
+                    </tr>
+                `;
+                
+            } catch (error) {
+                console.error("Erro ao buscar cartões virtuais:", error);
+                const tbody = document.getElementById('tableVcRequests');
+                if (tbody) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="text-center py-8 text-danger-400 text-xs">
+                                <i data-lucide="alert-circle" class="w-4 h-4 inline mr-1" aria-hidden="true"></i> Erro ao carregar pedidos
+                            </td>
+                        </tr>
+                    `;
+                    if (typeof lucide !== 'undefined') lucide.createIcons({ root: tbody });
+                }
             }
-          }
         };
         
         const fetchVipSubscriptions = async () => {
@@ -1444,6 +1396,10 @@
             } catch (error) { console.error("Erro ao buscar VIPs:", error); }
         };
 
+        // ==========================================
+        // 💳 MODAIS & AÇÕES B2C (PAYOUT E CARTÃO)
+        // ==========================================
+
         window.openManualPayoutModal = function() {
             const modal = document.getElementById('manualPayoutModal');
             if(modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
@@ -1479,7 +1435,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         adminId: adminId,
-                        withdrawalId: "MANUAL_PAYOUT",
+                        withdrawalId: "MANUAL_PAYOUT", // ⚠️ A chave mágica para o Bypass
                         targetPhone: phone,
                         targetAmount: amount,
                         targetMethod: method
@@ -1505,82 +1461,74 @@
         };
 
         window.openVcApproveModal = async (reqId, userId, userName) => {
-          const decodedReqId = decodeURIComponent(String(reqId || '')).trim();
-          const decodedUserId = decodeURIComponent(String(userId || '')).trim();
-          const decodedUserName = decodeURIComponent(String(userName || 'Cliente')).trim();
+            const decodedReqId = decodeURIComponent(String(reqId || '')).trim();
+            const decodedUserId = decodeURIComponent(String(userId || '')).trim();
+            const decodedUserName = decodeURIComponent(String(userName || 'Cliente')).trim();
 
-          if (!decodedReqId) {
-            window.showToast('ID do pedido de cartão em falta.', 'error');
-            return;
-          }
-
-          setSafeText('vcClientName', sanitizeInput(decodedUserName, 100));
-          document.getElementById('vcApproveReqId').value = sanitizeInput(decodedReqId, 80);
-          document.getElementById('vcApproveUserId').value = sanitizeInput(decodedUserId, 80);
-
-          const form = document.getElementById('vcApproveForm');
-          if (form) form.reset();
-
-          vcPreviewVisible = false;
-          document.getElementById('vcPreviewBox')?.classList.add('hidden');
-          document.getElementById('vcPreviewFull')?.classList.add('hidden');
-          document.getElementById('vcPreviewMasked')?.classList.remove('hidden');
-          setSafeText('togglePreviewText', 'Ver dados');
-
-          try {
-            const reqDoc = await window.firebaseFirestore.getDoc(
-              window.firebaseFirestore.doc(db, "vc_requests", reqId)
-            );
-
-            let resolvedModalUserId = decodedUserId;
-            if (reqDoc.exists()) {
-              const reqData = reqDoc.data() || {};
-              resolvedModalUserId = resolvedModalUserId || reqData.userId || reqData.uid || reqData.clientId || reqData.customerId || '';
-              document.getElementById('vcApproveUserId').value = sanitizeInput(resolvedModalUserId, 80);
-              document.getElementById('vcApproveUsdBalance').value = Number(reqData.cardBalanceUsd || 0).toFixed(2);
-              document.getElementById('vcApproveType').value = reqData.cardBalanceType || 'virtual';
-              if (reqData.userName || reqData.name || reqData.customerName) {
-                setSafeText('vcClientName', sanitizeInput(reqData.userName || reqData.name || reqData.customerName, 100));
-              }
+            if (!decodedReqId) {
+                window.showToast('ID do pedido de cartão em falta.', 'error');
+                return;
             }
 
-            if (!resolvedModalUserId) {
-              window.showToast('Este pedido não tem userId associado. Verifique o documento em vc_requests.', 'error', 7000);
-              return;
+            const form = document.getElementById('vcApproveForm');
+            if (form) form.reset();
+
+            let resolvedUserId = decodedUserId;
+            let resolvedUserName = decodedUserName || 'Cliente';
+
+            try {
+                const reqDoc = await window.firebaseFirestore.getDoc(
+                    window.firebaseFirestore.doc(db, "vc_requests", decodedReqId)
+                );
+
+                if (reqDoc.exists()) {
+                    const reqData = reqDoc.data() || {};
+                    resolvedUserId = resolvedUserId || reqData.userId || reqData.uid || reqData.clientId || reqData.customerId || '';
+                    resolvedUserName = reqData.userName || reqData.name || reqData.customerName || resolvedUserName;
+                    if (document.getElementById('vcApproveUsdBalance')) document.getElementById('vcApproveUsdBalance').value = Number(reqData.cardBalanceUsd || 0).toFixed(2);
+                    if (document.getElementById('vcApproveType')) document.getElementById('vcApproveType').value = reqData.cardBalanceType || 'virtual';
+                }
+
+                if (!resolvedUserId) {
+                    window.showToast('Este pedido não tem userId associado. Verifique o documento em vc_requests.', 'error', 7000);
+                    return;
+                }
+
+                const userDoc = await window.firebaseFirestore.getDoc(
+                    window.firebaseFirestore.doc(db, "users", resolvedUserId)
+                );
+
+                if (userDoc.exists()) {
+                    const userData = userDoc.data() || {};
+                    resolvedUserName = userData.name || resolvedUserName;
+                    const card = userData.virtualCard || {};
+
+                    if (card.number) document.getElementById('vcApproveNumber').value = formatCardInput(card.number);
+                    if (card.expiry) document.getElementById('vcApproveExpiry').value = card.expiry;
+                    if (card.cvc) document.getElementById('vcApproveCvc').value = card.cvc;
+                    if (card.destination) document.getElementById('vcApproveDestination').value = card.destination;
+                    if (card.cardBalanceUsd !== undefined && document.getElementById('vcApproveUsdBalance')) document.getElementById('vcApproveUsdBalance').value = Number(card.cardBalanceUsd || 0).toFixed(2);
+                    if (card.cardBalanceType && document.getElementById('vcApproveType')) document.getElementById('vcApproveType').value = card.cardBalanceType;
+                    if (document.getElementById('vcRevealToAdmin')) document.getElementById('vcRevealToAdmin').checked = !!card.allowAdminVisibility;
+                }
+            } catch (err) {
+                console.error('Erro ao pré-carregar cartão:', err);
+                window.showToast(`Erro ao abrir pedido: ${err?.message || 'erro desconhecido'}`, 'error', 7000);
             }
 
-            const userDoc = await window.firebaseFirestore.getDoc(
-              window.firebaseFirestore.doc(db, "users", resolvedModalUserId)
-            );
+            // IDs são definidos depois do reset para não serem apagados.
+            setSafeText('vcClientName', sanitizeInput(resolvedUserName, 100));
+            document.getElementById('vcApproveReqId').value = decodedReqId;
+            document.getElementById('vcApproveUserId').value = resolvedUserId;
+            window.updateVcPreview?.();
 
-            if (userDoc.exists()) {
-              const userData = userDoc.data() || {};
-              const card = userData.virtualCard || {};
-
-              if (card.number) document.getElementById('vcApproveNumber').value = formatCardInput(card.number);
-              if (card.expiry) document.getElementById('vcApproveExpiry').value = card.expiry;
-              if (card.cvc) document.getElementById('vcApproveCvc').value = card.cvc;
-              if (card.destination) document.getElementById('vcApproveDestination').value = card.destination;
-              if (card.cardBalanceUsd !== undefined) document.getElementById('vcApproveUsdBalance').value = Number(card.cardBalanceUsd || 0).toFixed(2);
-              if (card.cardBalanceType) document.getElementById('vcApproveType').value = card.cardBalanceType;
-              if (card.allowAdminVisibility) document.getElementById('vcRevealToAdmin').checked = !!card.allowAdminVisibility;
+            const modal = document.getElementById('vcApproveModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                document.body.style.overflow = 'hidden';
             }
-          } catch (err) {
-            console.error('Erro ao pré-carregar cartão:', err);
-          }
-
-          window.updateVcPreview();
-
-          const modal = document.getElementById('vcApproveModal');
-          if (modal) {
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            document.body.style.overflow = 'hidden';
-          }
-
-          setTimeout(() => {
-            document.getElementById('vcApproveNumber')?.focus();
-          }, 250);
+            setTimeout(() => { document.getElementById('vcApproveNumber')?.focus(); }, 300);
         };
         
         window.closeVcModal = () => {
@@ -1597,184 +1545,148 @@
         document.getElementById('manualPayoutModal')?.addEventListener('click', (e) => { if (e.target.id === 'manualPayoutModal') { window.closeManualPayoutModal(); } });
         
         const setupCardFormatters = () => {
-          const inputNum = document.getElementById('vcApproveNumber');
-          const inputExp = document.getElementById('vcApproveExpiry');
-          const inputCvc = document.getElementById('vcApproveCvc');
-          const inputDest = document.getElementById('vcApproveDestination');
-          const inputUsd = document.getElementById('vcApproveUsdBalance');
-          const inputType = document.getElementById('vcApproveType');
-
-          if (inputNum) {
-            inputNum.addEventListener('input', (e) => {
-              const digits = e.target.value.replace(/\D/g, '').slice(0, 16);
-              e.target.value = digits.replace(/(.{4})/g, '$1 ').trim();
-              window.updateVcPreview();
-            });
-          }
-
-          if (inputExp) {
-            inputExp.addEventListener('input', (e) => {
-              const digits = e.target.value.replace(/\D/g, '').slice(0, 4);
-              e.target.value = digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
-              window.updateVcPreview();
-            });
-          }
-
-          if (inputCvc) {
-            inputCvc.addEventListener('input', (e) => {
-              e.target.value = e.target.value.replace(/\D/g, '').slice(0, 3);
-              window.updateVcPreview();
-            });
-          }
-
-          if (inputDest) inputDest.addEventListener('input', window.updateVcPreview);
-          if (inputUsd) inputUsd.addEventListener('input', window.updateVcPreview);
-          if (inputType) inputType.addEventListener('change', window.updateVcPreview);
+            const inputNum = document.getElementById('vcApproveNumber');
+            if (inputNum) { inputNum.addEventListener('input', (e) => { const digits = e.target.value.replace(/\D/g, '').slice(0, 16); e.target.value = digits.replace(/(.{4})/g, '$1 ').trim(); }); }
+            
+            const inputExp = document.getElementById('vcApproveExpiry');
+            if (inputExp) { inputExp.addEventListener('input', (e) => { const digits = e.target.value.replace(/\D/g, '').slice(0, 4); e.target.value = digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits; }); }
+            
+            const inputCvc = document.getElementById('vcApproveCvc');
+            if (inputCvc) { inputCvc.addEventListener('input', (e) => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 3); }); }
         };
         
         const setupVcForm = () => {
-          const form = document.getElementById('vcApproveForm');
-          if (!form) return;
+            const form = document.getElementById('vcApproveForm');
+            if (!form) return;
+            
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const reqId = String(document.getElementById('vcApproveReqId').value || '').trim();
+                let userId = String(document.getElementById('vcApproveUserId').value || '').trim();
+                
+                if (!reqId) { window.showToast("ID do pedido em falta.", "error"); return; }
+                
+                const vcData = { 
+                    number: document.getElementById('vcApproveNumber').value.replace(/\s/g, ''),
+                    expiry: document.getElementById('vcApproveExpiry').value,
+                    cvc: document.getElementById('vcApproveCvc').value,
+                    destination: document.getElementById('vcApproveDestination').value.trim(),
+                    cardBalanceUsd: Number(document.getElementById('vcApproveUsdBalance')?.value || 0),
+                    cardBalanceType: document.getElementById('vcApproveType')?.value || 'virtual',
+                    allowAdminVisibility: !!document.getElementById('vcRevealToAdmin')?.checked,
+                    addedAt: new Date().toISOString()
+                };
+                
+                if (!/^\d{13,19}$/.test(vcData.number)) { window.showToast("Número do cartão inválido. Use 13 a 19 dígitos.", "error"); return; }
+                if (!/^\d{2}\/\d{2}$/.test(vcData.expiry)) { window.showToast("Validade inválida. Use MM/AA.", "error"); return; }
+                if (!/^\d{3}$/.test(vcData.cvc)) { window.showToast("CVC inválido.", "error"); return; }
+                if (!vcData.destination) { window.showToast("Destino do cartão é obrigatório.", "error"); return; }
+                if (vcData.cardBalanceUsd < 0) { window.showToast("Saldo USD inválido.", "error"); return; }
+                
+                const btn = document.getElementById('btnSubmitApproveVc');
+                const originalBtnText = btn.innerHTML;
+                
+                btn.disabled = true;
+                btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> <span>A Processar...</span>`;
+                if (typeof lucide !== 'undefined') lucide.createIcons({ root: btn });
+                
+                try {
+                    const reqRef = window.firebaseFirestore.doc(db, "vc_requests", reqId);
 
-          form.addEventListener('submit', async (e) => {
-            e.preventDefault();
+                    if (!userId || userId === 'undefined' || userId === 'null') {
+                        const reqSnap = await window.firebaseFirestore.getDoc(reqRef);
+                        const reqData = reqSnap.exists() ? (reqSnap.data() || {}) : {};
+                        userId = reqData.userId || reqData.uid || reqData.clientId || reqData.customerId || '';
+                    }
 
-            const reqId = document.getElementById('vcApproveReqId').value;
-            const userId = document.getElementById('vcApproveUserId').value;
+                    if (!userId || userId === 'undefined' || userId === 'null') {
+                        throw new Error('userId do cliente em falta. O pedido precisa ter userId em vc_requests.');
+                    }
 
-            if (!reqId || !userId) {
-              window.showToast("Dados do pedido em falta.", "error");
-              return;
-            }
+                    const userRef = window.firebaseFirestore.doc(db, "users", userId);
+                    const cardPayload = {
+                        ...vcData,
+                        maskedNumber: `•••• •••• •••• ${vcData.number.slice(-4)}`,
+                        last4: vcData.number.slice(-4),
+                        brand: vcData.number.startsWith('4') ? 'visa' : 'mastercard'
+                    };
 
-            const vcData = {
-              number: document.getElementById('vcApproveNumber').value.replace(/\s/g, ''),
-              expiry: document.getElementById('vcApproveExpiry').value,
-              cvc: document.getElementById('vcApproveCvc').value,
-              destination: document.getElementById('vcApproveDestination').value.trim(),
-              cardBalanceUsd: Number(document.getElementById('vcApproveUsdBalance').value || 0),
-              cardBalanceType: document.getElementById('vcApproveType').value || 'virtual',
-              allowAdminVisibility: document.getElementById('vcRevealToAdmin').checked,
-              addedAt: new Date().toISOString()
-            };
-
-            if (!/^\d{13,19}$/.test(vcData.number)) {
-              window.showToast("Número do cartão inválido. Use 13 a 19 dígitos.", "error");
-              return;
-            }
-
-            if (!/^\d{2}\/\d{2}$/.test(vcData.expiry)) {
-              window.showToast("Validade inválida.", "error");
-              return;
-            }
-
-            if (!/^\d{3}$/.test(vcData.cvc)) {
-              window.showToast("CVC inválido.", "error");
-              return;
-            }
-
-            if (!vcData.destination) {
-              window.showToast("Destino do cartão é obrigatório.", "error");
-              return;
-            }
-
-            if (vcData.cardBalanceUsd < 0) {
-              window.showToast("Saldo USD inválido.", "error");
-              return;
-            }
-
-            const btn = document.getElementById('btnSubmitApproveVc');
-            const originalBtnText = btn.innerHTML;
-
-            btn.disabled = true;
-            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> <span>A Processar...</span>`;
-            if (typeof lucide !== 'undefined') lucide.createIcons({ root: btn });
-
-            try {
-              if (!userId || userId === 'undefined' || userId === 'null') {
-                throw new Error('userId do cliente em falta. O pedido precisa ter userId em vc_requests.');
-              }
-
-              const userRef = window.firebaseFirestore.doc(db, "users", userId);
-              const reqRef = window.firebaseFirestore.doc(db, "vc_requests", reqId);
-
-              const cardPayload = {
-                ...vcData,
-                maskedNumber: `•••• •••• •••• ${vcData.number.slice(-4)}`,
-                last4: vcData.number.slice(-4),
-                brand: vcData.number.startsWith('4') ? 'visa' : 'mastercard'
-              };
-
-              await window.firebaseFirestore.updateDoc(userRef, {
-                virtualCard: cardPayload,
-                vcBalance: vcData.cardBalanceUsd,
-                vcRequestPending: false,
-                vcActivatedAt: window.firebaseFirestore.serverTimestamp()
-              });
-
-              await window.firebaseFirestore.updateDoc(reqRef, {
-                status: 'completed',
-                approvedAt: window.firebaseFirestore.serverTimestamp(),
-                approvedBy: loggedInAdminId,
-                userId: userId,
-                cardNumberLast4: vcData.number.slice(-4),
-                cardBalanceUsd: vcData.cardBalanceUsd,
-                cardBalanceType: vcData.cardBalanceType
-              });
-
-              try {
-                await window.firebaseFirestore.addDoc(
-                  window.firebaseFirestore.collection(db, "notifications"),
-                  {
-                    userId: userId,
-                    title: "Cartão PayGo Ativado 💳",
-                    message: `O seu cartão PayGo foi criado com sucesso. Saldo inicial registado: $${vcData.cardBalanceUsd.toFixed(2)} (${vcData.cardBalanceType}).`,
-                    type: "card_issued",
-                    read: false,
-                    createdAt: window.firebaseFirestore.serverTimestamp(),
-                    priority: 'high'
-                  }
-                );
-              } catch (notifyErr) {
-                console.warn('Cartão entregue, mas a notificação falhou:', notifyErr);
-              }
-
-              try {
-                await window.firebaseFirestore.addDoc(
-                  window.firebaseFirestore.collection(db, "admin_audit_logs"),
-                  {
-                    adminId: loggedInAdminId,
-                    action: 'VC_CARD_APPROVED',
-                    targetId: reqId,
-                    targetType: 'vc_request',
-                    userId: userId,
-                    details: {
-                      cardNumberLast4: vcData.number.slice(-4),
-                      cardBalanceUsd: vcData.cardBalanceUsd,
-                      cardBalanceType: vcData.cardBalanceType,
-                      allowAdminVisibility: vcData.allowAdminVisibility
-                    },
-                    createdAt: window.firebaseFirestore.serverTimestamp()
-                  }
-                );
-              } catch (auditErr) {
-                console.warn('Cartão entregue, mas o log de auditoria falhou:', auditErr);
-              }
-
-              window.showToast("✅ Cartão PayGo entregue com sucesso!", "success");
-              window.closeVcModal();
-              await window.fetchDashboardData(true);
-            } catch (err) {
-              console.error("Erro ao aprovar cartão:", err);
-              window.showToast(`❌ Falha ao entregar: ${err?.message || 'erro desconhecido'}`, "error", 7000);
-            } finally {
-              btn.disabled = false;
-              btn.innerHTML = originalBtnText;
-              if (typeof lucide !== 'undefined') lucide.createIcons({ root: btn });
-            }
-          });
+                    await window.firebaseFirestore.updateDoc(userRef, { 
+                        virtualCard: cardPayload,
+                        vcBalance: vcData.cardBalanceUsd,
+                        vcRequestPending: false,
+                        vcActivatedAt: window.firebaseFirestore.serverTimestamp()
+                    });
+                    
+                    await window.firebaseFirestore.updateDoc(reqRef, { 
+                        status: 'completed',
+                        approvedAt: window.firebaseFirestore.serverTimestamp(),
+                        approvedBy: loggedInAdminId,
+                        userId: userId,
+                        cardNumberLast4: vcData.number.slice(-4),
+                        cardBalanceUsd: vcData.cardBalanceUsd,
+                        cardBalanceType: vcData.cardBalanceType
+                    });
+                    
+                    try {
+                        await window.firebaseFirestore.addDoc(
+                            window.firebaseFirestore.collection(db, "notifications"), 
+                            {
+                                userId: userId,
+                                title: "Cartão PayGo Ativado 💳",
+                                message: `O seu cartão PayGo foi criado com sucesso. Saldo inicial registado: $${vcData.cardBalanceUsd.toFixed(2)} (${vcData.cardBalanceType}).`,
+                                type: "card_issued",
+                                read: false,
+                                createdAt: window.firebaseFirestore.serverTimestamp(),
+                                priority: 'high'
+                            }
+                        );
+                    } catch (notifyErr) {
+                        console.warn('Cartão entregue, mas notificação falhou:', notifyErr);
+                    }
+                    
+                    try {
+                        await window.firebaseFirestore.addDoc(
+                            window.firebaseFirestore.collection(db, "admin_audit_logs"),
+                            {
+                                adminId: loggedInAdminId,
+                                action: 'VC_CARD_APPROVED',
+                                targetId: reqId,
+                                targetType: 'vc_request',
+                                userId: userId,
+                                details: {
+                                    cardNumberLast4: vcData.number.slice(-4),
+                                    cardBalanceUsd: vcData.cardBalanceUsd,
+                                    cardBalanceType: vcData.cardBalanceType,
+                                    allowAdminVisibility: vcData.allowAdminVisibility
+                                },
+                                createdAt: window.firebaseFirestore.serverTimestamp()
+                            }
+                        );
+                    } catch (auditErr) {
+                        console.warn('Cartão entregue, mas auditoria falhou:', auditErr);
+                    }
+                    
+                    window.showToast("✅ Cartão PayGo entregue com sucesso!", "success");
+                    window.closeVcModal();
+                    await window.fetchDashboardData(true);
+                    
+                } catch (err) {
+                    console.error("Erro ao aprovar cartão:", err);
+                    window.showToast(`❌ Falha ao entregar: ${err?.message || 'erro desconhecido'}`, "error", 7000);
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = originalBtnText;
+                    if (typeof lucide !== 'undefined') lucide.createIcons({ root: btn });
+                }
+            });
         };
 
+        // ==========================================
+        // 📱 UX & UTILITÁRIOS
+        // ==========================================
+        
         window.toggleSidebar = () => {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('mobileOverlay');
@@ -1813,17 +1725,15 @@
         
         document.addEventListener('paste', (e) => {
             const target = e.target;
-            if (!target?.id?.includes('vcApprove')) return;
-            setTimeout(() => {
-                if (target.id === 'vcApproveNumber') target.value = formatCardInput(target.value);
-                if (target.id === 'vcApproveExpiry') {
-                  const digits = String(target.value || '').replace(/\D/g, '').slice(0, 4);
-                  target.value = digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
-                }
-                if (target.id === 'vcApproveCvc') target.value = String(target.value || '').replace(/\D/g, '').slice(0, 3);
-                window.updateVcPreview?.();
-            }, 0);
+            if (target?.id?.includes('vcApprove') && target?.id !== 'vcApproveDestination') {
+                e.preventDefault();
+                window.showToast('Cole manualmente por segurança', 'warning', 2000);
+            }
         });
+        
+        // ==========================================
+        // 🎯 INICIALIZAÇÃO
+        // ==========================================
         
         document.addEventListener('DOMContentLoaded', () => {
             setupCardFormatters();
