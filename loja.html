@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt-MZ" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="robots" content="noindex,nofollow">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            display: ['"Outfit"', 'sans-serif'],
+            mono: ['"Fira Code"', 'monospace']
+          },
+          colors: {
+            brand: {50:'#eff6ff',100:'#dbeafe',400:'#60a5fa',500:'#3b82f6',600:'#2563eb',700:'#1d4ed8',950:'#0f172a'},
+            success: {400:'#4ade80',500:'#22c55e',600:'#16a34a'},
+            warning: {400:'#fbbf24',500:'#f59e0b',600:'#d97706'},
+            danger: {400:'#f87171',500:'#ef4444',600:'#dc2626'},
+            vip: {400:'#c084fc',500:'#a855f7',600:'#9333ea'}
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body{font-family:'Plus Jakarta Sans',sans-serif}
+    .theme-bg{background:#f8fafc;color:#0f172a}
+    .dark .theme-bg{background:#020617;color:#f8fafc}
+    .panel{background:rgba(255,255,255,.86);border:1px solid rgba(15,23,42,.06);box-shadow:0 16px 40px rgba(15,23,42,.06);backdrop-filter:blur(14px)}
+    .dark .panel{background:rgba(15,23,42,.72);border:1px solid rgba(255,255,255,.07);box-shadow:0 24px 60px rgba(0,0,0,.28)}
+    .soft-border{border-color:rgba(148,163,184,.22)}
+    .nav-link{transition:all .2s ease;border-radius:1rem}
+    .nav-link:hover{transform:translateX(4px)}
+    .nav-link.active{background:rgba(59,130,246,.12);color:#2563eb;font-weight:700}
+    .dark .nav-link.active{background:rgba(59,130,246,.18);color:#93c5fd}
+    .pill{display:inline-flex;align-items:center;gap:.35rem;padding:.35rem .65rem;border-radius:999px;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+    .pill.success{background:rgba(34,197,94,.12);color:#16a34a}.pill.warning{background:rgba(245,158,11,.12);color:#d97706}.pill.danger{background:rgba(239,68,68,.12);color:#dc2626}.pill.brand{background:rgba(59,130,246,.12);color:#2563eb}
+    .dark .pill.success{color:#4ade80}.dark .pill.warning{color:#fbbf24}.dark .pill.danger{color:#f87171}.dark .pill.brand{color:#93c5fd}
+    ::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:#64748b;border-radius:999px}
+    .code{font-family:'Fira Code',monospace}
+  </style>
+</head>
+
+<title>Loja | PayGo Admin</title>
+<body class="theme-bg min-h-screen">
+  <div class="min-h-screen grid lg:grid-cols-[280px_minmax(0,1fr)]">
+    <aside class="hidden lg:flex flex-col gap-5 p-5 border-r border-slate-200/70 dark:border-slate-800 panel rounded-none">
+      <div class="flex items-center gap-3"><div class="w-12 h-12 rounded-2xl bg-brand-500 text-white flex items-center justify-center shadow-lg"><i data-lucide="shopping-bag" class="w-5 h-5"></i></div><div><h1 class="text-xl font-display font-extrabold">PayGo Admin</h1><p class="text-xs uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">Loja</p></div></div>
+      <nav class="space-y-2 text-sm">
+        <a href="carteira.html" class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-300"><i data-lucide="wallet" class="w-4 h-4"></i><span>Carteira</span></a>
+        <a href="loja.html" class="nav-link active flex items-center gap-3 px-4 py-3"><i data-lucide="shopping-bag" class="w-4 h-4"></i><span>Loja</span></a>
+        <a href="pedidos.html" class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-300"><i data-lucide="receipt" class="w-4 h-4"></i><span>Pedidos</span></a>
+        <a href="afiliados.html" class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-300"><i data-lucide="network" class="w-4 h-4"></i><span>Afiliados</span></a>
+      </nav>
+      <div class="mt-auto space-y-3"><div class="panel rounded-2xl p-4"><p id="adminName" class="font-bold">A carregar…</p><p id="adminEmail" class="text-xs text-slate-500 dark:text-slate-400">…</p></div><button data-theme-toggle class="w-full px-4 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-sm font-bold flex items-center justify-center gap-2"><i data-lucide="sun-moon" class="w-4 h-4"></i><span>Tema claro/escuro</span></button><button id="logoutBtn" class="w-full px-4 py-3 rounded-2xl bg-danger-500/10 text-danger-500 hover:bg-danger-500 hover:text-white text-sm font-bold flex items-center justify-center gap-2"><i data-lucide="log-out" class="w-4 h-4"></i><span>Encerrar sessão</span></button></div>
+    </aside>
+    <main class="p-4 md:p-8 space-y-8">
+      <header class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4"><div><p class="text-xs uppercase tracking-[0.25em] text-brand-500 font-bold">Painel separado</p><h2 class="text-3xl md:text-4xl font-display font-extrabold">Loja</h2><p class="text-sm text-slate-500 dark:text-slate-400 mt-2">Compras, pedidos, faturação, VIP e afiliados no mesmo painel.</p></div><div class="flex gap-3 w-full md:w-auto"><button data-theme-toggle class="px-5 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-sm font-bold flex items-center gap-2"><i data-lucide="sun-moon" class="w-4 h-4"></i><span>Tema</span></button><button id="refreshBtn" class="px-5 py-3 rounded-2xl bg-brand-600 hover:bg-brand-500 text-white text-sm font-bold flex items-center gap-2"><i data-lucide="refresh-cw" class="w-4 h-4"></i><span>Atualizar</span></button></div></header>
+      <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+        <article class="panel rounded-[1.7rem] p-5"><p class="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 font-bold mb-3">Faturação</p><p id="grossRevenue" class="text-3xl font-display font-extrabold text-brand-500">0.00 MT</p></article>
+        <article class="panel rounded-[1.7rem] p-5"><p class="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 font-bold mb-3">Pedidos</p><p id="ordersCount" class="text-3xl font-display font-extrabold text-brand-500">0</p></article>
+        <article class="panel rounded-[1.7rem] p-5"><p class="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 font-bold mb-3">Pendentes</p><p id="pendingCount" class="text-3xl font-display font-extrabold text-warning-500">0</p></article>
+        <article class="panel rounded-[1.7rem] p-5"><p class="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 font-bold mb-3">Concluídos</p><p id="completedCount" class="text-3xl font-display font-extrabold text-success-500">0</p></article>
+        <article class="panel rounded-[1.7rem] p-5"><p class="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 font-bold mb-3">VIP</p><p id="vipTotal" class="text-3xl font-display font-extrabold text-vip-500">0.00 MT</p></article>
+      </section>
+      <section class="grid xl:grid-cols-3 gap-6">
+        <div class="xl:col-span-2 space-y-6">
+          <div class="panel rounded-[1.8rem] overflow-hidden"><div class="p-5 border-b soft-border"><h3 class="text-lg font-display font-bold">Últimos pedidos</h3></div><div class="overflow-auto max-h-[520px]"><table class="w-full"><thead class="sticky top-0 bg-slate-50/95 dark:bg-slate-950/95 text-slate-500 dark:text-slate-400 text-[10px] uppercase tracking-[0.18em]"><tr><th class="px-5 py-4 text-left">Referência</th><th class="px-5 py-4 text-left">Cliente</th><th class="px-5 py-4 text-left">Valor</th><th class="px-5 py-4 text-left">Status</th></tr></thead><tbody id="ordersTable"></tbody></table></div></div>
+          <div class="panel rounded-[1.8rem] overflow-hidden"><div class="p-5 border-b soft-border"><h3 class="text-lg font-display font-bold">Assinaturas VIP</h3></div><div id="vipList" class="p-5 space-y-3"></div></div>
+        </div>
+        <div class="space-y-6">
+          <div class="panel rounded-[1.8rem] overflow-hidden"><div class="p-5 border-b soft-border"><h3 class="text-lg font-display font-bold">Afiliados</h3></div><div class="p-5 space-y-4"><div class="flex justify-between"><span class="text-sm text-slate-500 dark:text-slate-400">Parceiros ativos</span><strong id="affiliateCount">0</strong></div><div class="flex justify-between"><span class="text-sm text-slate-500 dark:text-slate-400">Leads</span><strong id="affiliateLeads">0</strong></div><div class="flex justify-between"><span class="text-sm text-slate-500 dark:text-slate-400">Comissões</span><strong id="affiliateCommissions">0.00 MT</strong></div></div></div>
+          <div class="panel rounded-[1.8rem] overflow-hidden"><div class="p-5 border-b soft-border"><h3 class="text-lg font-display font-bold">Resumo da loja</h3></div><div class="p-5 space-y-4"><div class="flex justify-between"><span class="text-sm text-slate-500 dark:text-slate-400">Cancelados</span><strong id="cancelledCount">0</strong></div><div class="flex justify-between"><span class="text-sm text-slate-500 dark:text-slate-400">Em processamento</span><strong id="processingCount">0</strong></div><div class="flex justify-between"><span class="text-sm text-slate-500 dark:text-slate-400">Pedidos pagos</span><strong id="paidCount">0</strong></div></div></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { getFirestore, collection, getDocs, getDoc, doc, query, orderBy, limit, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8",
+    authDomain: "paygo-14311.firebaseapp.com",
+    projectId: "paygo-14311",
+    storageBucket: "paygo-14311.firebasestorage.app",
+    messagingSenderId: "208360646277",
+    appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app, "paygodb");
+
+  const $ = (id) => document.getElementById(id);
+  const mt = (v) => `${Number(v || 0).toLocaleString('pt-MZ', {minimumFractionDigits:2, maximumFractionDigits:2})} MT`;
+  const usd = (v) => `$${Number(v || 0).toFixed(2)}`;
+  const esc = (str) => String(str ?? '').replace(/[&<>'"]/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[s]));
+  const fmtDate = (ts) => {
+    if (!ts) return '—';
+    try {
+      const d = ts?.toDate ? ts.toDate() : new Date(ts?.seconds ? ts.seconds * 1000 : ts);
+      return d.toLocaleString('pt-MZ', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'});
+    } catch { return '—'; }
+  };
+
+  function setTheme(mode){
+    if(mode==='dark') document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
+    localStorage.setItem('paygo_admin_theme', mode);
+  }
+  function initTheme(){ setTheme(localStorage.getItem('paygo_admin_theme') || 'dark'); }
+  function toggleTheme(){ setTheme(document.documentElement.classList.contains('dark') ? 'light' : 'dark'); }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
+    document.querySelectorAll('[data-theme-toggle]').forEach(btn => btn.addEventListener('click', toggleTheme));
+    lucide.createIcons();
+  });
+
+  async function requireAdmin(user){
+    const userRef = await getDoc(doc(db, 'users', user.uid));
+    if (!userRef.exists()) { location.href = '../login.html'; return null; }
+    const data = userRef.data() || {};
+    if (!['admin','superadmin'].includes(data.role)) { location.href = '../dashboard.html'; return null; }
+    $('adminName') && ($('adminName').textContent = data.name || 'Admin');
+    $('adminEmail') && ($('adminEmail').textContent = data.email || '');
+    return data;
+  }
+
+  window.PayGoCtx = { auth, db, onAuthStateChanged, signOut, collection, getDocs, getDoc, doc, query, orderBy, limit, where, mt, usd, esc, fmtDate, requireAdmin };
+</script>
+
+<script type="module">
+  const { auth, onAuthStateChanged, signOut, db, collection, getDocs, query, orderBy, limit, where, requireAdmin, mt, esc } = window.PayGoCtx;
+  async function loadPage(){
+    const [ordersSnap, vipSnap, affiliatesSnap] = await Promise.all([
+      getDocs(query(collection(db,'orders'), orderBy('createdAt','desc'), limit(20))),
+      getDocs(query(collection(db,'vip_subscriptions'), orderBy('createdAt','desc'), limit(12))),
+      getDocs(query(collection(db,'users'), where('role','==','affiliate')))
+    ]);
+    let grossRevenue=0, ordersCount=0, pendingCount=0, completedCount=0, cancelledCount=0, processingCount=0, paidCount=0;
+    const rows=[];
+    ordersSnap.forEach(s=>{ const d=s.data()||{}; const total=Number(d.total||0); grossRevenue += total; ordersCount++; if(d.status==='pending') pendingCount++; if(d.status==='completed') completedCount++; if(d.status==='cancelled') cancelledCount++; if(['processing','shipped'].includes(d.status)) processingCount++; if(d.isPaid) paidCount++; rows.push({id:d.orderId||s.id, name:d.name||d.customerName||'Cliente', total, status:d.status||'pending'}); });
+    document.getElementById('grossRevenue').textContent = mt(grossRevenue);
+    document.getElementById('ordersCount').textContent = ordersCount;
+    document.getElementById('pendingCount').textContent = pendingCount;
+    document.getElementById('completedCount').textContent = completedCount;
+    document.getElementById('cancelledCount').textContent = cancelledCount;
+    document.getElementById('processingCount').textContent = processingCount;
+    document.getElementById('paidCount').textContent = paidCount;
+    document.getElementById('ordersTable').innerHTML = rows.length ? rows.map(r=>{ const cls = r.status==='completed'?'success':r.status==='pending'?'warning':r.status==='cancelled'?'danger':'brand'; return `<tr class="border-b soft-border"><td class="px-5 py-4 code text-brand-500">${esc(r.id)}</td><td class="px-5 py-4"><div class="font-bold">${esc(r.name)}</div></td><td class="px-5 py-4 font-bold">${mt(r.total)}</td><td class="px-5 py-4"><span class="pill ${cls}">${esc(r.status)}</span></td></tr>`; }).join('') : `<tr><td colspan="4" class="px-5 py-8 text-center text-slate-500 dark:text-slate-400">Sem pedidos recentes.</td></tr>`;
+    let vipTotal=0; const vipRows=[]; vipSnap.forEach(s=>{ const d=s.data()||{}; vipTotal += Number(d.amountPaid||0); vipRows.push(d); }); document.getElementById('vipTotal').textContent = mt(vipTotal);
+    document.getElementById('vipList').innerHTML = vipRows.length ? vipRows.map(v=>`<div class="rounded-2xl border soft-border p-4"><div class="flex justify-between gap-4"><div><p class="font-bold">${esc(v.userName||'Cliente')}</p><p class="text-[11px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">${esc(v.plan||'vip')}</p></div><div class="text-right"><p class="font-bold text-vip-500">${mt(v.amountPaid||0)}</p></div></div></div>`).join('') : `<p class="text-sm text-slate-500 dark:text-slate-400">Sem assinaturas VIP recentes.</p>`;
+    let affiliateCount=0, affiliateLeads=0, affiliateCommissions=0; affiliatesSnap.forEach(s=>{ const d=s.data()||{}; if(d.status==='active') affiliateCount++; affiliateLeads += Number(d.approvedReferrals||0); affiliateCommissions += Number(d.affiliateEarnings||0); });
+    document.getElementById('affiliateCount').textContent = affiliateCount; document.getElementById('affiliateLeads').textContent = affiliateLeads; document.getElementById('affiliateCommissions').textContent = mt(affiliateCommissions);
+    lucide.createIcons();
+  }
+  onAuthStateChanged(auth, async (user)=>{ if(!user){ location.href='../login.html'; return; } const admin = await requireAdmin(user); if(!admin) return; await loadPage(); });
+  document.addEventListener('DOMContentLoaded', ()=>{ document.getElementById('logoutBtn').addEventListener('click', async ()=>{ await signOut(auth); location.href='../login.html'; }); document.getElementById('refreshBtn').addEventListener('click', async ()=>{ const icon=document.querySelector('#refreshBtn i'); icon.classList.add('animate-spin'); await loadPage(); setTimeout(()=>icon.classList.remove('animate-spin'), 500); }); });
+</script>
+</body></html>
