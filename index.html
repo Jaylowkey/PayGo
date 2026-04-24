@@ -13,8 +13,11 @@
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="X-Frame-Options" content="DENY">
     <meta name="referrer" content="strict-origin-when-cross-origin">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: 'unsafe-inline' 'unsafe-eval'; img-src 'self' data: https:; font-src 'self' https: data:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: 'unsafe-inline' 'unsafe-eval'; img-src 'self' data: https:; font-src 'self' https: data:; connect-src 'self' https: wss:; frame-src https://maps.google.com https://www.google.com;">
     <meta name="heleket" content="a7226d08" />
+    <link rel="canonical" href="https://paygo.co.mz/">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="color-scheme" content="dark light">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -61,6 +64,7 @@
                         },
                         accent: { 400: '#22d3ee', 500: '#06b6d4', 600: '#0891b2' },
                         success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' },
+                        danger: { 400: '#f87171', 500: '#ef4444', 600: '#dc2626' },
                         warning: { 400: '#fbbf24', 500: '#f59e0b', 600: '#d97706', 900: '#78350f' },
                         vip: { 400: '#c084fc', 500: '#a855f7', 600: '#9333ea' }
                     },
@@ -173,6 +177,18 @@
             opacity: 1;
         }
 
+
+        .skip-link { position: fixed; top: -48px; left: 16px; z-index: 100000; background: #2563eb; color: #fff; padding: 10px 14px; border-radius: 999px; font-weight: 800; transition: top .2s ease; }
+        .skip-link:focus { top: 16px; outline: 3px solid rgba(255,255,255,.75); }
+        :focus-visible { outline: 3px solid rgba(59,130,246,.55); outline-offset: 3px; border-radius: 10px; }
+        .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+        .trust-pill { display: inline-flex; align-items: center; gap: .45rem; border: 1px solid rgba(15,23,42,.08); background: rgba(255,255,255,.86); color: #0f172a; border-radius: 999px; padding: .55rem .85rem; font-size: .75rem; font-weight: 800; box-shadow: 0 10px 30px rgba(15,23,42,.08); }
+        .dark-surface { background: linear-gradient(180deg, rgba(15,23,42,.96), rgba(2,6,23,.98)); }
+        .floating-help { position: fixed; right: 18px; bottom: 18px; z-index: 90; display: flex; flex-direction: column; gap: 10px; }
+        .floating-help a { width: 52px; height: 52px; border-radius: 999px; display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 18px 40px rgba(0,0,0,.28); border: 1px solid rgba(255,255,255,.18); transition: transform .2s ease; }
+        .floating-help a:hover { transform: translateY(-3px) scale(1.04); }
+        @media (max-width: 768px) { .floating-help { bottom: 14px; right: 14px; } .floating-help a { width: 48px; height: 48px; } }
+
         @media (max-width: 768px) {
             #cookieConsent {
                 width: 95%;
@@ -182,6 +198,7 @@
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 font-sans overflow-x-hidden selection:bg-brand-500 selection:text-white antialiased">
+<a href="#mainContent" class="skip-link">Saltar para o conteúdo</a>
 <div class="bg-noise" aria-hidden="true"></div>
 <div id="toast-container" role="region" aria-label="Notificações"></div>
 
@@ -229,7 +246,7 @@
             <i data-lucide="shopping-bag" class="w-4 h-4 text-orange-500"></i> Comprar no AliExpress
           </a>
           <a href="#cartao-virtual" class="anchor-link px-4 py-3 hover:bg-slate-50 text-slate-700 hover:text-green-600 text-sm font-semibold flex items-center gap-2 transition-colors">
-            <i data-lucide="credit-card" class="w-4 h-4 text-green-500"></i> Cartão Virtual (RedotPay)
+            <i data-lucide="credit-card" class="w-4 h-4 text-green-500"></i> Cartão Virtual PayGo
             <span class="bg-green-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full ml-auto animate-pulse">+$5 Bónus</span>
           </a>
         </div>
@@ -351,7 +368,7 @@
   </div>
 </div>
 
-<main role="main">
+<main id="mainContent" role="main">
   <section class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 hero-gradient overflow-hidden min-h-screen lg:min-h-0 flex items-center" aria-labelledby="hero-title">
     <div class="absolute top-0 -left-4 w-96 h-96 bg-purple-600/30 rounded-full mix-blend-screen filter blur-[100px] opacity-30 animate-blob" aria-hidden="true"></div>
     <div class="absolute top-0 -right-4 w-96 h-96 bg-brand-600/30 rounded-full mix-blend-screen filter blur-[100px] opacity-30 animate-blob animation-delay-2000" aria-hidden="true"></div>
@@ -393,6 +410,11 @@
             <div class="flex items-center gap-2"><i data-lucide="shield-check" class="w-4 h-4 text-success-400" aria-hidden="true"></i><span>Transações Seguras</span></div>
             <div class="flex items-center gap-2"><i data-lucide="zap" class="w-4 h-4 text-brand-400" aria-hidden="true"></i><span>Processamento Rápido</span></div>
             <div class="flex items-center gap-2"><i data-lucide="message-circle" class="w-4 h-4 text-accent-400" aria-hidden="true"></i><span>Suporte 24/7</span></div>
+          </div>
+          <div class="mt-6 flex flex-wrap gap-3" data-aos="fade-up" data-aos-delay="1100" aria-label="Garantias PayGo">
+            <span class="trust-pill"><i data-lucide="receipt-text" class="w-4 h-4 text-brand-600"></i> Fatura e comprovativo</span>
+            <span class="trust-pill"><i data-lucide="refresh-cw" class="w-4 h-4 text-success-600"></i> Reembolso conforme termos</span>
+            <span class="trust-pill"><i data-lucide="lock-keyhole" class="w-4 h-4 text-vip-600"></i> Dados protegidos</span>
           </div>
         </div>
         <div class="hidden lg:flex justify-center card-3d-wrapper" data-aos="fade-left" data-aos-duration="1200" data-aos-delay="600" aria-hidden="true">
@@ -480,7 +502,7 @@
                         <span class="px-3 py-1 bg-green-500/20 text-green-400 text-xs font-bold uppercase tracking-widest rounded-full border border-green-500/30 shadow-sm animate-pulse flex items-center gap-1.5"><i data-lucide="gift" class="w-3 h-3"></i> $5 de Bónus de Registo</span>
                     </div>
                     <h2 class="text-4xl md:text-5xl font-display font-extrabold text-white mb-4">A tua própria<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-accent-400 to-brand-400">Liberdade Financeira</span></h2>
-                    <p class="text-slate-400 text-lg mb-8 leading-relaxed max-w-md mx-auto lg:mx-0">O Cartão Virtual Visa da RedotPay permite-te pagar subscrições como a Netflix, Spotify ou Apple Music com total autonomia. Recarrega com M-Pesa quando quiseres.</p>
+                    <p class="text-slate-400 text-lg mb-8 leading-relaxed max-w-md mx-auto lg:mx-0">O Cartão Virtual PayGo ajuda-te a pagar subscrições como Netflix, Spotify, Apple Music, anúncios e serviços digitais com mais autonomia. Recarrega e gere tudo com apoio da PayGo.</p>
                     
                     <div class="flex flex-col sm:flex-row items-center gap-4 w-full">
                         <a href="https://url.hk/i/pt/jt6mg" target="_blank" rel="noopener noreferrer" class="w-full sm:w-auto bg-gradient-to-r from-brand-600 to-accent-600 hover:from-brand-500 hover:to-accent-500 text-white px-8 py-4 rounded-xl font-bold transition-all shadow-lg hover:shadow-brand-500/30 flex items-center justify-center gap-2 transform active:scale-95">
@@ -500,7 +522,7 @@
                         <div class="w-12 h-10 bg-gradient-to-br from-yellow-200 to-yellow-400 rounded-md shadow-sm relative overflow-hidden">
                             <div class="absolute top-0 left-0 w-full h-1/2 bg-white/20"></div>
                         </div>
-                        <p class="text-white/80 font-black italic text-2xl tracking-tighter">RedotPay</p>
+                        <p class="text-white/80 font-black italic text-2xl tracking-tighter">PayGo</p>
                     </div>
                     <div class="relative z-10 mt-6">
                         <div class="text-white/90 font-mono text-2xl tracking-[0.15em] shadow-black drop-shadow-md">4452 •••• •••• 9821</div>
@@ -905,7 +927,7 @@
                                 Quero aprender agora
                             </a>
                             <a href="https://url.hk/i/pt/jt6mg" target="_blank" rel="noopener noreferrer" class="flex-1 bg-transparent border border-white/20 text-white py-4 px-6 rounded-2xl font-bold text-center hover:bg-white/10 transition-all">
-                                Criar conta RedotPay
+                                Criar conta do cartão
                             </a>
                         </div>
 
@@ -1080,7 +1102,7 @@
                     Quero aprender agora
                 </a>
                 <a href="https://url.hk/i/pt/jt6mg" target="_blank" rel="noopener noreferrer" class="bg-white/5 hover:bg-white/10 border border-white/10 text-white px-6 py-3 rounded-xl font-bold transition-all text-center">
-                    Criar conta RedotPay
+                    Criar conta do cartão
                 </a>
             </div>
         </div>
@@ -1134,6 +1156,16 @@
         </div>
     </div>
 </div>
+
+<div class="floating-help safe-bottom" aria-label="Ajuda rápida PayGo">
+    <a href="https://wa.me/258837522255" target="_blank" rel="noopener noreferrer" class="bg-[#25D366]" title="Falar com suporte no WhatsApp" aria-label="Falar com suporte no WhatsApp">
+        <i data-lucide="message-circle" class="w-6 h-6"></i>
+    </a>
+    <a href="#formulario" class="anchor-link bg-brand-600" title="Simular pedido" aria-label="Simular pedido">
+        <i data-lucide="calculator" class="w-6 h-6"></i>
+    </a>
+</div>
+
 <script type="module">
 // ==========================================
 // 🛡️ O GUARDA-COSTAS (Modo Manutenção)
@@ -1172,13 +1204,37 @@ let calcTimeout;
 let isPaymentProcessing = false;
 
 window.escapeHTML = (str) => {
-    if (!str) return '';
-    return String(str).replace(/[&<>'"]/g, tag => ({ '&': '&', '<': '<', '>': '>', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+    if (str === null || str === undefined) return '';
+    return String(str).replace(/[&<>'"]/g, tag => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        "'": '&#39;',
+        '"': '&quot;'
+    }[tag] || tag));
 };
 
-const sanitizeInput = (str) => {
-    if (typeof str !== 'string') return '';
-    return str.replace(/[<>]/g, '').trim(); 
+const sanitizeInput = (str, maxLength = 1000) => {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/[<>]/g, '')
+        .replace(/[\u0000-\u001F\u007F]/g, '')
+        .trim()
+        .slice(0, maxLength);
+};
+
+const safeNumber = (value, fallback = 0) => {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : fallback;
+};
+
+const isValidHttpUrl = (value) => {
+    try {
+        const url = new URL(value);
+        return ['http:', 'https:'].includes(url.protocol);
+    } catch {
+        return false;
+    }
 };
 
 window.showToast = function(message, type = 'default', duration = 4000) {
@@ -1230,10 +1286,10 @@ async function fetchSystemSettings() {
                 }
             }
 
-            BINANCE_RATE = parseFloat(data.exchangeRate) || 85.00;
-            sysTax1 = parseFloat(data.tax1) || 150;
-            sysTax2 = parseFloat(data.tax2) || 250;
-            sysTax3 = parseFloat(data.tax3) || 600;
+            BINANCE_RATE = safeNumber(data.exchangeRate, 85.00);
+            sysTax1 = safeNumber(data.tax1, 150);
+            sysTax2 = safeNumber(data.tax2, 250);
+            sysTax3 = safeNumber(data.tax3, 600);
             firstPurchaseFree = data.firstPurchaseFree !== false;
 
             document.querySelectorAll('#exchangeRateDisplay').forEach(el => el.textContent = `${BINANCE_RATE.toFixed(2)} MT`);
@@ -1268,7 +1324,7 @@ window.addToCart = function() {
         return;
     }
     
-    const usd = parseFloat(document.getElementById('userUSD').value) || 0;
+    const usd = safeNumber(document.getElementById('userUSD').value);
     const detail = sanitizeInput(document.getElementById('userLink').value);
     const type = sanitizeInput(document.getElementById('serviceType').value);
     
@@ -1325,7 +1381,7 @@ window.processDirectPayment = async function() {
             return; 
         }
         
-        const usd = parseFloat(document.getElementById('userUSD').value) || 0;
+        const usd = safeNumber(document.getElementById('userUSD').value);
         const detail = sanitizeInput(document.getElementById('userLink').value);
         const serviceType = sanitizeInput(document.getElementById('serviceType').value);
         const paymentMethod = 'wallet'; 
@@ -1383,7 +1439,7 @@ window.processDirectPayment = async function() {
         };
 
         const freshUserDoc = await getDoc(doc(db, "users", currentFirebaseUser.uid));
-        const freshBalance = parseFloat(freshUserDoc.data()?.walletBalance) || 0;
+        const freshBalance = safeNumber(freshUserDoc.data()?.walletBalance);
         
         if (freshBalance < totalFinal) {
             window.showToast(`Saldo insuficiente (${formatMZN(freshBalance)} MT). A redirecionar para recarga...`, 'error');
@@ -1398,7 +1454,7 @@ window.processDirectPayment = async function() {
         await addDoc(collection(db, "orders"), currentOrderData);
         await addDoc(collection(db, "wallet_transactions"), {
             userId: currentFirebaseUser.uid, type: 'debit', amount: totalFinal,
-            description: `Compra via Site: ${orderId}`, reference: orderId, createdAt: new Date().toISOString()
+            description: `Compra via Site: ${orderId}`, reference: orderId, createdAt: window.PayGoDB.serverTimestamp(), createdAtIso: new Date().toISOString()
         });
 
         window.showToast('Pagamento efetuado com sucesso via Carteira! 🎉', 'success');
@@ -1433,9 +1489,13 @@ document.getElementById('paygoForm').addEventListener('submit', async function(e
             return; 
         }
         
-        const usd = parseFloat(document.getElementById('userUSD').value) || 0;
+        const usd = safeNumber(document.getElementById('userUSD').value);
         const detail = sanitizeInput(document.getElementById('userLink').value);
         const serviceType = sanitizeInput(document.getElementById('serviceType').value);
+
+        if (serviceType === 'compra' && detail && !isValidHttpUrl(detail)) {
+            return window.showToast('Cole um link válido começando por https://', 'error');
+        }
 
         if (!detail || usd <= 0) {
             return window.showToast('Preencha os dados da encomenda primeiro.', 'error');
@@ -1477,7 +1537,7 @@ document.getElementById('paygoForm').addEventListener('submit', async function(e
         const safeEmail = currentUserData.email || document.getElementById('userEmail')?.value || 'cliente@paygo.co.mz';
 
         const freshUserDoc = await getDoc(doc(db, "users", currentFirebaseUser.uid));
-        const freshBalance = parseFloat(freshUserDoc.data()?.walletBalance) || 0;
+        const freshBalance = safeNumber(freshUserDoc.data()?.walletBalance);
         
         if (freshBalance < totalFinal) {
             window.showToast(`Saldo insuficiente (${formatMZN(freshBalance)} MT). A redirecionar para recarga...`, 'error');
@@ -1501,7 +1561,7 @@ document.getElementById('paygoForm').addEventListener('submit', async function(e
         await addDoc(collection(db, "orders"), orderData);
         await addDoc(collection(db, "wallet_transactions"), {
             userId: currentFirebaseUser.uid, type: 'debit', amount: totalFinal,
-            description: `Compra via Site (WhatsApp): ${orderId}`, reference: orderId, createdAt: new Date().toISOString()
+            description: `Compra via Site (WhatsApp): ${orderId}`, reference: orderId, createdAt: window.PayGoDB.serverTimestamp(), createdAtIso: new Date().toISOString()
         });
         
         fetch('/api/notify-order', {
@@ -1554,7 +1614,7 @@ onAuthStateChanged(auth, async (user) => {
             if (userDoc.exists()) {
                 currentUserData = userDoc.data();
                 const userName = currentUserData.name || 'Cliente';
-                const walletBal = parseFloat(currentUserData.walletBalance) || 0;
+                const walletBal = safeNumber(currentUserData.walletBalance);
                 
                 if(document.getElementById('headerUserName')) document.getElementById('headerUserName').textContent = userName;
                 if(document.getElementById('headerWalletBalance')) document.getElementById('headerWalletBalance').textContent = formatMZN(walletBal) + ' MT';
@@ -1728,7 +1788,7 @@ window.calculate = function() {
     clearTimeout(calcTimeout);
     calcTimeout = setTimeout(() => {
         const userUsdElem = document.getElementById('userUSD');
-        const usd = parseFloat(userUsdElem ? userUsdElem.value : 0) || 0;
+        const usd = safeNumber(userUsdElem ? userUsdElem.value : 0);
         
         const chkElem = document.getElementById('chkFirstPurchase');
         const isCheckboxChecked = chkElem ? chkElem.checked : false;
@@ -1770,6 +1830,12 @@ window.calculate = function() {
 // 🛠️ INICIALIZAÇÃO E COOKIES
 // ========================================================================
 document.addEventListener('DOMContentLoaded', function() {
+    window.addEventListener('beforeunload', (event) => {
+        if (isPaymentProcessing) {
+            event.preventDefault();
+            event.returnValue = '';
+        }
+    });
     fetchSystemSettings();
     updateCartBadge();
     window.calculate();
