@@ -2017,12 +2017,27 @@
                             if (userData.virtualCard) {
                                 const storedNumber = String(userData.virtualCard.number || userData.virtualCard.fullNumber || '').replace(/\D/g, '');
                                 const last4 = userData.virtualCard.last4 || storedNumber.slice(-4) || String(userData.virtualCard.maskedNumber || '').replace(/\D/g, '').slice(-4);
-                                rawVcNumber = storedNumber.length >= 13 ? storedNumber.replace(/(.{4})/g, '$1 ').trim() : `**** **** **** ${last4 || '****'}`;
+                                rawVcNumber = storedNumber.length >= 13
+                                    ? storedNumber.replace(/(.{4})/g, '$1 ').trim()
+                                    : `**** **** **** ${last4 || '****'}`;
                                 rawVcCvc = String(userData.virtualCard.cvc || '').replace(/\D/g, '').slice(0, 4) || '***';
-                                isCardRevealed = false;
-                                setSafeText('vcNumber', `**** **** **** ${last4 || '****'}`);
-                                setSafeText('vcCvc', '***');
-                                setSafeText('vcExpiry', '**/**');
+
+                                // ✅ Correção PRO: não ocultar automaticamente quando o onSnapshot atualizar o userData.
+                                // Antes, qualquer updateDoc feito ao confirmar PIN disparava este listener e resetava
+                                // isCardRevealed para false, por isso os detalhes desapareciam em 1-2 segundos.
+                                const eyeIcon = document.getElementById('vcEyeIcon');
+                                if (!isCardRevealed) {
+                                    setSafeText('vcNumber', `**** **** **** ${last4 || '****'}`);
+                                    setSafeText('vcCvc', '***');
+                                    setSafeText('vcExpiry', '**/**');
+                                    if (eyeIcon) eyeIcon.setAttribute('data-lucide', 'eye');
+                                } else {
+                                    setSafeText('vcNumber', rawVcNumber || `**** **** **** ${last4 || '****'}`);
+                                    setSafeText('vcCvc', rawVcCvc || '***');
+                                    setSafeText('vcExpiry', userData.virtualCard?.expiry || 'MM/AA');
+                                    if (eyeIcon) eyeIcon.setAttribute('data-lucide', 'eye-off');
+                                }
+
                                 setSafeText('vcBalanceDisplay', `${formatUSD(userData.virtualCard?.cardBalanceUsd ?? userData.vcBalance ?? 0)}`);
                                 const btnReveal = document.getElementById('btnRevealCard');
                                 if (btnReveal) {
