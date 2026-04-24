@@ -192,6 +192,31 @@
       color: #c084fc;
       border-color: rgba(168,85,247,.30);
     }
+    .status-badge.frozen {
+      background: rgba(245,158,11,.15);
+      color: #fbbf24;
+      border-color: rgba(245,158,11,.30);
+    }
+    .status-badge.blocked {
+      background: rgba(239,68,68,.15);
+      color: #f87171;
+      border-color: rgba(239,68,68,.30);
+    }
+    .status-badge.low {
+      background: rgba(34,197,94,.15);
+      color: #4ade80;
+      border-color: rgba(34,197,94,.30);
+    }
+    .status-badge.medium {
+      background: rgba(245,158,11,.15);
+      color: #fbbf24;
+      border-color: rgba(245,158,11,.30);
+    }
+    .status-badge.high {
+      background: rgba(239,68,68,.15);
+      color: #f87171;
+      border-color: rgba(239,68,68,.30);
+    }
 
     .modal-backdrop {
       background: rgba(2,6,23,.9);
@@ -530,6 +555,14 @@
                 <span class="text-sm text-slate-400">Últimos 4 dígitos</span>
                 <span id="modalLast4" class="text-brand-400 font-bold font-mono">—</span>
               </div>
+              <div class="flex justify-between items-center">
+                <span class="text-sm text-slate-400">Status</span>
+                <span id="modalCardStatus" class="status-badge active">Ativo</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-sm text-slate-400">Risco</span>
+                <span id="modalRiskLevel" class="status-badge low">Baixo</span>
+              </div>
             </div>
           </div>
 
@@ -539,7 +572,8 @@
               <button onclick="window.switchTab('detailsTab')" class="tab-btn active px-4 py-3 rounded-xl border border-slate-700 text-sm font-bold text-white" data-tab-btn="detailsTab">Dados</button>
               <button onclick="window.switchTab('moneyTab')" class="tab-btn px-4 py-3 rounded-xl border border-slate-700 text-sm font-bold text-white" data-tab-btn="moneyTab">Saldo</button>
               <button onclick="window.switchTab('transferTab')" class="tab-btn px-4 py-3 rounded-xl border border-slate-700 text-sm font-bold text-white" data-tab-btn="transferTab">Transferir</button>
-              <button onclick="window.switchTab('historyTab')" class="tab-btn px-4 py-3 rounded-xl border border-slate-700 text-sm font-bold text-white" data-tab-btn="historyTab">Histórico</button>
+              <button onclick="window.switchTab('securityTab')" class="tab-btn px-4 py-3 rounded-xl border border-slate-700 text-sm font-bold text-white" data-tab-btn="securityTab">Segurança</button>
+              <button onclick="window.switchTab('historyTab')" class="tab-btn col-span-2 px-4 py-3 rounded-xl border border-slate-700 text-sm font-bold text-white" data-tab-btn="historyTab">Histórico</button>
             </div>
           </div>
         </div>
@@ -697,6 +731,74 @@
           </div>
         </div>
 
+        <div id="securityTab" class="tab-pane hidden space-y-6">
+          <div class="grid xl:grid-cols-2 gap-6">
+            <div class="glass-card rounded-2xl p-5 border border-warning-500/20">
+              <h4 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                <i data-lucide="shield-alert" class="w-4 h-4 text-warning-400"></i>
+                Segurança operacional
+              </h4>
+              <p class="text-xs text-slate-400 mb-4">Use estas ações quando houver suspeita, pedido do cliente ou necessidade operacional.</p>
+              <div class="grid sm:grid-cols-3 gap-3">
+                <button onclick="window.updateCardStatus('active')" class="py-3 bg-success-600 hover:bg-success-500 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2">
+                  <i data-lucide="check-circle" class="w-4 h-4"></i><span>Ativar</span>
+                </button>
+                <button onclick="window.updateCardStatus('frozen')" class="py-3 bg-warning-600 hover:bg-warning-500 text-slate-950 rounded-xl font-bold transition-all flex items-center justify-center gap-2">
+                  <i data-lucide="snowflake" class="w-4 h-4"></i><span>Congelar</span>
+                </button>
+                <button onclick="window.updateCardStatus('blocked')" class="py-3 bg-danger-600 hover:bg-danger-500 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2">
+                  <i data-lucide="ban" class="w-4 h-4"></i><span>Bloquear</span>
+                </button>
+              </div>
+              <div class="mt-5">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Motivo rápido / observação</label>
+                <input id="securityReason" type="text" placeholder="Ex: pedido do cliente, suspeita de uso indevido, ajuste de limite..." class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-warning-500 focus:ring-1 focus:ring-warning-500 text-white outline-none">
+              </div>
+            </div>
+
+            <div class="glass-card rounded-2xl p-5 border border-brand-500/20">
+              <h4 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                <i data-lucide="gauge" class="w-4 h-4 text-brand-400"></i>
+                Limites e risco
+              </h4>
+              <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Limite diário (USD)</label>
+                  <input id="dailyLimitUsd" type="number" min="0" step="0.01" placeholder="50.00" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white font-mono outline-none">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Limite mensal (USD)</label>
+                  <input id="monthlyLimitUsd" type="number" min="0" step="0.01" placeholder="500.00" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white font-mono outline-none">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Gasto hoje (USD)</label>
+                  <input id="spentTodayUsd" type="number" min="0" step="0.01" placeholder="0.00" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white font-mono outline-none">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Gasto no mês (USD)</label>
+                  <input id="spentMonthUsd" type="number" min="0" step="0.01" placeholder="0.00" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white font-mono outline-none">
+                </div>
+                <div class="md:col-span-2">
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Nível de risco</label>
+                  <select id="riskLevel" class="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white outline-none">
+                    <option value="low">Baixo</option>
+                    <option value="medium">Médio</option>
+                    <option value="high">Alto</option>
+                  </select>
+                </div>
+              </div>
+              <div class="grid sm:grid-cols-2 gap-3 mt-5">
+                <button onclick="window.updateCardLimits()" class="py-3 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2">
+                  <i data-lucide="save" class="w-4 h-4"></i><span>Guardar limites</span>
+                </button>
+                <button onclick="window.createRiskAlert()" class="py-3 bg-danger-600 hover:bg-danger-500 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2">
+                  <i data-lucide="siren" class="w-4 h-4"></i><span>Criar alerta</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div id="historyTab" class="tab-pane hidden space-y-6">
           <div class="glass-card rounded-2xl p-5">
             <h4 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
@@ -842,10 +944,15 @@
         phone: data.phone || data.whatsapp || '',
         walletBalance: safeNumber(data.walletBalance),
         virtualCard,
-        vcBalance: safeNumber(data.vcBalance),
+        vcBalance: safeNumber(data.vcBalance ?? virtualCard.cardBalanceUsd),
         vcSimulatedBalance: safeNumber(data.vcSimulatedBalance),
         history: Array.isArray(data.vcBalanceHistory) ? data.vcBalanceHistory : [],
-        status: virtualCard?.number ? 'active' : 'pending',
+        status: virtualCard?.number ? (virtualCard.status || 'active') : 'pending',
+        riskLevel: virtualCard?.riskLevel || 'low',
+        dailyLimitUsd: safeNumber(virtualCard?.dailyLimitUsd ?? 50),
+        monthlyLimitUsd: safeNumber(virtualCard?.monthlyLimitUsd ?? 500),
+        spentTodayUsd: safeNumber(virtualCard?.spentTodayUsd),
+        spentMonthUsd: safeNumber(virtualCard?.spentMonthUsd),
         vcLastBalanceUpdate: data.vcLastBalanceUpdate || virtualCard?.updatedAt || null
       };
     };
@@ -957,7 +1064,8 @@
               </div>
             </td>
             <td>
-              <span class="status-badge ${user.status === 'active' ? 'active' : 'pending'}">${user.status === 'active' ? 'Ativo' : 'Pendente'}</span>
+              <span class="status-badge ${user.status === 'blocked' ? 'blocked' : user.status === 'frozen' ? 'frozen' : user.status === 'active' ? 'active' : 'pending'}">${user.status === 'blocked' ? 'Bloqueado' : user.status === 'frozen' ? 'Congelado' : user.status === 'active' ? 'Ativo' : 'Pendente'}</span>
+              <div class="mt-2"><span class="status-badge ${user.riskLevel || 'low'}">Risco ${user.riskLevel === 'high' ? 'alto' : user.riskLevel === 'medium' ? 'médio' : 'baixo'}</span></div>
               ${safeNumber(user.vcBalance) <= 0 ? `<div class="mt-2"><span class="status-badge zero">Sem saldo</span></div>` : ''}
               ${safeNumber(user.vcSimulatedBalance) > 0 ? `<div class="mt-2"><span class="status-badge sim">Simulado</span></div>` : ''}
             </td>
@@ -1047,13 +1155,34 @@
       return cardsUsers.find(u => u.id === userId);
     };
 
-    const buildHistoryEntry = (type, message, amount = undefined) => ({
-      type,
-      message,
-      amount: amount !== undefined ? safeNumber(amount) : undefined,
-      by: loggedInAdminName || 'Admin',
-      date: new Date().toISOString()
-    });
+    const cleanForFirestore = (value) => {
+      if (value === undefined) return null;
+      if (value === null) return null;
+      if (Array.isArray(value)) return value.map(cleanForFirestore).filter(v => v !== undefined);
+      if (typeof value === 'object') {
+        const cleaned = {};
+        Object.entries(value).forEach(([key, val]) => {
+          if (val !== undefined) cleaned[key] = cleanForFirestore(val);
+        });
+        return cleaned;
+      }
+      return value;
+    };
+
+    const buildHistoryEntry = (type, message, amount = null) => {
+      const entry = {
+        type: type || 'update',
+        message: message || 'Atualização do cartão',
+        by: loggedInAdminName || 'Admin',
+        date: new Date().toISOString()
+      };
+
+      if (amount !== null && amount !== undefined && amount !== '') {
+        entry.amount = safeNumber(amount);
+      }
+
+      return cleanForFirestore(entry);
+    };
 
     const pushAuditLog = async (action, targetUserId, details = {}) => {
       try {
@@ -1065,7 +1194,7 @@
             action,
             targetId: targetUserId,
             targetType: 'virtual_card',
-            details,
+            details: cleanForFirestore(details),
             createdAt: window.firebaseFirestore.serverTimestamp()
           }
         );
@@ -1114,6 +1243,12 @@
       setSafeText('modalRealBalance', formatCurrency(user.vcBalance));
       setSafeText('modalSimBalance', formatCurrency(user.vcSimulatedBalance));
       setSafeText('modalLast4', cardLast4(user.virtualCard?.number) || '—');
+      const statusLabel = user.status === 'blocked' ? 'Bloqueado' : user.status === 'frozen' ? 'Congelado' : user.status === 'active' ? 'Ativo' : 'Pendente';
+      const riskLabel = user.riskLevel === 'high' ? 'Alto' : user.riskLevel === 'medium' ? 'Médio' : 'Baixo';
+      const statusEl = document.getElementById('modalCardStatus');
+      const riskEl = document.getElementById('modalRiskLevel');
+      if (statusEl) { statusEl.className = `status-badge ${user.status === 'blocked' ? 'blocked' : user.status === 'frozen' ? 'frozen' : 'active'}`; statusEl.textContent = statusLabel; }
+      if (riskEl) { riskEl.className = `status-badge ${user.riskLevel || 'low'}`; riskEl.textContent = riskLabel; }
 
       document.getElementById('editCardNumber').value = formatCardInput(user.virtualCard?.number || '');
       document.getElementById('editCardExpiry').value = user.virtualCard?.expiry || '';
@@ -1121,6 +1256,12 @@
       document.getElementById('editCardDestination').value = user.virtualCard?.destination || '';
       document.getElementById('editCardType').value = user.virtualCard?.cardBalanceType || user.virtualCard?.type || 'virtual';
       document.getElementById('editCardBalanceUsd').value = safeNumber(user.virtualCard?.cardBalanceUsd ?? user.vcBalance).toFixed(2);
+      document.getElementById('dailyLimitUsd').value = safeNumber(user.virtualCard?.dailyLimitUsd ?? 50).toFixed(2);
+      document.getElementById('monthlyLimitUsd').value = safeNumber(user.virtualCard?.monthlyLimitUsd ?? 500).toFixed(2);
+      document.getElementById('spentTodayUsd').value = safeNumber(user.virtualCard?.spentTodayUsd ?? 0).toFixed(2);
+      document.getElementById('spentMonthUsd').value = safeNumber(user.virtualCard?.spentMonthUsd ?? 0).toFixed(2);
+      document.getElementById('riskLevel').value = user.virtualCard?.riskLevel || 'low';
+      document.getElementById('securityReason').value = '';
       cardDetailsVisible = true;
       window.applySavedCardVisibility?.();
 
@@ -1164,13 +1305,14 @@
 
       if (!/^\d{13,19}$/.test(number)) return showToast('Número do cartão inválido. Use 13 a 19 dígitos.', 'error');
       if (!expiry || !/^\d{2}\/\d{2}$/.test(expiry)) return showToast('Validade inválida. Use MM/AA.', 'error');
-      if (!cvc || !/^\d{3}$/.test(cvc)) return showToast('CVC inválido.', 'error');
-      if (!destination) return showToast('Preencha o destino do cartão.', 'error');
+      if (cvc && !/^\d{3,4}$/.test(cvc)) return showToast('CVC inválido.', 'error');
       if (cardBalanceUsd < 0) return showToast('Saldo USD inválido.', 'error');
+      const finalDestination = destination || 'Cartão adicionado manualmente pelo admin';
 
       try {
         const userRef = window.firebaseFirestore.doc(db, "users", userId);
         const currentUser = getCurrentUserFromModal();
+        if (!currentUser) return showToast('Utilizador não encontrado.', 'error');
 
         const historyEntry = buildHistoryEntry(
           'card_update',
@@ -1185,21 +1327,29 @@
             last4: number.slice(-4),
             brand: number.startsWith('4') ? 'visa' : 'mastercard',
             expiry,
-            cvc,
-            destination,
-            cardBalanceUsd,
+            cvc: cvc || null,
+            cvcMasked: cvc ? '***' : null,
+            destination: finalDestination,
+            cardBalanceUsd: safeNumber(cardBalanceUsd),
             cardBalanceType,
-            updatedAt: new Date().toISOString()
+            status: currentUser?.virtualCard?.status || 'active',
+            dailyLimitUsd: safeNumber(currentUser?.virtualCard?.dailyLimitUsd ?? 50),
+            monthlyLimitUsd: safeNumber(currentUser?.virtualCard?.monthlyLimitUsd ?? 500),
+            spentTodayUsd: safeNumber(currentUser?.virtualCard?.spentTodayUsd ?? 0),
+            spentMonthUsd: safeNumber(currentUser?.virtualCard?.spentMonthUsd ?? 0),
+            riskLevel: currentUser?.virtualCard?.riskLevel || 'low',
+            updatedAt: new Date().toISOString(),
+            lastActionAt: new Date().toISOString()
           },
-          vcBalance: cardBalanceUsd,
+          vcBalance: safeNumber(cardBalanceUsd),
           vcBalanceHistory: window.firebaseFirestore.arrayUnion(historyEntry),
           vcLastBalanceUpdate: new Date().toISOString()
         });
 
         await pushAuditLog('VC_CARD_UPDATED', userId, {
           last4: number.slice(-4),
-          destination,
-          cardBalanceUsd,
+          destination: finalDestination,
+          cardBalanceUsd: safeNumber(cardBalanceUsd),
           cardBalanceType
         });
 
@@ -1209,6 +1359,146 @@
       } catch (err) {
         console.error(err);
         showToast('Falha ao guardar alterações do cartão.', 'error');
+      }
+    };
+
+
+    const getSecurityReason = (fallback = '') => {
+      const typed = document.getElementById('securityReason')?.value?.trim() || '';
+      return typed || fallback || prompt('Informe o motivo desta ação:') || '';
+    };
+
+    const writeCardSecurityLog = async ({ userId, action, reason, details = {} }) => {
+      try {
+        await window.firebaseFirestore.addDoc(
+          window.firebaseFirestore.collection(db, "card_security_logs"),
+          cleanForFirestore({
+            userId,
+            adminId: loggedInAdminId,
+            adminName: loggedInAdminName,
+            action,
+            reason,
+            details,
+            createdAt: window.firebaseFirestore.serverTimestamp()
+          })
+        );
+      } catch (err) {
+        console.error('Card security log error:', err);
+      }
+    };
+
+    window.updateCardStatus = async (status) => {
+      const userId = document.getElementById('modalUserId').value;
+      const currentUser = getCurrentUserFromModal();
+      const reason = getSecurityReason(status === 'active' ? 'Cartão reativado pelo admin' : status === 'frozen' ? 'Cartão congelado por segurança' : 'Cartão bloqueado por segurança');
+
+      if (!userId || !currentUser) return showToast('Utilizador inválido.', 'error');
+      if (!['active', 'frozen', 'blocked'].includes(status)) return showToast('Status inválido.', 'error');
+      if (!reason.trim()) return showToast('Motivo obrigatório.', 'error');
+
+      const label = status === 'active' ? 'Ativo' : status === 'frozen' ? 'Congelado' : 'Bloqueado';
+      if (!confirm(`Alterar status do cartão para ${label}?`)) return;
+
+      try {
+        const historyEntry = buildHistoryEntry('card_status_update', `Status alterado para ${label}. Motivo: ${reason}`);
+
+        await window.firebaseFirestore.updateDoc(
+          window.firebaseFirestore.doc(db, "users", userId),
+          {
+            "virtualCard.status": status,
+            "virtualCard.lastActionAt": new Date().toISOString(),
+            vcBalanceHistory: window.firebaseFirestore.arrayUnion(historyEntry),
+            vcLastBalanceUpdate: new Date().toISOString()
+          }
+        );
+
+        await writeCardSecurityLog({ userId, action: `CARD_${status.toUpperCase()}`, reason, details: { previousStatus: currentUser.status, newStatus: status } });
+        await pushAuditLog('VC_CARD_STATUS_UPDATED', userId, { previousStatus: currentUser.status, newStatus: status, reason });
+
+        showToast(`Cartão ${label.toLowerCase()} com sucesso.`, 'success');
+        await window.fetchCardsData(true);
+        window.openCardModal(userId);
+        window.switchTab('securityTab');
+      } catch (err) {
+        console.error(err);
+        showToast('Erro ao atualizar status do cartão.', 'error');
+      }
+    };
+
+    window.updateCardLimits = async () => {
+      const userId = document.getElementById('modalUserId').value;
+      const currentUser = getCurrentUserFromModal();
+      const dailyLimitUsd = safeNumber(document.getElementById('dailyLimitUsd')?.value || 0);
+      const monthlyLimitUsd = safeNumber(document.getElementById('monthlyLimitUsd')?.value || 0);
+      const spentTodayUsd = safeNumber(document.getElementById('spentTodayUsd')?.value || 0);
+      const spentMonthUsd = safeNumber(document.getElementById('spentMonthUsd')?.value || 0);
+      const riskLevel = document.getElementById('riskLevel')?.value || 'low';
+      const reason = getSecurityReason('Limites e risco atualizados pelo admin');
+
+      if (!userId || !currentUser) return showToast('Utilizador inválido.', 'error');
+      if (dailyLimitUsd < 0 || monthlyLimitUsd < 0 || spentTodayUsd < 0 || spentMonthUsd < 0) return showToast('Valores inválidos.', 'error');
+      if (!['low', 'medium', 'high'].includes(riskLevel)) return showToast('Nível de risco inválido.', 'error');
+      if (!reason.trim()) return showToast('Motivo obrigatório.', 'error');
+
+      try {
+        const historyEntry = buildHistoryEntry('card_limits_update', `Limites atualizados. Diário: ${formatCurrency(dailyLimitUsd)}, Mensal: ${formatCurrency(monthlyLimitUsd)}, Risco: ${riskLevel}. Motivo: ${reason}`);
+
+        await window.firebaseFirestore.updateDoc(
+          window.firebaseFirestore.doc(db, "users", userId),
+          {
+            "virtualCard.dailyLimitUsd": dailyLimitUsd,
+            "virtualCard.monthlyLimitUsd": monthlyLimitUsd,
+            "virtualCard.spentTodayUsd": spentTodayUsd,
+            "virtualCard.spentMonthUsd": spentMonthUsd,
+            "virtualCard.riskLevel": riskLevel,
+            "virtualCard.updatedAt": new Date().toISOString(),
+            "virtualCard.lastActionAt": new Date().toISOString(),
+            vcBalanceHistory: window.firebaseFirestore.arrayUnion(historyEntry),
+            vcLastBalanceUpdate: new Date().toISOString()
+          }
+        );
+
+        await writeCardSecurityLog({ userId, action: 'CARD_LIMITS_UPDATED', reason, details: { dailyLimitUsd, monthlyLimitUsd, spentTodayUsd, spentMonthUsd, riskLevel } });
+        await pushAuditLog('VC_CARD_LIMITS_UPDATED', userId, { dailyLimitUsd, monthlyLimitUsd, spentTodayUsd, spentMonthUsd, riskLevel, reason });
+
+        showToast('Limites e risco atualizados.', 'success');
+        await window.fetchCardsData(true);
+        window.openCardModal(userId);
+        window.switchTab('securityTab');
+      } catch (err) {
+        console.error(err);
+        showToast('Erro ao atualizar limites.', 'error');
+      }
+    };
+
+    window.createRiskAlert = async () => {
+      const userId = document.getElementById('modalUserId').value;
+      const currentUser = getCurrentUserFromModal();
+      const reason = getSecurityReason('Alerta de risco criado manualmente pelo admin');
+      if (!userId || !currentUser) return showToast('Utilizador inválido.', 'error');
+      if (!reason.trim()) return showToast('Motivo obrigatório.', 'error');
+
+      try {
+        await window.firebaseFirestore.addDoc(
+          window.firebaseFirestore.collection(db, "card_risk_alerts"),
+          cleanForFirestore({
+            userId,
+            adminId: loggedInAdminId,
+            adminName: loggedInAdminName,
+            cardLast4: cardLast4(currentUser.virtualCard?.number),
+            riskLevel: document.getElementById('riskLevel')?.value || currentUser.riskLevel || 'medium',
+            reason,
+            status: 'open',
+            createdAt: window.firebaseFirestore.serverTimestamp()
+          })
+        );
+
+        await writeCardSecurityLog({ userId, action: 'CARD_RISK_ALERT_CREATED', reason, details: { last4: cardLast4(currentUser.virtualCard?.number) } });
+        showToast('Alerta de risco criado.', 'success');
+        document.getElementById('securityReason').value = '';
+      } catch (err) {
+        console.error(err);
+        showToast('Erro ao criar alerta de risco.', 'error');
       }
     };
 
@@ -1228,6 +1518,8 @@
           window.firebaseFirestore.doc(db, "users", userId),
           {
             vcBalance: window.firebaseFirestore.increment(amount),
+            "virtualCard.cardBalanceUsd": window.firebaseFirestore.increment(amount),
+            "virtualCard.lastActionAt": new Date().toISOString(),
             vcBalanceHistory: window.firebaseFirestore.arrayUnion(entry),
             vcLastBalanceUpdate: new Date().toISOString()
           }
@@ -1269,6 +1561,8 @@
           window.firebaseFirestore.doc(db, "users", userId),
           {
             vcBalance: window.firebaseFirestore.increment(-amount),
+            "virtualCard.cardBalanceUsd": window.firebaseFirestore.increment(-amount),
+            "virtualCard.lastActionAt": new Date().toISOString(),
             vcBalanceHistory: window.firebaseFirestore.arrayUnion(entry),
             vcLastBalanceUpdate: new Date().toISOString()
           }
