@@ -6,6 +6,10 @@
 <title>A Minha Carrinha | PayGo Moçambique</title>
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#0f172a">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta http-equiv="X-Frame-Options" content="DENY">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=()">
 
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233b82f6'><polygon points='13 2 3 14 12 14 11 22 21 10 12 10 13 2'/></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -124,6 +128,13 @@ html { scroll-behavior: smooth; }
 
     <div class="flex items-center gap-4">
       <div class="hidden md:flex items-center gap-3">
+        <a href="dashboard.html" class="hidden lg:flex items-center gap-2 bg-white/5 border border-white/10 hover:border-brand-400/60 rounded-2xl px-3 py-2 transition">
+          <i data-lucide="wallet" class="w-4 h-4 text-brand-300"></i>
+          <div class="text-right">
+            <p class="text-[9px] text-slate-400 uppercase tracking-widest font-black leading-none">Carteira</p>
+            <p class="text-xs font-mono font-bold text-white leading-none mt-1" id="headerWalletBalance">0.00 MT</p>
+          </div>
+        </a>
         <div class="text-right">
           <p class="text-sm font-semibold text-white" id="headerUserName">A carregar...</p>
         </div>
@@ -168,7 +179,12 @@ html { scroll-behavior: smooth; }
                     <h1 class="text-3xl md:text-4xl font-display font-extrabold text-slate-900 tracking-tight">A Sua Carrinha</h1>
                     <p class="text-sm text-slate-500 mt-1 font-medium">Reveja os itens antes de prosseguir para o pagamento.</p>
                 </div>
-                <span class="text-xs font-black text-brand-700 bg-brand-100 px-4 py-1.5 rounded-full border border-brand-200 shadow-sm" id="itemCountLabel">0 Itens</span>
+                <div class="flex items-center gap-2">
+                    <button id="btnClearCart" onclick="window.clearCart()" class="hidden text-xs font-black text-danger-600 bg-danger-500/10 hover:bg-danger-500 hover:text-white px-4 py-1.5 rounded-full border border-danger-500/20 transition-all">
+                        Limpar
+                    </button>
+                    <span class="text-xs font-black text-brand-700 bg-brand-100 px-4 py-1.5 rounded-full border border-brand-200 shadow-sm" id="itemCountLabel">0 Itens</span>
+                </div>
             </div>
 
             <div id="emptyCartState" class="hidden bg-white rounded-3xl border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-12 text-center flex-1 flex flex-col justify-center items-center transform transition-all">
@@ -241,7 +257,19 @@ html { scroll-behavior: smooth; }
 
                 <div class="mt-8 relative z-10">
                     <label class="block text-[10px] font-black text-brand-300 uppercase tracking-widest mb-3 text-center">Escolha a via de pagamento</label>
-                    <div class="grid grid-cols-2 gap-3 mb-6">
+                    <div class="mb-4">
+                        <label for="checkoutPhone" class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Número para pagamento</label>
+                        <input id="checkoutPhone" type="tel" inputmode="numeric" placeholder="84/85/86/87..." class="checkout-field" autocomplete="tel">
+                        <p class="text-[10px] text-slate-400 mt-2">Usado para M-Pesa/e-Mola. Para Carteira PayGo, o saldo é debitado automaticamente.</p>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
+                        <label class="payment-method wallet-method bg-white cursor-pointer rounded-xl p-4 flex flex-col items-center justify-center text-center group shadow-sm hover:shadow-md">
+                            <input type="radio" name="paymentMethod" value="wallet" class="sr-only" onchange="window.updatePaymentMethod()">
+                            <div class="check-indicator"><i data-lucide="check" class="w-3 h-3 text-white"></i></div>
+                            <div class="w-10 h-7 bg-brand-600 rounded flex items-center justify-center shadow-inner mb-2"><i data-lucide="wallet" class="w-4 h-4 text-white"></i></div>
+                            <p class="text-xs font-bold text-slate-700">Carteira PayGo</p>
+                            <p class="text-[9px] text-slate-500 mt-1" id="walletBalanceMini">0.00 MT</p>
+                        </label>
                         <label class="payment-method bg-white cursor-pointer rounded-xl p-4 flex flex-col items-center justify-center text-center group selected shadow-sm hover:shadow-md">
                             <input type="radio" name="paymentMethod" value="mpesa" class="sr-only" checked onchange="window.updatePaymentMethod()">
                             <div class="check-indicator"><i data-lucide="check" class="w-3 h-3 text-white"></i></div>
@@ -273,7 +301,7 @@ html { scroll-behavior: smooth; }
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const FIREBASE_CONFIG = {
@@ -289,427 +317,625 @@ const app = initializeApp(FIREBASE_CONFIG);
 const db = getFirestore(app, "paygodb");
 const auth = getAuth(app);
 
+const WHATSAPP_FALLBACK = "258871002255";
+const CART_KEY = "paygo_cart";
+const CHECKOUT_LOCK_KEY = "paygo_checkout_lock_until";
+
+let currentFirebaseUser = null;
 let currentUserData = null;
+let isCheckoutRunning = false;
+
 window.BINANCE_RATE = 88.00;
+window.PAYGO_TOTAL_MZN = 0;
+window.PAYGO_TOTAL_USD = 0;
+window.PAYGO_SERVICE_TAX = 0;
 
-// Inicializa Icones
-document.addEventListener('DOMContentLoaded', () => {
-    if(typeof lucide !== 'undefined') lucide.createIcons();
-    if(typeof AOS !== 'undefined') AOS.init({ duration: 600, once: true });
-});
+const $ = (id) => document.getElementById(id);
 
-// ==========================================
-// 🛡️ ARQUITETURA CIRCUIT BREAKER
-// ==========================================
-class CircuitBreaker {
-    constructor(requestFunction, options = {}) {
-        this.requestFunction = requestFunction;
-        this.state = 'CLOSED';
-        this.failureCount = 0;
-        this.failureThreshold = options.failureThreshold || 2;
-        this.resetTimeout = options.resetTimeout || 120000;
-        this.nextAttempt = Date.now();
-    }
+const escapeHTML = (value) => String(value ?? '').replace(/[&<>'"]/g, (char) => ({
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  "'": '&#39;',
+  '"': '&quot;'
+}[char]));
 
-    async fire(...args) {
-        if (this.state === 'OPEN') {
-            if (Date.now() > this.nextAttempt) {
-                this.state = 'HALF_OPEN';
-            } else {
-                throw new Error("CIRCUITO_ABERTO");
-            }
-        }
-        try {
-            const response = await this.requestFunction(...args);
-            return this.success(response);
-        } catch (error) {
-            return this.fail(error);
-        }
-    }
+const safeText = (value, max = 1000) => String(value ?? '').replace(/[<>]/g, '').trim().slice(0, max);
 
-    success(response) {
-        this.failureCount = 0;
-        this.state = 'CLOSED';
-        return response;
-    }
+const safeNumber = (value, fallback = 0) => {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+};
 
-    fail(error) {
-        this.failureCount++;
-        if (this.failureCount >= this.failureThreshold && this.state !== 'OPEN') {
-            this.state = 'OPEN';
-            this.nextAttempt = Date.now() + this.resetTimeout;
-            console.warn("🚨 Gateway em Lockdown automático!");
-        }
-        throw error;
-    }
+const formatMZN = (value) => `${safeNumber(value).toLocaleString('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MT`;
+const formatUSD = (value) => `$${safeNumber(value).toFixed(2)}`;
+
+function getCart() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(CART_KEY) || '[]');
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .map((item, index) => ({
+        id: safeText(item.id || `ITEM-${Date.now()}-${index}`, 80),
+        usd: Math.max(0, safeNumber(item.usd)),
+        detail: safeText(item.detail, 1200),
+        type: ['compra', 'jogo'].includes(item.type) ? item.type : 'compra',
+        addedAt: item.addedAt || new Date().toISOString()
+      }))
+      .filter((item) => item.usd > 0 && item.detail);
+  } catch {
+    localStorage.setItem(CART_KEY, '[]');
+    return [];
+  }
 }
 
-// ==========================================
-// 🔔 TOOLING: UI E TOASTS PREMIUM
-// ==========================================
-window.showToast = function(message, type = 'success', duration = 4000) {
-  const container = document.getElementById('toast-container');
+function setCart(cart) {
+  localStorage.setItem(CART_KEY, JSON.stringify(cart));
+}
+
+function setButtonLoading(btn, loading, text = 'A processar...') {
+  if (!btn) return;
+  if (loading) {
+    btn.dataset.originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.classList.add('btn-disabled');
+    btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> ${escapeHTML(text)}`;
+  } else {
+    btn.disabled = false;
+    btn.classList.remove('btn-disabled');
+    if (btn.dataset.originalHtml) btn.innerHTML = btn.dataset.originalHtml;
+  }
+  if (typeof lucide !== 'undefined') lucide.createIcons({ root: btn });
+}
+
+function getSelectedPaymentMethod() {
+  return document.querySelector('input[name="paymentMethod"]:checked')?.value || 'mpesa';
+}
+
+function normalizeMozPhone(phone) {
+  const digits = String(phone || '').replace(/\D/g, '');
+  if (!digits) return '';
+  if (digits.startsWith('258') && digits.length === 12) return digits;
+  if (digits.length === 9) return `258${digits}`;
+  return digits;
+}
+
+function isValidMozPhone(phone) {
+  return /^258(8[2-7])\d{7}$/.test(normalizeMozPhone(phone));
+}
+
+function buildWhatsAppMessage(orderId, totalMzn, totalUsd, method, itemCount) {
+  return `*OLÁ PAYGO!* 👋\n\nQuero finalizar a minha carrinha manualmente.\n\n*Ref:* #${orderId}\n*Itens:* ${itemCount}\n*Total USD:* ${formatUSD(totalUsd)}\n*Total MZN:* ${formatMZN(totalMzn)}\n*Método pretendido:* ${method.toUpperCase()}\n\nPodem ajudar-me a concluir o pagamento?`;
+}
+
+class CircuitBreaker {
+  constructor(requestFunction, options = {}) {
+    this.requestFunction = requestFunction;
+    this.state = 'CLOSED';
+    this.failureCount = 0;
+    this.failureThreshold = options.failureThreshold || 2;
+    this.resetTimeout = options.resetTimeout || 120000;
+    this.nextAttempt = Date.now();
+  }
+
+  async fire(...args) {
+    if (this.state === 'OPEN') {
+      if (Date.now() > this.nextAttempt) this.state = 'HALF_OPEN';
+      else throw new Error("CIRCUITO_ABERTO");
+    }
+
+    try {
+      const response = await this.requestFunction(...args);
+      this.failureCount = 0;
+      this.state = 'CLOSED';
+      return response;
+    } catch (error) {
+      this.failureCount++;
+      if (this.failureCount >= this.failureThreshold) {
+        this.state = 'OPEN';
+        this.nextAttempt = Date.now() + this.resetTimeout;
+      }
+      throw error;
+    }
+  }
+}
+
+window.showToast = function(message, type = 'success', duration = 4200) {
+  const container = $('toast-container');
   if (!container) return;
+
   const toast = document.createElement('div');
-  
   const bgColors = { success: 'bg-slate-900', error: 'bg-red-900', warning: 'bg-amber-900', info: 'bg-brand-900' };
   const borderColors = { success: 'border-green-500', error: 'border-red-500', warning: 'border-amber-500', info: 'border-brand-500' };
   const iconColors = { success: 'text-green-400', error: 'text-red-400', warning: 'text-amber-400', info: 'text-brand-400' };
   const icons = { success: 'check-circle', error: 'alert-circle', warning: 'alert-triangle', info: 'info' };
-  
-  toast.className = `toast ${bgColors[type]} ${borderColors[type]} shadow-2xl`;
-  toast.innerHTML = `<i data-lucide="${icons[type]}" class="${iconColors[type]} w-5 h-5 flex-shrink-0"></i><span class="text-sm font-bold text-white">${message}</span>`;
-  
+
+  toast.className = `toast ${bgColors[type] || bgColors.info} ${borderColors[type] || borderColors.info} shadow-2xl`;
+  toast.innerHTML = `
+    <i data-lucide="${icons[type] || icons.info}" class="${iconColors[type] || iconColors.info} w-5 h-5 flex-shrink-0"></i>
+    <span class="text-sm font-bold text-white">${escapeHTML(message)}</span>
+    <button type="button" class="ml-auto text-slate-300 hover:text-white" aria-label="Fechar notificação" onclick="this.closest('.toast').remove()">
+      <i data-lucide="x" class="w-4 h-4"></i>
+    </button>
+  `;
+
   container.appendChild(toast);
-  if(typeof lucide !== 'undefined') lucide.createIcons({root: toast});
+  if (typeof lucide !== 'undefined') lucide.createIcons({ root: toast });
   requestAnimationFrame(() => toast.classList.add('show'));
-  setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, duration);
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 400);
+  }, duration);
 };
 
-// ==========================================
-// 💰 FETCH CÂMBIO GLOBAL E CARREGAMENTO
-// ==========================================
 async function fetchExchangeRate() {
-    try {
-        const snap = await getDoc(doc(db, "settings", "global"));
-        if (snap.exists() && snap.data().exchangeRate) {
-            window.BINANCE_RATE = parseFloat(snap.data().exchangeRate);
-            const cambioDisplay = document.getElementById('cambioDisplay');
-            if (cambioDisplay) cambioDisplay.textContent = window.BINANCE_RATE.toFixed(2);
-            window.updateTotals();
-        }
-    } catch (e) {
-        console.warn("A usar taxa de câmbio default", e);
+  try {
+    const snap = await getDoc(doc(db, "settings", "global"));
+    if (snap.exists()) {
+      const data = snap.data() || {};
+      if (data.isMaintenanceMode === true && currentUserData?.role !== 'superadmin') {
+        location.href = 'manutencao.html';
+        return;
+      }
+
+      window.BINANCE_RATE = safeNumber(data.exchangeRate, 88.00);
+      const cambioDisplay = $('cambioDisplay');
+      if (cambioDisplay) cambioDisplay.textContent = window.BINANCE_RATE.toFixed(2);
+      window.updateTotals();
     }
+  } catch (e) {
+    console.warn("A usar taxa de câmbio padrão:", e);
+  }
 }
 
-onAuthStateChanged(auth, async (user) => {
-  const loader = document.getElementById('authLoader');
-  if (user) {
-      try {
-          const userDoc = await getDoc(doc(db, "users", user.uid));
-          if (userDoc.exists()) {
-              currentUserData = userDoc.data();
-              document.getElementById('headerUserName').textContent = currentUserData.name || 'Cliente';
-              document.getElementById('headerUserAvatar').textContent = String(currentUserData.name || 'C').charAt(0).toUpperCase();
-              
-              loader.style.opacity = '0';
-              setTimeout(() => loader.classList.add('hidden'), 500);
-              
-              await fetchExchangeRate();
-              window.renderCart();
-          }
-      } catch (e) { console.error('Erro Firebase Auth:', e); }
-  } else {
-      window.location.href = 'login.html?redirect=carrinha.html';
+async function chamarGatewayPagamento(payload) {
+  const response = await fetch('/api/paysuite-payment', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+
+  let result = {};
+  try {
+    result = await response.json();
+  } catch {
+    result = {};
+  }
+
+  if (response.status === 503 || String(result.error || '').includes("manutenção preventiva")) {
+    throw new Error("MANUTENCAO_PAYSUITE");
+  }
+
+  if (!response.ok || !result.success) {
+    throw new Error(result.error || result.message || "A transação foi recusada pela operadora.");
+  }
+
+  return result;
+}
+
+const gatewaySeguro = new CircuitBreaker(chamarGatewayPagamento, {
+  failureThreshold: 2,
+  resetTimeout: 120000
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+  if (typeof AOS !== 'undefined') AOS.init({ duration: 600, once: true });
+
+  window.updatePaymentMethod();
+  window.renderCart();
+
+  const phoneInput = $('checkoutPhone');
+  if (phoneInput) {
+    phoneInput.addEventListener('input', () => {
+      phoneInput.value = phoneInput.value.replace(/[^\d+]/g, '').slice(0, 13);
+    });
   }
 });
 
-// ==========================================
-// 🛒 MOTOR DA CARRINHA
-// ==========================================
 window.renderCart = function() {
-  const cart = JSON.parse(localStorage.getItem('paygo_cart') || '[]');
-  const container = document.getElementById('cartItemsContainer');
-  const emptyState = document.getElementById('emptyCartState');
-  const btnCheckout = document.getElementById('btnCheckout');
-  
-  document.getElementById('itemCountLabel').textContent = `${cart.length} Iten${cart.length !== 1 ? 's' : ''}`;
+  const cart = getCart();
+  const container = $('cartItemsContainer');
+  const emptyState = $('emptyCartState');
+  const btnCheckout = $('btnCheckout');
+  const btnClearCart = $('btnClearCart');
+
+  const itemCountLabel = $('itemCountLabel');
+  if (itemCountLabel) itemCountLabel.textContent = `${cart.length} Ite${cart.length !== 1 ? 'ns' : 'm'}`;
+  if (btnClearCart) btnClearCart.classList.toggle('hidden', cart.length === 0);
+
+  if (!container || !emptyState || !btnCheckout) return;
 
   if (cart.length === 0) {
-      container.innerHTML = '';
-      emptyState.classList.remove('hidden');
-      btnCheckout.disabled = true;
-      btnCheckout.classList.add('opacity-50', 'cursor-not-allowed', 'grayscale');
-      window.updateTotals();
-      return;
+    container.innerHTML = '';
+    emptyState.classList.remove('hidden');
+    btnCheckout.disabled = true;
+    btnCheckout.classList.add('opacity-50', 'cursor-not-allowed', 'grayscale');
+    window.updateTotals();
+    return;
   }
 
   emptyState.classList.add('hidden');
   btnCheckout.disabled = false;
   btnCheckout.classList.remove('opacity-50', 'cursor-not-allowed', 'grayscale');
 
-  let html = '';
+  container.innerHTML = cart.map((item, index) => {
+    const usdSafe = Math.max(0, safeNumber(item.usd));
+    const mtValue = usdSafe * window.BINANCE_RATE;
+    const badgeClass = item.type === 'compra' ? 'badge-compra' : 'badge-jogo';
+    const icon = item.type === 'compra' ? 'shopping-bag' : 'gamepad-2';
+    const typeLabel = item.type === 'compra' ? 'Produto Internacional' : 'Recarga / Jogo';
 
-  cart.forEach((item, index) => {
-      const usdSafe = parseFloat(item.usd || 0);
-      const mtValue = (usdSafe * window.BINANCE_RATE).toLocaleString('pt-MZ', { minimumFractionDigits: 2 });
-      const safeType = String(item.type || 'compra');
-      
-      const badgeClass = safeType === 'compra' ? 'badge-compra' : 'badge-jogo';
-      const icon = safeType === 'compra' ? 'shopping-bag' : 'gamepad-2';
-      const typeLabel = safeType === 'compra' ? 'Produto Internacional' : 'Recarga / Jogo';
-      
-      html += `
-      <div id="cart-item-${item.id}" class="cart-item bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-5 items-center relative overflow-hidden group hover:border-brand-300 hover:shadow-md transition-all" style="animation-delay: ${index * 0.1}s">
-          <div class="w-16 h-16 bg-slate-50 rounded-xl flex items-center justify-center shrink-0 border border-slate-100 group-hover:bg-brand-50 transition-colors">
-              <i data-lucide="${icon}" class="w-7 h-7 text-slate-400 group-hover:text-brand-500 transition-colors"></i>
+    return `
+      <div id="cart-item-${escapeHTML(item.id)}" class="cart-item bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-5 items-center relative overflow-hidden group hover:border-brand-300 hover:shadow-md transition-all" style="animation-delay: ${index * 0.06}s">
+        <div class="w-16 h-16 bg-slate-50 rounded-xl flex items-center justify-center shrink-0 border border-slate-100 group-hover:bg-brand-50 transition-colors">
+          <i data-lucide="${icon}" class="w-7 h-7 text-slate-400 group-hover:text-brand-500 transition-colors"></i>
+        </div>
+
+        <div class="flex-1 w-full text-center sm:text-left min-w-0">
+          <span class="${badgeClass} mb-2"><i data-lucide="${icon}" class="w-3 h-3"></i> ${typeLabel}</span>
+          <p class="font-bold text-slate-800 text-sm break-words" title="${escapeHTML(item.detail)}">${escapeHTML(item.detail)}</p>
+          <p class="text-[11px] text-slate-400 mt-2">Adicionado em ${escapeHTML(new Date(item.addedAt).toLocaleDateString('pt-MZ'))}</p>
+        </div>
+
+        <div class="flex items-center gap-6 mt-3 sm:mt-0 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-t-0 border-slate-100 pt-4 sm:pt-0">
+          <div class="text-left sm:text-right">
+            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-0.5">Subtotal</p>
+            <p class="font-display font-extrabold text-slate-900 text-lg leading-none">${formatMZN(mtValue)}</p>
+            <p class="text-[11px] text-brand-600 font-bold mt-1 bg-brand-50 inline-block px-1.5 rounded border border-brand-100">${formatUSD(usdSafe)}</p>
           </div>
-          <div class="flex-1 w-full text-center sm:text-left min-w-0">
-              <span class="${badgeClass} mb-2"><i data-lucide="${icon}" class="w-3 h-3"></i> ${typeLabel}</span>
-              <p class="font-bold text-slate-800 text-sm truncate hover:whitespace-normal transition-all" title="${item.detail}">${item.detail}</p>
-          </div>
-          <div class="flex items-center gap-6 mt-3 sm:mt-0 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-t-0 border-slate-100 pt-4 sm:pt-0">
-              <div class="text-left sm:text-right">
-                  <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-0.5">Subtotal</p>
-                  <p class="font-display font-extrabold text-slate-900 text-lg leading-none">${mtValue} <span class="text-xs text-slate-500 font-medium">MT</span></p>
-                  <p class="text-[11px] text-brand-600 font-bold mt-1 bg-brand-50 inline-block px-1.5 rounded border border-brand-100">$${usdSafe.toFixed(2)} USD</p>
-              </div>
-              <button onclick="window.removeFromCart('${item.id}')" class="item-remove w-12 h-12 rounded-xl flex items-center justify-center text-slate-400 hover:text-danger-500 bg-slate-50 hover:bg-danger-50 border border-slate-200 hover:border-danger-200 focus:outline-none shrink-0 shadow-sm" title="Remover Item">
-                  <i data-lucide="trash-2" class="w-5 h-5"></i>
-              </button>
-          </div>
+          <button type="button" onclick="window.removeFromCart('${escapeHTML(item.id)}')" class="item-remove w-12 h-12 rounded-xl flex items-center justify-center text-slate-400 hover:text-danger-500 bg-slate-50 hover:bg-danger-50 border border-slate-200 hover:border-danger-200 focus:outline-none shrink-0 shadow-sm" title="Remover Item">
+            <i data-lucide="trash-2" class="w-5 h-5"></i>
+          </button>
+        </div>
       </div>
-      `;
-  });
+    `;
+  }).join('');
 
-  container.innerHTML = html;
-  if(typeof lucide !== 'undefined') lucide.createIcons();
-  
+  if (typeof lucide !== 'undefined') lucide.createIcons({ root: container });
   window.updateTotals();
 };
 
+window.clearCart = function() {
+  if (!confirm('Deseja limpar todos os itens da carrinha?')) return;
+  setCart([]);
+  window.renderCart();
+  window.showToast('Carrinha limpa com sucesso.', 'info');
+};
+
 window.removeFromCart = function(id) {
-  const itemEl = document.getElementById(`cart-item-${id}`);
-  if(itemEl) {
-      itemEl.classList.add('removing');
-      setTimeout(() => {
-          let cart = JSON.parse(localStorage.getItem('paygo_cart') || '[]');
-          cart = cart.filter(item => item.id !== id);
-          localStorage.setItem('paygo_cart', JSON.stringify(cart));
-          window.showToast('Produto removido da carrinha.', 'info');
-          window.renderCart();
-      }, 400);
-  }
+  const safeId = safeText(id, 80);
+  const itemEl = document.getElementById(`cart-item-${CSS.escape(safeId)}`);
+  if (itemEl) itemEl.classList.add('removing');
+
+  setTimeout(() => {
+    const cart = getCart().filter((item) => item.id !== safeId);
+    setCart(cart);
+    window.renderCart();
+    window.showToast('Produto removido da carrinha.', 'info');
+  }, itemEl ? 360 : 0);
 };
 
 window.updateTotals = function() {
-  const cart = JSON.parse(localStorage.getItem('paygo_cart') || '[]');
-  let totalUSD = 0;
-  cart.forEach(item => {
-      totalUSD += parseFloat(item.usd || 0);
-  });
+  const cart = getCart();
+  const totalUSD = cart.reduce((sum, item) => sum + safeNumber(item.usd), 0);
 
-  const chkEl = document.getElementById('chkFirstPurchase');
-  const isFirst = chkEl ? chkEl.checked : false;
-  const badge = document.getElementById('freeTaxBadge');
-  
+  const isFirst = $('chkFirstPurchase')?.checked || false;
+  const badge = $('freeTaxBadge');
   const convertedMT = totalUSD * window.BINANCE_RATE;
   let taxMT = 0;
 
   if (totalUSD > 0) {
-      if (totalUSD <= 5 && isFirst) {
-          taxMT = 0;
-          if(badge) badge.classList.remove('hidden');
-      } else {
-          if(badge) badge.classList.add('hidden');
-          if (totalUSD <= 20) taxMT = 150;
-          else if (totalUSD <= 50) taxMT = 250;
-          else if (totalUSD <= 100) taxMT = 600;
-          else taxMT = convertedMT * 0.07;
-      }
+    if (totalUSD <= 5 && isFirst) {
+      taxMT = 0;
+      badge?.classList.remove('hidden');
+    } else {
+      badge?.classList.add('hidden');
+      if (totalUSD <= 20) taxMT = 150;
+      else if (totalUSD <= 50) taxMT = 250;
+      else if (totalUSD <= 100) taxMT = 600;
+      else taxMT = convertedMT * 0.07;
+    }
   } else {
-      if(badge) badge.classList.add('hidden');
+    badge?.classList.add('hidden');
   }
 
   const totalFinal = convertedMT + taxMT;
-  
-  // Guardamos o valor para o Checkout Global ter acesso
+
+  window.PAYGO_TOTAL_USD = totalUSD;
+  window.PAYGO_SERVICE_TAX = taxMT;
   window.PAYGO_TOTAL_MZN = totalFinal;
 
-  document.getElementById('summaryUsd').textContent = `$${totalUSD.toFixed(2)}`;
-  document.getElementById('summaryConverted').textContent = `${convertedMT.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`;
-  document.getElementById('summaryTax').textContent = `${taxMT.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`;
-  
+  if ($('summaryUsd')) $('summaryUsd').textContent = formatUSD(totalUSD);
+  if ($('summaryConverted')) $('summaryConverted').textContent = formatMZN(convertedMT);
+  if ($('summaryTax')) $('summaryTax').textContent = formatMZN(taxMT);
+
   const totalRounded = Math.floor(totalFinal);
   const cents = Math.round((totalFinal % 1) * 100).toString().padStart(2, '0');
-  
-  const totalDisplay = document.getElementById('summaryTotal');
-  totalDisplay.innerHTML = `${totalRounded.toLocaleString('pt-MZ')} <span class="text-xl text-slate-400 font-medium mb-1">.${cents} MT</span>`;
-  totalDisplay.classList.add('scale-105', 'text-brand-300');
-  setTimeout(() => totalDisplay.classList.remove('scale-105', 'text-brand-300'), 200);
+  const totalDisplay = $('summaryTotal');
+  if (totalDisplay) {
+    totalDisplay.innerHTML = `${totalRounded.toLocaleString('pt-MZ')} <span class="text-xl text-slate-400 font-medium mb-1">.${cents} MT</span>`;
+    totalDisplay.classList.add('scale-105', 'text-brand-300');
+    setTimeout(() => totalDisplay.classList.remove('scale-105', 'text-brand-300'), 200);
+  }
+
+  window.updatePaymentMethod();
 };
 
-// Estilo UI dos Métodos de Pagamento
 window.updatePaymentMethod = function() {
-  document.querySelectorAll('.payment-method').forEach(el => {
-      const radio = el.querySelector('input[type="radio"]');
-      if (radio && radio.checked) {
-          el.classList.add('selected');
-      } else {
-          el.classList.remove('selected');
-      }
+  const method = getSelectedPaymentMethod();
+
+  document.querySelectorAll('.payment-method').forEach((el) => {
+    const radio = el.querySelector('input[type="radio"]');
+    el.classList.toggle('selected', !!radio?.checked);
   });
+
+  const phoneInput = $('checkoutPhone');
+  if (phoneInput) {
+    const needsPhone = method !== 'wallet';
+    phoneInput.disabled = !needsPhone;
+    phoneInput.classList.toggle('opacity-60', !needsPhone);
+    phoneInput.placeholder = needsPhone ? '84/85/86/87...' : 'Não necessário para Carteira PayGo';
+  }
+
+  const btn = $('btnCheckout');
+  if (btn) {
+    const label = method === 'wallet' ? 'Pagar com Carteira' : 'Pagar e Concluir';
+    btn.innerHTML = `<i data-lucide="${method === 'wallet' ? 'wallet' : 'lock'}" class="w-5 h-5 group-hover:-translate-y-0.5 transition-transform"></i> ${label}`;
+    if (typeof lucide !== 'undefined') lucide.createIcons({ root: btn });
+  }
 };
 
 window.logoutFromHeader = async function() {
-  if (confirm('Sair da conta? Os seus itens ficarão guardados neste dispositivo.')) {
-      await signOut(auth);
-      window.location.href = 'login.html';
-  }
+  if (!confirm('Sair da conta? Os seus itens ficarão guardados neste dispositivo.')) return;
+  await signOut(auth);
+  location.href = 'login.html';
 };
 
-// ==========================================
-// 🚀 CHECKOUT COM INTEGRAÇÃO DE ESCUDO
-// ==========================================
-
-// Função Base de Comunicação (isolada para o Circuit Breaker)
-async function chamarGatewayPagamento(dadosPayload) {
-    const response = await fetch('/api/paysuite-payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(dadosPayload)
-    });
-
-    const result = await response.json();
-
-    // Detetor do "Kill Switch" (Erro 503 devolvido pela Vercel)
-    if (response.status === 503 || result.error?.includes("manutenção preventiva")) {
-        throw new Error("MANUTENCAO_PAYSUITE");
-    }
-
-    if (!response.ok || !result.success) {
-        throw new Error(result.error || result.message || "A transação foi recusada pela operadora.");
-    }
-
-    return result;
+async function saveOrder(orderData) {
+  return addDoc(collection(db, "orders"), orderData);
 }
 
-// Inicializar o Escudo (Protege contra spam e falhas de rede)
-const gatewaySegura = new CircuitBreaker(chamarGatewayPagamento, {
-    failureThreshold: 2,
-    resetTimeout: 120000 
-});
+async function saveWalletTransaction(data) {
+  return addDoc(collection(db, "wallet_transactions"), data);
+}
+
+async function notifyOrder(orderData) {
+  fetch('/api/notify-order', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ orderData, action: 'new_order', sendEmail: true, sendLark: true })
+  }).catch((e) => console.warn('Falha silenciosa ao notificar:', e));
+}
 
 window.processCheckout = async function() {
-  if (!currentUserData) {
-      window.showToast('Sessão inválida. A redirecionar para Login.', 'error');
-      setTimeout(() => window.location.href = 'login.html', 1000);
-      return;
-  }
-  
-  const cart = JSON.parse(localStorage.getItem('paygo_cart') || '[]');
-  if (cart.length === 0) return window.showToast('Adicione produtos à carrinha primeiro!', 'warning');
+  if (isCheckoutRunning) return;
 
-  const btn = document.getElementById('btnCheckout');
-  const containerAvisos = document.getElementById('checkoutAvisos');
-  const footerNote = document.getElementById('checkoutFooterNote');
-  
-  const originalHTML = btn.innerHTML;
-  btn.disabled = true;
-  btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A preparar transação...`;
-  if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
-  containerAvisos.innerHTML = ''; // Limpa avisos anteriores
+  if (!currentFirebaseUser || !currentUserData) {
+    window.showToast('Sessão inválida. A redirecionar para Login.', 'error');
+    setTimeout(() => location.href = 'login.html?redirect=carrinha.html', 1000);
+    return;
+  }
+
+  const lockUntil = Number(sessionStorage.getItem(CHECKOUT_LOCK_KEY) || 0);
+  if (Date.now() < lockUntil) {
+    window.showToast('Aguarde alguns segundos antes de tentar novamente.', 'warning');
+    return;
+  }
+
+  const cart = getCart();
+  if (cart.length === 0) {
+    window.showToast('Adicione produtos à carrinha primeiro.', 'warning');
+    return;
+  }
+
+  window.updateTotals();
+
+  const method = getSelectedPaymentMethod();
+  const btn = $('btnCheckout');
+  const containerAvisos = $('checkoutAvisos');
+  const footerNote = $('checkoutFooterNote');
+
+  if (containerAvisos) containerAvisos.innerHTML = '';
+
+  const userPhoneRaw = $('checkoutPhone')?.value || currentUserData.phone || currentUserData.whatsapp || '';
+  const cleanPhone = normalizeMozPhone(userPhoneRaw);
+
+  if (method !== 'wallet' && !isValidMozPhone(cleanPhone)) {
+    window.showToast('Insira um número válido para M-Pesa/e-Mola. Ex: 84xxxxxxx.', 'error');
+    $('checkoutPhone')?.focus();
+    return;
+  }
+
+  const totalFinal = Math.round((window.PAYGO_TOTAL_MZN || 0) * 100) / 100;
+  const totalUSD = Math.round((window.PAYGO_TOTAL_USD || 0) * 100) / 100;
+  const tax = Math.round((window.PAYGO_SERVICE_TAX || 0) * 100) / 100;
+
+  if (totalFinal < 1 || totalUSD <= 0) {
+    window.showToast('Valor da carrinha inválido.', 'error');
+    return;
+  }
+
+  isCheckoutRunning = true;
+  sessionStorage.setItem(CHECKOUT_LOCK_KEY, String(Date.now() + 8000));
+  setButtonLoading(btn, true, method === 'wallet' ? 'A debitar carteira...' : 'A preparar transação...');
 
   try {
-      let totalUSD = 0;
-      let linksArr = [];
-      cart.forEach((item, index) => {
-          totalUSD += parseFloat(item.usd || 0);
-          linksArr.push(`[Item ${index+1}] ${String(item.type || 'compra').toUpperCase()}: ${String(item.detail || '')}`);
+    const freshUserDoc = await getDoc(doc(db, "users", currentFirebaseUser.uid));
+    const freshUser = freshUserDoc.exists() ? freshUserDoc.data() : currentUserData;
+    const freshBalance = safeNumber(freshUser.walletBalance);
+
+    if (method === 'wallet' && freshBalance < totalFinal) {
+      throw new Error(`Saldo insuficiente na Carteira PayGo. Saldo atual: ${formatMZN(freshBalance)}.`);
+    }
+
+    const orderId = 'PG-' + Date.now().toString().slice(-6).toUpperCase();
+    const detailString = cart.map((item, index) => `[Item ${index + 1}] ${item.type.toUpperCase()}: ${item.detail}`).join(" | ");
+    const isFirst = $('chkFirstPurchase')?.checked || false;
+    const affiliateRef = localStorage.getItem('paygo_affiliate_ref') || null;
+
+    const orderData = {
+      orderId,
+      userId: currentFirebaseUser.uid,
+      name: safeText(freshUser.name || currentUserData.name || 'Cliente'),
+      email: safeText(freshUser.email || currentUserData.email || 'cliente@paygo.co.mz'),
+      whatsapp: cleanPhone || safeText(freshUser.phone || currentUserData.phone || ''),
+      usd: totalUSD,
+      detail: detailString,
+      items: cart.map((item) => ({ id: item.id, usd: item.usd, detail: item.detail, type: item.type })),
+      itemCount: cart.length,
+      tax,
+      total: totalFinal,
+      exchangeRate: window.BINANCE_RATE,
+      status: method === 'wallet' ? 'processing' : 'pending',
+      isPaid: method === 'wallet',
+      paymentMethod: method,
+      type: String(cart[0].type || 'compra'),
+      isFirstPurchase: isFirst && totalUSD <= 5,
+      referredBy: affiliateRef || null,
+      createdAt: serverTimestamp(),
+      source: 'carrinha',
+      security: {
+        userAgent: navigator.userAgent.slice(0, 180),
+        createdAtClient: new Date().toISOString()
+      }
+    };
+
+    await saveOrder(orderData);
+    await notifyOrder(orderData);
+
+    if (method === 'wallet') {
+      await updateDoc(doc(db, "users", currentFirebaseUser.uid), {
+        walletBalance: increment(-totalFinal)
       });
 
-      const detailString = linksArr.join(" | ");
-      const isFirst = document.getElementById('chkFirstPurchase')?.checked || false;
-      const paymentMethodNode = document.querySelector('input[name="paymentMethod"]:checked');
-      const paymentMethod = paymentMethodNode ? paymentMethodNode.value : 'mpesa';
-      
-      const totalFinal = window.PAYGO_TOTAL_MZN || 0; // Usamos a variável global preenchida pelo updateTotals()
-      if (totalFinal < 1) throw new Error("Valor do carrinho inválido.");
+      await saveWalletTransaction({
+        userId: currentFirebaseUser.uid,
+        type: 'debit',
+        amount: totalFinal,
+        description: `Compra via Carrinha: ${orderId}`,
+        reference: orderId,
+        status: 'completed',
+        createdAt: new Date().toISOString()
+      });
 
-      const orderId = 'PG-' + Date.now().toString().slice(-6).toUpperCase();
-      const affiliateRef = localStorage.getItem('paygo_affiliate_ref') || null;
-      const userPhone = String(currentUserData.phone || currentUserData.whatsapp || '258000000000');
+      setCart([]);
+      window.showToast('Pagamento efetuado com sucesso via Carteira PayGo.', 'success');
+      setTimeout(() => location.href = `historico.html?ref=${encodeURIComponent(orderId)}`, 1200);
+      return;
+    }
 
-      const orderData = {
-          orderId: orderId,
-          name: String(currentUserData.name || 'Cliente'),
-          email: String(currentUserData.email || 'anon@paygo.co.mz'),
-          whatsapp: userPhone,
-          usd: totalUSD,
-          detail: detailString,
-          tax: totalFinal - (totalUSD * window.BINANCE_RATE),
-          total: totalFinal,
-          exchangeRate: window.BINANCE_RATE,
-          status: 'pending',
-          isPaid: false,
-          paymentMethod: String(paymentMethod),
-          type: String(cart[0].type || 'compra'),
-          isFirstPurchase: isFirst,
-          referredBy: affiliateRef,
-          createdAt: serverTimestamp(),
-          source: 'carrinha'
-      };
+    const payload = {
+      orderId,
+      amount: totalFinal,
+      currency: 'MZN',
+      phone: cleanPhone,
+      method,
+      email: orderData.email,
+      name: orderData.name,
+      description: `Carrinha PayGo: ${cart.length} itens (Ref: #${orderId})`
+    };
 
-      // 1. Gravar a Intenção na Firebase
-      await addDoc(collection(db, "orders"), orderData);
-      
-      // 2. Notificação Paralela (Não bloqueante)
-      fetch('/api/notify-order', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ orderData: orderData, action: 'new_order', sendEmail: true, sendLark: true })
-      }).catch(e => console.warn('Falha silenciosa ao notificar:', e));
+    const result = await gatewaySeguro.fire(payload);
 
-      // 3. O DISPARO SEGURO ATRAVÉS DO CIRCUIT BREAKER
-      const cleanPhone = userPhone.replace(/\D/g, '');
-      const payloadParaVercel = {
-          orderId: orderId,
-          amount: totalFinal,
-          currency: 'MZN',
-          phone: cleanPhone,
-          method: paymentMethod,
-          email: orderData.email,
-          name: orderData.name,
-          description: `Carrinha PayGo: ${cart.length} itens (Ref: #${orderId})`
-      };
+    if (result.success && result.data?.checkoutUrl) {
+      setCart([]);
+      location.href = result.data.checkoutUrl;
+      return;
+    }
 
-      const result = await gatewaySegura.fire(payloadParaVercel);
-      
-      // Se sucesso, vamos para o Checkout da PaySuite
-      if (result.success && result.data?.checkoutUrl) {
-          localStorage.removeItem('paygo_cart');
-          window.location.href = result.data.checkoutUrl;
-      }
+    throw new Error('Gateway não retornou link de pagamento.');
 
   } catch (err) {
-      console.error("Erro Checkout (Escudo):", err.message);
-      
-      // 🎯 A MAGIA DA GRACEFUL DEGRADATION
-      if (err.message === "MANUTENCAO_PAYSUITE" || err.message.startsWith("CIRCUITO_ABERTO")) {
-          // Esconde o botão e a nota
-          btn.style.display = 'none';
-          if (footerNote) footerNote.style.display = 'none';
-          
-          const numWhatsApp = "258871002255"; // O número que configuraste no Painel
-          const totalExibicao = document.getElementById('summaryConverted').textContent; // Só para efeitos visuais
-          const msg = `*OLÁ PAYGO!* 👋\n\nEstou a tentar finalizar uma encomenda na minha carrinha, mas o sistema automático está em manutenção.\n\nPodem ajudar-me a finalizar por transferência manual?`;
-          const linkWhatsApp = `https://wa.me/${numWhatsApp}?text=${encodeURIComponent(msg)}`;
-          
-          containerAvisos.innerHTML = `
-              <div class="bg-warning-500/10 border border-warning-500/30 text-warning-300 p-4 rounded-xl mb-4 animate-fade-in backdrop-blur-md">
-                  <p class="font-bold text-sm mb-1.5 flex items-center gap-1.5"><i data-lucide="alert-triangle" class="w-4 h-4"></i> Gateway Indisponível</p>
-                  <p class="text-xs leading-relaxed text-slate-300">Os nossos pagamentos automáticos estão em manutenção preventiva. Não se preocupe, o seu pedido foi guardado! Clique abaixo para finalizar via WhatsApp com a nossa equipa.</p>
-              </div>
-              <a href="${linkWhatsApp}" target="_blank" class="w-full h-14 bg-[#25D366] hover:bg-[#1fb355] text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-[0_10px_25px_rgba(37,211,102,0.3)] hover:-translate-y-0.5 animate-fade-in">
-                  <i data-lucide="message-circle" class="w-5 h-5"></i>
-                  Finalizar Encomenda no WhatsApp
-              </a>
-          `;
-          if(typeof lucide !== 'undefined') lucide.createIcons({root: containerAvisos});
-          
-      } else {
-          // Erro tradicional (ex: Saldo insuficiente ou limite da API)
-          let erroVisivel = err.message || 'Falha ao iniciar pagamento. Verifique a ligação.';
-          if(erroVisivel.includes("Missing or insufficient permissions")) erroVisivel = "O seu Perfil está incompleto (Falta Número/Email).";
-          
-          window.showToast(erroVisivel, 'error', 6000);
-          btn.disabled = false;
-          btn.innerHTML = originalHTML;
-          if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
+    console.error("Erro Checkout:", err);
+    const msg = String(err.message || '');
+
+    if (msg === "MANUTENCAO_PAYSUITE" || msg.startsWith("CIRCUITO_ABERTO")) {
+      if (btn) btn.style.display = 'none';
+      if (footerNote) footerNote.style.display = 'none';
+
+      const fallbackOrderId = 'PG-' + Date.now().toString().slice(-6).toUpperCase();
+      const linkWhatsApp = `https://wa.me/${WHATSAPP_FALLBACK}?text=${encodeURIComponent(buildWhatsAppMessage(
+        fallbackOrderId,
+        window.PAYGO_TOTAL_MZN,
+        window.PAYGO_TOTAL_USD,
+        getSelectedPaymentMethod(),
+        getCart().length
+      ))}`;
+
+      if (containerAvisos) {
+        containerAvisos.innerHTML = `
+          <div class="bg-warning-500/10 border border-warning-500/30 text-warning-300 p-4 rounded-xl mb-4 animate-fade-in backdrop-blur-md">
+            <p class="font-bold text-sm mb-1.5 flex items-center gap-1.5"><i data-lucide="alert-triangle" class="w-4 h-4"></i> Gateway Indisponível</p>
+            <p class="text-xs leading-relaxed text-slate-300">Os pagamentos automáticos estão temporariamente indisponíveis. A carrinha foi preservada neste dispositivo. Finalize com a nossa equipa no WhatsApp.</p>
+          </div>
+          <a href="${linkWhatsApp}" target="_blank" rel="noopener noreferrer" class="w-full h-14 bg-[#25D366] hover:bg-[#1fb355] text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-[0_10px_25px_rgba(37,211,102,0.3)] hover:-translate-y-0.5 animate-fade-in">
+            <i data-lucide="message-circle" class="w-5 h-5"></i>
+            Finalizar no WhatsApp
+          </a>
+        `;
+        if (typeof lucide !== 'undefined') lucide.createIcons({ root: containerAvisos });
       }
+    } else {
+      let erroVisivel = msg || 'Falha ao iniciar pagamento. Verifique a ligação.';
+      if (erroVisivel.includes("Missing or insufficient permissions")) {
+        erroVisivel = "O seu perfil está incompleto ou sem permissão para esta operação.";
+      }
+      window.showToast(erroVisivel, 'error', 6500);
+      setButtonLoading(btn, false);
+    }
+  } finally {
+    isCheckoutRunning = false;
+    if (btn && btn.style.display !== 'none') setButtonLoading(btn, false);
   }
 };
+
+onAuthStateChanged(auth, async (user) => {
+  const loader = $('authLoader');
+
+  if (!user) {
+    location.href = 'login.html?redirect=carrinha.html';
+    return;
+  }
+
+  currentFirebaseUser = user;
+
+  try {
+    const userDoc = await getDoc(doc(db, "users", user.uid));
+    if (!userDoc.exists()) {
+      location.href = 'login.html?redirect=carrinha.html';
+      return;
+    }
+
+    currentUserData = userDoc.data() || {};
+    const name = currentUserData.name || user.displayName || 'Cliente';
+    const walletBalance = safeNumber(currentUserData.walletBalance);
+
+    if ($('headerUserName')) $('headerUserName').textContent = name;
+    if ($('headerUserAvatar')) $('headerUserAvatar').textContent = String(name).charAt(0).toUpperCase();
+    if ($('headerWalletBalance')) $('headerWalletBalance').textContent = formatMZN(walletBalance);
+    if ($('walletBalanceMini')) $('walletBalanceMini').textContent = formatMZN(walletBalance);
+    if ($('checkoutPhone')) $('checkoutPhone').value = normalizeMozPhone(currentUserData.phone || currentUserData.whatsapp || '');
+
+    await fetchExchangeRate();
+    window.renderCart();
+  } catch (e) {
+    console.error('Erro Firebase Auth:', e);
+    window.showToast('Erro ao validar a sessão.', 'error');
+  } finally {
+    if (loader) {
+      loader.style.opacity = '0';
+      setTimeout(() => loader.classList.add('hidden'), 500);
+    }
+  }
+});
+
+window.addEventListener('beforeunload', (event) => {
+  if (isCheckoutRunning) {
+    event.preventDefault();
+    event.returnValue = '';
+  }
+});
 </script>
 </body>
 </html>
