@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Payouts | PayGo Admin</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <meta name="theme-color" content="#020617" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              400: '#60a5fa',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              900: '#1e3a8a'
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    body {
+      background:
+        radial-gradient(circle at 20% 20%, rgba(59,130,246,.18), transparent 35%),
+        radial-gradient(circle at 90% 10%, rgba(16,185,129,.12), transparent 30%),
+        #020617;
+      color: #f8fafc;
+      min-height: 100vh;
+    }
+
+    .glass {
+      background: rgba(15, 23, 42, .78);
+      border: 1px solid rgba(255,255,255,.08);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 24px 80px rgba(0,0,0,.35);
+    }
+
+    .input {
+      width: 100%;
+      background: rgba(2,6,23,.72);
+      border: 1px solid rgba(148,163,184,.28);
+      border-radius: 14px;
+      padding: 13px 14px;
+      outline: none;
+      color: white;
+      transition: .2s ease;
+    }
+
+    .input:focus {
+      border-color: rgba(96,165,250,.85);
+      box-shadow: 0 0 0 4px rgba(59,130,246,.12);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .badge-pending { background: rgba(245,158,11,.16); color: #fbbf24; border: 1px solid rgba(245,158,11,.28); }
+    .badge-completed { background: rgba(34,197,94,.16); color: #4ade80; border: 1px solid rgba(34,197,94,.28); }
+    .badge-failed { background: rgba(239,68,68,.16); color: #f87171; border: 1px solid rgba(239,68,68,.28); }
+    .badge-cancelled { background: rgba(100,116,139,.18); color: #cbd5e1; border: 1px solid rgba(148,163,184,.28); }
+
+    .loader {
+      width: 18px;
+      height: 18px;
+      border: 2.5px solid rgba(255,255,255,.35);
+      border-top-color: #fff;
+      border-radius: 999px;
+      animation: spin .8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+
+<body>
+  <main class="max-w-7xl mx-auto px-4 py-8">
+    <header class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5 mb-7">
+      <div>
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-400 text-xs font-black uppercase tracking-widest mb-4">
+          <i data-lucide="shield-check" class="w-4 h-4"></i>
+          PayGo Admin Financeiro
+        </div>
+        <h1 class="text-3xl md:text-5xl font-black tracking-tight">Payouts PaySuite</h1>
+        <p class="text-slate-400 mt-2 max-w-2xl">
+          Solicite saídas para M-Pesa/e-Mola, acompanhe estados e mantenha registo financeiro no painel PayGo.
+        </p>
+      </div>
+
+      <button id="refreshBtn" class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/10 font-bold transition">
+        <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+        Atualizar lista
+      </button>
+    </header>
+
+    <section class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div class="glass rounded-3xl p-5">
+        <p class="text-xs text-slate-500 font-black uppercase tracking-widest">Total payout</p>
+        <h2 id="statTotal" class="text-3xl font-black mt-2">0 MT</h2>
+      </div>
+      <div class="glass rounded-3xl p-5">
+        <p class="text-xs text-slate-500 font-black uppercase tracking-widest">Pendentes</p>
+        <h2 id="statPending" class="text-3xl font-black mt-2 text-amber-400">0</h2>
+      </div>
+      <div class="glass rounded-3xl p-5">
+        <p class="text-xs text-slate-500 font-black uppercase tracking-widest">Concluídos</p>
+        <h2 id="statCompleted" class="text-3xl font-black mt-2 text-emerald-400">0</h2>
+      </div>
+      <div class="glass rounded-3xl p-5">
+        <p class="text-xs text-slate-500 font-black uppercase tracking-widest">Falhados</p>
+        <h2 id="statFailed" class="text-3xl font-black mt-2 text-red-400">0</h2>
+      </div>
+    </section>
+
+    <section class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <div class="lg:col-span-2 glass rounded-[28px] p-5 md:p-6">
+        <div class="flex items-center gap-3 mb-5">
+          <div class="w-11 h-11 rounded-2xl bg-brand-500/15 border border-brand-500/20 flex items-center justify-center text-brand-400">
+            <i data-lucide="send" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h2 class="text-xl font-black">Criar payout</h2>
+            <p class="text-xs text-slate-500">Pedido enviado à PaySuite via API segura.</p>
+          </div>
+        </div>
+
+        <form id="payoutForm" class="space-y-4">
+          <div>
+            <label class="text-xs font-black uppercase tracking-widest text-slate-400">Valor em MT</label>
+            <input id="amount" class="input mt-2" type="number" min="1" step="0.01" placeholder="Ex: 1500" required />
+          </div>
+
+          <div>
+            <label class="text-xs font-black uppercase tracking-widest text-slate-400">Método</label>
+            <select id="method" class="input mt-2" required>
+              <option value="mpesa">M-Pesa</option>
+              <option value="emola">e-Mola</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="text-xs font-black uppercase tracking-widest text-slate-400">Telefone beneficiário</label>
+            <input id="phone" class="input mt-2" type="tel" placeholder="841234567 ou 258841234567" required />
+          </div>
+
+          <div>
+            <label class="text-xs font-black uppercase tracking-widest text-slate-400">Nome do titular</label>
+            <input id="holder" class="input mt-2" type="text" placeholder="Nome completo" required />
+          </div>
+
+          <div>
+            <label class="text-xs font-black uppercase tracking-widest text-slate-400">Referência</label>
+            <input id="reference" class="input mt-2" type="text" maxlength="50" placeholder="Ex: PAYGO-PO-001" />
+          </div>
+
+          <div>
+            <label class="text-xs font-black uppercase tracking-widest text-slate-400">Descrição</label>
+            <textarea id="description" class="input mt-2 min-h-[90px]" placeholder="Ex: Liquidação de saldo para fornecedor"></textarea>
+          </div>
+
+          <div class="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-4 text-sm text-amber-100">
+            <strong>Atenção:</strong> confirme sempre o número e titular antes de enviar. Payouts podem sair do saldo PaySuite real.
+          </div>
+
+          <button id="submitBtn" class="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-600 hover:bg-brand-500 px-5 py-4 font-black transition shadow-lg shadow-brand-600/20">
+            <i data-lucide="wallet-cards" class="w-5 h-5"></i>
+            Criar payout
+          </button>
+        </form>
+      </div>
+
+      <div class="lg:col-span-3 glass rounded-[28px] overflow-hidden">
+        <div class="p-5 md:p-6 border-b border-white/10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h2 class="text-xl font-black">Histórico de payouts</h2>
+            <p class="text-xs text-slate-500">Lista paginada da PaySuite sincronizada pelo backend.</p>
+          </div>
+
+          <div class="flex gap-2">
+            <input id="searchInput" class="input !py-3" placeholder="Pesquisar referência, telefone..." />
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left">
+            <thead class="bg-slate-950/70 text-slate-400 text-xs uppercase tracking-widest">
+              <tr>
+                <th class="px-5 py-4">Referência</th>
+                <th class="px-5 py-4">Beneficiário</th>
+                <th class="px-5 py-4">Método</th>
+                <th class="px-5 py-4">Valor</th>
+                <th class="px-5 py-4">Status</th>
+                <th class="px-5 py-4">Data</th>
+              </tr>
+            </thead>
+            <tbody id="payoutTable" class="divide-y divide-white/5">
+              <tr>
+                <td colspan="6" class="px-5 py-12 text-center text-slate-500">
+                  A carregar payouts...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="p-4 border-t border-white/10 flex justify-between items-center">
+          <button id="prevBtn" class="px-4 py-2 rounded-xl bg-white/10 border border-white/10 font-bold disabled:opacity-40">Anterior</button>
+          <span id="pageLabel" class="text-sm text-slate-400">Página 1</span>
+          <button id="nextBtn" class="px-4 py-2 rounded-xl bg-white/10 border border-white/10 font-bold disabled:opacity-40">Próxima</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="fixed right-5 top-5 z-50 hidden max-w-md rounded-2xl border p-4 shadow-2xl"></div>
+
+<script>
+const API_BASE = '/api';
+let payouts = [];
+let page = 1;
+let hasNext = false;
+
+function mt(value) {
+  const n = Number(value || 0);
+  return n.toLocaleString('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' MT';
+}
+
+function showToast(message, type = 'info') {
+  const toast = document.getElementById('toast');
+  const styles = {
+    success: 'bg-emerald-950/95 border-emerald-500/30 text-emerald-100',
+    error: 'bg-red-950/95 border-red-500/30 text-red-100',
+    info: 'bg-slate-950/95 border-white/10 text-white',
+    warning: 'bg-amber-950/95 border-amber-500/30 text-amber-100'
+  };
+  toast.className = `fixed right-5 top-5 z-50 max-w-md rounded-2xl border p-4 shadow-2xl ${styles[type] || styles.info}`;
+  toast.textContent = message;
+  toast.classList.remove('hidden');
+  setTimeout(() => toast.classList.add('hidden'), 4500);
+}
+
+function statusBadge(status) {
+  const clean = String(status || 'pending').toLowerCase();
+  const cls = clean === 'completed'
+    ? 'badge badge-completed'
+    : clean === 'failed'
+      ? 'badge badge-failed'
+      : clean === 'cancelled'
+        ? 'badge badge-cancelled'
+        : 'badge badge-pending';
+
+  return `<span class="${cls}">${clean}</span>`;
+}
+
+function renderStats(items) {
+  const total = items.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+  const pending = items.filter(p => String(p.status).toLowerCase() === 'pending').length;
+  const completed = items.filter(p => String(p.status).toLowerCase() === 'completed').length;
+  const failed = items.filter(p => ['failed', 'cancelled'].includes(String(p.status).toLowerCase())).length;
+
+  document.getElementById('statTotal').textContent = mt(total);
+  document.getElementById('statPending').textContent = pending;
+  document.getElementById('statCompleted').textContent = completed;
+  document.getElementById('statFailed').textContent = failed;
+}
+
+function renderTable() {
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const filtered = payouts.filter(p => {
+    const target = [
+      p.reference,
+      p.status,
+      p.method,
+      p.description,
+      p.beneficiary?.phone,
+      p.beneficiary?.holder
+    ].join(' ').toLowerCase();
+    return target.includes(q);
+  });
+
+  renderStats(filtered);
+
+  const table = document.getElementById('payoutTable');
+
+  if (!filtered.length) {
+    table.innerHTML = `<tr><td colspan="6" class="px-5 py-12 text-center text-slate-500">Nenhum payout encontrado.</td></tr>`;
+    return;
+  }
+
+  table.innerHTML = filtered.map(p => `
+    <tr class="hover:bg-white/[0.03] transition">
+      <td class="px-5 py-4">
+        <div class="font-black text-brand-400">${p.reference || p.id || 'N/A'}</div>
+        <div class="text-xs text-slate-500">${p.id || ''}</div>
+      </td>
+      <td class="px-5 py-4">
+        <div class="font-bold">${p.beneficiary?.holder || 'N/A'}</div>
+        <div class="text-xs text-slate-500">${p.beneficiary?.phone || 'N/A'}</div>
+      </td>
+      <td class="px-5 py-4 uppercase font-black text-sm">${p.method || 'N/A'}</td>
+      <td class="px-5 py-4 font-black">${mt(p.amount)}</td>
+      <td class="px-5 py-4">${statusBadge(p.status)}</td>
+      <td class="px-5 py-4 text-sm text-slate-400">${p.created_at ? new Date(p.created_at).toLocaleString('pt-MZ') : 'N/A'}</td>
+    </tr>
+  `).join('');
+}
+
+async function loadPayouts() {
+  const refreshBtn = document.getElementById('refreshBtn');
+  refreshBtn.disabled = true;
+  refreshBtn.innerHTML = '<span class="loader"></span> A carregar...';
+
+  try {
+    const res = await fetch(`${API_BASE}/paysuite-payouts?page=${page}&limit=15`);
+    const data = await res.json();
+
+    if (!res.ok || data.success === false) {
+      throw new Error(data.error || data.message || 'Falha ao carregar payouts.');
+    }
+
+    payouts = data.data || [];
+    hasNext = Boolean(data.meta?.hasNext || data.links?.next);
+    document.getElementById('pageLabel').textContent = `Página ${page}`;
+    document.getElementById('prevBtn').disabled = page <= 1;
+    document.getElementById('nextBtn').disabled = !hasNext;
+
+    renderTable();
+  } catch (error) {
+    document.getElementById('payoutTable').innerHTML = `<tr><td colspan="6" class="px-5 py-12 text-center text-red-300">${error.message}</td></tr>`;
+    showToast(error.message, 'error');
+  } finally {
+    refreshBtn.disabled = false;
+    refreshBtn.innerHTML = '<i data-lucide="refresh-cw" class="w-5 h-5"></i> Atualizar lista';
+    lucide.createIcons();
+  }
+}
+
+async function createPayout(event) {
+  event.preventDefault();
+
+  const submitBtn = document.getElementById('submitBtn');
+  const original = submitBtn.innerHTML;
+
+  const payload = {
+    amount: Number(document.getElementById('amount').value),
+    method: document.getElementById('method').value,
+    beneficiary: {
+      phone: document.getElementById('phone').value.trim(),
+      holder: document.getElementById('holder').value.trim()
+    },
+    reference: document.getElementById('reference').value.trim() || `PO-${Date.now()}`,
+    description: document.getElementById('description').value.trim() || 'Payout PayGo'
+  };
+
+  if (!payload.amount || payload.amount <= 0) {
+    showToast('Informe um valor válido.', 'warning');
+    return;
+  }
+
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<span class="loader"></span> A enviar para PaySuite...';
+
+  try {
+    const res = await fetch(`${API_BASE}/paysuite-create-payout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || data.success === false) {
+      throw new Error(data.error || data.message || 'Falha ao criar payout.');
+    }
+
+    showToast('Payout criado com sucesso.', 'success');
+    document.getElementById('payoutForm').reset();
+    page = 1;
+    await loadPayouts();
+  } catch (error) {
+    showToast(error.message, 'error');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = original;
+    lucide.createIcons();
+  }
+}
+
+document.getElementById('payoutForm').addEventListener('submit', createPayout);
+document.getElementById('refreshBtn').addEventListener('click', loadPayouts);
+document.getElementById('searchInput').addEventListener('input', renderTable);
+document.getElementById('prevBtn').addEventListener('click', () => { if (page > 1) { page--; loadPayouts(); } });
+document.getElementById('nextBtn').addEventListener('click', () => { if (hasNext) { page++; loadPayouts(); } });
+
+lucide.createIcons();
+loadPayouts();
+</script>
+</body>
+</html>
