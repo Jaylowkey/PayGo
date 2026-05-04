@@ -99,6 +99,162 @@ function buildBaseUrl(req) {
   return `${proto}://${host}`;
 }
 
+
+function toMoneyNumber(value, fallback = 0) {
+  const n = Number(String(value ?? '').replace(',', '.'));
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function roundMoney(value) {
+  return Math.round((Number(value || 0) + Number.EPSILON) * 100) / 100;
+}
+
+function getPaySuitePaymentId(paymentData = {}) {
+  return paymentData.payment_id || paymentData.paymentId || paymentData.id || 'N/A';
+}
+
+const PAYSUITE_DEFAULT_FEES = {
+  mpesa: 6.48,
+  emola: 6.48,
+  mkesh: 5.98,
+  card: 7.48,
+  visa: 7.48,
+  mastercard: 7.48,
+  default: 6.48
+};
+
+function normalizePaySuiteMethod(method = '') {
+  const clean = String(method || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (['mpesa', 'mpesaapi', 'mpsa'].includes(clean)) return 'mpesa';
+  if (['emola', 'emolaapi'].includes(clean)) return 'emola';
+  if (['mkesh', 'mkeshapi'].includes(clean)) return 'mkesh';
+  if (['visa', 'mastercard', 'card', 'creditcard', 'debitcard'].includes(clean)) return 'card';
+  return clean || 'default';
+}
+
+function getPaySuiteFeePercent(paymentData = {}, originalData = {}) {
+  const method = normalizePaySuiteMethod(
+    paymentData.method ||
+    paymentData.payment_method ||
+    paymentData.paymentMethod ||
+    paymentData.transaction?.method ||
+    originalData.method ||
+    originalData.paymentMethod ||
+    originalData.payment_method
+  );
+
+  const envSpecificKey = `PAYSUITE_FEE_PERCENT_${method.toUpperCase()}`;
+  const envSpecific = process.env[envSpecificKey];
+  if (envSpecific !== undefined) return toMoneyNumber(envSpecific, PAYSUITE_DEFAULT_FEES[method] ?? PAYSUITE_DEFAULT_FEES.default);
+
+  const envGeneral = process.env.PAYSUITE_FEE_PERCENT ?? process.env.PAYSUITE_PERCENT_FEE;
+  if (envGeneral !== undefined) return toMoneyNumber(envGeneral, PAYSUITE_DEFAULT_FEES[method] ?? PAYSUITE_DEFAULT_FEES.default);
+
+  return PAYSUITE_DEFAULT_FEES[method] ?? PAYSUITE_DEFAULT_FEES.default;
+}
+
+function formatMoneyMZN(value) {
+  return `${roundMoney(value).toLocaleString('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MT`;
+}
+
+function pickFirstMoney(...values) {
+  for (const value of values) {
+    const n = toMoneyNumber(value, NaN);
+    if (Number.isFinite(n) && n >= 0) return n;
+  }
+  return 0;
+}
+
+function resolvePaySuiteNetSettlement(paymentData = {}, fallbackGross = 0) {
+  return pickFirstMoney(
+    paymentData.net_amount,
+    paymentData.netAmount,
+    paymentData.settlement_amount,
+    paymentData.settlementAmount,
+    paymentData.received_amount,
+    paymentData.receivedAmount,
+    paymentData.amount_settled,
+    paymentData.amountSettled,
+    paymentData.merchant_amount,
+    paymentData.merchantAmount,
+    paymentData.balance_amount,
+    paymentData.balanceAmount,
+    paymentData.credit_amount,
+    paymentData.creditAmount,
+    fallbackGross
+  );
+}
+
+function resolvePaySuiteFee(paymentData = {}, grossAmount = 0, originalData = {}) {
+  const explicitFee = pickFirstMoney(
+    paymentData.fee,
+    paymentData.fees,
+    paymentData.gateway_fee,
+    paymentData.gatewayFee,
+    paymentData.commission,
+    paymentData.provider_fee,
+    paymentData.providerFee,
+    paymentData.processing_fee,
+    paymentData.processingFee,
+    paymentData.charge_fee,
+    paymentData.chargeFee
+  );
+
+  if (explicitFee > 0) return roundMoney(explicitFee);
+
+  const explicitNet = resolvePaySuiteNetSettlement(paymentData, 0);
+  if (explicitNet > 0 && grossAmount > explicitNet) {
+    return roundMoney(grossAmount - explicitNet);
+  }
+
+  const fixedFee = toMoneyNumber(process.env.PAYSUITE_FIXED_FEE_MT ?? process.env.PAYSUITE_FIXED_FEE ?? '0', 0);
+  const percentFee = getPaySuiteFeePercent(paymentData, originalData);
+  const calculated = fixedFee + (grossAmount * percentFee / 100);
+  return roundMoney(Math.max(0, calculated));
+}
+
+function calculatePaySuiteWalletCredit(paymentData = {}, originalData = {}) {
+  const grossAmount = roundMoney(pickFirstMoney(
+    paymentData.amount,
+    paymentData.total_amount,
+    paymentData.totalAmount,
+    paymentData.paid_amount,
+    paymentData.paidAmount,
+    originalData.chargedAmount,
+    originalData.grossPaidAmount,
+    originalData.total,
+    originalData.amount
+  ));
+
+  const mode = String(process.env.PAYSUITE_WALLET_CREDIT_MODE || 'net').toLowerCase();
+
+  if (mode === 'gross') {
+    return {
+      grossAmount,
+      gatewayFeeAmount: 0,
+      walletCreditAmount: grossAmount,
+      creditMode: 'gross',
+      feePercent: 0
+    };
+  }
+
+  const feeAmount = resolvePaySuiteFee(paymentData, grossAmount, originalData);
+  const netFromPayload = resolvePaySuiteNetSettlement(paymentData, 0);
+  const walletCreditAmount = roundMoney(
+    netFromPayload > 0 && netFromPayload <= grossAmount
+      ? netFromPayload
+      : Math.max(0, grossAmount - feeAmount)
+  );
+
+  return {
+    grossAmount,
+    gatewayFeeAmount: roundMoney(Math.max(0, grossAmount - walletCreditAmount)),
+    walletCreditAmount,
+    creditMode: netFromPayload > 0 && netFromPayload <= grossAmount ? 'net_from_paysuite_payload' : 'net_estimated_by_paysuite_rates',
+    feePercent: getPaySuiteFeePercent(paymentData, originalData)
+  };
+}
+
 async function getAuthenticatedUser(req) {
   const authHeader = req.headers.authorization || req.headers.Authorization || '';
   if (!authHeader.startsWith('Bearer ')) {
@@ -320,26 +476,40 @@ function getFallbackSubject(template, vars) {
 
 // 🎨 GENERATE NOTIFY HTML (Admin Notifications)
 function generateNotifyHTML(action, order, reason, extraAmount, mediaUrl) {
-  const total = Number(order.total || order.amount || 0).toLocaleString('pt-MZ', { minimumFractionDigits: 2 });
   const orderId = order.orderId || order.topupId || 'N/A';
+  const grossAmount = pickFirstMoney(order.grossPaidAmount, order.paidAmount, order.chargedAmount, order.total, order.amount);
+  const gatewayFeeAmount = pickFirstMoney(order.gatewayFeeAmount, order.gatewayFee, 0);
+  const walletCreditAmount = pickFirstMoney(order.walletCreditAmount, order.netAmount, order.amount, grossAmount);
+  const method = String(order.paymentMethod || order.method || 'N/A').toUpperCase();
+  const total = formatMoneyMZN(grossAmount);
+  const fee = formatMoneyMZN(gatewayFeeAmount);
+  const net = formatMoneyMZN(walletCreditAmount);
 
   const base = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><style>${getBaseStyles()}</style></head><body><div class="wrapper"><table class="container" cellpadding="0" cellspacing="0">`;
-  const foot = `<tr><td class="footer"><div class="footer-brand">PayGo Admin 🎛️</div><div>Painel de Controlo Interno</div></td></tr></table></div></body></html>`;
+  const foot = `<tr><td class="footer"><div class="footer-brand">PayGo Moçambique 🇲🇿</div><div>Suporte humano: WhatsApp +${WHATSAPP_NUMBER}</div><div style="margin-top:8px;font-size:11px;color:#94a3b8;">Mensagem automática. Guarde este email como comprovativo.</div></td></tr></table></div></body></html>`;
+
+  const paymentRows = `
+    <div class="detail-row"><span class="detail-label">Pedido</span><span class="detail-value order-id">#${escapeHTML(orderId)}</span></div>
+    <div class="detail-row"><span class="detail-label">Método</span><span class="detail-value">${escapeHTML(method)}</span></div>
+    <div class="detail-row"><span class="detail-label">Valor pago</span><span class="detail-value">${total}</span></div>
+    ${gatewayFeeAmount > 0 ? `<div class="detail-row"><span class="detail-label">Taxa PaySuite estimada/descontada</span><span class="detail-value" style="color:${BRAND_COLORS.warning};">-${fee}</span></div>` : ''}
+    <div class="detail-row"><span class="detail-label">Valor líquido registado</span><span class="detail-value" style="color:${BRAND_COLORS.success};font-size:18px;">${net}</span></div>
+  `;
 
   switch(action) {
     case 'payment_confirmed':
-      return `${base}<tr><td class="header" style="background:linear-gradient(135deg,${BRAND_COLORS.success},#059669);"><div class="header-content"><div class="logo">✅ PayGo <span class="logo-badge">Pago</span></div></div></td></tr><tr><td class="content"><span class="hero-icon">💸</span><h1 style="font-size:24px;font-weight:800;margin:0 0 8px;">Pagamento Recebido!</h1><p class="greeting">Olá, ${escapeHTML(order.name || 'Cliente')}.</p><div class="card" style="background:linear-gradient(145deg,#f0fdf4,#dcfce7);border-color:#bbf7d0;"><div class="card-title" style="color:${BRAND_COLORS.success};">🎉 Confirmação</div><div class="amount-highlight">${total} MT</div><div class="detail-row"><span class="detail-label">Pedido</span><span class="detail-value order-id">#${orderId}</span></div><div class="detail-row"><span class="detail-label">Status</span><span class="status-badge completed">🔄 Processando</span></div></div><p style="text-align:center;color:#64748b;">A equipa PayGo irá processar o seu pedido.</p></td></tr>${foot}`;
+      return `${base}<tr><td class="header" style="background:linear-gradient(135deg,${BRAND_COLORS.success},#059669);"><div class="header-content"><div class="logo">✅ PayGo <span class="logo-badge">Pagamento Confirmado</span></div></div></td></tr><tr><td class="content"><span class="hero-icon">💸</span><h1 style="font-size:24px;font-weight:800;margin:0 0 8px;">Pagamento confirmado</h1><p class="greeting">Olá, ${escapeHTML(order.name || 'Cliente')}.</p><p class="message">Recebemos a confirmação do pagamento. O valor líquido já foi registado de forma segura no sistema PayGo.</p><div class="card" style="background:linear-gradient(145deg,#f0fdf4,#dcfce7);border-color:#bbf7d0;"><div class="card-title" style="color:${BRAND_COLORS.success};">📌 Resumo financeiro</div>${paymentRows}</div><div class="alert success"><div class="alert-title">🔒 Segurança</div><div style="color:#166534;font-size:14px;">Se a PaySuite enviar eventos duplicados ou contraditórios, a PayGo mantém prioridade para pagamento confirmado e evita crédito duplicado.</div></div><p style="text-align:center;color:#64748b;">A equipa PayGo irá processar o seu pedido e atualizar o estado no painel.</p></td></tr>${foot}`;
 
     case 'order_refunded':
-      return `${base}<tr><td class="header" style="background:linear-gradient(135deg,${BRAND_COLORS.purple},#7c3aed);"><div class="header-content"><div class="logo">🟣 PayGo <span class="logo-badge">Reembolso</span></div></div></td></tr><tr><td class="content"><span class="hero-icon">↩️</span><h1 style="font-size:24px;font-weight:800;margin:0 0 8px;">Reembolso Emitido</h1><p class="greeting">Olá, ${escapeHTML(order.name || 'Cliente')}.</p><div class="card" style="background:linear-gradient(145deg,#faf5ff,#f3e8ff);border-color:#ddd6fe;"><div class="card-title" style="color:${BRAND_COLORS.purple};">💰 Valor Devolvido</div><div class="amount-highlight" style="color:${BRAND_COLORS.purple};">${total} MT</div><div class="detail-row"><span class="detail-label">Motivo</span><span class="detail-value">${escapeHTML(reason || 'Processado pela equipa.')}</span></div></div>${mediaUrl ? `<div style="text-align:center;margin:20px 0;"><a href="${mediaUrl}" class="btn" style="background:linear-gradient(135deg,${BRAND_COLORS.purple},#7c3aed);">📄 Ver Comprovativo</a></div>` : ''}</td></tr>${foot}`;
+      return `${base}<tr><td class="header" style="background:linear-gradient(135deg,${BRAND_COLORS.purple},#7c3aed);"><div class="header-content"><div class="logo">🟣 PayGo <span class="logo-badge">Reembolso</span></div></div></td></tr><tr><td class="content"><span class="hero-icon">↩️</span><h1 style="font-size:24px;font-weight:800;margin:0 0 8px;">Reembolso emitido</h1><p class="greeting">Olá, ${escapeHTML(order.name || 'Cliente')}.</p><p class="message">O reembolso foi registado pela equipa PayGo.</p><div class="card" style="background:linear-gradient(145deg,#faf5ff,#f3e8ff);border-color:#ddd6fe;"><div class="card-title" style="color:${BRAND_COLORS.purple};">💰 Valor devolvido</div><div class="amount-highlight" style="color:${BRAND_COLORS.purple};">${formatMoneyMZN(order.refundAmount || order.total || order.amount || 0)}</div><div class="detail-row"><span class="detail-label">Pedido</span><span class="detail-value order-id">#${escapeHTML(orderId)}</span></div><div class="detail-row"><span class="detail-label">Motivo</span><span class="detail-value">${escapeHTML(reason || 'Processado pela equipa.')}</span></div></div>${mediaUrl ? `<div style="text-align:center;margin:20px 0;"><a href="${mediaUrl}" class="btn" style="background:linear-gradient(135deg,${BRAND_COLORS.purple},#7c3aed);">📄 Ver comprovativo</a></div>` : ''}</td></tr>${foot}`;
 
     case 'insufficient_funds':
-      return `${base}<tr><td class="header" style="background:linear-gradient(135deg,${BRAND_COLORS.warning},#d97706);"><div class="header-content"><div class="logo">⚠️ PayGo <span class="logo-badge">Ação</span></div></div></td></tr><tr><td class="content"><span class="hero-icon">🔔</span><h1 style="font-size:24px;font-weight:800;margin:0 0 8px;">Ação Necessária</h1><p class="greeting">Olá, ${escapeHTML(order.name || 'Cliente')}.</p><p class="message">Houve uma alteração de custos no pedido <span class="order-id">#${orderId}</span>.</p><div class="alert"><div class="alert-title">💰 Valor em Falta</div><div style="font-size:24px;font-weight:800;color:#b45309;text-align:center;margin:8px 0;">${Number(extraAmount || 0).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT</div></div><div class="card"><div class="card-title" style="color:${BRAND_COLORS.warning};">📝 Justificação</div><p style="margin:0;color:#78350e;">${escapeHTML(reason || 'Subida de câmbio ou taxa extra de transporte.')}</p></div><div style="text-align:center;margin:24px 0;"><a href="${SITE_URL}/dashboard.html" class="btn">💳 Depositar Fundos</a></div></td></tr>${foot}`;
+      return `${base}<tr><td class="header" style="background:linear-gradient(135deg,${BRAND_COLORS.warning},#d97706);"><div class="header-content"><div class="logo">⚠️ PayGo <span class="logo-badge">Ação necessária</span></div></div></td></tr><tr><td class="content"><span class="hero-icon">🔔</span><h1 style="font-size:24px;font-weight:800;margin:0 0 8px;">Ajuste de valor necessário</h1><p class="greeting">Olá, ${escapeHTML(order.name || 'Cliente')}.</p><p class="message">Houve uma alteração de custos no pedido <span class="order-id">#${escapeHTML(orderId)}</span>.</p><div class="alert"><div class="alert-title">💰 Valor em falta</div><div style="font-size:24px;font-weight:800;color:#b45309;text-align:center;margin:8px 0;">${formatMoneyMZN(extraAmount || 0)}</div></div><div class="card"><div class="card-title" style="color:${BRAND_COLORS.warning};">📝 Justificação</div><p style="margin:0;color:#78350e;">${escapeHTML(reason || 'Subida de câmbio ou taxa extra de transporte.')}</p></div><div style="text-align:center;margin:24px 0;"><a href="${SITE_URL}/dashboard.html" class="btn">💳 Depositar fundos</a></div></td></tr>${foot}`;
 
     default: {
       const waLink = getWhatsAppLink(order);
       const isBank = String(order.paymentMethod || '').includes('transferencia');
-      return `${base}<tr><td class="header"><div class="header-content"><div class="logo">🛒 PayGo <span class="logo-badge">Novo</span></div></div></td></tr><tr><td class="content"><span class="hero-icon">📦</span><h1 style="font-size:24px;font-weight:800;margin:0 0 8px;">Pedido Registado!</h1><p class="greeting">Olá, ${escapeHTML(order.name || 'Cliente')}.</p><p class="message">O pedido <span class="order-id">#${orderId}</span> foi registado com sucesso.</p><div class="card"><div class="card-title">💰 Detalhes</div><div class="detail-row"><span class="detail-label">Total</span><span class="detail-value" style="color:${BRAND_COLORS.primary};font-size:18px;">${total} MT</span></div><div class="detail-row"><span class="detail-label">Método</span><span class="detail-value">${(order.paymentMethod || 'N/A').toUpperCase()}</span></div><div class="detail-row"><span class="detail-label">Cliente</span><span class="detail-value">${escapeHTML(order.name || 'N/A')}</span></div></div>${isBank ? `<div class="alert"><div class="alert-title">⚠️ Transferência Bancária</div><div style="color:#78350e;font-size:14px;">Envie o comprovativo via WhatsApp para validação.</div></div>` : `<div class="alert success"><div class="alert-title">🔔 Próximo Passo</div><div style="color:#166534;font-size:14px;">Aguarde instruções de pagamento no seu telemóvel.</div></div>`}<div style="text-align:center;margin:24px 0;"><a href="${waLink}" class="btn btn-whatsapp">💬 Falar no WhatsApp</a></div></td></tr>${foot}`;
+      return `${base}<tr><td class="header"><div class="header-content"><div class="logo">🛒 PayGo <span class="logo-badge">Novo pedido</span></div></div></td></tr><tr><td class="content"><span class="hero-icon">📦</span><h1 style="font-size:24px;font-weight:800;margin:0 0 8px;">Pedido registado</h1><p class="greeting">Olá, ${escapeHTML(order.name || 'Cliente')}.</p><p class="message">O pedido <span class="order-id">#${escapeHTML(orderId)}</span> foi registado com sucesso.</p><div class="card"><div class="card-title">💰 Detalhes</div><div class="detail-row"><span class="detail-label">Total</span><span class="detail-value" style="color:${BRAND_COLORS.primary};font-size:18px;">${total}</span></div><div class="detail-row"><span class="detail-label">Método</span><span class="detail-value">${escapeHTML(method)}</span></div><div class="detail-row"><span class="detail-label">Cliente</span><span class="detail-value">${escapeHTML(order.name || 'N/A')}</span></div></div>${isBank ? `<div class="alert"><div class="alert-title">⚠️ Transferência bancária</div><div style="color:#78350e;font-size:14px;">Envie o comprovativo via WhatsApp para validação.</div></div>` : `<div class="alert success"><div class="alert-title">🔔 Próximo passo</div><div style="color:#166534;font-size:14px;">Aguarde instruções de pagamento no seu telemóvel.</div></div>`}<div style="text-align:center;margin:24px 0;"><a href="${waLink}" class="btn btn-whatsapp">💬 Falar no WhatsApp</a></div></td></tr>${foot}`;
     }
   }
 }
@@ -481,7 +651,7 @@ async function handlePaySuitePayment(req, res, body) {
   try { result = JSON.parse(textResponse); } catch { return res.status(502).json({ success: false, error: `Serviço ${cleanMethod.toUpperCase()} indisponível.`, raw: textResponse.substring(0, 300) }); }
   if (!response.ok || result.status === 'error') return res.status(400).json({ success: false, error: result.message || 'Servidor rejeitou.', data: result });
 
-  return res.status(200).json({ success: true, data: { paymentId: result.data?.id, status: result.data?.status, reference: result.data?.reference, checkoutUrl: result.data?.checkout_url, method: cleanMethod, amount: result.data?.amount }, message: 'Redirecione o cliente para o checkoutUrl' });
+  return res.status(200).json({ success: true, data: { paymentId: result.data?.id, status: result.data?.status, reference: result.data?.reference, checkoutUrl: result.data?.checkout_url, method: cleanMethod, amount: result.data?.amount || payload.amount, grossAmount: payload.amount, walletCreditMode: process.env.PAYSUITE_WALLET_CREDIT_MODE || 'net' }, message: 'Redirecione o cliente para o checkoutUrl' });
 }
 
 async function handlePaySuiteWebhook(req, res, body) {
@@ -566,28 +736,172 @@ async function handlePaySuiteWebhook(req, res, body) {
   }
 
   if (merchantReference.startsWith('TOP-')) {
-    const snap = await db.collection('topups').where('topupId', '==', merchantReference).get();
+    const snap = await db.collection('topups').where('topupId', '==', merchantReference).limit(1).get();
     if (snap.empty) return res.status(200).json({ warning: `Depósito ${merchantReference} não encontrado.` });
 
     const docTopup = snap.docs[0];
-    const topupData = docTopup.data();
+    const topupData = docTopup.data() || {};
+    const paymentId = getPaySuitePaymentId(paymentData);
 
     if (isSuccess) {
-      if (topupData.status === 'completed') return res.status(200).json({ message: 'Depósito já processado.' });
-
+      const settlement = calculatePaySuiteWalletCredit(paymentData, topupData);
+      const amountToCredit = settlement.walletCreditAmount;
+      const grossAmount = settlement.grossAmount;
+      const gatewayFeeAmount = settlement.gatewayFeeAmount;
       const userId = topupData.userId;
-      const amountToCredit = parseFloat(topupData.amount);
 
-      await docTopup.ref.update({ status: 'completed', paysuiteId: paymentData.payment_id || paymentData.id || 'N/A', updatedAt: agora });
-      await db.collection('users').doc(userId).update({ walletBalance: FieldValue.increment(amountToCredit) });
-      await db.collection('wallet_transactions').add({ userId, type: 'credit', amount: amountToCredit, description: `Depósito via ${paymentData.method || 'M-Pesa/e-Mola'}`, reference: merchantReference, createdAt: agora });
+      if (!userId) {
+        await db.collection('webhook_logs').add({
+          source: 'paysuite',
+          rawPayload: body,
+          status: 'topup_success_missing_user_id',
+          reference: merchantReference,
+          paymentId,
+          createdAt: agora,
+          receivedAt: agora
+        });
+        return res.status(400).json({ success: false, error: 'Depósito sem userId. Carteira não creditada.' });
+      }
 
-      return res.status(200).json({ success: true, operation: 'wallet_funded' });
+      if (!amountToCredit || amountToCredit <= 0) {
+        await db.collection('webhook_logs').add({
+          source: 'paysuite',
+          rawPayload: body,
+          status: 'topup_success_invalid_credit_amount',
+          reference: merchantReference,
+          paymentId,
+          grossAmount,
+          gatewayFeeAmount,
+          walletCreditAmount: amountToCredit,
+          createdAt: agora,
+          receivedAt: agora
+        });
+        return res.status(400).json({ success: false, error: 'Valor líquido inválido. Carteira não creditada.' });
+      }
+
+      let alreadyProcessed = false;
+      const txRef = db.collection('wallet_transactions').doc(`paysuite_${String(paymentId).replace(/[^a-zA-Z0-9_-]/g, '_')}_${merchantReference}`);
+
+      await db.runTransaction(async (transaction) => {
+        const freshTopupSnap = await transaction.get(docTopup.ref);
+        const freshTopup = freshTopupSnap.exists ? (freshTopupSnap.data() || {}) : {};
+
+        if (freshTopup.walletCredited === true || freshTopup.status === 'completed') {
+          alreadyProcessed = true;
+          return;
+        }
+
+        transaction.update(docTopup.ref, {
+          status: 'completed',
+          paymentStatus: 'paid',
+          isPaid: true,
+          walletCredited: true,
+          walletCreditMode: settlement.creditMode,
+          walletCreditAmount: amountToCredit,
+          grossPaidAmount: grossAmount,
+          gatewayFeeAmount,
+          gatewayFeePercent: settlement.feePercent || getPaySuiteFeePercent(paymentData, topupData),
+          paysuiteId: paymentId,
+          paysuiteReference: paymentData.reference || merchantReference,
+          paidAmount: grossAmount,
+          completedAt: agora,
+          updatedAt: agora
+        });
+
+        transaction.update(db.collection('users').doc(userId), {
+          walletBalance: FieldValue.increment(amountToCredit)
+        });
+
+        transaction.set(txRef, {
+          userId,
+          type: 'credit',
+          amount: amountToCredit,
+          grossAmount,
+          gatewayFeeAmount,
+          gatewayFeePercent: settlement.feePercent || getPaySuiteFeePercent(paymentData, topupData),
+          provider: 'paysuite',
+          creditMode: settlement.creditMode,
+          description: `Depósito PaySuite líquido (${grossAmount.toFixed(2)} MT - taxa ${gatewayFeeAmount.toFixed(2)} MT)`,
+          reference: merchantReference,
+          paymentId,
+          rawPayload: paymentData,
+          createdAt: agora
+        }, { merge: false });
+      });
+
+      if (alreadyProcessed) {
+        await db.collection('webhook_logs').add({
+          source: 'paysuite',
+          rawPayload: body,
+          status: 'ignored_duplicate_success',
+          reference: merchantReference,
+          paymentId,
+          createdAt: agora,
+          receivedAt: agora
+        });
+        return res.status(200).json({ success: true, ignored: true, message: 'Depósito já tinha sido creditado.' });
+      }
+
+      await db.collection('webhook_logs').add({
+        source: 'paysuite',
+        rawPayload: body,
+        status: topupData.status === 'failed' ? 'success_after_failed_wallet_funded_net' : 'success_wallet_funded_net',
+        reference: merchantReference,
+        paymentId,
+        grossAmount,
+        gatewayFeeAmount,
+        walletCreditAmount: amountToCredit,
+        gatewayFeePercent: settlement.feePercent || getPaySuiteFeePercent(paymentData, topupData),
+        creditMode: settlement.creditMode,
+        createdAt: agora,
+        receivedAt: agora
+      });
+
+      return res.status(200).json({
+        success: true,
+        operation: topupData.status === 'failed' ? 'wallet_funded_after_failed' : 'wallet_funded',
+        grossAmount,
+        gatewayFeeAmount,
+        walletCreditAmount: amountToCredit,
+        gatewayFeePercent: settlement.feePercent || getPaySuiteFeePercent(paymentData, topupData),
+        creditMode: settlement.creditMode
+      });
     }
 
     if (isFailed) {
-      await docTopup.ref.update({ status: 'failed', updatedAt: agora });
-      return res.status(200).json({ message: 'Depósito falhou.' });
+      if (topupData.walletCredited === true || topupData.status === 'completed' || topupData.isPaid === true) {
+        await db.collection('webhook_logs').add({
+          source: 'paysuite',
+          rawPayload: body,
+          status: 'ignored_failed_after_success',
+          reference: merchantReference,
+          paymentId,
+          createdAt: agora,
+          receivedAt: agora
+        });
+        return res.status(200).json({ success: true, ignored: true, message: 'Failed ignorado porque o depósito já estava concluído.' });
+      }
+
+      await docTopup.ref.update({
+        status: 'failed',
+        paymentStatus: 'failed',
+        paysuiteId: paymentId,
+        paysuiteReference: paymentData.reference || merchantReference,
+        failedAt: agora,
+        updatedAt: agora
+      });
+
+      await db.collection('webhook_logs').add({
+        source: 'paysuite',
+        rawPayload: body,
+        status: 'payment_failed_recorded_waiting_possible_success',
+        reference: merchantReference,
+        paymentId,
+        createdAt: agora,
+        receivedAt: agora
+      });
+
+      return res.status(200).json({ success: true, operation: 'payment_failed_recorded' });
     }
   }
 
@@ -806,8 +1120,10 @@ async function handleNotifyOrder(req, res, body) {
     const fields = [
       { is_short: true, text: { tag: 'lark_md', content: `**ID:**\n#${orderId}` } },
       { is_short: true, text: { tag: 'lark_md', content: `**Cliente:**\n${orderData.name || 'N/A'}` } },
-      { is_short: true, text: { tag: 'lark_md', content: `**Total:**\n${orderData.total || orderData.amount || 0} MT` } },
-      { is_short: true, text: { tag: 'lark_md', content: `**Método:**\n${(orderData.paymentMethod || 'N/A').toUpperCase()}` } }
+      { is_short: true, text: { tag: 'lark_md', content: `**Pago bruto:**\n${orderData.grossPaidAmount || orderData.paidAmount || orderData.total || orderData.amount || 0} MT` } },
+      { is_short: true, text: { tag: 'lark_md', content: `**Taxa PaySuite:**\n${orderData.gatewayFeeAmount || 0} MT` } },
+      { is_short: true, text: { tag: 'lark_md', content: `**Líquido/Carteira:**\n${orderData.walletCreditAmount || orderData.netAmount || orderData.amount || 0} MT` } },
+      { is_short: true, text: { tag: 'lark_md', content: `**Método:**\n${(orderData.paymentMethod || orderData.method || 'N/A').toUpperCase()}` } }
     ];
     if (reason) fields.push({ is_short: false, text: { tag: 'lark_md', content: `**Motivo / Nota:**\n${reason}` } });
     if (extraAmount) fields.push({ is_short: false, text: { tag: 'lark_md', content: `**Valor em Falta:**\n${extraAmount} MT` } });
