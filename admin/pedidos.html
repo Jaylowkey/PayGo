@@ -517,6 +517,36 @@ function normalizeLower(v) {
   return safeText(v).toLowerCase();
 }
 
+function escapeHTML(str) {
+  return safeText(str).replace(/[&<>'"]/g, tag => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    "'": '&#39;',
+    '"': '&quot;'
+  }[tag] || tag));
+}
+
+function normalizeExternalUrl(value) {
+  const raw = safeText(value).trim();
+  if (!raw || raw === 'N/A') return '#';
+  try {
+    const url = new URL(raw);
+    return ['http:', 'https:'].includes(url.protocol) ? url.href : '#';
+  } catch (_) {
+    return '#';
+  }
+}
+
+function csvEscape(value) {
+  return `"${safeText(value).replace(/"/g, '""')}"`;
+}
+
+function isValidPositiveNumber(value) {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0;
+}
+
 function isPhysicalOrder(order) {
   return !order.isTopup && (!order.category || order.category === 'physical');
 }
@@ -570,7 +600,7 @@ window.showToast = (message, type = 'success') => {
   toast.className = `toast ${type}`;
   toast.innerHTML = `
     <i data-lucide="${iconMap[type] || 'check-check'}" class="w-5 h-5"></i>
-    <span class="text-sm font-bold text-white tracking-wide">${safeText(message)}</span>
+    <span class="text-sm font-bold text-white tracking-wide">${escapeHTML(message)}</span>
   `;
 
   container.appendChild(toast);
@@ -603,16 +633,6 @@ function getRelativeDateLabel(date) {
   if (date.toDateString() === yesterday.toDateString()) return 'Ontem';
   return date.toLocaleDateString('pt-MZ');
 }
-
-const escapeHTML = (str) => {
-  return safeText(str).replace(/[&<>'"]/g, tag => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    "'": '&#39;',
-    '"': '&quot;'
-  }[tag] || tag));
-};
 
 function safeDateFromFirestore(value) {
   if (value?.toDate) return value.toDate();
@@ -777,6 +797,8 @@ function loadDataRealTime() {
         total: Number(data.amount) || 0,
         tax: 0,
         status: isCompleted ? 'completed' : (isFailed ? 'failed' : 'pending'),
+        originalStatus: safeText(data.status, 'pending'),
+        walletInjected: Boolean(data.walletInjected),
         trackingCode: '',
         isPaid: isCompleted,
         paymentMethod: safeText(data.method, 'mpesa'),
@@ -1016,8 +1038,12 @@ window.addInternalNote = async (orderId) => {
 };
 
 window.requestExtraFunds = async (orderId) => {
-  const amount = prompt("Indique o valor em FALTA (MT) que o cliente deve pagar:");
-  if (!amount || isNaN(amount) || Number(amount) <= 0) return;
+  const amountRaw = prompt("Indique o valor em FALTA (MT) que o cliente deve pagar:");
+  const amount = Number(safeText(amountRaw).replace(',', '.'));
+  if (!isValidPositiveNumber(amount)) {
+    window.showToast('Valor inválido. Use apenas números positivos.', 'warning');
+    return;
+  }
 
   const reason = prompt("Qual o motivo? (Ex: Subida do câmbio, taxa extra de envio, etc)");
   if (!reason) return;
@@ -1028,7 +1054,7 @@ window.requestExtraFunds = async (orderId) => {
     return;
   }
 
-  const noteText = `ALERTA DE FUNDOS: Solicitado ${amount} MT adicionais ao cliente. Motivo: ${reason}`;
+  const noteText = `ALERTA DE FUNDOS: Solicitado ${formatValue(amount, 'currency')} adicionais ao cliente. Motivo: ${reason}`;
 
   try {
     const noteObj = {
@@ -1056,7 +1082,7 @@ window.requestExtraFunds = async (orderId) => {
       console.warn("Falha ao invocar servidor de emails, mas a nota foi salva.");
     });
 
-    window.showToast(`Solicitação de ${amount} MT enviada e registada!`, 'success');
+    window.showToast(`Solicitação de ${formatValue(amount, 'currency')} enviada e registada!`, 'success');
     window.closeModal();
   } catch (e) {
     console.error(e);
@@ -1194,7 +1220,8 @@ window.openModal = (orderId, isSilentUpdate = false) => {
   }
 
   const detailParts = safeText(order.detail).split(' | ');
-  const urlStr = detailParts[0] || '#';
+  const rawUrlStr = detailParts[0] || '#';
+  const urlStr = normalizeExternalUrl(rawUrlStr);
   const detStr = detailParts.slice(1).join(' | ') || 'Nenhum detalhe adicional.';
 
   document.getElementById('modalContent').innerHTML = `
@@ -1423,41 +1450,61 @@ window.saveOrderStatus = async () => {
   try {
     // TOPUP
     if (order.isTopup) {
-      if (newStatus === 'completed' && order.status !== 'completed') {
-        if (!order.userId) {
-          throw new Error('Este depósito não possui utilizador associado.');
-        }
-
-        const userRef = doc(db, "users", order.userId);
-        await updateDoc(userRef, {
-          walletBalance: increment(Number(order.total))
-        });
-
-        await addDoc(collection(db, "wallet_transactions"), {
-          userId: order.userId,
-          type: 'credit',
-          amount: Number(order.total),
-          description: `Depósito aprovado manualmente`,
-          reference: order.orderId,
-          createdAt: new Date().toISOString()
-        });
-
-        window.showToast('Dinheiro injetado na carteira do cliente!', 'success');
-      }
-
-      await updateDoc(doc(db, "topups", currentOrderId), {
+      const topupAmount = Number(order.total) || 0;
+      const updates = {
         status: newStatus,
         updatedAt: serverTimestamp()
-      });
+      };
 
+      if (newStatus === 'completed' && order.status !== 'completed') {
+        if (!order.userId) throw new Error('Este depósito não possui utilizador associado.');
+        if (!isValidPositiveNumber(topupAmount)) throw new Error('Valor do depósito inválido.');
+        if (order.walletInjected) throw new Error('Este depósito já foi injetado anteriormente.');
+
+        const batch = writeBatch(db);
+        const userRef = doc(db, "users", order.userId);
+        const txRef = doc(collection(db, "wallet_transactions"));
+        const topupRef = doc(db, "topups", currentOrderId);
+
+        batch.update(userRef, { walletBalance: increment(topupAmount) });
+        batch.set(txRef, {
+          userId: order.userId,
+          type: 'credit',
+          amount: topupAmount,
+          description: `Depósito aprovado manualmente`,
+          reference: order.orderId,
+          createdAt: serverTimestamp()
+        });
+        batch.update(topupRef, {
+          ...updates,
+          walletInjected: true,
+          approvedBy: loggedInAdminId || null,
+          approvedByName: loggedInAdminName || 'Equipa PayGo'
+        });
+
+        await batch.commit();
+        await logAdminAction('APPROVE_TOPUP_AND_CREDIT_WALLET', currentOrderId, { status: order.status }, { status: newStatus, amount: topupAmount });
+        window.showToast('Dinheiro injetado na carteira do cliente!', 'success');
+        window.closeModal();
+        return;
+      }
+
+      await updateDoc(doc(db, "topups", currentOrderId), updates);
       await logAdminAction('UPDATE_TOPUP_STATUS', currentOrderId, { status: order.status }, { status: newStatus });
+      window.showToast('Estado do depósito atualizado.', 'success');
       window.closeModal();
       return;
     }
 
     // NORMAL ORDER
-    const newTracking = safeText(document.getElementById('trackingInput')?.value).trim();
+    const newTracking = safeText(document.getElementById('trackingInput')?.value).trim().toUpperCase();
     const oldStatus = order.status;
+
+    if (newStatus === 'shipped' && isPhysicalOrder(order) && !newTracking) {
+      window.showToast('Insira o código de rastreio antes de marcar como Em Trânsito.', 'warning');
+      if (btn) { btn.disabled = false; btn.innerHTML = originalText; window.renderIcons(); }
+      return;
+    }
 
     let refundReasonText = '';
     let refundNoteObj = null;
@@ -1523,9 +1570,53 @@ window.saveOrderStatus = async () => {
     if (refundNoteObj) {
       updateData.adminNotes = arrayUnion(refundNoteObj);
       updateData.refundProcessed = true;
+      updateData.refundedBy = loggedInAdminId || null;
+      updateData.refundedByName = loggedInAdminName || 'Equipa PayGo';
+      updateData.refundedAt = serverTimestamp();
     }
 
-    await updateDoc(doc(db, "orders", currentOrderId), updateData);
+    if (newStatus === 'refunded' && !order.refundProcessed && order.userId) {
+      const refundAmount = Number(order.total) || 0;
+      if (!isValidPositiveNumber(refundAmount)) throw new Error('Valor do reembolso inválido.');
+
+      const userRef = doc(db, "users", order.userId);
+      const userSnap = await getDoc(userRef);
+      if (!userSnap.exists()) throw new Error('Cliente já não existe na base de dados. Saldo não injetado.');
+
+      const batch = writeBatch(db);
+      const orderRef = doc(db, "orders", currentOrderId);
+      const topupRef = doc(collection(db, "topups"));
+      const txRef = doc(collection(db, "wallet_transactions"));
+
+      batch.update(orderRef, updateData);
+      batch.update(userRef, { walletBalance: increment(refundAmount) });
+      batch.set(topupRef, {
+        userId: order.userId,
+        userName: order.name,
+        userEmail: order.email,
+        amount: refundAmount,
+        method: 'refund',
+        status: 'completed',
+        topupId: `REF-${order.orderId || order.id.substring(0, 6)}`,
+        createdAt: serverTimestamp(),
+        detail: `Reembolso automático. Fatura: ${order.orderId}. Motivo: ${refundReasonText}`,
+        relatedOrderId: currentOrderId
+      });
+      batch.set(txRef, {
+        userId: order.userId,
+        type: 'credit',
+        amount: refundAmount,
+        description: `Reembolso automático da fatura ${order.orderId}`,
+        reference: `REF-${order.orderId || order.id.substring(0, 6)}`,
+        createdAt: serverTimestamp()
+      });
+
+      await batch.commit();
+      window.showToast(`Reembolso de ${formatValue(refundAmount, 'currency')} injetado na carteira.`, 'success');
+    } else {
+      await updateDoc(doc(db, "orders", currentOrderId), updateData);
+    }
+
     await logAdminAction('UPDATE_ORDER_STATUS', currentOrderId, { status: oldStatus }, { status: newStatus, trackingCode: newTracking || null });
 
     if (newStatus === 'completed' && order.referredBy && !order.commissionProcessed) {
@@ -1533,37 +1624,6 @@ window.saveOrderStatus = async () => {
       await updateDoc(doc(db, "orders", currentOrderId), {
         commissionProcessed: true
       });
-    }
-
-    if (newStatus === 'refunded' && !order.refundProcessed && order.userId) {
-      const refundAmount = Number(order.total) || 0;
-
-      if (refundAmount > 0) {
-        const userRef = doc(db, "users", order.userId);
-        const userSnap = await getDoc(userRef);
-
-        if (userSnap.exists()) {
-          await updateDoc(userRef, {
-            walletBalance: increment(refundAmount)
-          });
-
-          await addDoc(collection(db, "topups"), {
-            userId: order.userId,
-            userName: order.name,
-            userEmail: order.email,
-            amount: refundAmount,
-            method: 'refund',
-            status: 'completed',
-            topupId: `REF-${order.orderId || order.id.substring(0, 6)}`,
-            createdAt: serverTimestamp(),
-            detail: `Reembolso automático. Fatura: ${order.orderId}. Motivo: ${refundReasonText}`
-          });
-
-          window.showToast(`Reembolso de ${formatValue(refundAmount, 'currency')} injetado na carteira.`, 'success');
-        } else {
-          window.showToast(`Atenção: Cliente já não existe na base de dados. Saldo não injetado.`, 'error');
-        }
-      }
     }
 
     window.showToast('Nova fase logística gravada.', 'success');
@@ -1671,22 +1731,25 @@ window.clearHistory = async () => {
   const qty = currentFilteredOrders.length;
   if (!confirm(`⚠️ ALERTA VERMELHO ⚠️\n\nIsto irá varrer TODOS os ${qty} pedidos no ecrã.\nProceder?`)) return;
 
-  window.showToast('A preparar injeção de eliminação em massa...', 'info');
+  window.showToast('A preparar eliminação em massa segura...', 'info');
 
   try {
     await logAdminAction('BULK_DELETE_ORDERS', 'multiple', null, { deletedCount: qty });
 
-    const batch = writeBatch(db);
-    currentFilteredOrders.forEach(order => {
-      const col = order.isTopup ? "topups" : "orders";
-      batch.delete(doc(db, col, order.id));
-    });
+    const chunkSize = 450;
+    for (let i = 0; i < currentFilteredOrders.length; i += chunkSize) {
+      const batch = writeBatch(db);
+      currentFilteredOrders.slice(i, i + chunkSize).forEach(order => {
+        const col = order.isTopup ? "topups" : "orders";
+        batch.delete(doc(db, col, order.id));
+      });
+      await batch.commit();
+    }
 
-    await batch.commit();
     window.showToast(`Operação global: ${qty} documentos destruídos.`, 'success');
   } catch (e) {
     console.error(e);
-    window.showToast('O servidor bloqueou a execução em massa (limites).', 'error');
+    window.showToast(`O servidor bloqueou a execução em massa: ${e.message || 'limite/permissão'}.`, 'error');
   }
 };
 
@@ -1698,21 +1761,36 @@ window.exportToCSV = () => {
 
   logAdminAction('EXPORT_CSV', 'all', null, { exportedCount: currentFilteredOrders.length });
 
-  let csvContent = "ID,Data,Hora,Cliente,Email,Categoria,Total(MT),Status\n";
+  let csvContent = "\uFEFFID,Data,Hora,Cliente,Email,WhatsApp,Categoria,USD,Total(MT),Pago,Status,Rastreio,Referência Externa\n";
   currentFilteredOrders.forEach(order => {
-    const safeName = `"${safeText(order.name).replace(/"/g, '""')}"`;
-    const safeEmail = `"${safeText(order.email).replace(/"/g, '""')}"`;
-    const safeCategory = `"${safeText(order.category)}"`;
-    csvContent += `"${safeText(order.orderId)}","${order.createdAt.toLocaleDateString('pt-MZ')}","${order.createdAt.toLocaleTimeString('pt-MZ')}",${safeName},${safeEmail},${safeCategory},"${Number(order.total) || 0}","${safeText(order.status)}"\n`;
+    const row = [
+      order.orderId,
+      order.createdAt.toLocaleDateString('pt-MZ'),
+      order.createdAt.toLocaleTimeString('pt-MZ'),
+      order.name,
+      order.email,
+      order.whatsapp,
+      order.category,
+      Number(order.usd) || 0,
+      Number(order.total) || 0,
+      order.isPaid ? 'Sim' : 'Não',
+      order.status,
+      order.trackingCode || '',
+      order.paysuitePaymentId || ''
+    ].map(csvEscape).join(',');
+
+    csvContent += `${row}\n`;
   });
 
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
+  const objectUrl = URL.createObjectURL(blob);
+  link.href = objectUrl;
   link.download = `PayGo_Relatorio_${new Date().toISOString().split('T')[0]}.csv`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+  URL.revokeObjectURL(objectUrl);
 };
 
 // ==========================================
