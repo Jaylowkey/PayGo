@@ -441,9 +441,18 @@ select, input, textarea {
           <i data-lucide="paperclip" class="w-3 h-3"></i> Anexar Prova (Opcional - Imagem/PDF)
         </label>
         <input type="file" id="refundMediaInput" accept="image/*,application/pdf" class="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-danger-500/20 file:text-danger-400 hover:file:bg-danger-500/30 cursor-pointer bg-slate-900 border border-danger-500/30 rounded-xl p-2 transition-all">
+
+        <label id="refundOnCancelLabel" class="hidden mt-4 p-3 rounded-xl bg-slate-950/80 border border-warning-500/30 text-xs text-warning-200 font-bold flex items-start gap-3 cursor-pointer">
+          <input type="checkbox" id="refundOnCancelInput" class="mt-1 accent-yellow-500 w-4 h-4 shrink-0">
+          <span>
+            Creditar automaticamente o valor pago na Carteira PayGo do cliente ao cancelar este pedido.
+            <b class="block text-warning-400 mt-1">Use isto quando o cliente já pagou e o pedido foi cancelado.</b>
+          </span>
+        </label>
+
         <p class="text-[10px] text-danger-400/80 mt-2 font-bold flex items-center gap-1">
           <i data-lucide="info" class="w-3 h-3"></i>
-          O valor exacto pago será devolvido à Carteira PayGo do cliente.
+          Ao marcar como reembolsado, ou ao cancelar com a opção de crédito ativa, o valor exacto pago será devolvido à Carteira PayGo do cliente.
         </p>
       </div>
 
@@ -1376,9 +1385,21 @@ window.openModal = (orderId, isSilentUpdate = false) => {
       statusSelect.onchange = (e) => {
         const selected = e.target.value;
 
+        const refundOnCancelLabel = document.getElementById('refundOnCancelLabel');
+        const refundOnCancelInput = document.getElementById('refundOnCancelInput');
+
         if (refundReasonContainer) {
-          if (selected === 'refunded') refundReasonContainer.classList.remove('hidden');
+          if (selected === 'refunded' || selected === 'cancelled') refundReasonContainer.classList.remove('hidden');
           else refundReasonContainer.classList.add('hidden');
+        }
+
+        if (refundOnCancelLabel) {
+          if (selected === 'cancelled') refundOnCancelLabel.classList.remove('hidden');
+          else refundOnCancelLabel.classList.add('hidden');
+        }
+
+        if (refundOnCancelInput && selected !== 'cancelled') {
+          refundOnCancelInput.checked = false;
         }
       };
 
@@ -1509,18 +1530,32 @@ window.saveOrderStatus = async () => {
     let refundReasonText = '';
     let refundNoteObj = null;
     let mediaUrl = null;
+    const refundOnCancel = newStatus === 'cancelled' && Boolean(document.getElementById('refundOnCancelInput')?.checked);
+    const shouldCreditWallet = newStatus === 'refunded' || refundOnCancel;
 
-    if (newStatus === 'refunded') {
+    if (shouldCreditWallet) {
       refundReasonText = safeText(document.getElementById('refundReasonInput')?.value).trim();
 
       if (!refundReasonText) {
-        window.showToast('Obrigatório preencher o motivo do reembolso!', 'error');
+        window.showToast('Obrigatório preencher o motivo da devolução/cancelamento!', 'error');
+        if (btn) { btn.disabled = false; btn.innerHTML = originalText; window.renderIcons(); }
+        return;
+      }
+
+      if (!order.isPaid) {
+        window.showToast('Este pedido ainda não está marcado como pago. Não é seguro creditar a carteira.', 'warning');
+        if (btn) { btn.disabled = false; btn.innerHTML = originalText; window.renderIcons(); }
+        return;
+      }
+
+      if (!order.userId) {
+        window.showToast('Este pedido não possui utilizador associado para receber saldo na carteira.', 'error');
         if (btn) { btn.disabled = false; btn.innerHTML = originalText; window.renderIcons(); }
         return;
       }
 
       if (order.refundProcessed) {
-        window.showToast('Alerta: Este pedido já foi reembolsado.', 'warning');
+        window.showToast('Alerta: Este pedido já teve devolução processada.', 'warning');
         if (btn) { btn.disabled = false; btn.innerHTML = originalText; window.renderIcons(); }
         return;
       }
@@ -1547,11 +1582,13 @@ window.saveOrderStatus = async () => {
       }
 
       if (btn) {
-        btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A processar reembolso...`;
+        btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> A processar devolução...`;
         window.renderIcons();
       }
 
-      let textWithMedia = `REEMBOLSO EMITIDO: ${refundReasonText}`;
+      let textWithMedia = refundOnCancel
+        ? `CANCELAMENTO COM CRÉDITO NA CARTEIRA: ${refundReasonText}`
+        : `REEMBOLSO EMITIDO: ${refundReasonText}`;
       if (mediaUrl) textWithMedia += ` | Anexo: ${mediaUrl}`;
 
       refundNoteObj = {
@@ -1559,6 +1596,15 @@ window.saveOrderStatus = async () => {
         author: loggedInAdminName || 'Sistema',
         date: new Date().toISOString()
       };
+    } else if (newStatus === 'cancelled') {
+      const cancelReasonText = safeText(document.getElementById('refundReasonInput')?.value).trim();
+      if (cancelReasonText) {
+        refundNoteObj = {
+          text: `CANCELAMENTO SEM CRÉDITO NA CARTEIRA: ${cancelReasonText}`,
+          author: loggedInAdminName || 'Sistema',
+          date: new Date().toISOString()
+        };
+      }
     }
 
     const updateData = {
@@ -1569,15 +1615,19 @@ window.saveOrderStatus = async () => {
 
     if (refundNoteObj) {
       updateData.adminNotes = arrayUnion(refundNoteObj);
+    }
+
+    if (shouldCreditWallet) {
       updateData.refundProcessed = true;
       updateData.refundedBy = loggedInAdminId || null;
       updateData.refundedByName = loggedInAdminName || 'Equipa PayGo';
       updateData.refundedAt = serverTimestamp();
+      updateData.refundType = refundOnCancel ? 'cancelled_to_wallet' : 'refunded_to_wallet';
     }
 
-    if (newStatus === 'refunded' && !order.refundProcessed && order.userId) {
+    if (shouldCreditWallet) {
       const refundAmount = Number(order.total) || 0;
-      if (!isValidPositiveNumber(refundAmount)) throw new Error('Valor do reembolso inválido.');
+      if (!isValidPositiveNumber(refundAmount)) throw new Error('Valor da devolução inválido.');
 
       const userRef = doc(db, "users", order.userId);
       const userSnap = await getDoc(userRef);
@@ -1597,22 +1647,22 @@ window.saveOrderStatus = async () => {
         amount: refundAmount,
         method: 'refund',
         status: 'completed',
-        topupId: `REF-${order.orderId || order.id.substring(0, 6)}`,
+        topupId: `${refundOnCancel ? 'CAN' : 'REF'}-${order.orderId || order.id.substring(0, 6)}`,
         createdAt: serverTimestamp(),
-        detail: `Reembolso automático. Fatura: ${order.orderId}. Motivo: ${refundReasonText}`,
+        detail: `${refundOnCancel ? 'Crédito por cancelamento' : 'Reembolso automático'}. Fatura: ${order.orderId}. Motivo: ${refundReasonText}`,
         relatedOrderId: currentOrderId
       });
       batch.set(txRef, {
         userId: order.userId,
         type: 'credit',
         amount: refundAmount,
-        description: `Reembolso automático da fatura ${order.orderId}`,
-        reference: `REF-${order.orderId || order.id.substring(0, 6)}`,
+        description: `${refundOnCancel ? 'Crédito por cancelamento' : 'Reembolso automático'} da fatura ${order.orderId}`,
+        reference: `${refundOnCancel ? 'CAN' : 'REF'}-${order.orderId || order.id.substring(0, 6)}`,
         createdAt: serverTimestamp()
       });
 
       await batch.commit();
-      window.showToast(`Reembolso de ${formatValue(refundAmount, 'currency')} injetado na carteira.`, 'success');
+      window.showToast(`${refundOnCancel ? 'Cancelamento concluído e' : 'Reembolso de'} ${formatValue(refundAmount, 'currency')} injetado na carteira.`, 'success');
     } else {
       await updateDoc(doc(db, "orders", currentOrderId), updateData);
     }
@@ -1630,13 +1680,13 @@ window.saveOrderStatus = async () => {
 
     if (newStatus === 'completed' && oldStatus !== 'completed') {
       await sendNotificationEmail(order, 'completed');
-    } else if (newStatus === 'refunded' && oldStatus !== 'refunded') {
+    } else if ((newStatus === 'refunded' || refundOnCancel) && oldStatus !== newStatus) {
       await fetch('/api/notify-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           orderData: order,
-          action: "order_refunded",
+          action: refundOnCancel ? "order_cancelled_refunded" : "order_refunded",
           reason: refundReasonText,
           mediaUrl,
           sendEmail: true
