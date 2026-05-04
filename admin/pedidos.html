@@ -513,6 +513,11 @@ let ordersUnsubscribe = null;
 let topupsUnsubscribe = null;
 let loggedInAdminId = null;
 let loggedInAdminName = null;
+let renderDebounceTimer = null;
+let lastRenderedSignature = '';
+let modalUserIsEditing = false;
+let isSavingStatus = false;
+let lastModalRefreshAt = 0;
 const userCache = {};
 
 // ==========================================
@@ -649,6 +654,41 @@ function safeDateFromFirestore(value) {
   return Number.isNaN(d.getTime()) ? new Date() : d;
 }
 
+function getOrdersSignature(list) {
+  return list.map(o => [
+    o.id,
+    o.status,
+    o.isPaid ? 1 : 0,
+    o.trackingCode || '',
+    o.refundProcessed ? 1 : 0,
+    Array.isArray(o.adminNotes) ? o.adminNotes.length : 0,
+    o.createdAt instanceof Date ? o.createdAt.getTime() : 0
+  ].join(':')).join('|');
+}
+
+function isModalActive() {
+  const modal = document.getElementById('orderModal');
+  return Boolean(modal && modal.classList.contains('active'));
+}
+
+function scheduleRenderOrders() {
+  clearTimeout(renderDebounceTimer);
+  renderDebounceTimer = setTimeout(() => {
+    const signature = getOrdersSignature(orders);
+
+    // Evita o efeito de "piscar" quando o Firestore dispara snapshots seguidos
+    // ou quando o admin está a editar o modal.
+    if (signature === lastRenderedSignature && isModalActive()) return;
+
+    window.renderOrders();
+    lastRenderedSignature = signature;
+  }, 120);
+}
+
+function markModalEditing() {
+  modalUserIsEditing = true;
+}
+
 const resolveUserName = async (userId) => {
   if (!userId || userCache[userId]) return;
   try {
@@ -726,11 +766,13 @@ function mergeAndRender() {
     return timeB - timeA;
   });
 
-  window.renderOrders();
+  scheduleRenderOrders();
 
-  const modal = document.getElementById('orderModal');
-  if (currentOrderId && modal && modal.classList.contains('active')) {
-    window.openModal(currentOrderId, true);
+  // IMPORTANTE: não reconstruir o modal automaticamente enquanto ele está aberto.
+  // Antes isto chamava openModal(currentOrderId, true) a cada snapshot do Firebase,
+  // causando "piscar" e apagando seleção/campos enquanto o admin editava o estado.
+  if (currentOrderId && isModalActive()) {
+    lastModalRefreshAt = Date.now();
   }
 }
 
@@ -1092,7 +1134,7 @@ window.requestExtraFunds = async (orderId) => {
     });
 
     window.showToast(`Solicitação de ${formatValue(amount, 'currency')} enviada e registada!`, 'success');
-    window.closeModal();
+    window.closeModal(true);
   } catch (e) {
     console.error(e);
     window.showToast('Falha técnica ao solicitar fundos.', 'error');
@@ -1107,6 +1149,7 @@ window.openModal = (orderId, isSilentUpdate = false) => {
   if (!order) return;
 
   currentOrderId = orderId;
+  if (!isSilentUpdate) modalUserIsEditing = false;
   const theme = getThemeByOrder(order);
 
   const topStatusBadge = {
@@ -1403,13 +1446,24 @@ window.openModal = (orderId, isSilentUpdate = false) => {
         }
       };
 
+      statusSelect.addEventListener('focus', markModalEditing);
+      statusSelect.addEventListener('change', markModalEditing);
       statusSelect.dispatchEvent(new Event('change'));
     }
+
+    const refundReasonInput = document.getElementById('refundReasonInput');
+    const refundMediaInput = document.getElementById('refundMediaInput');
+    const refundOnCancelInput = document.getElementById('refundOnCancelInput');
+    if (refundReasonInput) refundReasonInput.addEventListener('input', markModalEditing);
+    if (refundMediaInput) refundMediaInput.addEventListener('change', markModalEditing);
+    if (refundOnCancelInput) refundOnCancelInput.addEventListener('change', markModalEditing);
 
     if (trackingContainer && trackingInput) {
       if (isPhysicalOrder(order)) trackingContainer.classList.remove('hidden');
       else trackingContainer.classList.add('hidden');
       trackingInput.value = safeText(order.trackingCode, '');
+      trackingInput.addEventListener('input', markModalEditing);
+      trackingInput.addEventListener('focus', markModalEditing);
     }
 
     const modalActionButtons = document.getElementById('modalActionButtons');
@@ -1433,18 +1487,20 @@ window.openModal = (orderId, isSilentUpdate = false) => {
   window.renderIcons();
 };
 
-window.closeModal = () => {
+window.closeModal = (force = false) => {
+  if (isSavingStatus && !force) return;
   const modal = document.getElementById('orderModal');
   if (modal) modal.classList.remove('active');
   document.body.style.overflow = '';
   currentOrderId = null;
+  modalUserIsEditing = false;
 };
 
 // ==========================================
 // SAVE STATUS
 // ==========================================
 window.saveOrderStatus = async () => {
-  if (!currentOrderId) return;
+  if (!currentOrderId || isSavingStatus) return;
 
   const order = orders.find(o => o.id === currentOrderId);
   if (!order) {
@@ -1461,6 +1517,8 @@ window.saveOrderStatus = async () => {
     window.showToast('Selecione um estado válido.', 'warning');
     return;
   }
+
+  isSavingStatus = true;
 
   if (btn) {
     btn.disabled = true;
@@ -1506,14 +1564,14 @@ window.saveOrderStatus = async () => {
         await batch.commit();
         await logAdminAction('APPROVE_TOPUP_AND_CREDIT_WALLET', currentOrderId, { status: order.status }, { status: newStatus, amount: topupAmount });
         window.showToast('Dinheiro injetado na carteira do cliente!', 'success');
-        window.closeModal();
+        window.closeModal(true);
         return;
       }
 
       await updateDoc(doc(db, "topups", currentOrderId), updates);
       await logAdminAction('UPDATE_TOPUP_STATUS', currentOrderId, { status: order.status }, { status: newStatus });
       window.showToast('Estado do depósito atualizado.', 'success');
-      window.closeModal();
+      window.closeModal(true);
       return;
     }
 
@@ -1694,11 +1752,13 @@ window.saveOrderStatus = async () => {
       }).catch(() => console.warn("API de notificação indisponível."));
     }
 
-    window.closeModal();
+    window.closeModal(true);
   } catch (error) {
     console.error("Erro ao salvar:", error);
     window.showToast(`Erro na gravação: ${error.message || 'falha desconhecida'}`, 'error');
   } finally {
+    isSavingStatus = false;
+    modalUserIsEditing = false;
     if (btn) {
       btn.disabled = false;
       btn.innerHTML = originalText;
@@ -1750,7 +1810,7 @@ window.togglePaymentStatus = async (orderId, isCurrentlyPaid) => {
       await sendNotificationEmail(order, 'paid');
     }
 
-    window.closeModal();
+    window.closeModal(true);
   } catch (e) {
     console.error(e);
     window.showToast('Falha técnica.', 'error');
@@ -1765,7 +1825,7 @@ window.deleteSingleOrder = async (orderId, isTopup) => {
     const collectionTarget = isTopup ? "topups" : "orders";
     await deleteDoc(doc(db, collectionTarget, orderId));
     window.showToast(`O documento foi vaporizado da base de dados.`, 'success');
-    window.closeModal();
+    window.closeModal(true);
   } catch (error) {
     console.error(error);
     window.showToast('Falha técnica ao eliminar o documento.', 'error');
@@ -1875,7 +1935,7 @@ if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeMobileSidebar)
 document.addEventListener('keydown', (e) => {
   const modal = document.getElementById('orderModal');
   if (e.key === 'Escape' && modal && modal.classList.contains('active')) {
-    window.closeModal();
+    window.closeModal(true);
   }
 });
 
