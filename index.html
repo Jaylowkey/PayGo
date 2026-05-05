@@ -573,7 +573,7 @@
               </div>
             </div>
             
-            <form id="paygoForm" class="space-y-4" novalidate aria-label="Formulário de pedido">
+            <form id="paygoForm" class="space-y-4" novalidate aria-label="Simulador PayGo">
               <div class="flex p-1 bg-slate-100 rounded-xl border border-slate-200" role="radiogroup" aria-label="Tipo de serviço">
                 <button type="button" class="flex-1 py-2.5 rounded-lg text-xs font-bold transition-all shadow-sm bg-white text-brand-700 ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500" id="btn-compra" onclick="window.toggleServiceType('compra')" role="radio" aria-checked="true" aria-controls="serviceType">
                   🛍️ Compras
@@ -637,15 +637,15 @@
               <div class="flex flex-col sm:flex-row gap-3 pt-4 w-full">
                 <button type="button" id="addToCartBtn" onclick="window.addToCart()" class="flex-1 bg-slate-900 text-white py-3 md:py-4 rounded-xl font-bold hover:bg-slate-800 transition-all flex items-center justify-center gap-2 group shadow-lg hover:shadow-xl transform active:scale-[0.98] focus:outline-none">
                   <i data-lucide="shopping-cart" class="w-4 h-4 md:w-5 md:h-5 text-brand-400 group-hover:scale-110 transition-transform"></i>
-                  <span class="text-[11px] sm:text-sm md:text-base whitespace-nowrap">À Carrinha</span>
+                  <span class="text-[11px] sm:text-sm md:text-base whitespace-nowrap">Ir à Loja</span>
                 </button>
                 <button type="button" id="payNowBtn" onclick="window.processDirectPayment()" class="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 md:py-4 rounded-xl font-bold hover:from-green-500 hover:to-emerald-500 transition-all flex items-center justify-center gap-2 group shadow-lg hover:shadow-xl transform active:scale-[0.98]">
                   <i data-lucide="credit-card" class="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform"></i>
-                  <span class="text-[11px] sm:text-sm md:text-base whitespace-nowrap">Pagar Logo</span>
+                  <span class="text-[11px] sm:text-sm md:text-base whitespace-nowrap">Comprar na Loja</span>
                 </button>
                 <button type="submit" id="submitBtn" class="flex-1 bg-[#25D366] hover:bg-[#1fb355] text-white py-3 md:py-4 rounded-xl font-bold transition-all flex items-center justify-center gap-2 group shadow-lg hover:shadow-xl transform active:scale-[0.98] focus:outline-none">
                   <i data-lucide="message-circle" class="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform"></i>
-                  <span class="btn-text text-[11px] sm:text-sm md:text-base whitespace-nowrap">WhatsApp</span>
+                  <span class="btn-text text-[11px] sm:text-sm md:text-base whitespace-nowrap">Continuar na Loja</span>
                   <span class="btn-spinner hidden"><i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i></span>
                 </button>
               </div>
@@ -653,8 +653,7 @@
               <div class="mt-6 bg-warning-900/10 border border-warning-900/20 rounded-xl p-4 flex items-start gap-3">
                   <i data-lucide="alert-triangle" class="w-5 h-5 text-warning-900 shrink-0 mt-0.5"></i>
                   <div class="text-xs text-warning-900 leading-relaxed font-medium">
-                      <strong>Aviso de Segurança:</strong> Em caso de erro, produto esgotado ou desistência, contacte SEMPRE a nossa equipa de suporte para o reembolso imediato. 
-                      <strong class="underline">Não solicite chargeback diretamente à operadora móvel.</strong> O uso indevido resulta no banimento permanente da sua conta.
+                      <strong>Aviso:</strong> Este bloco é apenas um simulador de valores. Para fazer pedidos reais, use a Loja PayGo Pro. Nenhum pedido será criado por este formulário.
                   </div>
               </div>
               
@@ -669,7 +668,7 @@
                 <div class="bg-white/10 p-2 rounded-lg backdrop-blur-md border border-white/10" aria-hidden="true">
                   <i data-lucide="receipt" class="w-4 h-4"></i>
                 </div>
-                Resumo do Pedido
+                Resumo da Simulação
               </h4>
               <div class="space-y-4 text-sm">
                 <div class="flex justify-between items-start pb-4 border-b border-white/10">
@@ -1181,6 +1180,7 @@ const FIREBASE_CONFIG = {
 };
 
 const WHATSAPP_NUMBER = '258837522255'; 
+const PAYGO_STORE_URL = 'https://www.paygo.co.mz/loja-paygo-pro';
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc, query, where, getDocs, updateDoc, increment, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -1317,282 +1317,53 @@ function updateCartBadge() {
     }
 }
 
-window.addToCart = function() {
-    if (!currentUserData) {
-        window.showToast('A redirecionar para o login...', 'info');
-        setTimeout(() => window.location.href = 'login.html', 800);
-        return;
-    }
-    
-    const usd = safeNumber(document.getElementById('userUSD').value);
-    const detail = sanitizeInput(document.getElementById('userLink').value);
-    const type = sanitizeInput(document.getElementById('serviceType').value);
-    
-    if (type === 'compra' && !detail) {
-        document.getElementById('userLink').classList.add('ring-2', 'ring-danger-500');
-        setTimeout(() => document.getElementById('userLink').classList.remove('ring-2', 'ring-danger-500'), 2000);
-        return window.showToast('Insira um link de produto válido.', 'error');
-    }
-    if (type === 'jogo' && !detail) {
-        document.getElementById('userLink').classList.add('ring-2', 'ring-danger-500');
-        setTimeout(() => document.getElementById('userLink').classList.remove('ring-2', 'ring-danger-500'), 2000);
-        return window.showToast('Insira o ID ou Email da conta.', 'error');
-    }
-    
-    if (usd <= 0) {
-        document.getElementById('userUSD').classList.add('ring-2', 'ring-danger-500');
-        setTimeout(() => document.getElementById('userUSD').classList.remove('ring-2', 'ring-danger-500'), 2000);
-        return window.showToast('Insira um valor válido.', 'error');
-    }
 
+function buildStoreRedirectUrl(source = 'simulador') {
     try {
-        const cart = JSON.parse(localStorage.getItem('paygo_cart') || '[]');
-        cart.push({ id: 'ITEM-' + Date.now().toString().slice(-6), usd: usd, detail: detail, type: type, addedAt: new Date().toISOString() });
-        localStorage.setItem('paygo_cart', JSON.stringify(cart));
-        
-        updateCartBadge();
-        window.showToast('Produto adicionado à Carrinha! 🛒', 'success');
-        
-        document.getElementById('userLink').value = '';
-        document.getElementById('userUSD').value = '';
-        window.calculate();
+        const url = new URL(PAYGO_STORE_URL);
+        const usd = safeNumber(document.getElementById('userUSD')?.value);
+        const detail = sanitizeInput(document.getElementById('userLink')?.value || '');
+        const serviceType = sanitizeInput(document.getElementById('serviceType')?.value || 'compra');
+        const convertedText = document.getElementById('receipt-converted')?.textContent || '';
+        const taxText = document.getElementById('receipt-tax')?.textContent || '';
+        const totalText = document.getElementById('receipt-total')?.textContent?.replace(/\s+/g, ' ').trim() || '';
+
+        url.searchParams.set('origem', source);
+        url.searchParams.set('simulador', 'paygo');
+        if (usd > 0) url.searchParams.set('usd', usd.toFixed(2));
+        if (serviceType) url.searchParams.set('tipo', serviceType);
+        if (detail) url.searchParams.set('detalhe', detail.slice(0, 400));
+        if (convertedText) url.searchParams.set('conversao', convertedText);
+        if (taxText) url.searchParams.set('taxa', taxText);
+        if (totalText) url.searchParams.set('total', totalText);
+        return url.toString();
     } catch (e) {
-        window.showToast('Erro ao guardar na carrinha.', 'error');
+        return PAYGO_STORE_URL;
     }
+}
+
+function redirectPurchaseToStore(source = 'simulador') {
+    window.showToast('Este formulário agora é apenas simulador. A abrir a Loja PayGo Pro...', 'info', 3000);
+    setTimeout(() => {
+        window.location.href = buildStoreRedirectUrl(source);
+    }, 650);
+}
+
+window.addToCart = function() {
+    redirectPurchaseToStore('simulador-carrinha');
 };
 
-window.processDirectPayment = async function() {
-    if (isPaymentProcessing) return;
-
-    let btn = document.getElementById('payNowBtn');
-    let origHtml = btn ? btn.innerHTML : 'Pagar Logo';
-
-    try {
-        if (!currentUserData || !currentFirebaseUser) {
-            window.showToast('Sessão expirada. A redirecionar para o login...', 'info');
-            setTimeout(() => window.location.href = 'login.html', 800);
-            return;
-        }
-
-        const checkEmail = (currentUserData.email || '').toLowerCase();
-        if (checkEmail.includes('guest')) {
-            window.showToast("⚠️ Acesso restrito. Inicie sessão com uma conta válida.", "error");
-            setTimeout(() => { window.location.href = 'login.html'; }, 2000);
-            return; 
-        }
-        
-        const usd = safeNumber(document.getElementById('userUSD').value);
-        const detail = sanitizeInput(document.getElementById('userLink').value);
-        const serviceType = sanitizeInput(document.getElementById('serviceType').value);
-        const paymentMethod = 'wallet'; 
-        
-        if (!detail || usd <= 0) {
-            window.showToast('Preencha o link e o valor do produto antes de pagar.', 'error');
-            return;
-        }
-
-        isPaymentProcessing = true;
-        if (btn) {
-            btn.disabled = true;
-            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Processando...`;
-            if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
-        }
-
-        const converted = usd * BINANCE_RATE;
-        let tax = 0;
-        
-        if (isUserVip) {
-            tax = 0;
-        } else if (usd <= 5 && isFirstPurchaseEligible && firstPurchaseFree) {
-            tax = 0;
-        } else {
-            if (usd <= 20) tax = sysTax1;
-            else if (usd <= 50) tax = sysTax2;
-            else if (usd <= 100) tax = sysTax3;
-            else tax = converted * 0.07;
-        }
-
-        const totalFinal = Number((converted + tax).toFixed(2));
-        const orderId = 'PG-' + Date.now().toString().slice(-6).toUpperCase();
-        const affiliateRef = sanitizeInput(localStorage.getItem('paygo_affiliate_ref') || null);
-        const safeEmail = currentUserData.email || document.getElementById('userEmail')?.value || 'cliente@paygo.co.mz';
-
-        const currentOrderData = {
-            orderId: orderId,
-            userId: currentFirebaseUser.uid,
-            name: currentUserData.name || 'Cliente PayGo',
-            whatsapp: currentUserData.phone || '258000000000',
-            email: safeEmail,
-            usd: usd,
-            detail: detail,
-            tax: tax,
-            total: totalFinal,
-            exchangeRate: BINANCE_RATE,
-            status: 'processing',
-            isPaid: true,
-            paymentMethod: paymentMethod,
-            category: serviceType === 'jogo' ? 'game' : 'physical',
-            isFirstPurchase: (tax === 0 && !isUserVip), 
-            referredBy: affiliateRef,
-            createdAt: window.PayGoDB.serverTimestamp(),
-            source: 'direct-checkout'
-        };
-
-        const freshUserDoc = await getDoc(doc(db, "users", currentFirebaseUser.uid));
-        const freshBalance = safeNumber(freshUserDoc.data()?.walletBalance);
-        
-        if (freshBalance < totalFinal) {
-            window.showToast(`Saldo insuficiente (${formatMZN(freshBalance)} MT). A redirecionar para recarga...`, 'error');
-            isPaymentProcessing = false; 
-            if(btn) { btn.disabled = false; btn.innerHTML = origHtml; if(typeof lucide !== 'undefined') lucide.createIcons({root: btn}); }
-            setTimeout(() => window.location.href = 'dashboard.html', 2000);
-            return;
-        }
-
-        await updateDoc(doc(db, "users", currentFirebaseUser.uid), { walletBalance: increment(-totalFinal) });
-        
-        await addDoc(collection(db, "orders"), currentOrderData);
-        await addDoc(collection(db, "wallet_transactions"), {
-            userId: currentFirebaseUser.uid, type: 'debit', amount: totalFinal,
-            description: `Compra via Site: ${orderId}`, reference: orderId, createdAt: window.PayGoDB.serverTimestamp(), createdAtIso: new Date().toISOString()
-        });
-
-        window.showToast('Pagamento efetuado com sucesso via Carteira! 🎉', 'success');
-        setTimeout(() => window.location.href = 'historico.html', 2000);
-
-    } catch (err) {
-        console.error("ERRO NO PAGAMENTO:", err);
-        window.showToast(err.message || 'Falha ao iniciar pagamento. Tente novamente.', 'error');
-        isPaymentProcessing = false; 
-        if (btn) { btn.disabled = false; btn.innerHTML = origHtml; if(typeof lucide !== 'undefined') lucide.createIcons({root: btn}); }
-    }
+window.processDirectPayment = function() {
+    redirectPurchaseToStore('simulador-pagar-logo');
 };
 
-document.getElementById('paygoForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    if (isPaymentProcessing) return;
-
-    let btn = document.getElementById('submitBtn');
-    let originalContent = btn ? btn.innerHTML : 'WhatsApp';
-
-    try {
-        if (!currentUserData || !currentFirebaseUser) { 
-            window.showToast('A redirecionar para o login...', 'info'); 
-            setTimeout(() => window.location.href = 'login.html', 800); 
-            return; 
-        }
-        
-        const checkEmail = (currentUserData.email || '').toLowerCase();
-        if (checkEmail.includes('guest')) {
-            window.showToast("⚠️ Acesso restrito. Inicie sessão com uma conta válida.", "error");
-            setTimeout(() => { window.location.href = 'login.html'; }, 2000);
-            return; 
-        }
-        
-        const usd = safeNumber(document.getElementById('userUSD').value);
-        const detail = sanitizeInput(document.getElementById('userLink').value);
-        const serviceType = sanitizeInput(document.getElementById('serviceType').value);
-
-        if (serviceType === 'compra' && detail && !isValidHttpUrl(detail)) {
-            return window.showToast('Cole um link válido começando por https://', 'error');
-        }
-
-        if (!detail || usd <= 0) {
-            return window.showToast('Preencha os dados da encomenda primeiro.', 'error');
-        }
-
-        isPaymentProcessing = true;
-        if (btn) {
-            btn.disabled = true; 
-            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Processando...`; 
-            if(typeof lucide !== 'undefined') lucide.createIcons({root: btn});
-        }
-
-        try {
-            const cart = JSON.parse(localStorage.getItem('paygo_cart') || '[]');
-            cart.push({ id: 'ITEM-' + Date.now().toString().slice(-6), usd: usd, detail: detail, type: serviceType, addedAt: new Date().toISOString() });
-            localStorage.setItem('paygo_cart', JSON.stringify(cart));
-            updateCartBadge(); 
-        } catch(e) {}
-
-        const converted = usd * BINANCE_RATE;
-        let tax = 0;
-        let isFreeTaxUsed = false;
-        
-        if (isUserVip) {
-            tax = 0;
-        } else if (usd <= 5 && isFirstPurchaseEligible && firstPurchaseFree) {
-            tax = 0;
-            isFreeTaxUsed = true;
-        } else {
-            if (usd <= 20) tax = sysTax1;
-            else if (usd <= 50) tax = sysTax2;
-            else if (usd <= 100) tax = sysTax3;
-            else tax = converted * 0.07;
-        }
-        
-        const totalFinal = Number((converted + tax).toFixed(2));
-        const orderId = 'PG-' + Date.now().toString().slice(-6).toUpperCase();
-        const affiliateRef = sanitizeInput(localStorage.getItem('paygo_affiliate_ref') || null);
-        const safeEmail = currentUserData.email || document.getElementById('userEmail')?.value || 'cliente@paygo.co.mz';
-
-        const freshUserDoc = await getDoc(doc(db, "users", currentFirebaseUser.uid));
-        const freshBalance = safeNumber(freshUserDoc.data()?.walletBalance);
-        
-        if (freshBalance < totalFinal) {
-            window.showToast(`Saldo insuficiente (${formatMZN(freshBalance)} MT). A redirecionar para recarga...`, 'error');
-            isPaymentProcessing = false; 
-            if(btn) { btn.disabled = false; btn.innerHTML = originalContent; if(typeof lucide !== 'undefined') lucide.createIcons({root: btn}); }
-            setTimeout(() => window.location.href = 'dashboard.html', 2000);
-            return;
-        }
-
-        await updateDoc(doc(db, "users", currentFirebaseUser.uid), { walletBalance: increment(-totalFinal) });
-
-        const orderData = {
-            orderId: orderId, name: sanitizeInput(document.getElementById('userName')?.value), 
-            whatsapp: sanitizeInput(document.getElementById('userWhatsApp')?.value), 
-            email: safeEmail, usd: usd, detail: detail,
-            tax: tax, total: totalFinal, exchangeRate: BINANCE_RATE, status: 'processing', isPaid: true, userId: currentFirebaseUser.uid,
-            category: serviceType === 'jogo' ? 'game' : 'physical', paymentMethod: 'wallet',
-            isFirstPurchase: isFreeTaxUsed, referredBy: affiliateRef, createdAt: window.PayGoDB.serverTimestamp()
-        };
-
-        await addDoc(collection(db, "orders"), orderData);
-        await addDoc(collection(db, "wallet_transactions"), {
-            userId: currentFirebaseUser.uid, type: 'debit', amount: totalFinal,
-            description: `Compra via Site (WhatsApp): ${orderId}`, reference: orderId, createdAt: window.PayGoDB.serverTimestamp(), createdAtIso: new Date().toISOString()
-        });
-        
-        fetch('/api/notify-order', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ orderData: orderData, action: 'new_order', sendEmail: true, sendLark: true })
-        }).catch(e => console.warn('Notificação falhou em silêncio.'));
-
-        window.showToast(`✅ Pagamento efetuado! Redirecionando para o WhatsApp...`, 'success', 4000);
-        
-        const tipoServico = serviceType === 'compra' ? 'Produto Internacional' : 'Jogo / Recarga';
-        const metodoPgto = 'CARTEIRA PAYGO';
-        let bonusTxt = '';
-        if (isUserVip) bonusTxt = ' (Isento VIP 👑)';
-        else if (isFreeTaxUsed) bonusTxt = ' (1ª Compra Grátis 🎁)';
-
-        const msg = `*PEDIDO PAGO COM SUCESSO* 🛒✅\n--------------------------------------\n*🆔 Ref:* #${orderId}\n*👤 Cliente:* ${orderData.name}\n*📱 Contacto:* ${orderData.whatsapp}\n*📧 Email:* ${orderData.email}\n\n*🛍️ DADOS DO SERVIÇO*\n*Categoria:* ${tipoServico}\n*Detalhe/Link:* ${orderData.detail}\n*Valor em Dólar:* $${orderData.usd.toFixed(2)} USD\n\n*💰 RESUMO FINANCEIRO*\n*Câmbio Base:* ${BINANCE_RATE.toFixed(2)} MT\n*Taxa PayGo:* ${tax.toFixed(2)} MT${bonusTxt}\n*TOTAL PAGO:* ${totalFinal.toFixed(2)} MT\n\n*💳 MÉTODO DE PAGAMENTO*\n${metodoPgto}\n\n_Olá equipa PayGo, o meu pedido já foi pago via carteira digital!_`;
-
-        setTimeout(() => {
-            window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
-            document.getElementById('userLink').value = ''; document.getElementById('userUSD').value = ''; window.calculate();
-            isPaymentProcessing = false;
-            if (btn) { btn.disabled = false; btn.innerHTML = originalContent; if(typeof lucide !== 'undefined') lucide.createIcons({root: btn}); }
-        }, 1500);
-
-    } catch (error) {
-        console.error("ERRO NO WHATSAPP:", error);
-        window.showToast('Erro técnico ao processar o seu pedido.', 'error');
-        isPaymentProcessing = false;
-        if (btn) { btn.disabled = false; btn.innerHTML = originalContent; if(typeof lucide !== 'undefined') lucide.createIcons({root: btn}); }
-    }
-});
+const paygoForm = document.getElementById('paygoForm');
+if (paygoForm) {
+    paygoForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        redirectPurchaseToStore('simulador-whatsapp');
+    });
+}
 
 function formatMZN(val) { return new Intl.NumberFormat('pt-MZ', { minimumFractionDigits: 2 }).format(val || 0); }
 
