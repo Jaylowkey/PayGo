@@ -365,6 +365,91 @@
     let pendingUserEmail = '';
     let pendingUserName = '';
 
+    // =========================================================
+    // 🔁 REDIRECIONAMENTO INTELIGENTE PÓS-LOGIN
+    // =========================================================
+    // Objetivo: depois do login, devolver o utilizador à página onde estava.
+    // Prioridade:
+    // 1) ?redirect=/pagina.html recebido no URL
+    // 2) sessionStorage.paygoRedirectAfterLogin salvo por outras páginas
+    // 3) document.referrer, se vier do próprio site PayGo
+    // 4) fallback por tipo de conta
+
+    const PAYGO_BASE_ORIGIN = window.location.origin;
+
+    function isSafePayGoRedirect(value) {
+        if (!value || typeof value !== 'string') return false;
+        const clean = value.trim();
+        if (!clean) return false;
+
+        try {
+            const url = new URL(clean, PAYGO_BASE_ORIGIN);
+            const sameOrigin = url.origin === PAYGO_BASE_ORIGIN;
+            const notLoginPage = !url.pathname.toLowerCase().endsWith('/login.html');
+            const notEmpty = url.pathname !== '/undefined' && url.pathname !== '/null';
+            return sameOrigin && notLoginPage && notEmpty;
+        } catch {
+            return false;
+        }
+    }
+
+    function normalizeRedirectUrl(value) {
+        if (!isSafePayGoRedirect(value)) return '';
+        const url = new URL(value.trim(), PAYGO_BASE_ORIGIN);
+        return `${url.pathname}${url.search}${url.hash}` || 'index.html';
+    }
+
+    function getRedirectFromCurrentUrl() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const redirectParam = urlParams.get('redirect') || urlParams.get('next') || urlParams.get('returnTo');
+        return normalizeRedirectUrl(redirectParam);
+    }
+
+    function saveReferrerAsRedirect() {
+        const existing = getRedirectFromCurrentUrl() || sessionStorage.getItem('paygoRedirectAfterLogin');
+        if (isSafePayGoRedirect(existing)) return;
+
+        if (document.referrer && isSafePayGoRedirect(document.referrer)) {
+            const normalized = normalizeRedirectUrl(document.referrer);
+            if (normalized) sessionStorage.setItem('paygoRedirectAfterLogin', normalized);
+        }
+    }
+
+    function getPostLoginRedirect(userData = {}) {
+        const fromUrl = getRedirectFromCurrentUrl();
+        const fromStorage = normalizeRedirectUrl(sessionStorage.getItem('paygoRedirectAfterLogin'));
+        const role = String(userData.role || '').toLowerCase();
+
+        // Admin e afiliados só usam redirect quando o destino for seguro; senão vão ao painel correto.
+        if (fromUrl) return fromUrl;
+        if (fromStorage) return fromStorage;
+
+        if (role === 'admin' || role === 'superadmin') return 'admin/dashboard.html';
+        if (role === 'affiliate') return 'dashboard-afiliado.html';
+        return 'index.html';
+    }
+
+    function clearSavedRedirect() {
+        sessionStorage.removeItem('paygoRedirectAfterLogin');
+    }
+
+    function appendRedirectToLink(link) {
+        if (!link) return;
+        const currentRedirect = getRedirectFromCurrentUrl() || normalizeRedirectUrl(sessionStorage.getItem('paygoRedirectAfterLogin'));
+        if (!currentRedirect) return;
+
+        try {
+            const url = new URL(link.getAttribute('href'), window.location.href);
+            if (url.origin !== PAYGO_BASE_ORIGIN) return;
+            if (!url.searchParams.get('redirect')) {
+                url.searchParams.set('redirect', currentRedirect);
+                link.setAttribute('href', `${url.pathname}${url.search}${url.hash}`);
+            }
+        } catch {}
+    }
+
+    saveReferrerAsRedirect();
+
     // Ferramentas da Interface UI
     window.showToast = function(message, type = 'default') {
         const container = document.getElementById('toast-container');
@@ -515,17 +600,9 @@
                     // O cliente está verificado, o erro (se houve) foi engolido. Redirecionar para o painel!
                     window.showToast('Identidade Validada! A entrar...', 'success');
                     
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const redirectParam = urlParams.get('redirect');
-                    
-                    // 🎯 ROTA CORRIGIDA: Clientes normais vão para o index.html (Sem dashboard)
-                    if(userData.role === 'admin' || userData.role === 'superadmin') {
-                        window.location.href = redirectParam || 'admin/dashboard.html';
-                    } else if (userData.role === 'affiliate') {
-                        window.location.href = redirectParam || 'dashboard-afiliado.html';
-                    } else {
-                        window.location.href = redirectParam || 'index.html'; // Clientes normais regressam à loja!
-                    }
+                    const finalRedirect = getPostLoginRedirect(userData);
+                    clearSavedRedirect();
+                    window.location.href = finalRedirect;
                 }
             } catch (error) {
                 console.error('Error Auth:', error);
@@ -605,6 +682,15 @@
     });
 
     document.addEventListener('DOMContentLoaded', function() {
+        saveReferrerAsRedirect();
+        document.querySelectorAll('a[href^="register.html"]').forEach(appendRedirectToLink);
+
+        const currentRedirect = getRedirectFromCurrentUrl() || normalizeRedirectUrl(sessionStorage.getItem('paygoRedirectAfterLogin'));
+        const subtitle = document.querySelector('.glass-card .text-center p.text-slate-400');
+        if (subtitle && currentRedirect) {
+            subtitle.textContent = 'Entre para continuar exatamente de onde parou.';
+        }
+
         if (typeof lucide !== 'undefined') lucide.createIcons();
         if (typeof AOS !== 'undefined') AOS.init({ duration: 800, once: true });
     });
