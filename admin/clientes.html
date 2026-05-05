@@ -742,7 +742,7 @@
     init();
 
     function init() {
-      lucide.createIcons();
+      if (typeof lucide !== 'undefined') lucide.createIcons();
       bindEvents();
       startAuthCheck();
     }
@@ -786,10 +786,16 @@
       els.sidebarOverlay.addEventListener('click', toggleMobileSidebar);
     }
 
+    function buildLoginUrl() {
+      const currentPath = window.location.pathname + window.location.search + window.location.hash;
+      const redirect = encodeURIComponent(currentPath || '/admin/clientes.html');
+      return `../login.html?redirect=${redirect}`;
+    }
+
     async function startAuthCheck() {
       onAuthStateChanged(auth, async (user) => {
         if (!user) {
-          window.location.href = '../login.html';
+          window.location.href = buildLoginUrl();
           return;
         }
 
@@ -922,7 +928,7 @@
       els.refreshBtn.innerHTML = isLoading
         ? `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>`
         : `<i data-lucide="refresh-cw" class="w-4 h-4"></i>`;
-      lucide.createIcons({ root: els.refreshBtn });
+      if (typeof lucide !== 'undefined') lucide.createIcons({ root: els.refreshBtn });
     }
 
     function setWalletButtonsLoading(isLoading) {
@@ -961,7 +967,7 @@
       `;
 
       els.toastContainer.appendChild(t);
-      lucide.createIcons({ root: t });
+      if (typeof lucide !== 'undefined') lucide.createIcons({ root: t });
 
       requestAnimationFrame(() => t.classList.add('show'));
       setTimeout(() => {
@@ -1111,7 +1117,7 @@
           </tr>
         `;
         els.kpiOnline.textContent = '0';
-        lucide.createIcons();
+        if (typeof lucide !== 'undefined') lucide.createIcons();
         return;
       }
 
@@ -1203,7 +1209,7 @@
       }).join('');
 
       els.kpiOnline.textContent = String(onlineCount);
-      lucide.createIcons();
+      if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 
     async function handleTableActions(event) {
@@ -1265,7 +1271,7 @@
         }
       } catch (error) {
         console.error(error);
-        showToast('Erro ao tentar atualizar a base de dados.', 'error');
+        showToast('Erro ao atualizar. Verifique permissões do Firestore ou use uma rota Admin no backend.', 'error');
       } finally {
         state.isMutating = false;
         if (button) button.disabled = false;
@@ -1280,6 +1286,11 @@
 
     async function deleteUserRecord(userId, userName, button = null) {
       if (!userId) return;
+
+      if (userId === state.loggedInAdminId) {
+        showToast('Não pode apagar a própria conta de administração nesta página.', 'error');
+        return;
+      }
 
       const confirm1 = window.confirm(`⚠️ PERIGO EXTREMO ⚠️\n\nApagar PERMANENTEMENTE a conta de ${userName}? Isto limpará a base de dados e destruirá a conta de login.`);
       if (!confirm1) return;
@@ -1297,18 +1308,34 @@
 
         showToast('A desintegrar conta...', 'info');
 
+        let backendDeleted = false;
+
         try {
-          await fetch('/api/delete-user', {
+          const response = await fetch('/api/delete-user', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ uid: userId })
           });
+
+          if (response.ok) {
+            backendDeleted = true;
+          } else {
+            let errorMessage = 'Falha ao apagar pelo servidor.';
+            try {
+              const payload = await response.json();
+              errorMessage = payload.error || payload.message || errorMessage;
+            } catch {}
+            console.warn(errorMessage);
+          }
         } catch (fetchError) {
-          console.warn('Falha ao chamar /api/delete-user, seguindo com limpeza local.', fetchError);
+          console.warn('Falha ao chamar /api/delete-user. Tentando limpeza local.', fetchError);
         }
 
-        await deleteDoc(doc(db, COLLECTIONS.USERS, userId));
-        await addAuditLog('CLIENT_DELETED', { userId, userName });
+        if (!backendDeleted) {
+          await deleteDoc(doc(db, COLLECTIONS.USERS, userId));
+        }
+
+        await addAuditLog('CLIENT_DELETED', { userId, userName, deletedByBackend: backendDeleted });
 
         showToast('A conta foi erradicada.', 'success');
         closeClientModalIfViewingSameUser(userId);
@@ -1342,7 +1369,7 @@
           <p>A extrair faturas...</p>
         </div>
       `;
-      lucide.createIcons();
+      if (typeof lucide !== 'undefined') lucide.createIcons();
 
       try {
         const q = query(collection(db, COLLECTIONS.ORDERS), where("userId", "==", userId));
@@ -1371,7 +1398,7 @@
               <p class="text-slate-400">O cliente não tem faturas ativas.</p>
             </div>
           `;
-          lucide.createIcons();
+          if (typeof lucide !== 'undefined') lucide.createIcons();
           return;
         }
 
@@ -1412,7 +1439,7 @@
           `;
         }).join('');
 
-        lucide.createIcons();
+        if (typeof lucide !== 'undefined') lucide.createIcons();
       } catch (error) {
         console.error(error);
         els.modalOrderTimeline.innerHTML = `<p class="text-danger-400 text-center py-4">Erro ao extrair faturas do cofre.</p>`;
@@ -1535,7 +1562,7 @@
         }
       } catch (error) {
         console.error(error);
-        showToast('Falha técnica ao tentar ajustar os fundos do cliente.', 'error');
+        showToast('Falha ao ajustar fundos. Verifique permissões do Firestore ou a rota Admin.', 'error');
       } finally {
         state.isMutating = false;
         setWalletButtonsLoading(false);
@@ -1546,7 +1573,7 @@
       try {
         await signOut(auth);
       } finally {
-        window.location.href = '../login.html';
+        window.location.href = buildLoginUrl();
       }
     }
 
