@@ -165,14 +165,49 @@ function pickFirstMoney(...values) {
   return 0;
 }
 
+function hasMoneyField(obj = {}, fields = []) {
+  return fields.some((field) => {
+    const value = obj?.[field];
+    const n = toMoneyNumber(value, NaN);
+    return value !== undefined && value !== null && String(value).trim() !== '' && Number.isFinite(n) && n >= 0;
+  });
+}
+
+const PAYSUITE_NET_FIELDS = [
+  'net_amount',
+  'netAmount',
+  'settlement_amount',
+  'settlementAmount',
+  'amount_settled',
+  'amountSettled',
+  'merchant_amount',
+  'merchantAmount',
+  'balance_amount',
+  'balanceAmount',
+  'credit_amount',
+  'creditAmount'
+];
+
+const PAYSUITE_FEE_FIELDS = [
+  'fee',
+  'fees',
+  'gateway_fee',
+  'gatewayFee',
+  'commission',
+  'provider_fee',
+  'providerFee',
+  'processing_fee',
+  'processingFee',
+  'charge_fee',
+  'chargeFee'
+];
+
 function resolvePaySuiteNetSettlement(paymentData = {}, fallbackGross = 0) {
   return pickFirstMoney(
     paymentData.net_amount,
     paymentData.netAmount,
     paymentData.settlement_amount,
     paymentData.settlementAmount,
-    paymentData.received_amount,
-    paymentData.receivedAmount,
     paymentData.amount_settled,
     paymentData.amountSettled,
     paymentData.merchant_amount,
@@ -207,6 +242,12 @@ function resolvePaySuiteFee(paymentData = {}, grossAmount = 0, originalData = {}
     return roundMoney(grossAmount - explicitNet);
   }
 
+  // Segurança contra desconto duplo:
+  // A comissão da PaySuite só deve ser estimada manualmente se esta variável estiver ativa.
+  // Caso contrário, se o payload não trouxer fee/net explícito, creditamos o valor bruto recebido.
+  const shouldEstimateFees = String(process.env.PAYSUITE_ESTIMATE_FEES || 'true').toLowerCase() !== 'false';
+  if (!shouldEstimateFees) return 0;
+
   const fixedFee = toMoneyNumber(process.env.PAYSUITE_FIXED_FEE_MT ?? process.env.PAYSUITE_FIXED_FEE ?? '0', 0);
   const percentFee = getPaySuiteFeePercent(paymentData, originalData);
   const calculated = fixedFee + (grossAmount * percentFee / 100);
@@ -226,32 +267,78 @@ function calculatePaySuiteWalletCredit(paymentData = {}, originalData = {}) {
     originalData.amount
   ));
 
-  const mode = String(process.env.PAYSUITE_WALLET_CREDIT_MODE || 'net').toLowerCase();
+  // Modo padrão PayGo: net_estimated.
+  // Regra pedida: se o payload não trouxer valor líquido/fee explícito, calcular a taxa por percentagem.
+  // Para desligar esta estimativa, defina PAYSUITE_WALLET_CREDIT_MODE=gross ou PAYSUITE_ESTIMATE_FEES=false.
+  const mode = String(process.env.PAYSUITE_WALLET_CREDIT_MODE || 'net_estimated').toLowerCase();
 
   if (mode === 'gross') {
     return {
       grossAmount,
       gatewayFeeAmount: 0,
       walletCreditAmount: grossAmount,
-      creditMode: 'gross',
+      creditMode: 'gross_no_extra_paysuite_deduction',
       feePercent: 0
     };
   }
 
-  const feeAmount = resolvePaySuiteFee(paymentData, grossAmount, originalData);
-  const netFromPayload = resolvePaySuiteNetSettlement(paymentData, 0);
-  const walletCreditAmount = roundMoney(
-    netFromPayload > 0 && netFromPayload <= grossAmount
-      ? netFromPayload
-      : Math.max(0, grossAmount - feeAmount)
-  );
+  const hasExplicitNet = hasMoneyField(paymentData, PAYSUITE_NET_FIELDS);
+  const hasExplicitFee = hasMoneyField(paymentData, PAYSUITE_FEE_FIELDS);
+  const netFromPayload = hasExplicitNet ? resolvePaySuiteNetSettlement(paymentData, 0) : 0;
+
+  if (mode === 'net_payload_only' || mode === 'net') {
+    if (hasExplicitNet && netFromPayload > 0 && netFromPayload <= grossAmount) {
+      return {
+        grossAmount,
+        gatewayFeeAmount: roundMoney(Math.max(0, grossAmount - netFromPayload)),
+        walletCreditAmount: roundMoney(netFromPayload),
+        creditMode: 'net_from_paysuite_payload',
+        feePercent: getPaySuiteFeePercent(paymentData, originalData)
+      };
+    }
+
+    if (hasExplicitFee) {
+      const feeAmount = resolvePaySuiteFee(paymentData, grossAmount, originalData);
+      const walletCreditAmount = roundMoney(Math.max(0, grossAmount - feeAmount));
+      return {
+        grossAmount,
+        gatewayFeeAmount: feeAmount,
+        walletCreditAmount,
+        creditMode: 'net_from_explicit_paysuite_fee',
+        feePercent: getPaySuiteFeePercent(paymentData, originalData)
+      };
+    }
+
+    // Sem net/fee explícito: calcular taxa por percentagem configurada.
+    const feeAmount = resolvePaySuiteFee(paymentData, grossAmount, originalData);
+    const walletCreditAmount = roundMoney(Math.max(0, grossAmount - feeAmount));
+    return {
+      grossAmount,
+      gatewayFeeAmount: feeAmount,
+      walletCreditAmount,
+      creditMode: feeAmount > 0 ? 'net_estimated_by_paysuite_rates' : 'gross_no_fee_estimated',
+      feePercent: feeAmount > 0 ? getPaySuiteFeePercent(paymentData, originalData) : 0
+    };
+  }
+
+  if (mode === 'net_estimated') {
+    const feeAmount = resolvePaySuiteFee(paymentData, grossAmount, originalData);
+    const walletCreditAmount = roundMoney(Math.max(0, grossAmount - feeAmount));
+    return {
+      grossAmount,
+      gatewayFeeAmount: feeAmount,
+      walletCreditAmount,
+      creditMode: feeAmount > 0 ? 'net_estimated_by_paysuite_rates' : 'gross_no_fee_estimated',
+      feePercent: feeAmount > 0 ? getPaySuiteFeePercent(paymentData, originalData) : 0
+    };
+  }
 
   return {
     grossAmount,
-    gatewayFeeAmount: roundMoney(Math.max(0, grossAmount - walletCreditAmount)),
-    walletCreditAmount,
-    creditMode: netFromPayload > 0 && netFromPayload <= grossAmount ? 'net_from_paysuite_payload' : 'net_estimated_by_paysuite_rates',
-    feePercent: getPaySuiteFeePercent(paymentData, originalData)
+    gatewayFeeAmount: 0,
+    walletCreditAmount: grossAmount,
+    creditMode: 'gross_unknown_mode_fallback',
+    feePercent: 0
   };
 }
 
@@ -651,7 +738,7 @@ async function handlePaySuitePayment(req, res, body) {
   try { result = JSON.parse(textResponse); } catch { return res.status(502).json({ success: false, error: `Serviço ${cleanMethod.toUpperCase()} indisponível.`, raw: textResponse.substring(0, 300) }); }
   if (!response.ok || result.status === 'error') return res.status(400).json({ success: false, error: result.message || 'Servidor rejeitou.', data: result });
 
-  return res.status(200).json({ success: true, data: { paymentId: result.data?.id, status: result.data?.status, reference: result.data?.reference, checkoutUrl: result.data?.checkout_url, method: cleanMethod, amount: result.data?.amount || payload.amount, grossAmount: payload.amount, walletCreditMode: process.env.PAYSUITE_WALLET_CREDIT_MODE || 'net' }, message: 'Redirecione o cliente para o checkoutUrl' });
+  return res.status(200).json({ success: true, data: { paymentId: result.data?.id, status: result.data?.status, reference: result.data?.reference, checkoutUrl: result.data?.checkout_url, method: cleanMethod, amount: result.data?.amount || payload.amount, grossAmount: payload.amount, walletCreditMode: process.env.PAYSUITE_WALLET_CREDIT_MODE || 'net_estimated' }, message: 'Redirecione o cliente para o checkoutUrl' });
 }
 
 async function handlePaySuiteWebhook(req, res, body) {
@@ -821,7 +908,7 @@ async function handlePaySuiteWebhook(req, res, body) {
           gatewayFeePercent: settlement.feePercent || getPaySuiteFeePercent(paymentData, topupData),
           provider: 'paysuite',
           creditMode: settlement.creditMode,
-          description: `Depósito PaySuite líquido (${grossAmount.toFixed(2)} MT - taxa ${gatewayFeeAmount.toFixed(2)} MT)`,
+          description: gatewayFeeAmount > 0 ? `Depósito PaySuite líquido (${grossAmount.toFixed(2)} MT - taxa ${gatewayFeeAmount.toFixed(2)} MT)` : `Depósito PaySuite (${grossAmount.toFixed(2)} MT)`,
           reference: merchantReference,
           paymentId,
           rawPayload: paymentData,
@@ -845,7 +932,7 @@ async function handlePaySuiteWebhook(req, res, body) {
       await db.collection('webhook_logs').add({
         source: 'paysuite',
         rawPayload: body,
-        status: topupData.status === 'failed' ? 'success_after_failed_wallet_funded_net' : 'success_wallet_funded_net',
+        status: topupData.status === 'failed' ? 'success_after_failed_wallet_funded' : 'success_wallet_funded',
         reference: merchantReference,
         paymentId,
         grossAmount,
