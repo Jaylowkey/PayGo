@@ -1486,11 +1486,495 @@ async function handleUpdateGroupApplicationStatus(req, res, body) {
   }
 }
 
+
+// =========================================================
+// 🎮 TOPGAMES HELPERS & ORDER CREATION
+// =========================================================
+const TOPGAMES_ORDERS_COLLECTION = 'orders';
+
+function normalizeTopGamesOrderId(value = '') {
+  const raw = String(value || '').trim() || `PG-TG-${Date.now()}`;
+  if (raw.startsWith('PG-TG-')) return raw;
+  if (raw.startsWith('PG-')) return raw;
+  if (raw.startsWith('PGTG')) return raw.replace(/^PGTG/, 'PG-TG-');
+  if (raw.startsWith('TG-')) return `PG-${raw}`;
+  return `PG-TG-${raw.replace(/[^a-zA-Z0-9_-]/g, '') || Date.now()}`;
+}
+
+function normalizeTopGamesMethod(method = '') {
+  const clean = String(method || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (['mpesa', 'mpesaapi', 'mpsa'].includes(clean)) return 'mpesa';
+  if (['emola', 'emolaapi'].includes(clean)) return 'emola';
+  if (['mkesh', 'mkeshapi'].includes(clean)) return 'mkesh';
+  if (['visa', 'mastercard', 'card', 'creditcard', 'debitcard'].includes(clean)) return 'card';
+  return 'mpesa';
+}
+
+function sanitizeTopGamesItems(items = []) {
+  if (!Array.isArray(items)) return [];
+  return items
+    .map((item, index) => ({
+      id: item?.id || `item_${index + 1}`,
+      game: sanitizeText(item?.game || item?.gameName || ''),
+      gameName: sanitizeText(item?.gameName || item?.game || ''),
+      name: sanitizeText(item?.name || item?.title || ''),
+      price: roundMoney(toMoneyNumber(item?.price ?? item?.amount, 0)),
+      quantity: Math.max(1, parseInt(item?.quantity || 1, 10) || 1),
+      gameKey: sanitizeText(item?.gameKey || item?.game_key || '')
+    }))
+    .filter((item) => item.name && item.price > 0);
+}
+
+function calculateTopGamesTotal(items = []) {
+  return roundMoney(items.reduce((sum, item) => sum + (Number(item.price || 0) * Number(item.quantity || 1)), 0));
+}
+
+function resolveTopGamesReturnUrl(req, body = {}, orderId = '') {
+  const explicit = sanitizeText(body.returnUrl || body.return_url || body.successUrl || body.success_url || body.metadata?.returnUrl);
+  if (explicit && /^https?:\/\//i.test(explicit)) return explicit;
+
+  const origin = sanitizeText(body.siteUrl || body.site_url || body.metadata?.siteUrl || body.metadata?.origin || process.env.TOPGAMES_SITE_URL || process.env.NEXT_PUBLIC_TOPGAMES_URL);
+  if (origin && /^https?:\/\//i.test(origin)) {
+    return `${origin.replace(/\/+$/, '')}/success?reference=${encodeURIComponent(orderId)}`;
+  }
+
+  return `${buildBaseUrl(req)}/success?reference=${encodeURIComponent(orderId)}`;
+}
+
+async function handleCreateTopGamesOrder(req, res, body) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ success: false, error: 'Método não permitido' });
+  }
+
+  const { db } = getFirebase();
+  const now = new Date().toISOString();
+
+  const customer = body.customer || {};
+  const orderId = normalizeTopGamesOrderId(body.orderId || body.order_id || body.reference);
+  const method = normalizeTopGamesMethod(body.method || body.paymentMethod || body.payment_method || customer.paymentMethod);
+  const items = sanitizeTopGamesItems(body.items || customer.items || body.cart || []);
+  const itemsTotal = calculateTopGamesTotal(items);
+  const requestedAmount = roundMoney(toMoneyNumber(body.amount ?? body.total ?? body.total_amount, itemsTotal));
+  const amount = requestedAmount > 0 ? requestedAmount : itemsTotal;
+
+  const name = sanitizeText(customer.name || body.name || body.customerName || body.customer_name);
+  const phone = normalizePhone(customer.phone || body.phone || body.customerPhone || body.customer_phone);
+  const game = sanitizeText(customer.game || body.game || items[0]?.gameName || items[0]?.game || '');
+  const playerId = sanitizeText(customer.playerId || customer.player_id || body.playerId || body.player_id);
+  const nickname = sanitizeText(customer.nickname || body.nickname);
+  const notes = sanitizeText(customer.notes || body.notes || body.observations);
+
+  if (!amount || amount < 1) {
+    return res.status(400).json({ success: false, error: 'Valor inválido. O mínimo é 1 MT.' });
+  }
+
+  if (!name) {
+    return res.status(400).json({ success: false, error: 'Nome do cliente em falta.' });
+  }
+
+  if (!phone) {
+    return res.status(400).json({ success: false, error: 'WhatsApp do cliente em falta.' });
+  }
+
+  if (!playerId) {
+    return res.status(400).json({ success: false, error: 'ID do jogador em falta.' });
+  }
+
+  if (!items.length) {
+    return res.status(400).json({ success: false, error: 'Nenhum pacote válido foi enviado.' });
+  }
+
+  if (itemsTotal > 0 && Math.abs(itemsTotal - amount) > 0.01) {
+    return res.status(400).json({
+      success: false,
+      error: 'Total inválido. O valor enviado não corresponde aos pacotes selecionados.',
+      expectedTotal: itemsTotal,
+      receivedTotal: amount
+    });
+  }
+
+  const orderRef = db.collection(TOPGAMES_ORDERS_COLLECTION).doc(orderId);
+  const currentSnap = await orderRef.get();
+
+  if (currentSnap.exists) {
+    const current = currentSnap.data() || {};
+    if (current.isPaid === true || current.status === 'processing' || current.status === 'completed') {
+      return res.status(409).json({
+        success: false,
+        error: 'Este pedido já existe e já foi processado ou pago.',
+        orderId,
+        status: current.status || 'unknown'
+      });
+    }
+  }
+
+  const returnUrl = resolveTopGamesReturnUrl(req, body, orderId);
+  const description = sanitizeText(body.description) || `TOPGAMES ${orderId} - ${game || 'Game'} - ID ${playerId}`;
+
+  const orderData = purificarDados({
+    orderId,
+    type: 'topgames',
+    category: 'game_topup',
+    source: 'topgames',
+    status: 'pending',
+    paymentStatus: 'pending',
+    isPaid: false,
+    customer_name: name,
+    name,
+    phone,
+    customerPhone: phone,
+    game,
+    playerId,
+    nickname,
+    notes,
+    items,
+    amount,
+    total: amount,
+    total_amount: amount,
+    currency: 'MZN',
+    method,
+    paymentMethod: method,
+    description,
+    returnUrl,
+    metadata: {
+      ...(body.metadata || {}),
+      source: 'topgames',
+      type: 'game_topup',
+      playerId,
+      nickname,
+      game
+    },
+    createdAt: currentSnap.exists ? (currentSnap.data()?.createdAt || now) : now,
+    updatedAt: now
+  });
+
+  await orderRef.set(orderData, { merge: true });
+
+  await db.collection('admin_audit_logs').add({
+    adminId: 'system_bot',
+    adminName: '🤖 Sistema Automático',
+    action: currentSnap.exists ? 'TOPGAMES_ORDER_UPDATED_PENDING' : 'TOPGAMES_ORDER_CREATED',
+    targetId: orderId,
+    targetType: 'order',
+    details: {
+      orderId,
+      game,
+      playerId,
+      amount,
+      method,
+      itemsCount: items.length
+    },
+    createdAt: now
+  });
+
+  const cleanReference = String(orderId).replace(/[^a-zA-Z0-9]/g, '');
+  const baseUrl = buildBaseUrl(req);
+  const paymentPayload = {
+    amount: parseFloat(amount),
+    method,
+    reference: cleanReference,
+    description,
+    callback_url: `${baseUrl}/api/paysuite-webhook`,
+    return_url: returnUrl
+  };
+
+  const response = await fetch(`${(process.env.PAYSUITE_API_URL || 'https://paysuite.tech/api/v1').replace(/\/+$/, '')}/payments`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      Authorization: `Bearer ${process.env.PAYSUITE_API_KEY || process.env.PAYSUITE_API_TOKEN}`
+    },
+    body: JSON.stringify(paymentPayload),
+    signal: AbortSignal.timeout(30000)
+  });
+
+  const textResponse = await response.text();
+  let result;
+  try {
+    result = JSON.parse(textResponse);
+  } catch {
+    await orderRef.update({
+      paymentStatus: 'creation_failed',
+      paymentError: 'Resposta inválida da Paysuite.',
+      updatedAt: new Date().toISOString()
+    });
+    return res.status(502).json({
+      success: false,
+      error: 'Resposta inválida da Paysuite.',
+      orderId,
+      raw: textResponse.substring(0, 300)
+    });
+  }
+
+  if (!response.ok || result.status === 'error') {
+    await orderRef.update({
+      paymentStatus: 'creation_failed',
+      paymentError: result.message || 'Falha ao criar pagamento na Paysuite.',
+      paysuiteRawError: purificarDados(result),
+      updatedAt: new Date().toISOString()
+    });
+    return res.status(400).json({
+      success: false,
+      error: result.message || 'Falha ao criar pagamento na Paysuite.',
+      orderId,
+      data: result
+    });
+  }
+
+  const paymentData = result.data || {};
+  await orderRef.update({
+    paymentStatus: paymentData.status || 'pending',
+    paysuitePaymentId: paymentData.id || paymentData.payment_id || null,
+    paysuiteReference: paymentData.reference || cleanReference,
+    paysuiteCheckoutUrl: paymentData.checkout_url || paymentData.checkoutUrl || null,
+    paysuiteRaw: purificarDados(result),
+    updatedAt: new Date().toISOString()
+  });
+
+  await db.collection('webhook_logs').add({
+    source: 'topgames',
+    status: 'payment_created',
+    reference: orderId,
+    paysuiteReference: paymentData.reference || cleanReference,
+    paymentId: paymentData.id || paymentData.payment_id || null,
+    amount,
+    method,
+    createdAt: new Date().toISOString(),
+    receivedAt: new Date().toISOString()
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: 'Pedido TOPGAMES criado e pagamento gerado com sucesso.',
+    data: {
+      orderId,
+      paymentId: paymentData.id || paymentData.payment_id || null,
+      status: paymentData.status || 'pending',
+      reference: paymentData.reference || cleanReference,
+      checkoutUrl: paymentData.checkout_url || paymentData.checkoutUrl || null,
+      method,
+      amount,
+      returnUrl
+    }
+  });
+}
+
+
+// =========================================================
+// 🎮 TOPGAMES ADMIN HELPERS & ROUTES
+// =========================================================
+function getTopGamesAdminToken(req) {
+  const authHeader = req.headers.authorization || req.headers.Authorization || '';
+  const bearer = String(authHeader).startsWith('Bearer ') ? String(authHeader).slice(7).trim() : '';
+  const headerToken = req.headers['x-admin-token'] || req.headers['x-topgames-admin-token'] || '';
+  return bearer || String(headerToken || '').trim();
+}
+
+function assertTopGamesAdmin(req) {
+  const expected = process.env.TOPGAMES_ADMIN_TOKEN;
+  if (!expected) {
+    const err = new Error('TOPGAMES_ADMIN_TOKEN em falta na Vercel do projeto PayGo. Crie uma senha forte para o dashboard admin.');
+    err.statusCode = 500;
+    throw err;
+  }
+
+  const provided = getTopGamesAdminToken(req);
+  if (!provided || provided !== expected) {
+    const err = new Error('Acesso negado. Token admin inválido.');
+    err.statusCode = 401;
+    throw err;
+  }
+}
+
+function normalizeDateValue(value) {
+  if (!value) return null;
+  if (typeof value.toDate === 'function') return value.toDate().toISOString();
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? String(value) : d.toISOString();
+}
+
+function normalizeTopGamesOrder(doc) {
+  const data = doc.data() || {};
+  const items = Array.isArray(data.items) ? data.items : [];
+  return {
+    id: doc.id,
+    orderId: data.orderId || doc.id,
+    status: data.status || 'pending',
+    paymentStatus: data.paymentStatus || (data.isPaid ? 'paid' : 'pending'),
+    isPaid: Boolean(data.isPaid),
+    name: data.name || data.customer_name || data.customerName || '',
+    phone: data.phone || data.customerPhone || '',
+    game: data.game || '',
+    playerId: data.playerId || data.player_id || '',
+    nickname: data.nickname || '',
+    method: data.method || data.paymentMethod || data.payment_method || '',
+    amount: pickFirstMoney(data.amount, data.total, data.total_amount, 0),
+    total: pickFirstMoney(data.total, data.amount, data.total_amount, 0),
+    currency: data.currency || 'MZN',
+    items,
+    notes: data.notes || '',
+    adminNote: data.adminNote || '',
+    adminNotes: Array.isArray(data.adminNotes) ? data.adminNotes : [],
+    paysuitePaymentId: data.paysuitePaymentId || data.paysuiteId || null,
+    paysuiteReference: data.paysuiteReference || null,
+    paysuiteCheckoutUrl: data.paysuiteCheckoutUrl || null,
+    completedAt: normalizeDateValue(data.completedAt),
+    paidAt: normalizeDateValue(data.paidAt),
+    createdAt: normalizeDateValue(data.createdAt),
+    updatedAt: normalizeDateValue(data.updatedAt),
+    raw: data
+  };
+}
+
+function buildTopGamesStats(orders) {
+  const stats = {
+    total: orders.length,
+    pending: 0,
+    paid: 0,
+    processing: 0,
+    completed: 0,
+    failed: 0,
+    cancelled: 0,
+    refunded: 0,
+    revenue: 0,
+    paidRevenue: 0
+  };
+
+  for (const order of orders) {
+    const status = String(order.status || 'pending').toLowerCase();
+    if (stats[status] !== undefined) stats[status] += 1;
+    stats.revenue += Number(order.total || order.amount || 0);
+    if (order.isPaid || ['paid', 'processing', 'completed'].includes(status)) {
+      stats.paidRevenue += Number(order.total || order.amount || 0);
+    }
+  }
+
+  stats.revenue = roundMoney(stats.revenue);
+  stats.paidRevenue = roundMoney(stats.paidRevenue);
+  return stats;
+}
+
+async function handleGetTopGamesOrders(req, res, body) {
+  if (!['GET', 'POST'].includes(req.method)) return res.status(405).json({ success: false, error: 'Método não permitido' });
+  assertTopGamesAdmin(req);
+
+  const params = req.method === 'GET' ? (req.query || {}) : body;
+  const status = sanitizeText(params.status || 'all').toLowerCase();
+  const game = sanitizeText(params.game || 'all').toLowerCase();
+  const search = sanitizeText(params.search || '').toLowerCase();
+  const maxFetch = Math.min(Math.max(Number(params.maxFetch || 500), 1), 1000);
+  const limit = Math.min(Math.max(Number(params.limit || 200), 1), 500);
+
+  const { db } = getFirebase();
+  const snap = await db.collection('orders').where('type', '==', 'topgames').limit(maxFetch).get();
+
+  let orders = snap.docs.map(normalizeTopGamesOrder).sort((a, b) => {
+    const da = new Date(a.createdAt || 0).getTime();
+    const dbb = new Date(b.createdAt || 0).getTime();
+    return dbb - da;
+  });
+
+  const stats = buildTopGamesStats(orders);
+
+  if (status && status !== 'all') {
+    orders = orders.filter((order) => String(order.status || '').toLowerCase() === status || String(order.paymentStatus || '').toLowerCase() === status);
+  }
+
+  if (game && game !== 'all') {
+    orders = orders.filter((order) => String(order.game || '').toLowerCase().includes(game));
+  }
+
+  if (search) {
+    orders = orders.filter((order) => {
+      const haystack = [order.orderId, order.name, order.phone, order.playerId, order.nickname, order.game, order.method]
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(search);
+    });
+  }
+
+  orders = orders.slice(0, limit);
+
+  return res.status(200).json({ success: true, orders, stats, count: orders.length });
+}
+
+async function resolveTopGamesOrderRef(db, orderId) {
+  const directRef = db.collection('orders').doc(orderId);
+  const directSnap = await directRef.get();
+  if (directSnap.exists) return { ref: directRef, snap: directSnap };
+
+  const querySnap = await db.collection('orders').where('orderId', '==', orderId).limit(1).get();
+  if (!querySnap.empty) return { ref: querySnap.docs[0].ref, snap: querySnap.docs[0] };
+
+  return { ref: directRef, snap: null };
+}
+
+async function handleUpdateTopGamesOrder(req, res, body) {
+  if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Método não permitido' });
+  assertTopGamesAdmin(req);
+
+  const orderId = sanitizeText(body.orderId || body.id);
+  const status = sanitizeText(body.status || '').toLowerCase();
+  const adminName = sanitizeText(body.adminName || 'Admin TOPGAMES');
+  const note = sanitizeText(body.note || body.adminNote || '');
+
+  const allowed = ['pending', 'paid', 'processing', 'completed', 'failed', 'cancelled', 'refunded'];
+  if (!orderId) return res.status(400).json({ success: false, error: 'orderId em falta.' });
+  if (!allowed.includes(status)) return res.status(400).json({ success: false, error: `Status inválido. Use: ${allowed.join(', ')}` });
+
+  const { db } = getFirebase();
+  const { ref, snap } = await resolveTopGamesOrderRef(db, orderId);
+  if (!snap || !snap.exists) return res.status(404).json({ success: false, error: 'Pedido TOPGAMES não encontrado.', orderId });
+
+  const current = snap.data() || {};
+  const now = new Date().toISOString();
+  const update = {
+    status,
+    updatedAt: now,
+    updatedBy: adminName,
+    adminNote: note || current.adminNote || '',
+    adminNotes: FieldValue.arrayUnion({ status, note, adminName, createdAt: now })
+  };
+
+  if (['paid', 'processing', 'completed'].includes(status)) {
+    update.isPaid = true;
+    update.paymentStatus = 'paid';
+    if (!current.paidAt) update.paidAt = now;
+  }
+
+  if (status === 'completed') update.completedAt = now;
+  if (status === 'failed') update.paymentStatus = current.isPaid ? 'paid' : 'failed';
+  if (status === 'cancelled') update.paymentStatus = current.isPaid ? 'paid' : 'cancelled';
+  if (status === 'refunded') update.paymentStatus = 'refunded';
+
+  await ref.update(update);
+
+  await db.collection('admin_audit_logs').add({
+    adminId: 'topgames_admin',
+    adminName,
+    action: 'TOPGAMES_ORDER_STATUS_UPDATED',
+    targetId: orderId,
+    targetType: 'order',
+    details: {
+      previous: { status: current.status || 'pending', paymentStatus: current.paymentStatus || null, isPaid: Boolean(current.isPaid) },
+      updated: { status, note }
+    },
+    createdAt: now
+  });
+
+  const updatedSnap = await ref.get();
+  return res.status(200).json({ success: true, order: normalizeTopGamesOrder(updatedSnap), message: 'Pedido atualizado com sucesso.' });
+}
+
 // =========================================================
 // 🗺️ MAPA DE ROTAS & EXPORT
 // =========================================================
 const routes = {
   'paysuite-payment': handlePaySuitePayment,
+  'create-topgames-order': handleCreateTopGamesOrder,
+  'get-topgames-orders': handleGetTopGamesOrders,
+  'update-topgames-order': handleUpdateTopGamesOrder,
   'paysuite-webhook': handlePaySuiteWebhook,
   'delete-user': handleDeleteUser,
   'get-referrals': handleGetReferrals,
