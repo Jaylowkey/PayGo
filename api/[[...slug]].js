@@ -1772,7 +1772,7 @@ function getTopGamesAdminToken(req) {
 }
 
 function assertTopGamesAdmin(req) {
-  const expected = process.env.TOPGAMES_ADMIN_TOKEN;
+  const expected = String(process.env.TOPGAMES_ADMIN_TOKEN || '').trim();
   if (!expected) {
     const err = new Error('TOPGAMES_ADMIN_TOKEN em falta na Vercel do projeto PayGo. Crie uma senha forte para o dashboard admin.');
     err.statusCode = 500;
@@ -1780,7 +1780,7 @@ function assertTopGamesAdmin(req) {
   }
 
   const provided = getTopGamesAdminToken(req);
-  if (!provided || provided !== expected) {
+  if (!provided || String(provided).trim() !== expected) {
     const err = new Error('Acesso negado. Token admin inválido.');
     err.statusCode = 401;
     throw err;
