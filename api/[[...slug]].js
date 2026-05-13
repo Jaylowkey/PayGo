@@ -267,78 +267,18 @@ function calculatePaySuiteWalletCredit(paymentData = {}, originalData = {}) {
     originalData.amount
   ));
 
-  // Modo padrão PayGo: net_estimated.
-  // Regra pedida: se o payload não trouxer valor líquido/fee explícito, calcular a taxa por percentagem.
-  // Para desligar esta estimativa, defina PAYSUITE_WALLET_CREDIT_MODE=gross ou PAYSUITE_ESTIMATE_FEES=false.
-  const mode = String(process.env.PAYSUITE_WALLET_CREDIT_MODE || 'net_estimated').toLowerCase();
-
-  if (mode === 'gross') {
-    return {
-      grossAmount,
-      gatewayFeeAmount: 0,
-      walletCreditAmount: grossAmount,
-      creditMode: 'gross_no_extra_paysuite_deduction',
-      feePercent: 0
-    };
-  }
-
-  const hasExplicitNet = hasMoneyField(paymentData, PAYSUITE_NET_FIELDS);
-  const hasExplicitFee = hasMoneyField(paymentData, PAYSUITE_FEE_FIELDS);
-  const netFromPayload = hasExplicitNet ? resolvePaySuiteNetSettlement(paymentData, 0) : 0;
-
-  if (mode === 'net_payload_only' || mode === 'net') {
-    if (hasExplicitNet && netFromPayload > 0 && netFromPayload <= grossAmount) {
-      return {
-        grossAmount,
-        gatewayFeeAmount: roundMoney(Math.max(0, grossAmount - netFromPayload)),
-        walletCreditAmount: roundMoney(netFromPayload),
-        creditMode: 'net_from_paysuite_payload',
-        feePercent: getPaySuiteFeePercent(paymentData, originalData)
-      };
-    }
-
-    if (hasExplicitFee) {
-      const feeAmount = resolvePaySuiteFee(paymentData, grossAmount, originalData);
-      const walletCreditAmount = roundMoney(Math.max(0, grossAmount - feeAmount));
-      return {
-        grossAmount,
-        gatewayFeeAmount: feeAmount,
-        walletCreditAmount,
-        creditMode: 'net_from_explicit_paysuite_fee',
-        feePercent: getPaySuiteFeePercent(paymentData, originalData)
-      };
-    }
-
-    // Sem net/fee explícito: calcular taxa por percentagem configurada.
-    const feeAmount = resolvePaySuiteFee(paymentData, grossAmount, originalData);
-    const walletCreditAmount = roundMoney(Math.max(0, grossAmount - feeAmount));
-    return {
-      grossAmount,
-      gatewayFeeAmount: feeAmount,
-      walletCreditAmount,
-      creditMode: feeAmount > 0 ? 'net_estimated_by_paysuite_rates' : 'gross_no_fee_estimated',
-      feePercent: feeAmount > 0 ? getPaySuiteFeePercent(paymentData, originalData) : 0
-    };
-  }
-
-  if (mode === 'net_estimated') {
-    const feeAmount = resolvePaySuiteFee(paymentData, grossAmount, originalData);
-    const walletCreditAmount = roundMoney(Math.max(0, grossAmount - feeAmount));
-    return {
-      grossAmount,
-      gatewayFeeAmount: feeAmount,
-      walletCreditAmount,
-      creditMode: feeAmount > 0 ? 'net_estimated_by_paysuite_rates' : 'gross_no_fee_estimated',
-      feePercent: feeAmount > 0 ? getPaySuiteFeePercent(paymentData, originalData) : 0
-    };
-  }
-
+  // REGRA ATUAL PAYGO:
+  // A comissão já é descontada pela carteira/conta da PaySuite.
+  // Por isso, a carteira PayGo deve receber o valor BRUTO pago pelo cliente.
+  // Não estimar taxa, não subtrair fee, não usar net_amount para reduzir o saldo do cliente.
+  // Isto evita desconto duplo da comissão PaySuite.
   return {
     grossAmount,
     gatewayFeeAmount: 0,
     walletCreditAmount: grossAmount,
-    creditMode: 'gross_unknown_mode_fallback',
-    feePercent: 0
+    creditMode: 'gross_no_paysuite_deduction',
+    feePercent: 0,
+    paysuiteCommissionIgnored: true
   };
 }
 
@@ -580,7 +520,7 @@ function generateNotifyHTML(action, order, reason, extraAmount, mediaUrl) {
     <div class="detail-row"><span class="detail-label">Método</span><span class="detail-value">${escapeHTML(method)}</span></div>
     <div class="detail-row"><span class="detail-label">Valor pago</span><span class="detail-value">${total}</span></div>
     ${gatewayFeeAmount > 0 ? `<div class="detail-row"><span class="detail-label">Taxa PaySuite estimada/descontada</span><span class="detail-value" style="color:${BRAND_COLORS.warning};">-${fee}</span></div>` : ''}
-    <div class="detail-row"><span class="detail-label">Valor líquido registado</span><span class="detail-value" style="color:${BRAND_COLORS.success};font-size:18px;">${net}</span></div>
+    <div class="detail-row"><span class="detail-label">Valor creditado na carteira</span><span class="detail-value" style="color:${BRAND_COLORS.success};font-size:18px;">${net}</span></div>
   `;
 
   switch(action) {
@@ -738,7 +678,7 @@ async function handlePaySuitePayment(req, res, body) {
   try { result = JSON.parse(textResponse); } catch { return res.status(502).json({ success: false, error: `Serviço ${cleanMethod.toUpperCase()} indisponível.`, raw: textResponse.substring(0, 300) }); }
   if (!response.ok || result.status === 'error') return res.status(400).json({ success: false, error: result.message || 'Servidor rejeitou.', data: result });
 
-  return res.status(200).json({ success: true, data: { paymentId: result.data?.id, status: result.data?.status, reference: result.data?.reference, checkoutUrl: result.data?.checkout_url, method: cleanMethod, amount: result.data?.amount || payload.amount, grossAmount: payload.amount, walletCreditMode: process.env.PAYSUITE_WALLET_CREDIT_MODE || 'net_estimated' }, message: 'Redirecione o cliente para o checkoutUrl' });
+  return res.status(200).json({ success: true, data: { paymentId: result.data?.id, status: result.data?.status, reference: result.data?.reference, checkoutUrl: result.data?.checkout_url, method: cleanMethod, amount: result.data?.amount || payload.amount, grossAmount: payload.amount, walletCreditMode: 'gross_no_paysuite_deduction' }, message: 'Redirecione o cliente para o checkoutUrl' });
 }
 
 async function handlePaySuiteWebhook(req, res, body) {
@@ -908,7 +848,7 @@ async function handlePaySuiteWebhook(req, res, body) {
           gatewayFeePercent: settlement.feePercent || getPaySuiteFeePercent(paymentData, topupData),
           provider: 'paysuite',
           creditMode: settlement.creditMode,
-          description: gatewayFeeAmount > 0 ? `Depósito PaySuite líquido (${grossAmount.toFixed(2)} MT - taxa ${gatewayFeeAmount.toFixed(2)} MT)` : `Depósito PaySuite (${grossAmount.toFixed(2)} MT)`,
+          description: `Depósito PaySuite bruto (${grossAmount.toFixed(2)} MT) sem desconto extra de comissão`,
           reference: merchantReference,
           paymentId,
           rawPayload: paymentData,
@@ -932,7 +872,7 @@ async function handlePaySuiteWebhook(req, res, body) {
       await db.collection('webhook_logs').add({
         source: 'paysuite',
         rawPayload: body,
-        status: topupData.status === 'failed' ? 'success_after_failed_wallet_funded' : 'success_wallet_funded',
+        status: topupData.status === 'failed' ? 'success_after_failed_wallet_funded_gross' : 'success_wallet_funded_gross',
         reference: merchantReference,
         paymentId,
         grossAmount,
