@@ -1109,7 +1109,7 @@
     async function getAuthHeaders() {
       const user = auth.currentUser;
       if (!user) throw new Error("Sessão expirada.");
-      const idToken = await user.getIdToken(true);
+      const idToken = await user.getIdToken(false);
       return {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${idToken}`
@@ -1291,6 +1291,39 @@
 
     bindQuickFilters();
 
+    function isFirebaseApiBlockedError(error) {
+      const msg = String(error?.message || error?.code || error || "");
+      return (
+        msg.includes("securetoken.googleapis.com") ||
+        msg.includes("identitytoolkit.googleapis.com") ||
+        msg.includes("requests-to-this-api") ||
+        msg.includes("GrantToken") ||
+        msg.includes("are-blocked") ||
+        msg.includes("are blocked")
+      );
+    }
+
+    function getFirebaseFriendlyError(error) {
+      if (isFirebaseApiBlockedError(error)) {
+        return "Firebase Auth está bloqueado na chave/API do Google Cloud. Libere a Token Service API (securetoken.googleapis.com) e a Identity Toolkit API na chave Web do Firebase, e confirme o domínio permitido nos HTTP referrers.";
+      }
+      return error?.message || "Erro de autenticação. Faça login novamente.";
+    }
+
+    function renderAuthError(error) {
+      console.error("Firebase Auth:", error);
+      authLoading.innerHTML = `
+        <div class="card auth-box">
+          <h1 style="font-size:2rem;margin-bottom:10px;">Erro de autenticação</h1>
+          <p class="small">${escapeHtml(getFirebaseFriendlyError(error))}</p>
+          <div style="margin-top:18px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+            <a class="btn primary" href="../login.html">Ir para login da PayGo</a>
+            <button class="btn secondary" onclick="location.reload()">Tentar novamente</button>
+          </div>
+        </div>
+      `;
+    }
+
     onAuthStateChanged(auth, async (user) => {
       try {
         if (!user) {
@@ -1307,17 +1340,9 @@
         await loadApplications();
         startAutoRefresh();
       } catch (error) {
-        authLoading.innerHTML = `
-          <div class="card auth-box">
-            <h1 style="font-size:2rem;margin-bottom:10px;">Acesso negado</h1>
-            <p class="small">${escapeHtml(error.message || "Não autorizado.")}</p>
-            <div style="margin-top:18px;">
-              <a class="btn primary" href="../login.html">Ir para login da PayGo</a>
-            </div>
-          </div>
-        `;
+        renderAuthError(error);
       }
-    });
+    }, renderAuthError);
   </script>
 </body>
 </html>
