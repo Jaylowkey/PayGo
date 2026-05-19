@@ -50,6 +50,111 @@
     .json-string { color: #86efac; }
     .json-number { color: #fca5a5; }
     .json-boolean { color: #fcd34d; }
+
+    /* Detailed payload modal */
+    .payload-modal-content { max-width: 1120px; }
+    .modal-summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    .summary-card {
+      background: linear-gradient(180deg, rgba(30,41,59,.85), rgba(15,23,42,.88));
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 16px;
+      padding: 14px;
+      min-height: 86px;
+    }
+    .summary-card small {
+      display: block;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: #94a3b8;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .summary-card strong {
+      display: block;
+      color: #f8fafc;
+      font-size: 14px;
+      line-height: 1.45;
+      word-break: break-word;
+    }
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 16px; }
+    .detail-panel {
+      background: rgba(15,23,42,.72);
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 18px;
+      overflow: hidden;
+    }
+    .detail-panel-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 13px 15px;
+      background: rgba(2,6,23,.62);
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      color: #dbeafe;
+      font-weight: 800;
+      font-size: 13px;
+    }
+    .detail-panel-body { padding: 12px 15px; display: grid; gap: 10px; }
+    .detail-row {
+      display: grid;
+      grid-template-columns: minmax(112px, .42fr) 1fr;
+      gap: 10px;
+      align-items: start;
+      padding-bottom: 9px;
+      border-bottom: 1px dashed rgba(255,255,255,.06);
+    }
+    .detail-row:last-child { border-bottom: 0; padding-bottom: 0; }
+    .detail-key {
+      color: #94a3b8;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+    .detail-value {
+      color: #e2e8f0;
+      font-size: 13px;
+      line-height: 1.55;
+      word-break: break-word;
+    }
+    .detail-value.mono { font-family: 'Fira Code', monospace; color: #bfdbfe; }
+    .detail-value.money { color: #86efac; font-weight: 900; }
+    .detail-value.danger { color: #fca5a5; font-weight: 800; }
+    .detail-value.warning { color: #fcd34d; font-weight: 800; }
+    .modal-tabs { display: inline-flex; gap: 6px; padding: 4px; border-radius: 14px; background: rgba(2,6,23,.55); border: 1px solid rgba(255,255,255,.06); }
+    .modal-tab-btn {
+      padding: 9px 12px;
+      border-radius: 10px;
+      color: #94a3b8;
+      font-weight: 800;
+      font-size: 12px;
+      transition: .2s ease;
+    }
+    .modal-tab-btn.active { background: rgba(59,130,246,.18); color: #bfdbfe; }
+    .payload-tab-panel { display: none; }
+    .payload-tab-panel.active { display: block; }
+    .copy-btn {
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: rgba(59,130,246,.14);
+      border: 1px solid rgba(59,130,246,.24);
+      color: #bfdbfe;
+      font-size: 12px;
+      font-weight: 800;
+      transition: .2s ease;
+    }
+    .copy-btn:hover { background: rgba(59,130,246,.22); color: #fff; }
+    .empty-detail { color: #64748b; font-size: 13px; padding: 8px 0; }
+    @media (max-width: 920px) {
+      .modal-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .detail-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .modal-summary-grid { grid-template-columns: 1fr; }
+      .detail-row { grid-template-columns: 1fr; gap: 4px; }
+    }
+
   </style>
 </head>
 <body class="selection:bg-brand-500 selection:text-white">
@@ -77,18 +182,50 @@
     
     <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
       <div>
-        <h1 class="text-3xl font-display font-extrabold text-white tracking-tight">Centro de Monitorização</h1>
-        <p class="text-slate-400 text-sm mt-1">Acompanhe as ações da Equipa e os disparos técnicos (Webhooks).</p>
+        <h1 class="text-3xl font-display font-extrabold text-whi<div id="payloadModal" class="modal" aria-hidden="true">
+    <div class="modal-overlay" onclick="window.closeModal()"></div>
+    <div class="modal-content payload-modal-content flex flex-col h-full md:h-auto border border-slate-700">
+      <div class="flex justify-between items-center p-5 border-b border-white/10 bg-slate-900 sticky top-0 z-10 rounded-t-[20px]">
+        <div>
+          <h2 id="modalTitle" class="text-lg font-display font-bold text-white flex items-center gap-2">
+            <i data-lucide="scan-search" class="w-5 h-5 text-brand-400"></i>
+            Inspeção detalhada
+          </h2>
+          <p id="modalSubtitle" class="text-xs text-slate-500 mt-1">Resumo técnico formatado a partir do payload</p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="window.copyCurrentPayload()" class="copy-btn flex items-center gap-2" type="button">
+            <i data-lucide="copy" class="w-4 h-4"></i> Copiar JSON
+          </button>
+          <button onclick="window.closeModal()" class="text-slate-400 hover:text-white transition p-2" type="button">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
       </div>
-      <div class="flex items-center gap-2 bg-slate-900/50 px-4 py-2 rounded-xl border border-slate-800">
-        <span class="relative flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span></span>
-        <span class="text-xs font-bold text-slate-300 uppercase tracking-widest">Live Sync Ativo</span>
+
+      <div class="p-6 bg-slate-950 flex-1">
+        <div class="flex flex-col md:flex-row justify-between gap-3 md:items-center mb-5 border-b border-slate-800 pb-4">
+          <div id="modalMetaInfo" class="flex flex-col gap-1 text-sm text-slate-400"></div>
+          <div class="modal-tabs">
+            <button class="modal-tab-btn active" id="modalTabResumo" onclick="window.switchPayloadTab('resumo')" type="button">Resumo</button>
+            <button class="modal-tab-btn" id="modalTabJson" onclick="window.switchPayloadTab('json')" type="button">JSON bruto</button>
+          </div>
+        </div>
+
+        <div id="payloadTabResumo" class="payload-tab-panel active">
+          <div id="modalSummaryCards" class="modal-summary-grid"></div>
+          <div id="modalDetailPanels" class="detail-grid"></div>
+        </div>
+
+        <div id="payloadTabJson" class="payload-tab-panel">
+          <div class="json-view" id="jsonContainer">{}</div>
+        </div>
       </div>
     </div>
+  </div>
 
-    <div class="flex gap-2 mb-6 border-b border-slate-800 pb-px">
-        <button onclick="window.switchTab('audit')" id="tab-audit" class="tab-btn active px-6 py-3 rounded-t-xl text-sm font-medium text-slate-400 border border-transparent border-b-0 hover:text-slate-200">
-            <i data-lucide="users" class="w-4 h-4 inline-block mr-2 mb-0.5"></i> Ações da Equipa
+<i data-lucide="users" class="w-4 h-4 inline-block mr-2 mb-0.5"></i> Ações da Equipa
         </button>
         <button onclick="window.switchTab('webhook')" id="tab-webhook" class="tab-btn px-6 py-3 rounded-t-xl text-sm font-medium text-slate-400 border border-transparent border-b-0 hover:text-slate-200">
             <i data-lucide="webhook" class="w-4 h-4 inline-block mr-2 mb-0.5"></i> Webhooks Brutos
@@ -309,43 +446,299 @@
     }
 
     // =====================================
-    // 🔍 VISUALIZADORES DE MODAL
+    // 🔍 VISUALIZADORES DE MODAL ESTILIZADO
     // =====================================
+    let currentModalPayload = null;
+
+    function escapeDetail(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function toDisplayDate(value) {
+        if (!value) return '—';
+        if (value?.toDate) return value.toDate().toLocaleString('pt-MZ');
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString('pt-MZ');
+    }
+
+    function getPath(obj, paths, fallback = '—') {
+        for (const path of paths) {
+            const value = path.split('.').reduce((acc, key) => acc?.[key], obj);
+            if (value !== undefined && value !== null && String(value) !== '') return value;
+        }
+        return fallback;
+    }
+
+    function moneyValue(value) {
+        if (value === undefined || value === null || value === '' || value === '—') return '—';
+        const n = Number(String(value).replace(',', '.'));
+        if (!Number.isFinite(n)) return escapeDetail(value);
+        return `${n.toLocaleString('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MT`;
+    }
+
+    function prettyLabel(key) {
+        return String(key)
+            .replace(/_/g, ' ')
+            .replace(/([a-z])([A-Z])/g, '$1 $2')
+            .replace(/\b\w/g, l => l.toUpperCase());
+    }
+
+    function displayValue(value, type = 'text') {
+        if (value === undefined || value === null || value === '') return '<span class="text-slate-600">—</span>';
+        if (type === 'date') return escapeDetail(toDisplayDate(value));
+        if (type === 'money') return escapeDetail(moneyValue(value));
+        if (type === 'status') {
+            const status = escapeDetail(String(value).replaceAll('_', ' '));
+            return `<span class="status-badge bg-brand-500/10 text-brand-400 border border-brand-500/20">${status}</span>`;
+        }
+        if (type === 'bool') {
+            return value ? '<span class="text-success-400 font-bold">Sim</span>' : '<span class="text-danger-400 font-bold">Não</span>';
+        }
+        if (Array.isArray(value)) return escapeDetail(value.join(', '));
+        if (typeof value === 'object') return `<span class="font-mono text-brand-300">${escapeDetail(JSON.stringify(value))}</span>`;
+        return escapeDetail(value);
+    }
+
+    function summaryCard(label, value, icon = 'info') {
+        return `
+          <div class="summary-card">
+            <small><i data-lucide="${icon}" class="w-3 h-3 inline-block mr-1"></i>${escapeDetail(label)}</small>
+            <strong>${displayValue(value)}</strong>
+          </div>
+        `;
+    }
+
+    function renderDetailRows(rows) {
+        const validRows = rows.filter(row => row && row.value !== undefined && row.value !== null && row.value !== '');
+        if (!validRows.length) return `<div class="empty-detail">Sem dados disponíveis nesta secção.</div>`;
+
+        return validRows.map(row => `
+          <div class="detail-row">
+            <div class="detail-key">${escapeDetail(row.label)}</div>
+            <div class="detail-value ${row.className || ''}">${displayValue(row.value, row.type || 'text')}</div>
+          </div>
+        `).join('');
+    }
+
+    function detailPanel(title, icon, rows) {
+        return `
+          <section class="detail-panel">
+            <div class="detail-panel-header">
+              <i data-lucide="${icon}" class="w-4 h-4 text-brand-400"></i>
+              ${escapeDetail(title)}
+            </div>
+            <div class="detail-panel-body">
+              ${renderDetailRows(rows)}
+            </div>
+          </section>
+        `;
+    }
+
+    function objectToRows(obj = {}, ignoreKeys = []) {
+        if (!obj || typeof obj !== 'object') return [];
+        return Object.entries(obj)
+            .filter(([key]) => !ignoreKeys.includes(key))
+            .filter(([, value]) => value !== undefined && value !== null && String(value) !== '')
+            .slice(0, 18)
+            .map(([key, value]) => ({
+                label: prettyLabel(key),
+                value,
+                className: typeof value === 'number' ? 'mono' : ''
+            }));
+    }
+
+    function buildWebhookView(log) {
+        const payload = log.payload || log.rawPayload || {};
+        const data = payload.data || payload.transaction || payload.payment || {};
+        const event = payload.event || log.event || 'Payload Raw';
+        const reference = log.reference || log.orderId || payload.reference || data.reference || payload.merchant_reference || data.merchant_reference || 'S/N';
+        const paymentId = log.paymentId || data.payment_id || data.paymentId || data.id || payload.payment_id || payload.id || '—';
+        const amount = log.grossAmount || payload.amount || data.amount || data.total_amount || data.paid_amount || '—';
+        const walletCredit = log.walletCreditAmount || data.walletCreditAmount || data.net_amount || data.netAmount || '—';
+        const gatewayFee = log.gatewayFeeAmount || data.gatewayFeeAmount || data.fee || data.commission || '—';
+
+        document.getElementById('modalTitle').innerHTML = `<i data-lucide="webhook" class="w-5 h-5 text-brand-400"></i> Webhook PaySuite`;
+        document.getElementById('modalSubtitle').textContent = `Evento ${event} • Referência ${reference}`;
+
+        document.getElementById('modalMetaInfo').innerHTML = `
+          <p><strong class="text-slate-300">Fonte:</strong> <span class="text-brand-300">${escapeDetail(log.source || 'Desconhecido')}</span></p>
+          <p><strong class="text-slate-300">Recebido:</strong> <span class="font-mono text-slate-300">${escapeDetail(toDisplayDate(log.createdAt || log.receivedAt))}</span></p>
+          <p><strong class="text-slate-300">Erro:</strong> <span class="${log.errorMsg ? 'text-danger-400' : 'text-success-400'}">${escapeDetail(log.errorMsg || 'Sem erros registados')}</span></p>
+        `;
+
+        document.getElementById('modalSummaryCards').innerHTML = [
+            summaryCard('Evento', event, 'activity'),
+            summaryCard('Referência', reference, 'hash'),
+            summaryCard('Status servidor', log.status || 'received', 'server'),
+            summaryCard('Ação tomada', log.actionTaken || log.operation || 'Registado', 'check-circle')
+        ].join('');
+
+        const financialRows = [
+            { label: 'Valor pago/bruto', value: amount, type: 'money', className: 'money' },
+            { label: 'Valor creditado na carteira', value: walletCredit, type: 'money', className: 'money' },
+            { label: 'Taxa registada', value: gatewayFee, type: 'money', className: 'warning' },
+            { label: 'Percentagem gateway', value: log.gatewayFeePercent || data.gatewayFeePercent || data.feePercent || '—', className: 'mono' },
+            { label: 'Modo de crédito', value: log.creditMode || data.creditMode || '—', className: 'mono' }
+        ];
+
+        const eventRows = [
+            { label: 'Payment ID', value: paymentId, className: 'mono' },
+            { label: 'Referência', value: reference, className: 'mono' },
+            { label: 'Método', value: getPath(data, ['method', 'payment_method', 'paymentMethod'], getPath(payload, ['method', 'payment_method', 'paymentMethod'], '—')) },
+            { label: 'Status payload', value: getPath(data, ['status'], getPath(payload, ['status'], log.status || '—')), type: 'status' },
+            { label: 'Data do evento', value: getPath(data, ['created_at', 'createdAt', 'paid_at', 'paidAt'], payload.createdAt || log.createdAt), type: 'date' }
+        ];
+
+        const customerRows = [
+            { label: 'Nome', value: getPath(data, ['customer.name', 'customer_name', 'name'], getPath(payload, ['customer.name', 'customer_name', 'name'], '—')) },
+            { label: 'Email', value: getPath(data, ['customer.email', 'customer_email', 'email'], getPath(payload, ['customer.email', 'customer_email', 'email'], '—')) },
+            { label: 'Telefone', value: getPath(data, ['customer.phone', 'phone', 'msisdn'], getPath(payload, ['customer.phone', 'phone', 'msisdn'], '—')), className: 'mono' },
+            { label: 'Descrição', value: getPath(data, ['description'], getPath(payload, ['description'], '—')) }
+        ];
+
+        const serverRows = [
+            { label: 'ID do log', value: log.id, className: 'mono' },
+            { label: 'Status interno', value: log.status || 'received', type: 'status' },
+            { label: 'Operação', value: log.operation || log.actionTaken || '—' },
+            { label: 'Criado em', value: log.createdAt, type: 'date' },
+            { label: 'Recebido em', value: log.receivedAt, type: 'date' }
+        ];
+
+        const extraPayloadRows = objectToRows(data, [
+            'customer', 'amount', 'total_amount', 'paid_amount', 'net_amount', 'netAmount',
+            'fee', 'commission', 'reference', 'payment_id', 'paymentId', 'id', 'method',
+            'payment_method', 'paymentMethod', 'status', 'created_at', 'createdAt'
+        ]);
+
+        document.getElementById('modalDetailPanels').innerHTML = [
+            detailPanel('Resumo financeiro', 'wallet-cards', financialRows),
+            detailPanel('Pagamento e referência', 'receipt-text', eventRows),
+            detailPanel('Cliente / origem do pagamento', 'user-round', customerRows),
+            detailPanel('Processamento no servidor', 'server-cog', serverRows),
+            detailPanel('Outros campos do payload', 'list-tree', extraPayloadRows)
+        ].join('');
+    }
+
+    function buildAuditView(log) {
+        const details = log.details || {};
+        const previous = details.previous || details.before || details.previousData || log.previousData || {};
+        const updated = details.updated || details.after || details.newData || log.newData || {};
+        const changedKeys = Array.from(new Set([...Object.keys(previous || {}), ...Object.keys(updated || {})]));
+
+        document.getElementById('modalTitle').innerHTML = `<i data-lucide="shield-check" class="w-5 h-5 text-brand-400"></i> Auditoria da equipa`;
+        document.getElementById('modalSubtitle').textContent = `${log.action || 'Ação'} • alvo ${log.targetId || 'S/N'}`;
+
+        document.getElementById('modalMetaInfo').innerHTML = `
+          <p><strong class="text-slate-300">Responsável:</strong> <span class="text-brand-300">${escapeDetail(log.adminName || 'Desconhecido')}</span> <span class="text-xs text-slate-600">(${escapeDetail(log.adminId || 'sem id')})</span></p>
+          <p><strong class="text-slate-300">IP rastreado:</strong> <span class="font-mono text-warning-300">${escapeDetail(log.ip || 'Interno')}</span></p>
+          <p><strong class="text-slate-300">Data:</strong> <span class="font-mono text-slate-300">${escapeDetail(toDisplayDate(log.createdAt))}</span></p>
+        `;
+
+        document.getElementById('modalSummaryCards').innerHTML = [
+            summaryCard('Ação', log.action || '—', 'activity'),
+            summaryCard('Alvo', log.targetId || '—', 'crosshair'),
+            summaryCard('Tipo', log.targetType || '—', 'database'),
+            summaryCard('Admin', log.adminName || 'Sistema', 'user-check')
+        ].join('');
+
+        const actionRows = [
+            { label: 'Ação executada', value: log.action || '—', type: 'status' },
+            { label: 'Alvo', value: log.targetId || '—', className: 'mono' },
+            { label: 'Tipo do alvo', value: log.targetType || '—' },
+            { label: 'Admin ID', value: log.adminId || '—', className: 'mono' },
+            { label: 'Criado em', value: log.createdAt, type: 'date' }
+        ];
+
+        const beforeRows = objectToRows(previous);
+        const afterRows = objectToRows(updated);
+
+        const diffRows = changedKeys.map(key => ({
+            label: prettyLabel(key),
+            value: `Antes: ${previous?.[key] ?? '—'} → Depois: ${updated?.[key] ?? '—'}`,
+            className: 'mono'
+        }));
+
+        const extraRows = objectToRows(details, ['previous', 'before', 'previousData', 'updated', 'after', 'newData']);
+
+        document.getElementById('modalDetailPanels').innerHTML = [
+            detailPanel('Resumo da ação', 'clipboard-list', actionRows),
+            detailPanel('Alterações detectadas', 'git-compare-arrows', diffRows),
+            detailPanel('Antes', 'history', beforeRows),
+            detailPanel('Depois', 'check-check', afterRows),
+            detailPanel('Detalhes adicionais', 'list-tree', extraRows)
+        ].join('');
+    }
+
     window.viewAuditPayload = (id) => {
         const log = auditCache.find(l => l.id === id);
         if (!log) return;
-
-        document.getElementById('modalMetaInfo').innerHTML = `
-            <p><strong class="text-slate-300">Responsável:</strong> <span class="text-brand-300">${log.adminName}</span> <span class="text-xs text-slate-600">(${log.adminId})</span></p>
-            <p><strong class="text-slate-300">IP Rastreado:</strong> <span class="font-mono text-warning-300">${log.ip || 'Interno'}</span></p>
-        `;
-        document.getElementById('jsonContainer').innerHTML = syntaxHighlight(log.details || { aviso: "Sem detalhes de alteração registados." });
+        currentModalPayload = log.details || { aviso: "Sem detalhes de alteração registados.", log };
+        document.getElementById('jsonContainer').innerHTML = syntaxHighlight(currentModalPayload);
+        buildAuditView(log);
         openModalBox();
     };
 
     window.viewWebhookPayload = (id) => {
         const log = webhookCache.find(l => l.id === id);
         if (!log) return;
-
-        document.getElementById('modalMetaInfo').innerHTML = `
-            <p><strong class="text-slate-300">Resultado do Webhook:</strong> <span class="text-brand-300">${log.actionTaken || 'Nenhuma ação/Sem resposta'}</span></p>
-            <p><strong class="text-slate-300">Erro Analisado:</strong> <span class="text-danger-400">${log.errorMsg || 'Limpo (Sem erros)'}</span></p>
-        `;
-        document.getElementById('jsonContainer').innerHTML = syntaxHighlight(log.payload || log.rawPayload || { aviso: "Payload corrompido." });
+        currentModalPayload = log.payload || log.rawPayload || log;
+        document.getElementById('jsonContainer').innerHTML = syntaxHighlight(currentModalPayload || { aviso: "Payload corrompido." });
+        buildWebhookView(log);
         openModalBox();
     };
 
+    window.switchPayloadTab = (tab) => {
+        const resumoBtn = document.getElementById('modalTabResumo');
+        const jsonBtn = document.getElementById('modalTabJson');
+        const resumoPanel = document.getElementById('payloadTabResumo');
+        const jsonPanel = document.getElementById('payloadTabJson');
+
+        const isJson = tab === 'json';
+        resumoBtn.classList.toggle('active', !isJson);
+        jsonBtn.classList.toggle('active', isJson);
+        resumoPanel.classList.toggle('active', !isJson);
+        jsonPanel.classList.toggle('active', isJson);
+    };
+
+    window.copyCurrentPayload = async () => {
+        try {
+            await navigator.clipboard.writeText(JSON.stringify(currentModalPayload || {}, null, 2));
+            const btn = document.querySelector('.copy-btn');
+            const old = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i> Copiado';
+            lucide.createIcons();
+            setTimeout(() => { btn.innerHTML = old; lucide.createIcons(); }, 1600);
+        } catch {
+            alert('Não foi possível copiar o JSON.');
+        }
+    };
+
     function openModalBox() {
+        window.switchPayloadTab('resumo');
         const modal = document.getElementById('payloadModal');
         modal.style.display = 'flex';
-        setTimeout(() => modal.classList.add('active'), 10);
+        modal.setAttribute('aria-hidden', 'false');
+        setTimeout(() => {
+            modal.classList.add('active');
+            lucide.createIcons();
+        }, 10);
     }
 
     window.closeModal = () => {
         const modal = document.getElementById('payloadModal');
         modal.classList.remove('active');
+        modal.setAttribute('aria-hidden', 'true');
         setTimeout(() => modal.style.display = 'none', 300);
     };
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') window.closeModal();
+    });
   </script>
 </body>
 </html>
