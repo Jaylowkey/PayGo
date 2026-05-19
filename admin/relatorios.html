@@ -1,204 +1,237 @@
 <!DOCTYPE html>
 <html lang="pt-MZ" class="scroll-smooth">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Análise e Relatórios | PayGo Admin</title>
-  <meta name="theme-color" content="#0f172a">
-  <meta name="robots" content="noindex, nofollow">
-  
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="robots" content="noindex, nofollow" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  
+
   <script>
     tailwind.config = {
       theme: {
         extend: {
-          fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'], display: ['"Outfit"', 'sans-serif'], mono: ['"Fira Code"', 'monospace'] },
-          colors: { brand: { 500: '#3b82f6', 600: '#2563eb', 950: '#0f172a' }, success: { 400: '#4ade80', 500: '#22c55e' }, warning: { 400: '#fbbf24', 500: '#f59e0b' }, danger: { 400: '#f87171', 500: '#ef4444' } }
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            display: ['"Outfit"', 'sans-serif'],
+            mono: ['"Fira Code"', 'monospace']
+          },
+          colors: {
+            brand: { 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 950: '#0f172a' },
+            success: { 400: '#4ade80', 500: '#22c55e' },
+            warning: { 400: '#fbbf24', 500: '#f59e0b' },
+            danger: { 400: '#f87171', 500: '#ef4444' }
+          }
         }
       }
     };
   </script>
-  
+
   <style>
-    body { background-color: #0f172a; color: #f8fafc; }
-    ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-    .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
-    .glass-nav { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.08); }
-    .glass-card { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.3s ease; }
-    .glass-card:hover { border-color: rgba(59, 130, 246, 0.3); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5); }
-    .sidebar-link.active { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-left: 3px solid #60a5fa; font-weight: 700; }
-    
-    .btn-action { padding: 6px 14px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s ease; }
-    .btn-action:disabled { opacity: 0.5; cursor: not-allowed; }
-    
-    #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-    .toast { pointer-events: auto; background: rgba(15, 23, 42, 0.95); border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 12px; display: flex; gap: 12px; transform: translateX(120%); transition: transform 0.4s ease; opacity: 0; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+    *, *::before, *::after { box-sizing: border-box; }
+    body { background-color: #0f172a; color: #f8fafc; font-family: 'Plus Jakarta Sans', sans-serif; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+
+    .bg-grid {
+      background-size: 40px 40px;
+      background-image:
+        linear-gradient(to right, rgba(255,255,255,.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,.03) 1px, transparent 1px);
+    }
+    .glass-nav {
+      background: rgba(15, 23, 42, .86);
+      backdrop-filter: blur(16px) saturate(160%);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .glass-card {
+      background: rgba(30, 41, 59, .42);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,.06);
+      transition: border-color .25s ease, box-shadow .25s ease, transform .25s ease;
+    }
+    .glass-card:hover { border-color: rgba(59,130,246,.30); box-shadow: 0 18px 44px -28px rgba(59,130,246,.55); }
+    .sidebar-link.active { background: rgba(59,130,246,.15); color: #60a5fa; border-left: 3px solid #60a5fa; font-weight: 700; }
+
+    #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; max-width: min(420px, calc(100vw - 32px)); }
+    .toast { pointer-events: auto; background: rgba(15,23,42,.96); border: 1px solid rgba(255,255,255,.08); border-left: 4px solid #3b82f6; padding: 14px 16px; border-radius: 14px; display: flex; gap: 12px; align-items: flex-start; transform: translateX(120%); transition: all .35s ease; opacity: 0; box-shadow: 0 16px 36px rgba(0,0,0,.42); }
     .toast.show { transform: translateX(0); opacity: 1; }
     .toast.error { border-left-color: #ef4444; }
     .toast.success { border-left-color: #22c55e; }
     .toast.warning { border-left-color: #f59e0b; }
-    
-    .skeleton { background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 0.25rem; color: transparent !important; }
+
+    .skeleton { background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: .35rem; color: transparent !important; }
     @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+
+    .metric-card { min-height: 150px; }
+    .metric-label { font-size: 10px; text-transform: uppercase; letter-spacing: .12em; font-weight: 800; }
+    .table-cell { padding: 1rem 1.5rem; }
+    .status-pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; font-size: 10px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; border: 1px solid rgba(255,255,255,.08); }
+    .status-paid { background: rgba(34,197,94,.12); color: #86efac; border-color: rgba(34,197,94,.22); }
+    .status-pending { background: rgba(245,158,11,.12); color: #fde68a; border-color: rgba(245,158,11,.22); }
+    .status-cancelled { background: rgba(239,68,68,.12); color: #fecaca; border-color: rgba(239,68,68,.22); }
+    .status-processing { background: rgba(59,130,246,.12); color: #bfdbfe; border-color: rgba(59,130,246,.22); }
+
+    .chart-wrap { height: 280px; position: relative; }
+    .empty-chart { display: grid; place-items: center; color: #64748b; min-height: 220px; border: 1px dashed rgba(148,163,184,.2); border-radius: 16px; }
+
+    @media (max-width: 768px) {
+      #toastContainer { top: 88px; right: 16px; left: 16px; }
+      .metric-card { min-height: 132px; }
+      .table-cell { padding: .9rem 1rem; }
+    }
   </style>
 </head>
 <body class="selection:bg-brand-500 selection:text-white">
-
   <div id="sysLoader" class="fixed inset-0 bg-slate-950 z-[200] flex flex-col items-center justify-center transition-opacity duration-500">
-    <div class="w-16 h-16 border-4 border-slate-800 border-t-brand-500 rounded-full animate-spin mb-4"></div>
+    <div class="w-16 h-16 border-4 border-slate-800 border-t-brand-500 rounded-full animate-spin mb-4" aria-hidden="true"></div>
     <h2 class="text-white text-xl font-bold font-display">Motor de Análise</h2>
-    <p class="text-slate-400 text-sm mt-1">A processar o livro de registos financeiros...</p>
+    <p class="text-slate-400 text-sm mt-1">A processar registos financeiros...</p>
   </div>
 
   <div class="fixed inset-0 bg-grid opacity-20 pointer-events-none z-0"></div>
   <div class="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[500px] bg-brand-600/10 rounded-full mix-blend-screen blur-[120px] pointer-events-none z-0"></div>
-  <div id="toastContainer"></div>
+  <div id="toastContainer" aria-live="polite"></div>
 
   <header class="fixed w-full z-50 glass-nav">
-    <div class="container mx-auto px-6 h-20 flex justify-between items-center">
+    <div class="container mx-auto px-4 sm:px-6 h-20 flex justify-between items-center">
       <div class="flex items-center gap-3">
-        <button id="mobileMenuBtn" class="lg:hidden text-slate-400 hover:text-white p-2 -ml-2 transition-colors"><i data-lucide="menu" class="w-6 h-6"></i></button>
+        <button id="mobileMenuBtn" class="lg:hidden text-slate-400 hover:text-white p-2 -ml-2 transition-colors" aria-label="Abrir menu"><i data-lucide="menu" class="w-6 h-6"></i></button>
         <div class="bg-gradient-to-tr from-brand-500 to-brand-400 p-2.5 rounded-xl text-white shadow-lg"><i data-lucide="zap" class="w-5 h-5"></i></div>
-        <div class="hidden sm:block">
-            <span class="text-2xl font-display font-bold text-white">PayGo Admin</span>
-            <span class="text-[10px] text-brand-400 ml-2 px-2 py-0.5 bg-brand-500/20 border border-brand-500/30 rounded-full font-black uppercase tracking-widest">Analytics</span>
+        <div>
+          <span class="text-xl sm:text-2xl font-display font-bold text-white">PayGo Admin</span>
+          <span class="hidden sm:inline text-[10px] text-brand-400 ml-2 px-2 py-0.5 bg-brand-500/20 border border-brand-500/30 rounded-full font-black uppercase tracking-widest">Analytics</span>
         </div>
       </div>
-      <button onclick="window.logout()" class="bg-slate-800 hover:bg-danger-500/20 text-slate-400 hover:text-danger-400 rounded-xl p-2.5 transition-colors" title="Sair em Segurança"><i data-lucide="power" class="w-5 h-5"></i></button>
+      <div class="flex items-center gap-2">
+        <button onclick="window.refreshReports()" class="bg-slate-800 hover:bg-brand-500/20 text-slate-300 hover:text-brand-300 rounded-xl px-3 py-2.5 transition-colors text-xs font-bold flex items-center gap-2" title="Atualizar relatório"><i data-lucide="refresh-cw" class="w-4 h-4"></i><span class="hidden sm:inline">Atualizar</span></button>
+        <button onclick="window.logout()" class="bg-slate-800 hover:bg-danger-500/20 text-slate-400 hover:text-danger-400 rounded-xl p-2.5 transition-colors" title="Sair em Segurança"><i data-lucide="power" class="w-5 h-5"></i></button>
+      </div>
     </div>
   </header>
 
   <div id="sidebarOverlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-40 hidden lg:hidden opacity-0 transition-opacity duration-300"></div>
 
-  <div class="pt-28 pb-10 relative z-10 container mx-auto px-6 grid lg:grid-cols-5 gap-6">
-    
-    <div id="sidebar" class="lg:col-span-1 fixed lg:static top-0 left-0 h-full lg:h-auto w-72 lg:w-auto bg-slate-900 lg:bg-transparent z-50 lg:z-auto p-6 lg:p-0 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 border-r border-slate-800 lg:border-none">
+  <div class="pt-28 pb-10 relative z-10 container mx-auto px-4 sm:px-6 grid lg:grid-cols-5 gap-6">
+    <aside id="sidebar" class="lg:col-span-1 fixed lg:static top-0 left-0 h-full lg:h-auto w-72 lg:w-auto bg-slate-900 lg:bg-transparent z-50 lg:z-auto p-6 lg:p-0 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 border-r border-slate-800 lg:border-none" aria-label="Menu administrativo">
       <div class="glass-card rounded-2xl p-0 lg:p-6 sticky top-28 border-none lg:border-solid bg-transparent lg:bg-[rgba(30,41,59,0.4)]">
         <div class="flex justify-between items-center mb-6 lg:hidden">
-            <span class="text-xl font-display font-bold text-white">PayGo Admin</span>
-            <button id="closeSidebarBtn" class="text-slate-400 hover:text-white p-2"><i data-lucide="x" class="w-6 h-6"></i></button>
+          <span class="text-xl font-display font-bold text-white">PayGo Admin</span>
+          <button id="closeSidebarBtn" class="text-slate-400 hover:text-white p-2" aria-label="Fechar menu"><i data-lucide="x" class="w-6 h-6"></i></button>
         </div>
 
         <nav class="space-y-2">
-          <a href="dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
-            <i data-lucide="layout-dashboard" class="w-5 h-5"></i> <span class="text-sm font-medium">Visão Geral</span>
-          </a>
-          <a href="pedidos.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
-            <i data-lucide="shopping-bag" class="w-5 h-5"></i> <span class="text-sm font-medium">Pedidos</span>
-          </a>
-          <a href="clientes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
-            <i data-lucide="users" class="w-5 h-5"></i> <span class="text-sm font-medium">Clientes</span>
-          </a>
-          <a href="afiliados.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
-            <i data-lucide="network" class="w-5 h-5"></i> <span class="text-sm font-medium">Afiliados</span>
-          </a>
-          <a href="gerar-fatura.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
-            <i data-lucide="file-check-2" class="w-5 h-5 text-brand-400"></i> <span class="text-sm font-medium">Gerar Faturas</span>
-          </a>
-          <a href="relatorios.html" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-xl text-white">
-            <i data-lucide="bar-chart-3" class="w-5 h-5"></i> <span class="text-sm font-medium">Relatórios</span>
-          </a>
+          <a href="dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition"><i data-lucide="layout-dashboard" class="w-5 h-5"></i><span class="text-sm font-medium">Visão Geral</span></a>
+          <a href="pedidos.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition"><i data-lucide="shopping-bag" class="w-5 h-5"></i><span class="text-sm font-medium">Pedidos</span></a>
+          <a href="clientes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition"><i data-lucide="users" class="w-5 h-5"></i><span class="text-sm font-medium">Clientes</span></a>
+          <a href="afiliados.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition"><i data-lucide="network" class="w-5 h-5"></i><span class="text-sm font-medium">Afiliados</span></a>
+          <a href="gerar-fatura.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition"><i data-lucide="file-check-2" class="w-5 h-5 text-brand-400"></i><span class="text-sm font-medium">Gerar Faturas</span></a>
+          <a href="relatorios.html" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-xl text-white"><i data-lucide="bar-chart-3" class="w-5 h-5"></i><span class="text-sm font-medium">Relatórios</span></a>
           <div class="pt-4 mt-4 border-t border-slate-700/50"></div>
-          <a href="admin.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
-            <i data-lucide="shield" class="w-5 h-5"></i> <span class="text-sm font-medium">Gestão de Equipa</span>
-          </a>
-          <a href="configuracoes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition">
-            <i data-lucide="settings" class="w-5 h-5"></i> <span class="text-sm font-medium">Configurações</span>
-          </a>
+          <a href="admin.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition"><i data-lucide="shield" class="w-5 h-5"></i><span class="text-sm font-medium">Gestão de Equipa</span></a>
+          <a href="configuracoes.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition"><i data-lucide="settings" class="w-5 h-5"></i><span class="text-sm font-medium">Configurações</span></a>
         </nav>
       </div>
-    </div>
+    </aside>
 
-    <div class="lg:col-span-4 space-y-6">
-      
+    <main class="lg:col-span-4 space-y-6">
       <header class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
         <div>
           <h1 class="text-3xl font-display font-extrabold text-white tracking-tight">Análise de Dados</h1>
-          <p class="text-slate-400 text-sm mt-1">Indicadores Financeiros, Taxa de Conversão e Saúde da Plataforma.</p>
+          <p class="text-slate-400 text-sm mt-1">Indicadores financeiros, conversão e saúde operacional da plataforma.</p>
+          <p class="text-[11px] text-slate-500 mt-2" id="lastUpdated">Última atualização: —</p>
         </div>
-        <button onclick="window.exportReport()" class="bg-brand-600 hover:bg-brand-500 text-white px-5 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(37,99,235,0.3)] transition-colors active:scale-95 text-sm">
-            <i data-lucide="download-cloud" class="w-4 h-4"></i> Exportar Dados
-        </button>
+        <div class="flex flex-wrap gap-2">
+          <button onclick="window.exportReport()" class="bg-brand-600 hover:bg-brand-500 text-white px-5 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(37,99,235,.25)] transition-colors active:scale-95 text-sm"><i data-lucide="download-cloud" class="w-4 h-4"></i> Exportar CSV</button>
+        </div>
       </header>
 
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        
-        <div class="glass-card p-6 rounded-2xl relative overflow-hidden group border-brand-500/30 bg-brand-900/10">
+      <section class="grid grid-cols-2 xl:grid-cols-4 gap-4" aria-label="Indicadores principais">
+        <article class="glass-card metric-card p-6 rounded-2xl relative overflow-hidden group border-brand-500/30 bg-brand-900/10">
           <div class="absolute -right-4 -top-4 w-24 h-24 bg-brand-500/10 rounded-full blur-xl group-hover:bg-brand-500/20 transition-all"></div>
           <i data-lucide="bar-chart" class="w-6 h-6 text-brand-400 mb-3 relative z-10"></i>
           <p class="text-2xl font-display font-bold text-white relative z-10" id="reportOrders"><span class="skeleton inline-block w-12 h-6"></span></p>
-          <p class="text-[10px] text-brand-300 mt-1 uppercase font-bold tracking-wider relative z-10">Transações Totais</p>
-        </div>
+          <p class="metric-label text-brand-300 mt-1 relative z-10">Transações totais</p>
+          <p class="text-[11px] text-slate-500 mt-3 relative z-10" id="paidOrdersLabel">— pagas</p>
+        </article>
 
-        <div class="glass-card p-6 rounded-2xl relative overflow-hidden group">
+        <article class="glass-card metric-card p-6 rounded-2xl relative overflow-hidden group">
           <div class="absolute -right-4 -top-4 w-24 h-24 bg-success-500/10 rounded-full blur-xl group-hover:bg-success-500/20 transition-all"></div>
           <i data-lucide="wallet" class="w-6 h-6 text-success-400 mb-3 relative z-10"></i>
           <p class="text-2xl font-display font-bold text-white relative z-10" id="reportRevenue"><span class="skeleton inline-block w-24 h-6"></span></p>
-          <p class="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-wider relative z-10">Lucro Líquido (Taxas)</p>
-        </div>
+          <p class="metric-label text-slate-400 mt-1 relative z-10">Lucro retido</p>
+          <p class="text-[11px] text-slate-500 mt-3 relative z-10" id="grossRevenueLabel">Bruto: —</p>
+        </article>
 
-        <div class="glass-card p-6 rounded-2xl relative overflow-hidden group">
+        <article class="glass-card metric-card p-6 rounded-2xl relative overflow-hidden group">
           <div class="absolute -right-4 -top-4 w-24 h-24 bg-purple-500/10 rounded-full blur-xl group-hover:bg-purple-500/20 transition-all"></div>
           <i data-lucide="target" class="w-6 h-6 text-purple-400 mb-3 relative z-10"></i>
           <p class="text-2xl font-display font-bold text-white relative z-10" id="reportRate"><span class="skeleton inline-block w-16 h-6"></span></p>
-          <p class="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-wider relative z-10">Taxa de Conversão</p>
-        </div>
+          <p class="metric-label text-slate-400 mt-1 relative z-10">Taxa de conversão</p>
+          <p class="text-[11px] text-slate-500 mt-3 relative z-10" id="conversionLabel">Pagas / total</p>
+        </article>
 
-        <div class="glass-card p-6 rounded-2xl relative overflow-hidden group border-warning-500/20 bg-warning-900/10">
+        <article class="glass-card metric-card p-6 rounded-2xl relative overflow-hidden group border-warning-500/20 bg-warning-900/10">
           <div class="absolute -right-4 -top-4 w-24 h-24 bg-warning-500/10 rounded-full blur-xl group-hover:bg-warning-500/20 transition-all"></div>
           <i data-lucide="receipt" class="w-6 h-6 text-warning-400 mb-3 relative z-10"></i>
           <p class="text-2xl font-display font-bold text-white relative z-10" id="reportAvg"><span class="skeleton inline-block w-20 h-6"></span></p>
-          <p class="text-[10px] text-warning-300 mt-1 uppercase font-bold tracking-wider relative z-10">Ticket Médio Cliente</p>
-        </div>
+          <p class="metric-label text-warning-300 mt-1 relative z-10">Ticket médio</p>
+          <p class="text-[11px] text-slate-500 mt-3 relative z-10">Média dos pedidos pagos</p>
+        </article>
+      </section>
 
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <section class="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <div class="glass-card p-6 rounded-2xl">
-          <h3 class="font-bold text-white mb-6 flex items-center gap-2 text-sm"><i data-lucide="pie-chart" class="w-4 h-4 text-brand-400"></i> Distribuição de Vendas por Categoria</h3>
-          <div class="h-[250px] w-full flex items-center justify-center">
-            <canvas id="categoryChart"></canvas>
-          </div>
+          <h3 class="font-bold text-white mb-6 flex items-center gap-2 text-sm"><i data-lucide="pie-chart" class="w-4 h-4 text-brand-400"></i> Top categorias por volume</h3>
+          <div class="chart-wrap"><canvas id="categoryChart"></canvas><div id="categoryEmpty" class="empty-chart hidden">Sem dados suficientes para gráfico.</div></div>
         </div>
         <div class="glass-card p-6 rounded-2xl">
-          <h3 class="font-bold text-white mb-6 flex items-center gap-2 text-sm"><i data-lucide="activity" class="w-4 h-4 text-brand-400"></i> Funil de Status Operacional</h3>
-          <div class="h-[250px] w-full flex items-center justify-center">
-            <canvas id="statusChart"></canvas>
-          </div>
+          <h3 class="font-bold text-white mb-6 flex items-center gap-2 text-sm"><i data-lucide="activity" class="w-4 h-4 text-brand-400"></i> Funil de status operacional</h3>
+          <div class="chart-wrap"><canvas id="statusChart"></canvas><div id="statusEmpty" class="empty-chart hidden">Sem status para apresentar.</div></div>
         </div>
-      </div>
+      </section>
 
-      <div class="glass-card rounded-2xl overflow-hidden">
-        <div class="flex justify-between items-center p-6 border-b border-white/5 bg-slate-900/50">
-          <h2 class="text-sm font-bold text-white flex items-center gap-2"><i data-lucide="list" class="w-4 h-4 text-brand-400"></i> Análise de Categorias de Produto</h2>
+      <section class="glass-card rounded-2xl overflow-hidden">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 p-6 border-b border-white/5 bg-slate-900/50">
+          <div>
+            <h2 class="text-sm font-bold text-white flex items-center gap-2"><i data-lucide="list" class="w-4 h-4 text-brand-400"></i> Análise de categorias</h2>
+            <p class="text-xs text-slate-500 mt-1">Agrupamento automático por tipo, categoria ou detalhe do pedido.</p>
+          </div>
+          <div class="relative w-full sm:w-72">
+            <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2"></i>
+            <input id="categorySearch" type="search" placeholder="Filtrar categoria..." class="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-950/70 border border-slate-700 text-sm outline-none focus:border-brand-500" />
+          </div>
         </div>
         <div class="overflow-x-auto">
-          <table class="w-full text-left text-sm">
+          <table class="w-full text-left text-sm min-w-[820px]">
             <thead class="bg-slate-800/30 text-[10px] uppercase text-slate-400">
               <tr>
-                <th class="py-4 px-6">Tipo / Categoria</th>
-                <th class="py-4 px-6 text-center">Volume Pedidos</th>
-                <th class="py-4 px-6 text-right">Valor Captado (USD)</th>
-                <th class="py-4 px-6 text-right">Valor Final Faturado</th>
-                <th class="py-4 px-6 text-right text-success-400">Lucro Retido (Taxas)</th>
+                <th class="table-cell">Tipo / Categoria</th>
+                <th class="table-cell text-center">Volume</th>
+                <th class="table-cell text-right">Valor captado (USD)</th>
+                <th class="table-cell text-right">Valor final faturado</th>
+                <th class="table-cell text-right text-success-400">Lucro retido</th>
               </tr>
             </thead>
             <tbody id="reportTable" class="divide-y divide-white/5">
-                <tr><td colspan="5" class="py-8 text-center text-slate-500"><div class="skeleton h-4 w-full max-w-sm mx-auto"></div></td></tr>
+              <tr><td colspan="5" class="py-8 text-center text-slate-500"><div class="skeleton h-4 w-full max-w-sm mx-auto"></div></td></tr>
             </tbody>
           </table>
         </div>
-      </div>
-
-    </div>
+      </section>
+    </main>
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -211,223 +244,432 @@
       appId: "1:208360646277:web:aecc57cc0077ae48a52bec"
     };
 
-    const app = initializeApp(firebaseConfig);
+    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const db = getFirestore(app, "paygodb");
+    let db;
+    try { db = getFirestore(app, "paygodb"); } catch { db = getFirestore(app); }
 
-    lucide.createIcons();
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 
-    // Chart instances
-    let chart1 = null;
-    let chart2 = null;
+    let chartCategory = null;
+    let chartStatus = null;
     let rawOrders = [];
+    let categoryRows = [];
+    let currentUser = null;
+    const fallbackTimer = setTimeout(() => hideLoader(), 5000);
 
-    const fallbackTimer = setTimeout(() => { document.getElementById('sysLoader').style.display = 'none'; }, 3000);
+    const moneyFormatter = new Intl.NumberFormat('pt-MZ', { maximumFractionDigits: 2 });
+    const usdFormatter = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    const els = {
+      loader: document.getElementById('sysLoader'),
+      reportOrders: document.getElementById('reportOrders'),
+      reportRevenue: document.getElementById('reportRevenue'),
+      reportRate: document.getElementById('reportRate'),
+      reportAvg: document.getElementById('reportAvg'),
+      reportTable: document.getElementById('reportTable'),
+      lastUpdated: document.getElementById('lastUpdated'),
+      paidOrdersLabel: document.getElementById('paidOrdersLabel'),
+      grossRevenueLabel: document.getElementById('grossRevenueLabel'),
+      conversionLabel: document.getElementById('conversionLabel'),
+      categoryEmpty: document.getElementById('categoryEmpty'),
+      statusEmpty: document.getElementById('statusEmpty'),
+      categorySearch: document.getElementById('categorySearch')
+    };
+
+    function hideLoader() {
+      if (!els.loader) return;
+      els.loader.style.opacity = '0';
+      setTimeout(() => { els.loader.style.display = 'none'; }, 450);
+    }
+
+    function escapeHTML(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function toNumber(value, fallback = 0) {
+      const n = Number(String(value ?? '').replace(',', '.'));
+      return Number.isFinite(n) ? n : fallback;
+    }
+
+    function asDate(value) {
+      if (!value) return null;
+      if (typeof value.toDate === 'function') return value.toDate();
+      if (typeof value === 'string' || typeof value === 'number') {
+        const d = new Date(value);
+        return Number.isNaN(d.getTime()) ? null : d;
+      }
+      if (value.seconds) return new Date(value.seconds * 1000);
+      return null;
+    }
+
+    function formatDate(value) {
+      const d = asDate(value);
+      return d ? d.toLocaleString('pt-MZ') : '-';
+    }
+
+    function formatMT(value) { return `${moneyFormatter.format(toNumber(value))} MT`; }
+    function formatUSD(value) { return `$${usdFormatter.format(toNumber(value))}`; }
+
+    function normalizeStatus(status) {
+      const s = String(status || '').toLowerCase().trim();
+      if (['completed', 'complete', 'paid', 'success', 'processing', 'confirmed'].includes(s)) return s;
+      if (['cancelled', 'canceled', 'failed', 'rejected', 'refunded'].includes(s)) return s;
+      return s || 'pending';
+    }
+
+    function isPaidOrder(order) {
+      const status = normalizeStatus(order.status);
+      const paymentStatus = normalizeStatus(order.paymentStatus || order.payment_status);
+      return order.isPaid === true || order.paid === true || ['completed', 'paid', 'success', 'processing', 'confirmed'].includes(status) || ['paid', 'success', 'completed'].includes(paymentStatus);
+    }
+
+    function getOrderAmount(order) {
+      return toNumber(order.total ?? order.total_amount ?? order.amount ?? order.chargedAmount ?? order.paidAmount ?? 0);
+    }
+
+    function getOrderTax(order) {
+      return toNumber(order.tax ?? order.fee ?? order.serviceFee ?? order.service_fee ?? order.paygoFee ?? 0);
+    }
+
+    function getOrderUSD(order) {
+      return toNumber(order.usd ?? order.usdAmount ?? order.usd_amount ?? order.amountUsd ?? 0);
+    }
+
+    function getCategory(order) {
+      const candidates = [order.category, order.type, order.platform, order.store, order.service, order.detail, order.description];
+      let value = candidates.find(v => String(v || '').trim());
+      value = String(value || 'Geral').trim();
+      if (value.includes(' ')) value = value.split(' ').slice(0, 2).join(' ');
+      if (value.length > 24) value = value.slice(0, 24).trim();
+      return value || 'Geral';
+    }
+
+    function setText(idOrEl, text) {
+      const el = typeof idOrEl === 'string' ? document.getElementById(idOrEl) : idOrEl;
+      if (el) el.textContent = text;
+    }
+
+    function clearSkeletons() {
+      document.querySelectorAll('.skeleton').forEach(el => {
+        el.classList.remove('skeleton', 'text-transparent');
+      });
+    }
 
     onAuthStateChanged(auth, async (user) => {
-      if (!user) { window.location.href = '../login.html'; return; }
+      if (!user) {
+        window.location.href = '../login.html';
+        return;
+      }
+
       try {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists() && (userDoc.data().role === 'admin' || userDoc.data().role === 'superadmin')) {
-          await loadReportsEngine();
-        } else {
-          window.location.href = '../index.html';
+        currentUser = user;
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        const role = String(userDoc.exists() ? (userDoc.data().role || '') : '').toLowerCase();
+        if (!['admin', 'superadmin'].includes(role)) {
+          showToast('Acesso restrito a administradores.', 'error');
+          setTimeout(() => { window.location.href = '../index.html'; }, 900);
+          return;
         }
+        await loadReportsEngine();
       } catch (error) {
-        showToast("Erro na ligação ao servidor.", "error");
+        console.error('Erro de autenticação/relatório:', error);
+        showToast(readableFirebaseError(error), 'error', 8000);
       } finally {
         clearTimeout(fallbackTimer);
-        document.getElementById('sysLoader').style.opacity = '0';
-        setTimeout(() => document.getElementById('sysLoader').style.display = 'none', 500);
+        hideLoader();
       }
     });
 
     async function loadReportsEngine() {
       try {
-        const snap = await getDocs(collection(db, "orders"));
-        const orders = [];
-        snap.forEach(d => orders.push(d.data()));
-        rawOrders = orders; // Para CSV Export
-        
-        const total = orders.length;
-        const completed = orders.filter(o => o.status === 'completed' || o.isPaid === true);
-        
-        // Matemáticas Financeiras
-        const totalRevenueBruto = completed.reduce((sum, o) => sum + (Number(o.total) || 0), 0); // Todo o dinheiro que entra
-        const totalLucroTaxas = completed.reduce((sum, o) => sum + (Number(o.tax) || 0), 0); // O dinheiro que fica pra ti
-        const rate = total > 0 ? Math.round((completed.length / total) * 100) : 0;
-        const avgTicket = completed.length > 0 ? (totalRevenueBruto / completed.length) : 0;
-        
-        // Remove Skeletons & Injecta Dados
-        document.querySelectorAll('.skeleton').forEach(el => el.classList.remove('skeleton', 'text-transparent'));
-        
-        document.getElementById('reportOrders').textContent = total;
-        document.getElementById('reportRevenue').textContent = new Intl.NumberFormat('pt-MZ').format(totalLucroTaxas) + ' MT';
-        document.getElementById('reportRate').textContent = rate + '%';
-        document.getElementById('reportAvg').textContent = new Intl.NumberFormat('pt-MZ').format(avgTicket) + ' MT';
-        
-        // Agrupar por Categorias (Aliexpress, Shein, Amazon, etc)
-        const byCat = {};
-        orders.forEach(o => {
-          const typeStr = o.type || o.detail?.split(' ')[0] || 'Geral';
-          // Limpa um bocado o nome para não haver 20 categorias difusas
-          const c = typeStr.length < 15 ? typeStr : 'Geral'; 
-          const cleanCat = c.toLowerCase();
-
-          if (!byCat[cleanCat]) byCat[cleanCat] = { count: 0, usd: 0, total: 0, tax: 0, nome: c };
-          byCat[cleanCat].count++;
-          if (o.status === 'completed' || o.isPaid) {
-              byCat[cleanCat].usd += Number(o.usd) || 0;
-              byCat[cleanCat].total += Number(o.total) || 0;
-              byCat[cleanCat].tax += Number(o.tax) || 0;
-          }
-        });
-        
-        // Renderizar Tabela
-        const table = document.getElementById('reportTable');
-        const sortedCats = Object.values(byCat).sort((a,b) => b.count - a.count);
-        
-        table.innerHTML = sortedCats.map(d => `
-        <tr class="hover:bg-slate-800/40 transition-colors">
-          <td class="py-4 px-6 font-bold text-white uppercase tracking-wider text-[10px]"><span class="bg-slate-800 px-2 py-1 rounded border border-slate-700">${d.nome}</span></td>
-          <td class="py-4 px-6 text-center font-mono text-brand-400">${d.count}</td>
-          <td class="py-4 px-6 text-right text-slate-400 font-mono">$${d.usd.toFixed(2)}</td>
-          <td class="py-4 px-6 text-right font-bold text-slate-300 font-mono">${new Intl.NumberFormat('pt-MZ').format(d.total)} MT</td>
-          <td class="py-4 px-6 text-right font-black text-success-400 font-mono">+ ${new Intl.NumberFormat('pt-MZ').format(d.tax)} MT</td>
-        </tr>`).join('') || '<tr><td colspan="5" class="py-8 text-center text-slate-500"><i data-lucide="package-x" class="w-8 h-8 mx-auto mb-2 opacity-30"></i>Sem registos matemáticos</td></tr>';
-        
-        lucide.createIcons();
-
-        // Renderizar Gráficos (Chart.js)
-        renderCharts(sortedCats, orders);
-        
+        setLoadingState(true);
+        const snap = await getDocs(collection(db, 'orders'));
+        rawOrders = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        processReports(rawOrders);
+        setText(els.lastUpdated, `Última atualização: ${new Date().toLocaleString('pt-MZ')}`);
+        showToast('Relatório atualizado com sucesso.', 'success', 2500);
       } catch (error) {
-        console.error('Erro Analítico:', error);
-        showToast('Falha ao processar relatório da base de dados', 'error');
+        console.error('Erro analítico:', error);
+        showToast(readableFirebaseError(error), 'error', 8000);
+        renderEmptyState('Falha ao carregar relatório. Verifique Firebase, regras e ligação à internet.');
+      } finally {
+        setLoadingState(false);
       }
     }
 
-    function renderCharts(catData, orders) {
-        
-      Chart.defaults.color = '#94a3b8';
-      Chart.defaults.font.family = '"Plus Jakarta Sans", sans-serif';
+    window.refreshReports = loadReportsEngine;
 
-      // 1. Gráfico de Barras (Top Categorias)
-      const ctx1 = document.getElementById('categoryChart');
-      if (chart1) chart1.destroy();
-      
-      const topCats = catData.slice(0, 5); // Só os 5 melhores para ficar bonito
-      chart1 = new Chart(ctx1, {
+    function processReports(orders) {
+      clearSkeletons();
+      const total = orders.length;
+      const paid = orders.filter(isPaidOrder);
+      const grossRevenue = paid.reduce((sum, o) => sum + getOrderAmount(o), 0);
+      const totalTax = paid.reduce((sum, o) => sum + getOrderTax(o), 0);
+      const conversion = total > 0 ? Math.round((paid.length / total) * 100) : 0;
+      const avgTicket = paid.length ? grossRevenue / paid.length : 0;
+
+      setText(els.reportOrders, String(total));
+      setText(els.reportRevenue, formatMT(totalTax));
+      setText(els.reportRate, `${conversion}%`);
+      setText(els.reportAvg, formatMT(avgTicket));
+      setText(els.paidOrdersLabel, `${paid.length} pagas / ${total} registadas`);
+      setText(els.grossRevenueLabel, `Bruto faturado: ${formatMT(grossRevenue)}`);
+      setText(els.conversionLabel, `${paid.length} pedidos pagos de ${total}`);
+
+      categoryRows = buildCategoryRows(orders);
+      renderCategoryTable(categoryRows);
+      renderCharts(categoryRows, orders);
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    function buildCategoryRows(orders) {
+      const map = new Map();
+      for (const order of orders) {
+        const name = getCategory(order);
+        const key = name.toLowerCase();
+        if (!map.has(key)) {
+          map.set(key, { name, count: 0, paidCount: 0, usd: 0, total: 0, tax: 0 });
+        }
+        const row = map.get(key);
+        row.count += 1;
+        if (isPaidOrder(order)) {
+          row.paidCount += 1;
+          row.usd += getOrderUSD(order);
+          row.total += getOrderAmount(order);
+          row.tax += getOrderTax(order);
+        }
+      }
+      return [...map.values()].sort((a, b) => b.count - a.count || b.total - a.total);
+    }
+
+    function renderCategoryTable(rows) {
+      const search = String(els.categorySearch?.value || '').trim().toLowerCase();
+      const filtered = search ? rows.filter(r => r.name.toLowerCase().includes(search)) : rows;
+
+      if (!filtered.length) {
+        els.reportTable.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-slate-500"><i data-lucide="package-x" class="w-8 h-8 mx-auto mb-2 opacity-30"></i>Nenhuma categoria encontrada.</td></tr>`;
+        if (typeof lucide !== 'undefined') lucide.createIcons({ root: els.reportTable });
+        return;
+      }
+
+      els.reportTable.innerHTML = filtered.map(d => `
+        <tr class="hover:bg-slate-800/40 transition-colors">
+          <td class="table-cell font-bold text-white uppercase tracking-wider text-[10px]"><span class="bg-slate-800 px-2 py-1 rounded border border-slate-700">${escapeHTML(d.name)}</span></td>
+          <td class="table-cell text-center font-mono text-brand-400">${d.count}<span class="text-slate-600 text-[10px] ml-1">(${d.paidCount} pagas)</span></td>
+          <td class="table-cell text-right text-slate-400 font-mono">${formatUSD(d.usd)}</td>
+          <td class="table-cell text-right font-bold text-slate-300 font-mono">${formatMT(d.total)}</td>
+          <td class="table-cell text-right font-black text-success-400 font-mono">+ ${formatMT(d.tax)}</td>
+        </tr>
+      `).join('');
+    }
+
+    els.categorySearch?.addEventListener('input', () => renderCategoryTable(categoryRows));
+
+    function renderCharts(catData, orders) {
+      if (typeof Chart === 'undefined') {
+        showToast('Chart.js não carregou. Verifique a internet ou CSP.', 'warning');
+        return;
+      }
+
+      Chart.defaults.color = '#94a3b8';
+      Chart.defaults.font.family = 'Plus Jakarta Sans, sans-serif';
+
+      const topCats = catData.slice(0, 6).filter(x => x.count > 0);
+      renderCategoryChart(topCats);
+      renderStatusChart(orders);
+    }
+
+    function renderCategoryChart(topCats) {
+      const canvas = document.getElementById('categoryChart');
+      if (chartCategory) chartCategory.destroy();
+
+      if (!topCats.length) {
+        canvas.classList.add('hidden');
+        els.categoryEmpty.classList.remove('hidden');
+        return;
+      }
+      canvas.classList.remove('hidden');
+      els.categoryEmpty.classList.add('hidden');
+
+      chartCategory = new Chart(canvas, {
         type: 'bar',
         data: {
-          labels: topCats.map(k => k.nome.toUpperCase()),
-          datasets: [{ 
-              label: 'Volume de Pedidos', 
-              data: topCats.map(d => d.count), 
-              backgroundColor: '#3b82f6',
-              borderRadius: 6,
-              borderSkipped: false
+          labels: topCats.map(k => k.name.toUpperCase()),
+          datasets: [{
+            label: 'Volume de pedidos',
+            data: topCats.map(d => d.count),
+            backgroundColor: '#3b82f6',
+            borderRadius: 8,
+            borderSkipped: false
           }]
         },
-        options: { 
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: { 
-                y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } },
-                x: { grid: { display: false } }
-            }
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.raw} pedidos` } } },
+          scales: {
+            y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(255,255,255,.05)' } },
+            x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true } }
+          }
         }
       });
+    }
 
-      // 2. Gráfico de Funil (Status)
-      const status = { pending: 0, processing: 0, completed: 0, cancelled: 0 };
-      orders.forEach(o => { if (status[o.status] !== undefined) status[o.status]++; });
-      
-      const ctx2 = document.getElementById('statusChart');
-      if (chart2) chart2.destroy();
+    function renderStatusChart(orders) {
+      const canvas = document.getElementById('statusChart');
+      if (chartStatus) chartStatus.destroy();
 
-      chart2 = new Chart(ctx2, {
+      const buckets = { pending: 0, processing: 0, completed: 0, cancelled: 0 };
+      for (const order of orders) {
+        const status = normalizeStatus(order.status);
+        if (['completed', 'paid', 'success', 'confirmed'].includes(status) || order.isPaid === true) buckets.completed += 1;
+        else if (['processing', 'in_progress'].includes(status)) buckets.processing += 1;
+        else if (['cancelled', 'canceled', 'failed', 'rejected', 'refunded'].includes(status)) buckets.cancelled += 1;
+        else buckets.pending += 1;
+      }
+      const values = [buckets.pending, buckets.processing, buckets.completed, buckets.cancelled];
+      if (!values.some(Boolean)) {
+        canvas.classList.add('hidden');
+        els.statusEmpty.classList.remove('hidden');
+        return;
+      }
+      canvas.classList.remove('hidden');
+      els.statusEmpty.classList.add('hidden');
+
+      chartStatus = new Chart(canvas, {
         type: 'doughnut',
         data: {
-          labels: ['Falta Pagar', 'Processando', 'Finalizado', 'Recusado'],
-          datasets: [{ 
-              data: [status.pending, status.processing, status.completed, status.cancelled], 
-              backgroundColor: ['#f59e0b', '#3b82f6', '#22c55e', '#ef4444'],
-              borderWidth: 0,
-              hoverOffset: 4
+          labels: ['Pendente', 'Processando', 'Finalizado/Pago', 'Cancelado/Falhou'],
+          datasets: [{
+            data: values,
+            backgroundColor: ['#f59e0b', '#3b82f6', '#22c55e', '#ef4444'],
+            borderWidth: 0,
+            hoverOffset: 5
           }]
         },
-        options: { 
-            responsive: true, maintainAspectRatio: false,
-            cutout: '75%',
-            plugins: { 
-                legend: { position: 'right', labels: { usePointStyle: true, padding: 20 } } 
-            } 
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '72%',
+          plugins: { legend: { position: 'right', labels: { usePointStyle: true, padding: 18 } } }
         }
       });
     }
 
-    // Exportação Inteligente de CSV
-    window.exportReport = () => {
-      if(!rawOrders.length) { showToast('Não há dados analíticos para extrair.', 'warning'); return; }
-      
-      let csvContent = "Data,ID,Cliente,Produto,Valor Base (USD),Total Faturado (MT),Lucro Retido (MT),Estado Operacional\n";
-      
-      rawOrders.forEach(o => {
-        const dateStr = o.createdAt?.toDate ? o.createdAt.toDate().toLocaleDateString('pt-MZ') : '-';
-        const name = `"${(o.name || 'S/N').replace(/"/g, '""')}"`;
-        const detail = `"${(o.detail || 'S/N').replace(/"/g, '""')}"`;
-        const statusMap = { pending: 'Pendente', processing: 'Em Processamento', completed: 'Liquidado', cancelled: 'Anulado' };
-        
-        csvContent += `${dateStr},${o.orderId},${name},${detail},${o.usd || 0},${o.total || 0},${o.tax || 0},${statusMap[o.status] || o.status}\n`;
+    function setLoadingState(isLoading) {
+      document.querySelectorAll('button').forEach(btn => {
+        if (btn.id !== 'mobileMenuBtn' && btn.id !== 'closeSidebarBtn') btn.disabled = Boolean(isLoading);
       });
-      
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = `PayGo_Relatorio_Financeiro_${new Date().toISOString().split('T')[0]}.csv`;
-      document.body.appendChild(link); link.click(); document.body.removeChild(link);
-      
-      showToast('Relatório de Contabilidade descarregado com sucesso!', 'success');
-    };
-
-    window.logout = async function() { if(confirm('Fechar sessão administrativa?')) { await signOut(auth); window.location.href = '../login.html'; } };
-    
-    function showToast(msg, type = 'success') {
-      const container = document.getElementById('toastContainer');
-      const t = document.createElement('div');
-      const isErr = type === 'error', isWarn = type === 'warning';
-      const bg = isErr ? 'bg-danger-500/95 border-danger-400' : isWarn ? 'bg-warning-500/95 border-warning-400' : 'bg-slate-900/95 border-slate-700';
-      const icon = isErr ? 'alert-octagon text-danger-400' : isWarn ? 'alert-triangle text-warning-400' : 'check-check text-brand-400';
-      
-      t.className = `flex items-center gap-3 px-5 py-4 rounded-xl shadow-2xl backdrop-blur-xl transform transition-all duration-400 translate-x-full border ${bg}`;
-      t.innerHTML = `<i data-lucide="${icon.split(' ')[0]}" class="w-5 h-5 ${icon.split(' ')[1]}"></i> <span class="text-sm font-semibold text-white tracking-wide">${msg}</span>`;
-      
-      container.appendChild(t);
-      lucide.createIcons({ root: t });
-      requestAnimationFrame(() => t.classList.remove('translate-x-full'));
-      setTimeout(() => { t.classList.add('opacity-0', 'translate-x-8'); setTimeout(() => t.remove(), 400); }, 5000);
     }
 
-    // Controlo Mobile
+    function renderEmptyState(message) {
+      clearSkeletons();
+      setText(els.reportOrders, '0');
+      setText(els.reportRevenue, '0 MT');
+      setText(els.reportRate, '0%');
+      setText(els.reportAvg, '0 MT');
+      els.reportTable.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-danger-400">${escapeHTML(message)}</td></tr>`;
+    }
+
+    window.exportReport = () => {
+      if (!rawOrders.length) {
+        showToast('Não há dados analíticos para exportar.', 'warning');
+        return;
+      }
+
+      const header = ['Data', 'ID', 'Cliente', 'Produto', 'Categoria', 'Valor Base USD', 'Total Faturado MT', 'Lucro Retido MT', 'Estado', 'Pago'];
+      const rows = rawOrders.map(o => [
+        formatDate(o.createdAt),
+        o.orderId || o.id || '',
+        o.name || o.customerName || 'S/N',
+        o.detail || o.description || 'S/N',
+        getCategory(o),
+        getOrderUSD(o),
+        getOrderAmount(o),
+        getOrderTax(o),
+        o.status || 'pending',
+        isPaidOrder(o) ? 'Sim' : 'Não'
+      ]);
+
+      const csv = [header, ...rows]
+        .map(row => row.map(value => `"${String(value ?? '').replace(/"/g, '""')}"`).join(','))
+        .join('\n');
+
+      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `PayGo_Relatorio_Financeiro_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      URL.revokeObjectURL(link.href);
+      link.remove();
+      showToast('Relatório CSV descarregado com sucesso.', 'success');
+    };
+
+    window.logout = async () => {
+      if (!confirm('Fechar sessão administrativa?')) return;
+      await signOut(auth);
+      window.location.href = '../login.html';
+    };
+
+    function readableFirebaseError(error) {
+      const msg = String(error?.message || error || 'Erro desconhecido');
+      if (msg.includes('identitytoolkit.googleapis.com') || msg.includes('requests-from-referer')) {
+        return 'Firebase Auth bloqueado pela API Key. Adicione paygo.co.mz e www.paygo.co.mz nos HTTP referrers da chave.';
+      }
+      if (msg.includes('Missing or insufficient permissions')) return 'Sem permissão para ler relatórios. Verifique as regras do Firestore e o role admin.';
+      if (msg.includes('Failed to fetch')) return 'Falha de rede. Verifique internet, domínio e regras de CORS/CSP.';
+      return msg;
+    }
+
+    function showToast(msg, type = 'success', duration = 5000) {
+      const container = document.getElementById('toastContainer');
+      if (!container) return;
+      const t = document.createElement('div');
+      const iconName = type === 'error' ? 'alert-octagon' : type === 'warning' ? 'alert-triangle' : 'check-check';
+      const iconColor = type === 'error' ? 'text-danger-400' : type === 'warning' ? 'text-warning-400' : 'text-brand-400';
+      t.className = `toast ${type}`;
+      t.setAttribute('role', 'alert');
+      t.innerHTML = `<i data-lucide="${iconName}" class="w-5 h-5 ${iconColor} shrink-0"></i><span class="text-sm font-semibold text-white tracking-wide">${escapeHTML(msg)}</span>`;
+      container.appendChild(t);
+      if (typeof lucide !== 'undefined') lucide.createIcons({ root: t });
+      requestAnimationFrame(() => t.classList.add('show'));
+      setTimeout(() => {
+        t.classList.remove('show');
+        setTimeout(() => t.remove(), 350);
+      }, duration);
+    }
+
     const mobileMenuBtn = document.getElementById('mobileMenuBtn');
     const sidebar = document.getElementById('sidebar');
     const sidebarOverlay = document.getElementById('sidebarOverlay');
     const closeSidebarBtn = document.getElementById('closeSidebarBtn');
 
-    function toggleMobileSidebar() {
-      sidebar.classList.toggle('-translate-x-full');
-      if(sidebarOverlay.classList.contains('hidden')) {
+    function toggleMobileSidebar(forceClose = null) {
+      const shouldClose = forceClose === true || (forceClose === null && !sidebar.classList.contains('-translate-x-full'));
+      if (shouldClose) {
+        sidebar.classList.add('-translate-x-full');
+        sidebarOverlay.classList.add('opacity-0');
+        setTimeout(() => sidebarOverlay.classList.add('hidden'), 250);
+      } else {
+        sidebar.classList.remove('-translate-x-full');
         sidebarOverlay.classList.remove('hidden');
         setTimeout(() => sidebarOverlay.classList.remove('opacity-0'), 10);
-      } else {
-        sidebarOverlay.classList.add('opacity-0');
-        setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
       }
     }
-    mobileMenuBtn?.addEventListener('click', toggleMobileSidebar);
-    closeSidebarBtn?.addEventListener('click', toggleMobileSidebar);
-    sidebarOverlay?.addEventListener('click', toggleMobileSidebar);
+
+    mobileMenuBtn?.addEventListener('click', () => toggleMobileSidebar(false));
+    closeSidebarBtn?.addEventListener('click', () => toggleMobileSidebar(true));
+    sidebarOverlay?.addEventListener('click', () => toggleMobileSidebar(true));
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') toggleMobileSidebar(true);
+    });
   </script>
 </body>
 </html>
