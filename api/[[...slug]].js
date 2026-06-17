@@ -255,30 +255,21 @@ function resolvePaySuiteFee(paymentData = {}, grossAmount = 0, originalData = {}
 }
 
 function calculatePaySuiteWalletCredit(paymentData = {}, originalData = {}) {
-  // PRIORIZADO: Sempre tentar pegar o valor bruto do documento primeiro, ou campos brutos do webhook
-  const grossAmount = roundMoney(pickFirstMoney(
-    originalData.chargedAmount,      // 1º Prioridade: Valor bruto do utilizador registado ao criar o topup
-    originalData.grossPaidAmount,    // 2º Prioridade
-    paymentData.gross_amount,        // 3º Prioridade: Payload da Paysuite explícito
-    paymentData.original_amount,     // 4º Prioridade: Payload da Paysuite explícito
-    paymentData.amount,              // Fallbacks padrão da PaySuite a partir daqui...
-    paymentData.total_amount,
-    paymentData.totalAmount,
-    paymentData.paid_amount,
-    paymentData.paidAmount,
-    originalData.total,
-    originalData.amount
-  ));
+  // REGRA DE OURO PAYGO: 
+  // Confiar PRIMEIRO no valor original que foi gravado na base de dados 
+  // no momento em que o cliente clicou em "Depositar" (originalData.amount).
+  
+  const valorOriginalBD = toMoneyNumber(originalData.amount, 0);
+  const valorWebhook = toMoneyNumber(paymentData.amount, 0);
 
-  // REGRA ATUAL PAYGO:
-  // A comissão já é descontada pela carteira/conta da PaySuite.
-  // Por isso, a carteira PayGo deve receber o valor BRUTO pago pelo cliente.
-  // Não estimar taxa, não subtrair fee, não usar net_amount para reduzir o saldo do cliente.
-  // Isto evita desconto duplo da comissão PaySuite.
+  // Se a base de dados tem o valor, usamos esse. 
+  // Só usamos o valor do webhook da PaySuite como último recurso.
+  const grossAmount = roundMoney(valorOriginalBD > 0 ? valorOriginalBD : valorWebhook);
+
   return {
     grossAmount,
-    gatewayFeeAmount: 0,
-    walletCreditAmount: grossAmount,
+    gatewayFeeAmount: 0, // Zero, pois a PayGo absorve a comissão na conta PaySuite
+    walletCreditAmount: grossAmount, // O cliente recebe 100% do valor que pagou
     creditMode: 'gross_no_paysuite_deduction',
     feePercent: 0,
     paysuiteCommissionIgnored: true
