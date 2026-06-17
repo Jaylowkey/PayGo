@@ -255,14 +255,17 @@ function resolvePaySuiteFee(paymentData = {}, grossAmount = 0, originalData = {}
 }
 
 function calculatePaySuiteWalletCredit(paymentData = {}, originalData = {}) {
+  // PRIORIZADO: Sempre tentar pegar o valor bruto do documento primeiro, ou campos brutos do webhook
   const grossAmount = roundMoney(pickFirstMoney(
-    paymentData.amount,
+    originalData.chargedAmount,      // 1º Prioridade: Valor bruto do utilizador registado ao criar o topup
+    originalData.grossPaidAmount,    // 2º Prioridade
+    paymentData.gross_amount,        // 3º Prioridade: Payload da Paysuite explícito
+    paymentData.original_amount,     // 4º Prioridade: Payload da Paysuite explícito
+    paymentData.amount,              // Fallbacks padrão da PaySuite a partir daqui...
     paymentData.total_amount,
     paymentData.totalAmount,
     paymentData.paid_amount,
     paymentData.paidAmount,
-    originalData.chargedAmount,
-    originalData.grossPaidAmount,
     originalData.total,
     originalData.amount
   ));
