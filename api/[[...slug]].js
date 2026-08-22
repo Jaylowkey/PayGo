@@ -642,6 +642,209 @@ async function createPaySuitePaymentLink(req, {
 // =========================================================
 // 🛠️ HANDLERS DE ROTAS
 // =========================================================
+
+async function handleZumboPayPayment(
+  req,
+  res,
+  body
+) {
+  if (req.method !== "POST") {
+    return res.status(405).json({
+      success: false,
+      error: "Método não permitido",
+    });
+  }
+
+  const {
+    orderId,
+    amount,
+    method,
+    phone,
+    description,
+  } = body;
+
+  if (!orderId || !amount || !method) {
+    return res.status(400).json({
+      success: false,
+      error:
+        "Faltam campos obrigatórios: orderId, amount, method",
+    });
+  }
+
+  const numericAmount =
+    Number(amount);
+
+  if (
+    !Number.isFinite(
+      numericAmount
+    ) ||
+    numericAmount < 1
+  ) {
+    return res.status(400).json({
+      success: false,
+      error:
+        "O valor mínimo é 1 MT",
+    });
+  }
+
+  const cleanMethod =
+    String(method)
+      .toLowerCase()
+      .trim();
+
+  try {
+    // ==========================================
+    // STK M-PESA / E-MOLA
+    // ==========================================
+
+    if (
+      (
+        cleanMethod === "mpesa" ||
+        cleanMethod === "emola"
+      ) &&
+      phone
+    ) {
+      const charge =
+        await createCharge({
+          amount:
+            numericAmount,
+
+          phone,
+
+          customerName:
+            body.customerName ||
+            body.customer_name ||
+            "Cliente PayGo",
+
+          sourceId:
+            String(orderId),
+
+          method:
+            cleanMethod,
+        });
+
+      return res.status(200).json({
+        success: true,
+
+        data: {
+          provider:
+            "zumbopay",
+
+          type:
+            "stk",
+
+          paymentId:
+            charge.paymentId,
+
+          reference:
+            charge.reference,
+
+          status:
+            charge.status,
+
+          method:
+            charge.method,
+
+          amount:
+            charge.amount,
+
+          checkoutUrl:
+            null,
+        },
+
+        message:
+          charge.status ===
+          "success"
+            ? "Pagamento confirmado."
+            : "Confirme o pagamento no seu telemóvel.",
+      });
+    }
+
+    // ==========================================
+    // HOSTED CHECKOUT
+    // ==========================================
+
+    const payment =
+      await createPayment({
+        title:
+          body.title ||
+          `Pagamento PayGo #${orderId}`,
+
+        amount:
+          numericAmount,
+
+        reference:
+          String(orderId),
+
+        description:
+          description ||
+          `Pagamento PayGo #${orderId}`,
+
+        channels:
+          body.channels || [
+            "mpesa",
+            "emola",
+            "card",
+          ],
+
+        method:
+          cleanMethod,
+      });
+
+    return res.status(200).json({
+      success: true,
+
+      data: {
+        provider:
+          "zumbopay",
+
+        type:
+          "checkout",
+
+        paymentId:
+          payment.paymentId,
+
+        reference:
+          payment.reference,
+
+        status:
+          payment.status,
+
+        checkoutUrl:
+          payment.checkoutUrl,
+
+        amount:
+          payment.amount,
+
+        method:
+          payment.method,
+      },
+
+      message:
+        "Redirecione o cliente para o checkoutUrl.",
+    });
+  } catch (error) {
+    console.error(
+      "❌ ZumboPay payment:",
+      error
+    );
+
+    return res.status(
+      error?.status >= 400 &&
+      error?.status < 500
+        ? error.status
+        : 502
+    ).json({
+      success: false,
+      error:
+        error?.message ||
+        "Erro ao iniciar pagamento.",
+      code:
+        error?.code || null,
+    });
+  }
+}
+
 async function handlePaySuitePayment(req, res, body) {
   if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Método não permitido' });
   const { orderId, amount, method, description } = body;
