@@ -2648,114 +2648,356 @@
         // 7. DEPOSITAR NA CARTEIRA E P2P
         // =====================================
         window.processTopUp = async () => {
-            if (isProcessing) return;
-            isProcessing = true;
+    if (isProcessing) return;
 
-            const btn = document.getElementById('btnProcessTopUp');
-            const origText = btn.innerHTML;
-            btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A preparar Pagamento...`; if (typeof lucide !== 'undefined') lucide.createIcons({root: btn});
+    isProcessing = true;
 
-            const amount = Number(parseFloat(document.getElementById('topUpAmount').value) || 0);
-            const method = document.querySelector('input[name="topUpMethod"]:checked')?.value || 'mpesa';
+    const btn = document.getElementById('btnProcessTopUp');
 
-            if (!Number.isFinite(amount) || amount < 10) { window.showToast("O depósito mínimo é de 10 MT.", "warning"); isProcessing = false; btn.disabled = false; btn.innerHTML = origText; return; }
+    if (!btn) {
+        isProcessing = false;
+        return;
+    }
 
-            try {
-                if (method === 'bank') {
-                    await addDoc(collection(db, "support_tickets"), { userId: currentUser.uid, userName: userData.name, userEmail: currentUser.email, type: 'deposit_request', amount: amount, paymentMethod: method, message: `Depósito Bancário de ${formatMZN(amount)} MT.`, status: 'open', createdAt: serverTimestamp() });
-                    window.fetchDashboardData(true);
-                    window.closeModals(); document.getElementById('topUpForm').reset(); setSafeValue('topUpAmount',''); window.syncTopUpPreview(0, 0); window.showToast("Pedido enviado! O Admin confirmará após verificação.", "success");
-                } else {
-                    window.showToast("A conectar de forma segura à PaySuite...", "info");
-                    const topupId = 'TOP-' + Date.now().toString().slice(-6).toUpperCase();
-                    
-                    await addDoc(collection(db, "topups"), { topupId: topupId, userId: currentUser.uid, amount: amount, method: method, status: 'pending', createdAt: serverTimestamp() });
+    const origText = btn.innerHTML;
 
-                    const payloadVercel = { orderId: topupId, amount: Number(amount.toFixed(2)), method: method, description: `Depósito Carteira PayGo: ${topupId}` };
-                    const data = await pagamentoSeguro.fire(payloadVercel);
+    btn.disabled = true;
 
-                    if (data.data && data.data.checkoutUrl) { 
-                        window.location.href = data.data.checkoutUrl; 
-                    } else { 
-                        window.fetchDashboardData(true);
-                        window.closeModals(); document.getElementById('topUpForm').reset(); setSafeValue('topUpAmount',''); window.syncTopUpPreview(0, 0); window.showToast("Verifique o seu telemóvel para inserir o PIN!", "success"); 
-                    }
+    btn.innerHTML = `
+        <i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>
+        A preparar pagamento...
+    `;
+
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons({ root: btn });
+    }
+
+    try {
+        const amount = Number(
+            parseFloat(
+                document.getElementById('topUpAmount')?.value || 0
+            )
+        );
+
+        const phoneInput =
+            document.getElementById('topUpPhone');
+
+        const phone =
+            phoneInput?.value?.trim() || '';
+
+        const method =
+            document.querySelector(
+                'input[name="topUpMethod"]:checked'
+            )?.value || 'mpesa';
+
+        // =========================================
+        // VALIDAÇÃO DO VALOR
+        // =========================================
+
+        if (
+            !Number.isFinite(amount) ||
+            amount < 10
+        ) {
+            throw new Error(
+                'O depósito mínimo é de 10 MT.'
+            );
+        }
+
+        // =========================================
+        // BANCO
+        // =========================================
+
+        if (method === 'bank') {
+
+            await addDoc(
+                collection(db, 'support_tickets'),
+                {
+                    userId: currentUser.uid,
+
+                    userName:
+                        userData?.name ||
+                        currentUser.displayName ||
+                        'Cliente',
+
+                    userEmail:
+                        currentUser.email || '',
+
+                    type: 'deposit_request',
+
+                    amount: amount,
+
+                    paymentMethod: 'bank',
+
+                    message:
+                        `Depósito Bancário de ${formatMZN(amount)} MT.`,
+
+                    status: 'open',
+
+                    createdAt:
+                        serverTimestamp()
                 }
-            } catch (err) { 
-                if (err.message === "MANUTENCAO_PAYSUITE" || err.message.startsWith("CIRCUITO_ABERTO")) {
-                    window.showToast("Gateway automática em manutenção. Faça transferência bancária manual.", "warning", 6000);
-                    document.querySelector('input[value="bank"]').checked = true;
-                    document.getElementById('bankDetails').classList.remove('hidden');
-                } else {
-                    window.showToast(err.message || "Falha ao processar operação.", "error"); 
-                }
-            } finally { 
-                isProcessing = false; btn.disabled = false; btn.innerHTML = origText; 
+            );
+
+            window.fetchDashboardData(true);
+
+            window.closeModals();
+
+            document
+                .getElementById('topUpForm')
+                ?.reset();
+
+            setSafeValue(
+                'topUpAmount',
+                ''
+            );
+
+            window.syncTopUpPreview(
+                0,
+                0
+            );
+
+            window.showToast(
+                'Pedido enviado! O Admin confirmará após verificação.',
+                'success'
+            );
+
+            return;
+        }
+
+        // =========================================
+        // VALIDAR TELEFONE
+        // =========================================
+
+        if (!phone) {
+            throw new Error(
+                'Introduza o número de telefone para receber o pedido de pagamento.'
+            );
+        }
+
+        const cleanPhone =
+            phone
+                .replace(/\s+/g, '')
+                .replace(/-/g, '');
+
+        const phoneDigits =
+            cleanPhone.replace(/\D/g, '');
+
+        /**
+         * Aceitamos:
+         *
+         * 841234567
+         * 851234567
+         * 861234567
+         * 871234567
+         *
+         * ou:
+         *
+         * 258841234567
+         * +258841234567
+         */
+
+        let localPhone = phoneDigits;
+
+        if (
+            localPhone.startsWith('258')
+        ) {
+            localPhone =
+                localPhone.substring(3);
+        }
+
+        if (
+            !/^(8[4-7])\d{7}$/.test(
+                localPhone
+            )
+        ) {
+            throw new Error(
+                'Número inválido. Use um número M-Pesa/e-Mola válido, por exemplo 841234567.'
+            );
+        }
+
+        const normalizedPhone =
+            `258${localPhone}`;
+
+        // =========================================
+        // CRIAR TOPUP
+        // =========================================
+
+        const topupId =
+            'TOP-' +
+            Date.now()
+                .toString()
+                .slice(-8)
+                .toUpperCase();
+
+        await addDoc(
+            collection(db, 'topups'),
+            {
+                topupId,
+
+                userId:
+                    currentUser.uid,
+
+                amount:
+
+                    Number(
+                        amount.toFixed(2)
+                    ),
+
+                method,
+
+                phone:
+                    normalizedPhone,
+
+                status:
+                    'pending',
+
+                provider:
+                    'zumbopay',
+
+                createdAt:
+                    serverTimestamp()
             }
+        );
+
+        // =========================================
+        // ENVIAR PARA ZUMBOPAY
+        // =========================================
+
+        window.showToast(
+            `A iniciar pagamento via ${method === 'mpesa' ? 'M-Pesa' : 'e-Mola'}...`,
+            'info'
+        );
+
+        const payloadVercel = {
+            topupId,
+
+            orderId:
+                topupId,
+
+            amount:
+                Number(
+                    amount.toFixed(2)
+                ),
+
+            method,
+
+            phone:
+                normalizedPhone,
+
+            description:
+                `Depósito PayGo ${topupId}`
         };
 
-        window.syncTopUpPreview = (usd = 0, mt = 0) => {
-            setSafeText('topUpMznDisplay', `${formatMZN(mt)} MT`);
-            setSafeText('topUpUsdDisplay', `${formatUSD(usd)} USD`);
-            setSafeValue('topUpAmount', mt > 0 ? mt.toFixed(2) : '');
-        };
+        const data =
+            await pagamentoSeguro.fire(
+                payloadVercel
+            );
 
-        window.syncTopUpFromUsd = () => {
-            const usdInputEl = document.getElementById('topUpUsdInput');
-            const mtInputEl = document.getElementById('topUpMtInput');
-            const usd = parseFloat(usdInputEl?.value) || 0;
-            const mt = usd > 0 ? usd * sysExchangeRate : 0;
-            if (mtInputEl) mtInputEl.value = usd > 0 ? mt.toFixed(2) : '';
-            window.syncTopUpPreview(usd, mt);
-        };
+        // =========================================
+        // RESULTADO
+        // =========================================
 
-        window.syncTopUpFromMt = () => {
-            const usdInputEl = document.getElementById('topUpUsdInput');
-            const mtInputEl = document.getElementById('topUpMtInput');
-            const mt = parseFloat(mtInputEl?.value) || 0;
-            const usd = mt > 0 ? (mt / sysExchangeRate) : 0;
-            if (usdInputEl) usdInputEl.value = usd > 0 ? usd.toFixed(2) : '';
-            window.syncTopUpPreview(usd, mt);
-        };
+        const checkoutUrl =
+            data?.checkoutUrl ||
+            data?.data?.checkoutUrl ||
+            data?.data?.checkout_url ||
+            null;
 
-        window.calcTopUpMzn = () => window.syncTopUpFromUsd();
+        const reference =
+            data?.reference ||
+            data?.data?.reference ||
+            null;
 
-        window.toggleBankDetails = (method) => {
-            const el = document.getElementById('bankDetails');
-            if (method === 'bank') el.classList.remove('hidden'); else el.classList.add('hidden');
-        };
+        // =========================================
+        // CHECKOUT
+        // =========================================
 
-        window.processTransfer = async () => { 
-            if (isProcessing) return;
-            isProcessing = true;
+        if (checkoutUrl) {
 
-            const btn = document.getElementById('btnTransfer');
-            const origText = btn.innerHTML;
-            btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A transferir...`; if (typeof lucide !== 'undefined') lucide.createIcons({root: btn});
+            window.showToast(
+                'Pagamento criado. A abrir o pagamento...',
+                'success'
+            );
 
-            const emailDestino = document.getElementById('transferEmail').value.trim();
-            const amount = parseFloat(document.getElementById('transferAmount').value);
+            window.location.href =
+                checkoutUrl;
 
-            if (amount < 1 || !emailDestino) { window.showToast("Dados inválidos.", "error"); isProcessing = false; btn.disabled = false; btn.innerHTML = origText; return; }
+            return;
+        }
 
-            try {
-                const freshUserDoc = await getDoc(doc(db, "users", currentUser.uid));
-                if(amount > (parseFloat(freshUserDoc.data().walletBalance) || 0)) throw new Error("Saldo insuficiente para transferência.");
+        // =========================================
+        // STK PUSH
+        // =========================================
 
-                const response = await fetch('/api/p2p-transfer', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ senderId: currentUser.uid, receiverEmail: emailDestino, amount: amount })
-                });
-                
-                const data = await response.json();
-                if (!response.ok) throw new Error(data.error || "Erro na transferência.");
+        window.fetchDashboardData(
+            true
+        );
 
-                window.fetchDashboardData(true);
-                window.closeModals(); document.getElementById('transferForm').reset();
-                window.showToast(`Transferência de ${formatMZN(amount)} MT concluída!`, "success");
-            } catch (err) { window.showToast(err.message, "error"); } 
-            finally { isProcessing = false; btn.disabled = false; btn.innerHTML = origText; }
-        };
+        window.closeModals();
+
+        document
+            .getElementById('topUpForm')
+            ?.reset();
+
+        setSafeValue(
+            'topUpAmount',
+            ''
+        );
+
+        window.syncTopUpPreview(
+            0,
+            0
+        );
+
+        if (reference) {
+
+            window.showToast(
+                `Pedido enviado para ${phone}. Confirme o pagamento no seu telemóvel.`,
+                'success',
+                7000
+            );
+
+        } else {
+
+            window.showToast(
+                `Pedido de pagamento enviado para ${phone}. Confirme no seu telemóvel.`,
+                'success',
+                7000
+            );
+        }
+
+    } catch (err) {
+
+        console.error(
+            '[PayGo] Erro no depósito:',
+            err
+        );
+
+        window.showToast(
+            err?.message ||
+            'Falha ao iniciar o pagamento.',
+            'error',
+            6000
+        );
+
+    } finally {
+
+        isProcessing = false;
+
+        btn.disabled = false;
+
+        btn.innerHTML =
+            origText;
+
+        if (
+            typeof lucide !== 'undefined'
+        ) {
+            lucide.createIcons({
+                root: btn
+            });
+        }
+    }
+};
 
         // =====================================
         // 8. AÇÕES DO CARTÃO VIRTUAL / VIP
