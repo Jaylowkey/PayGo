@@ -4,6 +4,14 @@ import { Resend } from 'resend';
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import {
+  createCharge,
+  createPayment,
+  getPaymentStatus,
+  getWallets,
+  createPayout,
+  verifyWebhookSignature,
+} from '../lib/services/zumbopay.js';
 
 // =========================================================
 // 📦 CONFIGURAÇÕES GLOBAIS & INICIALIZAÇÃO
@@ -30,7 +38,7 @@ const BRAND_COLORS = {
 function setCors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-paysuite-signature, x-webhook-signature');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-paysuite-signature, x-webhook-signature, x-zumbopay-signature');
 }
 
 function normalizeBody(req) {
@@ -643,208 +651,471 @@ async function createPaySuitePaymentLink(req, {
 // 🛠️ HANDLERS DE ROTAS
 // =========================================================
 
-async function handleZumboPayPayment(
-  req,
-  res,
-  body
-) {
-  if (req.method !== "POST") {
-    return res.status(405).json({
-      success: false,
-      error: "Método não permitido",
-    });
+
+
+// =========================================================
+// 💳 ZUMBOPAY — PAGAMENTO
+// =========================================================
+async function handleZumboPayPayment(req, res, body) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ success: false, error: 'Método não permitido' });
   }
 
-  const {
-    orderId,
-    amount,
-    method,
-    phone,
-    description,
-  } = body;
-
+  const { orderId, amount, method, phone, description, title, channels } = body || {};
   if (!orderId || !amount || !method) {
-    return res.status(400).json({
-      success: false,
-      error:
-        "Faltam campos obrigatórios: orderId, amount, method",
-    });
+    return res.status(400).json({ success: false, error: 'Faltam campos obrigatórios: orderId, amount, method' });
   }
 
-  const numericAmount =
-    Number(amount);
-
-  if (
-    !Number.isFinite(
-      numericAmount
-    ) ||
-    numericAmount < 1
-  ) {
-    return res.status(400).json({
-      success: false,
-      error:
-        "O valor mínimo é 1 MT",
-    });
+  const numericAmount = Number(amount);
+  if (!Number.isFinite(numericAmount) || numericAmount < 1) {
+    return res.status(400).json({ success: false, error: 'O valor mínimo é 1 MT' });
   }
 
-  const cleanMethod =
-    String(method)
-      .toLowerCase()
-      .trim();
+  const cleanMethod = String(method).toLowerCase().trim();
+  const reference = String(orderId).replace(/[^a-zA-Z0-9_-]/g, '');
 
   try {
-    // ==========================================
-    // STK M-PESA / E-MOLA
-    // ==========================================
-
-    if (
-      (
-        cleanMethod === "mpesa" ||
-        cleanMethod === "emola"
-      ) &&
-      phone
-    ) {
-      const charge =
-        await createCharge({
-          amount:
-            numericAmount,
-
-          phone,
-
-          customerName:
-            body.customerName ||
-            body.customer_name ||
-            "Cliente PayGo",
-
-          sourceId:
-            String(orderId),
-
-          method:
-            cleanMethod,
-        });
+    if ((cleanMethod === 'mpesa' || cleanMethod === 'emola') && phone) {
+      const charge = await createCharge({
+        amount: numericAmount,
+        phone,
+        customerName: body.customerName || body.customer_name || 'Cliente PayGo',
+        sourceId: reference,
+        method: cleanMethod,
+      });
 
       return res.status(200).json({
         success: true,
-
         data: {
-          provider:
-            "zumbopay",
-
-          type:
-            "stk",
-
-          paymentId:
-            charge.paymentId,
-
-          reference:
-            charge.reference,
-
-          status:
-            charge.status,
-
-          method:
-            charge.method,
-
-          amount:
-            charge.amount,
-
-          checkoutUrl:
-            null,
+          provider: 'zumbopay',
+          type: 'stk',
+          paymentId: charge.paymentId || null,
+          reference: charge.reference || reference,
+          status: charge.status || 'pending',
+          method: cleanMethod,
+          amount: charge.amount || numericAmount,
+          checkoutUrl: null,
         },
-
-        message:
-          charge.status ===
-          "success"
-            ? "Pagamento confirmado."
-            : "Confirme o pagamento no seu telemóvel.",
+        message: charge.status === 'success'
+          ? 'Pagamento confirmado.'
+          : 'Confirme o pagamento no seu telemóvel.',
       });
     }
 
-    // ==========================================
-    // HOSTED CHECKOUT
-    // ==========================================
-
-    const payment =
-      await createPayment({
-        title:
-          body.title ||
-          `Pagamento PayGo #${orderId}`,
-
-        amount:
-          numericAmount,
-
-        reference:
-          String(orderId),
-
-        description:
-          description ||
-          `Pagamento PayGo #${orderId}`,
-
-        channels:
-          body.channels || [
-            "mpesa",
-            "emola",
-            "card",
-          ],
-
-        method:
-          cleanMethod,
-      });
+    const payment = await createPayment({
+      title: title || `Pagamento PayGo #${orderId}`,
+      amount: numericAmount,
+      reference,
+      description: description || `Pagamento PayGo #${orderId}`,
+      channels: channels || ['mpesa', 'emola', 'card'],
+      method: cleanMethod,
+    });
 
     return res.status(200).json({
       success: true,
-
       data: {
-        provider:
-          "zumbopay",
-
-        type:
-          "checkout",
-
-        paymentId:
-          payment.paymentId,
-
-        reference:
-          payment.reference,
-
-        status:
-          payment.status,
-
-        checkoutUrl:
-          payment.checkoutUrl,
-
-        amount:
-          payment.amount,
-
-        method:
-          payment.method,
+        provider: 'zumbopay',
+        type: 'checkout',
+        paymentId: payment.paymentId || null,
+        reference: payment.reference || reference,
+        status: payment.status || 'pending',
+        checkoutUrl: payment.checkoutUrl || null,
+        amount: payment.amount || numericAmount,
+        method: payment.method || cleanMethod,
       },
-
-      message:
-        "Redirecione o cliente para o checkoutUrl.",
+      message: 'Redirecione o cliente para o checkoutUrl.',
     });
   } catch (error) {
-    console.error(
-      "❌ ZumboPay payment:",
-      error
-    );
-
-    return res.status(
-      error?.status >= 400 &&
-      error?.status < 500
-        ? error.status
-        : 502
-    ).json({
+    console.error('❌ ZumboPay payment:', error);
+    return res.status(error?.status >= 400 && error.status < 500 ? error.status : 502).json({
       success: false,
-      error:
-        error?.message ||
-        "Erro ao iniciar pagamento.",
-      code:
-        error?.code || null,
+      error: error?.message || 'Erro ao iniciar pagamento.',
+      code: error?.code || null,
     });
   }
 }
 
+// =========================================================
+// 💰 ZUMBOPAY — SALDOS DAS WALLETS
+// =========================================================
+async function handleZumboPayWallets(req, res) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ success: false, error: 'Método não permitido' });
+  }
+
+  try {
+    await getAuthenticatedAdmin(req);
+    const wallets = await getWallets();
+    const normalized = (wallets || []).map((wallet) => ({
+      id: wallet.id || null,
+      walletCode: wallet.wallet_code || wallet.walletCode || null,
+      name: wallet.name || null,
+      method: wallet.method || null,
+      currency: wallet.currency || 'MZN',
+      balance: toMoneyNumber(wallet.balance, 0),
+      isActive: wallet.is_active !== false,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        wallets: normalized,
+        totalBalance: roundMoney(normalized.reduce((sum, w) => sum + w.balance, 0)),
+        currency: 'MZN',
+        updatedAt: new Date().toISOString(),
+      },
+    });
+  } catch (error) {
+    console.error('❌ ZumboPay wallets:', error);
+    return res.status(error?.message?.includes('Acesso negado') ? 403 : 502).json({
+      success: false,
+      error: error?.message || 'Não foi possível consultar as carteiras ZumboPay.',
+    });
+  }
+}
+
+// =========================================================
+// 💸 ZUMBOPAY — CRIAR PAYOUT PELO ADMIN
+// =========================================================
+async function handleZumboPayPayout(req, res, body) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ success: false, error: 'Método não permitido' });
+  }
+
+  let admin;
+  try {
+    admin = await getAuthenticatedAdmin(req);
+  } catch (error) {
+    return res.status(error?.message?.includes('Acesso negado') ? 403 : 401).json({
+      success: false,
+      error: error?.message || 'Não autenticado.',
+    });
+  }
+
+  const { amount, method, destination, notes, autoDispatch, walletId } = body || {};
+  const numericAmount = Number(amount);
+  const cleanMethod = String(method || '').toLowerCase().trim();
+
+  if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+    return res.status(400).json({ success: false, error: 'Valor do payout inválido.' });
+  }
+  if (!['mpesa', 'emola'].includes(cleanMethod)) {
+    return res.status(400).json({ success: false, error: 'Método deve ser mpesa ou emola.' });
+  }
+  if (!destination) {
+    return res.status(400).json({ success: false, error: 'Número de destino é obrigatório.' });
+  }
+
+  const { db } = getFirebase();
+  const now = new Date().toISOString();
+  const localRef = db.collection('zumbopay_payouts').doc();
+
+  try {
+    const payout = await createPayout({
+      amount: numericAmount,
+      method: cleanMethod,
+      destination,
+      notes: notes || 'Payout PayGo',
+      autoDispatch: Boolean(autoDispatch),
+      walletId: walletId || undefined,
+    });
+
+    await localRef.set({
+      id: localRef.id,
+      provider: 'zumbopay',
+      payoutId: payout.payoutId || null,
+      reference: payout.reference || null,
+      providerReference: payout.providerReference || null,
+      status: payout.status || 'pending',
+      method: cleanMethod,
+      destination: payout.destination || destination,
+      amount: payout.amount || numericAmount,
+      feeAmount: payout.feeAmount || 0,
+      netAmount: payout.netAmount || 0,
+      currency: payout.currency || 'MZN',
+      walletId: walletId || null,
+      autoDispatch: Boolean(autoDispatch),
+      notes: notes || 'Payout PayGo',
+      adminId: admin.uid,
+      adminName: admin.name,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    await db.collection('admin_audit_logs').add({
+      adminId: admin.uid,
+      adminName: admin.name,
+      action: 'ZUMBOPAY_PAYOUT_CREATED',
+      targetId: payout.payoutId || localRef.id,
+      targetType: 'zumbopay_payout',
+      details: purificarDados({
+        amount: numericAmount,
+        method: cleanMethod,
+        destination,
+        status: payout.status,
+        reference: payout.reference,
+      }),
+      createdAt: now,
+    });
+
+    return res.status(201).json({ success: true, data: payout });
+  } catch (error) {
+    console.error('❌ ZumboPay payout:', error);
+    await localRef.set({
+      id: localRef.id,
+      provider: 'zumbopay',
+      status: 'failed',
+      method: cleanMethod,
+      destination: String(destination),
+      amount: numericAmount,
+      adminId: admin.uid,
+      adminName: admin.name,
+      error: error?.message || 'Erro no payout',
+      createdAt: now,
+      updatedAt: new Date().toISOString(),
+    }, { merge: true }).catch(() => {});
+
+    return res.status(error?.status >= 400 && error.status < 500 ? error.status : 502).json({
+      success: false,
+      error: error?.message || 'Não foi possível criar o payout.',
+      code: error?.code || null,
+    });
+  }
+}
+
+// =========================================================
+// 📋 ZUMBOPAY — STATUS DE PAGAMENTO
+// =========================================================
+async function handleZumboPayStatus(req, res, body) {
+  if (req.method !== 'GET' && req.method !== 'POST') {
+    return res.status(405).json({ success: false, error: 'Método não permitido' });
+  }
+
+  const reference = body?.reference || req.query?.reference || body?.paymentId || req.query?.paymentId;
+  if (!reference) return res.status(400).json({ success: false, error: 'reference/paymentId é obrigatório.' });
+
+  try {
+    const result = await getPaymentStatus(reference);
+    return res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    return res.status(error?.status >= 400 && error.status < 500 ? error.status : 502).json({
+      success: false,
+      error: error?.message || 'Não foi possível consultar o pagamento.',
+    });
+  }
+}
+
+// =========================================================
+// 🔔 ZUMBOPAY — WEBHOOK
+// =========================================================
+async function handleZumboPayWebhook(req, res, body, rawBody) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ success: false, error: 'Método não permitido' });
+  }
+
+  const signature = req.headers['x-zumbopay-signature'] || '';
+  if (!verifyWebhookSignature(rawBody || JSON.stringify(body || {}), String(signature))) {
+    console.error('❌ Assinatura ZumboPay inválida.');
+    return res.status(401).json({ success: false, error: 'Invalid webhook signature' });
+  }
+
+  const event = body || {};
+  const eventType = event.event || event.type;
+  const data = event.data || event;
+  const { db } = getFirebase();
+  const agora = new Date().toISOString();
+
+  await db.collection('webhook_logs').add({
+    source: 'zumbopay',
+    event: eventType || null,
+    rawPayload: purificarDados(event),
+    status: 'received',
+    createdAt: agora,
+    receivedAt: agora,
+  });
+
+  // ---------------- PAYMENT ----------------
+  if (['payment.succeeded', 'payment.success', 'payment.completed', 'payment.failed', 'payment.refunded'].includes(eventType)) {
+    const isSuccess = ['payment.succeeded', 'payment.success', 'payment.completed'].includes(eventType);
+    const isFailed = eventType === 'payment.failed';
+    const isRefunded = eventType === 'payment.refunded';
+    let reference = data.reference || data.source_id || data.sourceId || event.reference;
+    if (reference) reference = String(reference).trim();
+    if (!reference) return res.status(200).json({ success: true, ignored: true, message: 'Webhook sem referência.' });
+
+    const paymentId = data.payment_id || data.paymentId || data.id || data.transaction_id || 'N/A';
+
+    // APL — candidatura
+    if (reference.replace('-', '').startsWith('APL')) {
+      const normalized = reference.includes('-') ? reference : reference.replace(/^APL/, 'APL-');
+      const snap = await db.collection(GROUP_APPLICATIONS_COLLECTION).where('shortId', '==', normalized).limit(1).get();
+      if (!snap.empty) {
+        const docApp = snap.docs[0];
+        const appData = docApp.data() || {};
+        if (isSuccess) {
+          await docApp.ref.update({
+            status: appData.status === 'added_to_group' ? 'added_to_group' : 'paid',
+            isPaid: true,
+            paymentStatus: 'paid',
+            zumbopayPaymentId: paymentId,
+            zumbopayReference: data.reference || normalized,
+            updatedAt: agora,
+          });
+          return res.status(200).json({ success: true, operation: 'group_application_paid' });
+        }
+        if (isFailed) {
+          await docApp.ref.update({ paymentStatus: 'failed', updatedAt: agora });
+          return res.status(200).json({ success: true, operation: 'group_application_failed' });
+        }
+      }
+    }
+
+    // TOP — depósito de carteira
+    if (reference.startsWith('TOP-')) {
+      const snap = await db.collection('topups').where('topupId', '==', reference).limit(1).get();
+      if (snap.empty) return res.status(200).json({ success: true, ignored: true, message: `Depósito ${reference} não encontrado.` });
+
+      const docTopup = snap.docs[0];
+      const topupData = docTopup.data() || {};
+      const grossAmount = roundMoney(toMoneyNumber(topupData.amount, toMoneyNumber(data.amount, 0)));
+      const userId = topupData.userId;
+
+      if (!userId) return res.status(400).json({ success: false, error: 'Depósito sem userId. Carteira não creditada.' });
+
+      if (isSuccess) {
+        let alreadyProcessed = false;
+        const txRef = db.collection('wallet_transactions').doc(`zumbopay_${String(paymentId).replace(/[^a-zA-Z0-9_-]/g, '_')}_${reference}`);
+
+        await db.runTransaction(async (transaction) => {
+          const freshSnap = await transaction.get(docTopup.ref);
+          const fresh = freshSnap.exists ? (freshSnap.data() || {}) : {};
+          if (fresh.walletCredited === true || fresh.status === 'completed') {
+            alreadyProcessed = true;
+            return;
+          }
+
+          transaction.update(docTopup.ref, {
+            status: 'completed',
+            paymentStatus: 'paid',
+            isPaid: true,
+            walletCredited: true,
+            walletCreditMode: 'gross_no_zumbopay_deduction',
+            walletCreditAmount: grossAmount,
+            grossPaidAmount: grossAmount,
+            gatewayFeeAmount: 0,
+            gatewayFeePercent: 0,
+            zumbopayId: paymentId,
+            zumbopayReference: data.reference || reference,
+            paidAmount: grossAmount,
+            completedAt: agora,
+            updatedAt: agora,
+          });
+
+          transaction.update(db.collection('users').doc(userId), {
+            walletBalance: FieldValue.increment(grossAmount),
+          });
+
+          transaction.set(txRef, {
+            userId,
+            type: 'credit',
+            amount: grossAmount,
+            grossAmount,
+            gatewayFeeAmount: 0,
+            gatewayFeePercent: 0,
+            provider: 'zumbopay',
+            creditMode: 'gross_no_zumbopay_deduction',
+            description: `Depósito ZumboPay bruto (${grossAmount.toFixed(2)} MT)`,
+            reference,
+            paymentId,
+            rawPayload: purificarDados(data),
+            createdAt: agora,
+          }, { merge: false });
+        });
+
+        await db.collection('webhook_logs').add({
+          source: 'zumbopay',
+          event: eventType,
+          rawPayload: purificarDados(event),
+          status: alreadyProcessed ? 'ignored_duplicate_success' : 'success_wallet_funded_gross',
+          reference,
+          paymentId,
+          grossAmount,
+          walletCreditAmount: grossAmount,
+          createdAt: agora,
+          receivedAt: agora,
+        });
+
+        return res.status(200).json({ success: true, operation: alreadyProcessed ? 'ignored_duplicate' : 'wallet_funded', walletCreditAmount: grossAmount });
+      }
+
+      if (isFailed) {
+        const current = topupData;
+        if (current.walletCredited === true || current.status === 'completed' || current.isPaid === true) {
+          return res.status(200).json({ success: true, ignored: true, message: 'Falha ignorada porque o depósito já foi concluído.' });
+        }
+        await docTopup.ref.update({ status: 'failed', paymentStatus: 'failed', zumbopayId: paymentId, zumbopayReference: data.reference || reference, failedAt: agora, updatedAt: agora });
+        return res.status(200).json({ success: true, operation: 'payment_failed_recorded' });
+      }
+
+      if (isRefunded) {
+        await docTopup.ref.update({ paymentStatus: 'refunded', status: 'refunded', zumbopayId: paymentId, updatedAt: agora });
+        return res.status(200).json({ success: true, operation: 'topup_refunded' });
+      }
+    }
+
+    // PG — pedido
+    if (reference.startsWith('PG-')) {
+      const snap = await db.collection('orders').where('orderId', '==', reference).limit(1).get();
+      if (snap.empty) return res.status(200).json({ success: true, ignored: true, message: `Pedido ${reference} não encontrado.` });
+      const docOrder = snap.docs[0];
+      const orderData = docOrder.data() || {};
+      if (isSuccess && !orderData.isPaid) {
+        await docOrder.ref.update({ status: 'processing', isPaid: true, zumbopayPaymentId: paymentId, zumbopayReference: data.reference || reference, updatedAt: agora });
+      } else if (isFailed && !orderData.isPaid) {
+        await docOrder.ref.update({ status: 'cancelled', updatedAt: agora });
+      } else if (isRefunded) {
+        await docOrder.ref.update({ status: 'refunded', isPaid: false, updatedAt: agora });
+      }
+      return res.status(200).json({ success: true, operation: isSuccess ? 'order_paid' : isFailed ? 'order_failed' : 'order_refunded' });
+    }
+  }
+
+  // ---------------- PAYOUT ----------------
+  if (eventType === 'payout.completed' || eventType === 'payout.failed') {
+    const payoutId = data.payout_id || data.payoutId || data.id || null;
+    const reference = data.reference || null;
+    const providerReference = data.provider_reference || data.providerReference || null;
+    const status = eventType === 'payout.completed' ? 'completed' : 'failed';
+
+    let snap = null;
+    if (payoutId) snap = await db.collection('zumbopay_payouts').where('payoutId', '==', payoutId).limit(1).get();
+    if ((!snap || snap.empty) && reference) snap = await db.collection('zumbopay_payouts').where('reference', '==', reference).limit(1).get();
+
+    if (!snap || snap.empty) {
+      await db.collection('zumbopay_payouts').add({
+        provider: 'zumbopay', payoutId, reference, providerReference, status,
+        amount: toMoneyNumber(data.amount, 0), feeAmount: toMoneyNumber(data.fee_amount ?? data.feeAmount, 0),
+        netAmount: toMoneyNumber(data.net_amount ?? data.netAmount, 0), method: data.method || null,
+        destination: data.destination || null, rawPayload: purificarDados(data),
+        createdAt: agora, updatedAt: agora,
+      });
+    } else {
+      const docPayout = snap.docs[0];
+      await docPayout.ref.update({ status, payoutId: payoutId || docPayout.data().payoutId || null, reference: reference || docPayout.data().reference || null, providerReference: providerReference || docPayout.data().providerReference || null, rawPayload: purificarDados(data), completedAt: status === 'completed' ? agora : null, failedAt: status === 'failed' ? agora : null, updatedAt: agora });
+    }
+
+    await db.collection('admin_audit_logs').add({
+      adminId: 'system_bot', adminName: '🤖 ZumboPay Webhook',
+      action: status === 'completed' ? 'ZUMBOPAY_PAYOUT_COMPLETED' : 'ZUMBOPAY_PAYOUT_FAILED',
+      targetId: payoutId || reference || 'N/A', targetType: 'zumbopay_payout',
+      details: purificarDados({ payoutId, reference, providerReference, status, data }), createdAt: agora,
+    });
+
+    return res.status(200).json({ success: true, operation: `payout_${status}`, payoutId, reference });
+  }
+
+  return res.status(200).json({ success: true, ignored: true, event: eventType || null });
+}
 async function handlePaySuitePayment(req, res, body) {
   if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Método não permitido' });
   const { orderId, amount, method, description } = body;
@@ -2191,10 +2462,34 @@ async function handleUpdateTopGamesOrder(req, res, body) {
   return res.status(200).json({ success: true, order: normalizeTopGamesOrder(updatedSnap), message: 'Pedido atualizado com sucesso.' });
 }
 
+
+
+// ZumboPay webhook precisa do corpo bruto para validação HMAC.
+// Os restantes endpoints continuam a usar o body normalizado abaixo.
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
+async function readRawRequestBody(req) {
+  if (req.body && typeof req.body === 'string') return req.body;
+  if (req.readableEnded) return '';
+
+  const chunks = [];
+  for await (const chunk of req) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  return Buffer.concat(chunks).toString('utf8');
+}
+
 // =========================================================
 // 🗺️ MAPA DE ROTAS & EXPORT
 // =========================================================
 const routes = {
+  'zumbopay-payment': handleZumboPayPayment,
+  'zumbopay-webhook': handleZumboPayWebhook,
+  'zumbopay-wallets': handleZumboPayWallets,
+  'zumbopay-payout': handleZumboPayPayout,
+  'zumbopay-status': handleZumboPayStatus,
   'paysuite-payment': handlePaySuitePayment,
   'create-topgames-order': handleCreateTopGamesOrder,
   'get-topgames-orders': handleGetTopGamesOrders,
@@ -2223,7 +2518,16 @@ export default async function handler(req, res) {
 
   try {
     const route = getRoute(req);
-    const body = normalizeBody(req);
+    let rawBody = '';
+    let body;
+    if (route === 'zumbopay-webhook') {
+      rawBody = await readRawRequestBody(req);
+      try { body = rawBody ? JSON.parse(rawBody) : {}; } catch {
+        return res.status(400).json({ success: false, error: 'JSON inválido.' });
+      }
+    } else {
+      body = normalizeBody(req);
+    }
     const endpoint = routes[route];
 
     if (!endpoint) {
@@ -2235,6 +2539,9 @@ export default async function handler(req, res) {
       });
     }
 
+    if (route === 'zumbopay-webhook') {
+      return await endpoint(req, res, body, rawBody);
+    }
     return await endpoint(req, res, body);
   } catch (error) {
     console.error('❌ [api/[...slug]] Erro crítico:', error);
