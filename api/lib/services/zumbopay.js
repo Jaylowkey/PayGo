@@ -1,77 +1,113 @@
-// lib/services/zumbopay.js
+import crypto from "crypto";
 
-import crypto from 'crypto';
-
-const ZUMBOPAY_API_URL =
-  process.env.ZUMBOPAY_API_URL || 'https://api.zumbopay.co.mz';
-
-const ZUMBOPAY_API_KEY = process.env.ZUMBOPAY_API_KEY || '';
-const ZUMBOPAY_WALLET_ID = process.env.ZUMBOPAY_WALLET_ID || '';
-
-/**
- * =========================================================
- * ZumboPay Service - PayGo
- * =========================================================
- */
+const ZUMBO_API_URL =
+  process.env.ZUMBOPAY_API_URL ||
+  "https://zumbopay.com/api/public/v1";
 
 function getConfig() {
-  if (!ZUMBOPAY_API_KEY) {
-    throw new Error('ZUMBOPAY_API_KEY não configurada.');
-  }
-
-  if (!ZUMBOPAY_WALLET_ID) {
-    throw new Error('ZUMBOPAY_WALLET_ID não configurada.');
-  }
-
   return {
-    apiUrl: ZUMBOPAY_API_URL.replace(/\/+$/, ''),
-    apiKey: ZUMBOPAY_API_KEY,
-    walletId: ZUMBOPAY_WALLET_ID,
+    apiKey: process.env.ZUMBOPAY_API_KEY || "",
+    merchantId: process.env.ZUMBOPAY_MERCHANT_ID || "",
+    webhookSecret: process.env.ZUMBOPAY_WEBHOOK_SECRET || "",
+
+    walletMpesa:
+      process.env.ZUMBOPAY_WALLET_MPESA || "",
+
+    walletEmola:
+      process.env.ZUMBOPAY_WALLET_EMOLA || "",
+
+    walletCard:
+      process.env.ZUMBOPAY_WALLET_CARD || "",
   };
 }
 
-/**
- * Faz uma requisição autenticada à ZumboPay.
- */
-async function zumbopayRequest(
-  endpoint,
-  {
-    method = 'GET',
-    body = null,
-    idempotencyKey = null,
-    headers = {},
-  } = {}
-) {
+function requireConfig() {
   const config = getConfig();
 
-  const requestHeaders = {
-    Accept: 'application/json',
-    'Content-Type': 'application/json',
-
-    // API Key nunca deve ir para o frontend.
-    Authorization: `Bearer ${config.apiKey}`,
-
-    ...headers,
-  };
-
-  if (idempotencyKey) {
-    requestHeaders['Idempotency-Key'] = idempotencyKey;
+  if (!config.apiKey) {
+    throw new Error(
+      "ZUMBOPAY_API_KEY não configurada."
+    );
   }
 
-  const response = await fetch(
-    `${config.apiUrl}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`,
-    {
-      method,
-      headers: requestHeaders,
-      body: body ? JSON.stringify(body) : undefined,
+  if (!config.merchantId) {
+    throw new Error(
+      "ZUMBOPAY_MERCHANT_ID não configurada."
+    );
+  }
 
-      signal: AbortSignal.timeout(30000),
-    }
-  );
+  return config;
+}
+
+function normalizePhone(phone) {
+  let value = String(phone || "")
+    .replace(/\s+/g, "")
+    .replace(/[^\d+]/g, "");
+
+  if (value.startsWith("+")) {
+    value = value.substring(1);
+  }
+
+  if (!value.startsWith("258")) {
+    value = `258${value}`;
+  }
+
+  return value;
+}
+
+function getWalletId(method) {
+  const config = requireConfig();
+
+  switch (
+    String(method || "")
+      .toLowerCase()
+      .trim()
+  ) {
+    case "mpesa":
+      return config.walletMpesa;
+
+    case "emola":
+      return config.walletEmola;
+
+    case "card":
+    case "visa":
+    case "mastercard":
+      return config.walletCard;
+
+    default:
+      return "";
+  }
+}
+
+async function zumboRequest(
+  endpoint,
+  options = {}
+) {
+  const config = requireConfig();
+
+  const url =
+    `${ZUMBO_API_URL.replace(/\/+$/, "")}` +
+    `/${String(endpoint).replace(/^\/+/, "")}`;
+
+  const headers = {
+    Authorization: `Bearer ${config.apiKey}`,
+    "X-Merchant-Id": config.merchantId,
+    Accept: "application/json",
+    "Content-Type": "application/json",
+    ...(options.headers || {}),
+  };
+
+  const response = await fetch(url, {
+    ...options,
+    headers,
+    signal:
+      options.signal ||
+      AbortSignal.timeout(30000),
+  });
 
   const text = await response.text();
 
-  let data;
+  let data = {};
 
   try {
     data = text ? JSON.parse(text) : {};
@@ -83,15 +119,18 @@ async function zumbopayRequest(
 
   if (!response.ok) {
     const message =
+      data?.error?.message ||
       data?.message ||
-      data?.error ||
-      data?.detail ||
-      `ZumboPay respondeu com HTTP ${response.status}.`;
+      `ZumboPay HTTP ${response.status}`;
 
     const error = new Error(message);
 
     error.status = response.status;
-    error.provider = 'zumbopay';
+    error.code =
+      data?.error?.code ||
+      data?.code ||
+      null;
+
     error.data = data;
 
     throw error;
@@ -100,578 +139,443 @@ async function zumbopayRequest(
   return data;
 }
 
-/**
- * Normaliza métodos de pagamento.
- */
-export function normalizeZumboPayMethod(method = '') {
-  const value = String(method)
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, '');
+// =========================================================
+// PAYMENT — STK PUSH
+// =========================================================
 
-  if (['mpesa', 'mpesaapi', 'mpsa'].includes(value)) {
-    return 'mpesa';
-  }
-
-  if (['emola', 'emolaapi'].includes(value)) {
-    return 'emola';
-  }
-
-  if (['card', 'visa', 'mastercard'].includes(value)) {
-    return 'card';
-  }
-
-  throw new Error(
-    `Método de pagamento não suportado pela ZumboPay: ${method}`
-  );
-}
-
-/**
- * Normaliza números moçambicanos.
- *
- * Exemplos:
- * 871002255
- * +258871002255
- * 258871002255
- *
- * Resultado:
- * +258871002255
- */
-export function normalizeMozambiquePhone(phone = '') {
-  let value = String(phone || '').replace(/[^\d+]/g, '');
-
-  if (!value) {
-    throw new Error('Número de telefone não informado.');
-  }
-
-  if (value.startsWith('00')) {
-    value = `+${value.slice(2)}`;
-  }
-
-  if (value.startsWith('+258')) {
-    return value;
-  }
-
-  if (value.startsWith('258')) {
-    return `+${value}`;
-  }
-
-  if (value.startsWith('0')) {
-    return `+258${value.slice(1)}`;
-  }
-
-  if (/^8\d{8}$/.test(value)) {
-    return `+258${value}`;
-  }
-
-  throw new Error('Número de telefone moçambicano inválido.');
-}
-
-/**
- * Gera uma chave de idempotência.
- */
-export function generateIdempotencyKey(prefix = 'PAYGO') {
-  return `${prefix}-${crypto.randomUUID()}`;
-}
-
-/**
- * =========================================================
- * MERCHANT
- * =========================================================
- */
-
-/**
- * Valida a configuração da conta PayGo na ZumboPay.
- */
-export async function validateMerchant() {
-  return zumbopayRequest('/merchant/validate');
-}
-
-/**
- * =========================================================
- * WALLETS
- * =========================================================
- */
-
-/**
- * Obtém as wallets disponíveis para o merchant.
- */
-export async function getWallets() {
-  return zumbopayRequest('/wallets');
-}
-
-/**
- * Obtém uma wallet específica.
- */
-export async function getWallet(walletId = ZUMBOPAY_WALLET_ID) {
-  if (!walletId) {
-    throw new Error('wallet_id não informado.');
-  }
-
-  return zumbopayRequest(`/wallets/${encodeURIComponent(walletId)}`);
-}
-
-/**
- * =========================================================
- * CHARGES
- * =========================================================
- */
-
-/**
- * Cria uma cobrança direta.
- *
- * Ideal para:
- * - M-Pesa
- * - e-Mola
- *
- * O cliente recebe o pedido de autorização no telemóvel.
- */
 export async function createCharge({
   amount,
-  method,
   phone,
-  reference,
-  description,
-  metadata = {},
-  idempotencyKey,
-} = {}) {
-  const config = getConfig();
+  customerName,
+  sourceId,
+  method,
+}) {
+  const walletId = getWalletId(method);
 
-  const numericAmount = Number(amount);
-
-  if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
-    throw new Error('Valor de pagamento inválido.');
-  }
-
-  if (!reference) {
-    throw new Error('Referência do pagamento é obrigatória.');
-  }
-
-  const paymentMethod = normalizeZumboPayMethod(method);
-
-  if (!['mpesa', 'emola'].includes(paymentMethod)) {
+  if (!walletId) {
     throw new Error(
-      'createCharge suporta apenas M-Pesa e e-Mola.'
+      `Wallet ZumboPay não configurada para ${method}.`
     );
   }
 
-  const normalizedPhone = normalizeMozambiquePhone(phone);
+  const normalizedPhone =
+    normalizePhone(phone);
 
-  const payload = {
-    wallet_id: config.walletId,
+  const response = await zumboRequest(
+    "/charges",
+    {
+      method: "POST",
 
-    amount: numericAmount,
+      headers: {
+        "Idempotency-Key": String(
+          sourceId
+        ),
+      },
 
-    method: paymentMethod,
-
-    phone: normalizedPhone,
-
-    reference: String(reference),
-
-    ...(description
-      ? {
-          description: String(description),
-        }
-      : {}),
-
-    ...(Object.keys(metadata).length
-      ? {
-          metadata,
-        }
-      : {}),
-  };
-
-  const key =
-    idempotencyKey ||
-    generateIdempotencyKey('PAYGO-CHARGE');
-
-  const result = await zumbopayRequest('/charges', {
-    method: 'POST',
-    body: payload,
-    idempotencyKey: key,
-  });
-
-  return {
-    success: true,
-
-    provider: 'zumbopay',
-
-    type: 'charge',
-
-    paymentId:
-      result?.data?.id ||
-      result?.data?.payment_id ||
-      result?.payment_id ||
-      result?.id ||
-      null,
-
-    reference:
-      result?.data?.reference ||
-      result?.reference ||
-      reference,
-
-    status:
-      result?.data?.status ||
-      result?.status ||
-      'pending',
-
-    amount:
-      result?.data?.amount ||
-      result?.amount ||
-      numericAmount,
-
-    method: paymentMethod,
-
-    raw: result,
-  };
-}
-
-/**
- * =========================================================
- * PAYMENTS / CHECKOUT
- * =========================================================
- */
-
-/**
- * Cria um checkout hospedado pela ZumboPay.
- *
- * Pode ser usado quando queremos:
- * - M-Pesa
- * - e-Mola
- * - cartão
- * - checkout centralizado
- */
-export async function createPayment({
-  amount,
-  method,
-  reference,
-  description,
-  returnUrl,
-  callbackUrl,
-  metadata = {},
-  idempotencyKey,
-} = {}) {
-  const config = getConfig();
-
-  const numericAmount = Number(amount);
-
-  if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
-    throw new Error('Valor de pagamento inválido.');
-  }
-
-  if (!reference) {
-    throw new Error('Referência do pagamento é obrigatória.');
-  }
-
-  const paymentMethod = normalizeZumboPayMethod(method);
-
-  const payload = {
-    wallet_id: config.walletId,
-
-    amount: numericAmount,
-
-    method: paymentMethod,
-
-    reference: String(reference),
-
-    ...(description
-      ? {
-          description: String(description),
-        }
-      : {}),
-
-    ...(returnUrl
-      ? {
-          return_url: returnUrl,
-        }
-      : {}),
-
-    ...(callbackUrl
-      ? {
-          callback_url: callbackUrl,
-        }
-      : {}),
-
-    ...(Object.keys(metadata).length
-      ? {
-          metadata,
-        }
-      : {}),
-  };
-
-  const key =
-    idempotencyKey ||
-    generateIdempotencyKey('PAYGO-PAYMENT');
-
-  const result = await zumbopayRequest('/payments', {
-    method: 'POST',
-    body: payload,
-    idempotencyKey: key,
-  });
-
-  return {
-    success: true,
-
-    provider: 'zumbopay',
-
-    type: 'payment',
-
-    paymentId:
-      result?.data?.id ||
-      result?.data?.payment_id ||
-      result?.payment_id ||
-      result?.id ||
-      null,
-
-    reference:
-      result?.data?.reference ||
-      result?.reference ||
-      reference,
-
-    status:
-      result?.data?.status ||
-      result?.status ||
-      'pending',
-
-    checkoutUrl:
-      result?.data?.checkout_url ||
-      result?.data?.checkoutUrl ||
-      result?.checkout_url ||
-      result?.checkoutUrl ||
-      null,
-
-    amount:
-      result?.data?.amount ||
-      result?.amount ||
-      numericAmount,
-
-    method: paymentMethod,
-
-    raw: result,
-  };
-}
-
-/**
- * =========================================================
- * PAYMENT STATUS
- * =========================================================
- */
-
-/**
- * Consulta o estado de um pagamento.
- */
-export async function getPaymentStatus(paymentId) {
-  if (!paymentId) {
-    throw new Error('paymentId é obrigatório.');
-  }
-
-  const result = await zumbopayRequest(
-    `/payments/${encodeURIComponent(paymentId)}`
+      body: JSON.stringify({
+        wallet_id: walletId,
+        amount: Number(amount),
+        msisdn: normalizedPhone,
+        customer_name:
+          customerName || "Cliente PayGo",
+        source_id: String(sourceId),
+      }),
+    }
   );
 
+  const data = response?.data || {};
+
   return {
     success: true,
 
-    provider: 'zumbopay',
-
-    paymentId,
-
-    status:
-      result?.data?.status ||
-      result?.status ||
-      'unknown',
+    paymentId:
+      data.id ||
+      data.payment_id ||
+      null,
 
     reference:
-      result?.data?.reference ||
-      result?.reference ||
+      data.reference ||
       null,
+
+    status:
+      data.status ||
+      "pending",
 
     amount:
-      result?.data?.amount ||
-      result?.amount ||
-      null,
+      Number(data.amount) ||
+      Number(amount),
 
-    raw: result,
+    method,
+
+    raw: response,
   };
 }
 
-/**
- * =========================================================
- * WEBHOOK
- * =========================================================
- */
+// =========================================================
+// PAYMENT — HOSTED CHECKOUT
+// =========================================================
 
-/**
- * Verifica assinatura HMAC do webhook.
- *
- * A chave secreta deve ficar exclusivamente na Vercel:
- *
- * ZUMBOPAY_WEBHOOK_SECRET
- */
+export async function createPayment({
+  amount,
+  reference,
+  title,
+  description,
+  channels,
+  method,
+  walletId,
+  maxUses = 1,
+  expiresAt,
+}) {
+  const selectedWallet =
+    walletId ||
+    getWalletId(method || "mpesa");
+
+  if (!selectedWallet) {
+    throw new Error(
+      "Wallet ZumboPay não configurada."
+    );
+  }
+
+  const payload = {
+    title:
+      title ||
+      `Pagamento PayGo #${reference}`,
+
+    amount: Number(amount),
+
+    currency: "MZN",
+
+    channels:
+      channels || [
+        "mpesa",
+        "emola",
+        "card",
+      ],
+
+    wallet_id: selectedWallet,
+
+    ...(description
+      ? { description }
+      : {}),
+
+    max_uses: maxUses,
+
+    ...(expiresAt
+      ? { expires_at: expiresAt }
+      : {}),
+  };
+
+  const response = await zumboRequest(
+    "/payments",
+    {
+      method: "POST",
+
+      body: JSON.stringify(payload),
+    }
+  );
+
+  const data = response?.data || {};
+
+  return {
+    success: true,
+
+    paymentId:
+      data.id ||
+      null,
+
+    reference:
+      data.reference ||
+      reference ||
+      null,
+
+    status:
+      data.status ||
+      "active",
+
+    checkoutUrl:
+      data.checkout_url ||
+      null,
+
+    amount:
+      Number(data.amount) ||
+      Number(amount),
+
+    method:
+      method ||
+      "checkout",
+
+    raw: response,
+  };
+}
+
+// =========================================================
+// PAYMENT STATUS
+// =========================================================
+
+export async function getPaymentStatus(
+  reference
+) {
+  if (!reference) {
+    throw new Error(
+      "Referência do pagamento é obrigatória."
+    );
+  }
+
+  return await zumboRequest(
+    `/payments/${encodeURIComponent(
+      reference
+    )}`,
+    {
+      method: "GET",
+    }
+  );
+}
+
+// =========================================================
+// WALLETS
+// =========================================================
+
+export async function getWallets() {
+  const response =
+    await zumboRequest("/wallets", {
+      method: "GET",
+    });
+
+  return response?.data || [];
+}
+
+export async function getWalletBalance(
+  walletId
+) {
+  const wallets = await getWallets();
+
+  const wallet = wallets.find(
+    (item) =>
+      String(item.id) ===
+        String(walletId) ||
+      String(item.wallet_code) ===
+        String(walletId)
+  );
+
+  return wallet || null;
+}
+
+// =========================================================
+// MERCHANT VALIDATION
+// =========================================================
+
+export async function validateMerchant() {
+  return await zumboRequest(
+    "/merchant/validate",
+    {
+      method: "GET",
+    }
+  );
+}
+
+// =========================================================
+// PAYOUT
+// =========================================================
+
+export async function createPayout({
+  amount,
+  method,
+  destination,
+  notes,
+  autoDispatch = false,
+  walletId,
+}) {
+  const selectedWallet =
+    walletId ||
+    getWalletId(method);
+
+  if (!selectedWallet) {
+    throw new Error(
+      `Wallet ZumboPay não configurada para ${method}.`
+    );
+  }
+
+  if (!amount || Number(amount) <= 0) {
+    throw new Error(
+      "Valor do payout inválido."
+    );
+  }
+
+  if (!destination) {
+    throw new Error(
+      "Número de destino é obrigatório."
+    );
+  }
+
+  const normalizedDestination =
+    normalizePhone(destination);
+
+  const payload = {
+    wallet_id: selectedWallet,
+
+    amount: Number(amount),
+
+    method,
+
+    destination:
+      normalizedDestination,
+
+    ...(notes
+      ? { notes }
+      : {}),
+
+    ...(method === "mpesa" &&
+    autoDispatch === true
+      ? {
+          auto_dispatch: true,
+        }
+      : {}),
+  };
+
+  const idempotencyKey =
+    `paygo-payout-${Date.now()}-${crypto
+      .randomBytes(8)
+      .toString("hex")}`;
+
+  const response =
+    await zumboRequest(
+      "/payouts",
+      {
+        method: "POST",
+
+        headers: {
+          "Idempotency-Key":
+            idempotencyKey,
+        },
+
+        body: JSON.stringify(payload),
+      }
+    );
+
+  const data = response?.data || {};
+
+  return {
+    success: true,
+
+    payoutId:
+      data.id ||
+      null,
+
+    reference:
+      data.reference ||
+      null,
+
+    providerReference:
+      data.provider_reference ||
+      null,
+
+    status:
+      data.status ||
+      "pending",
+
+    method:
+      data.method ||
+      method,
+
+    destination:
+      data.destination ||
+      normalizedDestination,
+
+    amount:
+      Number(data.amount) ||
+      Number(amount),
+
+    feeAmount:
+      Number(data.fee_amount) ||
+      0,
+
+    netAmount:
+      Number(data.net_amount) ||
+      0,
+
+    currency:
+      data.currency ||
+      "MZN",
+
+    autoDispatched:
+      Boolean(
+        data.auto_dispatched
+      ),
+
+    raw: response,
+  };
+}
+
+// =========================================================
+// WEBHOOK SIGNATURE
+// =========================================================
+
 export function verifyWebhookSignature(
   rawBody,
   signature
 ) {
-  const secret =
-    process.env.ZUMBOPAY_WEBHOOK_SECRET || '';
+  const config = getConfig();
 
-  // Em produção queremos segredo configurado.
-  if (!secret) {
-    throw new Error(
-      'ZUMBOPAY_WEBHOOK_SECRET não configurado.'
+  if (!config.webhookSecret) {
+    console.error(
+      "ZUMBOPAY_WEBHOOK_SECRET não configurado."
     );
+
+    return false;
   }
 
   if (!signature) {
     return false;
   }
 
-  const expected = crypto
-    .createHmac('sha256', secret)
-    .update(rawBody)
-    .digest('hex');
+  const cleanSignature =
+    String(signature)
+      .replace(/^sha256=/i, "")
+      .trim();
 
-  const provided = String(signature)
-    .replace(/^sha256=/, '')
-    .trim();
+  if (
+    !/^[a-fA-F0-9]{64}$/.test(
+      cleanSignature
+    )
+  ) {
+    return false;
+  }
 
-  if (expected.length !== provided.length) {
+  const expected =
+    crypto
+      .createHmac(
+        "sha256",
+        config.webhookSecret
+      )
+      .update(rawBody)
+      .digest("hex");
+
+  const receivedBuffer =
+    Buffer.from(
+      cleanSignature,
+      "hex"
+    );
+
+  const expectedBuffer =
+    Buffer.from(
+      expected,
+      "hex"
+    );
+
+  if (
+    receivedBuffer.length !==
+    expectedBuffer.length
+  ) {
     return false;
   }
 
   return crypto.timingSafeEqual(
-    Buffer.from(expected, 'utf8'),
-    Buffer.from(provided, 'utf8')
+    receivedBuffer,
+    expectedBuffer
   );
 }
 
-/**
- * Extrai a assinatura de diferentes headers.
- */
-export function getWebhookSignature(req) {
-  return (
-    req.headers?.['x-webhook-signature'] ||
-    req.headers?.['x-zumbopay-signature'] ||
-    req.headers?.['x-signature'] ||
-    ''
-  );
-}
-
-/**
- * =========================================================
- * WEBHOOK EVENT HELPERS
- * =========================================================
- */
-
-export function getWebhookEvent(body = {}) {
-  return (
-    body?.event ||
-    body?.type ||
-    body?.data?.event ||
-    null
-  );
-}
-
-export function getWebhookPaymentData(body = {}) {
-  return body?.data || body?.payment || body || {};
-}
-
-export function getWebhookPaymentId(body = {}) {
-  const data = getWebhookPaymentData(body);
-
-  return (
-    data?.payment_id ||
-    data?.paymentId ||
-    data?.id ||
-    null
-  );
-}
-
-export function getWebhookReference(body = {}) {
-  const data = getWebhookPaymentData(body);
-
-  return (
-    data?.reference ||
-    body?.reference ||
-    null
-  );
-}
-
-export function getWebhookAmount(body = {}) {
-  const data = getWebhookPaymentData(body);
-
-  const amount = Number(
-    data?.amount ??
-      data?.gross_amount ??
-      data?.grossAmount ??
-      0
-  );
-
-  return Number.isFinite(amount)
-    ? amount
-    : 0;
-}
-
-/**
- * Verifica se o evento representa pagamento concluído.
- */
-export function isSuccessfulWebhookEvent(event) {
-  return [
-    'payment.completed',
-    'payment.success',
-    'payment.succeeded',
-    'charge.completed',
-    'charge.success',
-    'charge.succeeded',
-  ].includes(String(event || '').toLowerCase());
-}
-
-/**
- * Verifica se o evento representa falha.
- */
-export function isFailedWebhookEvent(event) {
-  return [
-    'payment.failed',
-    'payment.cancelled',
-    'payment.canceled',
-    'charge.failed',
-    'charge.cancelled',
-    'charge.canceled',
-  ].includes(String(event || '').toLowerCase());
-}
-
-/**
- * =========================================================
- * EXPORT DEFAULT
- * =========================================================
- */
-
-const ZumboPay = {
-  validateMerchant,
-  getWallets,
-  getWallet,
-
-  createCharge,
-  createPayment,
-
-  getPaymentStatus,
-
-  normalizeZumboPayMethod,
-  normalizeMozambiquePhone,
-
-  generateIdempotencyKey,
-
-  verifyWebhookSignature,
-  getWebhookSignature,
-
-  getWebhookEvent,
-  getWebhookPaymentData,
-  getWebhookPaymentId,
-  getWebhookReference,
-  getWebhookAmount,
-
-  isSuccessfulWebhookEvent,
-  isFailedWebhookEvent,
+export {
+  normalizePhone,
+  getWalletId,
 };
-
-export default ZumboPay;
