@@ -1,771 +1,324 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getFirestore, FieldValue } from "firebase-admin/firestore";
-import { getApps, initializeApp, cert } from "firebase-admin/app";
+import { createCharge, createPayment, normalizePhone } from "@/lib/services/zumbopay";
 
 export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
 
-/**
- * =========================================================
- * PAYGO → ZUMBOPAY
- * POST /api/payments/initiate
- * =========================================================
- *
- * Recebe:
- *
- * {
- *   topupId: "TOP-12345678",
- *   amount: 500,
- *   method: "mpesa",
- *   phone: "841234567"
- * }
- *
- * Fluxo:
- *
- * Frontend
- *    ↓
- * /api/payments/initiate
- *    ↓
- * ZumboPay
- *    ↓
- * pagamento pendente
- *
- * O saldo NÃO é atualizado aqui.
- *
- * O saldo será atualizado somente pelo webhook.
- * =========================================================
- */
-
-const ZUMBOPAY_API_URL =
-  process.env.ZUMBOPAY_API_URL ||
-  "https://zumbopay.com/api/v1";
-
-const ZUMBOPAY_API_KEY =
-  process.env.ZUMBOPAY_API_KEY || "";
-
-/**
- * =========================================================
- * FIREBASE ADMIN
- * =========================================================
- */
-
-function getAdminDb() {
-  if (!getApps().length) {
-    const projectId =
-      process.env.FIREBASE_PROJECT_ID ||
-      process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-
-    const clientEmail =
-      process.env.FIREBASE_CLIENT_EMAIL;
-
-    const privateKey =
-      process.env.FIREBASE_PRIVATE_KEY?.replace(
-        /\\n/g,
-        "\n"
-      );
-
-    if (
-      !projectId ||
-      !clientEmail ||
-      !privateKey
-    ) {
-      throw new Error(
-        "Configuração Firebase Admin incompleta."
-      );
-    }
-
-    initializeApp({
-      credential: cert({
-        projectId,
-        clientEmail,
-        privateKey,
-      }),
-    });
-  }
-
-  return getFirestore();
+interface InitiatePaymentBody {
+  amount: number;
+  method: "mpesa" | "emola" | "card";
+  phone?: string;
+  orderId?: string;
+  reference?: string;
+  description?: string;
 }
 
-/**
- * =========================================================
- * NORMALIZAR TELEFONE
- * =========================================================
- */
-
-function normalizePhone(
-  phone: string
-): string {
-  let value = String(
-    phone || ""
-  )
-    .trim()
-    .replace(/\s+/g, "")
-    .replace(/-/g, "");
-
-  value = value.replace(
-    /[^\d+]/g,
-    ""
-  );
-
-  if (value.startsWith("+")) {
-    value = value.substring(1);
-  }
-
-  if (value.startsWith("00")) {
-    value = value.substring(2);
-  }
-
-  if (value.startsWith("258")) {
-    value = value.substring(3);
-  }
-
-  if (value.startsWith("0")) {
-    value = value.substring(1);
-  }
-
-  /**
-   * M-Pesa:
-   * 84 / 85
-   *
-   * e-Mola:
-   * 86 / 87
-   */
-
-  if (!/^8[4-7]\d{7}$/.test(value)) {
-    throw new Error(
-      "Número de telefone inválido. Use, por exemplo, 841234567."
-    );
-  }
-
-  return `+258${value}`;
-}
-
-/**
- * =========================================================
- * NORMALIZAR MÉTODO
- * =========================================================
- */
-
-function normalizeMethod(
-  method: string
-): "mpesa" | "emola" {
-  const value =
-    String(method || "")
-      .trim()
-      .toLowerCase();
-
-  if (value === "mpesa") {
-    return "mpesa";
-  }
-
-  if (
-    value === "emola" ||
-    value === "e-mola" ||
-    value === "e_mola"
-  ) {
-    return "emola";
-  }
-
-  throw new Error(
-    "Método de pagamento inválido. Escolha M-Pesa ou e-Mola."
-  );
-}
-
-/**
- * =========================================================
- * POST
- * =========================================================
- */
-
-export async function POST(
-  request: NextRequest
-) {
+export async function POST(request: NextRequest) {
   try {
-    /**
-     * =====================================================
-     * 1. VERIFICAR CONFIGURAÇÃO
-     * =====================================================
-     */
+    // =========================================================
+    // 1. LER BODY
+    // =========================================================
 
-    if (!ZUMBOPAY_API_KEY) {
-      console.error(
-        "[PayGo] ZUMBOPAY_API_KEY não configurada."
-      );
+    const body = (await request.json()) as InitiatePaymentBody;
 
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            "Gateway de pagamento não configurado.",
-        },
-        {
-          status: 500,
-        }
-      );
-    }
+    const amount = Number(body.amount);
+    const method = String(body.method || "").toLowerCase() as
+      | "mpesa"
+      | "emola"
+      | "card";
 
-    /**
-     * =====================================================
-     * 2. BODY
-     * =====================================================
-     */
-
-    const body =
-      await request.json();
-
-    const {
-      topupId,
-      orderId,
-      amount,
-      method,
-      phone,
-      description,
-    } = body || {};
-
-    /**
-     * Aceitamos topupId ou orderId
-     * para facilitar a transição do frontend.
-     */
+    const phone = body.phone
+      ? normalizePhone(body.phone)
+      : "";
 
     const reference =
-      String(
-        topupId ||
-          orderId ||
-          ""
-      ).trim();
+      body.orderId ||
+      body.reference ||
+      `PAYGO-${Date.now()}`;
 
-    if (!reference) {
+    const description =
+      body.description ||
+      `Depósito PayGo ${reference}`;
+
+    // =========================================================
+    // 2. VALIDAR VALOR
+    // =========================================================
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Valor do pagamento inválido.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // PayGo: depósito mínimo de 10 MT
+    if (amount < 10) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "O depósito mínimo é de 10 MT.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // =========================================================
+    // 3. VALIDAR MÉTODO
+    // =========================================================
+
+    if (!["mpesa", "emola", "card"].includes(method)) {
       return NextResponse.json(
         {
           success: false,
           error:
-            "topupId é obrigatório.",
+            "Método de pagamento inválido. Use M-Pesa, e-Mola ou cartão.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
-    /**
-     * =====================================================
-     * 3. VALIDAR VALOR
-     * =====================================================
-     */
+    // =========================================================
+    // 4. M-PESA / E-MOLA
+    // =========================================================
+    //
+    // STK PUSH
+    //
+    // O cliente informa o número de telefone.
+    // A ZumboPay envia o pedido de pagamento para o telefone.
+    //
+    // Endpoint utilizado internamente pelo service:
+    //
+    // POST /charges
+    //
+    // =========================================================
 
-    const numericAmount =
-      Number(amount);
-
-    if (
-      !Number.isFinite(
-        numericAmount
-      ) ||
-      numericAmount <= 0
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            "Valor de pagamento inválido.",
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
-    /**
-     * PayGo mínimo.
-     */
-
-    if (
-      numericAmount < 10
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            "O depósito mínimo é de 10 MT.",
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
-    /**
-     * =====================================================
-     * 4. MÉTODO
-     * =====================================================
-     */
-
-    let paymentMethod:
-      | "mpesa"
-      | "emola";
-
-    try {
-      paymentMethod =
-        normalizeMethod(
-          method
-        );
-    } catch (error: any) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            error.message,
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
-    /**
-     * =====================================================
-     * 5. TELEFONE
-     * =====================================================
-     */
-
-    if (!phone) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            "Número de telefone é obrigatório.",
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
-    let customerPhone: string;
-
-    try {
-      customerPhone =
-        normalizePhone(
-          phone
-        );
-    } catch (error: any) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            error.message,
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
-    /**
-     * =====================================================
-     * 6. FIRESTORE
-     * =====================================================
-     */
-
-    const db =
-      getAdminDb();
-
-    const topupRef =
-      db
-        .collection("topups")
-        .doc(reference);
-
-    const topupSnapshot =
-      await topupRef.get();
-
-    /**
-     * O frontend deve ter criado
-     * o topup antes de chamar esta rota.
-     */
-
-    if (!topupSnapshot.exists) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            "Pedido de depósito não encontrado.",
-        },
-        {
-          status: 404,
-        }
-      );
-    }
-
-    const topup =
-      topupSnapshot.data() || {};
-
-    /**
-     * =====================================================
-     * 7. EVITAR DUPLICAÇÃO
-     * =====================================================
-     */
-
-    if (
-      topup.status ===
-        "completed" ||
-      topup.status ===
-        "paid"
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            "Este depósito já foi confirmado.",
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
-    /**
-     * Se já existe uma referência
-     * da ZumboPay, não criamos outro pagamento.
-     */
-
-    if (
-      topup.providerReference
-    ) {
-      return NextResponse.json(
-        {
-          success: true,
-          status:
-            topup.status ||
-            "pending",
-
-          reference:
-            topup.providerReference,
-
-          paymentId:
-            topup.providerPaymentId ||
-            null,
-
-          checkoutUrl:
-            topup.checkoutUrl ||
-            null,
-
-          alreadyCreated:
-            true,
-        },
-        {
-          status: 200,
-        }
-      );
-    }
-
-    /**
-     * =====================================================
-     * 8. CALLBACK
-     * =====================================================
-     */
-
-    const baseUrl =
-      process.env.NEXT_PUBLIC_APP_URL ||
-      process.env.APP_URL ||
-      request.nextUrl.origin;
-
-    const callbackUrl =
-      `${baseUrl}/api/webhooks/zumbopay`;
-
-    /**
-     * =====================================================
-     * 9. PAYLOAD ZUMBOPAY
-     * =====================================================
-     */
-
-    const payload = {
-      amount:
-        Number(
-          numericAmount.toFixed(2)
-        ),
-
-      currency:
-        "MZN",
-
-      method:
-        paymentMethod,
-
-      customer: {
-        phone:
-          customerPhone,
-      },
-
-      callback_url:
-        callbackUrl,
-
-      reference,
-
-      description:
-        description ||
-        `Depósito PayGo ${reference}`,
-    };
-
-    console.log(
-      "[PayGo → ZumboPay] Criando pagamento:",
-      {
-        reference,
-        amount:
-          payload.amount,
-        method:
-          paymentMethod,
-        phone:
-          customerPhone,
-      }
-    );
-
-    /**
-     * =====================================================
-     * 10. CHAMADA ZUMBOPAY
-     * =====================================================
-     */
-
-    const response =
-      await fetch(
-        `${ZUMBOPAY_API_URL.replace(
-          /\/+$/,
-          ""
-        )}/payments`,
-        {
-          method:
-            "POST",
-
-          headers: {
-            Authorization:
-              `Bearer ${ZUMBOPAY_API_KEY}`,
-
-            "Content-Type":
-              "application/json",
-
-            Accept:
-              "application/json",
-
-            "Idempotency-Key":
-              reference,
+    if (method === "mpesa" || method === "emola") {
+      if (!phone) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "O número de telefone é obrigatório para M-Pesa/e-Mola.",
           },
+          { status: 400 }
+        );
+      }
 
-          body:
-            JSON.stringify(
-              payload
-            ),
+      // Validar número moçambicano
+      if (!/^2588[4-7]\d{7}$/.test(phone)) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "Número inválido. Use um número M-Pesa/e-Mola válido.",
+          },
+          { status: 400 }
+        );
+      }
 
-          cache:
-            "no-store",
-        }
-      );
+      console.log("========================================");
+      console.log("PAYGO → ZUMBOPAY STK");
+      console.log("========================================");
+      console.log("Reference:", reference);
+      console.log("Amount:", amount);
+      console.log("Method:", method);
+      console.log("Phone:", phone);
+      console.log("========================================");
 
-    /**
-     * =====================================================
-     * 11. RESPOSTA
-     * =====================================================
-     */
-
-    const responseText =
-      await response.text();
-
-    let providerData:
-      any = {};
-
-    try {
-      providerData =
-        responseText
-          ? JSON.parse(
-              responseText
-            )
-          : {};
-    } catch {
-      providerData = {
-        raw:
-          responseText,
-      };
-    }
-
-    if (!response.ok) {
-      console.error(
-        "[ZumboPay] Erro:",
-        {
-          status:
-            response.status,
-
-          response:
-            providerData,
-        }
-      );
-
-      /**
-       * Registra a falha no topup,
-       * mas não mexe no saldo.
-       */
-
-      await topupRef.update({
-        lastProviderError:
-          providerData,
-
-        lastProviderStatus:
-          response.status,
-
-        updatedAt:
-          FieldValue.serverTimestamp(),
+      const charge = await createCharge({
+        amount,
+        phone,
+        customerName: "Cliente PayGo",
+        sourceId: reference,
+        method,
       });
 
-      return NextResponse.json(
-        {
-          success: false,
+      if (!charge.success) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "Não foi possível iniciar o pagamento.",
+          },
+          { status: 400 }
+        );
+      }
 
-          error:
-            providerData?.error?.message ||
-            providerData?.message ||
-            providerData?.error ||
-            `ZumboPay respondeu HTTP ${response.status}.`,
+      return NextResponse.json({
+        success: true,
 
-          providerStatus:
-            response.status,
-        },
-        {
+        type: "stk_push",
+
+        provider: "zumbopay",
+
+        reference:
+          charge.reference || reference,
+
+        paymentId:
+          charge.paymentId || null,
+
+        status:
+          charge.status || "pending",
+
+        amount,
+
+        method,
+
+        phone,
+
+        message:
+          charge.status === "success"
+            ? "Pagamento confirmado."
+            : "Pedido enviado. Confirme o pagamento no seu telemóvel usando o PIN.",
+
+        data: {
+          reference:
+            charge.reference || reference,
+
+          paymentId:
+            charge.paymentId || null,
+
           status:
-            response.status >= 400 &&
-            response.status < 500
-              ? response.status
-              : 502,
-        }
-      );
+            charge.status || "pending",
+
+          method,
+
+          phone,
+        },
+      });
     }
 
-    /**
-     * =====================================================
-     * 12. EXTRAIR DADOS
-     * =====================================================
-     */
+    // =========================================================
+    // 5. CARTÃO
+    // =========================================================
+    //
+    // Para cartão usamos o checkout hospedado da ZumboPay.
+    //
+    // =========================================================
 
-    const data =
-      providerData?.data ||
-      providerData;
+    if (method === "card") {
+      console.log("========================================");
+      console.log("PAYGO → ZUMBOPAY CHECKOUT");
+      console.log("========================================");
+      console.log("Reference:", reference);
+      console.log("Amount:", amount);
+      console.log("Method:", method);
+      console.log("========================================");
 
-    const paymentId =
-      data?.id ||
-      data?.payment_id ||
-      data?.paymentId ||
-      null;
+      const payment = await createPayment({
+        amount,
 
-    const providerReference =
-      data?.reference ||
-      data?.transaction_id ||
-      data?.transactionId ||
-      reference;
+        reference,
 
-    const status =
-      data?.status ||
-      "pending";
+        title:
+          `Depósito PayGo ${reference}`,
 
-    const checkoutUrl =
-      data?.checkout_url ||
-      data?.checkoutUrl ||
-      data?.url ||
-      null;
+        description,
 
-    /**
-     * =====================================================
-     * 13. ATUALIZAR TOPUP
-     * =====================================================
-     */
+        channels: ["card"],
 
-    await topupRef.update({
-      provider:
-        "zumbopay",
+        method: "card",
+      });
 
-      providerReference,
-
-      providerPaymentId:
-        paymentId,
-
-      providerStatus:
-        status,
-
-      paymentMethod:
-        paymentMethod,
-
-      phone:
-        customerPhone,
-
-      amount:
-        Number(
-          numericAmount.toFixed(2)
-        ),
-
-      checkoutUrl:
-        checkoutUrl,
-
-      callbackUrl,
-
-      updatedAt:
-        FieldValue.serverTimestamp(),
-    });
-
-    console.log(
-      "[PayGo] Pagamento ZumboPay criado:",
-      {
-        reference:
-          providerReference,
-
-        paymentId,
-
-        status,
-
-        checkoutUrl,
+      if (!payment.success) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "Não foi possível criar o pagamento por cartão.",
+          },
+          { status: 400 }
+        );
       }
-    );
 
-    /**
-     * =====================================================
-     * 14. RESPOSTA AO FRONTEND
-     * =====================================================
-     */
+      if (!payment.checkoutUrl) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "A ZumboPay não devolveu o endereço do checkout.",
+          },
+          { status: 502 }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+
+        type: "checkout",
+
+        provider: "zumbopay",
+
+        reference:
+          payment.reference || reference,
+
+        paymentId:
+          payment.paymentId || null,
+
+        status:
+          payment.status || "pending",
+
+        amount,
+
+        method,
+
+        checkoutUrl:
+          payment.checkoutUrl,
+
+        message:
+          "Redirecione para a página segura da ZumboPay.",
+
+        data: {
+          reference:
+            payment.reference || reference,
+
+          paymentId:
+            payment.paymentId || null,
+
+          status:
+            payment.status || "pending",
+
+          checkoutUrl:
+            payment.checkoutUrl,
+
+          method,
+        },
+      });
+    }
+
+    // =========================================================
+    // 6. MÉTODO NÃO TRATADO
+    // =========================================================
 
     return NextResponse.json(
       {
-        success: true,
-
-        provider:
-          "zumbopay",
-
-        topupId:
-          reference,
-
-        paymentId,
-
-        reference:
-          providerReference,
-
-        status,
-
-        checkoutUrl,
-
-        method:
-          paymentMethod,
-
-        phone:
-          customerPhone,
-
-        message:
-          checkoutUrl
-            ? "Pagamento criado. Redirecione o cliente para o checkout."
-            : "Pedido de pagamento enviado. Confirme no seu telemóvel.",
-
-        data:
-          providerData,
+        success: false,
+        error: "Método de pagamento não suportado.",
       },
-      {
-        status: 200,
-      }
+      { status: 400 }
     );
   } catch (error: any) {
     console.error(
-      "[PayGo] /api/payments/initiate error:",
-      error
+      "========================================"
     );
+
+    console.error(
+      "PAYGO PAYMENT INITIATE ERROR"
+    );
+
+    console.error(
+      "========================================"
+    );
+
+    console.error(error);
+
+    const status =
+      Number(error?.status) >= 400 &&
+      Number(error?.status) < 600
+        ? Number(error.status)
+        : 500;
 
     return NextResponse.json(
       {
@@ -773,11 +326,15 @@ export async function POST(
 
         error:
           error?.message ||
-          "Erro interno ao iniciar pagamento.",
+          "Erro ao iniciar pagamento.",
+
+        provider:
+          "zumbopay",
+
+        code:
+          error?.code || null,
       },
-      {
-        status: 500,
-      }
+      { status }
     );
   }
 }
