@@ -109,10 +109,53 @@
         }
 
         .realistic-card {
+            position: relative;
+            width: min(100%, 420px);
+            max-width: 420px;
+            aspect-ratio: 1.586 / 1;
+            height: auto !important;
+            min-width: 0;
+            flex: 0 1 420px;
+            padding: clamp(14px, 4vw, 24px) !important;
             background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
             box-shadow:
                 -10px 10px 30px rgba(0,0,0,0.5),
                 inset 0 0 0 1px rgba(255,255,255,0.10);
+            overflow: hidden;
+        }
+
+        .realistic-card > * {
+            min-width: 0;
+        }
+
+        .realistic-card .card-number {
+            font-size: clamp(0.88rem, 4.2vw, 1.5rem);
+            letter-spacing: clamp(0.06em, 1.3vw, 0.15em);
+            white-space: nowrap;
+        }
+
+        .realistic-card .card-holder {
+            max-width: 52%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 420px) {
+            .realistic-card {
+                border-radius: 18px;
+                flex-basis: 100%;
+            }
+            .realistic-card .card-balance {
+                font-size: 0.92rem;
+            }
+            .realistic-card .card-number {
+                font-size: clamp(0.78rem, 5vw, 1.05rem);
+                letter-spacing: 0.07em;
+            }
+            .realistic-card .card-meta {
+                gap: 0.7rem;
+            }
         }
 
         .realistic-card::before {
@@ -330,6 +373,30 @@
         .pin-dot.active { background: #60a5fa; box-shadow: 0 0 12px rgba(96,165,250,.65); }
         .security-hint { background: rgba(59,130,246,.08); border: 1px solid rgba(59,130,246,.2); }
         html.light .security-hint { background: rgba(37,99,235,.07); border-color: rgba(37,99,235,.18); }
+
+        @media (max-width: 640px) {
+            .glass-card, .hero-card {
+                border-radius: 20px !important;
+            }
+
+            #vcActionButtons {
+                width: 100%;
+            }
+
+            #vcActionButtons button {
+                width: 100%;
+                min-width: 0;
+            }
+
+            #topUpModal .selection-chip {
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding-left: 8px;
+                padding-right: 8px;
+            }
+        }
 
     </style>
 </head>
@@ -553,8 +620,8 @@
             <div class="lg:col-span-2 space-y-6">
 
                 <div class="glass-card rounded-3xl p-6 md:p-8 border border-brand-500/20 shadow-[0_0_30px_rgba(59,130,246,0.08)] relative overflow-hidden">
-                    <div class="flex flex-col md:flex-row gap-8 items-center">
-                        <div class="realistic-card w-full md:w-80 h-48 rounded-2xl p-6 flex flex-col justify-between shrink-0 transform transition-transform hover:scale-[1.02] relative overflow-hidden group">
+                    <div class="flex flex-col lg:flex-row gap-8 items-center min-w-0">
+                        <div class="realistic-card rounded-2xl flex flex-col justify-between shrink-0 transform transition-transform hover:scale-[1.02] group">
                             <button onclick="window.toggleCardView()" class="absolute top-6 right-6 text-white/60 hover:text-white transition z-20 hidden bg-slate-950/35 border border-white/10 rounded-xl p-2 backdrop-blur" id="btnRevealCard" title="Mostrar/Ocultar detalhes do cartão com PIN">
                                 <i data-lucide="eye" id="vcEyeIcon" class="w-5 h-5"></i>
                             </button>
@@ -563,22 +630,22 @@
                                 <div class="w-12 h-9 bg-gradient-to-br from-yellow-200 via-yellow-400 to-yellow-600 rounded-md shadow-sm relative overflow-hidden opacity-90 border border-yellow-300/50">
                                     <div class="absolute top-0 left-0 w-full h-[40%] bg-white/20"></div>
                                 </div>
-                                <div class="text-right pr-8">
+                                <div class="text-right pr-8 min-w-0">
                                     <p class="text-[10px] text-white/50 uppercase font-bold tracking-widest mb-0.5">Cartão PAYGO</p>
-                                    <p class="text-xl font-display font-black text-white" id="vcBalanceDisplay"></p>
+                                    <p class="card-balance text-xl font-display font-black text-white truncate" id="vcBalanceDisplay"></p>
                                 </div>
                             </div>
 
                             <div class="z-10 text-center mt-2">
-                                <p class="text-2xl font-mono font-bold tracking-[0.15em] text-white/95 drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)]" id="vcNumber">**** **** **** ****</p>
+                                <p class="card-number font-mono font-bold text-white/95 drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)]" id="vcNumber">**** **** **** ****</p>
                             </div>
 
-                            <div class="flex justify-between items-end z-10">
+                            <div class="flex justify-between items-end z-10 min-w-0 card-meta">
                                 <div class="flex flex-col">
                                     <p class="text-[8px] uppercase tracking-widest text-white/50 mb-0.5">Titular</p>
-                                    <p class="text-xs font-mono font-bold text-white tracking-widest uppercase" id="vcNameDisplay">CLIENTE PAYGO</p>
+                                    <p class="card-holder text-xs font-mono font-bold text-white tracking-widest uppercase" id="vcNameDisplay">CLIENTE PAYGO</p>
                                 </div>
-                                <div class="flex gap-4 text-right">
+                                <div class="flex gap-3 sm:gap-4 text-right shrink-0">
                                     <div>
                                         <p class="text-[8px] uppercase tracking-widest text-white/50 mb-0.5">Validade</p>
                                         <p class="text-xs font-mono font-bold text-white" id="vcExpiry">MM/AA</p>
@@ -1089,14 +1156,14 @@
         </div>
     </div>
 
-    <div id="topUpModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl relative">
+    <div id="topUpModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl sm:rounded-3xl w-full max-w-md max-h-[calc(100vh-24px)] sm:max-h-[calc(100vh-32px)] overflow-y-auto shadow-2xl relative">
             <button type="button" onclick="window.closeModals()" class="absolute top-5 right-5 text-slate-400 hover:text-white focus:outline-none"><i data-lucide="x" class="w-6 h-6"></i></button>
             <div class="p-6 pb-0 mb-6">
                 <h3 class="text-xl font-display font-bold text-white mb-2">Depositar Fundos</h3>
                 <p class="text-sm text-slate-400">Adicione fundos em USD ou MT. O sistema converte sempre com o câmbio PayGo.</p>
             </div>
-            <form id="topUpForm" onsubmit="event.preventDefault(); window.processTopUp();" class="p-6 pt-0 space-y-5">
+            <form id="topUpForm" onsubmit="event.preventDefault(); window.processTopUp();" class="p-4 sm:p-6 pt-0 space-y-4 sm:space-y-5">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Valor Pretendido (USD)</label>
@@ -1118,6 +1185,14 @@
                     <p class="text-2xl font-display font-black text-brand-400" id="topUpMznDisplay">0.00 MT</p>
                     <p class="text-xs text-slate-400">Equivalente: <span id="topUpUsdDisplay" class="font-mono text-white">0.00 USD</span></p>
                     <input type="hidden" id="topUpAmount">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Número de Telefone para Pagamento</label>
+                    <div class="relative">
+                        <i data-lucide="phone" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-brand-400"></i>
+                        <input type="tel" id="topUpPhone" required inputmode="numeric" autocomplete="tel" maxlength="13" placeholder="Ex: 841234567" class="w-full pl-12 pr-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white font-mono text-lg font-bold shadow-inner outline-none transition-all">
+                    </div>
+                    <p class="text-[10px] text-slate-500 mt-2">Número M-Pesa ou e-Mola que receberá o pedido de pagamento.</p>
                 </div>
                 <div>
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Método de Pagamento</label>
@@ -1431,7 +1506,7 @@
         }
 
         async function fetchPaymentApi(payload) {
-            const res = await fetch('/api/paysuite-payment', {
+            const res = await fetch('/api/payments/initiate', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
             });
             let result = {};
@@ -1439,9 +1514,6 @@
                 result = await res.json();
             } catch {
                 result = {};
-            }
-            if (res.status === 503 || result.error?.includes("manutenção preventiva")) {
-                throw new Error("MANUTENCAO_PAYSUITE");
             }
             if (!res.ok || !result.success) throw new Error(result.error || `Falha no gateway (${res.status}). Verifique o método, o valor e a configuração da API.`);
             return result;
@@ -1480,7 +1552,13 @@
                 const el = document.getElementById(id); if(el) { el.classList.remove('flex'); el.classList.add('hidden'); } 
             }); 
         };
-        window.openTopUpModal = () => { window.closeModals(); const el = document.getElementById('topUpModal'); if(el) el.classList.replace('hidden', 'flex'); };
+        window.openTopUpModal = () => {
+            window.closeModals();
+            window.resetTopUpForm();
+            const el = document.getElementById('topUpModal');
+            if (el) el.classList.replace('hidden', 'flex');
+            if (typeof lucide !== 'undefined') lucide.createIcons({ root: el || document });
+        };
         window.openTransferModal = () => { window.closeModals(); const el = document.getElementById('transferModal'); if(el) el.classList.replace('hidden', 'flex'); };
         window.openVipModal = () => { window.closeModals(); const el = document.getElementById('vipModal'); if(el) el.classList.replace('hidden', 'flex'); };
         window.openVcTopUpModal = () => { window.closeModals(); const el = document.getElementById('vcTopUpModal'); if(el) el.classList.replace('hidden', 'flex'); };
@@ -2647,6 +2725,79 @@
         // =====================================
         // 7. DEPOSITAR NA CARTEIRA E P2P
         // =====================================
+        // =====================================
+        // 7A. SINCRONIZAÇÃO DO DEPÓSITO USD <-> MT
+        // =====================================
+        // O gateway recebe sempre o valor em MT.
+        // Os dois campos visíveis são apenas formas diferentes de o cliente
+        // informar o mesmo depósito.
+        window.syncTopUpPreview = function(mtValue, usdValue) {
+            const mt = Number.isFinite(Number(mtValue)) ? Number(mtValue) : 0;
+            const usd = Number.isFinite(Number(usdValue)) ? Number(usdValue) : 0;
+
+            setSafeText('topUpMznDisplay', `${mt.toFixed(2)} MT`);
+            setSafeText('topUpUsdDisplay', `${usd.toFixed(2)} USD`);
+
+            const hidden = document.getElementById('topUpAmount');
+            if (hidden) hidden.value = mt > 0 ? mt.toFixed(2) : '';
+        };
+
+        window.syncTopUpFromUsd = function() {
+            const usdInput = document.getElementById('topUpUsdInput');
+            const mtInput = document.getElementById('topUpMtInput');
+            if (!usdInput || !mtInput) return;
+
+            const usd = parseFloat(usdInput.value);
+            const rate = Number(sysExchangeRate);
+
+            if (!Number.isFinite(usd) || usd <= 0 || !Number.isFinite(rate) || rate <= 0) {
+                mtInput.value = '';
+                window.syncTopUpPreview(0, 0);
+                return;
+            }
+
+            const mt = usd * rate;
+            mtInput.value = mt.toFixed(2);
+            window.syncTopUpPreview(mt, usd);
+        };
+
+        window.syncTopUpFromMt = function() {
+            const usdInput = document.getElementById('topUpUsdInput');
+            const mtInput = document.getElementById('topUpMtInput');
+            if (!usdInput || !mtInput) return;
+
+            const mt = parseFloat(mtInput.value);
+            const rate = Number(sysExchangeRate);
+
+            if (!Number.isFinite(mt) || mt <= 0 || !Number.isFinite(rate) || rate <= 0) {
+                usdInput.value = '';
+                window.syncTopUpPreview(0, 0);
+                return;
+            }
+
+            const usd = mt / rate;
+            usdInput.value = usd.toFixed(2);
+            window.syncTopUpPreview(mt, usd);
+        };
+
+        // Limpa e inicializa o formulário sempre que o modal é aberto.
+        window.resetTopUpForm = function() {
+            const form = document.getElementById('topUpForm');
+            const usdInput = document.getElementById('topUpUsdInput');
+            const mtInput = document.getElementById('topUpMtInput');
+            const hidden = document.getElementById('topUpAmount');
+
+            if (form) form.reset();
+            if (usdInput) usdInput.value = '';
+            if (mtInput) mtInput.value = '';
+            if (hidden) hidden.value = '';
+            window.syncTopUpPreview(0, 0);
+
+            const mpesa = document.querySelector('input[name="topUpMethod"][value="mpesa"]');
+            if (mpesa) mpesa.checked = true;
+            if (typeof window.toggleBankDetails === 'function') window.toggleBankDetails('mpesa');
+        };
+
         window.processTopUp = async () => {
     if (isProcessing) return;
 
@@ -2673,11 +2824,21 @@
     }
 
     try {
-        const amount = Number(
+        let amount = Number(
             parseFloat(
                 document.getElementById('topUpAmount')?.value || 0
             )
         );
+
+        // Fallback defensivo: nunca dependa apenas do input hidden.
+        if (!Number.isFinite(amount) || amount <= 0) {
+            const mtInputValue = parseFloat(document.getElementById('topUpMtInput')?.value || 0);
+            if (Number.isFinite(mtInputValue) && mtInputValue > 0) {
+                amount = mtInputValue;
+                const usdValue = Number(sysExchangeRate) > 0 ? mtInputValue / Number(sysExchangeRate) : 0;
+                window.syncTopUpPreview(mtInputValue, usdValue);
+            }
+        }
 
         const phoneInput =
             document.getElementById('topUpPhone');
@@ -2829,8 +2990,8 @@
                 .slice(-8)
                 .toUpperCase();
 
-        await addDoc(
-            collection(db, 'topups'),
+        await setDoc(
+            doc(db, 'topups', topupId),
             {
                 topupId,
 
