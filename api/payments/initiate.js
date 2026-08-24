@@ -18,14 +18,8 @@ import {
 
 function setCors(res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader(
-    "Access-Control-Allow-Methods",
-    "POST, OPTIONS"
-  );
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "Content-Type, Authorization"
-  );
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
   res.setHeader("Content-Type", "application/json");
 }
 
@@ -36,27 +30,17 @@ function json(res, status, data) {
 function getFirebaseDb() {
   if (!getApps().length) {
     const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
-
-    if (!raw) {
-      throw new Error(
-        "FIREBASE_SERVICE_ACCOUNT em falta."
-      );
-    }
+    if (!raw) throw new Error("FIREBASE_SERVICE_ACCOUNT em falta.");
 
     const serviceAccount = JSON.parse(raw);
-
     if (serviceAccount.private_key) {
-      serviceAccount.private_key =
-        serviceAccount.private_key.replace(/\\n/g, "\n");
+      serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, "\n");
     }
 
-    initializeApp({
-      credential: cert(serviceAccount),
-    });
+    initializeApp({ credential: cert(serviceAccount) });
   }
 
   const app = getApps()[0];
-
   try {
     return getFirestore(app, "paygodb");
   } catch {
@@ -84,50 +68,28 @@ function getCustomerName(body) {
   );
 }
 
-async function createPendingTopUp({
-  reference,
-  userId,
-  amount,
-  method,
-  phone,
-}) {
-  if (!userId) {
-    throw new Error(
-      "userId é obrigatório para criar o depósito."
-    );
-  }
+async function createPendingTopUp({ reference, userId, amount, method, phone, customerName }) {
+  if (!userId) throw new Error("userId é obrigatório para criar o depósito.");
 
   const db = getFirebaseDb();
   const ref = db.collection("topups").doc(String(reference));
-
   const existing = await ref.get();
 
   if (existing.exists) {
     const existingData = existing.data() || {};
 
-    if (
-      existingData.status === "completed" ||
-      existingData.status === "success"
-    ) {
-      throw new Error(
-        "Esta referência de depósito já foi concluída."
-      );
+    if (existingData.status === "completed" || existingData.status === "success") {
+      throw new Error("Esta referência de depósito já foi concluída.");
     }
 
     if (
       Number(existingData.amount) !== Number(amount) ||
       String(existingData.userId || "") !== String(userId)
     ) {
-      throw new Error(
-        "A referência de depósito já existe com dados diferentes."
-      );
+      throw new Error("A referência de depósito já existe com dados diferentes.");
     }
 
-    return {
-      ref,
-      data: existingData,
-      reused: true,
-    };
+    return { ref, data: existingData, reused: true };
   }
 
   const data = {
@@ -143,7 +105,7 @@ async function createPendingTopUp({
     paymentMethod: method,
     phone: phone || null,
     customerPhone: phone || null,
-    customerName: getCustomerName({ customerName: "" }),
+    customerName: customerName || "Cliente PayGo",
     userId: String(userId),
     providerPaymentId: null,
     providerReference: null,
@@ -152,65 +114,36 @@ async function createPendingTopUp({
   };
 
   await ref.create(data);
-
-  return {
-    ref,
-    data,
-    reused: false,
-  };
+  return { ref, data, reused: false };
 }
 
 async function updateTopUp(reference, patch) {
   const db = getFirebaseDb();
   const ref = db.collection("topups").doc(String(reference));
-
-  await ref.set(
-    {
-      ...patch,
-      updatedAt: FieldValue.serverTimestamp(),
-    },
-    { merge: true }
-  );
+  await ref.set({ ...patch, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
 }
 
 export default async function handler(req, res) {
   setCors(res);
 
-  if (req.method === "OPTIONS") {
-    return res.status(204).end();
-  }
-
+  if (req.method === "OPTIONS") return res.status(204).end();
   if (req.method !== "POST") {
-    return json(res, 405, {
-      success: false,
-      error: "Método não permitido.",
-      allowed: ["POST"],
-    });
+    return json(res, 405, { success: false, error: "Método não permitido.", allowed: ["POST"] });
   }
 
   const body = req.body || {};
-
-  const requestReference =
-    body.reference ||
-    body.orderId ||
-    null;
-
+  const requestReference = body.reference || body.orderId || null;
   let reference = requestReference || `PAYGO-${Date.now()}`;
   let topupCreated = false;
 
   try {
-    console.log("========================================");
-    console.log("🔥 PAYGO → ZUMBOPAY");
-    console.log("POST /api/payments/initiate");
-    console.log("========================================");
-
     const amount = Number(body.amount);
     const method = normalizePaymentMethod(body.method);
     const phone = body.phone || "";
     const userId = getUserId(body);
     const customerName = getCustomerName(body);
 
-    console.log("Body recebido:", {
+    console.log("[PayGo → ZumboPay] initiate", {
       amount,
       method,
       phone: phone ? "***" : null,
@@ -220,80 +153,36 @@ export default async function handler(req, res) {
     });
 
     if (!Number.isFinite(amount) || amount <= 0) {
-      return json(res, 400, {
-        success: false,
-        error: "O valor do pagamento é inválido.",
-      });
+      return json(res, 400, { success: false, error: "O valor do pagamento é inválido." });
     }
 
     if (amount < 10) {
-      return json(res, 400, {
-        success: false,
-        error: "O depósito mínimo é de 10 MT.",
-      });
+      return json(res, 400, { success: false, error: "O depósito mínimo é de 10 MT." });
     }
 
     if (!userId) {
-      return json(res, 400, {
-        success: false,
-        error: "Sessão do cliente não identificada. userId é obrigatório.",
-      });
+      return json(res, 400, { success: false, error: "Sessão do cliente não identificada. userId é obrigatório." });
     }
 
-    // =====================================================
-    // M-PESA / E-MOLA
-    // =====================================================
-
     if (method === "mpesa" || method === "emola") {
-      if (!phone) {
-        return json(res, 400, {
-          success: false,
-          error: "O número de telefone é obrigatório.",
-        });
-      }
+      if (!phone) return json(res, 400, { success: false, error: "O número de telefone é obrigatório." });
 
       let normalizedPhone;
-
       try {
         normalizedPhone = normalizePhone(phone);
       } catch (error) {
-        console.error("❌ ERRO AO NORMALIZAR TELEFONE:", error);
-
-        return json(res, 400, {
-          success: false,
-          error:
-            error?.message ||
-            "Número de telefone inválido.",
-        });
+        return json(res, 400, { success: false, error: error?.message || "Número de telefone inválido." });
       }
 
       const msisdn = normalizedPhone.replace(/^\+/, "");
 
-      if (
-        method === "mpesa" &&
-        !/^2588[45]\d{7}$/.test(msisdn)
-      ) {
-        return json(res, 400, {
-          success: false,
-          error: "Para M-Pesa utilize um número 84 ou 85.",
-        });
+      if (method === "mpesa" && !/^2588[45]\d{7}$/.test(msisdn)) {
+        return json(res, 400, { success: false, error: "Para M-Pesa utilize um número 84 ou 85." });
       }
 
-      if (
-        method === "emola" &&
-        !/^2588[67]\d{7}$/.test(msisdn)
-      ) {
-        return json(res, 400, {
-          success: false,
-          error: "Para e-Mola utilize um número 86 ou 87.",
-        });
+      if (method === "emola" && !/^2588[67]\d{7}$/.test(msisdn)) {
+        return json(res, 400, { success: false, error: "Para e-Mola utilize um número 86 ou 87." });
       }
-
-      // ===================================================
-      // CRIAR TOPUP PENDING ANTES DO STK
-      // ===================================================
-      // Isto é essencial: quando o webhook payment.succeeded
-      // chegar, ele já terá um documento para localizar.
 
       const topup = await createPendingTopUp({
         reference,
@@ -301,21 +190,10 @@ export default async function handler(req, res) {
         amount,
         method,
         phone: normalizedPhone,
+        customerName,
       });
 
       topupCreated = !topup.reused;
-
-      console.log("[PayGo] TopUp preparado:", {
-        reference,
-        userId,
-        amount,
-        method,
-        reused: topup.reused,
-      });
-
-      // ===================================================
-      // CHARGE ZUMBOPAY
-      // ===================================================
 
       const charge = await createCharge({
         amount,
@@ -325,29 +203,18 @@ export default async function handler(req, res) {
         method,
       });
 
-      console.log("[ZumboPay] Resposta:", {
-        success: charge?.success,
-        reference: charge?.reference,
-        paymentId: charge?.paymentId,
-        status: charge?.status,
-        method: charge?.method,
-        amount: charge?.amount,
-      });
-
       if (!charge || charge.success !== true) {
         await updateTopUp(reference, {
           status: "failed",
           paymentStatus: "failed",
-          failureReason:
-            "A ZumboPay não conseguiu iniciar o pagamento.",
+          failureReason: "A ZumboPay não conseguiu iniciar o pagamento.",
           providerResponse: charge || null,
         });
 
         return json(res, 400, {
           success: false,
           provider: "zumbopay",
-          error:
-            "A ZumboPay não conseguiu iniciar o pagamento.",
+          error: "A ZumboPay não conseguiu iniciar o pagamento.",
           reference,
           data: charge || null,
         });
@@ -358,18 +225,9 @@ export default async function handler(req, res) {
         providerReference: charge.reference || null,
         providerStatus: charge.status || "pending",
         paymentStatus: charge.status || "pending",
-        status:
-          charge.status === "success"
-            ? "completed"
-            : "pending",
+        status: charge.status === "success" ? "completed" : "pending",
         providerResponse: charge.raw || null,
       });
-
-      // ===================================================
-      // CASO A ZUMBOPAY JÁ DEVOLVA SUCCESS SÍNCRONO
-      // ===================================================
-      // O webhook continua sendo a fonte de confirmação.
-      // Não creditamos saldo aqui para evitar crédito duplo.
 
       return json(res, 200, {
         success: true,
@@ -397,10 +255,6 @@ export default async function handler(req, res) {
       });
     }
 
-    // =====================================================
-    // CARTÃO — HOSTED CHECKOUT
-    // =====================================================
-
     if (method === "card") {
       const topup = await createPendingTopUp({
         reference,
@@ -408,11 +262,10 @@ export default async function handler(req, res) {
         amount,
         method,
         phone: phone || null,
+        customerName,
       });
 
       topupCreated = !topup.reused;
-
-      console.log("💳 INICIANDO CHECKOUT ZUMBOPAY");
 
       const payment = await createPayment({
         amount,
@@ -424,26 +277,18 @@ export default async function handler(req, res) {
         maxUses: 1,
       });
 
-      console.log("Resposta checkout:", {
-        success: payment?.success,
-        reference: payment?.reference,
-        checkoutUrl: payment?.checkoutUrl,
-      });
-
       if (!payment || payment.success !== true) {
         await updateTopUp(reference, {
           status: "failed",
           paymentStatus: "failed",
-          failureReason:
-            "Não foi possível criar o checkout da ZumboPay.",
+          failureReason: "Não foi possível criar o checkout da ZumboPay.",
           providerResponse: payment || null,
         });
 
         return json(res, 400, {
           success: false,
           provider: "zumbopay",
-          error:
-            "Não foi possível criar o checkout da ZumboPay.",
+          error: "Não foi possível criar o checkout da ZumboPay.",
           reference,
           data: payment || null,
         });
@@ -477,46 +322,27 @@ export default async function handler(req, res) {
       supportedMethods: ["mpesa", "emola", "card"],
     });
   } catch (error) {
-    console.error("========================================");
-    console.error("❌ ERRO PAYGO → ZUMBOPAY");
-    console.error("Mensagem:", error?.message);
-    console.error("Status:", error?.status);
-    console.error("Código:", error?.code);
-    console.error("Dados ZumboPay:", error?.data);
-    console.error("Stack:", error?.stack);
-    console.error("========================================");
+    console.error("[PayGo → ZumboPay] erro", error);
 
-    // Se o TopUp foi criado e o pedido falhou antes de existir
-    // uma transação válida na ZumboPay, deixamos a tentativa
-    // marcada como failed para não ficar presa em pending.
     if (topupCreated && reference) {
       try {
         await updateTopUp(reference, {
           status: "failed",
           paymentStatus: "failed",
-          failureReason:
-            error?.message ||
-            "Erro ao iniciar pagamento.",
+          failureReason: error?.message || "Erro ao iniciar pagamento.",
         });
       } catch (updateError) {
-        console.error(
-          "❌ Não foi possível atualizar o TopUp após erro:",
-          updateError?.message
-        );
+        console.error("[PayGo] Falha ao atualizar TopUp após erro:", updateError?.message);
       }
     }
 
     return json(res, 500, {
       success: false,
       provider: "zumbopay",
-      error:
-        error?.message ||
-        "Erro interno ao processar pagamento.",
+      error: error?.message || "Erro interno ao processar pagamento.",
       code: error?.code || null,
       reference,
-      ...(process.env.NODE_ENV !== "production"
-        ? { details: error?.data || null }
-        : {}),
+      ...(process.env.NODE_ENV !== "production" ? { details: error?.data || null } : {}),
     });
   }
 }
