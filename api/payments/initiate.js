@@ -206,7 +206,7 @@ export default async function handler(req, res) {
       });
     }
 
-    if (method === "mpesa" || method === "emola") {
+    if (method === "mpesa" || method === "emola" || method === "mkesh") {
       if (!phone) return json(res, 400, { success: false, error: "O número de telefone é obrigatório." });
 
       let normalizedPhone;
@@ -224,6 +224,10 @@ export default async function handler(req, res) {
 
       if (method === "emola" && !/^2588[67]\d{7}$/.test(msisdn)) {
         return json(res, 400, { success: false, error: "Para e-Mola utilize um número 86 ou 87." });
+      }
+
+      if (method === "mkesh" && !/^2588[23]\d{7}$/.test(msisdn)) {
+        return json(res, 400, { success: false, error: "Para mKesh utilize um número 82 ou 83." });
       }
 
       const topup = await createPendingTopUp({
@@ -361,7 +365,7 @@ export default async function handler(req, res) {
     return json(res, 400, {
       success: false,
       error: "Método de pagamento não suportado.",
-      supportedMethods: ["mpesa", "emola", "card"],
+      supportedMethods: ["mpesa", "emola", "mkesh", "card"],
     });
   } catch (error) {
     console.error("[PayGo → ZumboPay] erro", error);

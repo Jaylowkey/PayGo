@@ -1192,11 +1192,11 @@
                         <i data-lucide="phone" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-brand-400"></i>
                         <input type="tel" id="topUpPhone" required inputmode="numeric" autocomplete="tel" maxlength="13" placeholder="Ex: 841234567" class="w-full pl-12 pr-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-white font-mono text-lg font-bold shadow-inner outline-none transition-all">
                     </div>
-                    <p class="text-[10px] text-slate-500 mt-2">Número M-Pesa ou e-Mola que receberá o pedido de pagamento.</p>
+                    <p class="text-[10px] text-slate-500 mt-2">Número M-Pesa, e-Mola ou mKesh que receberá o pedido de pagamento.</p>
                 </div>
                 <div>
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Método de Pagamento</label>
-                    <div class="grid grid-cols-3 gap-2">
+                    <div class="grid grid-cols-4 gap-2">
                         <label class="cursor-pointer">
                             <input type="radio" name="topUpMethod" value="mpesa" class="peer sr-only" checked onchange="window.toggleBankDetails(this.value)">
                             <div class="selection-chip p-3 rounded-xl text-center text-xs font-bold peer-checked:text-white peer-checked:border-red-500 peer-checked:bg-red-500/20 transition-all shadow-sm">M-PESA</div>
@@ -1204,6 +1204,10 @@
                         <label class="cursor-pointer">
                             <input type="radio" name="topUpMethod" value="emola" class="peer sr-only" onchange="window.toggleBankDetails(this.value)">
                             <div class="selection-chip p-3 rounded-xl text-center text-xs font-bold peer-checked:text-white peer-checked:border-orange-500 peer-checked:bg-orange-500/20 transition-all shadow-sm">E-MOLA</div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="topUpMethod" value="mkesh" class="peer sr-only" onchange="window.toggleBankDetails(this.value)">
+                            <div class="selection-chip p-3 rounded-xl text-center text-xs font-bold peer-checked:text-white peer-checked:border-green-500 peer-checked:bg-green-500/20 transition-all shadow-sm">mKESH</div>
                         </label>
                         <label class="cursor-pointer">
                             <input type="radio" name="topUpMethod" value="bank" class="peer sr-only" onchange="window.toggleBankDetails(this.value)">
@@ -2967,12 +2971,16 @@
         }
 
         if (
-            !/^(8[4-7])\d{7}$/.test(
-                localPhone
-            )
+            (method === 'mkesh' && !/^8[23]\d{7}$/.test(localPhone)) ||
+            (method === 'mpesa' && !/^8[45]\d{7}$/.test(localPhone)) ||
+            (method === 'emola' && !/^8[67]\d{7}$/.test(localPhone))
         ) {
             throw new Error(
-                'Número inválido. Use um número M-Pesa/e-Mola válido, por exemplo 841234567.'
+                method === 'mkesh'
+                    ? 'Número inválido. Para mKesh utilize um número 82 ou 83, por exemplo 821234567.'
+                    : method === 'mpesa'
+                        ? 'Número inválido. Para M-Pesa utilize um número 84 ou 85.'
+                        : 'Número inválido. Para e-Mola utilize um número 86 ou 87.'
             );
         }
 
@@ -3025,7 +3033,7 @@
         // =========================================
 
         window.showToast(
-            `A iniciar pagamento via ${method === 'mpesa' ? 'M-Pesa' : 'e-Mola'}...`,
+            `A iniciar pagamento via ${method === 'mpesa' ? 'M-Pesa' : method === 'emola' ? 'e-Mola' : 'mKesh'}...`,
             'info'
         );
 

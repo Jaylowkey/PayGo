@@ -46,6 +46,9 @@ function getConfig() {
     walletEmola:
       process.env.ZUMBOPAY_WALLET_EMOLA || "",
 
+    walletMkesh:
+      process.env.ZUMBOPAY_WALLET_MKESH || "",
+
     walletCard:
       process.env.ZUMBOPAY_WALLET_CARD || "",
   };
@@ -141,6 +144,12 @@ export function normalizePaymentMethod(method) {
     case "emola":
       return "emola";
 
+    case "mkesh":
+    case "m-kesh":
+    case "m_kesh":
+    case "m kesh":
+      return "mkesh";
+
     case "card":
     case "visa":
     case "mastercard":
@@ -169,6 +178,9 @@ export function getWalletId(method) {
 
     case "emola":
       return config.walletEmola;
+
+    case "mkesh":
+      return config.walletMkesh;
 
     case "card":
       return config.walletCard;
@@ -509,10 +521,11 @@ export async function createCharge({
 
   if (
     normalizedMethod !== "mpesa" &&
-    normalizedMethod !== "emola"
+    normalizedMethod !== "emola" &&
+    normalizedMethod !== "mkesh"
   ) {
     throw new Error(
-      "createCharge suporta apenas M-Pesa e e-Mola."
+      "createCharge suporta apenas M-Pesa, e-Mola e mKesh."
     );
   }
 
