@@ -34,7 +34,7 @@ import crypto from "crypto";
 
 const ZUMBOPAY_API_URL =
   process.env.ZUMBOPAY_API_URL ||
-  "https://zumbopay.com/api/v1";
+  "https://zumbopay.com/api/public/v1";
 
 /**
  * =========================================================
