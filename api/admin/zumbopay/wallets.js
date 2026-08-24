@@ -1,16 +1,12 @@
-const BASE_URL = (process.env.ZUMBOPAY_API_URL || "https://zumbopay.com/api/public/v1").replace(/\/+$/, "");
+import { requireZumboAdmin } from "./login.js";
 
-function authorized(req) {
-  const expected = String(process.env.PAYGO_ADMIN_API_KEY || "");
-  const auth = String(req.headers.authorization || "");
-  return Boolean(expected) && auth === `Bearer ${expected}`;
-}
+const BASE_URL = (process.env.ZUMBOPAY_API_URL || "https://zumbopay.com/api/public/v1").replace(/\/+$/, "");
 
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
   if (req.method === "OPTIONS") return res.status(204).end();
   if (req.method !== "GET") return res.status(405).json({ success: false, error: "Método não permitido." });
-  if (!authorized(req)) return res.status(403).json({ success: false, error: "Acesso administrativo necessário." });
+  if (!requireZumboAdmin(req)) return res.status(401).json({ success: false, error: "Sessão administrativa necessária." });
 
   const apiKey = process.env.ZUMBOPAY_API_KEY;
   const merchantId = process.env.ZUMBOPAY_MERCHANT_ID;
