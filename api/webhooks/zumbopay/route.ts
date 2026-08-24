@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
+
 import {
   getApps,
   initializeApp,
   cert,
 } from "firebase-admin/app";
+
 import {
   getFirestore,
   FieldValue,
@@ -19,27 +21,25 @@ export const dynamic = "force-dynamic";
  * =========================================================
  *
  * Endpoint:
- *
  * POST /api/webhooks/zumbopay
  *
- * Responsabilidades:
+ * Eventos:
+ * - payment.succeeded
+ * - payment.failed
+ * - payment.refunded
  *
- * 1. Receber webhook da ZumboPay
- * 2. Validar assinatura HMAC
- * 3. Identificar o TopUp
- * 4. Confirmar pagamento
- * 5. Creditar walletBalance
- * 6. Criar wallet transaction
- * 7. Impedir crédito duplicado
+ * Responsabilidades:
+ * - Validar assinatura HMAC
+ * - Encontrar TopUp
+ * - Confirmar pagamento
+ * - Creditar walletBalance
+ * - Criar wallet transaction
+ * - Criar notificação
+ * - Impedir crédito duplicado
+ * - Registrar tentativas
  *
  * IMPORTANTE:
- *
- * O saldo NÃO é atualizado em:
- *
- * /api/payments/initiate
- *
- * O saldo somente é atualizado aqui depois
- * de uma confirmação de pagamento.
+ * O saldo só é alterado depois de payment.succeeded.
  * =========================================================
  */
 
@@ -111,13 +111,9 @@ function verifyWebhookSignature(
     return false;
   }
 
-  const cleanSignature =
-    String(signature)
-      .replace(
-        /^sha256=/i,
-        ""
-      )
-      .trim();
+  const cleanSignature = String(signature)
+    .replace(/^sha256=/i, "")
+    .trim();
 
   if (
     !/^[a-fA-F0-9]{64}$/.test(
@@ -127,23 +123,13 @@ function verifyWebhookSignature(
     return false;
   }
 
-  const expected =
-    crypto
-      .createHmac(
-        "sha256",
-        WEBHOOK_SECRET
-      )
-      .update(
-        rawBody,
-        "utf8"
-      )
-      .digest("hex");
-
-  const expectedBuffer =
-    Buffer.from(
-      expected,
-      "hex"
-    );
+  const expected = crypto
+    .createHmac(
+      "sha256",
+      WEBHOOK_SECRET
+    )
+    .update(rawBody, "utf8")
+    .digest("hex");
 
   const receivedBuffer =
     Buffer.from(
@@ -151,16 +137,22 @@ function verifyWebhookSignature(
       "hex"
     );
 
+  const expectedBuffer =
+    Buffer.from(
+      expected,
+      "hex"
+    );
+
   if (
-    expectedBuffer.length !==
-    receivedBuffer.length
+    receivedBuffer.length !==
+    expectedBuffer.length
   ) {
     return false;
   }
 
   return crypto.timingSafeEqual(
-    expectedBuffer,
-    receivedBuffer
+    receivedBuffer,
+    expectedBuffer
   );
 }
 
@@ -170,9 +162,7 @@ function verifyWebhookSignature(
  * =========================================================
  */
 
-function getEventType(
-  event: any
-): string {
+function getEventType(event: any): string {
   return String(
     event?.event ||
       event?.type ||
@@ -184,9 +174,7 @@ function getEventType(
     .toLowerCase();
 }
 
-function getEventData(
-  event: any
-): any {
+function getEventData(event: any): any {
   return (
     event?.data ||
     event?.payment ||
@@ -198,8 +186,7 @@ function getEventData(
 function getReference(
   event: any
 ): string | null {
-  const data =
-    getEventData(event);
+  const data = getEventData(event);
 
   return (
     data?.reference ||
@@ -213,8 +200,7 @@ function getReference(
 function getPaymentId(
   event: any
 ): string | null {
-  const data =
-    getEventData(event);
+  const data = getEventData(event);
 
   return (
     data?.id ||
@@ -226,33 +212,38 @@ function getPaymentId(
   );
 }
 
-function getAmount(
+function getSourceId(
   event: any
-): number {
-  const data =
-    getEventData(event);
+): string | null {
+  const data = getEventData(event);
 
-  const amount =
-    Number(
-      data?.amount ??
-        data?.gross_amount ??
-        data?.grossAmount ??
-        data?.value ??
-        0
-    );
+  return (
+    data?.source_id ||
+    data?.sourceId ||
+    event?.source_id ||
+    event?.sourceId ||
+    null
+  );
+}
 
-  return Number.isFinite(
-    amount
-  )
+function getAmount(event: any): number {
+  const data = getEventData(event);
+
+  const amount = Number(
+    data?.amount ??
+      data?.gross_amount ??
+      data?.grossAmount ??
+      data?.value ??
+      0
+  );
+
+  return Number.isFinite(amount)
     ? amount
     : 0;
 }
 
-function getStatus(
-  event: any
-): string {
-  const data =
-    getEventData(event);
+function getStatus(event: any): string {
+  const data = getEventData(event);
 
   return String(
     data?.status ||
@@ -261,6 +252,14 @@ function getStatus(
   )
     .trim()
     .toLowerCase();
+}
+
+function cleanReference(
+  reference: string | null
+): string {
+  return String(
+    reference || ""
+  ).trim();
 }
 
 /**
@@ -272,111 +271,321 @@ function getStatus(
 function isPaymentSuccess(
   eventType: string,
   status: string
-) {
-  const successEvents = [
-    "payment.succeeded",
-    "payment.success",
-    "payment.completed",
-    "charge.succeeded",
-    "charge.success",
-    "charge.completed",
-  ];
-
-  if (
-    successEvents.includes(
-      eventType
-    )
-  ) {
-    return true;
-  }
-
-  return [
-    "success",
-    "succeeded",
-    "completed",
-    "paid",
-  ].includes(
-    status
+): boolean {
+  return (
+    [
+      "payment.succeeded",
+      "payment.success",
+      "payment.completed",
+      "charge.succeeded",
+      "charge.success",
+      "charge.completed",
+    ].includes(eventType) ||
+    [
+      "success",
+      "succeeded",
+      "completed",
+      "paid",
+    ].includes(status)
   );
 }
 
 function isPaymentFailed(
   eventType: string,
   status: string
-) {
-  const failedEvents = [
-    "payment.failed",
-    "payment.failure",
-    "payment.cancelled",
-    "payment.canceled",
-    "charge.failed",
-    "charge.cancelled",
-    "charge.canceled",
-  ];
-
-  if (
-    failedEvents.includes(
-      eventType
-    )
-  ) {
-    return true;
-  }
-
-  return [
-    "failed",
-    "failure",
-    "cancelled",
-    "canceled",
-  ].includes(
-    status
+): boolean {
+  return (
+    [
+      "payment.failed",
+      "payment.failure",
+      "payment.cancelled",
+      "payment.canceled",
+      "charge.failed",
+      "charge.cancelled",
+      "charge.canceled",
+    ].includes(eventType) ||
+    [
+      "failed",
+      "failure",
+      "cancelled",
+      "canceled",
+    ].includes(status)
   );
 }
 
 function isPaymentRefunded(
   eventType: string,
   status: string
-) {
-  const refundedEvents = [
-    "payment.refunded",
-    "payment.refund",
-    "charge.refunded",
-  ];
-
-  if (
-    refundedEvents.includes(
-      eventType
-    )
-  ) {
-    return true;
-  }
-
-  return [
-    "refunded",
-    "refund",
-  ].includes(
-    status
+): boolean {
+  return (
+    [
+      "payment.refunded",
+      "payment.refund",
+      "charge.refunded",
+    ].includes(eventType) ||
+    [
+      "refunded",
+      "refund",
+    ].includes(status)
   );
 }
 
 /**
  * =========================================================
- * TOPUP REFERENCE
- * =========================================================
- *
- * O frontend cria:
- *
- * TOP-XXXXXXXX
- *
- * e envia essa referência à ZumboPay.
+ * NOTIFICAÇÃO
  * =========================================================
  */
 
-function cleanReference(
-  reference: string
-): string {
-  return String(
-    reference || ""
-  ).trim();
+async function createNotification(
+  db: FirebaseFirestore.Firestore,
+  params: {
+    userId: string;
+    title: string;
+    message: string;
+    type: string;
+    reference: string;
+    amount?: number;
+    status?: string;
+  }
+) {
+  const notificationRef =
+    db.collection("notifications").doc();
+
+  await notificationRef.set({
+    userId: params.userId,
+
+    title: params.title,
+
+    message: params.message,
+
+    type: params.type,
+
+    reference: params.reference,
+
+    amount:
+      params.amount ?? null,
+
+    status:
+      params.status ?? null,
+
+    read: false,
+
+    createdAt:
+      FieldValue.serverTimestamp(),
+  });
+}
+
+/**
+ * =========================================================
+ * REGISTRAR TENTATIVA
+ * =========================================================
+ *
+ * Cada webhook recebido fica registrado.
+ *
+ * Isso permite auditoria e histórico.
+ * =========================================================
+ */
+
+async function savePaymentAttempt(
+  db: FirebaseFirestore.Firestore,
+  params: {
+    reference: string;
+    sourceId?: string | null;
+    paymentId?: string | null;
+    eventType: string;
+    status: string;
+    amount: number;
+    rawEvent: any;
+    userId?: string | null;
+    topupId?: string | null;
+  }
+) {
+  const attemptId =
+    [
+      "ZUMBO",
+      params.paymentId ||
+        params.reference ||
+        crypto.randomUUID(),
+      params.eventType,
+    ]
+      .join("_")
+      .replace(/[^a-zA-Z0-9_-]/g, "_");
+
+  const ref =
+    db
+      .collection(
+        "payment_attempts"
+      )
+      .doc(attemptId);
+
+  await ref.set(
+    {
+      provider: "zumbopay",
+
+      reference:
+        params.reference,
+
+      sourceId:
+        params.sourceId ||
+        null,
+
+      paymentId:
+        params.paymentId ||
+        null,
+
+      eventType:
+        params.eventType,
+
+      status:
+        params.status,
+
+      amount:
+        params.amount,
+
+      userId:
+        params.userId ||
+        null,
+
+      topupId:
+        params.topupId ||
+        null,
+
+      rawEvent:
+        params.rawEvent,
+
+      updatedAt:
+        FieldValue.serverTimestamp(),
+
+      createdAt:
+        FieldValue.serverTimestamp(),
+    },
+    {
+      merge: true,
+    }
+  );
+}
+
+/**
+ * =========================================================
+ * LOCALIZAR TOPUP
+ * =========================================================
+ *
+ * Primeiro:
+ *
+ * topups/{reference}
+ *
+ * Depois procuramos referências alternativas.
+ *
+ * Isso é importante porque a PayGo pode ter:
+ *
+ * TOP-XXXXXXXX
+ *
+ * enquanto a ZumboPay devolve:
+ *
+ * ZP_XXXXXXXX
+ * =========================================================
+ */
+
+async function findTopUp(
+  db: FirebaseFirestore.Firestore,
+  reference: string,
+  sourceId?: string | null,
+  paymentId?: string | null
+) {
+  /**
+   * 1. ID direto
+   */
+
+  if (reference) {
+    const directRef =
+      db
+        .collection("topups")
+        .doc(reference);
+
+    const directSnapshot =
+      await directRef.get();
+
+    if (directSnapshot.exists) {
+      return {
+        ref: directRef,
+        snapshot: directSnapshot,
+      };
+    }
+  }
+
+  /**
+   * 2. sourceId
+   */
+
+  if (sourceId) {
+    const snapshot =
+      await db
+        .collection("topups")
+        .where(
+          "reference",
+          "==",
+          sourceId
+        )
+        .limit(1)
+        .get();
+
+    if (!snapshot.empty) {
+      return {
+        ref: snapshot.docs[0].ref,
+        snapshot: snapshot.docs[0],
+      };
+    }
+
+    const sourceSnapshot =
+      await db
+        .collection("topups")
+        .where(
+          "sourceId",
+          "==",
+          sourceId
+        )
+        .limit(1)
+        .get();
+
+    if (!sourceSnapshot.empty) {
+      return {
+        ref:
+          sourceSnapshot.docs[0].ref,
+        snapshot:
+          sourceSnapshot.docs[0],
+      };
+    }
+  }
+
+  /**
+   * 3. paymentId da ZumboPay
+   */
+
+  if (paymentId) {
+    const snapshot =
+      await db
+        .collection("topups")
+        .where(
+          "providerPaymentId",
+          "==",
+          paymentId
+        )
+        .limit(1)
+        .get();
+
+    if (!snapshot.empty) {
+      return {
+        ref: snapshot.docs[0].ref,
+        snapshot: snapshot.docs[0],
+      };
+    }
+  }
+
+  /**
+   * Não encontrado
+   */
+
+  return null;
 }
 
 /**
@@ -393,9 +602,6 @@ export async function POST(
      * =====================================================
      * 1. BODY ORIGINAL
      * =====================================================
-     *
-     * A assinatura deve ser calculada sobre o
-     * body bruto.
      */
 
     const rawBody =
@@ -405,6 +611,14 @@ export async function POST(
      * =====================================================
      * 2. ASSINATURA
      * =====================================================
+     *
+     * Oficial:
+     *
+     * x-zumbopay-signature
+     *
+     * Mantemos compatibilidade com:
+     *
+     * X-ZumboPay-Signature
      */
 
     const signature =
@@ -412,7 +626,7 @@ export async function POST(
         "x-zumbopay-signature"
       ) ||
       request.headers.get(
-        "X-ZumboPay-Signature"
+        "x-zumbopay-signature"
       ) ||
       "";
 
@@ -423,7 +637,7 @@ export async function POST(
       )
     ) {
       console.error(
-        "[ZumboPay] Assinatura do webhook inválida."
+        "[ZumboPay] Assinatura inválida."
       );
 
       return NextResponse.json(
@@ -448,9 +662,7 @@ export async function POST(
 
     try {
       event =
-        JSON.parse(
-          rawBody
-        );
+        JSON.parse(rawBody);
     } catch {
       return NextResponse.json(
         {
@@ -478,8 +690,11 @@ export async function POST(
 
     const reference =
       cleanReference(
-        getReference(event) || ""
+        getReference(event)
       );
+
+    const sourceId =
+      getSourceId(event);
 
     const paymentId =
       getPaymentId(event);
@@ -495,11 +710,10 @@ export async function POST(
       {
         eventType,
         reference,
+        sourceId,
         paymentId,
-        status:
-          providerStatus,
-        amount:
-          webhookAmount,
+        providerStatus,
+        webhookAmount,
       }
     );
 
@@ -514,6 +728,7 @@ export async function POST(
         {
           success: true,
           received: true,
+          ignored: true,
         },
         {
           status: 200,
@@ -523,10 +738,12 @@ export async function POST(
 
     /**
      * =====================================================
-     * 6. IGNORAR PAYOUTS AQUI
+     * 6. PAYOUT
      * =====================================================
      *
-     * Os payouts terão seu próprio tratamento.
+     * Por enquanto reconhecemos o evento.
+     *
+     * O payout terá tratamento próprio.
      */
 
     if (
@@ -535,15 +752,14 @@ export async function POST(
       )
     ) {
       console.log(
-        `[ZumboPay] Evento de payout recebido: ${eventType}`
+        `[ZumboPay] Payout recebido: ${eventType}`
       );
 
       return NextResponse.json(
         {
           success: true,
           received: true,
-          handled:
-            "payout",
+          handled: "payout",
         },
         {
           status: 200,
@@ -553,7 +769,7 @@ export async function POST(
 
     /**
      * =====================================================
-     * 7. VERIFICAR EVENTO DE PAGAMENTO
+     * 7. ESTADO DO PAGAMENTO
      * =====================================================
      */
 
@@ -574,6 +790,12 @@ export async function POST(
         eventType,
         providerStatus
       );
+
+    /**
+     * =====================================================
+     * 8. EVENTO NÃO RELEVANTE
+     * =====================================================
+     */
 
     if (
       !success &&
@@ -598,19 +820,22 @@ export async function POST(
 
     /**
      * =====================================================
-     * 8. REFERÊNCIA
+     * 9. REFERÊNCIA
      * =====================================================
      */
 
     if (!reference) {
       console.error(
-        "[ZumboPay] Webhook sem reference/source_id."
+        "[ZumboPay] Webhook sem referência."
       );
 
       /**
-       * Não podemos creditar dinheiro sem saber
-       * a qual TopUp pertence.
+       * Não podemos creditar sem referência.
+       *
+       * Retornamos 200 para evitar retries infinitos
+       * de um evento impossível de reconciliar.
        */
+
       return NextResponse.json(
         {
           success: true,
@@ -627,35 +852,59 @@ export async function POST(
 
     /**
      * =====================================================
-     * 9. FIRESTORE
+     * 10. FIRESTORE
      * =====================================================
      */
 
     const db =
       getAdminDb();
 
-    const topupRef =
-      db
-        .collection("topups")
-        .doc(reference);
+    /**
+     * =====================================================
+     * 11. LOCALIZAR TOPUP
+     * =====================================================
+     */
 
-    const topupSnapshot =
-      await topupRef.get();
+    const topupResult =
+      await findTopUp(
+        db,
+        reference,
+        sourceId,
+        paymentId
+      );
 
-    if (
-      !topupSnapshot.exists
-    ) {
+    if (!topupResult) {
       console.error(
-        `[ZumboPay] TopUp não encontrado: ${reference}`
+        "[ZumboPay] TopUp não encontrado:",
+        {
+          reference,
+          sourceId,
+          paymentId,
+        }
       );
 
       /**
-       * Não criamos um TopUp automaticamente.
+       * Guardamos a tentativa mesmo sem TopUp.
        *
-       * Isso evita que alguém consiga enviar um
-       * webhook referente a uma referência desconhecida
-       * e gerar saldo.
+       * Isto é importante para auditoria.
        */
+
+      await savePaymentAttempt(
+        db,
+        {
+          reference,
+          sourceId,
+          paymentId,
+          eventType,
+          status:
+            providerStatus ||
+            "unknown",
+          amount:
+            webhookAmount,
+          rawEvent: event,
+        }
+      );
+
       return NextResponse.json(
         {
           success: true,
@@ -670,12 +919,85 @@ export async function POST(
       );
     }
 
+    const topupRef =
+      topupResult.ref;
+
     const topup =
-      topupSnapshot.data() || {};
+      topupResult.snapshot.data() ||
+      {};
+
+    const topupId =
+      topupRef.id;
+
+    const userId =
+      String(
+        topup.userId ||
+          ""
+      ).trim();
 
     /**
      * =====================================================
-     * 10. VERIFICAR STATUS ATUAL
+     * 12. REGISTRAR TENTATIVA
+     * =====================================================
+     */
+
+    await savePaymentAttempt(
+      db,
+      {
+        reference,
+        sourceId,
+        paymentId,
+        eventType,
+        status:
+          providerStatus ||
+          "unknown",
+        amount:
+          webhookAmount,
+        rawEvent: event,
+        userId:
+          userId || null,
+        topupId,
+      }
+    );
+
+    /**
+     * =====================================================
+     * 13. USER ID
+     * =====================================================
+     */
+
+    if (!userId) {
+      console.error(
+        "[ZumboPay] TopUp sem userId:",
+        topupId
+      );
+
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "TopUp sem userId",
+        },
+        {
+          status: 500,
+        }
+      );
+    }
+
+    /**
+     * =====================================================
+     * 14. USER REF
+     * =====================================================
+     */
+
+    const userRef =
+      db
+        .collection("users")
+        .doc(userId);
+
+    /**
+     * =====================================================
+     * 15. STATUS ATUAL
      * =====================================================
      */
 
@@ -687,11 +1009,16 @@ export async function POST(
 
     /**
      * =====================================================
-     * 11. PAGAMENTO FALHOU
+     * 16. FAILED
      * =====================================================
      */
 
     if (failed) {
+      /**
+       * Nunca mudamos um pagamento já concluído
+       * para failed.
+       */
+
       if (
         ![
           "completed",
@@ -705,19 +1032,49 @@ export async function POST(
           status:
             "failed",
 
+          provider:
+            "zumbopay",
+
           providerStatus,
 
           providerPaymentId:
             paymentId,
 
+          providerReference:
+            reference,
+
           updatedAt:
             FieldValue.serverTimestamp(),
         });
-      }
 
-      console.log(
-        `[ZumboPay] TopUp marcado como failed: ${reference}`
-      );
+        /**
+         * Notificação de falha
+         */
+
+        await createNotification(
+          db,
+          {
+            userId,
+            title:
+              "Pagamento falhou",
+            message:
+              `O seu depósito de ${Number(
+                topup.amount || 0
+              ).toFixed(
+                2
+              )} MT não foi concluído.`,
+            type:
+              "deposit_failed",
+            reference,
+            amount:
+              Number(
+                topup.amount || 0
+              ),
+            status:
+              "failed",
+          }
+        );
+      }
 
       return NextResponse.json(
         {
@@ -725,6 +1082,7 @@ export async function POST(
           received: true,
           status:
             "failed",
+          reference,
         },
         {
           status: 200,
@@ -734,37 +1092,129 @@ export async function POST(
 
     /**
      * =====================================================
-     * 12. REEMBOLSO
+     * 17. REFUND
      * =====================================================
      */
 
     if (refunded) {
+      /**
+       * Não fazemos simplesmente:
+       *
+       * walletBalance -= amount
+       *
+       * porque precisamos verificar se:
+       *
+       * 1. O depósito foi creditado
+       * 2. O refund já foi processado
+       *
+       * para evitar retirar saldo duas vezes.
+       */
+
+      const refundTransactionId =
+        `ZUMBOPAY_REFUND_${reference}`;
+
+      const refundTransactionRef =
+        db
+          .collection(
+            "wallet_transactions"
+          )
+          .doc(
+            refundTransactionId
+          );
+
+      const refundSnapshot =
+        await refundTransactionRef.get();
+
+      /**
+       * Se já existe refund financeiro,
+       * não fazemos novamente.
+       */
+
+      if (
+        refundSnapshot.exists
+      ) {
+        await topupRef.update({
+          status:
+            "refunded",
+
+          providerStatus,
+
+          providerPaymentId:
+            paymentId,
+
+          providerReference:
+            reference,
+
+          updatedAt:
+            FieldValue.serverTimestamp(),
+        });
+
+        return NextResponse.json(
+          {
+            success: true,
+            received: true,
+            status:
+              "refunded",
+            alreadyProcessed:
+              true,
+          },
+          {
+            status: 200,
+          }
+        );
+      }
+
+      /**
+       * Por segurança:
+       *
+       * apenas marcamos o refund.
+       *
+       * O débito financeiro será feito
+       * pelo processo de refund administrativo,
+       * depois de validar a operação.
+       */
+
       await topupRef.update({
         status:
           "refunded",
+
+        provider:
+          "zumbopay",
 
         providerStatus,
 
         providerPaymentId:
           paymentId,
 
+        providerReference:
+          reference,
+
+        refundPending:
+          true,
+
         updatedAt:
           FieldValue.serverTimestamp(),
       });
 
-      console.log(
-        `[ZumboPay] TopUp reembolsado: ${reference}`
+      await createNotification(
+        db,
+        {
+          userId,
+          title:
+            "Reembolso recebido",
+          message:
+            `O pagamento ${reference} foi marcado como reembolsado.`,
+          type:
+            "deposit_refunded",
+          reference,
+          amount:
+            Number(
+              topup.amount || 0
+            ),
+          status:
+            "refunded",
+        }
       );
-
-      /**
-       * IMPORTANTE:
-       *
-       * Não fazemos débito automático aqui.
-       *
-       * O tratamento de refund financeiro deve ser
-       * separado para evitar que um webhook duplicado
-       * retire saldo duas vezes.
-       */
 
       return NextResponse.json(
         {
@@ -781,7 +1231,7 @@ export async function POST(
 
     /**
      * =====================================================
-     * 13. PAGAMENTO NÃO CONFIRMADO
+     * 18. PAGAMENTO NÃO É SUCCESS
      * =====================================================
      */
 
@@ -799,39 +1249,7 @@ export async function POST(
 
     /**
      * =====================================================
-     * 14. IDEMPOTÊNCIA
-     * =====================================================
-     *
-     * Se já está completed/paid,
-     * NÃO adicionar saldo novamente.
-     */
-
-    if (
-      currentStatus ===
-        "completed" ||
-      currentStatus ===
-        "paid"
-    ) {
-      console.log(
-        `[ZumboPay] TopUp já processado: ${reference}`
-      );
-
-      return NextResponse.json(
-        {
-          success: true,
-          received: true,
-          alreadyProcessed:
-            true,
-        },
-        {
-          status: 200,
-        }
-      );
-    }
-
-    /**
-     * =====================================================
-     * 15. VALOR
+     * 19. VALOR DO TOPUP
      * =====================================================
      */
 
@@ -847,7 +1265,11 @@ export async function POST(
       topupAmount <= 0
     ) {
       console.error(
-        `[ZumboPay] TopUp com valor inválido: ${reference}`
+        "[ZumboPay] Valor inválido:",
+        {
+          topupId,
+          topupAmount,
+        }
       );
 
       return NextResponse.json(
@@ -857,20 +1279,15 @@ export async function POST(
             "Invalid TopUp amount",
         },
         {
-          status: 400,
+          status: 500,
         }
       );
     }
 
     /**
      * =====================================================
-     * 16. VALIDAR VALOR DO WEBHOOK
+     * 20. VALIDAR VALOR
      * =====================================================
-     *
-     * Se a ZumboPay enviar o amount, comparamos
-     * com o valor que o cliente solicitou.
-     *
-     * Não aceitamos automaticamente uma diferença.
      */
 
     if (
@@ -882,17 +1299,12 @@ export async function POST(
             topupAmount
         );
 
-      /**
-       * Tolerância de 0.01 MT
-       * para arredondamentos.
-       */
-
       if (
         difference >
         0.01
       ) {
         console.error(
-          "[ZumboPay] Valor divergente:",
+          "[ZumboPay] Amount mismatch:",
           {
             reference,
             topupAmount,
@@ -904,10 +1316,16 @@ export async function POST(
           status:
             "amount_mismatch",
 
+          provider:
+            "zumbopay",
+
           providerStatus,
 
           providerPaymentId:
             paymentId,
+
+          providerReference:
+            reference,
 
           providerAmount:
             webhookAmount,
@@ -916,9 +1334,24 @@ export async function POST(
             FieldValue.serverTimestamp(),
         });
 
-        /**
-         * Não creditamos.
-         */
+        await createNotification(
+          db,
+          {
+            userId,
+            title:
+              "Pagamento em análise",
+            message:
+              "Recebemos o pagamento, mas o valor recebido não corresponde ao valor solicitado. O depósito foi colocado em análise.",
+            type:
+              "deposit_review",
+            reference,
+            amount:
+              webhookAmount,
+            status:
+              "amount_mismatch",
+          }
+        );
+
         return NextResponse.json(
           {
             success: true,
@@ -936,60 +1369,64 @@ export async function POST(
 
     /**
      * =====================================================
-     * 17. USER ID
+     * 21. IDEMPOTÊNCIA
      * =====================================================
+     *
+     * O documento da wallet transaction possui ID
+     * determinístico:
+     *
+     * ZUMBOPAY_TOPUP_<reference>
+     *
+     * Assim o mesmo webhook não pode gerar
+     * dois créditos.
      */
 
-    const userId =
-      String(
-        topup.userId ||
-          ""
-      ).trim();
+    const transactionId =
+      `ZUMBOPAY_TOPUP_${reference}`;
 
-    if (!userId) {
-      console.error(
-        `[ZumboPay] TopUp sem userId: ${reference}`
-      );
-
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            "TopUp sem userId",
-        },
-        {
-          status: 500,
-        }
-      );
-    }
-
-    /**
-     * =====================================================
-     * 18. USER
-     * =====================================================
-     */
-
-    const userRef =
+    const walletTransactionRef =
       db
-        .collection("users")
-        .doc(userId);
+        .collection(
+          "wallet_transactions"
+        )
+        .doc(
+          transactionId
+        );
 
     /**
      * =====================================================
-     * 19. TRANSACTION
+     * 22. NOTIFICAÇÃO DETERMINÍSTICA
      * =====================================================
-     *
-     * Esta é a parte mais importante.
-     *
-     * Firestore transaction garante que dois webhooks
-     * simultâneos não adicionem o saldo duas vezes.
      */
+
+    const notificationRef =
+      db
+        .collection(
+          "notifications"
+        )
+        .doc(
+          `ZUMBOPAY_DEPOSIT_${reference}`
+        );
+
+    /**
+     * =====================================================
+     * 23. TRANSACTION FIRESTORE
+     * =====================================================
+     */
+
+    let wasAlreadyProcessed =
+      false;
+
+    let balanceBefore = 0;
+
+    let balanceAfter = 0;
 
     await db.runTransaction(
       async (transaction) => {
         /**
-         * Ler novamente o TopUp dentro da transaction.
+         * Ler tudo dentro da transaction.
          */
+
         const currentTopupSnapshot =
           await transaction.get(
             topupRef
@@ -1014,22 +1451,25 @@ export async function POST(
           ).toLowerCase();
 
         /**
-         * Outro webhook pode ter terminado
-         * enquanto este estava sendo processado.
+         * Se já completado:
+         *
+         * não adicionar novamente.
          */
+
         if (
           status ===
             "completed" ||
           status ===
             "paid"
         ) {
+          wasAlreadyProcessed =
+            true;
+
           return;
         }
 
         /**
-         * ===================================================
-         * USER DENTRO DA TRANSACTION
-         * ===================================================
+         * Ler usuário.
          */
 
         const userSnapshot =
@@ -1049,26 +1489,26 @@ export async function POST(
           userSnapshot.data() ||
           {};
 
-        const oldBalance =
+        balanceBefore =
           Number(
             user.walletBalance || 0
           );
 
-        const newBalance =
-          oldBalance +
+        balanceAfter =
+          balanceBefore +
           topupAmount;
 
         /**
-         * ===================================================
-         * ATUALIZAR WALLET
-         * ===================================================
+         * =================================================
+         * ATUALIZAR SALDO
+         * =================================================
          */
 
         transaction.update(
           userRef,
           {
             walletBalance:
-              newBalance,
+              balanceAfter,
 
             updatedAt:
               FieldValue.serverTimestamp(),
@@ -1076,9 +1516,9 @@ export async function POST(
         );
 
         /**
-         * ===================================================
+         * =================================================
          * ATUALIZAR TOPUP
-         * ===================================================
+         * =================================================
          */
 
         transaction.update(
@@ -1092,13 +1532,17 @@ export async function POST(
 
             providerStatus:
               providerStatus ||
-              "success",
+              "succeeded",
 
             providerPaymentId:
               paymentId,
 
             providerReference:
               reference,
+
+            providerSourceId:
+              sourceId ||
+              null,
 
             providerAmount:
               webhookAmount ||
@@ -1113,40 +1557,15 @@ export async function POST(
         );
 
         /**
-         * ===================================================
+         * =================================================
          * WALLET TRANSACTION
-         * ===================================================
-         *
-         * Criamos um documento determinístico.
-         *
-         * Isso é importante para impedir duplicação.
-         *
-         * ID:
-         *
-         * ZUMBOPAY_TOPUP_TOP-12345678
-         * ===================================================
+         * =================================================
          */
-
-        const transactionId =
-          `ZUMBOPAY_TOPUP_${reference}`;
-
-        const walletTransactionRef =
-          db
-            .collection(
-              "wallet_transactions"
-            )
-            .doc(
-              transactionId
-            );
 
         const walletTransactionSnapshot =
           await transaction.get(
             walletTransactionRef
           );
-
-        /**
-         * Só criamos a transação se ainda não existir.
-         */
 
         if (
           !walletTransactionSnapshot.exists
@@ -1173,17 +1592,20 @@ export async function POST(
 
               reference,
 
+              sourceId:
+                sourceId ||
+                null,
+
               paymentId:
-                paymentId,
+                paymentId ||
+                null,
 
               description:
                 `Depósito via ZumboPay - ${reference}`,
 
-              balanceBefore:
-                oldBalance,
+              balanceBefore,
 
-              balanceAfter:
-                newBalance,
+              balanceAfter,
 
               status:
                 "completed",
@@ -1194,17 +1616,48 @@ export async function POST(
           );
         }
 
-        console.log(
-          "[ZumboPay] Crédito processado:",
+        /**
+         * =================================================
+         * NOTIFICAÇÃO
+         * =================================================
+         */
+
+        transaction.set(
+          notificationRef,
           {
             userId,
-            reference,
+
+            type:
+              "deposit_success",
+
+            title:
+              "Depósito confirmado",
+
+            message:
+              `O seu depósito de ${topupAmount.toFixed(
+                2
+              )} MT foi confirmado com sucesso e já está disponível na sua carteira.`,
+
             amount:
               topupAmount,
-            balanceBefore:
-              oldBalance,
-            balanceAfter:
-              newBalance,
+
+            currency:
+              "MZN",
+
+            reference,
+
+            paymentId:
+              paymentId ||
+              null,
+
+            read:
+              false,
+
+            createdAt:
+              FieldValue.serverTimestamp(),
+          },
+          {
+            merge: true,
           }
         );
       }
@@ -1212,7 +1665,54 @@ export async function POST(
 
     /**
      * =====================================================
-     * 20. SUCESSO
+     * 24. JÁ PROCESSADO
+     * =====================================================
+     */
+
+    if (
+      wasAlreadyProcessed
+    ) {
+      console.log(
+        `[ZumboPay] Pagamento já processado: ${reference}`
+      );
+
+      return NextResponse.json(
+        {
+          success: true,
+          received: true,
+          alreadyProcessed:
+            true,
+          reference,
+        },
+        {
+          status: 200,
+        }
+      );
+    }
+
+    /**
+     * =====================================================
+     * 25. LOG FINAL
+     * =====================================================
+     */
+
+    console.log(
+      "[ZumboPay] ✅ DEPÓSITO CONFIRMADO",
+      {
+        userId,
+        topupId,
+        reference,
+        paymentId,
+        amount:
+          topupAmount,
+        balanceBefore,
+        balanceAfter,
+      }
+    );
+
+    /**
+     * =====================================================
+     * 26. RESPONSE
      * =====================================================
      */
 
@@ -1231,23 +1731,31 @@ export async function POST(
 
         amount:
           topupAmount,
+
+        credited:
+          true,
       },
       {
         status: 200,
       }
     );
   } catch (error: any) {
+    /**
+     * =====================================================
+     * ERRO
+     * =====================================================
+     *
+     * Retornamos 500 para que a ZumboPay possa tentar
+     * novamente.
+     *
+     * A transaction + IDs determinísticos protegem
+     * contra crédito duplicado.
+     */
+
     console.error(
-      "[ZumboPay] Webhook error:",
+      "[ZumboPay] ❌ Webhook error:",
       error
     );
-
-    /**
-     * 500 permite que o provider tente novamente.
-     *
-     * Como usamos transaction + idempotência,
-     * uma nova tentativa não deve duplicar o saldo.
-     */
 
     return NextResponse.json(
       {
@@ -1269,9 +1777,9 @@ export async function POST(
  * GET
  * =========================================================
  *
- * Útil para verificar se a rota existe.
+ * Health check.
  *
- * NÃO confirma pagamentos.
+ * Não confirma pagamentos.
  * =========================================================
  */
 
@@ -1279,8 +1787,10 @@ export async function GET() {
   return NextResponse.json(
     {
       success: true,
+
       service:
         "PayGo ZumboPay Webhook",
+
       status:
         "online",
     },
