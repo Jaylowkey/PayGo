@@ -1,340 +1,736 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createCharge, createPayment, normalizePhone } from "@/lib/services/zumbopay";
+/**
+ * =========================================================
+ * PayGo → ZumboPay
+ * POST /api/payments/initiate
+ * =========================================================
+ *
+ * Suporta:
+ * - M-Pesa STK
+ * - e-Mola STK
+ * - Card / Checkout
+ *
+ * IMPORTANTE:
+ * Este projeto usa Vercel Serverless Functions,
+ * NÃO Next.js App Router.
+ *
+ * =========================================================
+ */
 
-export const runtime = "nodejs";
+import {
+  createCharge,
+  createPayment,
+  normalizePhone,
+  normalizePaymentMethod,
+} from "../lib/services/zumbopay.js";
 
-interface InitiatePaymentBody {
-  amount: number;
-  method: "mpesa" | "emola" | "card";
-  phone?: string;
-  orderId?: string;
-  reference?: string;
-  description?: string;
+
+// =========================================================
+// CORS
+// =========================================================
+
+function setCors(res) {
+  res.setHeader(
+    "Access-Control-Allow-Origin",
+    "*"
+  );
+
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "POST, OPTIONS"
+  );
+
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization"
+  );
+
+  res.setHeader(
+    "Content-Type",
+    "application/json"
+  );
 }
 
-export async function POST(request: NextRequest) {
+
+// =========================================================
+// JSON RESPONSE
+// =========================================================
+
+function json(res, status, data) {
+  return res.status(status).json(data);
+}
+
+
+// =========================================================
+// REQUEST HANDLER
+// =========================================================
+
+export default async function handler(req, res) {
+  setCors(res);
+
+  // =======================================================
+  // OPTIONS / PREFLIGHT
+  // =======================================================
+
+  if (req.method === "OPTIONS") {
+    return res.status(204).end();
+  }
+
+
+  // =======================================================
+  // SOMENTE POST
+  // =======================================================
+
+  if (req.method !== "POST") {
+    return json(res, 405, {
+      success: false,
+      error: "Método não permitido.",
+      allowed: ["POST"],
+    });
+  }
+
+
+  // =======================================================
+  // LOG INICIAL
+  // =======================================================
+
+  console.log(
+    "========================================"
+  );
+
+  console.log(
+    "🔥 PAYGO /api/payments/initiate"
+  );
+
+  console.log(
+    "🔥 REQUEST RECEIVED"
+  );
+
+  console.log(
+    "========================================"
+  );
+
+
   try {
-    // =========================================================
+    // =====================================================
     // 1. LER BODY
-    // =========================================================
+    // =====================================================
 
-    const body = (await request.json()) as InitiatePaymentBody;
+    const body =
+      req.body ||
+      {};
 
-    const amount = Number(body.amount);
-    const method = String(body.method || "").toLowerCase() as
-      | "mpesa"
-      | "emola"
-      | "card";
+    console.log(
+      "PAYGO REQUEST BODY:",
+      {
+        amount: body.amount,
+        method: body.method,
+        phone:
+          body.phone
+            ? "***"
+            : undefined,
+        orderId:
+          body.orderId,
+        reference:
+          body.reference,
+      }
+    );
 
-    const phone = body.phone
-      ? normalizePhone(body.phone)
-      : "";
+
+    // =====================================================
+    // 2. CAMPOS
+    // =====================================================
+
+    const amount =
+      Number(
+        body.amount
+      );
+
+    const method =
+      normalizePaymentMethod(
+        body.method
+      );
+
+    const rawPhone =
+      body.phone ||
+      "";
+
+    const orderId =
+      body.orderId ||
+      null;
 
     const reference =
-      body.orderId ||
       body.reference ||
+      orderId ||
       `PAYGO-${Date.now()}`;
 
     const description =
       body.description ||
       `Depósito PayGo ${reference}`;
 
-    // =========================================================
-    // 2. VALIDAR VALOR
-    // =========================================================
 
-    if (!Number.isFinite(amount) || amount <= 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Valor do pagamento inválido.",
-        },
-        { status: 400 }
-      );
+    // =====================================================
+    // 3. VALIDAR VALOR
+    // =====================================================
+
+    if (
+      !Number.isFinite(amount)
+    ) {
+      return json(res, 400, {
+        success: false,
+        error:
+          "O valor informado é inválido.",
+      });
     }
 
-    // PayGo: depósito mínimo de 10 MT
+
+    if (amount <= 0) {
+      return json(res, 400, {
+        success: false,
+        error:
+          "O valor deve ser maior que zero.",
+      });
+    }
+
+
+    // =====================================================
+    // 4. DEPÓSITO MÍNIMO
+    // =====================================================
+
     if (amount < 10) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "O depósito mínimo é de 10 MT.",
-        },
-        { status: 400 }
-      );
+      return json(res, 400, {
+        success: false,
+        error:
+          "O depósito mínimo é de 10 MT.",
+      });
     }
 
-    // =========================================================
-    // 3. VALIDAR MÉTODO
-    // =========================================================
 
-    if (!["mpesa", "emola", "card"].includes(method)) {
-      return NextResponse.json(
-        {
+    // =====================================================
+    // 5. M-PESA / E-MOLA
+    // =====================================================
+
+    if (
+      method === "mpesa" ||
+      method === "emola"
+    ) {
+
+      // ---------------------------------------------------
+      // TELEFONE OBRIGATÓRIO
+      // ---------------------------------------------------
+
+      if (!rawPhone) {
+        return json(res, 400, {
           success: false,
           error:
-            "Método de pagamento inválido. Use M-Pesa, e-Mola ou cartão.",
-        },
-        { status: 400 }
+            "O número de telefone é obrigatório.",
+        });
+      }
+
+
+      // ---------------------------------------------------
+      // NORMALIZAR TELEFONE
+      // ---------------------------------------------------
+
+      let phone;
+
+      try {
+        phone =
+          normalizePhone(
+            rawPhone
+          );
+      } catch (error) {
+        return json(res, 400, {
+          success: false,
+          error:
+            error?.message ||
+            "Número de telefone inválido.",
+        });
+      }
+
+
+      // ---------------------------------------------------
+      // MSISDN
+      // ---------------------------------------------------
+
+      const msisdn =
+        phone.replace(
+          /^\+/,
+          ""
+        );
+
+
+      // ---------------------------------------------------
+      // VALIDAR OPERADORA
+      // ---------------------------------------------------
+
+      const isMpesa =
+        /^2588[45]\d{7}$/.test(
+          msisdn
+        );
+
+      const isEmola =
+        /^2588[67]\d{7}$/.test(
+          msisdn
+        );
+
+
+      if (
+        method === "mpesa" &&
+        !isMpesa
+      ) {
+        return json(res, 400, {
+          success: false,
+          error:
+            "Para M-Pesa utilize um número 84 ou 85.",
+        });
+      }
+
+
+      if (
+        method === "emola" &&
+        !isEmola
+      ) {
+        return json(res, 400, {
+          success: false,
+          error:
+            "Para e-Mola utilize um número 86 ou 87.",
+        });
+      }
+
+
+      // ---------------------------------------------------
+      // LOG
+      // ---------------------------------------------------
+
+      console.log(
+        "========================================"
       );
-    }
 
-    // =========================================================
-    // 4. M-PESA / E-MOLA
-    // =========================================================
-    //
-    // STK PUSH
-    //
-    // O cliente informa o número de telefone.
-    // A ZumboPay envia o pedido de pagamento para o telefone.
-    //
-    // Endpoint utilizado internamente pelo service:
-    //
-    // POST /charges
-    //
-    // =========================================================
+      console.log(
+        "PAYGO → ZUMBOPAY STK"
+      );
 
-    if (method === "mpesa" || method === "emola") {
-      if (!phone) {
-        return NextResponse.json(
-          {
-            success: false,
-            error:
-              "O número de telefone é obrigatório para M-Pesa/e-Mola.",
-          },
-          { status: 400 }
-        );
+      console.log(
+        "========================================"
+      );
+
+      console.log(
+        "Amount:",
+        amount
+      );
+
+      console.log(
+        "Method:",
+        method
+      );
+
+      console.log(
+        "Phone:",
+        msisdn
+      );
+
+      console.log(
+        "Reference:",
+        reference
+      );
+
+      console.log(
+        "========================================"
+      );
+
+
+      // ---------------------------------------------------
+      // CREATE CHARGE
+      // ---------------------------------------------------
+
+      const charge =
+        await createCharge({
+          amount,
+
+          phone,
+
+          customerName:
+            body.customerName ||
+            "Cliente PayGo",
+
+          sourceId:
+            String(
+              reference
+            ),
+
+          method,
+        });
+
+
+      // ---------------------------------------------------
+      // RESPOSTA
+      // ---------------------------------------------------
+
+      console.log(
+        "ZUMBOPAY RESPONSE:",
+        {
+          success:
+            charge?.success,
+
+          reference:
+            charge?.reference,
+
+          status:
+            charge?.status,
+        }
+      );
+
+
+      if (
+        !charge ||
+        charge.success !== true
+      ) {
+        return json(res, 400, {
+          success: false,
+
+          provider:
+            "zumbopay",
+
+          error:
+            "A ZumboPay não conseguiu iniciar o pagamento.",
+
+          reference,
+
+          data:
+            charge || null,
+        });
       }
 
-      // Validar número moçambicano
-      if (!/^2588[4-7]\d{7}$/.test(phone)) {
-        return NextResponse.json(
-          {
-            success: false,
-            error:
-              "Número inválido. Use um número M-Pesa/e-Mola válido.",
-          },
-          { status: 400 }
-        );
-      }
 
-      console.log("========================================");
-      console.log("PAYGO → ZUMBOPAY STK");
-      console.log("========================================");
-      console.log("Reference:", reference);
-      console.log("Amount:", amount);
-      console.log("Method:", method);
-      console.log("Phone:", phone);
-      console.log("========================================");
+      // ---------------------------------------------------
+      // STK SUCCESS / PENDING
+      // ---------------------------------------------------
 
-      const charge = await createCharge({
-        amount,
-        phone,
-        customerName: "Cliente PayGo",
-        sourceId: reference,
-        method,
-      });
-
-      if (!charge.success) {
-        return NextResponse.json(
-          {
-            success: false,
-            error:
-              "Não foi possível iniciar o pagamento.",
-          },
-          { status: 400 }
-        );
-      }
-
-      return NextResponse.json({
+      return json(res, 200, {
         success: true,
 
-        type: "stk_push",
+        provider:
+          "zumbopay",
 
-        provider: "zumbopay",
-
-        reference:
-          charge.reference || reference,
-
-        paymentId:
-          charge.paymentId || null,
-
-        status:
-          charge.status || "pending",
-
-        amount,
+        type:
+          "stk_push",
 
         method,
 
+        amount,
+
         phone,
 
+        reference:
+          charge.reference ||
+          reference,
+
+        paymentId:
+          charge.paymentId ||
+          null,
+
+        status:
+          charge.status ||
+          "pending",
+
         message:
-          charge.status === "success"
+          charge.status ===
+          "success"
+
             ? "Pagamento confirmado."
+
             : "Pedido enviado. Confirme o pagamento no seu telemóvel usando o PIN.",
 
         data: {
           reference:
-            charge.reference || reference,
+            charge.reference ||
+            reference,
 
           paymentId:
-            charge.paymentId || null,
+            charge.paymentId ||
+            null,
 
           status:
-            charge.status || "pending",
+            charge.status ||
+            "pending",
 
           method,
+
+          amount,
 
           phone,
         },
       });
     }
 
-    // =========================================================
-    // 5. CARTÃO
-    // =========================================================
-    //
-    // Para cartão usamos o checkout hospedado da ZumboPay.
-    //
-    // =========================================================
 
-    if (method === "card") {
-      console.log("========================================");
-      console.log("PAYGO → ZUMBOPAY CHECKOUT");
-      console.log("========================================");
-      console.log("Reference:", reference);
-      console.log("Amount:", amount);
-      console.log("Method:", method);
-      console.log("========================================");
+    // =====================================================
+    // 6. CARTÃO
+    // =====================================================
 
-      const payment = await createPayment({
-        amount,
+    if (
+      method === "card"
+    ) {
 
-        reference,
+      console.log(
+        "========================================"
+      );
 
-        title:
-          `Depósito PayGo ${reference}`,
+      console.log(
+        "PAYGO → ZUMBOPAY CHECKOUT"
+      );
 
-        description,
+      console.log(
+        "========================================"
+      );
 
-        channels: ["card"],
+      console.log(
+        "Amount:",
+        amount
+      );
 
-        method: "card",
-      });
+      console.log(
+        "Reference:",
+        reference
+      );
 
-      if (!payment.success) {
-        return NextResponse.json(
-          {
-            success: false,
-            error:
-              "Não foi possível criar o pagamento por cartão.",
-          },
-          { status: 400 }
-        );
+
+      const payment =
+        await createPayment({
+          amount,
+
+          reference,
+
+          title:
+            `Depósito PayGo ${reference}`,
+
+          description,
+
+          method:
+            "card",
+
+          phone:
+            rawPhone ||
+            undefined,
+
+          callbackUrl:
+            process.env.ZUMBOPAY_WEBHOOK_URL ||
+            "https://paygo.co.mz/api/webhooks/zumbopay",
+
+          returnUrl:
+            process.env.PAYGO_PAYMENT_RETURN_URL ||
+            "https://paygo.co.mz/dashboard",
+        });
+
+
+      console.log(
+        "ZUMBOPAY CHECKOUT RESPONSE:",
+        {
+          success:
+            payment?.success,
+
+          reference:
+            payment?.reference,
+
+          checkoutUrl:
+            payment?.checkoutUrl,
+        }
+      );
+
+
+      if (
+        !payment ||
+        payment.success !== true
+      ) {
+        return json(res, 400, {
+          success: false,
+
+          provider:
+            "zumbopay",
+
+          error:
+            "Não foi possível criar o checkout da ZumboPay.",
+
+          reference,
+
+          data:
+            payment || null,
+        });
       }
 
-      if (!payment.checkoutUrl) {
-        return NextResponse.json(
-          {
-            success: false,
-            error:
-              "A ZumboPay não devolveu o endereço do checkout.",
-          },
-          { status: 502 }
-        );
+
+      if (
+        !payment.checkoutUrl
+      ) {
+        return json(res, 502, {
+          success: false,
+
+          provider:
+            "zumbopay",
+
+          error:
+            "A ZumboPay não devolveu o checkout_url.",
+
+          reference,
+        });
       }
 
-      return NextResponse.json({
+
+      return json(res, 200, {
         success: true,
 
-        type: "checkout",
+        provider:
+          "zumbopay",
 
-        provider: "zumbopay",
+        type:
+          "checkout",
 
-        reference:
-          payment.reference || reference,
-
-        paymentId:
-          payment.paymentId || null,
-
-        status:
-          payment.status || "pending",
+        method:
+          "card",
 
         amount,
 
-        method,
+        reference:
+          payment.reference ||
+          reference,
+
+        paymentId:
+          payment.paymentId ||
+          null,
+
+        status:
+          payment.status ||
+          "pending",
 
         checkoutUrl:
           payment.checkoutUrl,
 
         message:
-          "Redirecione para a página segura da ZumboPay.",
+          "Checkout da ZumboPay criado com sucesso.",
 
         data: {
           reference:
-            payment.reference || reference,
+            payment.reference ||
+            reference,
 
           paymentId:
-            payment.paymentId || null,
+            payment.paymentId ||
+            null,
 
           status:
-            payment.status || "pending",
+            payment.status ||
+            "pending",
 
           checkoutUrl:
             payment.checkoutUrl,
-
-          method,
         },
       });
     }
 
-    // =========================================================
-    // 6. MÉTODO NÃO TRATADO
-    // =========================================================
 
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Método de pagamento não suportado.",
-      },
-      { status: 400 }
-    );
-  } catch (error: any) {
+    // =====================================================
+    // 7. MÉTODO NÃO SUPORTADO
+    // =====================================================
+
+    return json(res, 400, {
+      success: false,
+
+      error:
+        "Método de pagamento não suportado.",
+
+      supportedMethods: [
+        "mpesa",
+        "emola",
+        "card",
+      ],
+    });
+
+  } catch (error) {
+
+    // =====================================================
+    // ERRO
+    // =====================================================
+
     console.error(
       "========================================"
     );
 
     console.error(
-      "PAYGO PAYMENT INITIATE ERROR"
+      "❌ PAYGO PAYMENT INITIATE ERROR"
     );
 
     console.error(
       "========================================"
     );
 
-    console.error(error);
+    console.error(
+      "Message:",
+      error?.message
+    );
+
+    console.error(
+      "Status:",
+      error?.status
+    );
+
+    console.error(
+      "Code:",
+      error?.code
+    );
+
+    console.error(
+      "Data:",
+      error?.data
+    );
+
+    console.error(
+      "Stack:",
+      error?.stack
+    );
+
 
     const status =
-      Number(error?.status) >= 400 &&
-      Number(error?.status) < 600
-        ? Number(error.status)
+      Number(
+        error?.status
+      ) >= 400 &&
+      Number(
+        error?.status
+      ) < 600
+
+        ? Number(
+            error.status
+          )
+
         : 500;
 
-    return NextResponse.json(
-      {
-        success: false,
 
-        error:
-          error?.message ||
-          "Erro ao iniciar pagamento.",
+    return json(res, status, {
+      success: false,
 
-        provider:
-          "zumbopay",
+      provider:
+        "zumbopay",
 
-        code:
-          error?.code || null,
-      },
-      { status }
-    );
+      error:
+        error?.message ||
+        "Erro interno ao iniciar pagamento.",
+
+      code:
+        error?.code ||
+        null,
+
+      reference:
+        body?.reference ||
+        body?.orderId ||
+        null,
+
+      ...(process.env.NODE_ENV !==
+      "production"
+        ? {
+            details:
+              error?.data ||
+              null,
+          }
+        : {}),
+    });
   }
 }
