@@ -68,6 +68,21 @@ function getCustomerName(body) {
   );
 }
 
+async function getExistingTopUp(reference) {
+  if (!reference) return null;
+
+  const db = getFirebaseDb();
+  const ref = db.collection("topups").doc(String(reference));
+  const snap = await ref.get();
+
+  if (!snap.exists) return null;
+
+  return {
+    ref,
+    data: snap.data() || {},
+  };
+}
+
 async function createPendingTopUp({ reference, userId, amount, method, phone, customerName }) {
   if (!userId) throw new Error("userId é obrigatório para criar o depósito.");
 
@@ -140,8 +155,30 @@ export default async function handler(req, res) {
     const amount = Number(body.amount);
     const method = normalizePaymentMethod(body.method);
     const phone = body.phone || "";
-    const userId = getUserId(body);
-    const customerName = getCustomerName(body);
+
+    // O Dashboard.html já cria o documento topups/{topupId} antes de chamar
+    // esta API. Esse documento contém o userId real da sessão Firebase.
+    // Assim não precisamos exigir que o frontend envie userId novamente.
+    let userId = getUserId(body);
+    let customerName = getCustomerName(body);
+    let existingTopUp = null;
+
+    if (!userId && reference) {
+      existingTopUp = await getExistingTopUp(reference);
+
+      if (existingTopUp?.data?.userId) {
+        userId = String(existingTopUp.data.userId);
+        customerName =
+          existingTopUp.data.customerName ||
+          existingTopUp.data.userName ||
+          customerName;
+
+        console.log("[PayGo → ZumboPay] userId recuperado do TopUp", {
+          reference,
+          userId,
+        });
+      }
+    }
 
     console.log("[PayGo → ZumboPay] initiate", {
       amount,
@@ -150,6 +187,7 @@ export default async function handler(req, res) {
       reference,
       userId: userId ? String(userId) : null,
       customerName,
+      existingTopUp: Boolean(existingTopUp),
     });
 
     if (!Number.isFinite(amount) || amount <= 0) {
@@ -161,7 +199,11 @@ export default async function handler(req, res) {
     }
 
     if (!userId) {
-      return json(res, 400, { success: false, error: "Sessão do cliente não identificada. userId é obrigatório." });
+      return json(res, 400, {
+        success: false,
+        error: "Sessão do cliente não identificada. O depósito TopUp não contém userId.",
+        reference,
+      });
     }
 
     if (method === "mpesa" || method === "emola") {
