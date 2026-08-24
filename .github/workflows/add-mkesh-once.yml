@@ -1,0 +1,119 @@
+name: Add mKesh support
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  add-mkesh:
+    if: ${{ !contains(github.event.head_commit.message, '[mkesh-auto]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Patch PayGo for mKesh
+        shell: python
+        run: |
+          from pathlib import Path
+
+          def patch(path, replacements):
+              p = Path(path)
+              text = p.read_text(encoding='utf-8')
+              original = text
+              for old, new in replacements:
+                  if old not in text:
+                      raise SystemExit(f'Pattern not found in {path}: {old[:100]}')
+                  text = text.replace(old, new, 1)
+              if text == original:
+                  raise SystemExit(f'No changes made to {path}')
+              p.write_text(text, encoding='utf-8')
+
+          patch('api/lib/services/zumbopay.js', [
+              (
+                  ' * - e-Mola STK Push\n',
+                  ' * - e-Mola STK Push\n * - mKesh STK Push\n'
+              ),
+              (
+                  '    walletEmola:\n      process.env.ZUMBOPAY_WALLET_EMOLA || "",\n\n    walletCard:',
+                  '    walletEmola:\n      process.env.ZUMBOPAY_WALLET_EMOLA || "",\n\n    walletMkesh:\n      process.env.ZUMBOPAY_WALLET_MKESH || "",\n\n    walletCard:'
+              ),
+              (
+                  '    case "emola":\n    case "e-mola":\n    case "e_mola":\n    case "emola":\n      return "emola";\n\n    case "card":',
+                  '    case "emola":\n    case "e-mola":\n    case "e_mola":\n    case "emola":\n      return "emola";\n\n    case "mkesh":\n    case "m-kesh":\n    case "m_kesh":\n    case "m kesh":\n      return "mkesh";\n\n    case "card":'
+              ),
+              (
+                  '    case "emola":\n      return config.walletEmola;\n\n    case "card":',
+                  '    case "emola":\n      return config.walletEmola;\n\n    case "mkesh":\n      return config.walletMkesh;\n\n    case "card":'
+              ),
+              (
+                  '    normalizedMethod !== "mpesa" &&\n    normalizedMethod !== "emola"\n  ) {',
+                  '    normalizedMethod !== "mpesa" &&\n    normalizedMethod !== "emola" &&\n    normalizedMethod !== "mkesh"\n  ) {'
+              ),
+              (
+                  '      "createCharge suporta apenas M-Pesa e e-Mola."',
+                  '      "createCharge suporta apenas M-Pesa, e-Mola e mKesh."'
+              ),
+              (
+                  '        "mpesa",\n        "emola",\n        "card",',
+                  '        "mpesa",\n        "emola",\n        "mkesh",\n        "card",'
+              )
+          ])
+
+          patch('api/payments/initiate.js', [
+              (
+                  '      if (method === "mpesa" || method === "emola") {',
+                  '      if (method === "mpesa" || method === "emola" || method === "mkesh") {'
+              ),
+              (
+                  '      if (method === "emola" && !/^2588[67]\\d{7}$/.test(msisdn)) {\n        return json(res, 400, { success: false, error: "Para e-Mola utilize um número 86 ou 87." });\n      }\n\n      const topup = await createPendingTopUp({',
+                  '      if (method === "emola" && !/^2588[67]\\d{7}$/.test(msisdn)) {\n        return json(res, 400, { success: false, error: "Para e-Mola utilize um número 86 ou 87." });\n      }\n\n      if (method === "mkesh" && !/^2588[23]\\d{7}$/.test(msisdn)) {\n        return json(res, 400, { success: false, error: "Para mKesh utilize um número 82 ou 83." });\n      }\n\n      const topup = await createPendingTopUp({'
+              ),
+              (
+                  '      supportedMethods: ["mpesa", "emola", "card"],',
+                  '      supportedMethods: ["mpesa", "emola", "mkesh", "card"],'
+              )
+          ])
+
+          patch('dashboard.html', [
+              (
+                  'Número M-Pesa ou e-Mola que receberá o pedido de pagamento.',
+                  'Número M-Pesa, e-Mola ou mKesh que receberá o pedido de pagamento.'
+              ),
+              (
+                  '<div class="grid grid-cols-3 gap-2">',
+                  '<div class="grid grid-cols-4 gap-2">',
+              ),
+              (
+                  '                        <label class="cursor-pointer">\n                            <input type="radio" name="topUpMethod" value="bank" class="peer sr-only" onchange="window.toggleBankDetails(this.value)">',
+                  '                        <label class="cursor-pointer">\n                            <input type="radio" name="topUpMethod" value="mkesh" class="peer sr-only" onchange="window.toggleBankDetails(this.value)">\n                            <div class="selection-chip p-3 rounded-xl text-center text-xs font-bold peer-checked:text-white peer-checked:border-green-500 peer-checked:bg-green-500/20 transition-all shadow-sm">mKESH</div>\n                        </label>\n                        <label class="cursor-pointer">\n                            <input type="radio" name="topUpMethod" value="bank" class="peer sr-only" onchange="window.toggleBankDetails(this.value)">'
+              ),
+              (
+                  '            !/^(8[4-7])\\d{7}$/.test(\n                localPhone\n            )\n        ) {\n            throw new Error(\n                \'Número inválido. Use um número M-Pesa/e-Mola válido, por exemplo 841234567.\'\n            );\n        }',
+                  '            !/^(8[4-7])\\d{7}$/.test(localPhone)\n            && !(method === \'mkesh\' && /^8[23]\\d{7}$/.test(localPhone))\n        ) {\n            throw new Error(\n                method === \'mkesh\'\n                    ? \'Número inválido. Para mKesh use um número 82 ou 83, por exemplo 821234567.\'\n                    : \'Número inválido. Use um número M-Pesa/e-Mola válido, por exemplo 841234567.\'\n            );\n        }\n\n        if (method === \'mpesa\' && !/^8[45]\\d{7}$/.test(localPhone)) {\n            throw new Error(\'Para M-Pesa utilize um número 84 ou 85.\');\n        }\n        if (method === \'emola\' && !/^8[67]\\d{7}$/.test(localPhone)) {\n            throw new Error(\'Para e-Mola utilize um número 86 ou 87.\');\n        }\n        if (method === \'mkesh\' && !/^8[23]\\d{7}$/.test(localPhone)) {\n            throw new Error(\'Para mKesh utilize um número 82 ou 83.\');\n        }'
+              ),
+              (
+                  '`A iniciar pagamento via ${method === \'mpesa\' ? \'M-Pesa\' : \'e-Mola\'}...`,',
+                  '`A iniciar pagamento via ${method === \'mpesa\' ? \'M-Pesa\' : method === \'emola\' ? \'e-Mola\' : \'mKesh\'}...`, '
+              )
+          ])
+
+          # Add a small provider marker for future admin/reconciliation flows.
+          p = Path('dashboard.html')
+          text = p.read_text(encoding='utf-8')
+          text = text.replace("provider:\n                    'zumbopay'", "provider:\n                    'zumbopay'", 1)
+          p.write_text(text, encoding='utf-8')
+
+      - name: Commit changes
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add api/lib/services/zumbopay.js api/payments/initiate.js dashboard.html .github/workflows/add-mkesh-once.yml
+          git rm .github/workflows/add-mkesh-once.yml
+          git diff --cached --quiet && exit 0
+          git commit -m "feat: add mKesh topups [mkesh-auto]"
+          git push
