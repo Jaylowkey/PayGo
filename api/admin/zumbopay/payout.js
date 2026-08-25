@@ -1,4 +1,6 @@
 import crypto from "crypto";
+import { initializeApp, cert, getApps } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
 import { requireZumboAdmin } from "./login.js";
 
 const BASE_URL = (process.env.ZUMBOPAY_API_URL || "https://zumbopay.com/api/public/v1").replace(/\/+$/, "");
@@ -8,6 +10,47 @@ function normalizePhone(value) {
   if (phone.startsWith("+")) phone = phone.slice(1);
   if (!phone.startsWith("258")) phone = `258${phone}`;
   return phone;
+}
+
+function getAdminDb() {
+  if (!getApps().length) {
+    const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
+    if (!raw) throw new Error("FIREBASE_SERVICE_ACCOUNT em falta.");
+    const serviceAccount = JSON.parse(raw);
+    if (serviceAccount.private_key) serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, "\n");
+    initializeApp({ credential: cert(serviceAccount) });
+  }
+  const app = getApps()[0];
+  try { return getFirestore(app, "paygodb"); } catch { return getFirestore(app); }
+}
+
+async function persistPayout(payout, body, walletId) {
+  try {
+    const db = getAdminDb();
+    const reference = String(payout.reference || payout.id || `paygo-${Date.now()}`).replace(/\//g, "_");
+    await db.collection("zumbopay_payouts").doc(reference).set({
+      id: payout.id || null,
+      reference: payout.reference || null,
+      providerReference: payout.provider_reference || null,
+      walletId,
+      wallet_id: walletId,
+      amount: Number(payout.amount ?? body.amount),
+      feeAmount: Number(payout.fee_amount ?? 0),
+      netAmount: Number(payout.net_amount ?? 0),
+      currency: payout.currency || "MZN",
+      method: payout.method || body.method,
+      destination: payout.destination || body.destination || body.phone,
+      holder: body.holder ? String(body.holder).slice(0, 160) : null,
+      notes: body.notes ? String(body.notes).slice(0, 500) : null,
+      status: payout.status || "pending",
+      autoDispatched: Boolean(payout.auto_dispatched),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      source: "paygo-admin",
+    }, { merge: true });
+  } catch (error) {
+    console.error("[PayGo Admin → ZumboPay] failed to persist payout history", error);
+  }
 }
 
 export default async function handler(req, res) {
@@ -73,6 +116,8 @@ export default async function handler(req, res) {
     }
 
     const payout = data?.data || {};
+    await persistPayout(payout, { ...body, destination }, walletId);
+
     return res.status(200).json({
       success: true,
       payout: {
