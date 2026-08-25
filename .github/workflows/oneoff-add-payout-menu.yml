@@ -1,0 +1,48 @@
+name: One-off add payout menu
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  update-dashboard:
+    if: !startsWith(github.event.head_commit.message, 'chore(admin): add payout menu')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add Payout / Transferências menu item
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('admin/dashboard.html')
+          text = path.read_text(encoding='utf-8')
+          marker = '''            <a href="pedidos.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 rounded-xl font-medium hover:text-white" role="menuitem">'''
+          item = '''            <a href="payout.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-slate-400 rounded-xl font-medium hover:text-white" role="menuitem">\n                <i data-lucide="send" class="w-5 h-5 text-brand-400" aria-hidden="true"></i>\n                <span class="text-sm">Payout / Transferências</span>\n            </a>\n'''
+          if 'href="payout.html"' in text:
+              print('Payout menu already present; nothing to change.')
+          else:
+              if marker not in text:
+                  raise SystemExit('Menu marker not found; refusing to modify dashboard.html')
+              text = text.replace(marker, item + marker, 1)
+              path.write_text(text, encoding='utf-8')
+              print('Payout menu inserted.')
+      - name: Commit dashboard change
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add admin/dashboard.html
+          git diff --cached --quiet && exit 0
+          git commit -m "chore(admin): add payout menu"
+          git push
+      - name: Remove one-off workflow
+        if: success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -f .github/workflows/oneoff-add-payout-menu.yml
+          git add .github/workflows/oneoff-add-payout-menu.yml
+          git commit -m "chore: remove one-off payout menu updater"
+          git push
