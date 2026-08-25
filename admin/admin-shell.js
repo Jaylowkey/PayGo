@@ -21,7 +21,7 @@ function shell(){
  ensureTheme();
  const old=document.querySelector('aside'); if(!old)return;
  const labels={Principal:['dashboard.html','relatorios.html'],Operações:['clientes.html','pedidos.html','payout.html','cartoes.html','gerar-fatura.html'],Ecossistema:['afiliados.html','candidaturas.html','logs.html','logs-admin.html','mensagem.html'],Sistema:['configuracoes.html','admin.html']};
- let nav=''; groups.forEach(g=>{nav+=`<div class="pg-label">${g}</div>`;labels[g].forEach(p=>{const d=pages[p];if(!d)return;nav+=`<a class="pg-item ${p===file?'active':''}" href="${p}">${icon(d[1])}<span>${d[0]}</span>`})});
+ let nav=''; groups.forEach(g=>{nav+=`<div class="pg-label">${g}</div>`;labels[g].forEach(p=>{const d=pages[p];if(!d)return;nav+=`<a class="pg-item ${p===file?'active':''}" href="${p}">${icon(d[1])}<span>${d[0]}</span></a>`})});
  const aside=document.createElement('aside');aside.id='sidebar';aside.className='pg-sidebar';aside.innerHTML=`<div class="pg-brand"><div class="pg-brand-mark">⚡</div><div><div class="pg-brand-title">PayGo</div><div class="pg-brand-sub">Admin Financeiro</div></div></div><nav class="pg-nav">${nav}</nav><div class="pg-footer"><a class="pg-item" href="../index.html">${icon('arrow-left')}<span>Voltar ao PayGo</span></a></div>`;old.replaceWith(aside);
  const main=document.querySelector('main');if(main){main.classList.add('pg-main')}
  let overlay=document.getElementById('pgOverlay');if(!overlay){overlay=document.createElement('div');overlay.id='pgOverlay';overlay.className='pg-overlay';document.body.prepend(overlay)}
