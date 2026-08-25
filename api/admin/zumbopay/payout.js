@@ -59,8 +59,28 @@ export default async function handler(req, res) {
 
     const text = await response.text();
     let data = {};
-    try { data = text ? JSON.parse(text) : {}; } catch { return res.status(502).json({ success: false, error: "Resposta inválida da ZumboPay." }); }
-    if (!response.ok) return res.status(response.status).json({ success: false, error: data?.error?.message || data?.message || `ZumboPay HTTP ${response.status}`, code: data?.error?.code || data?.code || null });
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch {
+      console.error("[PayGo Admin → ZumboPay] invalid JSON", {
+        status: response.status,
+        contentType: response.headers.get("content-type"),
+        body: text.slice(0, 500),
+      });
+      return res.status(502).json({
+        success: false,
+        error: `Resposta inválida da ZumboPay (HTTP ${response.status}).`,
+        contentType: response.headers.get("content-type") || null,
+      });
+    }
+
+    if (!response.ok) {
+      return res.status(response.status).json({
+        success: false,
+        error: data?.error?.message || data?.message || `ZumboPay HTTP ${response.status}`,
+        code: data?.error?.code || data?.code || null,
+      });
+    }
 
     const payout = data?.data || {};
     return res.status(200).json({
