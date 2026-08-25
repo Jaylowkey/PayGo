@@ -1,4 +1,7 @@
 import crypto from "crypto";
+import { initializeApp, cert, getApps } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
+import { getFirestore } from "firebase-admin/firestore";
 
 const COOKIE_NAME = "paygo_admin_zp";
 const MAX_AGE = 60 * 60 * 8;
@@ -30,7 +33,43 @@ function validSession(token, secret) {
   return timingSafe(signature, sign(`${expires}.${nonce}`, secret));
 }
 
-export function requireZumboAdmin(req) {
+function getFirebase() {
+  if (!getApps().length) {
+    const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
+    if (!raw) throw new Error("FIREBASE_SERVICE_ACCOUNT em falta.");
+    const serviceAccount = JSON.parse(raw);
+    if (serviceAccount.private_key) serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, "\n");
+    initializeApp({ credential: cert(serviceAccount) });
+  }
+  const app = getApps()[0];
+  let db;
+  try { db = getFirestore(app, "paygodb"); } catch { db = getFirestore(app); }
+  return { auth: getAuth(app), db };
+}
+
+async function validFirebaseAdmin(req) {
+  const header = req.headers.authorization || req.headers.Authorization || "";
+  if (!header.startsWith("Bearer ")) return false;
+  const token = header.slice(7).trim();
+  if (!token) return false;
+
+  try {
+    const { auth, db } = getFirebase();
+    const decoded = await auth.verifyIdToken(token);
+    const snap = await db.collection("users").doc(decoded.uid).get();
+    if (!snap.exists) return false;
+    const role = String(snap.data()?.role || "").toLowerCase();
+    return role === "admin" || role === "superadmin";
+  } catch (error) {
+    console.error("[PayGo Admin → ZumboPay] Firebase admin auth failed", error?.message || error);
+    return false;
+  }
+}
+
+export async function requireZumboAdmin(req) {
+  if (await validFirebaseAdmin(req)) return true;
+
+  // Compatibilidade com a sessão ZumboPay antiga.
   const secret = process.env.PAYGO_ADMIN_API_KEY || "";
   if (!secret) return false;
   const cookies = parseCookies(req.headers.cookie || "");
@@ -45,7 +84,7 @@ export default async function handler(req, res) {
   if (!secret) return res.status(500).json({ success: false, error: "PAYGO_ADMIN_API_KEY não configurada." });
 
   if (req.method === "GET") {
-    return res.status(200).json({ success: true, authenticated: requireZumboAdmin(req) });
+    return res.status(200).json({ success: true, authenticated: await requireZumboAdmin(req) });
   }
 
   if (req.method !== "POST") return res.status(405).json({ success: false, error: "Método não permitido." });
