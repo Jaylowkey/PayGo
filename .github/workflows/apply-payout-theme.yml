@@ -1,0 +1,39 @@
+name: Apply payout dashboard theme
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  apply-theme:
+    if: "!contains(github.event.head_commit.message, 'Apply payout dashboard theme')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Inject payout theme stylesheet
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('admin/dashboard.html')
+          s = p.read_text(encoding='utf-8')
+          link = '<link rel="stylesheet" href="payout-theme.css">'
+          if link not in s:
+              s = s.replace('</head>', f'    {link}\n</head>', 1)
+              p.write_text(s, encoding='utf-8')
+          wf = Path('.github/workflows/apply-payout-theme.yml')
+          if wf.exists():
+              wf.unlink()
+
+      - name: Commit theme application
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add admin/dashboard.html .github/workflows/apply-payout-theme.yml
+          git commit -m "style(admin): apply payout page design to dashboard" || exit 0
+          git push origin main
