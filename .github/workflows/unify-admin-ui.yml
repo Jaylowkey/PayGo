@@ -1,0 +1,36 @@
+name: Apply PayGo Admin Shell
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'admin/*.html'
+      - 'admin/admin-shell.css'
+      - 'admin/admin-shell.js'
+permissions:
+  contents: write
+jobs:
+  apply-shell:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inject shared admin shell
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          for p in Path('admin').glob('*.html'):
+              s=p.read_text(encoding='utf-8')
+              css='<link rel="stylesheet" href="admin-shell.css">'
+              js='<script src="admin-shell.js"></script>'
+              if 'href="admin-shell.css"' not in s:
+                  s=s.replace('</head>', '  '+css+'\n</head>', 1)
+              if 'src="admin-shell.js"' not in s:
+                  s=s.replace('</body>', '  '+js+'\n</body>', 1)
+              p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit normalized admin pages
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add admin/*.html
+          git diff --cached --quiet || git commit -m 'feat(admin): unify sidebar and visual shell'
+          git push
