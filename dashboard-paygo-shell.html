@@ -30,14 +30,35 @@
     const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
     async function initFirebase() {
-      const [{ initializeApp, getApps }, { getAuth }, firestore] = await Promise.all([
+      const [{ initializeApp, getApps }, authModule, firestore] = await Promise.all([
         import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js'),
         import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js'),
         import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js')
       ]);
       const name = 'paygo-dashboard-shell';
       const app = getApps().find(item => item.name === name) || initializeApp(CONFIG, name);
-      return { auth: getAuth(app), db: firestore.getFirestore(app, 'paygodb'), firestore };
+      return { auth: authModule.getAuth(app), db: firestore.getFirestore(app, 'paygodb'), firestore, onAuthStateChanged: authModule.onAuthStateChanged };
+    }
+
+    async function waitForUser(auth, onAuthStateChanged) {
+      if (auth.currentUser) return auth.currentUser;
+      return new Promise((resolve, reject) => {
+        let done = false;
+        const timer = setTimeout(() => {
+          if (done) return;
+          done = true;
+          unsubscribe?.();
+          reject(new Error('A sessão do cliente não foi carregada. Entre novamente na sua conta.'));
+        }, 5000);
+        const unsubscribe = onAuthStateChanged(auth, user => {
+          if (done) return;
+          if (!user) return;
+          done = true;
+          clearTimeout(timer);
+          unsubscribe();
+          resolve(user);
+        });
+      });
     }
 
     function installStyles(doc) {
@@ -121,11 +142,10 @@
       }
 
       try {
-        const { auth, db, firestore } = await initFirebase();
-        const user = auth.currentUser;
-        if (!user) throw new Error('A sessão expirou. Entre novamente na sua conta.');
-
+        const { auth, db, firestore, onAuthStateChanged } = await initFirebase();
+        const user = await waitForUser(auth, onAuthStateChanged);
         const topupId = `TOP-${Date.now().toString().slice(-10)}`;
+
         await firestore.setDoc(firestore.doc(db, 'topups', topupId), {
           topupId,
           userId: user.uid,
@@ -143,13 +163,13 @@
         const response = await fetch('/api/payments/initiate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+          body: {
             topupId,
             orderId: topupId,
             amount: Number(amount.toFixed(2)),
             method: 'card',
             description: `Depósito PayGo por cartão ${topupId}`
-          })
+          }
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok || !data.success) throw new Error(data.error || 'Não foi possível iniciar o pagamento por cartão.');
