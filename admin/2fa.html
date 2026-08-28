@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="pt-MZ">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>2FA | PayGo OS</title>
+  <meta name="robots" content="noindex,nofollow">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <link rel="stylesheet" href="admin-shell.css">
+  <style>
+    body{margin:0;background:#eef3f9;color:#102033;font-family:Inter,system-ui,sans-serif}.wrap{max-width:900px;margin:0 auto;padding:110px 20px 60px}.card{background:#fff;border:1px solid #e5ebf2;border-radius:24px;box-shadow:0 14px 40px rgba(15,35,60,.07)}.hero{background:linear-gradient(135deg,#102d4e,#0b1f37);color:#fff}.muted{color:#718096}.input{width:100%;box-sizing:border-box;background:#f8fafc;border:1px solid #dce5ef;border-radius:12px;padding:13px;outline:0}.input:focus{border-color:#287be8;box-shadow:0 0 0 3px #287be822}.btn{border:0;border-radius:12px;padding:12px 16px;font-weight:800;cursor:pointer}.primary{background:#287be8;color:#fff}.secondary{background:#edf3f9;color:#17324f}.danger{background:#fff0f0;color:#c63d3d}.pill{display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:7px 11px;font-size:12px;font-weight:800}.ok{background:#eaf9f0;color:#159447}.warn{background:#fff7e6;color:#bd7500}.qr{width:220px;height:220px;background:#fff;border-radius:16px;padding:10px;border:1px solid #e5ebf2}.secret{font-family:ui-monospace,monospace;letter-spacing:.12em;word-break:break-all;background:#0b1f37;color:#fff;border-radius:12px;padding:14px}.step{display:flex;gap:12px}.num{width:30px;height:30px;min-width:30px;border-radius:50%;background:#eaf3ff;color:#1769d2;display:grid;place-items:center;font-weight:900}
+  </style>
+</head>
+<body>
+<div id="pgRoot"></div>
+<main class="wrap">
+  <section class="card hero p-7 md:p-9">
+    <div class="flex items-start justify-between gap-4"><div><span class="pill bg-white/10 text-blue-100"><i data-lucide="shield-check" class="w-4"></i> Segurança administrativa</span><h1 class="text-3xl md:text-4xl font-black mt-4">Autenticação de dois fatores</h1><p class="text-blue-100/80 mt-3 max-w-2xl">Proteja o acesso ao PayGo OS com TOTP. Compatível com Google Authenticator, Microsoft Authenticator e outros aplicativos autenticadores.</p></div><a href="configuracoes.html" class="btn secondary whitespace-nowrap">Voltar</a></div>
+  </section>
+
+  <section class="card p-6 md:p-8 mt-6">
+    <div class="flex items-center justify-between gap-4"><div><h2 class="text-xl font-black">Estado do 2FA</h2><p class="muted text-sm mt-1">A configuração é individual por administrador.</p></div><span id="state" class="pill warn">A verificar...</span></div>
+    <div id="notReady" class="hidden mt-6 p-4 rounded-xl bg-amber-50 border border-amber-100 text-amber-800 text-sm">O TOTP ainda não está habilitado no projeto Firebase/Identity Platform. Ative o provedor TOTP no Firebase antes de concluir o registo.</div>
+
+    <div id="enrolled" class="hidden mt-6">
+      <div class="p-5 rounded-2xl bg-emerald-50 border border-emerald-100"><div class="flex items-center gap-3"><i data-lucide="badge-check" class="text-emerald-600"></i><div><b class="text-emerald-800">2FA ativo</b><p class="text-sm text-emerald-700 mt-1">Este administrador já possui um autenticador TOTP associado.</p></div></div></div>
+      <button id="disable" class="btn danger mt-5">Remover autenticador</button>
+    </div>
+
+    <div id="setup" class="hidden mt-6">
+      <div class="grid md:grid-cols-[240px_1fr] gap-7 items-start">
+        <div class="text-center"><canvas id="qr" class="qr mx-auto"></canvas><p class="muted text-xs mt-3">Digitalize este QR no seu autenticador.</p></div>
+        <div>
+          <div class="step"><span class="num">1</span><div><b>Adicione o PayGo OS</b><p class="muted text-sm mt-1">Abra Google Authenticator ou outro autenticador e digitalize o QR.</p></div></div>
+          <div class="step mt-5"><span class="num">2</span><div class="w-full"><b>Chave manual</b><p class="muted text-sm mt-1 mb-2">Se não conseguir digitalizar, utilize esta chave:</p><div id="secret" class="secret">—</div></div></div>
+          <div class="step mt-5"><span class="num">3</span><div class="w-full"><b>Confirme o código</b><p class="muted text-sm mt-1 mb-2">Digite o código de 6 dígitos gerado pelo aplicativo.</p><input id="code" class="input" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"><button id="enable" class="btn primary mt-3 w-full">Ativar 2FA</button></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="start" class="mt-6"><button id="startBtn" class="btn primary">Configurar 2FA</button></div>
+    <p id="message" class="text-sm mt-5"></p>
+  </section>
+</main>
+<script type="module">
+import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getAuth, onAuthStateChanged, multiFactor, TotpMultiFactorGenerator, EmailAuthProvider, reauthenticateWithCredential } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+const cfg={apiKey:'AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxSp0Qh8',authDomain:'paygo-14311.firebaseapp.com',projectId:'paygo-14311',storageBucket:'paygo-14311.firebasestorage.app',messagingSenderId:'208360646277',appId:'1:208360646277:web:aecc57cc0077ae48a52bec'};
+const app=getApps().length?getApp():initializeApp(cfg);const auth=getAuth(app);const db=getFirestore(app,'paygodb');
+const $=id=>document.getElementById(id);let currentUser=null;let secret=null;
+function msg(text,ok=false){$('message').textContent=text;$('message').className=`text-sm mt-5 ${ok?'text-emerald-600':'text-red-600'}`}
+function show(id,on=true){$(id).classList.toggle('hidden',!on)}
+
+onAuthStateChanged(auth,async user=>{
+  currentUser=user;
+  if(!user){location.href='../login.html?redirect=/admin/2fa.html';return}
+  if(!user.emailVerified){msg('Verifique o email da conta antes de configurar o 2FA.');$('state').textContent='Email não verificado';$('state').className='pill warn';return}
+  try{
+    const snap=await getDoc(doc(db,'users',user.uid));
+    const role=snap.exists()?snap.data().role:null;
+    if(!['admin','superadmin'].includes(role)){msg('Acesso reservado a administradores.');$('state').textContent='Sem permissão';$('state').className='pill warn';return}
+    const factors=multiFactor(user).enrolledFactors||[];
+    if(factors.length){$('state').textContent='Ativo';$('state').className='pill ok';show('enrolled');show('setup',false);show('start',false)}
+    else{$('state').textContent='Desativado';$('state').className='pill warn';show('start')}
+  }catch(e){console.error(e);if(e.code==='auth/operation-not-allowed'||e.code==='auth/unsupported-first-factor')show('notReady');msg('O Firebase ainda não permite TOTP neste projeto. Ative o TOTP no Identity Platform e tente novamente.')}
+});
+
+$('startBtn').onclick=async()=>{
+  if(!currentUser)return;
+  try{
+    const password=prompt('Por segurança, confirme a senha da sua conta administrativa:');
+    if(!password)return;
+    await reauthenticateWithCredential(currentUser,EmailAuthProvider.credential(currentUser.email,password));
+    const session=await multiFactor(currentUser).getSession();
+    secret=await TotpMultiFactorGenerator.generateSecret(session);
+    const uri=secret.generateQrCodeUrl(currentUser.email,'PayGo OS');
+    $('secret').textContent=secret.secretKey;
+    await QRCode.toCanvas($('qr'),uri,{width:220,margin:1});
+    show('start',false);show('setup');show('notReady',false);msg('QR gerado. Adicione-o no seu autenticador e introduza o código.',true);
+  }catch(e){console.error(e);if(e.code==='auth/operation-not-allowed'||e.code==='auth/unsupported-first-factor')show('notReady');msg(e.message||'Não foi possível iniciar a configuração do 2FA.')}
+};
+
+$('enable').onclick=async()=>{
+  const code=$('code').value.replace(/\D/g,'');if(code.length!==6||!secret){msg('Digite um código TOTP válido de 6 dígitos.');return}
+  try{const assertion=TotpMultiFactorGenerator.assertionForEnrollment(secret,code);await multiFactor(currentUser).enroll(assertion,'PayGo Authenticator');$('state').textContent='Ativo';$('state').className='pill ok';show('setup',false);show('enrolled');show('start',false);msg('2FA ativado com sucesso.',true)}catch(e){console.error(e);msg(e.message||'Código inválido ou expirado.')}
+};
+
+$('disable').onclick=async()=>{const factors=multiFactor(currentUser).enrolledFactors||[];if(!factors.length)return;try{await multiFactor(currentUser).unenroll(factors[0]);$('state').textContent='Desativado';$('state').className='pill warn';show('enrolled',false);show('start');msg('2FA removido.')}catch(e){console.error(e);msg(e.message||'Não foi possível remover o 2FA.')}};
+
+lucide.createIcons();
+</script>
+<script src="admin-shell.js"></script>
+</body>
+</html>
