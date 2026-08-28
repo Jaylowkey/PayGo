@@ -47,14 +47,14 @@ function verifySignature(raw, header) {
 
 function getPayload(event) {
   const data = event?.data || event?.payload || {};
-  // NetShop events can arrive as data directly or in a Stripe-style data.object shape.
-  return data?.object || data?.charge || data?.payment || data || event || {};
+  return data?.object || data?.charge || data?.payment || data?.transaction || data || event || {};
 }
 
 function getReference(payload, event) {
   return String(
     payload.reference || payload.merchant_reference || payload.merchantReference ||
-    payload.order_reference || payload.orderReference ||
+    payload.order_reference || payload.orderReference || payload.source_id || payload.sourceId ||
+    payload.metadata?.reference || payload.metadata?.merchant_reference ||
     event.reference || event.merchant_reference || event.merchantReference || ""
   ).trim();
 }
@@ -63,38 +63,59 @@ function getProviderId(payload, event) {
   return String(
     payload.id || payload.charge_id || payload.chargeId || payload.payment_id || payload.paymentId ||
     payload.transaction_id || payload.transactionId || payload.provider_reference || payload.providerReference ||
+    payload.provider?.id || payload.metadata?.charge_id || payload.metadata?.payment_id ||
     event.charge_id || event.payment_id || event.transaction_id || ""
   ).trim();
 }
 
 function eventState(eventType, payload) {
-  const status = String(payload.status || payload.payment_status || payload.paymentStatus || "").toLowerCase();
+  const status = String(payload.status || payload.payment_status || payload.paymentStatus || payload.state || "").toLowerCase();
   const type = String(eventType || "").toLowerCase();
-  if (type === "charge.paid" || type === "payment.paid") return "paid";
-  if (type === "charge.failed" || type === "payment.failed") return "failed";
-  if (type === "charge.pending" || type === "payment.pending") return "pending";
+  if (["charge.paid", "payment.paid", "charge.success", "payment.success"].includes(type)) return "paid";
+  if (["charge.failed", "payment.failed", "charge.failure", "payment.failure"].includes(type)) return "failed";
+  if (["charge.pending", "payment.pending", "charge.processing", "payment.processing"].includes(type)) return "pending";
   if (["paid", "successful", "success", "completed", "complete", "confirmed"].includes(status)) return "paid";
   if (["failed", "failure", "cancelled", "canceled", "expired", "declined"].includes(status)) return "failed";
   return "pending";
 }
 
-async function fetchCharge(id, method) {
+async function requestCharge(id, walletId) {
   const apiKey = process.env.NETSHOP_API_KEY;
-  const walletId = walletForMethod(method);
-  if (!apiKey || !walletId) throw new Error("NETSHOP_API_KEY ou wallet NetShop em falta.");
+  if (!apiKey) throw new Error("NETSHOP_API_KEY em falta.");
+
+  const headers = {
+    Authorization: `Bearer ${apiKey}`,
+    Accept: "application/json",
+  };
+  if (walletId) headers["X-Wallet-ID"] = String(walletId);
+
   const response = await fetch(`${BASE_URL}/charges/${encodeURIComponent(id)}`, {
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "X-Wallet-ID": String(walletId),
-      Accept: "application/json",
-    },
+    headers,
     signal: AbortSignal.timeout(30000),
   });
+
   const text = await response.text();
   let body = {};
   try { body = text ? JSON.parse(text) : {}; } catch { throw new Error(`Resposta inválida da NetShop (${response.status}).`); }
-  if (!response.ok) throw new Error(body?.error?.message || body?.message || `NetShop HTTP ${response.status}`);
-  return body?.data || body;
+  return { response, body };
+}
+
+async function fetchCharge(id, method) {
+  const walletId = walletForMethod(method);
+  let result = await requestCharge(id, walletId);
+  if (!result.response.ok && walletId) {
+    // Alguns endpoints da NetShop resolvem a cobrança pelo ID sem exigir
+    // X-Wallet-ID no GET. Tentar sem o header evita falso "reconciliation_pending".
+    result = await requestCharge(id, "");
+  }
+  if (!result.response.ok) {
+    throw new Error(result.body?.error?.message || result.body?.message || `NetShop HTTP ${result.response.status}`);
+  }
+  return result.body?.data || result.body;
+}
+
+function notificationText(amount, reference) {
+  return `O seu depósito de ${amount.toFixed(2)} MT foi confirmado e creditado na sua carteira PayGo. Referência: ${reference}.`;
 }
 
 export default async function handler(req, res) {
@@ -114,12 +135,12 @@ export default async function handler(req, res) {
 
   const firestore = db();
   const receivedAt = new Date().toISOString();
-  const eventType = String(event.event || event.type || event.event_type || "unknown");
+  const eventType = String(event.event || event.type || event.event_type || req.headers["x-event-type"] || "unknown");
   const payload = getPayload(event);
   const reference = getReference(payload, event);
   const providerId = getProviderId(payload, event);
   const method = normalizeMethod(payload.method || payload.payment_method || payload.paymentMethod || "mpesa");
-  const state = eventState(eventType, payload);
+  const stateFromEvent = eventState(eventType, payload);
 
   const logRef = firestore.collection("webhook_logs").doc();
   await logRef.set({
@@ -140,7 +161,6 @@ export default async function handler(req, res) {
     return res.status(200).json({ success: true, ignored: true, reason: "missing_reference" });
   }
 
-  // Topups are created with the PayGo reference as document ID.
   let topupRef = firestore.collection("topups").doc(reference);
   let topupSnap = await topupRef.get();
   if (!topupSnap.exists) {
@@ -169,28 +189,33 @@ export default async function handler(req, res) {
     return res.status(422).json({ success: false, error: "Topup sem userId.", reference });
   }
 
-  // The webhook is the trigger; when a provider ID is available we always reconcile
-  // against NetShop before changing the PayGo wallet.
   let verifiedCharge = payload;
   if (providerId) {
     try {
       verifiedCharge = await fetchCharge(providerId, normalizeMethod(topup.paymentMethod || topup.method || method));
     } catch (error) {
-      await logRef.update({ status: "reconciliation_pending", reconciliationError: error.message, updatedAt: new Date().toISOString() });
-      return res.status(202).json({ success: true, accepted: true, reconciliation: "pending", reference, providerId });
+      // Se o evento é explicitamente charge.paid, continuamos somente com a
+      // validação local de referência/valor. Para outros eventos mantemos
+      // a reconciliação obrigatória para evitar créditos indevidos.
+      if (stateFromEvent !== "paid") {
+        await logRef.update({ status: "reconciliation_pending", reconciliationError: error.message, updatedAt: new Date().toISOString() });
+        return res.status(202).json({ success: true, accepted: true, reconciliation: "pending", reference, providerId });
+      }
+      await logRef.update({ status: "reconciliation_bypassed_paid_event", reconciliationError: error.message, updatedAt: new Date().toISOString() });
     }
   }
 
   const verifiedStatus = eventState(eventType, verifiedCharge);
-  const expectedAmount = money(topup.amount || topup.grossAmount);
-  const providerAmount = money(verifiedCharge.amount ?? payload.amount);
+  const finalState = verifiedStatus === "paid" || stateFromEvent === "paid" ? "paid" : verifiedStatus;
+  const expectedAmount = money(topup.amount || topup.grossAmount || topup.walletCreditAmount);
+  const providerAmount = money(verifiedCharge.amount ?? verifiedCharge.total_amount ?? verifiedCharge.totalAmount ?? payload.amount ?? payload.total_amount ?? 0);
 
   if (providerAmount > 0 && expectedAmount > 0 && Math.abs(providerAmount - expectedAmount) > 0.01) {
     await logRef.update({ status: "amount_mismatch", expectedAmount, providerAmount, updatedAt: new Date().toISOString() });
     return res.status(422).json({ success: false, error: "Valor do pagamento não corresponde ao depósito PayGo.", reference });
   }
 
-  if (verifiedStatus === "pending") {
+  if (finalState === "pending") {
     await topupRef.set({
       provider: "netshop",
       providerPaymentId: providerId || topup.providerPaymentId || null,
@@ -204,7 +229,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ success: true, operation: "pending", reference, providerId });
   }
 
-  if (verifiedStatus === "failed") {
+  if (finalState === "failed") {
     await topupRef.set({
       provider: "netshop",
       providerPaymentId: providerId || null,
@@ -219,6 +244,11 @@ export default async function handler(req, res) {
     return res.status(200).json({ success: true, operation: "failed_recorded", reference, providerId });
   }
 
+  if (finalState !== "paid") {
+    await logRef.update({ status: "ignored_unknown_state", providerStatus: String(verifiedCharge.status || "unknown"), updatedAt: receivedAt });
+    return res.status(200).json({ success: true, ignored: true, reason: "unknown_state", reference, providerId });
+  }
+
   if (!expectedAmount && !providerAmount) {
     await logRef.update({ status: "paid_but_missing_amount", updatedAt: receivedAt });
     return res.status(422).json({ success: false, error: "Pagamento confirmado mas sem valor válido.", reference });
@@ -226,18 +256,27 @@ export default async function handler(req, res) {
 
   const creditAmount = expectedAmount || providerAmount;
   const userRef = firestore.collection("users").doc(userId);
-  const txId = `netshop_${String(providerId || reference).replace(/[^a-zA-Z0-9_-]/g, "_")}_${String(reference).replace(/[^a-zA-Z0-9_-]/g, "_")}`;
+  const txKey = String(providerId || reference).replace(/[^a-zA-Z0-9_-]/g, "_");
+  const refKey = String(reference).replace(/[^a-zA-Z0-9_-]/g, "_");
+  const txId = `netshop_${txKey}_${refKey}`;
   const txRef = firestore.collection("wallet_transactions").doc(txId);
-  let credited = false;
+  const notificationRef = firestore.collection("notifications").doc(`netshop_${refKey}`);
   let duplicate = false;
 
   await firestore.runTransaction(async transaction => {
-    const freshTopup = await transaction.get(topupRef);
+    const [freshTopup, freshUser, existingTx] = await Promise.all([
+      transaction.get(topupRef),
+      transaction.get(userRef),
+      transaction.get(txRef),
+    ]);
     const fresh = freshTopup.exists ? freshTopup.data() || {} : {};
-    if (fresh.walletCredited === true || fresh.status === "completed") {
+
+    if (fresh.walletCredited === true || fresh.status === "completed" || existingTx.exists) {
       duplicate = true;
       return;
     }
+
+    if (!freshUser.exists) throw new Error("Utilizador da carteira não encontrado.");
 
     transaction.set(topupRef, {
       provider: "netshop",
@@ -273,13 +312,26 @@ export default async function handler(req, res) {
       rawPayload: verifiedCharge,
       createdAt: receivedAt,
     });
-    credited = true;
+
+    transaction.set(notificationRef, {
+      userId,
+      title: "Depósito confirmado 💰",
+      message: notificationText(creditAmount, reference),
+      type: "deposit_confirmed",
+      provider: "netshop",
+      reference,
+      amount: creditAmount,
+      read: false,
+      priority: "high",
+      createdAt: receivedAt,
+    }, { merge: false });
   });
 
   await logRef.update({
     status: duplicate ? "ignored_duplicate_success" : "success_wallet_funded",
     providerStatus: String(verifiedCharge.status || "paid"),
     walletCreditAmount: creditAmount,
+    notificationCreated: !duplicate,
     updatedAt: new Date().toISOString(),
   });
 
@@ -289,5 +341,6 @@ export default async function handler(req, res) {
     reference,
     providerId,
     amount: creditAmount,
+    notification: !duplicate,
   });
 }
