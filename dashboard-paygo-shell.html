@@ -51,8 +51,7 @@
           reject(new Error('A sessão do cliente não foi carregada. Entre novamente na sua conta.'));
         }, 5000);
         const unsubscribe = onAuthStateChanged(auth, user => {
-          if (done) return;
-          if (!user) return;
+          if (done || !user) return;
           done = true;
           clearTimeout(timer);
           unsubscribe();
@@ -110,7 +109,7 @@
         if (wrap) wrap.classList.toggle('hidden', isCard);
         if (tel) {
           tel.disabled = isCard;
-          if (isCard) tel.removeAttribute('required'); else tel.setAttribute('required', 'true');
+          if (isCard) tel.removeAttribute('required'); else tel.setAttribute('required','true');
         }
         if (details) details.classList.toggle('hidden', !isCard);
         if (button) button.textContent = isCard ? 'Continuar para pagamento seguro' : 'Gerar Pagamento';
@@ -163,13 +162,13 @@
         const response = await fetch('/api/payments/initiate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: {
+          body: JSON.stringify({
             topupId,
             orderId: topupId,
             amount: Number(amount.toFixed(2)),
             method: 'card',
             description: `Depósito PayGo por cartão ${topupId}`
-          }
+          })
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok || !data.success) throw new Error(data.error || 'Não foi possível iniciar o pagamento por cartão.');
