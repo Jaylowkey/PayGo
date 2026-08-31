@@ -5,7 +5,7 @@ import { requireZumboAdmin } from "./zumbopay/login.js";
 
 const ZUMBO_URL=(process.env.ZUMBOPAY_API_URL||"https://zumbopay.com/api/public/v1").replace(/\/+$/,'');
 const NETSHOP_URL=(process.env.NETSHOP_API_URL||"https://www.netshop.co.mz/api/v1").replace(/\/+$/,'');
-const MIN_PAYOUT={netshop:100,zumbopay:10};
+const MIN_PAYOUT={netshop:10,zumbopay:10};
 const money=v=>{const n=Number(String(v??'').replace(',','.'));return Number.isFinite(n)?Math.round(n*100)/100:0};
 const method=v=>{const x=String(v||'').toLowerCase().replace(/[^a-z0-9]/g,'');return ['mpesa','emola','mkesh','card'].includes(x)?x:''};
 const phone=v=>{const d=String(v||'').replace(/\D/g,'');if(/^258\d{9}$/.test(d))return `+${d}`;if(/^\d{9}$/.test(d))return `+258${d}`;return ''};
