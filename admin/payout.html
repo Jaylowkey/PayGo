@@ -1,18 +1,305 @@
-<!doctype html><html lang="pt-MZ"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Payouts | PayGo Admin</title><meta name="robots" content="noindex,nofollow"><script src="https://cdn.tailwindcss.com"></script><script src="https://unpkg.com/lucide@latest"></script><link rel="stylesheet" href="admin-shell.css"><style>:root{--blue:#2563eb;--bg:#f5f8fc;--line:#e4eaf3}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#0f172a;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}.card{background:#fff;border:1px solid var(--line);box-shadow:0 10px 30px rgba(15,23,42,.06)}.input{width:100%;min-height:48px;border:1px solid #d8e1ed;border-radius:13px;padding:11px 13px;background:#fff;outline:0}.input:focus{border-color:#60a5fa;box-shadow:0 0 0 4px rgba(37,99,235,.1)}.provider-btn{border:1px solid #dbe4f0;border-radius:16px;padding:13px;text-align:left;background:#fff}.provider-btn.active{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);background:#f8fbff}.overlay{background:rgba(2,6,23,.55);backdrop-filter:blur(4px)}@media(max-width:1023px){.sidebar{transform:translateX(-100%);transition:.2s}.sidebar.open{transform:translateX(0)}}</style></head><body><div id="overlay" class="hidden fixed inset-0 z-40 overlay"></div><aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-[250px] bg-[#061126] text-white flex flex-col"><div class="h-20 px-5 flex items-center gap-3 border-b border-white/10"><div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-xl">⚡</div><div><b class="text-lg">PayGo</b><div class="text-[10px] text-blue-300 font-black tracking-widest uppercase">Admin Financeiro</div></div></div><nav class="flex-1 p-3 overflow-y-auto"><a class="flex gap-3 items-center p-3 rounded-xl text-slate-300 hover:bg-white/10" href="dashboard.html"><i data-lucide="layout-dashboard"></i>Dashboard</a><a class="flex gap-3 items-center p-3 rounded-xl text-slate-300 hover:bg-white/10" href="relatorios.html"><i data-lucide="bar-chart-3"></i>Relatórios</a><div class="px-3 pt-6 pb-2 text-[10px] uppercase tracking-widest text-slate-500 font-black">Operações</div><a class="flex gap-3 items-center p-3 rounded-xl text-slate-300 hover:bg-white/10" href="clientes.html"><i data-lucide="users"></i>Clientes</a><a class="flex gap-3 items-center p-3 rounded-xl text-slate-300 hover:bg-white/10" href="pedidos.html"><i data-lucide="shopping-bag"></i>Pedidos</a><a class="flex gap-3 items-center p-3 rounded-xl bg-blue-600 text-white font-bold" href="payout.html"><i data-lucide="send"></i>Payouts</a><a class="flex gap-3 items-center p-3 rounded-xl text-slate-300 hover:bg-white/10" href="cartoes.html"><i data-lucide="credit-card"></i>Cartões</a><a class="flex gap-3 items-center p-3 rounded-xl text-slate-300 hover:bg-white/10" href="logs.html"><i data-lucide="activity"></i>Transações & Logs</a><div class="px-3 pt-6 pb-2 text-[10px] uppercase tracking-widest text-slate-500 font-black">Sistema</div><a class="flex gap-3 items-center p-3 rounded-xl text-slate-300 hover:bg-white/10" href="configuracoes.html"><i data-lucide="settings"></i>Configurações</a><a class="flex gap-3 items-center p-3 rounded-xl text-slate-300 hover:bg-white/10" href="admin.html"><i data-lucide="user-cog"></i>Administradores</a></nav><div class="p-3 border-t border-white/10"><a class="flex gap-3 items-center p-3 rounded-xl text-slate-300" href="../index.html"><i data-lucide="arrow-left"></i>Voltar ao PayGo</a></div></aside><main class="lg:ml-[250px] min-h-screen"><header class="sticky top-0 z-30 h-20 bg-white/90 backdrop-blur-xl border-b px-4 sm:px-7 flex items-center justify-between"><div class="flex items-center gap-3"><button id="menu" class="lg:hidden w-10 h-10 rounded-xl border bg-white"><i data-lucide="menu"></i></button><div><div class="text-[10px] uppercase tracking-widest text-blue-600 font-black">Centro financeiro</div><h1 class="text-xl sm:text-2xl font-black">Payouts</h1></div></div><button id="refresh" class="border rounded-xl px-3 py-2.5 font-bold flex gap-2 items-center"><i data-lucide="refresh-cw"></i><span class="hidden sm:inline">Atualizar</span></button></header><div class="max-w-[1500px] mx-auto p-4 sm:p-7"><section class="rounded-3xl p-6 sm:p-8 text-white bg-gradient-to-br from-[#061126] via-[#0d2b51] to-blue-700 mb-6"><div class="text-xs uppercase tracking-widest font-black text-blue-200">PayGo Payout Engine</div><h2 class="text-2xl sm:text-4xl font-black mt-2">Um único painel para ZumboPay e NetShop</h2><p class="text-blue-100/80 mt-2 max-w-2xl">Payouts unificados, validação por provider e acompanhamento financeiro.</p></section><div id="notice" class="hidden mb-5 rounded-2xl p-4 text-sm font-semibold"></div><section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6"><div class="card rounded-2xl p-4"><span class="text-xs text-slate-500 font-bold">Payouts</span><b id="count" class="block text-2xl mt-1">0</b></div><div class="card rounded-2xl p-4"><span class="text-xs text-slate-500 font-bold">Concluídos</span><b id="success" class="block text-2xl mt-1 text-emerald-600">0</b></div><div class="card rounded-2xl p-4"><span class="text-xs text-slate-500 font-bold">Pendentes</span><b id="pending" class="block text-2xl mt-1 text-amber-600">0</b></div><div class="card rounded-2xl p-4"><span class="text-xs text-slate-500 font-bold">Total enviado</span><b id="total" class="block text-2xl mt-1">0,00 MT</b></div></section><section class="grid lg:grid-cols-2 gap-4 mb-6"><div class="card rounded-2xl p-5 bg-gradient-to-br from-blue-50 to-white"><div class="flex justify-between"><div><div class="text-xs uppercase tracking-widest text-blue-600 font-black">Saldo disponível</div><h3 class="text-lg font-black mt-1">NetShop</h3></div><span id="netshopStatus" class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-bold">A verificar</span></div><div id="netshopAmount" class="text-3xl font-black mt-4">—</div><p id="netshopInfo" class="text-xs text-slate-500 mt-1">A consultar a API.</p></div><div class="card rounded-2xl p-5 bg-gradient-to-br from-violet-50 to-white"><div class="flex justify-between"><div><div class="text-xs uppercase tracking-widest text-violet-600 font-black">Saldo total</div><h3 class="text-lg font-black mt-1">ZumboPay</h3></div><span id="zumboStatus" class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-bold">A verificar</span></div><div id="zumboAmount" class="text-3xl font-black mt-4">—</div><p id="zumboInfo" class="text-xs text-slate-500 mt-1">Soma das wallets disponíveis.</p></div></section><div class="grid xl:grid-cols-5 gap-5 items-start"><section class="xl:col-span-2 card rounded-3xl overflow-hidden"><div class="p-5 border-b"><div class="text-xs uppercase tracking-widest text-blue-600 font-black">Nova operação</div><h2 class="text-xl font-black mt-1">Criar payout</h2></div><form id="form" class="p-5 space-y-4"><div><span class="text-xs font-black text-slate-500">ORIGEM DOS FUNDOS</span><div class="grid grid-cols-2 gap-2 mt-2"><button type="button" data-provider="netshop" class="provider-btn active"><b class="block">NetShop</b><span class="text-[11px] text-slate-500">Saldo merchant</span></button><button type="button" data-provider="zumbopay" class="provider-btn"><b class="block">ZumboPay</b><span class="text-[11px] text-slate-500">Wallet selecionada</span></button></div><input id="provider" type="hidden" value="netshop"></div><label class="block"><span class="text-xs font-black text-slate-500">MÉTODO</span><select id="method" class="input mt-2"><option value="mpesa">M-Pesa</option><option value="emola">e-Mola</option><option value="mkesh">mKesh</option></select></label><label id="walletWrap" class="block hidden"><span class="text-xs font-black text-slate-500">WALLET ZUMBOPAY</span><select id="wallet" class="input mt-2"><option value="">A carregar...</option></select><p id="walletHelp" class="text-[11px] text-slate-500 mt-1"></p></label><label class="block"><span class="text-xs font-black text-slate-500">VALOR (MT)</span><input id="amount" class="input mt-2" type="number" min="100" step="0.01" placeholder="100,00" required><p id="minHelp" class="text-[11px] text-slate-500 mt-1"></p></label><label class="block"><span class="text-xs font-black text-slate-500">TELEFONE</span><input id="phone" class="input mt-2" inputmode="tel" maxlength="13" placeholder="841234567" required></label><label class="block"><span class="text-xs font-black text-slate-500">REFERÊNCIA</span><input id="reference" class="input mt-2" maxlength="100" placeholder="PG-PAYOUT-..."></label><label class="block"><span class="text-xs font-black text-slate-500">OBSERVAÇÃO</span><textarea id="notes" class="input mt-2 min-h-[80px]" maxlength="500" placeholder="Motivo do payout"></textarea></label><div id="precheck" class="rounded-2xl bg-slate-50 border p-4 text-xs text-slate-600">Introduza o valor para verificar.</div><button id="submit" class="w-full rounded-2xl bg-blue-600 hover:bg-blue-700 text-white py-4 font-black">Enviar payout</button></form></section><section class="xl:col-span-3 card rounded-3xl overflow-hidden"><div class="p-5 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-3"><div><div class="text-xs uppercase tracking-widest text-blue-600 font-black">Monitorização</div><h2 class="text-xl font-black">Histórico unificado</h2></div><div class="flex gap-2"><select id="filterProvider" class="rounded-xl border px-3 py-2 text-sm font-bold"><option value="all">Todos</option><option value="netshop">NetShop</option><option value="zumbopay">ZumboPay</option></select><select id="filterStatus" class="rounded-xl border px-3 py-2 text-sm font-bold"><option value="all">Estados</option><option value="success">Concluídos</option><option value="pending">Pendentes</option><option value="failed">Falhados</option></select></div></div><div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-slate-50 text-slate-500 text-xs uppercase"><tr><th class="text-left p-4">Provider</th><th class="text-left p-4">Referência</th><th class="text-left p-4">Método</th><th class="text-left p-4">Destino</th><th class="text-right p-4">Valor</th><th class="text-left p-4">Estado</th></tr></thead><tbody id="rows"><tr><td colspan="6" class="p-8 text-center text-slate-400">A carregar...</td></tr></tbody></table></div></section></div></div></main><div id="login" class="fixed inset-0 z-[60] hidden items-center justify-center p-4 overlay"><div class="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl"><div class="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center mb-4">⚡</div><h2 class="text-xl font-black">Acesso administrativo</h2><p class="text-sm text-slate-500 mt-1">Use a chave administrativa PayGo.</p><input id="adminKey" class="input mt-5" type="password" placeholder="Chave administrativa"><button id="loginBtn" class="w-full mt-3 bg-blue-600 text-white rounded-2xl py-3.5 font-black">Entrar</button><p id="loginError" class="hidden text-sm text-red-600 mt-3"></p></div></div><script>
-const $=id=>document.getElementById(id);let all=[];let balances={netshop:null,zumbopay:null};let mins={netshop:100,zumbopay:10};
-const SUCCESS=['SUCCESS','COMPLETED','SUCCEEDED','PAID'];const FAILED=['FAILED','FAILURE','REJECTED'];const PENDING=['PENDING','PROCESSING','IN_PROGRESS'];
-function money(v){return new Intl.NumberFormat('pt-MZ',{minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(v)||0)+' MT'}
-function notice(msg,ok=false){const n=$('notice');if(!n)return;n.textContent=String(msg||'');n.className=`mb-5 rounded-2xl p-4 text-sm font-semibold ${ok?'bg-emerald-50 border border-emerald-200 text-emerald-700':'bg-red-50 border border-red-200 text-red-700'}`}
-function setBalance(p,d){balances[p]=d||null;const a=$(`${p}Amount`),s=$(`${p}Status`),i=$(`${p}Info`);if(!a||!s||!i)return;if(!d){a.textContent='—';s.textContent='Indisponível';i.textContent='Não foi possível consultar.';return}const value=Number(d.balance||0);if(d.error&&value===0){a.textContent='—';s.textContent=d.configured?'Indisponível':'Não configurado';s.className='px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-bold';i.textContent=d.error;return}a.textContent=money(value);s.textContent='Disponível';s.className='px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold';i.textContent=p==='zumbopay'?`${Array.isArray(d.wallets)?d.wallets.length:0} wallet(s) — total disponível.`:'Saldo retornado pela API.'}
-async function api(url,opt={}){const r=await fetch(url,{...opt,credentials:'same-origin'});const d=await r.json().catch(()=>({success:false,error:'Resposta inválida.'}));if(r.status===401){const l=$('login');if(l){l.classList.remove('hidden');l.classList.add('flex')}throw new Error('Sessão administrativa expirada.')}if(!r.ok||d.success===false)throw new Error(d.error||'Operação recusada.');return d}
-async function loadBalances(){try{const d=await api('../api/admin/payout-balances');setBalance('netshop',d.netshop);setBalance('zumbopay',d.zumbopay)}catch(e){setBalance('netshop',null);setBalance('zumbopay',null);if(!String(e.message).includes('Sessão'))notice(e.message)}}
-async function loadHistory(){const d=await api('../api/admin/payout');all=Array.isArray(d.payouts)?d.payouts:[];if(d.minPayout&&typeof d.minPayout==='object')mins={...mins,...d.minPayout};else if(Number.isFinite(Number(d.minPayout)))mins.netshop=Number(d.minPayout);updateMinimum();render()}
-function updateMinimum(){const p=$('provider')?.value||'netshop',m=Number(mins[p]||10),a=$('amount'),h=$('minHelp');if(a)a.min=String(m);if(h)h.textContent=`Mínimo ${p==='netshop'?'NetShop':'ZumboPay'}: ${money(m)}`}
-async function loadWallets(){if($('provider')?.value!=='zumbopay')return;const s=$('wallet');if(!s)return;s.innerHTML='<option value="">A carregar wallets...</option>';try{const d=await api('../api/admin/zumbopay/wallets');const ws=Array.isArray(d.wallets)?d.wallets:[];s.innerHTML=ws.length?ws.map(w=>`<option value="${String(w.id||w.wallet_id||'').replace(/"/g,'&quot;')}">${String(w.name||w.label||w.id||'Wallet')} ${w.balance!=null?'— '+money(w.balance):''}</option>`).join(''):'<option value="">Nenhuma wallet disponível</option>';updatePrecheck()}catch(e){s.innerHTML='<option value="">Não foi possível carregar</option>';const h=$('walletHelp');if(h)h.textContent=e.message}}
-function setProvider(p){const x=$('provider');if(!x)return;x.value=p;document.querySelectorAll('.provider-btn').forEach(b=>b.classList.toggle('active',b.dataset.provider===p));const w=$('walletWrap');if(w)w.classList.toggle('hidden',p!=='zumbopay');updateMinimum();updatePrecheck();if(p==='zumbopay')loadWallets()}
-function currentBalance(){const b=balances[$('provider')?.value];return Number(b?.balance||0)}
-function updatePrecheck(){const box=$('precheck'),p=$('provider')?.value||'netshop',amount=Number($('amount')?.value||0),min=Number(mins[p]||10),bal=currentBalance();if(!box)return;if(!amount){box.className='rounded-2xl bg-slate-50 border p-4 text-xs text-slate-600';box.innerHTML=`<b>Verificação:</b> mínimo ${money(min)}.`;return}if(amount<min){box.className='rounded-2xl bg-red-50 border border-red-200 p-4 text-xs text-red-700';box.innerHTML=`<b>Valor abaixo do mínimo.</b> O mínimo é ${money(min)}.`;return}if(bal>0&&amount>bal){box.className='rounded-2xl bg-red-50 border border-red-200 p-4 text-xs text-red-700';box.innerHTML=`<b>Saldo insuficiente.</b> Disponível: ${money(bal)}.`;return}box.className='rounded-2xl bg-emerald-50 border border-emerald-200 p-4 text-xs text-emerald-700';box.innerHTML=`<b>Pronto.</b> ${bal>0?`Saldo disponível: ${money(bal)}.`:'O provider fará a validação final do saldo.'}`}
-function render(){const pf=$('filterProvider')?.value||'all',sf=$('filterStatus')?.value||'all',list=all.filter(x=>(pf==='all'||x.provider===pf)&&(sf==='all'||(sf==='success'?SUCCESS.includes(String(x.status).toUpperCase()):sf==='failed'?FAILED.includes(String(x.status).toUpperCase()):PENDING.includes(String(x.status).toUpperCase()))));if($('count'))$('count').textContent=all.length;if($('success'))$('success').textContent=all.filter(x=>SUCCESS.includes(String(x.status).toUpperCase())).length;if($('pending'))$('pending').textContent=all.filter(x=>PENDING.includes(String(x.status).toUpperCase())).length;if($('total'))$('total').textContent=money(all.reduce((s,x)=>s+Number(x.amount||0),0));const rows=$('rows');if(!rows)return;rows.innerHTML=list.length?list.map(x=>{const s=String(x.status||'PENDING').toUpperCase(),good=SUCCESS.includes(s),bad=FAILED.includes(s);return `<tr class="border-t hover:bg-slate-50"><td class="p-4 font-black"><span class="px-2.5 py-1 rounded-full text-xs ${x.provider==='netshop'?'bg-blue-50 text-blue-700':'bg-violet-50 text-violet-700'}">${x.provider==='netshop'?'NetShop':'ZumboPay'}</span></td><td class="p-4 font-semibold">${x.reference||x.id||'—'}</td><td class="p-4">${x.method||'—'}</td><td class="p-4">${x.destination||x.msisdn||'—'}</td><td class="p-4 text-right font-black">${money(x.amount)}</td><td class="p-4"><span class="px-2.5 py-1 rounded-full text-xs font-black ${good?'bg-emerald-50 text-emerald-700':bad?'bg-red-50 text-red-700':'bg-amber-50 text-amber-700'}">${s}</span></td></tr>`}).join(''):'<tr><td colspan="6" class="p-10 text-center text-slate-400">Nenhum payout encontrado.</td></tr>'}
-async function loadAll(){try{await Promise.all([loadHistory(),loadBalances()])}catch(e){if(!String(e.message).includes('Sessão'))notice(e.message)}}
-async function login(){const key=$('adminKey')?.value.trim();if(!key)return;const b=$('loginBtn');if(b)b.disabled=true;try{const r=await fetch('../api/admin/zumbopay/login',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({key})});const d=await r.json();if(!r.ok||!d.authenticated)throw new Error(d.error||'Chave inválida.');$('login').classList.add('hidden');$('login').classList.remove('flex');await loadAll()}catch(e){const x=$('loginError');if(x){x.textContent=e.message;x.classList.remove('hidden')}}finally{if(b)b.disabled=false}}
-document.querySelectorAll('.provider-btn').forEach(b=>b.addEventListener('click',()=>setProvider(b.dataset.provider)));$('method')?.addEventListener('change',updatePrecheck);$('amount')?.addEventListener('input',updatePrecheck);$('filterProvider')?.addEventListener('change',render);$('filterStatus')?.addEventListener('change',render);$('refresh')?.addEventListener('click',loadAll);$('loginBtn')?.addEventListener('click',login);$('adminKey')?.addEventListener('keydown',e=>{if(e.key==='Enter')login()});$('menu')?.addEventListener('click',()=>{$('sidebar')?.classList.add('open');$('overlay')?.classList.remove('hidden')});$('overlay')?.addEventListener('click',()=>{$('sidebar')?.classList.remove('open');$('overlay')?.classList.add('hidden')});$('form')?.addEventListener('submit',async e=>{e.preventDefault();const p=$('provider')?.value||'netshop',amount=Number($('amount')?.value||0),min=Number(mins[p]||10),bal=currentBalance();if(amount<min)return notice(`O mínimo para ${p==='netshop'?'NetShop':'ZumboPay'} é ${money(min)}.`);if(bal>0&&amount>bal)return notice(`Saldo insuficiente. Disponível: ${money(bal)}.`);if(p==='zumbopay'&&!$('wallet')?.value)return notice('Selecione uma wallet ZumboPay.');if(!confirm(`Confirmar payout de ${money(amount)} via ${p==='netshop'?'NetShop':'ZumboPay'} para ${$('phone')?.value||''}?`))return;const btn=$('submit');if(btn){btn.disabled=true;btn.textContent='A processar...'}try{const body={provider:p,method:$('method')?.value,amount,destination:$('phone')?.value,reference:$('reference')?.value,notes:$('notes')?.value};if(p==='zumbopay')body.walletId=$('wallet')?.value;const d=await api('../api/admin/payout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});notice(`Payout enviado. Referência: ${d.payout?.reference||d.payout?.id||'—'}`,true);$('form')?.reset();setProvider('netshop');await loadAll()}catch(e){notice(e.message)}finally{if(btn){btn.disabled=false;btn.textContent='Enviar payout'}}});lucide.createIcons();setProvider('netshop');loadAll();</script><script src="admin-shell.js"></script></body></html>
+<!doctype html>
+<html lang="pt-MZ">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Payouts | PayGo Admin</title>
+  <meta name="robots" content="noindex,nofollow">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="admin-shell.css">
+  <style>
+    :root{--blue:#2563eb;--bg:#f5f8fc;--line:#e4eaf3}
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;overflow-x:hidden}
+    body{background:var(--bg);color:#0f172a;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+    .card{background:#fff;border:1px solid var(--line);box-shadow:0 10px 30px rgba(15,23,42,.06)}
+    .input{width:100%;min-height:48px;border:1px solid #d8e1ed;border-radius:13px;padding:11px 13px;background:#fff;outline:0;font-size:16px}
+    .input:focus{border-color:#60a5fa;box-shadow:0 0 0 4px rgba(37,99,235,.1)}
+    .provider-btn{border:1px solid #dbe4f0;border-radius:16px;padding:13px;text-align:left;background:#fff;transition:.15s;min-width:0}
+    .provider-btn.active{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);background:#f8fbff}
+    .overlay{background:rgba(2,6,23,.55);backdrop-filter:blur(4px)}
+    .table-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .history-table{min-width:760px}
+    .stat-number{font-variant-numeric:tabular-nums}
+    @media(max-width:1023px){
+      .sidebar{transform:translateX(-100%);transition:.2s}
+      .sidebar.open{transform:translateX(0)}
+      main{margin-left:0!important}
+    }
+    @media(max-width:640px){
+      .hero-title{font-size:1.55rem;line-height:1.15}
+      .hero-copy{font-size:.86rem}
+      .stat-number{font-size:1.35rem}
+      .balance-number{font-size:1.8rem}
+      .provider-grid{grid-template-columns:1fr}
+      .filter-grid{display:grid;grid-template-columns:1fr 1fr;width:100%}
+      .filter-grid select{width:100%;min-width:0}
+      .mobile-tight{padding:1rem!important}
+    }
+  </style>
+</head>
+<body>
+  <div id="overlay" class="hidden fixed inset-0 z-40 overlay"></div>
+
+  <aside id="sidebar" class="sidebar fixed inset-y-0 left-0 z-50 w-[250px] bg-[#061126] text-white flex flex-col">
+    <div class="h-20 px-5 flex items-center gap-3 border-b border-white/10">
+      <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-xl">⚡</div>
+      <div><b class="text-lg">PayGo</b><div class="text-[10px] text-blue-300 font-black tracking-widest uppercase">Admin Financeiro</div></div>
+    </div>
+    <nav class="flex-1 p-3 overflow-y-auto">
+      <a class="flex gap-3 items-center p-3 rounded-xl text-slate-300 hover:bg-white/10" href="dashboard.html"><i data-lucide="layout-dashboard"></i>Dashboard</a>
+      <a class="flex gap-3 items-center p-3 rounded-xl text-slate-300 hover:bg-white/10" href="relatorios.html"><i data-lucide="bar-chart-3"></i>Relatórios</a>
+      <div class="px-3 pt-6 pb-2 text-[10px] uppercase tracking-widest text-slate-500 font-black">Operações</div>
+      <a class="flex gap-3 items-center p-3 rounded-xl text-slate-300 hover:bg-white/10" href="clientes.html"><i data-lucide="users"></i>Clientes</a>
+      <a class="flex gap-3 items-center p-3 rounded-xl text-slate-300 hover:bg-white/10" href="pedidos.html"><i data-lucide="shopping-bag"></i>Pedidos</a>
+      <a class="flex gap-3 items-center p-3 rounded-xl bg-blue-600 text-white font-bold" href="payout.html"><i data-lucide="send"></i>Payouts</a>
+      <a class="flex gap-3 items-center p-3 rounded-xl text-slate-300 hover:bg-white/10" href="cartoes.html"><i data-lucide="credit-card"></i>Cartões</a>
+      <a class="flex gap-3 items-center p-3 rounded-xl text-slate-300 hover:bg-white/10" href="logs.html"><i data-lucide="activity"></i>Transações & Logs</a>
+      <div class="px-3 pt-6 pb-2 text-[10px] uppercase tracking-widest text-slate-500 font-black">Sistema</div>
+      <a class="flex gap-3 items-center p-3 rounded-xl text-slate-300 hover:bg-white/10" href="configuracoes.html"><i data-lucide="settings"></i>Configurações</a>
+      <a class="flex gap-3 items-center p-3 rounded-xl text-slate-300 hover:bg-white/10" href="admin.html"><i data-lucide="user-cog"></i>Administradores</a>
+    </nav>
+    <div class="p-3 border-t border-white/10"><a class="flex gap-3 items-center p-3 rounded-xl text-slate-300" href="../index.html"><i data-lucide="arrow-left"></i>Voltar ao PayGo</a></div>
+  </aside>
+
+  <main class="lg:ml-[250px] min-h-screen">
+    <header class="sticky top-0 z-30 min-h-20 bg-white/90 backdrop-blur-xl border-b px-4 sm:px-7 py-3 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3 min-w-0">
+        <button id="menu" class="lg:hidden shrink-0 w-10 h-10 rounded-xl border bg-white flex items-center justify-center"><i data-lucide="menu"></i></button>
+        <div class="min-w-0"><div class="text-[10px] uppercase tracking-widest text-blue-600 font-black">Centro financeiro</div><h1 class="text-xl sm:text-2xl font-black truncate">Payouts</h1></div>
+      </div>
+      <button id="refresh" class="shrink-0 border rounded-xl px-3 py-2.5 font-bold flex gap-2 items-center bg-white"><i data-lucide="refresh-cw"></i><span class="hidden sm:inline">Atualizar</span></button>
+    </header>
+
+    <div class="max-w-[1500px] mx-auto p-3 sm:p-5 lg:p-7">
+      <section class="rounded-3xl p-5 sm:p-8 text-white bg-gradient-to-br from-[#061126] via-[#0d2b51] to-blue-700 mb-5 sm:mb-6">
+        <div class="text-xs uppercase tracking-widest font-black text-blue-200">PayGo Payout Engine</div>
+        <h2 class="hero-title text-2xl sm:text-4xl font-black mt-2">Payouts para ZumboPay e NetShop</h2>
+        <p class="hero-copy text-blue-100/80 mt-2 max-w-2xl">Operações unificadas, saldos em tempo real e validação antes do envio.</p>
+      </section>
+
+      <div id="notice" class="hidden mb-5 rounded-2xl p-4 text-sm font-semibold"></div>
+
+      <section class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mb-5 sm:mb-6">
+        <div class="card rounded-2xl p-3 sm:p-4"><span class="text-xs text-slate-500 font-bold">Payouts</span><b id="count" class="stat-number block text-2xl mt-1">0</b></div>
+        <div class="card rounded-2xl p-3 sm:p-4"><span class="text-xs text-slate-500 font-bold">Concluídos</span><b id="success" class="stat-number block text-2xl mt-1 text-emerald-600">0</b></div>
+        <div class="card rounded-2xl p-3 sm:p-4"><span class="text-xs text-slate-500 font-bold">Pendentes</span><b id="pending" class="stat-number block text-2xl mt-1 text-amber-600">0</b></div>
+        <div class="card rounded-2xl p-3 sm:p-4"><span class="text-xs text-slate-500 font-bold">Total enviado</span><b id="total" class="stat-number block text-xl sm:text-2xl mt-1">0,00 MT</b></div>
+      </section>
+
+      <section class="grid md:grid-cols-2 gap-3 sm:gap-4 mb-5 sm:mb-6">
+        <div class="card rounded-2xl p-4 sm:p-5 bg-gradient-to-br from-blue-50 to-white">
+          <div class="flex items-start justify-between gap-3"><div><div class="text-xs uppercase tracking-widest text-blue-600 font-black">Saldo disponível</div><h3 class="text-lg font-black mt-1">NetShop</h3></div><span id="netshopStatus" class="shrink-0 px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-bold">A verificar</span></div>
+          <div id="netshopAmount" class="balance-number text-3xl font-black mt-4">—</div><p id="netshopInfo" class="text-xs text-slate-500 mt-1">A consultar a API.</p>
+        </div>
+        <div class="card rounded-2xl p-4 sm:p-5 bg-gradient-to-br from-violet-50 to-white">
+          <div class="flex items-start justify-between gap-3"><div><div class="text-xs uppercase tracking-widest text-violet-600 font-black">Saldo total</div><h3 class="text-lg font-black mt-1">ZumboPay</h3></div><span id="zumboStatus" class="shrink-0 px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-bold">A verificar</span></div>
+          <div id="zumboAmount" class="balance-number text-3xl font-black mt-4">—</div><p id="zumboInfo" class="text-xs text-slate-500 mt-1">Soma das wallets disponíveis.</p>
+        </div>
+      </section>
+
+      <div class="grid xl:grid-cols-5 gap-4 sm:gap-5 items-start">
+        <section class="xl:col-span-2 card rounded-3xl overflow-hidden min-w-0">
+          <div class="p-4 sm:p-5 border-b"><div class="text-xs uppercase tracking-widest text-blue-600 font-black">Nova operação</div><h2 class="text-xl font-black mt-1">Criar payout</h2></div>
+          <form id="form" class="p-4 sm:p-5 space-y-4">
+            <div>
+              <span class="text-xs font-black text-slate-500">ORIGEM DOS FUNDOS</span>
+              <div class="provider-grid grid grid-cols-2 gap-2 mt-2">
+                <button type="button" data-provider="netshop" class="provider-btn active"><b class="block">NetShop</b><span class="text-[11px] text-slate-500">Saldo merchant</span></button>
+                <button type="button" data-provider="zumbopay" class="provider-btn"><b class="block">ZumboPay</b><span class="text-[11px] text-slate-500">Payout instantâneo B2C</span></button>
+              </div>
+              <input id="provider" type="hidden" value="netshop">
+            </div>
+
+            <label class="block"><span class="text-xs font-black text-slate-500">MÉTODO</span><select id="method" class="input mt-2"></select><p id="methodHelp" class="text-[11px] text-slate-500 mt-1"></p></label>
+
+            <label id="walletWrap" class="block hidden"><span class="text-xs font-black text-slate-500">WALLET ZUMBOPAY</span><select id="wallet" class="input mt-2"><option value="">A carregar...</option></select><p id="walletHelp" class="text-[11px] text-slate-500 mt-1"></p></label>
+
+            <label class="block"><span class="text-xs font-black text-slate-500">VALOR (MT)</span><input id="amount" class="input mt-2" type="number" min="10" step="0.01" placeholder="10,00" required><p id="minHelp" class="text-[11px] text-slate-500 mt-1"></p></label>
+            <label class="block"><span class="text-xs font-black text-slate-500">TELEFONE</span><input id="phone" class="input mt-2" inputmode="tel" maxlength="13" placeholder="841234567" required></label>
+            <label class="block"><span class="text-xs font-black text-slate-500">REFERÊNCIA</span><input id="reference" class="input mt-2" maxlength="100" placeholder="PG-PAYOUT-..."></label>
+            <label class="block"><span class="text-xs font-black text-slate-500">OBSERVAÇÃO</span><textarea id="notes" class="input mt-2 min-h-[80px]" maxlength="500" placeholder="Motivo do payout"></textarea></label>
+            <div id="precheck" class="rounded-2xl bg-slate-50 border p-4 text-xs text-slate-600">Introduza o valor para verificar.</div>
+            <button id="submit" class="w-full rounded-2xl bg-blue-600 hover:bg-blue-700 text-white py-4 font-black disabled:opacity-60">Enviar payout</button>
+          </form>
+        </section>
+
+        <section class="xl:col-span-3 card rounded-3xl overflow-hidden min-w-0">
+          <div class="p-4 sm:p-5 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div><div class="text-xs uppercase tracking-widest text-blue-600 font-black">Monitorização</div><h2 class="text-xl font-black">Histórico unificado</h2></div>
+            <div class="filter-grid flex gap-2"><select id="filterProvider" class="rounded-xl border px-3 py-2 text-sm font-bold bg-white"><option value="all">Todos</option><option value="netshop">NetShop</option><option value="zumbopay">ZumboPay</option></select><select id="filterStatus" class="rounded-xl border px-3 py-2 text-sm font-bold bg-white"><option value="all">Estados</option><option value="success">Concluídos</option><option value="pending">Pendentes</option><option value="failed">Falhados</option></select></div>
+          </div>
+          <div class="table-wrap">
+            <table class="history-table w-full text-sm">
+              <thead class="bg-slate-50 text-slate-500 text-xs uppercase"><tr><th class="text-left p-4">Provider</th><th class="text-left p-4">Referência</th><th class="text-left p-4">Método</th><th class="text-left p-4">Destino</th><th class="text-right p-4">Valor</th><th class="text-left p-4">Estado</th></tr></thead>
+              <tbody id="rows"><tr><td colspan="6" class="p-8 text-center text-slate-400">A carregar...</td></tr></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <div id="login" class="fixed inset-0 z-[60] hidden items-center justify-center p-4 overlay">
+    <div class="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl">
+      <div class="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center mb-4">⚡</div>
+      <h2 class="text-xl font-black">Acesso administrativo</h2><p class="text-sm text-slate-500 mt-1">Use a chave administrativa PayGo.</p>
+      <input id="adminKey" class="input mt-5" type="password" placeholder="Chave administrativa"><button id="loginBtn" class="w-full mt-3 bg-blue-600 text-white rounded-2xl py-3.5 font-black">Entrar</button><p id="loginError" class="hidden text-sm text-red-600 mt-3"></p>
+    </div>
+  </div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    let all = [];
+    let balances = {netshop:null,zumbopay:null};
+    let mins = {netshop:10,zumbopay:10};
+    const SUCCESS=['SUCCESS','COMPLETED','SUCCEEDED','PAID'];
+    const FAILED=['FAILED','FAILURE','REJECTED'];
+    const PENDING=['PENDING','PROCESSING','IN_PROGRESS'];
+
+    function money(v){return new Intl.NumberFormat('pt-MZ',{minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(v)||0)+' MT'}
+    function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+    function notice(msg,ok=false){const n=$('notice');if(!n)return;n.textContent=String(msg||'');n.className=`mb-5 rounded-2xl p-4 text-sm font-semibold ${ok?'bg-emerald-50 border border-emerald-200 text-emerald-700':'bg-red-50 border border-red-200 text-red-700'}`}
+
+    function setBalance(p,d){
+      balances[p]=d||null;
+      const a=$(`${p}Amount`),s=$(`${p}Status`),i=$(`${p}Info`);
+      if(!a||!s||!i)return;
+      if(!d){a.textContent='—';s.textContent='Indisponível';i.textContent='Não foi possível consultar.';return}
+      const value=Number(d.balance||0);
+      if(d.error&&value===0){a.textContent='—';s.textContent=d.configured?'Indisponível':'Não configurado';s.className='shrink-0 px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-bold';i.textContent=d.error;return}
+      a.textContent=money(value);s.textContent='Disponível';s.className='shrink-0 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold';i.textContent=p==='zumbopay'?`${Array.isArray(d.wallets)?d.wallets.length:0} wallet(s) — saldo total.`:'Saldo retornado pela API.'
+    }
+
+    async function api(url,opt={}){
+      const r=await fetch(url,{...opt,credentials:'same-origin'});
+      const d=await r.json().catch(()=>({success:false,error:'Resposta inválida.'}));
+      if(r.status===401){const l=$('login');if(l){l.classList.remove('hidden');l.classList.add('flex')}throw new Error('Sessão administrativa expirada.')}
+      if(!r.ok||d.success===false)throw new Error(d.error||'Operação recusada.');
+      return d;
+    }
+
+    async function loadBalances(){
+      try{
+        const d=await api('../api/admin/payout-balances');
+        setBalance('netshop',d.netshop);
+        setBalance('zumbopay',d.zumbopay);
+      }catch(e){
+        setBalance('netshop',null);setBalance('zumbopay',null);
+        if(!String(e.message).includes('Sessão'))notice(e.message)
+      }
+    }
+
+    async function loadHistory(){
+      const d=await api('../api/admin/payout');
+      all=Array.isArray(d.payouts)?d.payouts:[];
+      if(d.minPayout&&typeof d.minPayout==='object')mins={...mins,...d.minPayout};
+      updateProviderUI();render();
+    }
+
+    function updateProviderUI(){
+      const p=$('provider')?.value||'netshop';
+      const select=$('method');
+      if(!select)return;
+      const current=select.value;
+      if(p==='zumbopay'){
+        select.innerHTML='<option value="mpesa">M-Pesa — B2C instantâneo</option>';
+        select.value='mpesa';
+        $('methodHelp').textContent='ZumboPay usa o payout instantâneo M-Pesa B2C para evitar o mínimo de 500 MT do payout manual.';
+        $('walletWrap')?.classList.remove('hidden');
+      }else{
+        select.innerHTML='<option value="mpesa">M-Pesa</option><option value="emola">e-Mola</option><option value="mkesh">mKesh</option>';
+        select.value=['mpesa','emola','mkesh'].includes(current)?current:'mpesa';
+        $('methodHelp').textContent='Payout normal via wallet NetShop configurada.';
+        $('walletWrap')?.classList.add('hidden');
+      }
+      const m=Number(mins[p]||10),a=$('amount'),h=$('minHelp');
+      if(a){a.min=String(m);a.placeholder=m+',00'}
+      if(h)h.textContent=`Mínimo PayGo: ${money(m)}`;
+      updatePrecheck();
+    }
+
+    async function loadWallets(){
+      if($('provider')?.value!=='zumbopay')return;
+      const s=$('wallet');if(!s)return;
+      s.innerHTML='<option value="">A carregar wallets...</option>';
+      try{
+        const d=await api('../api/admin/zumbopay/wallets');
+        const ws=Array.isArray(d.wallets)?d.wallets:[];
+        s.innerHTML=ws.length?ws.map(w=>`<option value="${esc(w.id||w.wallet_id||'')}">${esc(w.name||w.label||w.id||'Wallet')} — ${money(w.balance||0)}</option>`).join(''):'<option value="">Nenhuma wallet disponível</option>';
+        if(ws.length){
+          const sum=ws.reduce((n,w)=>n+Number(w.balance||0),0);
+          const fallback={configured:true,balance:sum,wallets:ws};
+          if(!balances.zumbopay||Number(balances.zumbopay.balance||0)===0)setBalance('zumbopay',fallback);
+        }
+        updatePrecheck();
+      }catch(e){
+        s.innerHTML='<option value="">Não foi possível carregar</option>';
+        const h=$('walletHelp');if(h)h.textContent=e.message;
+      }
+    }
+
+    function setProvider(p){
+      const x=$('provider');if(!x)return;x.value=p;
+      document.querySelectorAll('.provider-btn').forEach(b=>b.classList.toggle('active',b.dataset.provider===p));
+      updateProviderUI();
+      if(p==='zumbopay')loadWallets();
+    }
+
+    function currentBalance(){const b=balances[$('provider')?.value];return Number(b?.balance||0)}
+    function updatePrecheck(){
+      const box=$('precheck'),p=$('provider')?.value||'netshop',amount=Number($('amount')?.value||0),min=Number(mins[p]||10),bal=currentBalance();
+      if(!box)return;
+      if(!amount){box.className='rounded-2xl bg-slate-50 border p-4 text-xs text-slate-600';box.innerHTML=`<b>Verificação:</b> mínimo ${money(min)}.`;return}
+      if(amount<min){box.className='rounded-2xl bg-red-50 border border-red-200 p-4 text-xs text-red-700';box.innerHTML=`<b>Valor abaixo do mínimo.</b> O mínimo PayGo é ${money(min)}.`;return}
+      if(bal>0&&amount>bal){box.className='rounded-2xl bg-red-50 border border-red-200 p-4 text-xs text-red-700';box.innerHTML=`<b>Saldo insuficiente.</b> Disponível: ${money(bal)}.`;return}
+      box.className='rounded-2xl bg-emerald-50 border border-emerald-200 p-4 text-xs text-emerald-700';box.innerHTML=`<b>Pronto.</b> ${bal>0?`Saldo disponível: ${money(bal)}.`:'O provider fará a validação final do saldo.'}`;
+    }
+
+    function render(){
+      const pf=$('filterProvider')?.value||'all',sf=$('filterStatus')?.value||'all';
+      const list=all.filter(x=>(pf==='all'||x.provider===pf)&&(sf==='all'||(sf==='success'?SUCCESS.includes(String(x.status).toUpperCase()):sf==='failed'?FAILED.includes(String(x.status).toUpperCase()):PENDING.includes(String(x.status).toUpperCase()))));
+      $('count').textContent=all.length;$('success').textContent=all.filter(x=>SUCCESS.includes(String(x.status).toUpperCase())).length;$('pending').textContent=all.filter(x=>PENDING.includes(String(x.status).toUpperCase())).length;$('total').textContent=money(all.reduce((s,x)=>s+Number(x.amount||0),0));
+      const rows=$('rows');
+      rows.innerHTML=list.length?list.map(x=>{const s=String(x.status||'PENDING').toUpperCase(),good=SUCCESS.includes(s),bad=FAILED.includes(s);return `<tr class="border-t hover:bg-slate-50"><td class="p-4 font-black"><span class="px-2.5 py-1 rounded-full text-xs ${x.provider==='netshop'?'bg-blue-50 text-blue-700':'bg-violet-50 text-violet-700'}">${x.provider==='netshop'?'NetShop':'ZumboPay'}</span></td><td class="p-4 font-semibold">${esc(x.reference||x.id||'—')}</td><td class="p-4">${esc(x.method||'—')}</td><td class="p-4">${esc(x.destination||x.msisdn||'—')}</td><td class="p-4 text-right font-black">${money(x.amount)}</td><td class="p-4"><span class="px-2.5 py-1 rounded-full text-xs font-black ${good?'bg-emerald-50 text-emerald-700':bad?'bg-red-50 text-red-700':'bg-amber-50 text-amber-700'}">${s}</span></td></tr>`}).join(''):'<tr><td colspan="6" class="p-10 text-center text-slate-400">Nenhum payout encontrado.</td></tr>';
+    }
+
+    async function loadAll(){try{await Promise.all([loadHistory(),loadBalances()])}catch(e){if(!String(e.message).includes('Sessão'))notice(e.message)}}
+
+    async function login(){
+      const key=$('adminKey')?.value.trim();if(!key)return;const b=$('loginBtn');if(b)b.disabled=true;
+      try{const r=await fetch('../api/admin/zumbopay/login',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({key})});const d=await r.json();if(!r.ok||!d.authenticated)throw new Error(d.error||'Chave inválida.');$('login').classList.add('hidden');$('login').classList.remove('flex');await loadAll()}catch(e){const x=$('loginError');if(x){x.textContent=e.message;x.classList.remove('hidden')}}finally{if(b)b.disabled=false}
+    }
+
+    document.querySelectorAll('.provider-btn').forEach(b=>b.addEventListener('click',()=>setProvider(b.dataset.provider)));
+    $('method')?.addEventListener('change',updatePrecheck);$('amount')?.addEventListener('input',updatePrecheck);$('filterProvider')?.addEventListener('change',render);$('filterStatus')?.addEventListener('change',render);$('refresh')?.addEventListener('click',loadAll);$('loginBtn')?.addEventListener('click',login);$('adminKey')?.addEventListener('keydown',e=>{if(e.key==='Enter')login()});
+    $('menu')?.addEventListener('click',()=>{$('sidebar')?.classList.add('open');$('overlay')?.classList.remove('hidden')});
+    $('overlay')?.addEventListener('click',()=>{$('sidebar')?.classList.remove('open');$('overlay')?.classList.add('hidden')});
+
+    $('form')?.addEventListener('submit',async e=>{
+      e.preventDefault();
+      const p=$('provider')?.value||'netshop',amount=Number($('amount')?.value||0),min=Number(mins[p]||10),bal=currentBalance();
+      if(amount<min)return notice(`O mínimo para ${p==='netshop'?'NetShop':'ZumboPay'} é ${money(min)}.`);
+      if(bal>0&&amount>bal)return notice(`Saldo insuficiente. Disponível: ${money(bal)}.`);
+      if(p==='zumbopay'&&$('method')?.value!=='mpesa')return notice('ZumboPay usa M-Pesa B2C instantâneo para este payout.');
+      if(p==='zumbopay'&&!$('wallet')?.value)return notice('Selecione uma wallet ZumboPay.');
+      if(!confirm(`Confirmar payout de ${money(amount)} via ${p==='netshop'?'NetShop':'ZumboPay'} para ${$('phone')?.value||''}?`))return;
+      const btn=$('submit');if(btn){btn.disabled=true;btn.textContent='A processar...'}
+      try{
+        const body={provider:p,method:$('method')?.value,amount,destination:$('phone')?.value,reference:$('reference')?.value,notes:$('notes')?.value};
+        if(p==='zumbopay')body.walletId=$('wallet')?.value;
+        const d=await api('../api/admin/payout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+        const type=d.payout?.payoutType==='instant_b2c'?'Payout instantâneo B2C':'Payout enviado';
+        notice(`${type}. Referência: ${d.payout?.reference||d.payout?.id||'—'}`,true);
+        $('form')?.reset();setProvider('netshop');await loadAll();
+      }catch(e){notice(e.message)}finally{if(btn){btn.disabled=false;btn.textContent='Enviar payout'}}
+    });
+
+    lucide.createIcons();
+    setProvider('netshop');
+    loadAll();
+  </script>
+  <script src="admin-shell.js"></script>
+</body>
+</html>
