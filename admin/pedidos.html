@@ -1546,7 +1546,7 @@ window.saveOrderStatus = async () => {
         const txRef = doc(collection(db, "wallet_transactions"));
         const topupRef = doc(db, "topups", currentOrderId);
 
-        batch.update(userRef, { walletBalance: increment(topupAmount) });
+        batch.set(userRef, { walletBalance: increment(topupAmount) }, { merge: true });
         batch.set(txRef, {
           userId: order.userId,
           type: 'credit',
@@ -1698,7 +1698,7 @@ window.saveOrderStatus = async () => {
       const txRef = doc(collection(db, "wallet_transactions"));
 
       batch.update(orderRef, updateData);
-      batch.update(userRef, { walletBalance: increment(refundAmount) });
+      batch.set(userRef, { walletBalance: increment(refundAmount) }, { merge: true });
       batch.set(topupRef, {
         userId: order.userId,
         userName: order.name,
