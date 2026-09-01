@@ -282,6 +282,233 @@
     }
   </style>
   <link rel="stylesheet" href="admin-shell.css">
+
+<style id="paygo-dimension-correction">
+/* ==========================================================
+   PAYGO — CORREÇÃO DE DIMENSÕES / LAYOUT
+   Mantém o visual atual e corrige apenas geometria.
+   ========================================================== */
+html, body {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+body {
+  min-height: 100vh;
+}
+
+/* Sidebar: dimensão real e independente do conteúdo */
+#sidebar {
+  position: fixed !important;
+  inset: 0 auto 0 0 !important;
+  width: 256px !important;
+  height: 100vh !important;
+  min-width: 256px !important;
+  max-width: 256px !important;
+  box-sizing: border-box !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  z-index: 50 !important;
+}
+
+/* Área principal: começa exatamente depois da sidebar */
+main {
+  position: relative !important;
+  width: calc(100% - 256px) !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  margin-left: 256px !important;
+  padding: 32px !important;
+  padding-top: 32px !important;
+  box-sizing: border-box !important;
+}
+
+/* Evita que regras de shell externo alterem a geometria */
+main.md\:ml-64 {
+  margin-left: 256px !important;
+}
+
+/* Cabeçalho */
+main > header {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+/* 5 indicadores: cada card recebe exatamente 1/5 do espaço */
+main > section.grid.grid-cols-1.sm\:grid-cols-2.xl\:grid-cols-5 {
+  width: 100% !important;
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: 20px !important;
+  min-width: 0 !important;
+}
+
+main > section.grid.grid-cols-1.sm\:grid-cols-2.xl\:grid-cols-5 > article {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  overflow: hidden !important;
+}
+
+/* Textos dos indicadores não devem aumentar a largura */
+main > section.grid.grid-cols-1.sm\:grid-cols-2.xl\:grid-cols-5 > article span,
+main > section.grid.grid-cols-1.sm\:grid-cols-2.xl\:grid-cols-5 > article p {
+  min-width: 0 !important;
+  overflow-wrap: anywhere !important;
+}
+
+/* Área de filtros */
+main > section.glass-card {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+/* Filtros: colunas proporcionais e sem overflow */
+main > section.glass-card .grid.lg\:grid-cols-4 {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+main > section.glass-card input,
+main > section.glass-card select {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Tabela ocupa todo o conteúdo */
+main > section.glass-card:last-of-type {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+main > section.glass-card:last-of-type > div.overflow-x-auto {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: auto !important;
+}
+main > section.glass-card:last-of-type table {
+  width: 100% !important;
+  min-width: 920px !important;
+  table-layout: auto !important;
+}
+
+/* Modal nunca ultrapassa a viewport */
+#cardModal {
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  max-height: none !important;
+}
+#cardModal > div {
+  width: min(1152px, calc(100vw - 32px)) !important;
+  max-width: 1152px !important;
+  max-height: calc(100vh - 32px) !important;
+}
+
+/* Toast respeita a viewport */
+#toastContainer {
+  max-width: min(430px, calc(100vw - 32px)) !important;
+}
+
+/* Desktop largo */
+@media (min-width: 1440px) {
+  main {
+    padding-left: 36px !important;
+    padding-right: 36px !important;
+  }
+}
+
+/* Desktop médio: mantém 5 cards sem esmagar */
+@media (min-width: 1024px) and (max-width: 1199px) {
+  main {
+    padding: 24px !important;
+  }
+  main > section.grid.grid-cols-1.sm\:grid-cols-2.xl\:grid-cols-5 {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+/* Tablet */
+@media (min-width: 769px) and (max-width: 1023px) {
+  #sidebar {
+    width: 230px !important;
+    min-width: 230px !important;
+    max-width: 230px !important;
+  }
+  main,
+  main.md\:ml-64 {
+    width: calc(100% - 230px) !important;
+    margin-left: 230px !important;
+    padding: 20px !important;
+  }
+  main > section.grid.grid-cols-1.sm\:grid-cols-2.xl\:grid-cols-5 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* Mobile: sidebar sobrepõe o conteúdo apenas quando aberta */
+@media (max-width: 768px) {
+  #sidebar {
+    width: 256px !important;
+    min-width: 256px !important;
+    max-width: 256px !important;
+  }
+
+  main,
+  main.md\:ml-64 {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    padding: 72px 16px 24px !important;
+  }
+
+  main > header {
+    margin-bottom: 24px !important;
+  }
+
+  main > header h1 {
+    font-size: 26px !important;
+    line-height: 1.2 !important;
+  }
+
+  main > section.grid.grid-cols-1.sm\:grid-cols-2.xl\:grid-cols-5 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+  }
+
+  main > section.grid.grid-cols-1.sm\:grid-cols-2.xl\:grid-cols-5 > article {
+    padding: 16px !important;
+    border-radius: 18px !important;
+  }
+
+  main > section.glass-card {
+    border-radius: 18px !important;
+  }
+
+  main > section.glass-card .grid.lg\:grid-cols-4 {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Telemóveis pequenos */
+@media (max-width: 480px) {
+  main {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  main > section.grid.grid-cols-1.sm\:grid-cols-2.xl\:grid-cols-5 {
+    grid-template-columns: 1fr !important;
+  }
+
+  main > section.grid.grid-cols-1.sm\:grid-cols-2.xl\:grid-cols-5 > article {
+    min-height: 120px !important;
+  }
+}
+</style>
 </head>
 <body class="selection:bg-brand-500 selection:text-white antialiased">
 
