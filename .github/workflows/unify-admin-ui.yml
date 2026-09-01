@@ -6,6 +6,7 @@ on:
       - 'admin/*.html'
       - 'admin/admin-shell.css'
       - 'admin/admin-shell.js'
+      - '.github/workflows/unify-admin-ui.yml'
 permissions:
   contents: write
 jobs:
@@ -13,24 +14,52 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Inject shared admin shell
+      - name: Inject shared admin shell and fix wallet document writes
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import re
+
+          # Keep the shared shell injection behaviour.
           for p in Path('admin').glob('*.html'):
-              s=p.read_text(encoding='utf-8')
-              css='<link rel="stylesheet" href="admin-shell.css">'
-              js='<script src="admin-shell.js"></script>'
+              s = p.read_text(encoding='utf-8')
+              css = '<link rel="stylesheet" href="admin-shell.css">'
+              js = '<script src="admin-shell.js"></script>'
               if 'href="admin-shell.css"' not in s:
-                  s=s.replace('</head>', '  '+css+'\n</head>', 1)
+                  s = s.replace('</head>', '  ' + css + '\n</head>', 1)
               if 'src="admin-shell.js"' not in s:
-                  s=s.replace('</body>', '  '+js+'\n</body>', 1)
+                  s = s.replace('</body>', '  ' + js + '\n</body>', 1)
               p.write_text(s, encoding='utf-8')
+
+          # Firestore: batch.update(userRef, ...) fails with
+          # "No document to update" when the customer's users/{uid}
+          # document is missing. Use merge semantics so the wallet
+          # credit creates the profile when necessary.
+          pedidos = Path('admin/pedidos.html')
+          if pedidos.exists():
+              s = pedidos.read_text(encoding='utf-8')
+              s, n_topup = re.subn(
+                  r'batch\.update\(userRef, \{\s*walletBalance:\s*increment\(topupAmount\)\s*\}\);',
+                  'batch.set(userRef, { walletBalance: increment(topupAmount) }, { merge: true });',
+                  s,
+              )
+              s, n_refund = re.subn(
+                  r'batch\.update\(userRef, \{\s*walletBalance:\s*increment\(refundAmount\)\s*\}\);',
+                  'batch.set(userRef, { walletBalance: increment(refundAmount) }, { merge: true });',
+                  s,
+              )
+              pedidos.write_text(s, encoding='utf-8')
+              print(f'Wallet document fix: topup={n_topup}, refund={n_refund}')
+
+          # Remove the temporary trigger file after the workflow has run.
+          trigger = Path('admin/.wallet-fix-trigger.html')
+          if trigger.exists():
+              trigger.unlink()
           PY
       - name: Commit normalized admin pages
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add admin/*.html
-          git diff --cached --quiet || git commit -m 'feat(admin): unify sidebar and visual shell'
+          git add admin/*.html admin/.wallet-fix-trigger.html .github/workflows/unify-admin-ui.yml
+          git diff --cached --quiet || git commit -m 'fix(admin): prevent missing wallet user document errors'
           git push
