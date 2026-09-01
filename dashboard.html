@@ -13,698 +13,406 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="dashboard-mobile.css">
-
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
-                        display: ['"Outfit"', 'sans-serif'],
-                        mono: ['"Fira Code"', 'monospace']
-                    },
-                    colors: {
-                        brand: { 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8' },
-                        success: { 400: '#4ade80', 500: '#22c55e' },
-                        warning: { 400: '#fbbf24', 500: '#f59e0b' },
-                        danger: { 400: '#f87171', 500: '#ef4444' },
-                        vip: { 400: '#c084fc', 500: '#a855f7', 600: '#9333ea' }
-                    }
-                }
-            }
-        };
-    </script>
-
-    <style>
-        body {
-            background:
-                radial-gradient(circle at top left, rgba(59,130,246,0.14), transparent 30%),
-                radial-gradient(circle at bottom right, rgba(168,85,247,0.08), transparent 28%),
-                #0f172a;
-            color: #f8fafc;
-        }
-
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 999px; }
-
-        .bg-grid {
-            background-size: 40px 40px;
-            background-image:
-                linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
-        }
-
-        .glass-nav {
-            background: rgba(15, 23, 42, 0.82);
-            backdrop-filter: blur(18px);
-            border-bottom: 1px solid rgba(255,255,255,0.08);
-        }
-
-        .glass-card {
-            background: rgba(30, 41, 59, 0.40);
-            backdrop-filter: blur(14px);
-            border: 1px solid rgba(255,255,255,0.06);
-            transition: all 0.25s ease;
-            box-shadow: 0 16px 50px rgba(0,0,0,0.25);
-        }
-
-        .glass-card:hover {
-            border-color: rgba(255,255,255,0.10);
-        }
-
-        .hero-card {
-            background:
-                linear-gradient(135deg, rgba(37,99,235,0.16), rgba(168,85,247,0.08)),
-                rgba(15,23,42,0.72);
-            border: 1px solid rgba(255,255,255,0.08);
-            backdrop-filter: blur(16px);
-        }
-
-        .btn-epic {
-            transition: all 0.2s ease;
-            position: relative;
-            overflow: hidden;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            font-weight: 700;
-            border-radius: 0.95rem;
-        }
-
-        .btn-epic:active:not(:disabled) {
-            transform: scale(0.97);
-        }
-
-        .btn-epic:disabled {
-            opacity: 0.65;
-            cursor: not-allowed;
-        }
-
-        .stat-card {
-            background: rgba(15, 23, 42, 0.75);
-            border: 1px solid rgba(255,255,255,0.06);
-        }
-
-        .realistic-card {
-            position: relative;
-            width: min(100%, 420px);
-            max-width: 420px;
-            aspect-ratio: 1.586 / 1;
-            height: auto !important;
-            min-width: 0;
-            flex: 0 1 420px;
-            padding: clamp(14px, 4vw, 24px) !important;
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-            box-shadow:
-                -10px 10px 30px rgba(0,0,0,0.5),
-                inset 0 0 0 1px rgba(255,255,255,0.10);
-            overflow: hidden;
-        }
-
-        .realistic-card > * {
-            min-width: 0;
-        }
-
-        .realistic-card .card-number {
-            font-size: clamp(0.88rem, 4.2vw, 1.5rem);
-            letter-spacing: clamp(0.06em, 1.3vw, 0.15em);
-            white-space: nowrap;
-        }
-
-        .realistic-card .card-holder {
-            max-width: 52%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        @media (max-width: 420px) {
-            .realistic-card {
-                border-radius: 18px;
-                flex-basis: 100%;
-            }
-            .realistic-card .card-balance {
-                font-size: 0.92rem;
-            }
-            .realistic-card .card-number {
-                font-size: clamp(0.78rem, 5vw, 1.05rem);
-                letter-spacing: 0.07em;
-            }
-            .realistic-card .card-meta {
-                gap: 0.7rem;
-            }
-        }
-
-        .realistic-card::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -20%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 60%);
-            pointer-events: none;
-        }
-
-        .section-label {
-            font-size: 11px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.18em;
-            color: #64748b;
-        }
-
-        .toast-item {
-            pointer-events: auto;
-            background: rgba(15, 23, 42, 0.96);
-            border-left: 4px solid #3b82f6;
-            padding: 16px 18px;
-            border-radius: 14px;
-            display: flex;
-            gap: 12px;
-            transform: translateX(120%);
-            opacity: 0;
-            transition: all 0.35s ease;
-            box-shadow: 0 12px 30px rgba(0,0,0,0.35);
-        }
-
-        .toast-item.show {
-            transform: translateX(0);
-            opacity: 1;
-        }
-
-        .toast-item.hiding {
-            transform: translateX(40px);
-            opacity: 0;
-        }
-
-        .skeleton {
-            background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
-            border-radius: 10px;
-        }
-
-        @keyframes shimmer {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
-        }
-
-        #toastContainer {
-            position: fixed;
-            top: 24px;
-            right: 24px;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            pointer-events: none;
-        }
-
-        select option {
-            background: #0f172a;
-            color: #f8fafc;
-        }
-
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            padding: 6px 10px;
-            border-radius: 999px;
-            font-size: 10px;
-            font-weight: 800;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            border: 1px solid rgba(255,255,255,0.08);
-            white-space: nowrap;
-        }
-        .status-badge.pending { background: rgba(245,158,11,0.12); color: #fbbf24; border-color: rgba(245,158,11,0.28); }
-        .status-badge.processing { background: rgba(59,130,246,0.12); color: #60a5fa; border-color: rgba(59,130,246,0.28); }
-        .status-badge.completed { background: rgba(34,197,94,0.12); color: #4ade80; border-color: rgba(34,197,94,0.28); }
-        .status-badge.cancelled { background: rgba(239,68,68,0.12); color: #f87171; border-color: rgba(239,68,68,0.28); }
-        .game-service-card {
-            position: relative;
-            border: 1px solid rgba(255,255,255,0.08);
-            background: rgba(15,23,42,0.7);
-            border-radius: 1rem;
-            padding: 1rem;
-            transition: all 0.25s ease;
-            cursor: pointer;
-            overflow: hidden;
-        }
-        .game-service-card:hover { border-color: rgba(59,130,246,0.35); transform: translateY(-2px); }
-        .game-service-card.active { border-color: rgba(34,197,94,0.45); background: rgba(34,197,94,0.08); box-shadow: 0 0 0 1px rgba(34,197,94,0.15) inset; }
-        .game-service-card .logo { width: 2.25rem; height: 2.25rem; border-radius: 0.9rem; display:flex; align-items:center; justify-content:center; font-size: 1rem; font-weight: 800; }
-        .service-quick-card {
-            position: relative;
-            border: 1px solid rgba(255,255,255,0.08);
-            background: rgba(15,23,42,0.72);
-            border-radius: 1rem;
-            padding: 0.95rem;
-            transition: all 0.22s ease;
-            overflow: hidden;
-        }
-        .service-quick-card:hover { border-color: rgba(59,130,246,0.35); transform: translateY(-2px); }
-        .service-quick-card.active { border-color: rgba(59,130,246,0.45); background: rgba(59,130,246,0.10); box-shadow: 0 0 0 1px rgba(59,130,246,0.15) inset; }
-        .service-quick-card .logo { width: 2.25rem; height: 2.25rem; border-radius: 0.9rem; display:flex; align-items:center; justify-content:center; font-size: 1rem; font-weight: 800; }
-        .selection-chip {
-            border: 1px solid rgba(148,163,184,0.35);
-            background: rgba(15,23,42,0.75);
-            color: #cbd5e1;
-            transition: all .2s ease;
-            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
-        }
-        .selection-chip:hover {
-            border-color: rgba(96,165,250,0.5);
-            color: #fff;
-            background: rgba(30,41,59,0.95);
-        }
-        .selection-chip.active {
-            border-color: rgba(59,130,246,0.7);
-            background: linear-gradient(135deg, rgba(37,99,235,0.28), rgba(15,23,42,0.92));
-            color: #fff;
-            box-shadow: 0 0 0 1px rgba(59,130,246,0.2) inset, 0 12px 30px rgba(37,99,235,0.14);
-        }
-        .selection-chip.success-active {
-            border-color: rgba(34,197,94,0.6);
-            background: linear-gradient(135deg, rgba(22,163,74,0.28), rgba(15,23,42,0.92));
-        }
-        .selection-chip.warning-active {
-            border-color: rgba(245,158,11,0.6);
-            background: linear-gradient(135deg, rgba(217,119,6,0.28), rgba(15,23,42,0.92));
-        }
-        .mode-pill { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
-        .hidden-soft { display: none !important; }
-
-        .client-guide-card {
-            background: linear-gradient(135deg, rgba(15,23,42,0.86), rgba(30,41,59,0.75));
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 1.5rem;
-            overflow: hidden;
-        }
-        .client-step-card {
-            background: rgba(2,6,23,0.55);
-            border: 1px solid rgba(148,163,184,0.16);
-            border-radius: 1rem;
-            padding: 1rem;
-            transition: all .22s ease;
-        }
-        .client-step-card:hover {
-            border-color: rgba(96,165,250,0.35);
-            transform: translateY(-2px);
-        }
-        .trust-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: .45rem;
-            padding: .6rem .85rem;
-            border-radius: 999px;
-            border: 1px solid rgba(148,163,184,0.2);
-            background: rgba(15,23,42,0.78);
-            color: #cbd5e1;
-            font-size: .72rem;
-            font-weight: 800;
-            letter-spacing: .04em;
-        }
-        .client-help-chip {
-            border: 1px solid rgba(59,130,246,0.18);
-            background: rgba(59,130,246,0.08);
-            color: #bfdbfe;
-            border-radius: 999px;
-            padding: .45rem .75rem;
-            font-size: .72rem;
-            font-weight: 800;
-            letter-spacing: .04em;
-        }
-        .live-summary-card {
-            background: linear-gradient(135deg, rgba(59,130,246,0.12), rgba(15,23,42,0.92));
-            border: 1px solid rgba(59,130,246,0.22);
-            border-radius: 1rem;
-            padding: 1rem;
-        }
     
+<style>
+/* =========================================================
+   PayGo AdminLTE Visual Layer
+   Visual-only replacement: IDs/JS behavior remain untouched.
+   ========================================================= */
 
-        /* ===== PayGo PRO: Modo Claro/Escuro ===== */
-        html.light body { background: #f8fafc !important; color: #0f172a !important; }
-        html.light .glass-card, html.light .hero-card, html.light .client-guide-card { background: rgba(255,255,255,.92) !important; border-color: rgba(15,23,42,.10) !important; box-shadow: 0 18px 45px rgba(15,23,42,.08) !important; }
-        html.light .glass-nav { background: rgba(255,255,255,.88) !important; border-bottom-color: rgba(15,23,42,.10) !important; }
-        html.light .text-white { color:#0f172a !important; }
-        html.light .text-slate-400, html.light .text-slate-500 { color:#64748b !important; }
-        html.light .bg-slate-900, html.light .bg-slate-950, html.light .bg-slate-800 { background-color:#ffffff !important; }
-        html.light .border-slate-700, html.light .border-slate-800, html.light .border-white\/5 { border-color:rgba(15,23,42,.12) !important; }
-        html.light input, html.light textarea, html.light select { background:#ffffff !important; color:#0f172a !important; border-color:#cbd5e1 !important; }
-        html.light select option { background:#ffffff; color:#0f172a; }
-        .theme-toggle-floating { position: fixed; right: 20px; bottom: 20px; z-index: 90; }
-        .paygo-panel-nav { display:flex; flex-wrap:wrap; gap:.7rem; margin-bottom:1.25rem; }
-        .paygo-panel-nav a, .paygo-panel-nav button { padding:.85rem 1rem; border-radius:1rem; font-size:.82rem; font-weight:800; border:1px solid rgba(148,163,184,.25); background:rgba(15,23,42,.75); color:#cbd5e1; display:inline-flex; gap:.5rem; align-items:center; }
-        html.light .paygo-panel-nav a, html.light .paygo-panel-nav button { background:#fff; color:#334155; border-color:#cbd5e1; }
-        .paygo-panel-nav .active { background:#2563eb !important; color:#fff !important; border-color:#3b82f6 !important; }
+:root{
+  --pg-primary:#2563eb;
+  --pg-primary-dark:#1d4ed8;
+  --pg-primary-soft:#eff6ff;
+  --pg-bg:#f4f6f9;
+  --pg-surface:#fff;
+  --pg-border:#dee2e6;
+  --pg-text:#212529;
+  --pg-muted:#6c757d;
+  --pg-success:#198754;
+  --pg-warning:#ffc107;
+  --pg-danger:#dc3545;
+  --pg-info:#0dcaf0;
+  --pg-sidebar:#1f2d3d;
+  --pg-sidebar-dark:#1a252f;
+  --pg-shadow:0 1px 3px rgba(0,0,0,.08);
+}
 
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;min-height:100%;font-family:"Source Sans 3","Segoe UI",Arial,sans-serif}
+html{scroll-behavior:smooth}
+body{
+  background:var(--pg-bg)!important;
+  color:var(--pg-text)!important;
+  font-size:14px;
+  line-height:1.5;
+}
+a{color:var(--pg-primary);text-decoration:none}
+a:hover{color:var(--pg-primary-dark)}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
 
-        /* ===== PayGo PRO Segurança Máxima: Cartão ===== */
-        .sensitive-blur { filter: blur(5px); user-select: none; }
-        .security-modal-card { max-height: 90vh; overflow-y: auto; }
-        .pin-dot { width: 10px; height: 10px; border-radius: 999px; background: #334155; display: inline-block; }
-        .pin-dot.active { background: #60a5fa; box-shadow: 0 0 12px rgba(96,165,250,.65); }
-        .security-hint { background: rgba(59,130,246,.08); border: 1px solid rgba(59,130,246,.2); }
-        html.light .security-hint { background: rgba(37,99,235,.07); border-color: rgba(37,99,235,.18); }
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:#f1f1f1}
+::-webkit-scrollbar-thumb{background:#adb5bd;border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:#868e96}
 
-        @media (max-width: 640px) {
-            .glass-card, .hero-card {
-                border-radius: 20px !important;
-            }
+/* Remove decorative layers from previous design */
+.bg-grid,#glowOrb,
+.fixed.top-0.left-0.w-\[500px\],
+.fixed.bottom-0.right-0.w-\[420px]{display:none!important}
 
-            #vcActionButtons {
-                width: 100%;
-            }
+/* Header / navbar */
+header{
+  position:fixed!important;
+  top:0!important;left:0!important;right:0!important;
+  height:57px!important;
+  z-index:1050!important;
+  background:#fff!important;
+  border-bottom:1px solid var(--pg-border)!important;
+  box-shadow:var(--pg-shadow)!important;
+}
+header>div{
+  max-width:none!important;
+  height:57px!important;
+  padding:0 20px!important;
+}
+.paygo-brand-header{height:100%;display:flex;align-items:center}
+.paygo-brand-header>a{
+  color:var(--pg-text)!important;
+  gap:10px!important;
+}
+.paygo-header-logo{width:105px!important;height:auto}
+.paygo-eyebrow{color:var(--pg-primary)!important;font-size:8px!important}
+.paygo-brand-name{color:#343a40!important;font-size:18px!important}
 
-            #vcActionButtons button {
-                width: 100%;
-                min-width: 0;
-            }
+/* Main wrapper approximation */
+body>main,
+main{
+  padding-top:77px!important;
+  padding-left:250px!important;
+  padding-right:20px!important;
+  padding-bottom:30px!important;
+  max-width:none!important;
+  width:100%!important;
+}
 
-            #topUpModal .selection-chip {
-                min-height: 44px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding-left: 8px;
-                padding-right: 8px;
-            }
-        }
+/* Sidebar-looking navigation */
+.paygo-panel-nav{
+  position:fixed!important;
+  z-index:1040!important;
+  left:0!important;
+  top:57px!important;
+  bottom:0!important;
+  width:230px!important;
+  margin:0!important;
+  padding:14px 10px!important;
+  display:flex!important;
+  flex-direction:column!important;
+  flex-wrap:nowrap!important;
+  gap:2px!important;
+  overflow-y:auto!important;
+  background:var(--pg-sidebar)!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+.paygo-panel-nav::before{
+  content:"PAYGO";
+  display:block;
+  padding:9px 12px 12px;
+  color:#aeb7c2;
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.08em;
+}
+.paygo-panel-nav a,.paygo-panel-nav button{
+  width:100%!important;
+  min-height:42px!important;
+  justify-content:flex-start!important;
+  padding:10px 12px!important;
+  border:0!important;
+  border-radius:4px!important;
+  background:transparent!important;
+  color:#c2c7d0!important;
+  font-size:13px!important;
+  font-weight:500!important;
+  text-align:left!important;
+}
+.paygo-panel-nav a:hover,.paygo-panel-nav button:hover{
+  background:rgba(255,255,255,.08)!important;
+  color:#fff!important;
+}
+.paygo-panel-nav .active{
+  background:var(--pg-primary)!important;
+  color:#fff!important;
+  box-shadow:none!important;
+}
 
-    
-        /* =========================================================
-           PayGo Modern Dashboard — light, responsive, AdminKit-inspired
-           ========================================================= */
-        :root {
-            --paygo-blue: #2563eb;
-            --paygo-blue-2: #0ea5e9;
-            --paygo-ink: #0f172a;
-            --paygo-muted: #64748b;
-            --paygo-border: #e2e8f0;
-            --paygo-surface: #ffffff;
-            --paygo-bg: #f5f8fc;
-        }
+/* Common Tailwind utility compatibility */
+.container{max-width:none!important}
+.mx-auto{margin-left:auto!important;margin-right:auto!important}
+.text-white{color:#212529!important}
+.text-slate-400,.text-slate-500,.text-slate-600{color:var(--pg-muted)!important}
+.bg-slate-950,.bg-slate-900,.bg-slate-800,.bg-slate-700{background:#fff!important}
+.border-slate-700,.border-slate-800{border-color:var(--pg-border)!important}
+.rounded-2xl,.rounded-3xl{border-radius:6px!important}
+.shadow-xl,.shadow-2xl{box-shadow:var(--pg-shadow)!important}
 
-        html:not(.dark) body,
-        html.light body {
-            background:
-                radial-gradient(circle at 8% 0%, rgba(37,99,235,.08), transparent 25%),
-                radial-gradient(circle at 100% 10%, rgba(14,165,233,.06), transparent 23%),
-                var(--paygo-bg) !important;
-            color: var(--paygo-ink) !important;
-        }
+/* Cards */
+.glass-card,.hero-card,.stat-card,
+.client-guide-card,.client-step-card,
+.live-summary-card,.service-quick-card,.game-service-card{
+  background:var(--pg-surface)!important;
+  border:1px solid var(--pg-border)!important;
+  border-radius:6px!important;
+  box-shadow:var(--pg-shadow)!important;
+  backdrop-filter:none!important;
+  color:var(--pg-text)!important;
+}
+.glass-card:hover,.game-service-card:hover,.service-quick-card:hover{
+  border-color:#c8ced3!important;
+  transform:none!important;
+}
+.hero-card{
+  background:#fff!important;
+}
+.hero-card h1,.hero-card h2,.hero-card h3,
+.glass-card h1,.glass-card h2,.glass-card h3,
+.stat-card h1,.stat-card h2,.stat-card h3{
+  color:#343a40!important;
+}
 
-        body {
-            font-family: "Plus Jakarta Sans", sans-serif;
-        }
+/* Section headings */
+.section-label{
+  color:#6c757d!important;
+  font-size:11px!important;
+  font-weight:700!important;
+  letter-spacing:.06em!important;
+}
 
-        .glass-nav {
-            background: rgba(255,255,255,.92) !important;
-            border-bottom: 1px solid rgba(15,23,42,.08) !important;
-            box-shadow: 0 4px 24px rgba(15,23,42,.05);
-            backdrop-filter: blur(18px);
-        }
+/* Buttons */
+.btn-epic{
+  border-radius:4px!important;
+  box-shadow:none!important;
+  transform:none!important;
+}
+.btn-epic:hover{transform:none!important}
 
-        .paygo-header-logo {
-            width: 132px;
-            height: auto;
-            object-fit: contain;
-            display: block;
-        }
+/* Inputs */
+input,textarea,select{
+  background:#fff!important;
+  color:#212529!important;
+  border:1px solid #ced4da!important;
+  border-radius:4px!important;
+  box-shadow:none!important;
+}
+input:focus,textarea:focus,select:focus{
+  border-color:#86b7fe!important;
+  outline:0!important;
+  box-shadow:0 0 0 .2rem rgba(13,110,253,.15)!important;
+}
+input::placeholder,textarea::placeholder{color:#adb5bd!important}
 
-        .paygo-brand-header { display:flex; align-items:center; }
-        .paygo-eyebrow {
-            margin: 0;
-            color: #2563eb;
-            font-size: 9px;
-            line-height: 1;
-            font-weight: 800;
-            letter-spacing: .18em;
-            text-transform: uppercase;
-        }
-        .paygo-brand-name {
-            color: #0f172a;
-            font-family: "Outfit", sans-serif;
-            font-size: 1.1rem;
-            font-weight: 800;
-        }
+/* Status badges */
+.status-badge{
+  border-radius:4px!important;
+  padding:4px 8px!important;
+  font-size:11px!important;
+  letter-spacing:.02em!important;
+}
+.status-badge.pending{background:#fff3cd!important;color:#856404!important;border-color:#ffecb5!important}
+.status-badge.processing{background:#cfe2ff!important;color:#084298!important;border-color:#b6d4fe!important}
+.status-badge.completed{background:#d1e7dd!important;color:#0f5132!important;border-color:#badbcc!important}
+.status-badge.cancelled{background:#f8d7da!important;color:#842029!important;border-color:#f5c2c7!important}
 
-        .paygo-panel-nav {
-            display: grid !important;
-            grid-template-columns: repeat(6, minmax(0,1fr));
-            gap: .55rem !important;
-            margin-bottom: 1.5rem !important;
-            padding: .45rem;
-            border: 1px solid #e2e8f0;
-            border-radius: 16px;
-            background: rgba(255,255,255,.84);
-            box-shadow: 0 10px 30px rgba(15,23,42,.05);
-        }
-        .paygo-panel-nav a, .paygo-panel-nav button {
-            min-height: 44px;
-            justify-content: center;
-            padding: .7rem .8rem !important;
-            border: 0 !important;
-            border-radius: 11px !important;
-            background: transparent !important;
-            color: #475569 !important;
-            font-size: .78rem !important;
-            transition: .2s ease;
-        }
-        .paygo-panel-nav a:hover, .paygo-panel-nav button:hover {
-            background: #eff6ff !important;
-            color: #2563eb !important;
-        }
-        .paygo-panel-nav .active {
-            background: #2563eb !important;
-            color: #fff !important;
-            box-shadow: 0 8px 18px rgba(37,99,235,.20);
-        }
+/* Selection / service cards */
+.selection-chip{
+  background:#fff!important;
+  color:#495057!important;
+  border:1px solid #ced4da!important;
+  border-radius:4px!important;
+  box-shadow:none!important;
+}
+.selection-chip:hover{
+  background:#f8f9fa!important;
+  color:#212529!important;
+  border-color:#adb5bd!important;
+}
+.selection-chip.active{
+  background:var(--pg-primary-soft)!important;
+  color:var(--pg-primary)!important;
+  border-color:#9ec5fe!important;
+  box-shadow:none!important;
+}
+.selection-chip.success-active{
+  background:#d1e7dd!important;
+  color:#0f5132!important;
+  border-color:#a3cfbb!important;
+}
+.selection-chip.warning-active{
+  background:#fff3cd!important;
+  color:#664d03!important;
+  border-color:#ffe69c!important;
+}
 
-        .hero-card {
-            background: linear-gradient(135deg,#ffffff 0%,#eef5ff 100%) !important;
-            border: 1px solid #dbe7f5 !important;
-            box-shadow: 0 18px 45px rgba(15,23,42,.07) !important;
-        }
-        .hero-card .text-white,
-        .glass-card .text-white,
-        .hero-card h1,
-        .glass-card h1,
-        .glass-card h2,
-        .glass-card h3 {
-            color: #0f172a !important;
-        }
-        .hero-card .text-slate-400,
-        .glass-card .text-slate-400 { color: #64748b !important; }
-        .stat-card {
-            background: rgba(255,255,255,.9) !important;
-            border: 1px solid #e2e8f0 !important;
-            box-shadow: 0 8px 22px rgba(15,23,42,.04);
-        }
-        .stat-card .text-white { color: #0f172a !important; }
+/* Realistic card retained as a PayGo product component */
+.realistic-card{
+  background:linear-gradient(135deg,#071b46,#0b2c6d 50%,#020617)!important;
+  border:1px solid rgba(96,165,250,.28)!important;
+  box-shadow:0 12px 30px rgba(0,0,0,.18)!important;
+  border-radius:10px!important;
+}
 
-        .glass-card {
-            background: rgba(255,255,255,.92) !important;
-            border: 1px solid #e2e8f0 !important;
-            box-shadow: 0 14px 36px rgba(15,23,42,.06) !important;
-            backdrop-filter: blur(14px);
-        }
-        .glass-card:hover { border-color:#cbd5e1 !important; }
+/* Deposit modal */
+.paygo-deposit-modal{
+  background:#fff!important;
+  border:1px solid var(--pg-border)!important;
+  border-radius:6px!important;
+  box-shadow:0 10px 40px rgba(0,0,0,.2)!important;
+}
+.paygo-deposit-head{
+  background:#fff!important;
+  border-bottom:1px solid var(--pg-border)!important;
+}
+.paygo-modal-close{
+  border-radius:4px!important;
+  background:#f8f9fa!important;
+  border:1px solid var(--pg-border)!important;
+}
+.paygo-method-card{
+  background:#fff!important;
+  border:1px solid var(--pg-border)!important;
+  border-radius:4px!important;
+}
+.paygo-method input:checked+.paygo-method-card{
+  background:var(--pg-primary-soft)!important;
+  border-color:#86b7fe!important;
+  box-shadow:none!important;
+}
+.paygo-conversion-card{
+  background:#f8f9fa!important;
+  border:1px solid var(--pg-border)!important;
+  border-radius:6px!important;
+}
+.paygo-card-checkout{
+  background:#f8f9fa!important;
+  border:1px solid var(--pg-border)!important;
+  border-radius:6px!important;
+}
+.paygo-deposit-submit{
+  border-radius:4px!important;
+  background:var(--pg-primary)!important;
+  box-shadow:none!important;
+}
+.paygo-deposit-submit:hover{
+  background:var(--pg-primary-dark)!important;
+  box-shadow:none!important;
+  transform:none!important;
+}
 
-        .section-label { color:#64748b !important; }
-        .client-help-chip {
-            background:#eff6ff !important;
-            border-color:#dbeafe !important;
-            color:#2563eb !important;
-        }
-        .trust-badge {
-            background:#fff !important;
-            border-color:#e2e8f0 !important;
-            color:#475569 !important;
-        }
-        .selection-chip,
-        .service-quick-card,
-        .game-service-card {
-            background:#fff !important;
-            border-color:#e2e8f0 !important;
-            color:#334155 !important;
-        }
-        .selection-chip.active,
-        .selection-chip:hover { background:#eff6ff !important; color:#0f172a !important; }
+/* Toasts */
+#toastContainer{top:70px!important;right:20px!important}
+.toast-item{
+  background:#fff!important;
+  color:#212529!important;
+  border:1px solid var(--pg-border)!important;
+  border-left:4px solid var(--pg-primary)!important;
+  border-radius:4px!important;
+  box-shadow:0 4px 12px rgba(0,0,0,.12)!important;
+}
 
-        .realistic-card {
-            background:
-                radial-gradient(circle at 80% 20%, rgba(14,165,233,.25), transparent 35%),
-                linear-gradient(135deg,#071b46 0%,#0b2c6d 48%,#020617 100%) !important;
-            border: 1px solid rgba(96,165,250,.28) !important;
-            box-shadow: 0 24px 50px rgba(2,6,23,.28), inset 0 0 0 1px rgba(255,255,255,.08) !important;
-        }
-        .paygo-card-logo-wrap {
-            width: 112px;
-            height: 38px;
-            display:flex;
-            align-items:center;
-            overflow:hidden;
-        }
-        .paygo-card-logo {
-            width: 112px;
-            height: auto;
-            object-fit: contain;
-            filter: brightness(0) invert(1);
-            opacity: .98;
-            transform: scale(1.12);
-            transform-origin: left center;
-        }
+/* Loader */
+#sysLoader{
+  background:#fff!important;
+  color:#212529!important;
+}
+#sysLoader h2{color:#343a40!important}
+#sysLoader p{color:#6c757d!important}
 
-        /* Inputs across the light dashboard */
-        input, textarea, select {
-            background: #fff !important;
-            color: #0f172a !important;
-            border-color: #cbd5e1 !important;
-        }
-        input::placeholder, textarea::placeholder { color:#94a3b8 !important; }
-        select option { background:#fff !important; color:#0f172a !important; }
+/* Generic table styling */
+table{width:100%;border-collapse:collapse}
+th{
+  background:#f8f9fa;
+  color:#495057;
+  font-weight:600;
+  text-align:left;
+  border-bottom:1px solid var(--pg-border);
+}
+td{
+  border-bottom:1px solid #edf0f2;
+  color:#343a40;
+}
+tr:hover td{background:#f8f9fa}
 
-        /* Deposit modal */
-        .paygo-deposit-modal {
-            background: #fff;
-            border: 1px solid #dbe4ef;
-            border-radius: 26px;
-            box-shadow: 0 30px 80px rgba(15,23,42,.22);
-            overflow: hidden;
-        }
-        .paygo-deposit-head {
-            position: relative;
-            padding: 1.35rem 1.35rem 1.15rem;
-            border-bottom: 1px solid #edf2f7;
-            background: linear-gradient(135deg,#f8fbff,#fff);
-        }
-        .paygo-modal-logo {
-            width: 58px; height: 58px; border-radius: 16px;
-            background:#fff; border:1px solid #dbeafe;
-            display:flex; align-items:center; justify-content:center;
-            box-shadow:0 8px 20px rgba(37,99,235,.10);
-            overflow:hidden; flex:none;
-        }
-        .paygo-modal-logo img { width:52px; height:auto; }
-        .paygo-modal-kicker {
-            color:#2563eb; font-size:10px; font-weight:800;
-            letter-spacing:.12em; text-transform:uppercase;
-        }
-        .paygo-secure-pill {
-            display:inline-flex; align-items:center; gap:5px;
-            padding:4px 8px; border-radius:999px;
-            background:#ecfdf5; color:#047857;
-            border:1px solid #bbf7d0; font-size:10px; font-weight:800;
-        }
-        .paygo-modal-close {
-            position:absolute; right:14px; top:14px;
-            width:42px; height:42px; border-radius:12px;
-            display:flex; align-items:center; justify-content:center;
-            color:#64748b; background:#f8fafc; border:1px solid #e2e8f0;
-        }
-        .paygo-modal-close:hover { color:#0f172a; background:#f1f5f9; }
-        .paygo-amount-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-        .paygo-field label, .paygo-field-label {
-            display:block; color:#475569; font-size:10px; font-weight:800;
-            letter-spacing:.12em; text-transform:uppercase; margin-bottom:8px;
-        }
-        .paygo-input-wrap { position:relative; }
-        .paygo-input-wrap input {
-            width:100%; min-height:50px; border-radius:13px;
-            padding:0 14px 0 42px; outline:none; font-weight:700;
-            box-shadow:inset 0 1px 2px rgba(15,23,42,.03);
-        }
-        .paygo-input-wrap input:focus { border-color:#60a5fa !important; box-shadow:0 0 0 4px rgba(37,99,235,.10); }
-        .paygo-input-icon { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:#2563eb; width:18px; height:18px; }
-        .paygo-currency { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:#2563eb; font-size:12px; font-weight:900; }
-        .paygo-conversion-card {
-            display:flex; align-items:center; justify-content:space-between; gap:14px;
-            padding:15px 16px; border-radius:16px;
-            background:#f8fbff; border:1px solid #dbeafe;
-        }
-        .paygo-conversion-label { font-size:10px; color:#64748b; font-weight:800; text-transform:uppercase; letter-spacing:.12em; }
-        .paygo-conversion-rate { font-size:13px; font-weight:800; color:#2563eb; margin-top:4px; }
-        .paygo-conversion-value { font-size:22px; font-weight:900; color:#0f172a; font-family:"Outfit",sans-serif; }
-        .paygo-method { display:block; cursor:pointer; }
-        .paygo-method-card {
-            min-height:82px; padding:12px 8px; border-radius:15px;
-            border:1px solid #e2e8f0; background:#fff;
-            display:flex; flex-direction:column; align-items:center; justify-content:center;
-            gap:4px; text-align:center; transition:.2s ease;
-        }
-        .paygo-method-card i { width:19px; height:19px; color:#64748b; }
-        .paygo-method-card strong { color:#1e293b; font-size:12px; }
-        .paygo-method-card small { color:#94a3b8; font-size:9px; }
-        .paygo-method input:checked + .paygo-method-card {
-            border-color:#2563eb; background:#eff6ff;
-            box-shadow:0 0 0 3px rgba(37,99,235,.08);
-        }
-        .paygo-method input:checked + .paygo-method-card i { color:#2563eb; }
-        .paygo-card-checkout {
-            display:flex; gap:13px; align-items:flex-start;
-            padding:14px; border-radius:16px;
-            background:linear-gradient(135deg,#eff6ff,#f8fbff);
-            border:1px solid #bfdbfe;
-        }
-        .paygo-card-checkout-icon {
-            width:42px; height:42px; border-radius:12px;
-            background:#2563eb; color:#fff; display:flex; align-items:center; justify-content:center; flex:none;
-            box-shadow:0 8px 18px rgba(37,99,235,.18);
-        }
-        .paygo-card-brand {
-            padding:4px 7px; border-radius:6px; background:#fff;
-            border:1px solid #e2e8f0; color:#334155; font-size:9px; font-weight:900;
-        }
-        .paygo-card-note {
-            display:inline-flex; align-items:center; gap:4px; color:#64748b; font-size:9px; font-weight:700;
-        }
-        .paygo-deposit-trust {
-            display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
-        }
-        .paygo-deposit-trust > div {
-            display:flex; align-items:center; justify-content:center; gap:6px;
-            min-height:38px; padding:7px; border:1px solid #eef2f7;
-            border-radius:11px; color:#64748b; font-size:9px; font-weight:800; text-align:center;
-        }
-        .paygo-deposit-trust svg { width:14px; height:14px; color:#2563eb; flex:none; }
-        .paygo-deposit-submit {
-            width:100%; min-height:54px; border:0; border-radius:14px;
-            display:flex; align-items:center; justify-content:center; gap:8px;
-            background:linear-gradient(135deg,#2563eb,#1d4ed8);
-            color:#fff; font-size:14px; font-weight:900;
-            box-shadow:0 12px 26px rgba(37,99,235,.22);
-            transition:.2s ease;
-        }
-        .paygo-deposit-submit:hover { transform:translateY(-1px); box-shadow:0 15px 30px rgba(37,99,235,.28); }
-        .paygo-deposit-submit:disabled { opacity:.55; transform:none; box-shadow:none; }
+/* Alerts */
+.alert{border-radius:4px!important}
 
-        @media (max-width: 900px) {
-            .paygo-panel-nav { grid-template-columns:repeat(3,1fr); }
-        }
-        @media (max-width: 640px) {
-            .paygo-header-logo { width:112px; }
-            .paygo-panel-nav { grid-template-columns:repeat(2,1fr); }
-            .paygo-panel-nav a, .paygo-panel-nav button { font-size:.72rem !important; }
-            .paygo-amount-grid { grid-template-columns:1fr; }
-            .paygo-conversion-card { align-items:flex-start; flex-direction:column; }
-            .paygo-conversion-card .text-right { width:100%; text-align:left; }
-            .paygo-deposit-trust { grid-template-columns:1fr; }
-            .paygo-deposit-head { padding:1rem; }
-            .paygo-modal-logo { width:50px; height:50px; }
-            .paygo-deposit-modal { border-radius:20px; }
-            .realistic-card { width:100%; }
-        }
+/* Hidden helper */
+.hidden-soft{display:none!important}
+.sensitive-blur{filter:blur(5px);user-select:none}
 
-    </style>
+/* Responsive */
+@media(max-width:900px){
+  body>main,main{
+    padding-left:20px!important;
+    padding-right:20px!important;
+  }
+  .paygo-panel-nav{
+    position:relative!important;
+    top:auto!important;left:auto!important;bottom:auto!important;
+    width:100%!important;
+    height:auto!important;
+    flex-direction:row!important;
+    overflow-x:auto!important;
+    margin-bottom:15px!important;
+    padding:6px!important;
+    background:#fff!important;
+    border:1px solid var(--pg-border)!important;
+    border-radius:6px!important;
+  }
+  .paygo-panel-nav::before{display:none}
+  .paygo-panel-nav a,.paygo-panel-nav button{
+    width:auto!important;
+    min-width:max-content!important;
+    justify-content:center!important;
+    color:#495057!important;
+    background:#fff!important;
+  }
+  .paygo-panel-nav .active{
+    color:#fff!important;
+    background:var(--pg-primary)!important;
+  }
+}
+
+@media(max-width:640px){
+  header>div{padding:0 12px!important}
+  .paygo-header-logo{width:95px!important}
+  body>main,main{
+    padding-top:70px!important;
+    padding-left:10px!important;
+    padding-right:10px!important;
+  }
+  .paygo-panel-nav{
+    gap:3px!important;
+  }
+  .paygo-panel-nav a,.paygo-panel-nav button{
+    font-size:12px!important;
+    min-height:38px!important;
+    padding:8px 10px!important;
+  }
+  .paygo-amount-grid{grid-template-columns:1fr!important}
+  .paygo-deposit-trust{grid-template-columns:1fr!important}
+  .realistic-card{width:100%!important}
+}
+
+/* Prevent old dark-mode classes from restoring old theme */
+html.dark body{
+  background:var(--pg-bg)!important;
+  color:var(--pg-text)!important;
+}
+</style>
+
 </head>
 <body class="selection:bg-brand-500 selection:text-white">
 
