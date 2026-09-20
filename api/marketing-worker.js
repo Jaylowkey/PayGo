@@ -4,7 +4,7 @@ import { FieldPath, FieldValue, getFirestore, Timestamp } from 'firebase-admin/f
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const FROM_EMAIL = process.env.FROM_EMAIL || 'PayGo Moçambique <noreply@paygo.co.mz>';
-const BATCH = Math.max(1, Number(process.env.MARKETING_BATCH_SIZE || 100));
+const BATCH = Math.max(1, Math.min(500, Number(process.env.MARKETING_BATCH_SIZE || 100)));
 
 function db() {
   if (!getApps().length) {
@@ -16,60 +16,162 @@ function db() {
   }
   try { return getFirestore(getApps()[0], 'paygodb'); } catch { return getFirestore(); }
 }
-function auth(req) { return !!process.env.CRON_SECRET && (req.headers.authorization || '') === `Bearer ${process.env.CRON_SECRET}`; }
-function vars(s,u={}) {
-  const firstName=u.firstName||u.first_name||u.name?.split?.(' ')?.[0]||'Cliente';
-  const name=u.name||u.displayName||firstName;
-  const balance=u.balance??u.walletBalance??u.wallet?.balance??0;
-  return String(s||'').replace(/{{\s*firstName\s*}}/gi,String(firstName)).replace(/{{\s*name\s*}}/gi,String(name)).replace(/{{\s*balance\s*}}/gi,String(balance));
+
+function auth(req) {
+  const secret = process.env.CRON_SECRET;
+  const header = String(req.headers.authorization || '');
+  return Boolean(secret) && header === `Bearer ${secret}`;
 }
-function audience(u,a) {
-  if(a==='all') return true;
-  const status=String(u.status||'').toLowerCase();
-  const balance=Number(u.balance??u.walletBalance??u.wallet?.balance??0);
-  if(a==='active') return ['active','verified'].includes(status)||u.active===true||u.emailVerified===true;
-  if(a==='wallet') return balance>0;
-  if(a==='affiliate') return !!(u.affiliateCode||u.affiliate_code||u.referralCode||u.isAffiliate);
+
+function vars(s, u = {}) {
+  const firstName = u.firstName || u.first_name || u.name?.split?.(' ')?.[0] || 'Cliente';
+  const name = u.name || u.displayName || firstName;
+  const balance = u.balance ?? u.walletBalance ?? u.wallet?.balance ?? 0;
+  return String(s || '')
+    .replace(/{{\s*firstName\s*}}/gi, String(firstName))
+    .replace(/{{\s*name\s*}}/gi, String(name))
+    .replace(/{{\s*balance\s*}}/gi, String(balance));
+}
+
+function audience(u, a) {
+  if (a === 'all') return true;
+  const status = String(u.status || '').toLowerCase();
+  const balance = Number(u.balance ?? u.walletBalance ?? u.wallet?.balance ?? 0);
+  if (a === 'active') return ['active', 'verified'].includes(status) || u.active === true || u.emailVerified === true;
+  if (a === 'wallet') return balance > 0;
+  if (a === 'affiliate') return Boolean(u.affiliateCode || u.affiliate_code || u.referralCode || u.isAffiliate);
   return true;
 }
-function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');}
-async function email(to,subject,body,id){
-  if(!resend) return false;
-  const r=await resend.emails.send({from:FROM_EMAIL,to:[to],subject,html:`<div style="max-width:620px;margin:auto;padding:32px;font-family:Arial;color:#0f172a"><b style="font-size:28px;color:#2563eb">PayGo</b><p style="white-space:pre-wrap;line-height:1.7">${esc(body)}</p><hr><small>PayGo Moçambique · contact@paygo.co.mz</small></div>`,text:body,headers:{'X-PayGo-Campaign':id}});
+
+function esc(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
+async function email(to, subject, body, id) {
+  if (!resend) return false;
+  const r = await resend.emails.send({
+    from: FROM_EMAIL,
+    to: [to],
+    subject,
+    html: `<div style="max-width:620px;margin:auto;padding:32px;font-family:Arial;color:#0f172a"><b style="font-size:28px;color:#2563eb">PayGo</b><p style="white-space:pre-wrap;line-height:1.7">${esc(body)}</p><hr><small>PayGo Moçambique · contact@paygo.co.mz</small></div>`,
+    text: body,
+    headers: { 'X-PayGo-Campaign': id }
+  });
   return !r.error;
 }
-async function runCampaign(database,ref){
-  const c=ref.data()||{}, id=ref.id, channels=Array.isArray(c.channels)?c.channels:['in_app'], aud=c.audience||'all';
-  let sent=Number(c.stats?.sent||0), delivered=Number(c.stats?.delivered||0), failed=Number(c.stats?.failed||0);
-  let q=database.collection('users').orderBy(FieldPath.documentId()).limit(BATCH);
-  if(c.workerCursor) q=q.startAfter(c.workerCursor);
-  const snap=await q.get();
-  if(snap.empty){await ref.ref.update({status:'sent',completedAt:FieldValue.serverTimestamp(),stats:{...c.stats,sent,delivered,failed}});return {id,status:'sent'};}
-  let cursor=snap.docs[snap.docs.length-1].id;
-  for(const d of snap.docs){
-    const u=d.data()||{}; cursor=d.id;
-    if(!audience(u,aud)) continue;
-    const title=vars(c.title||c.subject||'PayGo',u), body=vars(c.message||c.body||'',u);
-    let ok=0, bad=0;
-    if(channels.includes('in_app')) try{await database.collection('notifications').add({userId:d.id,uid:d.id,type:'marketing',campaignId:id,title,body,message:body,read:false,createdAt:FieldValue.serverTimestamp(),metadata:{audience:aud,channels}});ok++;delivered++;}catch{bad++;}
-    if(channels.includes('email')) { const to=u.email||u.emailAddress; if(to && await email(to,vars(c.subject||c.title||'Notificação PayGo',u),body,id)) ok++; else bad++; }
-    // Push/WhatsApp are not faked; count them as unavailable until providers are configured.
-    bad += channels.filter(x=>x==='push'||x==='whatsapp').length;
-    sent+=ok; failed+=bad;
-  }
-  const more=snap.size===BATCH;
-  await ref.ref.update({status:more?'queued':'sent',workerCursor:more?cursor:FieldValue.delete(),completedAt:more?FieldValue.delete():FieldValue.serverTimestamp(),stats:{...c.stats,sent,delivered,failed,processed:sent+failed},lastProcessedAt:FieldValue.serverTimestamp()});
-  return {id,status:more?'queued':'sent',processed:snap.size};
+
+function campaignStats(c, sent, delivered, failed, processed) {
+  return { ...(c.stats || {}), sent, delivered, failed, processed };
 }
-export default async function handler(req,res){
-  if(!['GET','POST'].includes(req.method)) return res.status(405).json({error:'Method not allowed'});
-  if(!auth(req)) return res.status(401).json({error:'Unauthorized'});
-  try{
-    const database=db(), now=Timestamp.now(), results=[];
-    const queued=await database.collection('marketingCampaigns').where('status','==','queued').limit(10).get();
-    for(const d of queued.docs) results.push(await runCampaign(database,d));
-    const scheduled=await database.collection('marketingCampaigns').where('status','==','scheduled').where('scheduleAt','<=',now).limit(10).get();
-    for(const d of scheduled.docs){await d.ref.update({status:'queued',queuedAt:FieldValue.serverTimestamp()});results.push(await runCampaign(database,d));}
-    res.status(200).json({ok:true,processed:results.length,results,at:new Date().toISOString()});
-  }catch(e){console.error('[marketing-worker]',e);res.status(500).json({error:'Marketing worker failed',message:e.message});}
+
+async function runCampaign(database, ref) {
+  const c = ref.data() || {};
+  const id = ref.id;
+  const channels = Array.isArray(c.channels) && c.channels.length ? c.channels : ['in_app'];
+  const aud = c.audience || 'all';
+  let sent = Number(c.stats?.sent || 0);
+  let delivered = Number(c.stats?.delivered || 0);
+  let failed = Number(c.stats?.failed || 0);
+
+  let q = database.collection('users').orderBy(FieldPath.documentId()).limit(BATCH);
+  if (c.workerCursor) q = q.startAfter(c.workerCursor);
+  const snap = await q.get();
+
+  if (snap.empty) {
+    await ref.ref.update({
+      status: 'sent',
+      workerCursor: FieldValue.delete(),
+      completedAt: FieldValue.serverTimestamp(),
+      stats: campaignStats(c, sent, delivered, failed, Number(c.stats?.processed || 0))
+    });
+    return { id, status: 'sent', processed: 0 };
+  }
+
+  let cursor = snap.docs[snap.docs.length - 1].id;
+  let processed = Number(c.stats?.processed || 0);
+
+  for (const d of snap.docs) {
+    const u = d.data() || {};
+    cursor = d.id;
+    processed++;
+    if (!audience(u, aud)) continue;
+
+    const title = vars(c.title || c.subject || 'PayGo', u);
+    const body = vars(c.message || c.body || '', u);
+    let successfulChannels = 0;
+    let failedChannels = 0;
+
+    if (channels.includes('in_app')) {
+      try {
+        await database.collection('notifications').add({
+          userId: d.id, uid: d.id, type: 'marketing', campaignId: id,
+          title, body, message: body, read: false,
+          createdAt: FieldValue.serverTimestamp(),
+          metadata: { audience: aud, channels }
+        });
+        successfulChannels++;
+        delivered++;
+      } catch { failedChannels++; }
+    }
+
+    if (channels.includes('email')) {
+      const to = u.email || u.emailAddress;
+      if (to && await email(to, vars(c.subject || c.title || 'Notificação PayGo', u), body, id)) {
+        successfulChannels++;
+        delivered++;
+      } else {
+        failedChannels++;
+      }
+    }
+
+    failedChannels += channels.filter((x) => x === 'push' || x === 'whatsapp').length;
+    sent += successfulChannels;
+    failed += failedChannels;
+  }
+
+  const more = snap.size === BATCH;
+  await ref.ref.update({
+    status: more ? 'queued' : 'sent',
+    workerCursor: more ? cursor : FieldValue.delete(),
+    completedAt: more ? FieldValue.delete() : FieldValue.serverTimestamp(),
+    stats: campaignStats(c, sent, delivered, failed, processed),
+    lastProcessedAt: FieldValue.serverTimestamp()
+  });
+
+  return { id, status: more ? 'queued' : 'sent', processed: snap.size };
+}
+
+function isDue(value, now) {
+  if (!value) return false;
+  if (typeof value.toDate === 'function') return value.toDate().getTime() <= now.toDate().getTime();
+  const date = new Date(value);
+  return Number.isFinite(date.getTime()) && date.getTime() <= now.toDate().getTime();
+}
+
+export default async function handler(req, res) {
+  if (!['GET', 'POST'].includes(req.method)) return res.status(405).json({ error: 'Method not allowed' });
+  if (!auth(req)) return res.status(401).json({ error: 'Unauthorized' });
+
+  try {
+    const database = db();
+    const now = Timestamp.now();
+    const results = [];
+
+    const queued = await database.collection('marketingCampaigns').where('status', '==', 'queued').limit(10).get();
+    for (const d of queued.docs) results.push(await runCampaign(database, d));
+
+    // Avoid a Firestore composite index for status + scheduleAt.
+    const scheduled = await database.collection('marketingCampaigns').where('status', '==', 'scheduled').limit(100).get();
+    for (const d of scheduled.docs) {
+      const data = d.data() || {};
+      if (!isDue(data.scheduleAt, now)) continue;
+      await d.ref.update({ status: 'queued', queuedAt: FieldValue.serverTimestamp() });
+      results.push(await runCampaign(database, d));
+    }
+
+    return res.status(200).json({ ok: true, processed: results.length, results, at: new Date().toISOString() });
+  } catch (e) {
+    console.error('[marketing-worker]', e);
+    return res.status(500).json({ error: 'Marketing worker failed', message: e.message });
+  }
 }
