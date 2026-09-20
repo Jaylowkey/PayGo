@@ -5,6 +5,7 @@ import { FieldPath, FieldValue, getFirestore, Timestamp } from 'firebase-admin/f
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const FROM_EMAIL = process.env.FROM_EMAIL || 'PayGo Moçambique <noreply@paygo.co.mz>';
+const EMAIL_PROVIDER = String(process.env.MARKETING_EMAIL_PROVIDER || 'resend').toLowerCase();
 const BATCH = Math.max(1, Math.min(500, Number(process.env.MARKETING_BATCH_SIZE || 100)));
 
 function db() {
@@ -60,7 +61,7 @@ function esc(s) {
 }
 
 async function email(to, subject, body, id) {
-  if (!resend) return false;
+  if (EMAIL_PROVIDER !== 'resend' || !resend) return false;
   const r = await resend.emails.send({
     from: FROM_EMAIL,
     to: [to],
@@ -190,7 +191,7 @@ export default async function handler(req, res) {
       results.push(await runCampaign(database, d));
     }
 
-    return res.status(200).json({ ok: true, worker: 'marketing', processed: results.length, results, at: new Date().toISOString() });
+    return res.status(200).json({ ok: true, worker: 'marketing', providers: { in_app: true, email: EMAIL_PROVIDER === 'resend' && Boolean(resend), push: false, whatsapp: false }, processed: results.length, results, at: new Date().toISOString() });
   } catch (e) {
     console.error('[marketing-worker]', e);
     return res.status(500).json({ error: 'Marketing worker failed', message: e.message });
