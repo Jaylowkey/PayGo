@@ -149,6 +149,7 @@ function isDue(value, now) {
 }
 
 export default async function handler(req, res) {
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
   if (!['GET', 'POST'].includes(req.method)) return res.status(405).json({ error: 'Method not allowed' });
   if (!auth(req)) return res.status(401).json({ error: 'Unauthorized' });
 
@@ -169,7 +170,7 @@ export default async function handler(req, res) {
       results.push(await runCampaign(database, d));
     }
 
-    return res.status(200).json({ ok: true, processed: results.length, results, at: new Date().toISOString() });
+    return res.status(200).json({ ok: true, worker: 'marketing', processed: results.length, results, at: new Date().toISOString() });
   } catch (e) {
     console.error('[marketing-worker]', e);
     return res.status(500).json({ error: 'Marketing worker failed', message: e.message });
