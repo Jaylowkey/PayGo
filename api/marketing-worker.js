@@ -73,9 +73,15 @@ async function runCampaign(database, ref) {
   let delivered = Number(c.stats?.delivered || 0);
   let failed = Number(c.stats?.failed || 0);
 
-  let q = database.collection('users').orderBy(FieldPath.documentId()).limit(BATCH);
-  if (c.workerCursor) q = q.startAfter(c.workerCursor);
-  const snap = await q.get();
+  let snap;
+  if (aud === 'specific' && c.targetUserId) {
+    const target = await database.collection('users').doc(String(c.targetUserId)).get();
+    snap = { empty: !target.exists, size: target.exists ? 1 : 0, docs: target.exists ? [target] : [] };
+  } else {
+    let q = database.collection('users').orderBy(FieldPath.documentId()).limit(BATCH);
+    if (c.workerCursor) q = q.startAfter(c.workerCursor);
+    snap = await q.get();
+  }
 
   if (snap.empty) {
     await ref.ref.update({
