@@ -19,13 +19,18 @@ const db = getFirestore(app, 'paygodb');
 let messaging = null;
 let currentUser = null;
 
-function pushButton() {
+function pushButton(label = 'Ativar notificações') {
   let button = document.getElementById('enablePushNotifications');
-  if (button) return button;
+  if (button) {
+    const text = button.querySelector('[data-push-label]');
+    if (text) text.textContent = label;
+    return button;
+  }
   button = document.createElement('button');
   button.id = 'enablePushNotifications';
   button.type = 'button';
-  button.innerHTML = '<span style="font-size:16px">🔔</span><span>Ativar notificações</span>';
+  button.innerHTML = '<span style="font-size:16px">🔔</span><span data-push-label></span>';
+  button.querySelector('[data-push-label]').textContent = label;
   Object.assign(button.style, {
     position:'fixed', right:'16px', bottom:'16px', zIndex:'9999',
     display:'none', alignItems:'center', gap:'8px', padding:'12px 15px',
@@ -88,8 +93,15 @@ async function registerPush(user, requestPermission = false) {
   return true;
 }
 
+function showPushHelp(message) {
+  const button = pushButton('🔔 Ativar notificações');
+  button.style.display = 'flex';
+  button.title = message || 'Ative as notificações do PayGo no navegador.';
+}
+
 async function enablePush() {
-  const button = pushButton();
+  const button = pushButton('Ativar notificações');
+  button.style.display = 'flex';
   button.disabled = true;
   button.innerHTML = '<span>⏳</span><span>A ativar...</span>';
   try {
@@ -98,12 +110,17 @@ async function enablePush() {
       button.remove();
     } else {
       button.disabled = false;
-      button.innerHTML = '<span>🔔</span><span>Ativar notificações</span>';
+      button.innerHTML = '<span>🔔</span><span data-push-label>Ativar notificações</span>';
+      if (Notification.permission === 'denied') {
+        button.querySelector('[data-push-label]').textContent = 'Permitir nas definições';
+        button.title = 'O Chrome bloqueou as notificações. Abra as definições do site e permita as notificações.';
+      }
     }
   } catch (error) {
     console.error('[paygo-push]', error);
     button.disabled = false;
-    button.innerHTML = '<span>⚠️</span><span>Tentar novamente</span>';
+    button.innerHTML = '<span>⚠️</span><span data-push-label>Tentar novamente</span>';
+    button.title = error?.message || 'Não foi possível ativar as notificações.';
   }
 }
 
@@ -116,7 +133,13 @@ onAuthStateChanged(auth, async (user) => {
     if (!supported) return;
 
     if (Notification.permission === 'granted') {
-      await registerPush(user, false);
+      try {
+        const registered = await registerPush(user, false);
+        if (!registered) showPushHelp('Não foi possível registar o FCM neste navegador.');
+      } catch (error) {
+        console.warn('[paygo-push-register]', error);
+        showPushHelp('As notificações estão permitidas, mas o FCM ainda não foi registado. Toque para tentar novamente.');
+      }
       if (messaging) {
         onMessage(messaging, (payload) => {
           const n = payload.notification || {};
@@ -130,10 +153,13 @@ onAuthStateChanged(auth, async (user) => {
         });
       }
     } else if (Notification.permission === 'default') {
-      pushButton().style.display = 'flex';
+      showPushHelp('O PayGo precisa da sua autorização para enviar notificações.');
+    } else if (Notification.permission === 'denied') {
+      showPushHelp('As notificações do PayGo estão bloqueadas pelo navegador. Permita-as nas definições do site.');
     }
   } catch (error) {
     console.warn('[paygo-push-init]', error);
+    showPushHelp('Não foi possível inicializar as notificações. Toque para tentar novamente.');
   }
 });
 
