@@ -73,8 +73,16 @@ async function email(to, subject, body, id) {
   return !r.error;
 }
 
-function campaignStats(c, sent, delivered, failed, processed) {
-  return { ...(c.stats || {}), sent, delivered, failed, processed };
+function campaignStats(c, accepted, delivered, failed, processed, channelStats) {
+  return {
+    ...(c.stats || {}),
+    accepted,
+    sent: accepted,
+    delivered,
+    failed,
+    processed,
+    channelStats
+  };
 }
 
 async function runCampaign(database, ref) {
@@ -82,9 +90,15 @@ async function runCampaign(database, ref) {
   const id = ref.id;
   const channels = Array.isArray(c.channels) && c.channels.length ? c.channels : ['in_app'];
   const aud = c.audience || 'all';
-  let sent = Number(c.stats?.sent || 0);
+  let accepted = Number(c.stats?.accepted ?? c.stats?.sent ?? 0);
   let delivered = Number(c.stats?.delivered || 0);
   let failed = Number(c.stats?.failed || 0);
+  const channelStats = {
+    in_app: { ...(c.stats?.channelStats?.in_app || {}), attempted: Number(c.stats?.channelStats?.in_app?.attempted || 0), accepted: Number(c.stats?.channelStats?.in_app?.accepted || 0), delivered: Number(c.stats?.channelStats?.in_app?.delivered || 0), failed: Number(c.stats?.channelStats?.in_app?.failed || 0) },
+    email: { ...(c.stats?.channelStats?.email || {}), attempted: Number(c.stats?.channelStats?.email?.attempted || 0), accepted: Number(c.stats?.channelStats?.email?.accepted || 0), delivered: Number(c.stats?.channelStats?.email?.delivered || 0), failed: Number(c.stats?.channelStats?.email?.failed || 0) },
+    push: { ...(c.stats?.channelStats?.push || {}), attempted: Number(c.stats?.channelStats?.push?.attempted || 0), accepted: Number(c.stats?.channelStats?.push?.accepted || 0), delivered: Number(c.stats?.channelStats?.push?.delivered || 0), failed: Number(c.stats?.channelStats?.push?.failed || 0) },
+    whatsapp: { ...(c.stats?.channelStats?.whatsapp || {}), attempted: Number(c.stats?.channelStats?.whatsapp?.attempted || 0), accepted: Number(c.stats?.channelStats?.whatsapp?.accepted || 0), delivered: Number(c.stats?.channelStats?.whatsapp?.delivered || 0), failed: Number(c.stats?.channelStats?.whatsapp?.failed || 0) }
+  };
 
   let snap;
   if (aud === 'specific' && c.targetUserId) {
@@ -98,10 +112,10 @@ async function runCampaign(database, ref) {
 
   if (snap.empty) {
     await ref.ref.update({
-      status: 'sent',
+      status: 'processed',
       workerCursor: FieldValue.delete(),
       completedAt: FieldValue.serverTimestamp(),
-      stats: campaignStats(c, sent, delivered, failed, Number(c.stats?.processed || 0))
+      stats: campaignStats(c, accepted, delivered, failed, Number(c.stats?.processed || 0), channelStats)
     });
     return { id, status: 'sent', processed: 0 };
   }
@@ -121,6 +135,7 @@ async function runCampaign(database, ref) {
     let failedChannels = 0;
 
     if (channels.includes('in_app')) {
+      channelStats.in_app.attempted++;
       try {
         await database.collection('notifications').add({
           userId: d.id, uid: d.id, type: 'marketing', campaignId: id,
@@ -129,35 +144,46 @@ async function runCampaign(database, ref) {
           metadata: { audience: aud, channels }
         });
         successfulChannels++;
+        accepted++;
         delivered++;
-      } catch { failedChannels++; }
+        channelStats.in_app.accepted++;
+        channelStats.in_app.delivered++;
+      } catch { failedChannels++; channelStats.in_app.failed++; }
     }
 
     if (channels.includes('email')) {
+      channelStats.email.attempted++;
       const to = u.email || u.emailAddress;
       if (to && await email(to, vars(c.subject || c.title || 'Notificação PayGo', u), body, id)) {
         successfulChannels++;
-        delivered++;
+        accepted++;
+        channelStats.email.accepted++;
       } else {
         failedChannels++;
+        channelStats.email.failed++;
       }
     }
 
-    failedChannels += channels.filter((x) => x === 'push' || x === 'whatsapp').length;
-    sent += successfulChannels;
+    for (const unsupported of ['push', 'whatsapp']) {
+      if (!channels.includes(unsupported)) continue;
+      channelStats[unsupported].attempted++;
+      channelStats[unsupported].failed++;
+      failedChannels++;
+    }
+
     failed += failedChannels;
   }
 
   const more = snap.size === BATCH;
   await ref.ref.update({
-    status: more ? 'queued' : 'sent',
+    status: more ? 'queued' : 'processed',
     workerCursor: more ? cursor : FieldValue.delete(),
     completedAt: more ? FieldValue.delete() : FieldValue.serverTimestamp(),
-    stats: campaignStats(c, sent, delivered, failed, processed),
+    stats: campaignStats(c, accepted, delivered, failed, processed, channelStats),
     lastProcessedAt: FieldValue.serverTimestamp()
   });
 
-  return { id, status: more ? 'queued' : 'sent', processed: snap.size };
+  return { id, status: more ? 'queued' : 'processed', processed: snap.size, accepted, delivered, failed };
 }
 
 function isDue(value, now) {
