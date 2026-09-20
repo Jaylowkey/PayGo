@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 import { cert, getApps, initializeApp } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
 import { FieldPath, FieldValue, getFirestore, Timestamp } from 'firebase-admin/firestore';
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
@@ -17,10 +18,21 @@ function db() {
   try { return getFirestore(getApps()[0], 'paygodb'); } catch { return getFirestore(); }
 }
 
-function auth(req) {
+async function authorized(req, database) {
   const secret = process.env.CRON_SECRET;
   const header = String(req.headers.authorization || '');
-  return Boolean(secret) && header === `Bearer ${secret}`;
+  if (secret && header === `Bearer ${secret}`) return true;
+  if (!header.startsWith('Bearer ')) return false;
+  try {
+    const token = header.slice(7).trim();
+    const decoded = await getAuth().verifyIdToken(token);
+    const user = await database.collection('users').doc(decoded.uid).get();
+    const role = String(user.data()?.role || '').toLowerCase();
+    return user.exists && ['admin', 'superadmin'].includes(role);
+  } catch (e) {
+    console.error('[marketing-auth]', e);
+    return false;
+  }
 }
 
 function vars(s, u = {}) {
@@ -157,14 +169,16 @@ function isDue(value, now) {
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, max-age=0');
   if (!['GET', 'POST'].includes(req.method)) return res.status(405).json({ error: 'Method not allowed' });
-  if (!auth(req)) return res.status(401).json({ error: 'Unauthorized' });
-
   try {
     const database = db();
+    if (!await authorized(req, database)) return res.status(401).json({ error: 'Unauthorized' });
+    const campaignId = String(req.body?.campaignId || '');
     const now = Timestamp.now();
     const results = [];
 
-    const queued = await database.collection('marketingCampaigns').where('status', '==', 'queued').limit(10).get();
+    const queued = campaignId
+      ? await database.collection('marketingCampaigns').doc(campaignId).get().then(d => ({ docs: d.exists && d.data()?.status === 'queued' ? [d] : [] }))
+      : await database.collection('marketingCampaigns').where('status', '==', 'queued').limit(10).get();
     for (const d of queued.docs) results.push(await runCampaign(database, d));
 
     // Avoid a Firestore composite index for status + scheduleAt.
