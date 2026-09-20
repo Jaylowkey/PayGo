@@ -69,14 +69,13 @@ async function push(tokens, title, body, link, id) {
     const batch = tokens.slice(i, i + 500);
     const response = await messaging.sendEachForMulticast({
       tokens: batch,
-      notification: { title, body },
       data: {
         title: String(title || 'PayGo'),
         body: String(body || ''),
         campaignId: String(id || ''),
         link: String(link || 'https://www.paygo.co.mz/dashboard.html')
       },
-      webpush: { fcmOptions: { link: String(link || 'https://www.paygo.co.mz/dashboard.html') } }
+      webpush: { fcmOptions: { link: String(link || 'https://www.paygo.co.mz/dashboard.html') }, notification: { title: String(title || 'PayGo'), body: String(body || ''), icon: '/favicon.ico', badge: '/favicon.ico', tag: String(id || 'paygo-notification') } }
     });
     response.responses.forEach((result, index) => responses.push({ token: batch[index], success: result.success, error: result.error }));
   }
@@ -157,7 +156,8 @@ async function runCampaign(database, ref) {
     if (!audience(u, aud)) continue;
 
     const title = vars(c.title || c.subject || 'PayGo', u);
-    const body = vars(c.message || c.body || '', u);
+    const body = vars(c.message || c.body || c.content || '', u).trim();
+    if (!body) { console.warn('[marketing-empty-message]', id, d.id); failed++; continue; }
     let successfulChannels = 0;
     let failedChannels = 0;
 
