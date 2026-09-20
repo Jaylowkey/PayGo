@@ -1,6 +1,7 @@
 import { Resend } from 'resend';
 import { cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
+import { getMessaging } from 'firebase-admin/messaging';
 import { FieldPath, FieldValue, getFirestore, Timestamp } from 'firebase-admin/firestore';
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
@@ -58,6 +59,32 @@ function audience(u, a) {
 
 function esc(s) {
   return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
+async function push(tokens, title, body, link, id) {
+  if (!tokens.length) return { accepted: 0, failed: 0, invalid: [] };
+  const messaging = getMessaging();
+  const responses = [];
+  for (let i = 0; i < tokens.length; i += 500) {
+    const batch = tokens.slice(i, i + 500);
+    const response = await messaging.sendEachForMulticast({
+      tokens: batch,
+      notification: { title, body },
+      data: {
+        title: String(title || 'PayGo'),
+        body: String(body || ''),
+        campaignId: String(id || ''),
+        link: String(link || 'https://www.paygo.co.mz/dashboard.html')
+      },
+      webpush: { fcmOptions: { link: String(link || 'https://www.paygo.co.mz/dashboard.html') } }
+    });
+    response.responses.forEach((result, index) => responses.push({ token: batch[index], success: result.success, error: result.error }));
+  }
+  return {
+    accepted: responses.filter(x => x.success).length,
+    failed: responses.filter(x => !x.success).length,
+    invalid: responses.filter(x => !x.success && ['messaging/registration-token-not-registered', 'messaging/invalid-registration-token'].includes(x.error?.code)).map(x => x.token)
+  };
 }
 
 async function email(to, subject, body, id) {
@@ -151,6 +178,27 @@ async function runCampaign(database, ref) {
       } catch { failedChannels++; channelStats.in_app.failed++; }
     }
 
+    if (channels.includes('push')) {
+      channelStats.push.attempted++;
+      try {
+        const tokenSnap = await database.collection('users').doc(d.id).collection('pushTokens').where('enabled', '==', true).limit(500).get();
+        const tokens = tokenSnap.docs.map(x => String(x.data()?.token || '')).filter(Boolean);
+        const result = await push(tokens, title, body, 'https://www.paygo.co.mz/dashboard.html', id);
+        accepted += result.accepted;
+        failedChannels += result.failed;
+        channelStats.push.accepted += result.accepted;
+        channelStats.push.failed += result.failed;
+        for (const invalidToken of result.invalid) {
+          const tokenDoc = tokenSnap.docs.find(x => x.data()?.token === invalidToken);
+          if (tokenDoc) await tokenDoc.ref.delete().catch(() => {});
+        }
+      } catch (error) {
+        console.error('[marketing-push]', d.id, error);
+        failedChannels++;
+        channelStats.push.failed++;
+      }
+    }
+
     if (channels.includes('email')) {
       channelStats.email.attempted++;
       const to = u.email || u.emailAddress;
@@ -164,7 +212,7 @@ async function runCampaign(database, ref) {
       }
     }
 
-    for (const unsupported of ['push', 'whatsapp']) {
+    for (const unsupported of ['whatsapp']) {
       if (!channels.includes(unsupported)) continue;
       channelStats[unsupported].attempted++;
       channelStats[unsupported].failed++;
@@ -217,7 +265,7 @@ export default async function handler(req, res) {
       results.push(await runCampaign(database, d));
     }
 
-    return res.status(200).json({ ok: true, worker: 'marketing', providers: { in_app: true, email: EMAIL_PROVIDER === 'resend' && Boolean(resend), push: false, whatsapp: false }, processed: results.length, results, at: new Date().toISOString() });
+    return res.status(200).json({ ok: true, worker: 'marketing', providers: { in_app: true, email: EMAIL_PROVIDER === 'resend' && Boolean(resend), push: true, whatsapp: false }, processed: results.length, results, at: new Date().toISOString() });
   } catch (e) {
     console.error('[marketing-worker]', e);
     return res.status(500).json({ error: 'Marketing worker failed', message: e.message });
