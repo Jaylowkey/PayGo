@@ -9,7 +9,6 @@ import {
   createPayment,
   getPaymentStatus,
   getWallets,
-  createPayout,
   verifyWebhookSignature,
 } from '../lib/services/zumbopay.js';
 
@@ -770,115 +769,6 @@ async function handleZumboPayWallets(req, res) {
     return res.status(error?.message?.includes('Acesso negado') ? 403 : 502).json({
       success: false,
       error: error?.message || 'Não foi possível consultar as carteiras ZumboPay.',
-    });
-  }
-}
-
-// =========================================================
-// 💸 ZUMBOPAY — CRIAR PAYOUT PELO ADMIN
-// =========================================================
-async function handleZumboPayPayout(req, res, body) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ success: false, error: 'Método não permitido' });
-  }
-
-  let admin;
-  try {
-    admin = await getAuthenticatedAdmin(req);
-  } catch (error) {
-    return res.status(error?.message?.includes('Acesso negado') ? 403 : 401).json({
-      success: false,
-      error: error?.message || 'Não autenticado.',
-    });
-  }
-
-  const { amount, method, destination, notes, autoDispatch, walletId } = body || {};
-  const numericAmount = Number(amount);
-  const cleanMethod = String(method || '').toLowerCase().trim();
-
-  if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
-    return res.status(400).json({ success: false, error: 'Valor do payout inválido.' });
-  }
-  if (!['mpesa', 'emola'].includes(cleanMethod)) {
-    return res.status(400).json({ success: false, error: 'Método deve ser mpesa ou emola.' });
-  }
-  if (!destination) {
-    return res.status(400).json({ success: false, error: 'Número de destino é obrigatório.' });
-  }
-
-  const { db } = getFirebase();
-  const now = new Date().toISOString();
-  const localRef = db.collection('zumbopay_payouts').doc();
-
-  try {
-    const payout = await createPayout({
-      amount: numericAmount,
-      method: cleanMethod,
-      destination,
-      notes: notes || 'Payout PayGo',
-      autoDispatch: Boolean(autoDispatch),
-      walletId: walletId || undefined,
-    });
-
-    await localRef.set({
-      id: localRef.id,
-      provider: 'zumbopay',
-      payoutId: payout.payoutId || null,
-      reference: payout.reference || null,
-      providerReference: payout.providerReference || null,
-      status: payout.status || 'pending',
-      method: cleanMethod,
-      destination: payout.destination || destination,
-      amount: payout.amount || numericAmount,
-      feeAmount: payout.feeAmount || 0,
-      netAmount: payout.netAmount || 0,
-      currency: payout.currency || 'MZN',
-      walletId: walletId || null,
-      autoDispatch: Boolean(autoDispatch),
-      notes: notes || 'Payout PayGo',
-      adminId: admin.uid,
-      adminName: admin.name,
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    await db.collection('admin_audit_logs').add({
-      adminId: admin.uid,
-      adminName: admin.name,
-      action: 'ZUMBOPAY_PAYOUT_CREATED',
-      targetId: payout.payoutId || localRef.id,
-      targetType: 'zumbopay_payout',
-      details: purificarDados({
-        amount: numericAmount,
-        method: cleanMethod,
-        destination,
-        status: payout.status,
-        reference: payout.reference,
-      }),
-      createdAt: now,
-    });
-
-    return res.status(201).json({ success: true, data: payout });
-  } catch (error) {
-    console.error('❌ ZumboPay payout:', error);
-    await localRef.set({
-      id: localRef.id,
-      provider: 'zumbopay',
-      status: 'failed',
-      method: cleanMethod,
-      destination: String(destination),
-      amount: numericAmount,
-      adminId: admin.uid,
-      adminName: admin.name,
-      error: error?.message || 'Erro no payout',
-      createdAt: now,
-      updatedAt: new Date().toISOString(),
-    }, { merge: true }).catch(() => {});
-
-    return res.status(error?.status >= 400 && error.status < 500 ? error.status : 502).json({
-      success: false,
-      error: error?.message || 'Não foi possível criar o payout.',
-      code: error?.code || null,
     });
   }
 }
@@ -2488,7 +2378,6 @@ const routes = {
   'zumbopay-payment': handleZumboPayPayment,
   'zumbopay-webhook': handleZumboPayWebhook,
   'zumbopay-wallets': handleZumboPayWallets,
-  'zumbopay-payout': handleZumboPayPayout,
   'zumbopay-status': handleZumboPayStatus,
   'paysuite-payment': handlePaySuitePayment,
   'create-topgames-order': handleCreateTopGamesOrder,
