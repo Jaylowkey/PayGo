@@ -24,7 +24,7 @@
 <section class="mk-card mk-full"><div class="mk-title"><div class="mk-title-icon"><i data-lucide="list-checks"></i></div><div><h2>Campanhas</h2><div class="mk-muted">Acompanhe rascunhos, agendamentos e histórico.</div></div></div><div class="mk-table-wrap"><table class="mk-table"><thead><tr><th>Campanha</th><th>Canal</th><th>Público</th><th>Status</th><th>Criada</th><th>Ação</th></tr></thead><tbody id="campaignRows"><tr><td colspan="6" class="mk-empty">A carregar campanhas...</td></tr></tbody></table></div></section>
 </div></div></main>
 <script type="module">
-import{initializeApp,getApps}from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';import{getAuth,onAuthStateChanged}from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';import{getFirestore,collection,addDoc,serverTimestamp,doc,updateDoc,getDocs,limit}from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import{initializeApp,getApps}from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';import{getAuth,onAuthStateChanged}from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';import{getFirestore,collection,addDoc,serverTimestamp,doc,updateDoc,getDocs,getDoc,query,limit}from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 const cfg={apiKey:'AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxsp0Qh8',authDomain:'paygo-14311.firebaseapp.com',projectId:'paygo-14311',storageBucket:'paygo-14311.firebasestorage.app',messagingSenderId:'208360646277',appId:'1:208360646277:web:aecc57cc0077ae48a52bec'};const app=getApps().length?getApps()[0]:initializeApp(cfg),auth=getAuth(app),db=getFirestore(app,'paygodb');const $=id=>document.getElementById(id);lucide.createIcons();
 function updatePreview(){ $('previewHead').textContent=$('subject').value||'Título da campanha'; $('previewBody').textContent=$('message').value||'A mensagem aparecerá aqui.' }
 ['subject','message'].forEach(id=>$(id).addEventListener('input',updatePreview));$('previewBtn').onclick=updatePreview;$('previewTop').onclick=()=>{updatePreview();document.querySelector('.mk-preview-device').scrollIntoView({behavior:'smooth',block:'center'})};$('schedule').addEventListener('change',e=>{$('scheduleAtWrap').style.display=e.target.value==='scheduled'?'block':'none'});
@@ -36,61 +36,39 @@ function showCampaignMessage(message){$('campaignRows').innerHTML='<tr><td colsp
 async function handleMarketingAuth(u){
  currentUser=u||null;
  if(!u){showCampaignMessage('Sessão administrativa necessária.');return}
- await loadCampaigns();
+ try{
+  const profile=await getDoc(doc(db,'users',u.uid));
+  if(!profile.exists()){currentUser=null;showCampaignMessage('Perfil administrativo não encontrado.');return}
+  const role=String(profile.data()?.role||'').toLowerCase();
+  if(!['admin','superadmin'].includes(role)){currentUser=null;showCampaignMessage('Acesso administrativo necessário.');return}
+  await loadCampaigns();
+ }catch(e){console.error('[marketing-auth]',e);showCampaignMessage('Erro ao validar acesso: '+(e?.message||String(e)))}
 }
-onAuthStateChanged(auth,u=>{
- authReady=true;
- if(authFallbackTimer)clearTimeout(authFallbackTimer);
- handleMarketingAuth(u).catch(e=>{console.error('[marketing-auth]',e);showCampaignMessage('Erro ao iniciar sessão administrativa: '+(e?.message||String(e)))});
-});
-authFallbackTimer=setTimeout(()=>{
- if(authReady)return;
- const u=auth.currentUser;
- if(u){currentUser=u;loadCampaigns().catch(e=>{console.error('[marketing-auth-fallback]',e);showCampaignMessage('Erro ao carregar campanhas: '+(e?.message||String(e)))})}
- else showCampaignMessage('A autenticação do administrador não respondeu. Recarregue a página.');
-},5000);
-function fmt(t){return t?.toDate?t.toDate().toLocaleString('pt-MZ'):t?new Date(t).toLocaleString('pt-MZ'):'—'}function pill(s){return s==='processed'?'<span class="mk-pill mk-ok">Processada</span>':s==='queued'?'<span class="mk-pill mk-info">Na fila</span>':s==='scheduled'?'<span class="mk-pill mk-info">Agendada</span>':s==='failed'?'<span class="mk-pill mk-warn">Falhou</span>':s==='cancelled'?'<span class="mk-pill mk-warn">Cancelada</span>':'<span class="mk-pill mk-warn">Rascunho</span>'}async function loadCampaigns(){
- const target=$('campaignRows');
- target.innerHTML='<tr><td colspan="6" class="mk-empty">A carregar campanhas...</td></tr>';
+onAuthStateChanged(auth,u=>{authReady=true;if(authFallbackTimer)clearTimeout(authFallbackTimer);handleMarketingAuth(u);});
+authFallbackTimer=setTimeout(()=>{if(authReady)return;const u=auth.currentUser;if(u)handleMarketingAuth(u);else showCampaignMessage('A autenticação do administrador não respondeu. Recarregue a página.');},5000);
+function fmt(t){return t?.toDate?t.toDate().toLocaleString('pt-MZ'):t?new Date(t).toLocaleString('pt-MZ'):'—'}function pill(s){return s==='processed'?'<span class="mk-pill mk-ok">Processada</span>':s==='queued'?'<span class="mk-pill mk-info">Na fila</span>':s==='scheduled'?'<span class="mk-pill mk-info">Agendada</span>':s==='failed'?'<span class="mk-pill mk-warn">Falhou</span>':s==='cancelled'?'<span class="mk-pill mk-warn">Cancelada</span>':'<span class="mk-pill mk-warn">Rascunho</span>'}
+async function loadCampaigns(){
+ const target=$('campaignRows');target.innerHTML='<tr><td colspan="6" class="mk-empty">A carregar campanhas...</td></tr>';
  try{
   if(!currentUser)throw new Error('Sessão administrativa necessária.');
-  const token=await currentUser.getIdToken(true);
-  const r=await fetch('/api/admin/marketing-campaigns',{headers:{Authorization:'Bearer '+token},cache:'no-store'});
-  const data=await r.json().catch(()=>({}));
-  if(!r.ok)throw new Error(data.message||data.error||'Falha ao carregar campanhas');
-  const campaigns=Array.isArray(data.campaigns)?data.campaigns:[];
-  let sent=0,scheduled=0,delivered=0,totalSent=0;
-  const rows=[];
+  const snap=await getDocs(collection(db,'marketingCampaigns'));
+  const campaigns=snap.docs.map(x=>({id:x.id,...(x.data()||{})})).sort((a,b)=>{
+   const ta=a.createdAt?.toDate?.()?.getTime?.()||new Date(a.createdAt||0).getTime()||0;
+   const tb=b.createdAt?.toDate?.()?.getTime?.()||new Date(b.createdAt||0).getTime()||0;
+   return tb-ta;
+  });
+  let sent=0,scheduled=0,delivered=0,totalSent=0;const rows=[];
   campaigns.forEach(d=>{
-   const st=d.status||'draft',stats=d.stats||{};
-   if(st==='processed')sent++;
-   if(st==='scheduled')scheduled++;
-   delivered+=Number(stats.delivered||0);
-   totalSent+=Number(stats.accepted??stats.sent??0);
-   const action=st==='draft'
-    ?'<button class="mk-btn mk-primary" data-draft-send="'+d.id+'" type="button">Enviar agora</button>'
-    :st==='queued'
-    ?'<button class="mk-btn mk-primary" data-send="'+d.id+'" type="button">Enviar agora</button>'
-    :st==='scheduled'
-    ?'<button class="mk-btn mk-light" data-cancel="'+d.id+'" type="button">Cancelar</button>'
-    :'—';
+   const st=d.status||'draft',stats=d.stats||{};if(st==='processed')sent++;if(st==='scheduled')scheduled++;delivered+=Number(stats.delivered||0);totalSent+=Number(stats.accepted??stats.sent??0);
+   const action=st==='draft'?'<button class="mk-btn mk-primary" data-draft-send="'+d.id+'" type="button">Enviar agora</button>':st==='queued'?'<button class="mk-btn mk-primary" data-send="'+d.id+'" type="button">Enviar agora</button>':st==='scheduled'?'<button class="mk-btn mk-light" data-cancel="'+d.id+'" type="button">Cancelar</button>':'—';
    rows.push('<tr><td><b>'+escapeHtml(d.name||'Sem nome')+'</b><div class="mk-muted">'+escapeHtml(d.subject||d.title||'')+'</div></td><td>'+escapeHtml(Array.isArray(d.channels)?d.channels.join(', '):String(d.channels||''))+'</td><td>'+escapeHtml(d.audience==='specific'?'Utilizador específico':(d.audience||'all'))+'</td><td>'+pill(st)+'</td><td>'+fmt(d.createdAt)+'</td><td>'+action+'</td></tr>');
   });
   target.innerHTML=rows.length?rows.join(''):'<tr><td colspan="6" class="mk-empty">Nenhuma campanha criada.</td></tr>';
-  $('countCampaigns').textContent=campaigns.length;
-  $('countScheduled').textContent=scheduled;
-  $('countSent').textContent=sent;
-  $('deliveryRate').textContent=totalSent?Math.round(delivered/totalSent*100)+'%':'—';
+  $('countCampaigns').textContent=campaigns.length;$('countScheduled').textContent=scheduled;$('countSent').textContent=sent;$('deliveryRate').textContent=totalSent?Math.round(delivered/totalSent*100)+'%':'—';
   document.querySelectorAll('[data-draft-send]').forEach(x=>x.onclick=()=>queueAndSend(x.dataset.draftSend));
-  document.querySelectorAll('[data-cancel]').forEach(x=>x.onclick=async()=>{
-   try{await updateDoc(doc(db,'marketingCampaigns',x.dataset.cancel),{status:'cancelled',cancelledAt:serverTimestamp()});await loadCampaigns();}
-   catch(e){console.error('[marketing-cancel]',e);$('formNote').textContent='Não foi possível cancelar: '+e.message}
-  });
+  document.querySelectorAll('[data-cancel]').forEach(x=>x.onclick=async()=>{try{await updateDoc(doc(db,'marketingCampaigns',x.dataset.cancel),{status:'cancelled',cancelledAt:serverTimestamp()});await loadCampaigns()}catch(e){console.error('[marketing-cancel]',e);$('formNote').textContent='Não foi possível cancelar: '+e.message}});
   document.querySelectorAll('[data-send]').forEach(x=>x.onclick=()=>sendMarketingQueue(x.dataset.send));
- }catch(e){
-  console.error('[marketing-campaigns]',e);
-  target.innerHTML='<tr><td colspan="6" class="mk-empty">Erro ao carregar campanhas: '+escapeHtml(e?.message||String(e))+'</td></tr>';
- }
+ }catch(e){console.error('[marketing-campaigns]',e);target.innerHTML='<tr><td colspan="6" class="mk-empty">Erro ao carregar campanhas: '+escapeHtml(e?.message||String(e))+'</td></tr>'}
 }
 $('campaignForm').onsubmit=async e=>{e.preventDefault();if(!currentUser){$('formNote').textContent='Inicie sessão administrativa.';return}const channels=[...document.querySelectorAll('input[name=channel]:checked')].map(x=>x.value);if(!channels.length){$('formNote').textContent='Escolha pelo menos um canal.';return}const mode=$('schedule').value;const audienceValue=document.querySelector('input[name=audience]:checked').value;const targetUserId=audienceValue==='specific'?$('targetUser').value:'';if(audienceValue==='specific'&&!targetUserId){$('formNote').textContent='Selecione o utilizador destinatário.';return}const status=mode==='scheduled'?'scheduled':'queued';try{const created=await addDoc(collection(db,'marketingCampaigns'),{name:$('name').value.trim(),subject:$('subject').value.trim(),message:$('message').value,channels,audience:audienceValue,targetUserId:targetUserId||null,status,scheduleAt:$('schedule').value==='scheduled'&&$('scheduleAt').value?new Date($('scheduleAt').value):null,createdBy:currentUser.uid,createdAt:serverTimestamp(),stats:{sent:0,delivered:0,opened:0,clicked:0,failed:0}});if(status==='scheduled')$('formNote').textContent='Campanha agendada.';else{await sendMarketingQueue(created.id);}e.target.reset();$('scheduleAtWrap').style.display='none';$('targetUserWrap').style.display='none';updatePreview();await loadCampaigns()}catch(err){console.error(err);$('formNote').textContent='Não foi possível guardar a campanha.'}};
 async function queueAndSend(campaignId){if(!currentUser)return;await updateDoc(doc(db,'marketingCampaigns',campaignId),{status:'queued',queuedAt:serverTimestamp()});await sendMarketingQueue(campaignId)}
