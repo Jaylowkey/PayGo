@@ -9,7 +9,7 @@ const FROM_EMAIL = process.env.FROM_EMAIL || 'PayGo Moçambique <noreply@paygo.c
 const EMAIL_PROVIDER = String(process.env.MARKETING_EMAIL_PROVIDER || 'resend').toLowerCase();
 const BATCH = Math.max(1, Math.min(500, Number(process.env.MARKETING_BATCH_SIZE || 100)));
 
-function db() {
+function databases() {
   if (!getApps().length) {
     const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
     if (!raw) throw new Error('FIREBASE_SERVICE_ACCOUNT em falta.');
@@ -17,24 +17,35 @@ function db() {
     if (sa.private_key) sa.private_key = sa.private_key.replace(/\\n/g, '\n');
     initializeApp({ credential: cert(sa) });
   }
-  try { return getFirestore(getApps()[0], 'paygodb'); } catch { return getFirestore(); }
+  const app = getApps()[0];
+  const defaultDb = getFirestore(app);
+  let namedDb = defaultDb;
+  try { namedDb = getFirestore(app, 'paygodb'); } catch {}
+  return { defaultDb, namedDb };
 }
 
-async function authorized(req, database) {
+async function authorized(req, databaseList) {
   const secret = process.env.CRON_SECRET;
   const header = String(req.headers.authorization || '');
-  if (secret && header === `Bearer ${secret}`) return true;
-  if (!header.startsWith('Bearer ')) return false;
+  if (secret && header === `Bearer ${secret}`) return { ok: true, userDatabase: databaseList[0] };
+  if (!header.startsWith('Bearer ')) return { ok: false, userDatabase: databaseList[0] };
   try {
     const token = header.slice(7).trim();
     const decoded = await getAuth().verifyIdToken(token);
-    const user = await database.collection('users').doc(decoded.uid).get();
-    const role = String(user.data()?.role || '').toLowerCase();
-    return user.exists && ['admin', 'superadmin'].includes(role);
+    for (const database of databaseList) {
+      const user = await database.collection('users').doc(decoded.uid).get();
+      const role = String(user.data()?.role || '').toLowerCase();
+      if (user.exists && ['admin', 'superadmin'].includes(role)) return { ok: true, userDatabase: database };
+    }
   } catch (e) {
     console.error('[marketing-auth]', e);
-    return false;
   }
+  return { ok: false, userDatabase: databaseList[0] };
+}
+
+async function hasDocs(database, collection) {
+  const snap = await database.collection(collection).limit(1).get();
+  return !snap.empty;
 }
 
 function vars(s, u = {}) {
@@ -261,14 +272,20 @@ export default async function handler(req, res) {
   if (!['GET', 'POST'].includes(req.method)) return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const database = db();
-    if (!await authorized(req, database)) return res.status(401).json({ error: 'Unauthorized' });
+    const { defaultDb, namedDb } = databases();
+    const auth = await authorized(req, [namedDb, defaultDb]);
+    if (!auth.ok) return res.status(401).json({ error: 'Unauthorized' });
+    const userDatabase = auth.userDatabase;
+    const campaignDatabases = [namedDb, defaultDb];
 
     if (req.method === 'GET') {
       const resource = String(req.query?.resource || 'campaigns').toLowerCase();
 
       if (resource === 'users') {
-        const snap = await database.collection('users').limit(500).get();
+        const preferred = userDatabase;
+        const fallback = preferred === namedDb ? defaultDb : namedDb;
+        let snap = await preferred.collection('users').limit(500).get();
+        if (snap.empty) snap = await fallback.collection('users').limit(500).get();
         const users = snap.docs.map(d => {
           const u = d.data() || {};
           return {
@@ -280,8 +297,16 @@ export default async function handler(req, res) {
         return res.status(200).json({ ok: true, users });
       }
 
-      const snap = await database.collection('marketingCampaigns').limit(500).get();
-      const campaigns = snap.docs.map(serializeCampaign);
+      const campaignSnaps = await Promise.all(campaignDatabases.map(database => database.collection('marketingCampaigns').limit(500).get()));
+      const seen = new Set();
+      const campaigns = [];
+      for (const snap of campaignSnaps) {
+        for (const ref of snap.docs) {
+          if (seen.has(ref.id)) continue;
+          seen.add(ref.id);
+          campaigns.push(serializeCampaign(ref));
+        }
+      }
       campaigns.sort((a, b) => {
         const ta = new Date(a.createdAt || 0).getTime();
         const tb = new Date(b.createdAt || 0).getTime();
@@ -317,6 +342,8 @@ export default async function handler(req, res) {
       if (body.scheduleAt && (!scheduleAt || Number.isNaN(scheduleAt.getTime()))) return res.status(400).json({ error: 'Data de agendamento inválida.' });
 
       const status = body.scheduleMode === 'scheduled' ? 'scheduled' : 'queued';
+      let database = namedDb;
+      if (!(await hasDocs(namedDb, 'marketingCampaigns'))) database = await hasDocs(defaultDb, 'marketingCampaigns') ? defaultDb : userDatabase;
       const ref = await database.collection('marketingCampaigns').add({
         name,
         subject,
@@ -352,18 +379,20 @@ export default async function handler(req, res) {
     const now = Timestamp.now();
     const results = [];
 
-    const queued = campaignId
-      ? await database.collection('marketingCampaigns').doc(campaignId).get().then(d => ({ docs: d.exists && d.data()?.status === 'queued' ? [d] : [] }))
-      : await database.collection('marketingCampaigns').where('status', '==', 'queued').limit(10).get();
+    for (const database of campaignDatabases) {
+      const queued = campaignId
+        ? await database.collection('marketingCampaigns').doc(campaignId).get().then(d => ({ docs: d.exists && d.data()?.status === 'queued' ? [d] : [] }))
+        : await database.collection('marketingCampaigns').where('status', '==', 'queued').limit(10).get();
 
-    for (const d of queued.docs) results.push(await runCampaign(database, d));
+      for (const d of queued.docs) results.push(await runCampaign(database, d));
 
-    const scheduled = await database.collection('marketingCampaigns').where('status', '==', 'scheduled').limit(100).get();
-    for (const d of scheduled.docs) {
-      const data = d.data() || {};
-      if (!isDue(data.scheduleAt, now)) continue;
-      await d.ref.update({ status: 'queued', queuedAt: FieldValue.serverTimestamp() });
-      results.push(await runCampaign(database, d));
+      const scheduled = await database.collection('marketingCampaigns').where('status', '==', 'scheduled').limit(100).get();
+      for (const d of scheduled.docs) {
+        const data = d.data() || {};
+        if (!isDue(data.scheduleAt, now)) continue;
+        await d.ref.update({ status: 'queued', queuedAt: FieldValue.serverTimestamp() });
+        results.push(await runCampaign(database, d));
+      }
     }
 
     return res.status(200).json({
