@@ -241,40 +241,123 @@ function isDue(value, now) {
   return Number.isFinite(date.getTime()) && date.getTime() <= now.toDate().getTime();
 }
 
+function serializeValue(value) {
+  if (value && typeof value.toDate === 'function') return value.toDate().toISOString();
+  if (Array.isArray(value)) return value.map(serializeValue);
+  if (value && typeof value === 'object') {
+    const out = {};
+    for (const [key, val] of Object.entries(value)) out[key] = serializeValue(val);
+    return out;
+  }
+  return value;
+}
+
+function serializeCampaign(ref) {
+  return { id: ref.id, ...serializeValue(ref.data() || {}) };
+}
+
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, max-age=0');
   if (!['GET', 'POST'].includes(req.method)) return res.status(405).json({ error: 'Method not allowed' });
+
   try {
     const database = db();
     if (!await authorized(req, database)) return res.status(401).json({ error: 'Unauthorized' });
 
     if (req.method === 'GET') {
+      const resource = String(req.query?.resource || 'campaigns').toLowerCase();
+
+      if (resource === 'users') {
+        const snap = await database.collection('users').limit(500).get();
+        const users = snap.docs.map(d => {
+          const u = d.data() || {};
+          return {
+            id: d.id,
+            name: String(u.name || u.displayName || u.email || d.id),
+            email: String(u.email || u.emailAddress || '')
+          };
+        }).sort((a, b) => a.name.localeCompare(b.name, 'pt'));
+        return res.status(200).json({ ok: true, users });
+      }
+
       const snap = await database.collection('marketingCampaigns').limit(500).get();
-      const campaigns = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const campaigns = snap.docs.map(serializeCampaign);
       campaigns.sort((a, b) => {
-        const ta = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : new Date(a.createdAt || 0).getTime();
-        const tb = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : new Date(b.createdAt || 0).getTime();
+        const ta = new Date(a.createdAt || 0).getTime();
+        const tb = new Date(b.createdAt || 0).getTime();
         return (tb || 0) - (ta || 0);
       });
-      return res.status(200).json({ ok: true, campaigns, stats: {
+
+      const stats = {
         campaigns: campaigns.length,
         scheduled: campaigns.filter(x => x.status === 'scheduled').length,
         sent: campaigns.filter(x => x.status === 'processed').length,
         delivered: campaigns.reduce((n, x) => n + Number(x.stats?.delivered || 0), 0),
         totalSent: campaigns.reduce((n, x) => n + Number(x.stats?.accepted ?? x.stats?.sent ?? 0), 0)
-      }});
+      };
+      return res.status(200).json({ ok: true, campaigns, stats });
     }
 
-    const campaignId = String(req.body?.campaignId || '');
+    const body = req.body || {};
+    const action = String(body.action || 'process').toLowerCase();
+
+    if (action === 'create') {
+      const name = String(body.name || '').trim();
+      const subject = String(body.subject || '').trim();
+      const message = String(body.message || '').trim();
+      const channels = Array.isArray(body.channels) ? body.channels.map(String).filter(Boolean) : [];
+      const audienceValue = String(body.audience || 'all');
+      const targetUserId = body.targetUserId ? String(body.targetUserId) : null;
+      const scheduleAt = body.scheduleAt ? new Date(body.scheduleAt) : null;
+
+      if (!name || !subject || !message) return res.status(400).json({ error: 'Nome, assunto e mensagem são obrigatórios.' });
+      if (!channels.length) return res.status(400).json({ error: 'Escolha pelo menos um canal.' });
+      if (!['all', 'active', 'wallet', 'affiliate', 'specific'].includes(audienceValue)) return res.status(400).json({ error: 'Público inválido.' });
+      if (audienceValue === 'specific' && !targetUserId) return res.status(400).json({ error: 'Selecione o utilizador destinatário.' });
+      if (body.scheduleAt && (!scheduleAt || Number.isNaN(scheduleAt.getTime()))) return res.status(400).json({ error: 'Data de agendamento inválida.' });
+
+      const status = body.scheduleMode === 'scheduled' ? 'scheduled' : 'queued';
+      const ref = await database.collection('marketingCampaigns').add({
+        name,
+        subject,
+        message,
+        channels,
+        audience: audienceValue,
+        targetUserId,
+        status,
+        scheduleAt: status === 'scheduled' ? Timestamp.fromDate(scheduleAt) : null,
+        createdBy: String(body.createdBy || ''),
+        createdAt: FieldValue.serverTimestamp(),
+        stats: { sent: 0, accepted: 0, delivered: 0, opened: 0, clicked: 0, failed: 0, processed: 0 }
+      });
+
+      return res.status(201).json({ ok: true, campaignId: ref.id, status });
+    }
+
+    if (action === 'cancel') {
+      const campaignId = String(body.campaignId || '');
+      if (!campaignId) return res.status(400).json({ error: 'campaignId é obrigatório.' });
+      const ref = database.collection('marketingCampaigns').doc(campaignId);
+      const snap = await ref.get();
+      if (!snap.exists) return res.status(404).json({ error: 'Campanha não encontrada.' });
+      const status = String(snap.data()?.status || '');
+      if (['processed', 'cancelled'].includes(status)) return res.status(400).json({ error: 'Esta campanha não pode ser cancelada.' });
+      await ref.update({ status: 'cancelled', cancelledAt: FieldValue.serverTimestamp() });
+      return res.status(200).json({ ok: true, status: 'cancelled' });
+    }
+
+    if (action !== 'process') return res.status(400).json({ error: 'Ação inválida.' });
+
+    const campaignId = String(body.campaignId || '');
     const now = Timestamp.now();
     const results = [];
 
     const queued = campaignId
       ? await database.collection('marketingCampaigns').doc(campaignId).get().then(d => ({ docs: d.exists && d.data()?.status === 'queued' ? [d] : [] }))
       : await database.collection('marketingCampaigns').where('status', '==', 'queued').limit(10).get();
+
     for (const d of queued.docs) results.push(await runCampaign(database, d));
 
-    // Avoid a Firestore composite index for status + scheduleAt.
     const scheduled = await database.collection('marketingCampaigns').where('status', '==', 'scheduled').limit(100).get();
     for (const d of scheduled.docs) {
       const data = d.data() || {};
@@ -283,7 +366,14 @@ export default async function handler(req, res) {
       results.push(await runCampaign(database, d));
     }
 
-    return res.status(200).json({ ok: true, worker: 'marketing', providers: { in_app: true, email: EMAIL_PROVIDER === 'resend' && Boolean(resend), push: true, whatsapp: false }, processed: results.length, results, at: new Date().toISOString() });
+    return res.status(200).json({
+      ok: true,
+      worker: 'marketing',
+      providers: { in_app: true, email: EMAIL_PROVIDER === 'resend' && Boolean(resend), push: true, whatsapp: false },
+      processed: results.length,
+      results,
+      at: new Date().toISOString()
+    });
   } catch (e) {
     console.error('[marketing-worker]', e);
     return res.status(500).json({ error: 'Marketing worker failed', message: e.message });
