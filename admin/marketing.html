@@ -51,12 +51,11 @@ async function loadCampaigns(){
  const target=$('campaignRows');target.innerHTML='<tr><td colspan="6" class="mk-empty">A carregar campanhas...</td></tr>';
  try{
   if(!currentUser)throw new Error('Sessão administrativa necessária.');
-  const snap=await getDocs(collection(db,'marketingCampaigns'));
-  const campaigns=snap.docs.map(x=>({id:x.id,...(x.data()||{})})).sort((a,b)=>{
-   const ta=a.createdAt?.toDate?.()?.getTime?.()||new Date(a.createdAt||0).getTime()||0;
-   const tb=b.createdAt?.toDate?.()?.getTime?.()||new Date(b.createdAt||0).getTime()||0;
-   return tb-ta;
-  });
+  const token=await currentUser.getIdToken(true);
+  const r=await fetch('/api/admin-marketing',{headers:{Authorization:'Bearer '+token}});
+  const data=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(data.error||data.message||'Falha ao carregar campanhas.');
+  const campaigns=Array.isArray(data.campaigns)?data.campaigns:[];
   let sent=0,scheduled=0,delivered=0,totalSent=0;const rows=[];
   campaigns.forEach(d=>{
    const st=d.status||'draft',stats=d.stats||{};if(st==='processed')sent++;if(st==='scheduled')scheduled++;delivered+=Number(stats.delivered||0);totalSent+=Number(stats.accepted??stats.sent??0);
