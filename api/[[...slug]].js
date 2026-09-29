@@ -2371,6 +2371,83 @@ async function readRawRequestBody(req) {
   return Buffer.concat(chunks).toString('utf8');
 }
 
+
+/* =========================================================
+ * NOTIFICATIONS ADMIN API
+ * ========================================================= */
+function normalizeNotificationDate(value) {
+  if (!value) return null;
+  if (typeof value.toDate === 'function') return value.toDate().toISOString();
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+function serializeNotificationTemplate(doc) {
+  const d=doc.data()||{};
+  return {id:doc.id,event:d.event||'',channel:d.channel||'in_app',title:d.title||'',body:d.body||'',active:d.active!==false,systemDefault:Boolean(d.systemDefault),createdAt:normalizeNotificationDate(d.createdAt),updatedAt:normalizeNotificationDate(d.updatedAt)};
+}
+const NOTIFICATION_DEFAULTS=[
+ ['payment_success','Pagamento concluído','email','push','in_app'],
+ ['payment_failed','Falha de pagamento','email','push','in_app'],
+ ['payout_success','Payout concluído','push','whatsapp','in_app'],
+ ['payout_failed','Payout falhou','push','whatsapp','in_app'],
+ ['kyc_update','Atualização KYC/KYB','email','in_app'],
+ ['low_balance','Saldo baixo','push','whatsapp']
+];
+async function seedNotificationTemplates(db,adminUid){
+  const snap=await db.collection('notificationTemplates').limit(1).get();
+  if(!snap.empty)return;
+  const seeds=[
+   ['payment_success','email','Pagamento concluído','Olá {{firstName}}, o seu pagamento foi concluído com sucesso.'],
+   ['payment_success','push','Pagamento concluído','O seu pagamento foi concluído com sucesso.'],
+   ['payment_failed','email','Pagamento falhou','Não foi possível concluir o seu pagamento.'],
+   ['payment_failed','push','Pagamento falhou','O seu pagamento não foi concluído.'],
+   ['payout_success','in_app','Payout concluído','O seu payout foi concluído com sucesso.'],
+   ['payout_failed','in_app','Payout falhou','O seu payout não foi concluído.'],
+   ['kyc_update','email','Atualização KYC/KYB','O estado da sua verificação foi atualizado.'],
+   ['kyc_update','in_app','Atualização KYC/KYB','O estado da sua verificação foi atualizado.'],
+   ['low_balance','push','Saldo baixo','O seu saldo PayGo está baixo.']
+  ];
+  const batch=db.batch(),now=new Date();
+  for(const [event,channel,title,body] of seeds){const ref=db.collection('notificationTemplates').doc();batch.set(ref,{event,channel,title,body,active:true,systemDefault:true,createdBy:adminUid,createdAt:now,updatedAt:now});}
+  await batch.commit();
+}
+async function handleNotificationsAdmin(req,res,body){
+  const adminUser=await getAuthenticatedAdmin(req),{db}=getFirebase();
+  if(req.method==='GET'){
+    await seedNotificationTemplates(db,adminUser.uid);
+    const ss=await db.collection('settings').doc('notifications').get(),settings=ss.exists?(ss.data()||{}):{};
+    const ts=await db.collection('notificationTemplates').get();
+    const templates=ts.docs.map(serializeNotificationTemplate).sort((a,b)=>String(b.updatedAt||'').localeCompare(String(a.updatedAt||'')));
+    return res.status(200).json({success:true,settings:{routing:settings.routing||{},prefemail:settings.prefemail!==false,prefwhatsapp:settings.prefwhatsapp!==false,prefpush:settings.prefpush!==false,prefinapp:settings.prefinapp!==false},templates,stats:{templates:templates.length,events:new Set(templates.map(t=>t.event)).size,unread:0,failures:0},defaults:NOTIFICATION_DEFAULTS});
+  }
+  if(req.method==='PUT'){
+    const action=String(body.action||'settings');
+    if(action==='settings'){
+      const routing={};
+      for(const entry of NOTIFICATION_DEFAULTS){const event=entry[0],values=body.routing?.[event];routing[event]=Array.isArray(values)?values.filter(v=>['email','whatsapp','push','in_app'].includes(v)):entry.slice(2);}
+      await db.collection('settings').doc('notifications').set({routing,prefemail:body.prefemail!==false,prefwhatsapp:body.prefwhatsapp!==false,prefpush:body.prefpush!==false,prefinapp:body.prefinapp!==false,updatedAt:new Date(),updatedBy:adminUser.uid},{merge:true});
+      return res.status(200).json({success:true,message:'Configuração guardada.'});
+    }
+    if(action==='template'){
+      const event=String(body.event||'').trim(),channel=String(body.channel||'').trim(),title=String(body.title||'').trim(),templateBody=String(body.templateBody||body.body||'').trim();
+      if(!event||!channel||!title||!templateBody)return res.status(400).json({success:false,error:'Evento, canal, título e mensagem são obrigatórios.'});
+      if(!['email','whatsapp','push','in_app'].includes(channel))return res.status(400).json({success:false,error:'Canal inválido.'});
+      const data={event,channel,title,body:templateBody,active:body.active!==false,updatedAt:new Date(),updatedBy:adminUser.uid};
+      if(body.id){const ref=db.collection('notificationTemplates').doc(String(body.id));await ref.set(data,{merge:true});return res.status(200).json({success:true,template:serializeNotificationTemplate(await ref.get())});}
+      data.createdBy=adminUser.uid;data.createdAt=new Date();const ref=await db.collection('notificationTemplates').add(data);
+      return res.status(201).json({success:true,template:serializeNotificationTemplate(await ref.get())});
+    }
+    return res.status(400).json({success:false,error:'Ação inválida.'});
+  }
+  if(req.method==='DELETE'){
+    const id=String(body.id||req.query?.id||'').trim();
+    if(!id)return res.status(400).json({success:false,error:'ID do template em falta.'});
+    await db.collection('notificationTemplates').doc(id).delete();
+    return res.status(200).json({success:true,message:'Template apagado.'});
+  }
+  return res.status(405).json({success:false,error:'Método não permitido.'});
+}
+
 // =========================================================
 // 🗺️ MAPA DE ROTAS & EXPORT
 // =========================================================
@@ -2393,6 +2470,7 @@ const routes = {
   'recover-password': handleRecoverPassword,
   'verify-email': handleVerifyEmail,
   'notify-order': handleNotifyOrder,
+  'admin-notifications': handleNotificationsAdmin,
 
   'create-group-application': handleCreateGroupApplication,
   'get-my-group-application': handleGetMyGroupApplication,
