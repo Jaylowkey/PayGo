@@ -37,12 +37,11 @@ async function handleMarketingAuth(u){
  currentUser=u||null;
  if(!u){showCampaignMessage('Sessão administrativa necessária.');return}
  try{
-  const profile=await getDoc(doc(db,'users',u.uid));
-  if(!profile.exists()){currentUser=null;showCampaignMessage('Perfil administrativo não encontrado.');return}
-  const role=String(profile.data()?.role||'').toLowerCase();
-  if(!['admin','superadmin'].includes(role)){currentUser=null;showCampaignMessage('Acesso administrativo necessário.');return}
   await loadCampaigns();
- }catch(e){console.error('[marketing-auth]',e);showCampaignMessage('Erro ao validar acesso: '+(e?.message||String(e)))}
+ }catch(e){
+  console.error('[marketing-auth]',e);
+  showCampaignMessage('Erro ao carregar o marketing: '+(e?.message||String(e)));
+ }
 }
 onAuthStateChanged(auth,u=>{authReady=true;if(authFallbackTimer)clearTimeout(authFallbackTimer);handleMarketingAuth(u);});
 authFallbackTimer=setTimeout(()=>{if(authReady)return;const u=auth.currentUser;if(u)handleMarketingAuth(u);else showCampaignMessage('A autenticação do administrador não respondeu. Recarregue a página.');},5000);
