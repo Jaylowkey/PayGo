@@ -24,73 +24,161 @@
 <section class="mk-card mk-full"><div class="mk-title"><div class="mk-title-icon"><i data-lucide="list-checks"></i></div><div><h2>Campanhas</h2><div class="mk-muted">Acompanhe rascunhos, agendamentos e histórico.</div></div></div><div class="mk-table-wrap"><table class="mk-table"><thead><tr><th>Campanha</th><th>Canal</th><th>Público</th><th>Status</th><th>Criada</th><th>Ação</th></tr></thead><tbody id="campaignRows"><tr><td colspan="6" class="mk-empty">A carregar campanhas...</td></tr></tbody></table></div></section>
 </div></div></main>
 <script type="module">
-import{initializeApp,getApps}from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';import{getAuth,onAuthStateChanged}from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';import{getFirestore,collection,addDoc,serverTimestamp,doc,updateDoc,getDocs,getDoc,query,limit}from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-const cfg={apiKey:'AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxsp0Qh8',authDomain:'paygo-14311.firebaseapp.com',projectId:'paygo-14311',storageBucket:'paygo-14311.firebasestorage.app',messagingSenderId:'208360646277',appId:'1:208360646277:web:aecc57cc0077ae48a52bec'};const app=getApps().length?getApps()[0]:initializeApp(cfg),auth=getAuth(app),db=getFirestore(app,'paygodb');const $=id=>document.getElementById(id);lucide.createIcons();
-function updatePreview(){ $('previewHead').textContent=$('subject').value||'Título da campanha'; $('previewBody').textContent=$('message').value||'A mensagem aparecerá aqui.' }
-['subject','message'].forEach(id=>$(id).addEventListener('input',updatePreview));$('previewBtn').onclick=updatePreview;$('previewTop').onclick=()=>{updatePreview();document.querySelector('.mk-preview-device').scrollIntoView({behavior:'smooth',block:'center'})};$('schedule').addEventListener('change',e=>{$('scheduleAtWrap').style.display=e.target.value==='scheduled'?'block':'none'});
-function escapeHtml(v){return String(v).replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]))}
-let usersLoaded=false,loadedUsers=[];function renderUserOptions(term=''){const q=String(term||'').trim().toLocaleLowerCase('pt');const current=$('targetUser').value;const list=loadedUsers.filter(u=>!q||u.name.toLocaleLowerCase('pt').includes(q)||u.email.toLocaleLowerCase('pt').includes(q));const opts=['<option value="">'+(list.length?'Selecione o utilizador...':'Nenhum utilizador encontrado')+'</option>'];list.forEach(u=>opts.push('<option value="'+u.id+'">'+escapeHtml(u.name)+(u.email?' · '+escapeHtml(u.email):'')+'</option>'));$('targetUser').innerHTML=opts.join('');if(list.some(u=>u.id===current))$('targetUser').value=current}
-async function loadUsers(){if(usersLoaded)return;try{const snap=await getDocs(query(collection(db,'users'),limit(500)));loadedUsers=[];snap.forEach(d=>{const u=d.data()||{};loadedUsers.push({id:d.id,name:String(u.name||u.displayName||u.email||d.id),email:String(u.email||'')})});loadedUsers.sort((a,b)=>a.name.localeCompare(b.name,'pt'));usersLoaded=true;renderUserOptions($('userSearch').value)}catch(e){console.error('[marketing-users]',e);$('targetUser').innerHTML='<option value="">Não foi possível carregar utilizadores</option>'}}
-$('userSearch').addEventListener('input',e=>renderUserOptions(e.target.value));document.querySelectorAll('input[name="audience"]').forEach(el=>el.addEventListener('change',async e=>{const specific=e.target.value==='specific';$('targetUserWrap').style.display=specific?'block':'none';if(specific){await loadUsers();$('userSearch').focus()}}));let currentUser=null,authReady=false,authFallbackTimer=null;
-function showCampaignMessage(message){$('campaignRows').innerHTML='<tr><td colspan="6" class="mk-empty">'+escapeHtml(message)+'</td></tr>'}
-async function handleMarketingAuth(u){
- currentUser=u||null;
- if(!u){showCampaignMessage('Sessão administrativa necessária.');return}
+import{initializeApp,getApps}from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import{getAuth,onAuthStateChanged}from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+const cfg={apiKey:'AIzaSyAHxyX5e9O8qQo6Z3VHURgVXhxbxsp0Qh8',authDomain:'paygo-14311.firebaseapp.com',projectId:'paygo-14311',storageBucket:'paygo-14311.firebasestorage.app',messagingSenderId:'208360646277',appId:'1:208360646277:web:aecc57cc0077ae48a52bec'};
+const app=getApps().length?getApps()[0]:initializeApp(cfg),auth=getAuth(app);
+const $=id=>document.getElementById(id);
+lucide.createIcons();
+
+let currentUser=null,authReady=false,authFallbackTimer=null,loadedUsers=[],usersLoaded=false;
+
+function escapeHtml(v){return String(v??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]))}
+function showMessage(message){$('campaignRows').innerHTML='<tr><td colspan="6" class="mk-empty">'+escapeHtml(message)+'</td></tr>'}
+function fmt(t){return t?new Date(t).toLocaleString('pt-MZ'):'—'}
+function pill(s){return s==='processed'?'<span class="mk-pill mk-ok">Processada</span>':s==='queued'?'<span class="mk-pill mk-info">Na fila</span>':s==='scheduled'?'<span class="mk-pill mk-info">Agendada</span>':s==='failed'?'<span class="mk-pill mk-warn">Falhou</span>':s==='cancelled'?'<span class="mk-pill mk-warn">Cancelada</span>':'<span class="mk-pill mk-warn">Rascunho</span>'}
+
+async function api(path='',options={}){
+ if(!currentUser)throw new Error('Sessão administrativa necessária.');
+ const token=await currentUser.getIdToken();
+ const headers={Authorization:'Bearer '+token,...(options.body?{'Content-Type':'application/json'}:{})};
+ const r=await fetch('/api/marketing-worker'+path,{...options,headers});
+ const data=await r.json().catch(()=>({}));
+ if(!r.ok)throw new Error(data.error||data.message||'Pedido ao servidor falhou.');
+ return data;
+}
+
+function updatePreview(){
+ $('previewHead').textContent=$('subject').value||'Título da campanha';
+ $('previewBody').textContent=$('message').value||'A mensagem aparecerá aqui.';
+}
+['subject','message'].forEach(id=>$(id).addEventListener('input',updatePreview));
+$('previewBtn').onclick=updatePreview;
+$('previewTop').onclick=()=>{updatePreview();document.querySelector('.mk-preview-device').scrollIntoView({behavior:'smooth',block:'center'})};
+$('schedule').addEventListener('change',e=>{$('scheduleAtWrap').style.display=e.target.value==='scheduled'?'block':'none'});
+
+function renderUserOptions(term=''){
+ const q=String(term||'').trim().toLocaleLowerCase('pt');
+ const current=$('targetUser').value;
+ const list=loadedUsers.filter(u=>!q||u.name.toLocaleLowerCase('pt').includes(q)||u.email.toLocaleLowerCase('pt').includes(q));
+ const opts=['<option value="">'+(list.length?'Selecione o utilizador...':'Nenhum utilizador encontrado')+'</option>'];
+ list.forEach(u=>opts.push('<option value="'+escapeHtml(u.id)+'">'+escapeHtml(u.name)+(u.email?' · '+escapeHtml(u.email):'')+'</option>'));
+ $('targetUser').innerHTML=opts.join('');
+ if(list.some(u=>u.id===current))$('targetUser').value=current;
+}
+async function loadUsers(){
+ if(usersLoaded)return;
  try{
-  await loadCampaigns();
+  const data=await api('?resource=users');
+  loadedUsers=Array.isArray(data.users)?data.users:[];
+  usersLoaded=true;
+  renderUserOptions($('userSearch').value);
  }catch(e){
-  console.error('[marketing-auth]',e);
-  showCampaignMessage('Erro ao carregar o marketing: '+(e?.message||String(e)));
+  console.error('[marketing-users]',e);
+  $('targetUser').innerHTML='<option value="">'+escapeHtml(e.message)+'</option>';
  }
 }
-onAuthStateChanged(auth,u=>{authReady=true;if(authFallbackTimer)clearTimeout(authFallbackTimer);handleMarketingAuth(u);});
-authFallbackTimer=setTimeout(()=>{if(authReady)return;const u=auth.currentUser;if(u)handleMarketingAuth(u);else showCampaignMessage('A autenticação do administrador não respondeu. Recarregue a página.');},5000);
-function fmt(t){return t?.toDate?t.toDate().toLocaleString('pt-MZ'):t?new Date(t).toLocaleString('pt-MZ'):'—'}function pill(s){return s==='processed'?'<span class="mk-pill mk-ok">Processada</span>':s==='queued'?'<span class="mk-pill mk-info">Na fila</span>':s==='scheduled'?'<span class="mk-pill mk-info">Agendada</span>':s==='failed'?'<span class="mk-pill mk-warn">Falhou</span>':s==='cancelled'?'<span class="mk-pill mk-warn">Cancelada</span>':'<span class="mk-pill mk-warn">Rascunho</span>'}
+$('userSearch').addEventListener('input',e=>renderUserOptions(e.target.value));
+document.querySelectorAll('input[name="audience"]').forEach(el=>el.addEventListener('change',async e=>{
+ const specific=e.target.value==='specific';
+ $('targetUserWrap').style.display=specific?'block':'none';
+ if(specific){await loadUsers();$('userSearch').focus()}
+}));
+
 async function loadCampaigns(){
- const target=$('campaignRows');target.innerHTML='<tr><td colspan="6" class="mk-empty">A carregar campanhas...</td></tr>';
+ const target=$('campaignRows');
+ target.innerHTML='<tr><td colspan="6" class="mk-empty">A carregar campanhas...</td></tr>';
  try{
-  if(!currentUser)throw new Error('Sessão administrativa necessária.');
-  const token=await currentUser.getIdToken(true);
-  const r=await fetch('/api/marketing-worker',{headers:{Authorization:'Bearer '+token}});
-  const data=await r.json().catch(()=>({}));
-  if(!r.ok)throw new Error(data.error||data.message||'Falha ao carregar campanhas.');
+  const data=await api();
   const campaigns=Array.isArray(data.campaigns)?data.campaigns:[];
-  let sent=0,scheduled=0,delivered=0,totalSent=0;const rows=[];
-  campaigns.forEach(d=>{
-   const st=d.status||'draft',stats=d.stats||{};if(st==='processed')sent++;if(st==='scheduled')scheduled++;delivered+=Number(stats.delivered||0);totalSent+=Number(stats.accepted??stats.sent??0);
-   const action=st==='draft'?'<button class="mk-btn mk-primary" data-draft-send="'+d.id+'" type="button">Enviar agora</button>':st==='queued'?'<button class="mk-btn mk-primary" data-send="'+d.id+'" type="button">Enviar agora</button>':st==='scheduled'?'<button class="mk-btn mk-light" data-cancel="'+d.id+'" type="button">Cancelar</button>':'—';
-   rows.push('<tr><td><b>'+escapeHtml(d.name||'Sem nome')+'</b><div class="mk-muted">'+escapeHtml(d.subject||d.title||'')+'</div></td><td>'+escapeHtml(Array.isArray(d.channels)?d.channels.join(', '):String(d.channels||''))+'</td><td>'+escapeHtml(d.audience==='specific'?'Utilizador específico':(d.audience||'all'))+'</td><td>'+pill(st)+'</td><td>'+fmt(d.createdAt)+'</td><td>'+action+'</td></tr>');
+  const stats=data.stats||{};
+  const rows=campaigns.map(d=>{
+   const st=d.status||'draft';
+   let action='—';
+   if(st==='queued'||st==='draft')action='<button class="mk-btn mk-primary" data-send="'+escapeHtml(d.id)+'" type="button">Enviar agora</button>';
+   else if(st==='scheduled')action='<button class="mk-btn mk-light" data-cancel="'+escapeHtml(d.id)+'" type="button">Cancelar</button>';
+   return '<tr><td><b>'+escapeHtml(d.name||'Sem nome')+'</b><div class="mk-muted">'+escapeHtml(d.subject||d.title||'')+'</div></td><td>'+escapeHtml(Array.isArray(d.channels)?d.channels.join(', '):String(d.channels||''))+'</td><td>'+escapeHtml(d.audience==='specific'?'Utilizador específico':(d.audience||'all'))+'</td><td>'+pill(st)+'</td><td>'+fmt(d.createdAt)+'</td><td>'+action+'</td></tr>';
   });
   target.innerHTML=rows.length?rows.join(''):'<tr><td colspan="6" class="mk-empty">Nenhuma campanha criada.</td></tr>';
-  $('countCampaigns').textContent=campaigns.length;$('countScheduled').textContent=scheduled;$('countSent').textContent=sent;$('deliveryRate').textContent=totalSent?Math.round(delivered/totalSent*100)+'%':'—';
-  document.querySelectorAll('[data-draft-send]').forEach(x=>x.onclick=()=>queueAndSend(x.dataset.draftSend));
-  document.querySelectorAll('[data-cancel]').forEach(x=>x.onclick=async()=>{try{await updateDoc(doc(db,'marketingCampaigns',x.dataset.cancel),{status:'cancelled',cancelledAt:serverTimestamp()});await loadCampaigns()}catch(e){console.error('[marketing-cancel]',e);$('formNote').textContent='Não foi possível cancelar: '+e.message}});
+  $('countCampaigns').textContent=stats.campaigns??campaigns.length;
+  $('countScheduled').textContent=stats.scheduled??0;
+  $('countSent').textContent=stats.totalSent??0;
+  $('deliveryRate').textContent=(stats.totalSent?Math.round(Number(stats.delivered||0)/Number(stats.totalSent)*100)+'%':'—');
   document.querySelectorAll('[data-send]').forEach(x=>x.onclick=()=>sendMarketingQueue(x.dataset.send));
- }catch(e){console.error('[marketing-campaigns]',e);target.innerHTML='<tr><td colspan="6" class="mk-empty">Erro ao carregar campanhas: '+escapeHtml(e?.message||String(e))+'</td></tr>'}
+  document.querySelectorAll('[data-cancel]').forEach(x=>x.onclick=async()=>{
+   try{await api('',{method:'POST',body:JSON.stringify({action:'cancel',campaignId:x.dataset.cancel})});$('formNote').textContent='Campanha cancelada.';await loadCampaigns()}
+   catch(e){console.error(e);$('formNote').textContent='Não foi possível cancelar: '+e.message}
+  });
+ }catch(e){console.error('[marketing-campaigns]',e);showMessage('Erro ao carregar o marketing: '+e.message)}
 }
-$('campaignForm').onsubmit=async e=>{e.preventDefault();if(!currentUser){$('formNote').textContent='Inicie sessão administrativa.';return}const channels=[...document.querySelectorAll('input[name=channel]:checked')].map(x=>x.value);if(!channels.length){$('formNote').textContent='Escolha pelo menos um canal.';return}const mode=$('schedule').value;const audienceValue=document.querySelector('input[name=audience]:checked').value;const targetUserId=audienceValue==='specific'?$('targetUser').value:'';if(audienceValue==='specific'&&!targetUserId){$('formNote').textContent='Selecione o utilizador destinatário.';return}const status=mode==='scheduled'?'scheduled':'queued';try{const created=await addDoc(collection(db,'marketingCampaigns'),{name:$('name').value.trim(),subject:$('subject').value.trim(),message:$('message').value,channels,audience:audienceValue,targetUserId:targetUserId||null,status,scheduleAt:$('schedule').value==='scheduled'&&$('scheduleAt').value?new Date($('scheduleAt').value):null,createdBy:currentUser.uid,createdAt:serverTimestamp(),stats:{sent:0,delivered:0,opened:0,clicked:0,failed:0}});if(status==='scheduled')$('formNote').textContent='Campanha agendada.';else{await sendMarketingQueue(created.id);}e.target.reset();$('scheduleAtWrap').style.display='none';$('targetUserWrap').style.display='none';updatePreview();await loadCampaigns()}catch(err){console.error(err);$('formNote').textContent='Não foi possível guardar a campanha.'}};
-async function queueAndSend(campaignId){if(!currentUser)return;await updateDoc(doc(db,'marketingCampaigns',campaignId),{status:'queued',queuedAt:serverTimestamp()});await sendMarketingQueue(campaignId)}
+
+$('campaignForm').onsubmit=async e=>{
+ e.preventDefault();
+ const channels=[...document.querySelectorAll('input[name=channel]:checked')].map(x=>x.value);
+ if(!channels.length){$('formNote').textContent='Escolha pelo menos um canal.';return}
+ const mode=$('schedule').value;
+ const audienceValue=document.querySelector('input[name=audience]:checked').value;
+ const targetUserId=audienceValue==='specific'?$('targetUser').value:'';
+ if(audienceValue==='specific'&&!targetUserId){$('formNote').textContent='Selecione o utilizador destinatário.';return}
+ try{
+  $('formNote').textContent='A guardar campanha...';
+  const created=await api('',{method:'POST',body:JSON.stringify({
+   action:'create',name:$('name').value.trim(),subject:$('subject').value.trim(),message:$('message').value,
+   channels,audience:audienceValue,targetUserId:targetUserId||null,scheduleMode:mode,
+   scheduleAt:mode==='scheduled'&&$('scheduleAt').value?new Date($('scheduleAt').value).toISOString():null,createdBy:currentUser.uid
+  })});
+  if(mode==='scheduled'){
+   $('formNote').textContent='Campanha agendada com sucesso.';
+  }else{
+   $('formNote').textContent='Campanha criada. A processar fila...';
+   await sendMarketingQueue(created.campaignId);
+  }
+  e.target.reset();$('scheduleAtWrap').style.display='none';$('targetUserWrap').style.display='none';updatePreview();await loadCampaigns();
+ }catch(err){console.error('[marketing-create]',err);$('formNote').textContent='Não foi possível guardar a campanha: '+err.message}
+};
+
+async function sendMarketingQueue(campaignId=''){
+ try{
+  $('formNote').textContent='A processar fila...';
+  const data=await api('',{method:'POST',body:JSON.stringify({action:'process',campaignId})});
+  $('formNote').textContent=campaignId?'Campanha processada.':'Fila processada com sucesso.';
+  await loadCampaigns();
+  return data;
+ }catch(err){console.error('[marketing-process]',err);$('formNote').textContent='Não foi possível enviar agora: '+err.message}
+}
+$('sendQueue').onclick=()=>sendMarketingQueue();
+
 async function testPushToMe(){
  if(!currentUser){$('formNote').textContent='Sessão administrativa necessária.';return}
- $('formNote').textContent='A enviar teste Push para a sua conta...';
- $('testPush').disabled=true;
+ $('formNote').textContent='A enviar teste Push para a sua conta...';$('testPush').disabled=true;
  try{
-  const token=await currentUser.getIdToken(true);
+  const token=await currentUser.getIdToken();
   const r=await fetch('/api/admin/test-push',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({targetUserId:currentUser.uid})});
   const data=await r.json().catch(()=>({}));
-  if(!r.ok) throw new Error(data.message||data.error||'Falha no teste');
-  if(data.sent>0 && data.failed===0){
-   $('formNote').textContent='FCM aceitou o envio. Tokens: '+data.tokenCount+' · enviados: '+data.sent+'. Se não aparecer, o problema está no navegador/service worker.';
-  }else if(data.tokenCount===0){
-   $('formNote').textContent='Não há token FCM ativo nesta conta. Ative as notificações novamente neste navegador.';
-  }else{
-   const first=data.failures?.[0];
-   $('formNote').textContent='FCM recusou o envio: '+(first?.code||'erro')+(first?.message?' — '+first.message:'');
-  }
- }catch(err){
-  console.error('[test-push-ui]',err);
-  $('formNote').textContent='Teste Push falhou: '+err.message;
- }finally{$('testPush').disabled=false}
+  if(!r.ok)throw new Error(data.message||data.error||'Falha no teste');
+  if(data.sent>0&&data.failed===0)$('formNote').textContent='FCM aceitou o envio. Tokens: '+data.tokenCount+' · enviados: '+data.sent+'.';
+  else if(data.tokenCount===0)$('formNote').textContent='Não há token FCM ativo nesta conta. Ative as notificações novamente neste navegador.';
+  else $('formNote').textContent='FCM recusou o envio: '+(data.failures?.[0]?.code||'erro')+(data.failures?.[0]?.message?' — '+data.failures[0].message:'');
+ }catch(err){console.error('[test-push-ui]',err);$('formNote').textContent='Teste Push falhou: '+err.message}
+ finally{$('testPush').disabled=false}
 }
 $('testPush').onclick=testPushToMe;
-async function sendMarketingQueue(campaignId=''){if(!currentUser){$('formNote').textContent='Sessão administrativa necessária.';return}$('formNote').textContent='A processar fila...';try{const token=await currentUser.getIdToken(true);const r=await fetch('/api/marketing-worker',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({campaignId})});const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.message||data.error||'Falha no envio');$('formNote').textContent=campaignId?'Campanha processada.':'Fila processada com sucesso.'}catch(err){console.error(err);$('formNote').textContent='Não foi possível enviar agora: '+err.message}}$('sendQueue').onclick=()=>sendMarketingQueue();</script><script src="admin-shell.js"></script></body></html>
+
+async function handleMarketingAuth(u){
+ currentUser=u||null;
+ if(!u){showMessage('Sessão administrativa necessária.');return}
+ await loadCampaigns();
+}
+onAuthStateChanged(auth,u=>{
+ authReady=true;
+ if(authFallbackTimer)clearTimeout(authFallbackTimer);
+ handleMarketingAuth(u).catch(e=>{console.error('[marketing-auth]',e);showMessage('Erro ao carregar o marketing: '+e.message)});
+});
+authFallbackTimer=setTimeout(()=>{
+ if(authReady)return;
+ const u=auth.currentUser;
+ if(u)handleMarketingAuth(u);
+ else showMessage('A autenticação do administrador não respondeu. Recarregue a página.');
+},5000);
+</script></script><script src="admin-shell.js"></script></body></html>
