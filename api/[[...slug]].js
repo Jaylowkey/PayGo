@@ -2492,6 +2492,11 @@ export default async function handler(req, res) {
       try { body = rawBody ? JSON.parse(rawBody) : {}; } catch {
         return res.status(400).json({ success: false, error: 'JSON inválido.' });
       }
+    } else if (route === 'admin-notifications' && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method) && (!req.body || typeof req.body === 'string' || Object.keys(req.body || {}).length === 0)) {
+      rawBody = await readRawRequestBody(req);
+      try { body = rawBody ? JSON.parse(rawBody) : {}; } catch {
+        return res.status(400).json({ success: false, error: 'JSON inválido.' });
+      }
     } else {
       body = normalizeBody(req);
     }
