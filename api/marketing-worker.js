@@ -247,6 +247,24 @@ export default async function handler(req, res) {
   try {
     const database = db();
     if (!await authorized(req, database)) return res.status(401).json({ error: 'Unauthorized' });
+
+    if (req.method === 'GET') {
+      const snap = await database.collection('marketingCampaigns').limit(500).get();
+      const campaigns = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      campaigns.sort((a, b) => {
+        const ta = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : new Date(a.createdAt || 0).getTime();
+        const tb = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : new Date(b.createdAt || 0).getTime();
+        return (tb || 0) - (ta || 0);
+      });
+      return res.status(200).json({ ok: true, campaigns, stats: {
+        campaigns: campaigns.length,
+        scheduled: campaigns.filter(x => x.status === 'scheduled').length,
+        sent: campaigns.filter(x => x.status === 'processed').length,
+        delivered: campaigns.reduce((n, x) => n + Number(x.stats?.delivered || 0), 0),
+        totalSent: campaigns.reduce((n, x) => n + Number(x.stats?.accepted ?? x.stats?.sent ?? 0), 0)
+      }});
+    }
+
     const campaignId = String(req.body?.campaignId || '');
     const now = Timestamp.now();
     const results = [];
