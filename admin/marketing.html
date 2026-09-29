@@ -52,7 +52,7 @@ async function loadCampaigns(){
  try{
   if(!currentUser)throw new Error('Sessão administrativa necessária.');
   const token=await currentUser.getIdToken(true);
-  const r=await fetch('/api/admin-marketing',{headers:{Authorization:'Bearer '+token}});
+  const r=await fetch('/api/marketing-worker',{headers:{Authorization:'Bearer '+token}});
   const data=await r.json().catch(()=>({}));
   if(!r.ok)throw new Error(data.error||data.message||'Falha ao carregar campanhas.');
   const campaigns=Array.isArray(data.campaigns)?data.campaigns:[];
