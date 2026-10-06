@@ -516,7 +516,24 @@
                 };
                 await setDoc(doc(db, "users", user.uid), userData);
 
-                // 3. ENVIAR EMAIL DE VERIFICAÇÃO PELA NOSSA API
+                // 3. CONTABILIZAR O REGISTO ATRAVÉS DO CONVITE
+                if (affiliateCode) {
+                    try {
+                        const idToken = await user.getIdToken();
+                        await fetch('/api/affiliate-tracking', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${idToken}`
+                            },
+                            body: JSON.stringify({ action: 'register' })
+                        });
+                    } catch (trackingError) {
+                        console.warn('Falha no tracking do afiliado:', trackingError);
+                    }
+                }
+
+                // 4. ENVIAR EMAIL DE VERIFICAÇÃO PELA NOSSA API
                 fetch('/api/verify-email', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
