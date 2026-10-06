@@ -457,6 +457,12 @@
       if (refCode) {
           document.getElementById('redirectLoader').classList.remove('hidden');
           localStorage.setItem('paygo_affiliate_ref', refCode);
+
+          fetch('/api/affiliate-tracking', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'click', affiliateCode: refCode })
+          }).catch(() => {});
           
           setTimeout(() => {
               window.location.href = `register.html?ref=${refCode}`;
