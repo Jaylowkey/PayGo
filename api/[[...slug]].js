@@ -1315,6 +1315,73 @@ async function handlePaySuiteWebhook(req, res, body) {
   return res.status(200).json({ success: true, message: 'Referência processada.' });
 }
 
+async function handleAffiliateTracking(req, res, body) {
+  if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Método não permitido.' });
+  const { db, auth } = getFirebase();
+  const action = String(body?.action || '').trim();
+  const normalizeCode = (value) => String(value || '').trim().toUpperCase().slice(0, 100);
+
+  if (action === 'click') {
+    const affiliateCode = normalizeCode(body?.affiliateCode);
+    if (!affiliateCode) return res.status(400).json({ success: false, error: 'Código de afiliado em falta.' });
+    const snap = await db.collection('users').where('affiliateCode', '==', affiliateCode).limit(1).get();
+    if (snap.empty) return res.status(404).json({ success: false, error: 'Código de afiliado não encontrado.' });
+    await snap.docs[0].ref.update({
+      affiliateClicks: FieldValue.increment(1),
+      lastAffiliateClickAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+    return res.status(200).json({ success: true, tracked: true });
+  }
+
+  if (action === 'register') {
+    const header = String(req.headers.authorization || '');
+    const token = header.startsWith('Bearer ') ? header.slice(7).trim() : '';
+    if (!token) return res.status(401).json({ success: false, error: 'Sessão não autenticada.' });
+
+    const decoded = await auth.verifyIdToken(token);
+    const userRef = db.collection('users').doc(decoded.uid);
+    const userSnap = await userRef.get();
+    if (!userSnap.exists) return res.status(404).json({ success: false, error: 'Perfil do utilizador não encontrado.' });
+
+    const userData = userSnap.data() || {};
+    const affiliateCode = normalizeCode(userData.referredBy);
+    if (!affiliateCode) return res.status(200).json({ success: true, tracked: false, reason: 'Sem convite.' });
+    if (userData.affiliateAttributionProcessed === true) {
+      return res.status(200).json({ success: true, tracked: false, reason: 'Já contabilizado.' });
+    }
+
+    const affiliateSnap = await db.collection('users')
+      .where('affiliateCode', '==', affiliateCode)
+      .where('role', '==', 'affiliate')
+      .limit(1)
+      .get();
+    if (affiliateSnap.empty) return res.status(200).json({ success: true, tracked: false, reason: 'Afiliado não ativo.' });
+
+    const affiliateRef = affiliateSnap.docs[0].ref;
+    await db.runTransaction(async transaction => {
+      const freshUser = await transaction.get(userRef);
+      const freshAffiliate = await transaction.get(affiliateRef);
+      if (!freshUser.exists || !freshAffiliate.exists) throw new Error('Dados de atribuição indisponíveis.');
+      if ((freshUser.data() || {}).affiliateAttributionProcessed === true) return;
+
+      transaction.update(affiliateRef, {
+        totalReferrals: FieldValue.increment(1),
+        updatedAt: new Date().toISOString()
+      });
+      transaction.update(userRef, {
+        affiliateAttributionProcessed: true,
+        affiliateAttributedAt: new Date().toISOString(),
+        affiliateReferrerId: affiliateRef.id
+      });
+    });
+
+    return res.status(200).json({ success: true, tracked: true, affiliateCode });
+  }
+
+  return res.status(400).json({ success: false, error: 'Ação inválida.' });
+}
+
 async function handleDeleteUser(req, res, body) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   const { uid } = body;
@@ -2463,6 +2530,7 @@ const routes = {
   'paysuite-webhook': handlePaySuiteWebhook,
   'delete-user': handleDeleteUser,
   'get-referrals': handleGetReferrals,
+  'affiliate-tracking': handleAffiliateTracking,
   'log-action': handleLogAction,
   'p2p-transfer': handleP2PTransfer,
   'send-whatsapp-invoice': handleSendWhatsAppInvoice,
