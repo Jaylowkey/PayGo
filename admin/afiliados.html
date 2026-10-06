@@ -868,48 +868,82 @@
             }
         }
 
-        async function loadWithdrawals() {
-            try {
-                const q = query(collection(db, 'withdrawals'), where('status', '==', 'pending'), limit(50));
-                const snap = await getDocs(q);
-                let pendingCount = 0;
-                let html = '';
+        async function loadAffiliateDashboardData() {
+            const user = auth.currentUser;
+            if (!user) throw new Error('Sessão administrativa expirada.');
 
-                snap.forEach((docSnap) => {
-                    pendingCount++;
-                    const w = docSnap.data();
-                    html += `
-                        <tr class="hover:bg-slate-800/40 transition">
-                            <td class="py-4 px-4"><span class="font-bold text-white block bg-slate-800/80 px-3 py-1.5 rounded-lg w-max border border-slate-700 shadow-inner">${escapeHTML(w.affiliateCode || 'N/A')}</span></td>
-                            <td class="py-4 px-4">
-                                <div class="flex items-center gap-2">
-                                    <span class="bg-slate-800 p-1.5 rounded-md border border-white/5"><i data-lucide="smartphone" class="w-4 h-4 text-brand-400"></i></span>
-                                    <div>
-                                        <div class="font-bold text-sm text-white">${escapeHTML((w.method || '').toUpperCase())}</div>
-                                        <div class="font-mono text-slate-400 text-xs">${escapeHTML(w.phone || '')}</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="py-4 px-4 font-black text-success-400 font-display text-lg">${formatMZN(w.amount)} MT</td>
-                            <td class="py-4 px-4 text-right whitespace-nowrap">
-                                <button type="button" id="btn-pay-${docSnap.id}" onclick="window.processWithdrawal('${docSnap.id}', '${w.userId || ''}', ${Number(w.amount || 0)}, true)" class="btn-action btn-approve mr-2"><i data-lucide="check" class="w-4 h-4"></i> Pago</button>
-                                <button type="button" id="btn-rej-wd-${docSnap.id}" onclick="window.processWithdrawal('${docSnap.id}', '${w.userId || ''}', ${Number(w.amount || 0)}, false)" class="btn-action btn-reject"><i data-lucide="x" class="w-4 h-4"></i> Rejeitar</button>
-                            </td>
-                        </tr>
-                    `;
-                });
+            const token = await user.getIdToken(true);
+            const response = await fetch('/api/admin-affiliates', {
+                method: 'GET',
+                headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' },
+                cache: 'no-store'
+            });
 
-                setSafeText('kpiPendingWithdrawals', pendingCount);
-                if (pendingCount === 0) {
-                    setSafeHTML('withdrawalsTableBody', `<tr><td colspan="4" class="text-center py-12"><div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-success-500/10 mb-4"><i data-lucide="check-circle" class="w-8 h-8 text-success-500/50"></i></div><p class="text-slate-400 font-medium">Nenhum saque pendente. Bom trabalho.</p></td></tr>`);
-                } else {
-                    setSafeHTML('withdrawalsTableBody', html);
-                }
-                renderIcons(document.getElementById('withdrawalsTableBody'));
-            } catch (e) {
-                console.error(e);
-                window.showToast('Erro ao carregar saques.', 'error');
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || !result.success) {
+                throw new Error(result.error || 'Não foi possível carregar os dados dos afiliados.');
             }
+
+            const pending = Array.isArray(result.pending) ? result.pending : [];
+            const affiliates = Array.isArray(result.affiliates) ? result.affiliates : [];
+            const withdrawals = Array.isArray(result.withdrawals) ? result.withdrawals : [];
+
+            window.pendingUsersData = Object.fromEntries(pending.map(u => [u.id, u]));
+
+            const pendingHtml = pending.length ? pending.map(u => {
+                const initials = (u.name || 'U').substring(0, 2).toUpperCase();
+                return `
+                    <tr class="hover:bg-slate-800/40 transition">
+                        <td class="py-4 px-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center font-bold text-white border border-white/10 shadow-inner">${escapeHTML(initials)}</div>
+                                <div>
+                                    <div class="font-bold text-white text-sm">${escapeHTML(u.name || 'Desconhecido')}</div>
+                                    <div class="text-xs text-slate-400 mt-0.5">${escapeHTML(u.email || '')}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-4 px-4 text-xs font-bold text-slate-400 uppercase tracking-widest"><i data-lucide="calendar" class="w-3 h-3 inline mr-1 opacity-50"></i> ${escapeHTML(u.createdAtText || '-')}</td>
+                        <td class="py-4 px-4 text-right whitespace-nowrap">
+                            <button type="button" onclick="window.showCandidateDetails('${u.id}')" class="btn-action bg-slate-800 hover:bg-brand-600 text-white border border-white/10 transition-all"><i data-lucide="eye" class="w-4 h-4"></i> Analisar Ficha</button>
+                        </td>
+                    </tr>`;
+            }).join('') : `<tr><td colspan="3" class="text-center py-12"><div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-warning-500/10 mb-4"><i data-lucide="user-check" class="w-8 h-8 text-warning-500/50"></i></div><p class="text-slate-400 font-medium">Sem novas candidaturas no momento.</p></td></tr>`;
+            setSafeHTML('pendingTableBody', pendingHtml);
+
+            const activeHtml = affiliates.length ? affiliates.map(u => {
+                const isBlocked = u.status === 'blocked';
+                const statusBadge = isBlocked
+                    ? '<span class="status-badge blocked mb-2"><i data-lucide="lock" class="w-3 h-3"></i> Bloqueado</span>'
+                    : '<span class="status-badge active mb-2"><i data-lucide="check-circle" class="w-3 h-3"></i> Ativo</span>';
+                const controlBtns = isBlocked
+                    ? `<button type="button" id="btn-unblk-${u.id}" onclick="window.toggleAffiliateStatus('${u.id}', '${escapeHTML(u.email || '')}', '${escapeHTML(u.name || '')}', 'blocked')" class="btn-action btn-approve mr-2"><i data-lucide="unlock" class="w-4 h-4"></i> Restaurar</button>`
+                    : `<button type="button" id="btn-blk-${u.id}" onclick="window.toggleAffiliateStatus('${u.id}', '${escapeHTML(u.email || '')}', '${escapeHTML(u.name || '')}', 'active')" class="btn-action btn-warning mr-2"><i data-lucide="lock" class="w-4 h-4"></i> Suspender</button>`;
+                const actions = controlBtns + `<button type="button" id="btn-rev-${u.id}" onclick="window.revokeAffiliate('${u.id}', '${escapeHTML(u.email || '')}', '${escapeHTML(u.name || '')}')" class="btn-action btn-reject" title="Remover cargo permanentemente"><i data-lucide="user-minus" class="w-4 h-4"></i> Revogar</button>`;
+                const initials = (u.name || 'U').substring(0, 2).toUpperCase();
+                return `
+                    <tr class="hover:bg-slate-800/40 transition">
+                        <td class="py-4 px-4"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center font-bold text-slate-300 border border-slate-700">${escapeHTML(initials)}</div><div><div class="font-bold text-white text-sm">${escapeHTML(u.name || 'N/A')}</div><div class="text-xs text-slate-400 mt-0.5">${escapeHTML(u.email || '')}</div></div></div></td>
+                        <td class="py-4 px-4 text-center">${statusBadge}<br><span class="font-mono font-bold text-brand-400 bg-brand-500/10 px-3 py-1 rounded-md text-xs border border-brand-500/20">${escapeHTML(u.affiliateCode || 'S/N')}</span></td>
+                        <td class="py-4 px-4 text-center"><div class="bg-slate-900/50 inline-block p-2 rounded-xl border border-white/5"><div class="text-[11px] text-slate-300 font-bold mb-1 uppercase tracking-widest"><i data-lucide="users" class="w-3 h-3 inline text-slate-400 mr-1"></i> ${Number(u.approvedReferrals || 0)} Registos</div><div class="text-sm text-success-400 font-bold"><i data-lucide="banknote" class="w-4 h-4 inline mr-1"></i> ${formatMZN(u.affiliateEarnings)} MT</div></div></td>
+                        <td class="py-4 px-4 text-right whitespace-nowrap">${actions}</td>
+                    </tr>`;
+            }).join('') : `<tr><td colspan="4" class="text-center py-12"><div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-brand-500/10 mb-4"><i data-lucide="network" class="w-8 h-8 text-brand-500/50"></i></div><p class="text-slate-400 font-medium">Nenhum parceiro registado na rede.</p></td></tr>`;
+            setSafeHTML('activeTableBody', activeHtml);
+
+            const withdrawalsHtml = withdrawals.length ? withdrawals.map(w => `
+                <tr class="hover:bg-slate-800/40 transition">
+                    <td class="py-4 px-4"><span class="font-bold text-white block bg-slate-800/80 px-3 py-1.5 rounded-lg w-max border border-slate-700 shadow-inner">${escapeHTML(w.affiliateCode || 'N/A')}</span></td>
+                    <td class="py-4 px-4"><div class="flex items-center gap-2"><span class="bg-slate-800 p-1.5 rounded-md border border-white/5"><i data-lucide="smartphone" class="w-4 h-4 text-brand-400"></i></span><div><div class="font-bold text-sm text-white">${escapeHTML((w.method || '').toUpperCase())}</div><div class="font-mono text-slate-400 text-xs">${escapeHTML(w.phone || '')}</div></div></div></td>
+                    <td class="py-4 px-4 font-black text-success-400 font-display text-lg">${formatMZN(w.amount)} MT</td>
+                    <td class="py-4 px-4 text-right whitespace-nowrap"><button type="button" id="btn-pay-${w.id}" onclick="window.processWithdrawal('${w.id}', '${w.userId || ''}', ${Number(w.amount || 0)}, true)" class="btn-action btn-approve mr-2"><i data-lucide="check" class="w-4 h-4"></i> Pago</button><button type="button" id="btn-rej-wd-${w.id}" onclick="window.processWithdrawal('${w.id}', '${w.userId || ''}', ${Number(w.amount || 0)}, false)" class="btn-action btn-reject"><i data-lucide="x" class="w-4 h-4"></i> Rejeitar</button></td>
+                </tr>`).join('') : `<tr><td colspan="4" class="text-center py-12"><div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-success-500/10 mb-4"><i data-lucide="check-circle" class="w-8 h-8 text-success-500/50"></i></div><p class="text-slate-400 font-medium">Nenhum saque pendente. Bom trabalho.</p></td></tr>`;
+            setSafeHTML('withdrawalsTableBody', withdrawalsHtml);
+
+            setSafeText('kpiTotalActive', result.kpis?.activeAffiliates || 0);
+            setSafeText('kpiTotalEarnings', formatMZN(result.kpis?.earnings || 0));
+            setSafeText('kpiPendingWithdrawals', result.kpis?.pendingWithdrawals || 0);
+            renderIcons();
         }
 
         window.processWithdrawal = async (id, userId, amount, isApproved) => {
@@ -1304,11 +1338,7 @@
             if (refreshIcon) refreshIcon.classList.add('animate-spin');
 
             try {
-                await Promise.all([
-                    loadWithdrawals(),
-                    loadPendingAffiliates(),
-                    loadAllAffiliates()
-                ]);
+                await loadAffiliateDashboardData();
             } catch (e) {
                 console.error(e);
                 window.showToast('Alguns dados não puderam ser carregados.', 'warning');
