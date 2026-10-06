@@ -32,6 +32,8 @@ function cleanUser(id, data) {
     affiliateCode: data.affiliateCode || '',
     affiliateCodeActive: data.affiliateCodeActive === true,
     affiliateEarnings: Number(data.affiliateEarnings || 0),
+    totalReferrals: Number(data.totalReferrals || 0),
+    affiliateClicks: Number(data.affiliateClicks || 0),
     approvedReferrals: Number(data.approvedReferrals || 0),
     createdAtText: dateText(data.createdAt),
     whyAffiliate: data.whyAffiliate || '',
