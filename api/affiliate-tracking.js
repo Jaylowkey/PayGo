@@ -1,4 +1,5 @@
-import { cert, getApps, getAuth, getFirestore, initializeApp, FieldValue } from 'firebase-admin/app';
+import { cert, getApps, initializeApp } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
 import { getFirestore as getAdminFirestore, FieldValue as AdminFieldValue } from 'firebase-admin/firestore';
 
 function getFirebase() {
@@ -20,7 +21,7 @@ function normalizeCode(value) {
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (!['POST'].includes(req.method)) return res.status(405).json({ success: false, error: 'Método não permitido.' });
+  if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Método não permitido.' });
 
   try {
     const { db, auth } = getFirebase();
@@ -33,8 +34,7 @@ export default async function handler(req, res) {
       const snap = await db.collection('users').where('affiliateCode', '==', affiliateCode).limit(1).get();
       if (snap.empty) return res.status(404).json({ success: false, error: 'Código de afiliado não encontrado.' });
 
-      const ref = snap.docs[0].ref;
-      await ref.update({
+      await snap.docs[0].ref.update({
         affiliateClicks: AdminFieldValue.increment(1),
         lastAffiliateClickAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
@@ -60,16 +60,25 @@ export default async function handler(req, res) {
         return res.status(200).json({ success: true, tracked: false, reason: 'Já contabilizado.' });
       }
 
-      const affiliateSnap = await db.collection('users').where('affiliateCode', '==', affiliateCode).where('role', '==', 'affiliate').limit(1).get();
-      if (affiliateSnap.empty) return res.status(200).json({ success: true, tracked: false, reason: 'Afiliado não ativo.' });
+      const affiliateSnap = await db.collection('users')
+        .where('affiliateCode', '==', affiliateCode)
+        .where('role', '==', 'affiliate')
+        .limit(1)
+        .get();
+
+      if (affiliateSnap.empty) {
+        return res.status(200).json({ success: true, tracked: false, reason: 'Afiliado não ativo.' });
+      }
 
       const affiliateRef = affiliateSnap.docs[0].ref;
       await db.runTransaction(async transaction => {
-        const [freshUser, freshAffiliate] = await Promise.all([transaction.get(userRef), transaction.get(affiliateRef)]);
+        const freshUser = await transaction.get(userRef);
+        const freshAffiliate = await transaction.get(affiliateRef);
         if (!freshUser.exists || !freshAffiliate.exists) throw new Error('Dados de atribuição indisponíveis.');
+
         const currentUser = freshUser.data() || {};
         if (currentUser.affiliateAttributionProcessed === true) return;
-        const currentAffiliate = freshAffiliate.data() || {};
+
         transaction.update(affiliateRef, {
           totalReferrals: AdminFieldValue.increment(1),
           updatedAt: new Date().toISOString()
@@ -87,6 +96,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ success: false, error: 'Ação inválida.' });
   } catch (error) {
     console.error('[affiliate-tracking]', error);
-    return res.status(error?.code === 'auth/id-token-expired' || error?.code === 'auth/argument-error' ? 401 : 500).json({ success: false, error: error.message || 'Erro interno.' });
+    const unauthorized = String(error?.code || '').startsWith('auth/');
+    return res.status(unauthorized ? 401 : 500).json({ success: false, error: error.message || 'Erro interno.' });
   }
 }
