@@ -132,11 +132,11 @@ export default async function handler(req, res) {
 
     const normalizedPhone = phone
       ? (() => {
-          let digits = String(phone).trim().replace(/[^\\d+]/g, "");
+          let digits = String(phone).trim().replace(/[^\d+]/g, "");
           if (digits.startsWith("+")) digits = digits.slice(1);
           if (!digits.startsWith("258")) digits = `258${digits}`;
-          if (!/^2588\\d{8}$/.test(digits)) {
-            throw Object.assign(new Error("Número de telefone inválido. Use o formato 84xxxxxxx ou 86xxxxxxx."), { status: 400, code: "INVALID_PHONE" });
+          if (!/^2588\d{8}$/.test(digits)) {
+            throw Object.assign(new Error("Número inválido. Introduza um número moçambicano de 9 dígitos, por exemplo 84xxxxxxx, 85xxxxxxx, 86xxxxxxx ou 87xxxxxxx."), { status: 400, code: "INVALID_PHONE" });
           }
           return `+${digits}`;
         })()
