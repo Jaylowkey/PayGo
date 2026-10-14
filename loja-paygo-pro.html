@@ -1177,6 +1177,11 @@
                         </label>
                     </div>
                 </div>
+                <div id="mobilePhoneDetails" class="bg-slate-950 rounded-xl p-4 border border-orange-500/30 space-y-2">
+                    <label for="topUpPhone" class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Número para receber o pedido de pagamento</label>
+                    <input type="tel" id="topUpPhone" inputmode="tel" autocomplete="tel" placeholder="84xxxxxxx ou 86xxxxxxx" maxlength="16" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:border-brand-500 text-white outline-none" />
+                    <p class="text-xs text-slate-400">Introduza o número M-Pesa/e-Mola que irá confirmar o pagamento.</p>
+                </div>
                 <div id="bankDetails" class="hidden bg-slate-950 rounded-xl p-4 border border-blue-500/30 text-sm text-slate-300">
                     <p class="mb-2 text-blue-400 font-bold flex items-center gap-1"><i data-lucide="info" class="w-4 h-4"></i> Transferência Manual</p>
                     <p><strong>Banco:</strong> Millennium BIM</p>
@@ -2632,7 +2637,8 @@
                         reference: topupId,
                         userId: currentUser.uid,
                         customerName: userData?.name || currentUser.displayName || 'Cliente PayGo',
-                        customerPhone: userData?.phone || userData?.telephone || '',
+                        phone: document.getElementById('topUpPhone')?.value?.trim() || userData?.phone || userData?.telephone || '',
+                        customerPhone: document.getElementById('topUpPhone')?.value?.trim() || userData?.phone || userData?.telephone || '',
                         amount: Number(amount.toFixed(2)),
                         method,
                         description: `Depósito Carteira PayGo: ${topupId}`
@@ -2700,8 +2706,10 @@
         window.calcTopUpMzn = () => window.syncTopUpFromUsd();
 
         window.toggleBankDetails = (method) => {
-            const el = document.getElementById('bankDetails');
-            if (method === 'bank') el.classList.remove('hidden'); else el.classList.add('hidden');
+            const bank = document.getElementById('bankDetails');
+            const mobile = document.getElementById('mobilePhoneDetails');
+            if (bank) bank.classList.toggle('hidden', method !== 'bank');
+            if (mobile) mobile.classList.toggle('hidden', method === 'bank');
         };
 
         window.processTransfer = async () => { 
