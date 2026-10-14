@@ -130,6 +130,13 @@ export default async function handler(req, res) {
     const topup = await ensureTopUp({ reference, uid, amount, paymentMethod, phone, name });
     created = topup.created;
 
+    // Normalize and validate phone before sending to the provider.
+    const normalizedPhone = phone
+      ? (String(phone).replace(/\\s+/g, "").startsWith("+")
+          ? String(phone).replace(/\\s+/g, "")
+          : `+${String(phone).replace(/\\s+/g, "").replace(/^258/, "").replace(/^/, "258")}`)
+      : "";
+
     const charge = await createCharge({
       amount,
       method: paymentMethod,
