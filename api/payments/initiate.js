@@ -130,17 +130,22 @@ export default async function handler(req, res) {
     const topup = await ensureTopUp({ reference, uid, amount, paymentMethod, phone, name });
     created = topup.created;
 
-    // Normalize and validate phone before sending to the provider.
     const normalizedPhone = phone
-      ? (String(phone).replace(/\\s+/g, "").startsWith("+")
-          ? String(phone).replace(/\\s+/g, "")
-          : `+${String(phone).replace(/\\s+/g, "").replace(/^258/, "").replace(/^/, "258")}`)
+      ? (() => {
+          let digits = String(phone).trim().replace(/[^\\d+]/g, "");
+          if (digits.startsWith("+")) digits = digits.slice(1);
+          if (!digits.startsWith("258")) digits = `258${digits}`;
+          if (!/^2588\\d{8}$/.test(digits)) {
+            throw Object.assign(new Error("Número de telefone inválido. Use o formato 84xxxxxxx ou 86xxxxxxx."), { status: 400, code: "INVALID_PHONE" });
+          }
+          return `+${digits}`;
+        })()
       : "";
 
     const charge = await createCharge({
       amount,
       method: paymentMethod,
-      phone: phone || undefined,
+      phone: normalizedPhone || undefined,
       reference,
       sourceId: reference,
       customerName: name,
