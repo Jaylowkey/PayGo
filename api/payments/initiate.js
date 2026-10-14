@@ -94,11 +94,14 @@ export default async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(204).end();
   if (req.method !== "POST") return json(res, 405, { success: false, error: "Método não permitido.", allowed: ["POST"] });
 
-  const body = req.body || {};
+  let body = req.body || {};
+  if (typeof body === "string") {
+    try { body = JSON.parse(body); } catch { return json(res, 400, { success: false, error: "JSON inválido." }); }
+  }
   const amount = Number(body.amount);
   const paymentMethod = method(body.method);
-  const phone = body.phone || "";
-  const reference = String(body.reference || body.orderId || `PAYGO-${Date.now()}`);
+  const phone = body.phone || body.msisdn || body.customerPhone || body.customer_phone || "";
+  const reference = String(body.reference || body.orderId || body.order_id || `PAYGO-${Date.now()}`);
   let uid = userId(body);
   let name = customerName(body);
   let created = false;
