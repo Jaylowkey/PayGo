@@ -142,6 +142,12 @@ export default async function handler(req, res) {
         })()
       : "";
 
+    // Reuse the deposit document created by the checkout UI. The webhook
+    // reconciles by document ID, reference, or topupId, so keep them aligned.
+    if (topup.ref.id !== reference) {
+      throw Object.assign(new Error("A referência do depósito não corresponde ao registo existente."), { status: 409, code: "TOPUP_REFERENCE_MISMATCH" });
+    }
+
     const charge = await createCharge({
       amount,
       method: paymentMethod,
