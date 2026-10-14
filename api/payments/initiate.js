@@ -153,7 +153,7 @@ export default async function handler(req, res) {
 
     const raw = charge.raw || {};
     const rawData = raw?.data || {};
-    const checkoutUrl = rawData.checkout_url || rawData.checkoutUrl || raw.checkout_url || raw.checkoutUrl || null;
+    const checkoutUrl = charge.checkoutUrl || rawData.checkout_url || rawData.checkoutUrl || rawData.payment_url || rawData.paymentUrl || raw.checkout_url || raw.checkoutUrl || raw.payment_url || raw.paymentUrl || null;
 
     return json(res, 200, {
       success: true,
