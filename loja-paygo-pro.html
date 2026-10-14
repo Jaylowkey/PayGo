@@ -1387,59 +1387,6 @@
         import { getFirestore, doc, getDoc, getDocs, collection, query, orderBy, limit, where, updateDoc, addDoc, serverTimestamp, increment, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         // ==========================================
-        // 1. CIRCUIT BREAKER (Defesa contra falhas)
-        // ==========================================
-        class CircuitBreaker {
-            constructor(requestFunction, options = {}) {
-                this.requestFunction = requestFunction;
-                this.state = 'CLOSED';
-                this.failureCount = 0;
-                this.failureThreshold = options.failureThreshold || 2;
-                this.resetTimeout = options.resetTimeout || 120000;
-                this.nextAttempt = Date.now();
-            }
-            async fire(...args) {
-                if (this.state === 'OPEN') {
-                    if (Date.now() > this.nextAttempt) { this.state = 'HALF_OPEN'; } 
-                    else { throw new Error("CIRCUITO_ABERTO"); }
-                }
-                try {
-                    const response = await this.requestFunction(...args);
-                    return this.success(response);
-                } catch (error) {
-                    return this.fail(error);
-                }
-            }
-            success(response) { this.failureCount = 0; this.state = 'CLOSED'; return response; }
-            fail(error) {
-                this.failureCount++;
-                if (this.failureCount >= this.failureThreshold && this.state !== 'OPEN') {
-                    this.state = 'OPEN';
-                    this.nextAttempt = Date.now() + this.resetTimeout;
-                }
-                throw error;
-            }
-        }
-
-        async function fetchPaymentApi(payload) {
-            const res = await fetch('/api/paysuite-payment', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-            });
-            let result = {};
-            try {
-                result = await res.json();
-            } catch {
-                result = {};
-            }
-            if (res.status === 503 || result.error?.includes("manutenção preventiva")) {
-                throw new Error("MANUTENCAO_PAYSUITE");
-            }
-            if (!res.ok || !result.success) throw new Error(result.error || `Falha no gateway (${res.status}). Verifique o método, o valor e a configuração da API.`);
-            return result;
-        }
-        const pagamentoSeguro = new CircuitBreaker(fetchPaymentApi, { failureThreshold: 2 });
-
-        // ==========================================
         // 2. CONFIGURAÇÃO FIREBASE
         // ==========================================
         const firebaseConfig = { 
