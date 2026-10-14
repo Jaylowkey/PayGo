@@ -2618,48 +2618,111 @@
         // =====================================
         window.processTopUp = async () => {
             if (isProcessing) return;
-            isProcessing = true;
+            if (!currentUser?.uid) {
+                window.showToast("Inicie sessão antes de carregar a carteira.", "warning");
+                return;
+            }
 
+            isProcessing = true;
             const btn = document.getElementById('btnProcessTopUp');
             const origText = btn.innerHTML;
-            btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A preparar Pagamento...`; if (typeof lucide !== 'undefined') lucide.createIcons({root: btn});
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A preparar pagamento...`;
+            if (typeof lucide !== 'undefined') lucide.createIcons({ root: btn });
 
             const amount = Number(parseFloat(document.getElementById('topUpAmount').value) || 0);
             const method = document.querySelector('input[name="topUpMethod"]:checked')?.value || 'mpesa';
 
-            if (!Number.isFinite(amount) || amount < 10) { window.showToast("O depósito mínimo é de 10 MT.", "warning"); isProcessing = false; btn.disabled = false; btn.innerHTML = origText; return; }
+            if (!Number.isFinite(amount) || amount < 10) {
+                window.showToast("O depósito mínimo é de 10 MT.", "warning");
+                isProcessing = false;
+                btn.disabled = false;
+                btn.innerHTML = origText;
+                return;
+            }
 
             try {
                 if (method === 'bank') {
-                    await addDoc(collection(db, "support_tickets"), { userId: currentUser.uid, userName: userData.name, userEmail: currentUser.email, type: 'deposit_request', amount: amount, paymentMethod: method, message: `Depósito Bancário de ${formatMZN(amount)} MT.`, status: 'open', createdAt: serverTimestamp() });
+                    await addDoc(collection(db, "support_tickets"), {
+                        userId: currentUser.uid,
+                        userName: userData?.name || currentUser.displayName || 'Cliente',
+                        userEmail: currentUser.email || '',
+                        type: 'deposit_request',
+                        amount,
+                        paymentMethod: method,
+                        message: `Depósito Bancário de ${formatMZN(amount)} MT.`,
+                        status: 'open',
+                        createdAt: serverTimestamp()
+                    });
                     window.fetchDashboardData(true);
-                    window.closeModals(); document.getElementById('topUpForm').reset(); setSafeValue('topUpAmount',''); window.syncTopUpPreview(0, 0); window.showToast("Pedido enviado! O Admin confirmará após verificação.", "success");
-                } else {
-                    window.showToast("A conectar de forma segura à PaySuite...", "info");
-                    const topupId = 'TOP-' + Date.now().toString().slice(-6).toUpperCase();
-                    
-                    await addDoc(collection(db, "topups"), { topupId: topupId, userId: currentUser.uid, amount: amount, method: method, status: 'pending', createdAt: serverTimestamp() });
-
-                    const payloadVercel = { orderId: topupId, amount: Number(amount.toFixed(2)), method: method, description: `Depósito Carteira PayGo: ${topupId}` };
-                    const data = await pagamentoSeguro.fire(payloadVercel);
-
-                    if (data.data && data.data.checkoutUrl) { 
-                        window.location.href = data.data.checkoutUrl; 
-                    } else { 
-                        window.fetchDashboardData(true);
-                        window.closeModals(); document.getElementById('topUpForm').reset(); setSafeValue('topUpAmount',''); window.syncTopUpPreview(0, 0); window.showToast("Verifique o seu telemóvel para inserir o PIN!", "success"); 
-                    }
+                    window.closeModals();
+                    document.getElementById('topUpForm').reset();
+                    setSafeValue('topUpAmount', '');
+                    window.syncTopUpPreview(0, 0);
+                    window.showToast("Pedido enviado! O Admin confirmará após verificação.", "success");
+                    return;
                 }
-            } catch (err) { 
-                if (err.message === "MANUTENCAO_PAYSUITE" || err.message.startsWith("CIRCUITO_ABERTO")) {
-                    window.showToast("Gateway automática em manutenção. Faça transferência bancária manual.", "warning", 6000);
-                    document.querySelector('input[value="bank"]').checked = true;
-                    document.getElementById('bankDetails').classList.remove('hidden');
-                } else {
-                    window.showToast(err.message || "Falha ao processar operação.", "error"); 
+
+                // Keep the same top-up reference in Firestore and the payment provider.
+                const topupId = 'TOP-' + Date.now().toString(36).toUpperCase();
+                await addDoc(collection(db, "topups"), {
+                    topupId,
+                    reference: topupId,
+                    userId: currentUser.uid,
+                    amount,
+                    method,
+                    paymentMethod: method,
+                    status: 'pending',
+                    paymentStatus: 'pending',
+                    createdAt: serverTimestamp()
+                });
+
+                const response = await fetch('/api/payments/initiate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        orderId: topupId,
+                        reference: topupId,
+                        userId: currentUser.uid,
+                        customerName: userData?.name || currentUser.displayName || 'Cliente PayGo',
+                        customerPhone: userData?.phone || userData?.telephone || '',
+                        amount: Number(amount.toFixed(2)),
+                        method,
+                        description: `Depósito Carteira PayGo: ${topupId}`
+                    })
+                });
+
+                let result = {};
+                try { result = await response.json(); } catch { /* handled below */ }
+                if (!response.ok || !result.success) {
+                    const detail = result.error || result.message || `Falha ao iniciar pagamento (HTTP ${response.status}).`;
+                    throw new Error(detail);
                 }
-            } finally { 
-                isProcessing = false; btn.disabled = false; btn.innerHTML = origText; 
+
+                if (result.checkoutUrl) {
+                    window.location.href = result.checkoutUrl;
+                    return;
+                }
+
+                // Mobile-money STK requests may not return a checkout URL.
+                window.fetchDashboardData(true);
+                window.closeModals();
+                document.getElementById('topUpForm').reset();
+                setSafeValue('topUpAmount', '');
+                window.syncTopUpPreview(0, 0);
+                window.showToast(result.message || "Pedido enviado. Confirme o pagamento no seu telemóvel.", "success");
+            } catch (err) {
+                console.error("[PayGo top-up]", err);
+                const message = err?.message || "Falha ao iniciar o pagamento.";
+                if (message.startsWith("CIRCUITO_ABERTO")) {
+                    window.showToast("O gateway está temporariamente a recuperar. Aguarde alguns segundos antes de tentar novamente.", "warning", 6000);
+                } else {
+                    window.showToast(message, "error", 6000);
+                }
+            } finally {
+                isProcessing = false;
+                btn.disabled = false;
+                btn.innerHTML = origText;
             }
         };
 
